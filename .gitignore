@@ -1,0 +1,10 @@
+artifacts/
+.rsc-directory-*.lock
+.rsc-output-*.lock
+bin/
+obj/
+.vs/
+.vscode/*.log
+TestResults/
+*.user
+*.suo

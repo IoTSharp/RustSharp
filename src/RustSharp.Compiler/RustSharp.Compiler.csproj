@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>RustSharp compiler pipeline.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RustSharp.Syntax/RustSharp.Syntax.csproj" />
+    <ProjectReference Include="../RustSharp.CodeGen.IL/RustSharp.CodeGen.IL.csproj" />
+  </ItemGroup>
+</Project>

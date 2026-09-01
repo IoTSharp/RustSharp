@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RustSharp.Syntax/RustSharp.Syntax.csproj" />
+    <Project Path="src/RustSharp.CodeGen.IL/RustSharp.CodeGen.IL.csproj" />
+    <Project Path="src/RustSharp.Compiler/RustSharp.Compiler.csproj" />
+    <Project Path="src/RustSharp.Cli/RustSharp.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RustSharp.Tests/RustSharp.Tests.csproj" />
+  </Folder>
+</Solution>

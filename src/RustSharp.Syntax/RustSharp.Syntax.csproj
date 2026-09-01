@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>RustSharp source text, lexer, syntax tree, and parser.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>

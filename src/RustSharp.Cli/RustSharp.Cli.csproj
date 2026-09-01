@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>rsc</AssemblyName>
+    <Description>RustSharp compiler command-line tool.</Description>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>rsc</ToolCommandName>
+    <PackageId>RustSharp.Tool</PackageId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../RustSharp.Compiler/RustSharp.Compiler.csproj" />
+  </ItemGroup>
+</Project>
