@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using RustSharp.Compiler;
 
@@ -18,9 +19,12 @@ internal static class Program
     private const int MaximumCases = 64;
     private const string ProfileName = "vertical-slice-v1";
     private const string OracleName = "rustc-1.98";
+    private const string RustcToolchain = "1.98.0";
 
     public static async Task<int> Main(string[] args)
     {
+        DateTimeOffset startedAtUtc = DateTimeOffset.UtcNow;
+        var harnessClock = Stopwatch.StartNew();
         Options options;
         try
         {
@@ -49,20 +53,25 @@ internal static class Program
             ProcessResult rustcVersion = await RunAsync(
                 runner,
                 "rustc",
-                ["--version"],
+                [$"+{RustcToolchain}", "--version"],
                 repositoryRoot,
                 options.Timeout,
                 deadline.Token).ConfigureAwait(false);
-            string? rustcVersionText = FirstLine(rustcVersion.StandardOutput);
+            string? rustcVersionText = FindRustcVersion(rustcVersion);
             bool oracleAvailable = rustcVersion.Succeeded && IsRustc198(rustcVersionText);
             string? blockedReason = oracleAvailable
                 ? null
                 : rustcVersion.Succeeded
                     ? $"Requested oracle rustc 1.98.x, found '{rustcVersionText ?? "unknown"}'."
-                    : $"Could not execute rustc --version (termination={rustcVersion.Termination}, exitCode={rustcVersion.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "n/a"}).";
+                    : DescribeUnavailableProcess(
+                        "Could not execute rustc --version",
+                        rustcVersion,
+                        options.Timeout);
 
-            string? rustSharpVersion = await ReadRustSharpVersionAsync(runner, repositoryRoot, options.Timeout, deadline.Token)
+            ProcessResult rustSharpVersionProbe = await ReadRustSharpVersionAsync(runner, repositoryRoot, options.Timeout, deadline.Token)
                 .ConfigureAwait(false);
+            string? rustSharpVersion = FindRustSharpVersion(rustSharpVersionProbe);
+            bool rustSharpAvailable = rustSharpVersionProbe.Succeeded && rustSharpVersion is not null;
             var cases = new List<CaseReport>(FixtureCatalog.Length);
             if (oracleAvailable)
             {
@@ -75,7 +84,7 @@ internal static class Program
                     else
                     {
                         cases.Add(
-                            await RunCaseAsync(
+                            await RunCaseSafelyAsync(
                                 runner,
                                 repositoryRoot,
                                 runDirectory,
@@ -99,23 +108,55 @@ internal static class Program
             // A report with skipped cases is incomplete even when the oracle
             // itself is available (for example, an overall deadline expired).
             // Keep it blocked instead of allowing a partial run to look green.
-            string status = !oracleAvailable
+            string status = !oracleAvailable || !rustSharpAvailable
                 ? "blocked"
                 : skipped > 0
                     ? "blocked"
                     : failed == 0
                         ? "passed"
                         : "failed";
+            harnessClock.Stop();
+            string? rustSharpVersionDiagnostic = rustSharpAvailable
+                ? null
+                : DescribeUnavailableProcess(
+                    "Could not determine the RustSharp CLI version",
+                    rustSharpVersionProbe,
+                    options.Timeout);
             var report = new ConformanceReport(
                 1,
                 DateTimeOffset.UtcNow,
                 options.Profile,
-                new OracleReport(OracleName, "rustc", rustcVersionText, oracleAvailable, blockedReason, rustcVersion.ToEvidence()),
-                new ToolReport("rustsharp", "dotnet run --project src/RustSharp.Cli -c Release", rustSharpVersion),
+                new OracleReport(OracleName, "rustc", RustcToolchain, rustcVersionText, oracleAvailable, blockedReason, rustcVersion.ToEvidence()),
+                new ToolReport("rustsharp", "dotnet run --project src/RustSharp.Cli -c Release", rustSharpVersion)
+                {
+                    Available = rustSharpAvailable,
+                    Diagnostic = rustSharpVersionDiagnostic,
+                    VersionProbe = rustSharpVersionProbe.ToEvidence(),
+                },
                 new LimitsReport(options.Timeout.TotalSeconds, options.Deadline.TotalSeconds, MaximumCases, BoundedProcessRunner.MaximumTotalOutputBytes),
                 new SummaryReport(status, FixtureCatalog.Length, cases.Count - skipped, passed, failed, skipped),
                 cases,
-                null);
+                null)
+            {
+                Host = HostReport.Current,
+                Execution = new ExecutionReport(
+                    startedAtUtc,
+                    DateTimeOffset.UtcNow,
+                    harnessClock.Elapsed.TotalMilliseconds,
+                    deadline.IsCancellationRequested,
+                    deadline.IsCancellationRequested ? "Harness overall deadline expired." : null),
+                BlockedReason = status == "blocked"
+                    ? !oracleAvailable
+                        ? blockedReason
+                        : !rustSharpAvailable
+                            ? rustSharpVersionDiagnostic
+                            : deadline.IsCancellationRequested
+                                ? "Harness overall deadline expired."
+                                : skipped > 0
+                                    ? "One or more profile cases were skipped."
+                                    : null
+                    : null,
+            };
             string? cleanupDiagnostic = TryDeleteDirectory(runDirectory);
             report = report with { RunDirectoryCleanupDiagnostic = cleanupDiagnostic };
             await WriteReportAsync(reportPath, report).ConfigureAwait(false);
@@ -156,7 +197,7 @@ internal static class Program
         ProcessResult rustcCompile = await RunAsync(
             runner,
             "rustc",
-            [sourcePath, "--edition", "2024", "-o", rustcOutput],
+            [$"+{RustcToolchain}", sourcePath, "--edition", "2024", "-o", rustcOutput],
             repositoryRoot,
             timeout,
             cancellationToken).ConfigureAwait(false);
@@ -169,30 +210,42 @@ internal static class Program
             cancellationToken).ConfigureAwait(false);
 
         ProcessResult? rustcRun = null;
+        ProcessResult? rustSharpCompile = null;
         ProcessResult? rustSharpRun = null;
-        if (fixture.ExpectedSuccess && rustcCompile.Succeeded && rustSharpCheck.Succeeded)
+        if (fixture.ExpectedSuccess)
         {
-            rustcRun = await RunAsync(runner, rustcOutput, [], repositoryRoot, timeout, cancellationToken).ConfigureAwait(false);
-            string managedOutput = Path.Combine(caseDirectory, "rustsharp.dll");
-            ProcessResult compile = await RunAsync(
-                runner,
-                "dotnet",
-                ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--", "compile", sourcePath, "--output", managedOutput],
-                repositoryRoot,
-                timeout,
-                cancellationToken).ConfigureAwait(false);
-            if (compile.Succeeded)
+            if (rustcCompile.Succeeded)
             {
-                rustSharpRun = await RunAsync(runner, "dotnet", [managedOutput], caseDirectory, timeout, cancellationToken).ConfigureAwait(false);
+                rustcRun = await RunAsync(runner, rustcOutput, [], repositoryRoot, timeout, cancellationToken).ConfigureAwait(false);
+            }
+
+            if (rustSharpCheck.Succeeded)
+            {
+                string managedOutput = Path.Combine(caseDirectory, "rustsharp.dll");
+                rustSharpCompile = await RunAsync(
+                    runner,
+                    "dotnet",
+                    ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--", "compile", sourcePath, "--output", managedOutput],
+                    repositoryRoot,
+                    timeout,
+                    cancellationToken).ConfigureAwait(false);
+                if (rustSharpCompile.Succeeded)
+                {
+                    rustSharpRun = await RunAsync(runner, "dotnet", [managedOutput], caseDirectory, timeout, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
 
         bool outcomeMatches = fixture.ExpectedSuccess
             ? rustcCompile.Succeeded && rustSharpCheck.Succeeded && rustcRun?.Succeeded == true && rustSharpRun?.Succeeded == true && NormalizeOutput(rustcRun.StandardOutput) == NormalizeOutput(rustSharpRun.StandardOutput) && NormalizeOutput(rustSharpRun.StandardOutput) == NormalizeOutput(fixture.ExpectedOutput)
             : !rustcCompile.Succeeded && !rustSharpCheck.Succeeded;
-        string? difference = outcomeMatches ? null : fixture.ExpectedSuccess
-            ? "Compile/check/run outcome or stdout differed from the fixture expectation."
-            : "Compile outcome differed between rustc and RustSharp.";
+        string? difference = outcomeMatches ? null : DescribeCaseDifference(
+            fixture,
+            rustcCompile,
+            rustcRun,
+            rustSharpCheck,
+            rustSharpCompile,
+            rustSharpRun);
         return new CaseReport(
             fixture.Id,
             fixture.FileName,
@@ -202,14 +255,98 @@ internal static class Program
             rustcCompile.ToEvidence(),
             rustcRun?.ToEvidence(),
             rustSharpCheck.ToEvidence(),
-            rustSharpRun?.ToEvidence());
+            rustSharpRun?.ToEvidence())
+        {
+            ExpectedOutput = fixture.ExpectedOutput,
+            RustSharpCompile = rustSharpCompile?.ToEvidence(),
+        };
+    }
+
+    private static string DescribeCaseDifference(
+        Fixture fixture,
+        ProcessResult rustcCompile,
+        ProcessResult? rustcRun,
+        ProcessResult rustSharpCheck,
+        ProcessResult? rustSharpCompile,
+        ProcessResult? rustSharpRun)
+    {
+        if (!fixture.ExpectedSuccess)
+        {
+            if (rustcCompile.Succeeded)
+            {
+                return "rustc accepted a fixture expected to fail compilation.";
+            }
+
+            if (rustSharpCheck.Succeeded)
+            {
+                return "RustSharp accepted a fixture expected to fail compilation.";
+            }
+
+            return "Compile outcome differed between rustc and RustSharp.";
+        }
+
+        if (!rustcCompile.Succeeded)
+        {
+            return $"rustc compile failed (termination={rustcCompile.Termination}, exitCode={FormatExitCode(rustcCompile)}).";
+        }
+
+        if (!rustSharpCheck.Succeeded)
+        {
+            return $"RustSharp check failed (termination={rustSharpCheck.Termination}, exitCode={FormatExitCode(rustSharpCheck)}).";
+        }
+
+        if (rustcRun is not null && !rustcRun.Succeeded)
+        {
+            return $"rustc run failed (termination={rustcRun.Termination}, exitCode={FormatExitCode(rustcRun)}).";
+        }
+
+        if (rustSharpCompile is not null && !rustSharpCompile.Succeeded)
+        {
+            return $"RustSharp compile failed (termination={rustSharpCompile.Termination}, exitCode={FormatExitCode(rustSharpCompile)}).";
+        }
+
+        if (rustSharpRun is not null && !rustSharpRun.Succeeded)
+        {
+            return $"RustSharp run failed (termination={rustSharpRun.Termination}, exitCode={FormatExitCode(rustSharpRun)}).";
+        }
+
+        return "Run output differed from the fixture expectation or between rustc and RustSharp.";
+    }
+
+    private static string FormatExitCode(ProcessResult result) =>
+        result.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "n/a";
+
+    private static async Task<CaseReport> RunCaseSafelyAsync(
+        BoundedProcessRunner runner,
+        string repositoryRoot,
+        string runDirectory,
+        Fixture fixture,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await RunCaseAsync(
+                runner,
+                repositoryRoot,
+                runDirectory,
+                fixture,
+                timeout,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return CaseReport.Skipped(fixture, "Harness overall deadline expired while executing this case.");
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or NotSupportedException)
+        {
+            return CaseReport.Failed(fixture, $"Case execution failed: {TrimDiagnostic(exception.Message)}");
+        }
     }
 
     private static async Task<ProcessResult> RunAsync(BoundedProcessRunner runner, string fileName, IReadOnlyList<string> arguments, string workingDirectory, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        string commandLine = string.Join(
-            " ",
-            new[] { fileName }.Concat(arguments).Select(static value => value.Contains(' ', StringComparison.Ordinal) ? $"\"{value}\"" : value));
+        string commandLine = FormatCommandLine(fileName, arguments);
         try
         {
             return ProcessResult.From(
@@ -242,10 +379,9 @@ internal static class Program
         }
     }
 
-    private static async Task<string?> ReadRustSharpVersionAsync(BoundedProcessRunner runner, string root, TimeSpan timeout, CancellationToken cancellationToken)
+    private static async Task<ProcessResult> ReadRustSharpVersionAsync(BoundedProcessRunner runner, string root, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        ProcessResult result = await RunAsync(runner, "dotnet", ["run", "--project", Path.Combine(root, "src", "RustSharp.Cli"), "-c", "Release", "--", "--version"], root, timeout, cancellationToken).ConfigureAwait(false);
-        return FindRustSharpVersion(result.StandardOutput);
+        return await RunAsync(runner, "dotnet", ["run", "--project", Path.Combine(root, "src", "RustSharp.Cli"), "-c", "Release", "--", "--version"], root, timeout, cancellationToken).ConfigureAwait(false);
     }
 
     private static Options ParseOptions(string[] args)
@@ -281,15 +417,53 @@ internal static class Program
     }
 
     private static bool IsRustc198(string? version) => version?.StartsWith("rustc 1.98.", StringComparison.Ordinal) == true;
-    private static string? FirstLine(string text) => text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
 
-    private static string? FindRustSharpVersion(string text) =>
+    private static string? FindRustcVersion(ProcessResult result) =>
+        FindLineStartingWith(result.StandardOutput, "rustc ") ?? FindLineStartingWith(result.StandardError, "rustc ");
+
+    private static string? FindRustSharpVersion(ProcessResult result) =>
+        FindLineStartingWith(result.StandardOutput, "rsc ") ?? FindLineStartingWith(result.StandardError, "rsc ");
+
+    private static string? FindLineStartingWith(string text, string prefix) =>
         text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Select(static line => line.Trim())
-            .FirstOrDefault(static line => line.StartsWith("rsc ", StringComparison.Ordinal));
+            .FirstOrDefault(line => line.StartsWith(prefix, StringComparison.Ordinal));
+
+    private static string DescribeUnavailableProcess(string description, ProcessResult result, TimeSpan timeout)
+    {
+        string exitCode = result.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "n/a";
+        string? detail = FirstDiagnosticLine(result.StandardError)
+            ?? result.OutputDiagnostic
+            ?? FirstDiagnosticLine(result.StandardOutput);
+        string suffix = string.IsNullOrWhiteSpace(detail)
+            ? string.Empty
+            : $" detail='{TrimDiagnostic(detail!)}'.";
+        return $"{description} (termination={result.Termination}, exitCode={exitCode}, timeoutSeconds={timeout.TotalSeconds:0.#}, elapsedMilliseconds={result.Elapsed.TotalMilliseconds:0.#}).{suffix}";
+    }
+
+    private static string? FirstDiagnosticLine(string text) =>
+        text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(static line => line.Trim())
+            .FirstOrDefault(static line => line.Length > 0);
+
+    private static string FormatCommandLine(string fileName, IReadOnlyList<string> arguments) =>
+        string.Join(" ", new[] { fileName }.Concat(arguments).Select(QuoteCommandLineArgument));
+
+    private static string QuoteCommandLineArgument(string value) =>
+        value.Length != 0 && !value.Any(char.IsWhiteSpace) && value.IndexOf('"') < 0
+            ? value
+            : $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 
     private static string NormalizeOutput(string? text) =>
         (text ?? string.Empty).Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+
+    private static string TrimDiagnostic(string value)
+    {
+        const int maximumDiagnosticCharacters = 512;
+        return value.Length <= maximumDiagnosticCharacters
+            ? value
+            : value[..maximumDiagnosticCharacters] + "...";
+    }
     private static string FindRepositoryRoot()
     {
         string current = Path.GetFullPath(AppContext.BaseDirectory);
@@ -368,19 +542,72 @@ internal static class Program
 
     private sealed record Options(string Profile, string? ReportPath, TimeSpan Timeout, TimeSpan Deadline);
     private sealed record Fixture(string Id, string FileName, bool ExpectedSuccess, string? ExpectedOutput);
-    private sealed record ConformanceReport(int SchemaVersion, DateTimeOffset GeneratedAtUtc, string Profile, OracleReport Oracle, ToolReport RustSharp, LimitsReport Limits, SummaryReport Summary, IReadOnlyList<CaseReport> Cases, string? RunDirectoryCleanupDiagnostic);
-    private sealed record OracleReport(string Requested, string Executable, string? Version, bool Available, string? BlockedReason, ProcessEvidence VersionProbe);
-    private sealed record ToolReport(string Name, string Invocation, string? Version);
+    private sealed record ConformanceReport(int SchemaVersion, DateTimeOffset GeneratedAtUtc, string Profile, OracleReport Oracle, ToolReport RustSharp, LimitsReport Limits, SummaryReport Summary, IReadOnlyList<CaseReport> Cases, string? RunDirectoryCleanupDiagnostic)
+    {
+        // These additive fields make a report useful when it is collected from a CI runner
+        // without changing the original positional schema consumed by existing tooling.
+        public HostReport Host { get; init; } = HostReport.Current;
+        public ExecutionReport Execution { get; init; } = ExecutionReport.Empty;
+        public string? BlockedReason { get; init; }
+    }
+    private sealed record OracleReport(string Requested, string Executable, string Toolchain, string? Version, bool Available, string? BlockedReason, ProcessEvidence VersionProbe);
+    private sealed record ToolReport(string Name, string Invocation, string? Version)
+    {
+        public bool Available { get; init; }
+        public string? Diagnostic { get; init; }
+        public ProcessEvidence VersionProbe { get; init; } = ProcessEvidence.Empty;
+    }
     private sealed record LimitsReport(double TimeoutSeconds, double DeadlineSeconds, int MaximumCases, int MaximumOutputBytes);
     private sealed record SummaryReport(string Status, int Denominator, int Executed, int Passed, int Failed, int Skipped);
     private sealed record CaseReport(string Id, string Source, string Kind, string Status, string? Difference, ProcessEvidence RustcCompile, ProcessEvidence? RustcRun, ProcessEvidence RustSharpCheck, ProcessEvidence? RustSharpRun)
     {
-        public static CaseReport Skipped(Fixture fixture, string reason) => new(fixture.Id, fixture.FileName, fixture.ExpectedSuccess ? "run-pass" : "compile-fail", "skipped", reason, ProcessEvidence.Empty, null, ProcessEvidence.Empty, null);
+        public string? ExpectedOutput { get; init; }
+        public ProcessEvidence? RustSharpCompile { get; init; }
+
+        public static CaseReport Skipped(Fixture fixture, string reason) => new(fixture.Id, fixture.FileName, fixture.ExpectedSuccess ? "run-pass" : "compile-fail", "skipped", reason, ProcessEvidence.Empty, null, ProcessEvidence.Empty, null)
+        {
+            ExpectedOutput = fixture.ExpectedOutput,
+        };
+
+        public static CaseReport Failed(Fixture fixture, string reason) => new(fixture.Id, fixture.FileName, fixture.ExpectedSuccess ? "run-pass" : "compile-fail", "failed", reason, ProcessEvidence.Empty, null, ProcessEvidence.Empty, null)
+        {
+            ExpectedOutput = fixture.ExpectedOutput,
+        };
     }
     private sealed record ProcessEvidence(string CommandLine, int ProcessId, int ParentProcessId, DateTimeOffset? StartedAtUtc, int? ExitCode, string Termination, double ElapsedMilliseconds, string StandardOutput, string StandardError, bool OutputTruncated, bool OutputReadTimedOut, bool OutputDrainTimedOut, bool OutputReadLimitReached, string? OutputDiagnostic, bool CleanupAttempted, bool CleanupIncomplete, string? CleanupDiagnostic)
     {
         public static ProcessEvidence Empty => new("", 0, 0, null, null, "skipped", 0, "", "", false, false, false, false, null, false, false, null);
     }
+
+    private sealed record HostReport(
+        string OperatingSystem,
+        string OsArchitecture,
+        string ProcessArchitecture,
+        string Framework,
+        string RuntimeIdentifier,
+        string RuntimeVersion,
+        bool ContinuousIntegration)
+    {
+        public static HostReport Current => new(
+            RuntimeInformation.OSDescription.Trim(),
+            RuntimeInformation.OSArchitecture.ToString(),
+            RuntimeInformation.ProcessArchitecture.ToString(),
+            RuntimeInformation.FrameworkDescription.Trim(),
+            RuntimeInformation.RuntimeIdentifier,
+            Environment.Version.ToString(),
+            string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private sealed record ExecutionReport(
+        DateTimeOffset StartedAtUtc,
+        DateTimeOffset FinishedAtUtc,
+        double ElapsedMilliseconds,
+        bool DeadlineExpired,
+        string? DeadlineDiagnostic)
+    {
+        public static ExecutionReport Empty => new(DateTimeOffset.MinValue, DateTimeOffset.MinValue, 0, false, null);
+    }
+
     private sealed record ProcessResult(string CommandLine, int ProcessId, int? ExitCode, string Termination, TimeSpan Elapsed, string StandardOutput, string StandardError, bool OutputTruncated, bool OutputReadTimedOut, bool OutputDrainTimedOut, bool CleanupIncomplete, int ParentProcessId, DateTimeOffset? StartedAtUtc, bool OutputReadLimitReached, string? OutputDiagnostic, bool CleanupAttempted, string? CleanupDiagnostic)
     {
         public bool Succeeded => Termination == "exited" && ExitCode == 0;

@@ -72,6 +72,10 @@ when the requested `rustc 1.98.x` oracle is unavailable:
 dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98
 ```
 
+The harness invokes the pinned `rustc +1.98.0` toolchain for both version
+probing and fixture compilation, so the active default toolchain does not
+silently change the oracle.
+
 The Linux Native AOT probe is intended for a native Linux x64 runner and keeps
 the output directory exclusive to one invocation:
 
@@ -88,6 +92,19 @@ vertical prototype command is `compile`.
 The Native AOT prototype expects its output directory to be exclusive to one
 publish invocation. Concurrent publishes, filesystem-alias collision handling,
 and recovery of externally locked output files remain later hardening work.
+
+The P0 semantic/runtime and I/O probes can be run independently:
+
+```text
+dotnet run --project tools/RustSharp.Smoke -c Release -- --profile p0-io
+```
+
+The smoke report covers a file round-trip, loopback TCP, async completion and
+cancellation, and a parameterized SQLite transaction when the bounded
+`sqlite3` executable is available. `src/RustSharp.Semantics` and
+`src/RustSharp.Runtime` are feasibility boundaries for bounded generic/trait
+resolution and managed-hybrid ownership/interop; their executable cases run as
+part of the main harness.
 
 See `docs/compatibility.md` for the compatibility contract and `docs/adr` for
 the architectural decisions that constrain the implementation.

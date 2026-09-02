@@ -3,6 +3,8 @@
     <Project Path="src/RustSharp.Syntax/RustSharp.Syntax.csproj" />
     <Project Path="src/RustSharp.CodeGen.IL/RustSharp.CodeGen.IL.csproj" />
     <Project Path="src/RustSharp.Compiler/RustSharp.Compiler.csproj" />
+    <Project Path="src/RustSharp.Runtime/RustSharp.Runtime.csproj" />
+    <Project Path="src/RustSharp.Semantics/RustSharp.Semantics.csproj" />
     <Project Path="src/RustSharp.Cli/RustSharp.Cli.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -10,5 +12,6 @@
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/RustSharp.Conformance/RustSharp.Conformance.csproj" />
+    <Project Path="tools/RustSharp.Smoke/RustSharp.Smoke.csproj" />
   </Folder>
 </Solution>

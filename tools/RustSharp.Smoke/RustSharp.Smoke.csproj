@@ -1,14 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <IsTestProject>true</IsTestProject>
+    <Description>Bounded P0 managed-hybrid I/O smoke probes.</Description>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/RustSharp.Syntax/RustSharp.Syntax.csproj" />
-    <ProjectReference Include="../../src/RustSharp.CodeGen.IL/RustSharp.CodeGen.IL.csproj" />
     <ProjectReference Include="../../src/RustSharp.Compiler/RustSharp.Compiler.csproj" />
     <ProjectReference Include="../../src/RustSharp.Runtime/RustSharp.Runtime.csproj" />
-    <ProjectReference Include="../../src/RustSharp.Semantics/RustSharp.Semantics.csproj" />
   </ItemGroup>
 </Project>

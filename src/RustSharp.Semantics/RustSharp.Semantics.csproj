@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Bounded RustSharp generic and trait-resolution feasibility model.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>
