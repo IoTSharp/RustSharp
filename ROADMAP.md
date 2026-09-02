@@ -58,7 +58,7 @@ that later language or library profiles are complete.
 | BASE-03 | [x] Complete | `docs/compatibility.md` defines the initial `vertical-slice-v1` profile and explicit non-compatibility boundaries. |
 | BASE-04 | [x] Complete | `BoundedProcessRunner` implements bounded execution, process metadata, output limits, cancellation, and owned-tree cleanup; `eng/Invoke-BoundedProcess.ps1` is a bounded root-process smoke helper. The executable test harness records the timeout, cancellation, output-limit, and child-process cases. |
 | BASE-05 | [x] Complete | The parser recognizes the narrow `fn main()`/`println!(string)` profile and emits stable source diagnostics; the vertical-slice syntax and escape/comment regression cases pass in the executable test harness. |
-| BASE-06 | [ ] In progress | Direct PE/Portable PDB emission, metadata inspection, CoreCLR execution, and Windows x64 Native AOT execution are recorded below. A standalone ILVerify run and the broader deterministic-output gate remain open under P0-07. |
+| BASE-06 | [x] Complete | Direct PE/Portable PDB emission, metadata inspection, CoreCLR execution, Windows x64 Native AOT execution, deterministic on-disk output checks, and a standalone ILVerify run are recorded below. |
 
 ## Architecture and dependency rules
 
@@ -119,15 +119,15 @@ about the current harness.
 | P0-01 | [x] Complete | Create the .NET 10 solution and project boundaries. | None | `dotnet sln RustSharp.slnx list` | Syntax, IL codegen, compiler, CLI, and test projects are listed. |
 | P0-02 | [x] Complete | Record the language, compiler/output, and first-slice decisions. | None | `Get-ChildItem docs/adr/*.md` | ADR 0001-0003 exist and each says `Status: Accepted`. |
 | P0-03 | [x] Complete | Define the first versioned compatibility profile. | P0-02 | `Get-Content docs/compatibility.md` | `vertical-slice-v1`, Rust 1.98.0, Edition 2024, and non-promises are explicit. |
-| P0-04 | [x] Complete | Finish and test bounded process execution and owned-resource cleanup. | P0-01 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 18/18 executable tests pass, including exit, timeout, cancellation, output limits, concurrent output draining, and owned-child cleanup; process records contain PID, start, command, parent, and elapsed time. |
+| P0-04 | [x] Complete | Finish and test bounded process execution and owned-resource cleanup. | P0-01 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 27/27 executable tests pass, including exit, timeout, cancellation, output limits, concurrent output draining, and owned-child cleanup; process records contain PID, start, command, parent, and elapsed time. |
 | P0-05 | [x] Complete | Stabilize the narrow lexer/parser and diagnostics for `fn main()` plus literal `println!`. | P0-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | Valid samples parse; malformed delimiters, nested comments, escapes, line endings, and trailing tokens fail with stable code and span. |
 | P0-06 | [x] Complete | Emit an executable PE and Portable PDB directly from C#. | P0-05 | `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs --output artifacts/p0/hello.dll` | `hello.dll`, runtime config, and non-empty PDB are produced without generated C# program logic; the emitter tests also prove byte-identical repeat emission for the same input. |
-| P0-07 | [ ] In progress | Verify metadata, IL stack correctness, and deterministic output. | P0-06 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | PE/metadata/PDB readers and `ilspycmd` resolve the expected entry point and sequence points, and deterministic emission tests pass. A standalone `ILVerify` run is still required to close this item. |
+| P0-07 | [x] Complete | Verify metadata, IL stack correctness, and deterministic output. | P0-06 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` plus `pwsh -NoProfile -File eng/Invoke-ILVerify.ps1` | PE/metadata/PDB readers, `ilspycmd`, and the on-disk deterministic-output test resolve the expected entry point, sequence points, IL stack/tokens, and byte-identical PE/PDB/runtimeconfig files. The pinned standalone `dotnet-ilverify` 10.0.11 run exits 0 with explicit `System.Private.CoreLib`/runtime references and archived JSON evidence. |
 | P0-08 | [x] Complete | Run the generated assembly on CoreCLR. | P0-06 | `dotnet artifacts/p0/hello.dll` | Exit code is 0 and stdout is exactly `Hello from Rust#` plus the platform newline. This runtime smoke gate is independent of the optional standalone IL verifier in P0-07. |
 | P0-09 | [x] Complete | Complete the bounded Native AOT publish adapter and run the native executable on Windows x64. | P0-04, P0-08 | `dotnet run --project src/RustSharp.Cli -- publish samples/hello.rs --runtime win-x64 --output artifacts/p0/aot` | Publish exits 0 with no observed AOT/trimming warnings (warnings are errors), the native executable prints the expected line, and the publisher removes its owned host directory before reporting success. |
-| P0-10 | [ ] Planned | Repeat the executable slice on a Linux x64 native runner. | P0-09 | `rsc publish samples/hello.rs --runtime linux-x64 --output artifacts/p0/linux-x64` | The Linux native executable runs with the same exit code and text as CoreCLR. |
-| P0-11 | [ ] Planned | Build the rustc 1.98 differential/conformance harness. | P0-03, P0-04 | `dotnet run --project tools/RustSharp.Conformance -- --profile vertical-slice-v1 --oracle rustc-1.98` | A machine-readable report records pass/fail/run output, diagnostics, tool versions, timeouts, and profile denominator. |
-| P0-12 | [ ] Planned | Prove typed IR feasibility for locals, calls, branches, and returns. | P0-07 | `dotnet test RustSharp.slnx -c Release --filter ClrLir` | Stack/type validation rejects invalid IR before PE emission and emits valid branch/control-flow samples. |
+| P0-10 | [ ] In progress | Repeat the executable slice on a Linux x64 native runner. | P0-09 | `bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300` | The bounded probe and CI workflow are present; a native Linux x64 runner must still produce an executable with the same exit code and text as CoreCLR. |
+| P0-11 | [ ] In progress | Build the rustc 1.98 differential/conformance harness. | P0-03, P0-04 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98` | The harness emits a machine-readable report with pass/fail/run output, diagnostics, tool versions, timeouts, and profile denominator. The local gate is blocked until rustc 1.98.x is available. |
+| P0-12 | [x] Complete | Prove typed IR feasibility for locals, calls, branches, and returns. | P0-07 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The eight CLR LIR cases pass as part of the 27/27 executable harness; stack/type validation rejects invalid IR before PE emission and a valid branch/control-flow PE runs with the expected result. |
 | P0-13 | [ ] Planned | Prove move, shared/mutable borrow, non-lexical lifetime, and deterministic `Drop` on a small MIR. | P0-12 | `dotnet test RustSharp.slnx -c Release --filter OwnershipSpike` | Positive cases run; use-after-move, overlapping mutable borrows, and escaping references are compile failures; Drop order matches the profile oracle. |
 | P0-14 | [ ] Planned | Prove generics plus a bounded trait-resolution subset. | P0-12 | `dotnet test RustSharp.slnx -c Release --filter TraitSpike` | Generic `Option<T>`-style code is monomorphized; declared positive/ambiguous/missing-impl cases match rustc outcomes. |
 | P0-15 | [ ] Planned | Prove the managed-hybrid runtime mapping and explicit .NET interop boundary. | P0-13 | `dotnet test RustSharp.slnx -c Release --filter ManagedHybrid` | Borrowed managed storage cannot outlive its owner; pinned/interior references obey the profile; a small AOT-safe .NET API call works without dynamic code. |
@@ -136,22 +136,25 @@ about the current harness.
 
 ### Recorded vertical-slice evidence
 
-The following evidence was collected on 2026-09-01 with .NET SDK 10.0.400 on
+The following evidence was collected on 2026-09-02 with .NET SDK 10.0.400 on
 Windows x64. These are local verification observations; generated binaries and
 logs live under the ignored `artifacts/` directory and can be regenerated with
 the commands below.
 
 - Release solution build completed with zero warnings and zero errors.
-- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-build --no-restore` completed 18/18 tests; the same command was repeated successfully.
+- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` completed 27/27 tests, including the on-disk deterministic-output and IL sanity gates plus the eight typed CLR LIR cases; the same command was repeated successfully.
 - `dotnet run --project src/RustSharp.Cli -- check samples/hello.rs` and `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs` completed successfully. The `rsc` tool name is available after packing/installing the CLI tool; it is not assumed to be on PATH in a source checkout.
 - The generated DLL ran on CoreCLR and printed `Hello from Rust#`.
 - Windows x64 Native AOT publish completed with no observed AOT/trimming warnings (publish uses `-warnaserror`); the produced executable ran and printed `Hello from Rust#`.
 - `PEReader`, `MetadataReader`, and `ilspycmd --ilcode` inspection confirmed the managed entry point, generated IL, Portable PDB document, sequence points, and source checksum behavior (including UTF-8 BOM input).
+- The local `.config/dotnet-tools.json` manifest restored the pinned `dotnet-ilverify` 10.0.11 tool. It verified `artifacts/p0/hello.dll` with `System.Private.CoreLib` selected as the system module and the .NET 10.0.11 runtime reference directory. The process exited 0 and reported `All Classes and Methods ... Verified`; `eng/Invoke-ILVerify.ps1` archived the command, PID/start time, references, bounded output, SHA-256, environment, and cleanup state in `artifacts/p0/hello.ilverify.json`.
+- The Linux x64 probe passed shell/static checks and records a bounded `skipped` result on this Windows host because WSL has SDK 10.0.111 rather than the pinned 10.0.400. No Linux native execution pass is claimed; `.github/workflows/linux-native-aot.yml` runs the probe on an `ubuntu-24.04` native runner and uploads its evidence.
+- The conformance harness produced a blocked report at `artifacts/conformance/vertical-slice-v1.json`: the requested `rustc 1.98.x` oracle is unavailable locally (`rustc 1.97.1`), so denominator 4 has 0 executed and 4 skipped cases. The report still records the version probe, limits, process metadata, and cleanup result.
 
-The standalone `ilverify` tool is not installed in this environment, so P0-07
-remains in progress until that independent verifier is run and its output is
-archived. The current test project intentionally remains an executable harness;
-it does not claim `dotnet test` discovery.
+The current test project intentionally remains an executable harness; it does
+not claim `dotnet test` discovery. P0-10 and P0-11 remain in progress until
+their native/1.98 evidence is available; P0-12 is complete based on the local
+typed-LIR and executable-PE checks above.
 
 ### First 90-day batch sequence
 
@@ -366,6 +369,7 @@ gate it depends on.
 6. When scope changes, update the compatibility profile and ADR first, then the
    implementation and this roadmap.
 
-The immediate next item is completion of P0-07, followed by the Linux x64 and
-conformance gates. This order keeps independent IL verification and reproducible
-evidence ahead of broader language and library claims.
+The next open gates are P0-10 (native Linux x64) and P0-11 (rustc 1.98
+differential conformance). P0-12 is complete, so later ownership and generic
+spikes remain gated on those outstanding P0 evidence items rather than being
+declared compatible from the Windows-only slice.

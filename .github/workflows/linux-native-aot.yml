@@ -1,0 +1,34 @@
+name: Linux x64 Native AOT
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x64-native-aot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up .NET 10.0.400
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.400
+      - name: Restore
+        run: dotnet restore RustSharp.slnx
+      - name: Build
+        run: dotnet build RustSharp.slnx -c Release --no-restore
+      - name: Run Linux x64 Native AOT probe
+        run: bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300
+      - name: Upload Linux evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64-native-aot-evidence
+          path: artifacts/p0/linux-x64
+          if-no-files-found: warn

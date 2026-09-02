@@ -12,7 +12,7 @@ internal static class Program
         }
 
         IReadOnlyList<TestCase> tests =
-            [.. SyntaxTests.All, .. EmissionTests.All, .. NativeAotTests.All, .. BoundedProcessTests.All];
+            [.. SyntaxTests.All, .. EmissionTests.All, .. NativeAotTests.All, .. BoundedProcessTests.All, .. ClrLirTests.All];
         if (tests.Count > MaximumTestCount)
         {
             Console.Error.WriteLine($"Test count {tests.Count} exceeds the safety limit {MaximumTestCount}.");

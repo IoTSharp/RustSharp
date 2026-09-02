@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>RustSharp.Conformance</AssemblyName>
+    <RootNamespace>RustSharp.Conformance</RootNamespace>
+    <IsAotCompatible>false</IsAotCompatible>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/RustSharp.Compiler/RustSharp.Compiler.csproj" />
+  </ItemGroup>
+</Project>

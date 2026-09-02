@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -36,6 +37,7 @@ internal static class EmissionTests
         new("emitted portable PDB maps sequence points to source spans", EmitsPortablePdbSequencePointsAsync),
         new("emitted portable PDB hashes the original source bytes", EmitsPortablePdbSourceHashAsync),
         new("compiler writes PE, PDB, and runtime config", WritesCompilationArtifactsAsync),
+        new("disk compilation emits deterministic artifacts and valid IL", DiskCompilationEmitsDeterministicallyAsync),
         new("concurrent compiler writes produce readable artifacts", ConcurrentWritesProduceReadableArtifactsAsync),
     ];
 
@@ -350,6 +352,88 @@ internal static class EmissionTests
         return Task.CompletedTask;
     }
 
+    private static async Task DiskCompilationEmitsDeterministicallyAsync()
+    {
+        string repositoryRoot = GetRepositoryRoot();
+        string artifactsTestsRoot = Path.GetFullPath(
+            Path.Combine(repositoryRoot, "artifacts", "tests"));
+        string taskDirectoryName = $"emission-deterministic-{Environment.ProcessId}-{Guid.NewGuid():N}";
+        string taskDirectory = Path.GetFullPath(
+            Path.Combine(artifactsTestsRoot, taskDirectoryName));
+        bool taskDirectoryCreated = false;
+
+        ValidateTaskDirectory(artifactsTestsRoot, taskDirectory, taskDirectoryName);
+        AssertEx.False(
+            Directory.Exists(taskDirectory),
+            $"The deterministic test-owned output directory already exists: '{taskDirectory}'.");
+
+        try
+        {
+            Directory.CreateDirectory(taskDirectory);
+            taskDirectoryCreated = true;
+
+            string sourcePath = Path.Combine(taskDirectory, "main.rs");
+            string assemblyPath = Path.Combine(taskDirectory, "Emission.DiskDeterministic.dll");
+            File.WriteAllText(sourcePath, ValidSource, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+            CompilationResult firstResult = CompilerDriver.CompileFile(
+                sourcePath,
+                assemblyPath,
+                "Emission.DiskDeterministic");
+            AssertEx.True(firstResult.Success, "The first disk compilation must succeed.");
+            CompilationOutput firstOutput = AssertEx.NotNull(
+                firstResult.Output,
+                "The first disk compilation must describe its artifacts.");
+
+            byte[] firstPe = File.ReadAllBytes(firstOutput.AssemblyPath);
+            byte[] firstPdb = File.ReadAllBytes(
+                AssertEx.NotNull(firstOutput.PdbPath, "The first disk compilation must produce a PDB path."));
+            byte[] firstRuntimeConfig = File.ReadAllBytes(firstOutput.RuntimeConfigPath);
+
+            CompilationResult secondResult = CompilerDriver.CompileFile(
+                sourcePath,
+                assemblyPath,
+                "Emission.DiskDeterministic");
+            AssertEx.True(secondResult.Success, "The second disk compilation must succeed.");
+            CompilationOutput secondOutput = AssertEx.NotNull(
+                secondResult.Output,
+                "The second disk compilation must describe its artifacts.");
+
+            byte[] secondPe = File.ReadAllBytes(secondOutput.AssemblyPath);
+            byte[] secondPdb = File.ReadAllBytes(
+                AssertEx.NotNull(secondOutput.PdbPath, "The second disk compilation must produce a PDB path."));
+            byte[] secondRuntimeConfig = File.ReadAllBytes(secondOutput.RuntimeConfigPath);
+
+            AssertEx.True(
+                firstPe.AsSpan().SequenceEqual(secondPe),
+                "Repeated disk compilation must produce byte-identical PE images.");
+            AssertEx.True(
+                firstPdb.AsSpan().SequenceEqual(secondPdb),
+                "Repeated disk compilation must produce byte-identical PDB images.");
+            AssertEx.True(
+                firstRuntimeConfig.AsSpan().SequenceEqual(secondRuntimeConfig),
+                "Repeated disk compilation must produce byte-identical runtime config files.");
+
+            AssertValidPeAndIl(secondPe, "Emission.DiskDeterministic");
+            using JsonDocument runtimeConfig = JsonDocument.Parse(secondRuntimeConfig);
+            JsonElement runtimeOptions = runtimeConfig.RootElement.GetProperty("runtimeOptions");
+            AssertEx.Equal(
+                "net10.0",
+                AssertEx.NotNull(
+                    runtimeOptions.GetProperty("tfm").GetString(),
+                    "The runtime config must declare a target framework."));
+            AssertNoResidualTransactionDirectories(taskDirectory);
+        }
+        finally
+        {
+            if (taskDirectoryCreated)
+            {
+                ValidateTaskDirectory(artifactsTestsRoot, taskDirectory, taskDirectoryName);
+                await DeleteConcurrentTestDirectoryAsync(taskDirectory).ConfigureAwait(false);
+            }
+        }
+    }
+
     private static async Task ConcurrentWritesProduceReadableArtifactsAsync()
     {
         string repositoryRoot = GetRepositoryRoot();
@@ -460,6 +544,65 @@ internal static class EmissionTests
             JsonValueKind.Object,
             runtimeConfig.RootElement.ValueKind,
             "The concurrent runtime config must be valid JSON object data.");
+    }
+
+    private static void AssertValidPeAndIl(byte[] peImage, string expectedAssemblyName)
+    {
+        using var peStream = new MemoryStream(peImage, writable: false);
+        using var peReader = new PEReader(peStream);
+        AssertEx.True(peReader.HasMetadata, "The emitted PE must contain CLR metadata.");
+
+        MetadataReader metadata = peReader.GetMetadataReader();
+        AssertEx.Equal(
+            expectedAssemblyName,
+            metadata.GetString(metadata.GetAssemblyDefinition().Name));
+
+        CorHeader corHeader = AssertEx.NotNull(
+            peReader.PEHeaders.CorHeader,
+            "The emitted PE must contain a CLR header.");
+        int entryPointToken = corHeader.EntryPointTokenOrRelativeVirtualAddress;
+        AssertEx.Equal(0x06000000, entryPointToken & unchecked((int)0xff000000));
+
+        MethodDefinitionHandle entryPoint =
+            MetadataTokens.MethodDefinitionHandle(entryPointToken & 0x00ffffff);
+        MethodDefinition method = metadata.GetMethodDefinition(entryPoint);
+        AssertEx.True(
+            method.RelativeVirtualAddress > 0,
+            "The emitted entry point must have a method body.");
+
+        MethodBodyBlock body = peReader.GetMethodBody(method.RelativeVirtualAddress);
+        AssertEx.True(
+            body.MaxStack >= 1,
+            "The println body must declare at least one evaluation-stack slot.");
+        AssertEx.True(body.LocalSignature.IsNil, "The println body must not declare locals.");
+        AssertEx.Equal(0, body.ExceptionRegions.Length, "The println body must not declare exception regions.");
+
+        IEnumerable<byte>? ilBytes = body.GetILBytes();
+        AssertEx.True(ilBytes is not null, "The emitted entry point must contain IL bytes.");
+        byte[] il = ilBytes!.ToArray();
+        AssertEx.Equal(11, il.Length, "The single println body must contain ldstr, call, and ret.");
+        AssertEx.Equal((byte)ILOpCode.Ldstr, il[0], "The entry point must load its string literal.");
+        AssertEx.Equal((byte)ILOpCode.Call, il[5], "The entry point must call Console.WriteLine.");
+        AssertEx.Equal((byte)ILOpCode.Ret, il[10], "The entry point must return after writing the line.");
+
+        int userStringToken = BinaryPrimitives.ReadInt32LittleEndian(il.AsSpan(1, 4));
+        AssertEx.Equal(
+            0x70000000,
+            userStringToken & unchecked((int)0xff000000),
+            "ldstr must reference a user-string metadata token.");
+        AssertEx.Equal(
+            "Hello from emitted IL",
+            metadata.GetUserString(
+                MetadataTokens.UserStringHandle(userStringToken & 0x00ffffff)));
+
+        int memberReferenceToken = BinaryPrimitives.ReadInt32LittleEndian(il.AsSpan(6, 4));
+        AssertEx.Equal(
+            0x0a000000,
+            memberReferenceToken & unchecked((int)0xff000000),
+            "call must reference a member-reference metadata token.");
+        MemberReference memberReference = metadata.GetMemberReference(
+            MetadataTokens.MemberReferenceHandle(memberReferenceToken & 0x00ffffff));
+        AssertEx.Equal("WriteLine", metadata.GetString(memberReference.Name));
     }
 
     private static void AssertNoResidualTransactionDirectories(string taskDirectory)
