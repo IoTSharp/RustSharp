@@ -1,5 +1,7 @@
 # RustSharp
 
+English | [简体中文](README_zh.md)
+
 RustSharp is an experimental Rust 1.98 / Edition 2024 language implementation
 written in C# for .NET 10. The `rsc` compiler reads `.rs` source files, performs
 RustSharp language analysis, and emits ECMA-335 assemblies intended to run on
@@ -23,18 +25,19 @@ running on CoreCLR and as a .NET 10 Native AOT executable. Direct PE,
 Portable PDB, deterministic-output, standalone IL verification, and typed CLR
 LIR evidence is tracked in `ROADMAP.md`. The pinned rustc 1.98 differential
 harness has local evidence for all four fixtures (two run-pass and two
-compile-fail), so P0-11 is complete for the declared `vertical-slice-v1`
-denominator. Three P0 gates remain open: P0-10 (native Linux x64 Native AOT),
-P0-16 (the SQLite smoke case on a runner with bounded `sqlite3`), and P0-17
+compile-fail), so P0-11 is ✅ Complete for the declared `vertical-slice-v1`
+denominator. Three P0 gates remain 🚧 In progress: P0-10 (native Linux x64
+Native AOT), P0-16 (the SQLite smoke case on a runner with bounded `sqlite3`),
+and P0-17
 (recorded Windows/Linux x64 CI archive evidence). The Linux probe and CI
 workflows are present, but no successful native Linux or two-platform CI run
 is recorded yet; the local smoke report currently has 3 passed and 1 skipped,
-with summary status `blocked` because `sqlite3` is unavailable for the SQLite
-case.
+with summary status ⛔ Blocked (`blocked`) because `sqlite3` is unavailable for
+the SQLite case.
 Unsupported Rust syntax is rejected with a source diagnostic rather than
 silently assigned C# semantics.
 
-Early P1 front-end work is also in progress. The lossless lexer now has
+Early P1 front-end work is also 🚧 In progress. The lossless lexer now has
 bounded coverage for numeric, byte, and C literal forms, while the early
 `SafeCoreSyntax` model/parser handles representative modules, items,
 statements, expressions, patterns, types, generics, and attributes with stable
@@ -48,7 +51,7 @@ parameters, Unicode identifier normalization, and the import nesting limit.
 The local executable harness passes 73/73 tests. A bounded
 `SafeCoreHirLowering` prototype now converts successful
 syntax and name-resolution results into a deterministic, name-bound flat HIR
-arena. P1-01, P1-02, and P1-03 remain in progress because their dependencies,
+arena. P1-01, P1-02, and P1-03 remain 🚧 In progress because their dependencies,
 full-profile denominators, multi-file loading, and production compiler
 integration are still open.
 
@@ -133,7 +136,7 @@ bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 3
 The probe exits 77 with structured `skipped` evidence when the host is not a
 native Linux x64 environment; a WSL result is not treated as native CI proof.
 
-`build` and Cargo workspace commands are planned for later milestones; the
+`build` and Cargo workspace commands are ⏳ Planned for later milestones; the
 vertical prototype command is `compile`.
 
 The Native AOT prototype expects its output directory to be exclusive to one
