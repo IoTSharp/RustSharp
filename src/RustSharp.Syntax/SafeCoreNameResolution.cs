@@ -1,4 +1,6 @@
+using System.Buffers;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace RustSharp.Syntax;
 
@@ -1937,25 +1939,44 @@ public static class SafeCoreNameResolution
         private bool IsValidIdentifier(string value, TextSpan span)
         {
             int start = value.StartsWith("r#", StringComparison.Ordinal) ? 2 : 0;
-            if (start == value.Length || !RustIdentifierFacts.IsIdentifierStart(value[start]))
+            if (start == value.Length)
             {
                 return false;
             }
 
-            for (int index = start + 1; index < value.Length; index++)
+            ReadOnlySpan<char> identifier = value.AsSpan(start);
+            OperationStatus firstStatus = Rune.DecodeFromUtf16(
+                identifier,
+                out Rune first,
+                out int firstWidth);
+            if (firstStatus != OperationStatus.Done || !RustIdentifierFacts.IsIdentifierStart(first))
+            {
+                return false;
+            }
+
+            int index = firstWidth;
+            for (int scalarCount = 1;
+                 index < identifier.Length && scalarCount < identifier.Length;
+                 scalarCount++)
             {
                 if (!Step(span))
                 {
                     return false;
                 }
 
-                if (!RustIdentifierFacts.IsIdentifierContinue(value[index]))
+                OperationStatus status = Rune.DecodeFromUtf16(
+                    identifier[index..],
+                    out Rune current,
+                    out int width);
+                if (status != OperationStatus.Done || !RustIdentifierFacts.IsIdentifierContinue(current))
                 {
                     return false;
                 }
+
+                index += width;
             }
 
-            return true;
+            return index == identifier.Length;
         }
 
         private bool Enter(int depth, TextSpan span)

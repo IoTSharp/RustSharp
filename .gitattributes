@@ -1,1 +1,2 @@
 *.rs text eol=lf
+tools/RustSharp.Conformance/fixtures/*-manifest.json text eol=lf

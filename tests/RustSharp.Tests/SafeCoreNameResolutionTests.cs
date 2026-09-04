@@ -13,6 +13,7 @@ internal static class SafeCoreNameResolutionTests
         new("name resolution reports import cycles", ReportsImportCyclesAsync),
         new("name resolution obeys local declaration order and shadowing", ResolvesLocalScopesAsync),
         new("name resolution canonicalizes Unicode identifiers", CanonicalizesUnicodeIdentifiersAsync),
+        new("name resolution resolves supplementary-plane Unicode identifiers", ResolvesSupplementaryPlaneIdentifiersAsync),
         new("name resolution rejects qualified lexical members", RejectsQualifiedLexicalMembersAsync),
         new("name resolution obeys explicit work limits", ObeysLimitsAsync),
     ];
@@ -204,7 +205,7 @@ internal static class SafeCoreNameResolutionTests
             AssertEx.NotNull(result.FindResolution("missing"), "Missing path should be recorded.").Status);
 
         const string forbiddenRawSource =
-            "fn invalid_paths() { r#crate; r#self; r#super; r#Self; } " +
+            "fn invalid_paths() { r#crate; r#self; r#super; r#Self; r#_; } " +
             "fn r#crate() {}";
         SafeCoreSyntaxResult forbiddenRawSyntax = SafeCoreSyntax.Parse(
             forbiddenRawSource,
@@ -212,7 +213,7 @@ internal static class SafeCoreNameResolutionTests
         AssertEx.True(forbiddenRawSyntax.IsSuccessful, "The forbidden-raw fixture must parse.");
         SafeCoreNameResolutionResult forbiddenRaw = SafeCoreNameResolution.Resolve(forbiddenRawSyntax);
         AssertEx.False(forbiddenRaw.IsSuccessful, "Forbidden raw identifiers must fail resolution.");
-        foreach (string path in new[] { "r#crate", "r#self", "r#super", "r#Self" })
+        foreach (string path in new[] { "r#crate", "r#self", "r#super", "r#Self", "r#_" })
         {
             AssertEx.Equal(
                 SafeCoreNameResolutionStatus.Invalid,
@@ -223,7 +224,7 @@ internal static class SafeCoreNameResolutionTests
 
         AssertEx.True(
             forbiddenRaw.Diagnostics.Count(diagnostic =>
-                diagnostic.Code == SafeCoreNameResolutionDiagnosticCodes.InvalidPath) >= 5,
+                diagnostic.Code == SafeCoreNameResolutionDiagnosticCodes.InvalidPath) >= 6,
             "Forbidden raw paths and declarations should emit RSN1001.");
         AssertEx.False(
             forbiddenRaw.Symbols.Any(symbol => symbol.Name == "crate"),
@@ -503,6 +504,54 @@ internal static class SafeCoreNameResolutionTests
         AssertEx.False(
             invalid.Symbols.Any(symbol => symbol.Name == invalidName),
             "An invalid AST identifier must not enter the symbol table.");
+        return Task.CompletedTask;
+    }
+
+    private static Task ResolvesSupplementaryPlaneIdentifiersAsync()
+    {
+        string supplementaryName = char.ConvertFromUtf32(0x10400);
+        string continuedName = "value" + supplementaryName;
+        string source =
+            $"fn {supplementaryName}() {{}}\n" +
+            $"fn caller({continuedName}: i32) {{ {supplementaryName}(); {continuedName}; }}\n";
+
+        RustLexResult lexResult = RustLexer.Lex(source, "name-resolution-supplementary.rs");
+        AssertEx.True(
+            lexResult.IsSuccessful,
+            string.Join("; ", lexResult.Diagnostics.Select(diagnostic =>
+                $"{diagnostic.Code}:{diagnostic.Message} [{diagnostic.Span.Start},{diagnostic.Span.Length}]")));
+        AssertEx.Equal(source, lexResult.ToSourceText());
+        AssertEx.Equal(
+            2,
+            lexResult.Tokens.Count(token =>
+                token.Kind == RustTokenKind.Identifier && token.Text == supplementaryName));
+        AssertEx.Equal(
+            2,
+            lexResult.Tokens.Count(token =>
+                token.Kind == RustTokenKind.Identifier && token.Text == continuedName));
+
+        SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, "name-resolution-supplementary.rs");
+        AssertEx.True(
+            syntax.IsSuccessful,
+            string.Join("; ", syntax.Diagnostics.Select(diagnostic =>
+                $"{diagnostic.Code}:{diagnostic.Message} [{diagnostic.Span.Start},{diagnostic.Span.Length}]")));
+
+        SafeCoreNameResolutionResult result = SafeCoreNameResolution.Resolve(syntax);
+        AssertEx.True(result.IsSuccessful, FormatDiagnostics(result));
+        AssertSymbol(result, "crate::" + supplementaryName, SafeCoreSymbolKind.Function);
+
+        SafeCorePathResolution functionCall = AssertEx.NotNull(
+            result.FindResolution(supplementaryName, "crate::caller"),
+            "A supplementary-plane function call should be recorded.");
+        AssertEx.Equal(SafeCoreNameResolutionStatus.Resolved, functionCall.Status);
+        AssertEx.Equal("crate::" + supplementaryName, functionCall.Symbol!.QualifiedName);
+
+        SafeCorePathResolution parameterUse = AssertEx.NotNull(
+            result.FindResolution(continuedName, "crate::caller"),
+            "A supplementary-plane identifier continuation should be recorded.");
+        AssertEx.Equal(SafeCoreNameResolutionStatus.Resolved, parameterUse.Status);
+        AssertEx.Equal(SafeCoreSymbolKind.Parameter, parameterUse.Symbol!.Kind);
+        AssertEx.Equal("crate::caller::" + continuedName, parameterUse.Symbol.QualifiedName);
         return Task.CompletedTask;
     }
 

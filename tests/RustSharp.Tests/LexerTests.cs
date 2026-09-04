@@ -4,6 +4,11 @@ namespace RustSharp.Tests;
 
 internal static class LexerTests
 {
+    private static readonly string[] UppercaseRadixPrefixTexts = ["0XFF", "0O77", "0B11"];
+    private static readonly string[] OutOfRangeHexEscapeTexts = ["\\x80", "\\xFF"];
+    private static readonly string[] AdjacentLifetimeTexts = ["'a", "'b", "'a", "'b"];
+    private const int MaximumRawStringHashCountForTest = 255;
+
     public static IReadOnlyList<TestCase> All { get; } =
     [
         new("Lexer preserves token and trivia spans", PreservesSourceSpansAsync),
@@ -43,6 +48,45 @@ internal static class LexerTests
         AssertEx.Equal(RustTokenKind.Keyword, function.Kind);
         AssertEx.True(function.IsKeyword, "Keyword text must remain available on the token.");
         AssertEx.Equal("fn", function.RawText);
+
+        const string triviaSource =
+            "#!/usr/bin/env rsc\n" +
+            "//// ordinary line\n" +
+            "/// outer docs\n" +
+            "//! inner docs\n" +
+            "/*** ordinary block */\n" +
+            "/** outer block docs */\n" +
+            "/*! inner block docs */\n" +
+            "fn main() {}\n";
+        RustLexResult triviaResult = RustLexer.Lex(triviaSource, "trivia.rs");
+        AssertEx.Equal(0, triviaResult.Diagnostics.Count);
+        AssertEx.False(
+            triviaResult.Trivia.Single(item => item.Kind == RustTriviaKind.Shebang).IsDocumentation,
+            "A shebang is trivia, not a documentation comment.");
+        AssertEx.False(
+            triviaResult.Trivia.Single(item => item.Text.StartsWith("////", StringComparison.Ordinal)).IsDocumentation,
+            "Four-slash comments are not outer documentation comments.");
+        AssertEx.True(
+            triviaResult.Trivia.Single(item => item.Text.StartsWith("/// outer", StringComparison.Ordinal)).IsDocumentation,
+            "Three-slash comments are outer documentation comments.");
+        AssertEx.True(
+            triviaResult.Trivia.Single(item => item.Text.StartsWith("//!", StringComparison.Ordinal)).IsDocumentation,
+            "Bang line comments are inner documentation comments.");
+        AssertEx.False(
+            triviaResult.Trivia.Single(item => item.Text.StartsWith("/***", StringComparison.Ordinal)).IsDocumentation,
+            "Three-star block comments are not documentation comments.");
+        AssertEx.True(
+            triviaResult.Trivia.Single(item => item.Text.StartsWith("/** outer", StringComparison.Ordinal)).IsDocumentation,
+            "Two-star block comments are outer documentation comments.");
+        AssertEx.True(
+            triviaResult.Trivia.Single(item => item.Text.StartsWith("/*!", StringComparison.Ordinal)).IsDocumentation,
+            "Bang block comments are inner documentation comments.");
+        AssertEx.Equal("\n", triviaResult.TrailingTrivia.Single().Text);
+
+        const string patternWhitespace = "\u0009\u000A\u000B\u000C\u000D\u0020\u0085\u200E\u200F\u2028\u2029";
+        RustLexResult patternWhitespaceResult = RustLexer.Lex("alpha" + patternWhitespace + "omega");
+        AssertEx.Equal(0, patternWhitespaceResult.Diagnostics.Count);
+        AssertEx.Equal(patternWhitespace, patternWhitespaceResult.Trivia.Single().Text);
         return Task.CompletedTask;
     }
 
@@ -73,6 +117,42 @@ internal static class LexerTests
         AssertEx.Equal(RustTokenKind.RawCStringLiteral, FindToken(result, "cr\"raw c\"").Kind);
         AssertEx.Equal(RustTokenKind.ByteCharacterLiteral, FindToken(result, "b'\\x41'").Kind);
 
+        RustLexResult adjacentLifetimes = RustLexer.Lex("fn f<'a,'b,T>() where T:'a+'b {}");
+        AssertEx.Equal(0, adjacentLifetimes.Diagnostics.Count);
+        AssertEx.True(
+            adjacentLifetimes.Tokens
+                .Where(token => token.Kind == RustTokenKind.Lifetime)
+                .Select(token => token.Text)
+                .SequenceEqual(AdjacentLifetimeTexts),
+            "A plus sign between adjacent lifetimes must not turn them into a character literal.");
+
+        RustLexResult restrictedRawTokens = RustLexer.Lex("r#crate r#self r#super r#Self r#_");
+        AssertEx.Equal(0, restrictedRawTokens.Diagnostics.Count);
+        AssertEx.Equal(5, restrictedRawTokens.Tokens.Count);
+        AssertEx.True(
+            restrictedRawTokens.Tokens.All(token => token.Kind == RustTokenKind.RawIdentifier),
+            "Restricted raw spellings remain raw-identifier tokens for downstream validation.");
+
+        RustLexResult hexEscapeBoundaries = RustLexer.Lex("\"\\x7F\" b\"\\x80\\xFF\"");
+        AssertEx.Equal(0, hexEscapeBoundaries.Diagnostics.Count);
+        AssertEx.Equal(RustTokenKind.StringLiteral, FindToken(hexEscapeBoundaries, "\"\\x7F\"").Kind);
+        AssertEx.Equal(RustTokenKind.ByteStringLiteral, FindToken(hexEscapeBoundaries, "b\"\\x80\\xFF\"").Kind);
+
+        string supplementaryIdentifier = char.ConvertFromUtf32(0x10400);
+        RustLexResult supplementary = RustLexer.Lex($"fn {supplementaryIdentifier}() {{}}");
+        AssertEx.Equal(0, supplementary.Diagnostics.Count);
+        AssertEx.Equal(RustTokenKind.Identifier, FindToken(supplementary, supplementaryIdentifier).Kind);
+
+        RustLexResult xidIdentifiers = RustLexer.Lex("fn \u2118(a\u00b7b: i32) {}");
+        AssertEx.Equal(0, xidIdentifiers.Diagnostics.Count);
+        AssertEx.Equal(RustTokenKind.Identifier, FindToken(xidIdentifiers, "\u2118").Kind);
+        AssertEx.Equal(RustTokenKind.Identifier, FindToken(xidIdentifiers, "a\u00b7b").Kind);
+
+        RustLexResult excludedIdentifier = RustLexer.Lex("fn \u037a() {}");
+        Diagnostic excludedDiagnostic = excludedIdentifier.Diagnostics.Single(diagnostic =>
+            diagnostic.Code == RustLexDiagnosticCodes.UnknownCharacter);
+        AssertEx.Equal("\u037a", excludedIdentifier.GetText(excludedDiagnostic.Span));
+
         RustLexResult separatorForms = RustLexer.Lex("1_ 1__ 1.2_ 1e__2 0xff__f");
         AssertEx.Equal(0, separatorForms.Diagnostics.Count);
         AssertEx.True(
@@ -97,6 +177,13 @@ internal static class LexerTests
         AssertEx.True(
             nonAsciiDigit.Diagnostics.Any(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.UnknownCharacter),
             "Non-ASCII digits must not be accepted as Rust numeric literals.");
+
+        RustLexResult noBreakSpace = RustLexer.Lex("fn\u00a0main() {}");
+        AssertEx.True(
+            noBreakSpace.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == RustLexDiagnosticCodes.UnknownCharacter &&
+                noBreakSpace.GetText(diagnostic.Span) == "\u00a0"),
+            "NBSP must not be accepted as Rust lexical whitespace.");
         return Task.CompletedTask;
     }
 
@@ -132,6 +219,28 @@ internal static class LexerTests
         AssertEx.Equal("\u00a7", unknown.GetText(unknownDiagnostic.Span));
         AssertEx.Equal(1, unknownDiagnostic.Span.Length);
 
+        string emoji = char.ConvertFromUtf32(0x1F600);
+        RustLexResult supplementaryUnknown = RustLexer.Lex(emoji);
+        Diagnostic supplementaryDiagnostic = supplementaryUnknown.Diagnostics.Single();
+        RustToken supplementaryToken = supplementaryUnknown.Tokens.Single();
+        AssertEx.Equal(RustLexDiagnosticCodes.UnknownCharacter, supplementaryDiagnostic.Code);
+        AssertEx.Equal(2, supplementaryDiagnostic.Span.Length);
+        AssertEx.Equal(emoji, supplementaryUnknown.GetText(supplementaryDiagnostic.Span));
+        AssertEx.Equal(RustTokenKind.Unknown, supplementaryToken.Kind);
+        AssertEx.Equal(2, supplementaryToken.Span.Length);
+
+        RustLexResult isolatedHighSurrogate = RustLexer.Lex("\uD800");
+        AssertEx.Equal(1, isolatedHighSurrogate.Diagnostics.Count);
+        AssertEx.Equal(RustLexDiagnosticCodes.UnknownCharacter, isolatedHighSurrogate.Diagnostics[0].Code);
+        AssertEx.Equal(1, isolatedHighSurrogate.Diagnostics[0].Span.Length);
+        AssertEx.Equal(1, isolatedHighSurrogate.Tokens.Single().Span.Length);
+
+        RustLexResult isolatedLowSurrogate = RustLexer.Lex("\uDC00");
+        AssertEx.Equal(1, isolatedLowSurrogate.Diagnostics.Count);
+        AssertEx.Equal(RustLexDiagnosticCodes.UnknownCharacter, isolatedLowSurrogate.Diagnostics[0].Code);
+        AssertEx.Equal(1, isolatedLowSurrogate.Diagnostics[0].Span.Length);
+        AssertEx.Equal(1, isolatedLowSurrogate.Tokens.Single().Span.Length);
+
         RustLexResult malformed = RustLexer.Lex("fn main( { \"unterminated");
         AssertEx.True(
             malformed.Diagnostics.Any(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.UnterminatedLiteral),
@@ -153,6 +262,68 @@ internal static class LexerTests
         AssertEx.True(
             malformedNumbers.Diagnostics.Count(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidNumber) == 6,
             "Missing digits and incompatible numeric suffixes must be diagnosed without losing token spans.");
+
+        RustLexResult uppercaseRadixPrefixes = RustLexer.Lex("0XFF 0O77 0B11");
+        AssertEx.Equal(3, uppercaseRadixPrefixes.Diagnostics.Count);
+        AssertEx.True(
+            uppercaseRadixPrefixes.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidNumber),
+            "Uppercase radix prefixes must be rejected as invalid numeric literals.");
+        AssertEx.True(
+            uppercaseRadixPrefixes.Tokens.Select(token => token.Text).SequenceEqual(UppercaseRadixPrefixTexts),
+            "Invalid uppercase radix prefixes must remain complete lossless tokens.");
+
+        RustLexResult outOfRangeHexEscapes = RustLexer.Lex("\"\\x80\" \"\\xFF\"");
+        AssertEx.Equal(2, outOfRangeHexEscapes.Diagnostics.Count);
+        AssertEx.True(
+            outOfRangeHexEscapes.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidLiteral),
+            "Ordinary string hex escapes above ASCII must be rejected.");
+        AssertEx.True(
+            outOfRangeHexEscapes.Diagnostics
+                .Select(diagnostic => outOfRangeHexEscapes.GetText(diagnostic.Span))
+                .SequenceEqual(OutOfRangeHexEscapeTexts),
+            "Out-of-range hex diagnostics must cover the complete escape.");
+
+        RustLexResult supplementaryByteText = RustLexer.Lex("b\"\U0001F600\" br\"\U0001F600\"");
+        AssertEx.Equal(2, supplementaryByteText.Diagnostics.Count);
+        AssertEx.True(
+            supplementaryByteText.Diagnostics.All(diagnostic =>
+                diagnostic.Code == RustLexDiagnosticCodes.InvalidLiteral &&
+                diagnostic.Span.Length == 2 &&
+                supplementaryByteText.GetText(diagnostic.Span) == "\U0001F600"),
+            "Byte string diagnostics must cover the complete supplementary Unicode scalar.");
+
+        const string bareCarriageReturnLiterals =
+            "\"a\rb\" b\"a\rb\" c\"a\rb\" r\"a\rb\" br\"a\rb\" cr\"a\rb\"";
+        RustLexResult bareCarriageReturns = RustLexer.Lex(bareCarriageReturnLiterals);
+        AssertEx.Equal(6, bareCarriageReturns.Diagnostics.Count);
+        AssertEx.True(
+            bareCarriageReturns.Diagnostics.All(diagnostic =>
+                diagnostic.Code == RustLexDiagnosticCodes.InvalidLiteral &&
+                bareCarriageReturns.GetText(diagnostic.Span) == "\r"),
+            "Cooked and raw string forms must reject isolated carriage returns.");
+
+        const string carriageReturnLineFeedLiterals =
+            "\"a\r\nb\" b\"a\r\nb\" c\"a\r\nb\" r\"a\r\nb\" br\"a\r\nb\" cr\"a\r\nb\"";
+        AssertEx.Equal(0, RustLexer.Lex(carriageReturnLineFeedLiterals).Diagnostics.Count);
+
+        RustLexResult bareTabs = RustLexer.Lex("'\t' b'\t'");
+        AssertEx.Equal(2, bareTabs.Diagnostics.Count);
+        AssertEx.True(
+            bareTabs.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidLiteral),
+            "Character and byte-character literals must reject unescaped tabs.");
+        AssertEx.Equal(0, RustLexer.Lex("'\\t' b'\\t'").Diagnostics.Count);
+
+        string maximumHashes = new('#', MaximumRawStringHashCountForTest);
+        RustLexResult maximumRawString = RustLexer.Lex($"r{maximumHashes}\"ok\"{maximumHashes}");
+        AssertEx.Equal(0, maximumRawString.Diagnostics.Count);
+        AssertEx.Equal(RustTokenKind.RawStringLiteral, maximumRawString.Tokens.Single().Kind);
+
+        string excessiveHashes = new('#', MaximumRawStringHashCountForTest + 1);
+        RustLexResult excessiveRawString = RustLexer.Lex($"r{excessiveHashes}\"bad\"{excessiveHashes}");
+        Diagnostic excessiveHashDiagnostic = excessiveRawString.Diagnostics.Single();
+        AssertEx.Equal(RustLexDiagnosticCodes.InvalidLiteral, excessiveHashDiagnostic.Code);
+        AssertEx.Equal(MaximumRawStringHashCountForTest + 1, excessiveHashDiagnostic.Span.Length);
+        AssertEx.Equal(RustTokenKind.RawStringLiteral, excessiveRawString.Tokens.Single().Kind);
         return Task.CompletedTask;
     }
 

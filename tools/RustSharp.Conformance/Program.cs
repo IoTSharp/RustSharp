@@ -18,6 +18,7 @@ internal static class Program
     private static readonly TimeSpan CleanupTimeout = TimeSpan.FromSeconds(5);
     private const int MaximumCases = 64;
     private const string ProfileName = "vertical-slice-v1";
+    private const string SafeCoreLexingProfileName = "safe-core-lexing";
     private const string SafeCoreSyntaxProfileName = "safe-core-syntax";
     private const string SafeCoreNameResolutionProfileName = "safe-core-name-resolution";
     private const string OracleName = "rustc-1.98";
@@ -39,6 +40,27 @@ internal static class Program
         }
 
         string repositoryRoot = FindRepositoryRoot();
+        if (string.Equals(options.Profile, SafeCoreLexingProfileName, StringComparison.Ordinal))
+        {
+            try
+            {
+                string lexingReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                return await SafeCoreLexingProfileRunner.RunAsync(
+                    repositoryRoot,
+                    lexingReportPath,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                Console.Error.WriteLine($"conformance: safe-core-lexing harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+
         if (string.Equals(options.Profile, SafeCoreSyntaxProfileName, StringComparison.Ordinal))
         {
             try
@@ -470,13 +492,15 @@ internal static class Program
             }
             else throw new ArgumentException($"Unknown option '{value}'.");
         }
-        if (profile is not ProfileName and not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName)
+        if (profile is not ProfileName and not SafeCoreLexingProfileName and
+            not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName)
         {
             throw new ArgumentException(
-                $"Supported profiles are '{ProfileName}', '{SafeCoreSyntaxProfileName}', and '{SafeCoreNameResolutionProfileName}'.");
+                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', and '{SafeCoreNameResolutionProfileName}'.");
         }
 
-        bool inProcessAcceptanceProfile = profile is SafeCoreSyntaxProfileName or SafeCoreNameResolutionProfileName;
+        bool inProcessAcceptanceProfile = profile is SafeCoreLexingProfileName or
+            SafeCoreSyntaxProfileName or SafeCoreNameResolutionProfileName;
         if (inProcessAcceptanceProfile && oracleSpecified)
         {
             throw new ArgumentException($"Profile '{profile}' is in-process acceptance only and does not accept --oracle.");

@@ -37,9 +37,13 @@ Accordingly, P0-10, P0-16, and P0-17 are ✅ Complete.
 Unsupported Rust syntax is rejected with a source diagnostic rather than
 silently assigned C# semantics.
 
-Early P1 front-end work is also 🚧 In progress. The lossless lexer now has
-bounded coverage for numeric, byte, and C literal forms, while the early
-`SafeCoreSyntax` model/parser handles representative modules, items,
+Early P1 front-end work is also 🚧 In progress. The lossless lexer now has a
+manifest-driven, bounded acceptance profile for declared identifiers,
+literals, trivia, delimiters, token trees, and malformed-input diagnostics.
+The profile checks exact token/trivia/tree evidence and lossless source
+reconstruction, but its declared corpus is not a complete Rust 1.98 lexical
+conformance suite. The early `SafeCoreSyntax` model/parser handles
+representative modules, items,
 statements, expressions, patterns, types, generics, and attributes with stable
 `RSP` diagnostics. The bounded `SafeCoreNameResolution` prototype now collects
 module/item/local symbols across separate type/value namespaces and resolves
@@ -48,7 +52,7 @@ type/value namespaces and qualified paths, visibility, duplicate, ambiguous,
 and unresolved names, import cycles, declaration order and legal shadowing,
 rejected qualified access to function locals, struct fields, and enum generic
 parameters, Unicode identifier normalization, and the import nesting limit.
-The local executable harness passes 73/73 tests. A bounded
+The local executable harness passes 74/74 tests. A bounded
 `SafeCoreHirLowering` prototype now converts successful
 syntax and name-resolution results into a deterministic, name-bound flat HIR
 arena. P1-01, P1-02, and P1-03 remain 🚧 In progress because their dependencies,
@@ -103,6 +107,20 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --pr
 The harness invokes the pinned `rustc +1.98.0` toolchain for both version
 probing and fixture compilation, so the active default toolchain does not
 silently change the oracle.
+
+The manifest-driven safe-core lexing profile writes its bounded acceptance
+report to `artifacts/conformance/safe-core-lexing.json`:
+
+```text
+dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing
+```
+
+Each declared fixture must match its exact tokens, trivia, token trees,
+diagnostics, spans, and source reconstruction. Windows and Linux CI also
+require the manifest, summary, and executed-case denominators to agree. This is
+RustSharp lexer-acceptance evidence only; it is not rustc differential,
+runtime, or complete Rust 1.98 lexical conformance evidence, so P1-01 remains
+🚧 In progress.
 
 The separate safe-core syntax profile passes the current six-case parser
 acceptance manifest and writes `artifacts/conformance/safe-core-syntax.json`:

@@ -146,7 +146,7 @@ the recorded GitHub Actions runs.
 
 - Release solution build completed with zero warnings and zero errors.
 - Commit `286f139` passed the recorded Windows and Linux x64 workflows linked in P0-17. Each platform artifact contains 14 files and seven parseable JSON reports; both record 73/73 executable tests, 4/4 vertical conformance, 6/6 safe-core syntax, 6/6 safe-core name resolution, successful standalone IL verification, and 4/4 I/O smoke probes. All 12 `.rs` source SHA-256 values in the safe-core syntax and name-resolution corpora match across platforms.
-- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` completed 73/73 tests, including five bounded lexer cases, 13 safe-core syntax cases, nine safe-core name-resolution cases, four safe-core HIR lowering cases, on-disk deterministic-output and IL sanity gates, eight typed CLR LIR cases, eight ownership MIR cases, and bounded generic/runtime cases.
+- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` completed 74/74 tests, including five bounded lexer cases, 13 safe-core syntax cases, ten safe-core name-resolution cases, four safe-core HIR lowering cases, on-disk deterministic-output and IL sanity gates, eight typed CLR LIR cases, eight ownership MIR cases, and bounded generic/runtime cases.
 - `dotnet run --project src/RustSharp.Cli -- check samples/hello.rs` and `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs` completed successfully. The `rsc` tool name is available after packing/installing the CLI tool; it is not assumed to be on PATH in a source checkout.
 - The generated DLL ran on CoreCLR and printed `Hello from Rust#`.
 - Windows x64 Native AOT publish completed with no observed AOT/trimming warnings (publish uses `-warnaserror`); the produced executable ran and printed `Hello from Rust#`.
@@ -191,11 +191,14 @@ expands the grammar further.
 
 An early P1-01 prototype in `RustLexer.cs` and `RustLexingModels.cs` preserves
 token/trivia spans, builds nested token trees, and bounds malformed-input
-diagnostics. Its five harness cases now cover numeric radix, separator and
-suffix behavior plus byte, raw-byte, and C literal constraints. This is
-implementation evidence only: the P0 gate is ✅ Complete, the existing
-vertical-slice parser is still the production path, and no full safe-core
-lexical denominator has been published.
+diagnostics. A versioned `safe-core-lexing` manifest now publishes a bounded
+lexer-acceptance denominator for declared identifiers, literals, trivia,
+delimiters, token trees, and invalid forms. Its report checks exact evidence,
+spans, and lossless source reconstruction under declared limits. This is
+RustSharp lexer-acceptance evidence only, not rustc differential or runtime
+conformance evidence, and the corpus is not a complete Rust 1.98 lexical
+denominator. The existing vertical-slice parser remains the production path,
+so P1-01 remains 🚧 In progress.
 
 P1-02 also has an early bounded `SafeCoreSyntax` model/parser for
 representative modules, items, statements, expressions, patterns, types,
@@ -203,8 +206,8 @@ generics, and attributes, with stable `RSP` diagnostics. A six-case
 `safe-core-syntax` manifest and the acceptance command below produce
 `artifacts/conformance/safe-core-syntax.json`. The current report passes 6/6
 cases and is parser-acceptance evidence only, not rustc differential or runtime
-conformance evidence. P1-02 remains 🚧 In progress because the P0 and P1-01
-dependencies are open and the full syntax denominator has not been published.
+conformance evidence. P1-02 remains 🚧 In progress because its P1-01 dependency
+is open and the full syntax denominator has not been published.
 
 P1-03 now has a bounded `SafeCoreNameResolution` prototype over that syntax
 model. It collects module, import, item, generic, parameter, and local symbols
@@ -228,7 +231,7 @@ denominator, and broader diagnostic coverage remain open.
 
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The five lexer harness cases cover declared identifiers, literals, comments, delimiters, and bounded error spans; a standalone lexer acceptance denominator remains open. |
+| P1-01 | 🚧 In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | Every case in the published bounded manifest must match exact token, trivia, token-tree, diagnostic, span, and source-reconstruction evidence; the production path and complete Rust 1.98 lexical denominator remain open. |
 | P1-02 | 🚧 In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | Every case in the published syntax-profile denominator has the expected parse result; unsupported syntax is rejected explicitly. |
 | P1-03 | 🚧 In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator resolves expected symbols and diagnostics; four executable-harness cases cover bounded HIR lowering, while multi-file workspace and production pipeline integration remain open. |
 | P1-04 | ⏳ Planned | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet test RustSharp.slnx -c Release --filter TypeChecking` | Declared compile-pass/fail type cases agree with rustc 1.98 for the profile. |

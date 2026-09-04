@@ -133,7 +133,7 @@ GitHub Actions 运行中。
 
 - Release 解决方案构建完成，零警告、零错误。
 - 提交 `286f139` 通过了 P0-17 中链接的 Windows 和 Linux x64 工作流。每个平台制品包含 14 个文件和七份可解析的 JSON 报告；两者都记录了 73/73 可执行测试、4/4 纵向一致性、6/6 安全核心语法、6/6 安全核心名称解析、成功的独立 IL 验证和 4/4 I/O 冒烟探测。安全核心语法和名称解析语料中的全部 12 个 `.rs` 源 SHA-256 值在两平台间一致。
-- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` 完成 73/73 项测试，包括五个有界词法分析用例、13 个安全核心语法用例、九个安全核心名称解析用例、四个安全核心 HIR 降低用例、磁盘确定性输出和 IL 健全性门槛、八个类型化 CLR LIR 用例、八个所有权 MIR 用例，以及有界泛型/运行时用例。
+- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` 完成 74/74 项测试，包括五个有界词法分析用例、13 个安全核心语法用例、十个安全核心名称解析用例、四个安全核心 HIR 降低用例、磁盘确定性输出和 IL 健全性门槛、八个类型化 CLR LIR 用例、八个所有权 MIR 用例，以及有界泛型/运行时用例。
 - `dotnet run --project src/RustSharp.Cli -- check samples/hello.rs` 和 `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs` 成功完成。打包/安装 CLI 工具后可以使用 `rsc` 工具名称；不假定它在源码检出环境的 PATH 中。
 - 生成的 DLL 在 CoreCLR 上运行并打印 `Hello from Rust#`。
 - Windows x64 Native AOT 发布完成，未观察到 AOT/裁剪警告（发布使用 `-warnaserror`）；生成的可执行文件运行并打印 `Hello from Rust#`。
@@ -174,17 +174,19 @@ P1 进一步扩展语法前触发 ADR 评审。
 ## P1：实现安全语言核心
 
 `RustLexer.cs` 和 `RustLexingModels.cs` 中已有一个早期 P1-01 原型，它保留
-词元/trivia 范围、构建嵌套词元树，并限制格式错误输入的诊断。其五个测试工具用例
-目前覆盖数值基数、分隔符和后缀行为，以及字节、原始字节和 C 字面量约束。这只是
-实现证据：P0 门槛为 ✅ 已完成，现有纵向切片解析器仍是生产路径，也尚未发布完整的
-安全核心词法基准集合。
+词元/trivia 范围、构建嵌套词元树，并限制格式错误输入的诊断。版本化的
+`safe-core-lexing` 清单现在为已声明的标识符、字面量、trivia、分隔符、词元树和
+非法形式发布有界的词法分析器验收分母。其报告在声明的限制内核对精确证据、范围和
+无损源码重建。这只属于 RustSharp 词法分析器验收证据，并不构成 rustc 差分或运行时
+一致性证据，而且该语料也不是完整的 Rust 1.98 词法分母。现有纵向切片解析器仍是
+生产路径，因此 P1-01 仍为 🚧 进行中。
 
 P1-02 也已有早期的有界 `SafeCoreSyntax` 模型/解析器，覆盖代表性的模块、项、语句、
 表达式、模式、类型、泛型和属性，并提供稳定的 `RSP` 诊断。一个六用例
 `safe-core-syntax` 清单和下方验收命令生成
 `artifacts/conformance/safe-core-syntax.json`。当前报告通过 6/6 个用例，且仅作为
-解析器验收证据，而不是 rustc 差异或运行时一致性证据。P1-02 保持 🚧 进行中，因为 P0
-和 P1-01 依赖仍未完成，完整语法基准集合也尚未发布。
+解析器验收证据，而不是 rustc 差异或运行时一致性证据。P1-02 保持 🚧 进行中，因为
+它的 P1-01 依赖仍未完成，完整语法基准集合也尚未发布。
 
 P1-03 现在基于该语法模型提供了有界的 `SafeCoreNameResolution` 原型。它在独立的
 类型/值命名空间中收集模块、导入、项、泛型、参数和局部符号，并实现别名、限定路径、
@@ -200,7 +202,7 @@ Unicode 等价绑定和明确的工作量限制。这只是原型证据：工作
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 进行中 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 五个词法分析器测试工具用例覆盖已声明的标识符、字面量、注释、分隔符和有界错误范围；独立的词法分析器验收基准集合仍未完成。 |
+| P1-01 | 🚧 进行中 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | 已发布有界清单中的每个用例都必须与精确的词元、trivia、词元树、诊断、范围和源码重建证据匹配；生产路径和完整 Rust 1.98 词法分母仍未完成。 |
 | P1-02 | 🚧 进行中 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | 已发布语法配置档基准集合中的每个用例都具有预期解析结果；明确拒绝不支持的语法。 |
 | P1-03 | 🚧 进行中 | 将 AST 降低为 HIR，并实现模块、命名空间、可见性、导入和名称解析。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 六用例内存验收基准集合解析出预期符号和诊断；四个可执行测试工具用例覆盖有界 HIR 降低，而多文件工作区和生产流水线集成仍未完成。 |
 | P1-04 | ⏳ 计划中 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet test RustSharp.slnx -c Release --filter TypeChecking` | 配置档声明的编译通过/失败类型用例与 rustc 1.98 一致。 |

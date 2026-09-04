@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace RustSharp.Syntax;
 
@@ -28,6 +29,7 @@ public static class RustLexer
     private const int AbsoluteMaximumTrivia = 4_000_000;
     private const int AbsoluteMaximumDiagnostics = 4096;
     private const int AbsoluteMaximumDelimiterDepth = 4096;
+    private const int MaximumRawStringHashes = 255;
 
     private static readonly string[] PunctuationLexemes =
     [
@@ -185,14 +187,14 @@ public static class RustLexer
                     _position++;
                 }
 
-                AddTrivia(RustTriviaKind.Shebang, start, _position, true);
+                AddTrivia(RustTriviaKind.Shebang, start, _position, false);
                 return true;
             }
 
-            if (char.IsWhiteSpace(_source[_position]))
+            if (IsRustWhitespace(_source[_position]))
             {
                 _position++;
-                while (_position < _scanLength && char.IsWhiteSpace(_source[_position]))
+                while (_position < _scanLength && IsRustWhitespace(_source[_position]))
                 {
                     _position++;
                 }
@@ -216,7 +218,9 @@ public static class RustLexer
                 }
 
                 bool documentation = _position - start >= 3 &&
-                    (_source[start + 2] is '/' or '!');
+                    (_source[start + 2] == '!' ||
+                        (_source[start + 2] == '/' &&
+                            (_position - start == 3 || _source[start + 3] != '/')));
                 AddTrivia(RustTriviaKind.LineComment, start, _position, documentation);
                 return true;
             }
@@ -270,7 +274,9 @@ public static class RustLexer
             }
 
             bool documentationBlock = _position - start >= 3 &&
-                (_source[start + 2] is '*' or '!');
+                (_source[start + 2] == '!' ||
+                    (_source[start + 2] == '*' &&
+                        (_position - start == 3 || _source[start + 3] != '*')));
             AddTrivia(RustTriviaKind.BlockComment, start, _position, documentationBlock);
             return true;
         }
@@ -309,7 +315,7 @@ public static class RustLexer
                 return ScanNumber(start);
             }
 
-            if (IsIdentifierStart(_source[_position]))
+            if (IsIdentifierStartAt(_position, out _))
             {
                 return ScanIdentifier(start);
             }
@@ -334,12 +340,20 @@ public static class RustLexer
                 return CreateToken(RustTokenKind.Punctuation, start, _position, false, null);
             }
 
-            _position++;
+            int scalar = _source[start];
+            int width = 1;
+            if (TryReadRune(start, out Rune unknownRune, out int runeWidth))
+            {
+                scalar = unknownRune.Value;
+                width = runeWidth;
+            }
+
+            _position += width;
             AddDiagnostic(
                 RustLexDiagnosticCodes.UnknownCharacter,
-                $"Unknown character U+{(int)_source[start]:X4}.",
+                $"Unknown character U+{scalar:X4}.",
                 start,
-                1);
+                width);
             return CreateToken(RustTokenKind.Unknown, start, _position, false, null);
         }
 
@@ -383,6 +397,15 @@ public static class RustLexer
 
             int hashCount = quote - hashStart;
             int start = _position;
+            if (hashCount > MaximumRawStringHashes)
+            {
+                AddDiagnostic(
+                    RustLexDiagnosticCodes.InvalidLiteral,
+                    $"Raw string literals may use at most {MaximumRawStringHashes} delimiter hashes.",
+                    hashStart,
+                    hashCount);
+            }
+
             int cursor = quote + 1;
             while (cursor < _scanLength)
             {
@@ -430,6 +453,8 @@ public static class RustLexer
             int contentStart,
             int contentEnd)
         {
+            ReportBareCarriageReturns(contentStart, contentEnd);
+
             if (kind == RustTokenKind.RawCStringLiteral)
             {
                 int nul = _source.IndexOf('\0', contentStart, Math.Max(0, contentEnd - contentStart));
@@ -452,13 +477,33 @@ public static class RustLexer
                         continue;
                     }
 
+                    int scalarWidth = TryReadRune(position, out _, out int width) ? width : 1;
+
                     AddDiagnostic(
                         RustLexDiagnosticCodes.InvalidLiteral,
                         "Raw byte string literals must contain ASCII text.",
                         position,
-                        1);
+                        scalarWidth);
                     break;
                 }
+            }
+        }
+
+        private void ReportBareCarriageReturns(int contentStart, int contentEnd)
+        {
+            for (int position = contentStart; position < contentEnd; position++)
+            {
+                if (_source[position] != '\r' ||
+                    (position + 1 < contentEnd && _source[position + 1] == '\n'))
+                {
+                    continue;
+                }
+
+                AddDiagnostic(
+                    RustLexDiagnosticCodes.InvalidLiteral,
+                    "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+                    position,
+                    1);
             }
         }
 
@@ -490,43 +535,22 @@ public static class RustLexer
 
         private RustToken ScanApostropheToken(int start)
         {
-            if (_position + 1 < _scanLength && IsIdentifierStart(_source[_position + 1]) &&
-                !HasNearbyClosingApostrophe(_position + 1))
+            if (_position + 1 < _scanLength && IsIdentifierStartAt(_position + 1, out int firstWidth))
             {
-                _position += 2;
-                while (_position < _scanLength && IsIdentifierContinue(_source[_position]))
+                int identifierEnd = _position + 1 + firstWidth;
+                while (IsIdentifierContinueAt(identifierEnd, out int width))
                 {
-                    _position++;
+                    identifierEnd += width;
                 }
 
-                return CreateToken(RustTokenKind.Lifetime, start, _position, false, null);
+                if (identifierEnd >= _scanLength || _source[identifierEnd] != '\'')
+                {
+                    _position = identifierEnd;
+                    return CreateToken(RustTokenKind.Lifetime, start, _position, false, null);
+                }
             }
 
             return ScanQuotedLiteral(start, 0, '\'', RustTokenKind.CharacterLiteral);
-        }
-
-        private bool HasNearbyClosingApostrophe(int contentStart)
-        {
-            int cursor = contentStart;
-            int inspected = 0;
-            while (cursor < _scanLength && inspected < 256)
-            {
-                char current = _source[cursor];
-                if (current == '\'')
-                {
-                    return true;
-                }
-
-                if (current is '\r' or '\n' || char.IsWhiteSpace(current))
-                {
-                    return false;
-                }
-
-                cursor++;
-                inspected++;
-            }
-
-            return false;
         }
 
         private RustToken ScanQuotedLiteral(
@@ -555,12 +579,24 @@ public static class RustLexer
 
                 if (current is '\r' or '\n')
                 {
+                    bool carriageReturnLineFeed = current == '\r' &&
+                        _position + 1 < _scanLength && _source[_position + 1] == '\n';
+                    if (current == '\r' && !carriageReturnLineFeed)
+                    {
+                        invalid = true;
+                        AddDiagnostic(
+                            RustLexDiagnosticCodes.InvalidLiteral,
+                            "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+                            _position,
+                            1);
+                    }
+
                     if (quote == '\'')
                     {
                         invalid = true;
                     }
 
-                    if (current == '\r' && _position + 1 < _scanLength && _source[_position + 1] == '\n')
+                    if (carriageReturnLineFeed)
                     {
                         _position += 2;
                     }
@@ -638,6 +674,16 @@ public static class RustLexer
                                 escapeStart,
                                 Math.Max(1, _position - escapeStart));
                         }
+                        else if (hexValue > 0x7f &&
+                            kind is RustTokenKind.StringLiteral or RustTokenKind.CharacterLiteral)
+                        {
+                            invalid = true;
+                            AddDiagnostic(
+                                RustLexDiagnosticCodes.InvalidLiteral,
+                                "Hex escapes in string and character literals must be in the ASCII range \\x00..\\x7F.",
+                                escapeStart,
+                                _position - escapeStart);
+                        }
                         else if (cStringLiteral && hexValue == 0)
                         {
                             invalid = true;
@@ -692,6 +738,12 @@ public static class RustLexer
                     continue;
                 }
 
+                if (quote == '\'' && current == '\t')
+                {
+                    invalid = true;
+                }
+
+                int scalarWidth = TryReadRune(_position, out _, out int width) ? width : 1;
                 if (byteLiteral && current > 0x7f)
                 {
                     invalid = true;
@@ -699,7 +751,7 @@ public static class RustLexer
                         RustLexDiagnosticCodes.InvalidLiteral,
                         "Byte literals must contain ASCII text.",
                         _position,
-                        1);
+                        scalarWidth);
                 }
 
                 if (cStringLiteral && current == '\0')
@@ -713,16 +765,7 @@ public static class RustLexer
                 }
 
                 scalarCount++;
-                if (char.IsHighSurrogate(current) &&
-                    _position + 1 < _scanLength &&
-                    char.IsLowSurrogate(_source[_position + 1]))
-                {
-                    _position += 2;
-                }
-                else
-                {
-                    _position++;
-                }
+                _position += scalarWidth;
             }
 
             if (!closed)
@@ -825,6 +868,7 @@ public static class RustLexer
 
                 if (radix != 0)
                 {
+                    invalid = prefix is 'B' or 'O' or 'X';
                     _position += 2;
                     int digitCount = 0;
                     while (_position < _scanLength)
@@ -851,12 +895,12 @@ public static class RustLexer
                         invalid = true;
                     }
 
-                    if (_position < _scanLength && IsIdentifierContinue(_source[_position]))
+                    if (IsIdentifierContinueAt(_position, out _))
                     {
                         int tailStart = _position;
-                        while (_position < _scanLength && IsIdentifierContinue(_source[_position]))
+                        while (IsIdentifierContinueAt(_position, out int width))
                         {
-                            _position++;
+                            _position += width;
                         }
 
                         if (!IsIntegerSuffix(_source.AsSpan(tailStart, _position - tailStart)))
@@ -898,7 +942,7 @@ public static class RustLexer
             if (_position < _scanLength && _source[_position] == '.' &&
                 !(_position + 1 < _scanLength && _source[_position + 1] == '.') &&
                 (_position + 1 >= _scanLength ||
-                    !IsIdentifierStart(_source[_position + 1]) ||
+                    !IsIdentifierStartAt(_position + 1, out _) ||
                     IsAsciiDigit(_source[_position + 1])))
             {
                 floating = true;
@@ -935,12 +979,12 @@ public static class RustLexer
                 }
             }
 
-            if (_position < _scanLength && IsIdentifierStart(_source[_position]))
+            if (IsIdentifierStartAt(_position, out _))
             {
                 int suffixStart = _position;
-                while (_position < _scanLength && IsIdentifierContinue(_source[_position]))
+                while (IsIdentifierContinueAt(_position, out int width))
                 {
-                    _position++;
+                    _position += width;
                 }
 
                 ReadOnlySpan<char> suffix = _source.AsSpan(suffixStart, _position - suffixStart);
@@ -970,10 +1014,11 @@ public static class RustLexer
 
         private RustToken ScanIdentifier(int start)
         {
-            _position++;
-            while (_position < _scanLength && IsIdentifierContinue(_source[_position]))
+            _ = IsIdentifierStartAt(_position, out int firstWidth);
+            _position += firstWidth;
+            while (IsIdentifierContinueAt(_position, out int width))
             {
-                _position++;
+                _position += width;
             }
 
             string text = _source.Substring(start, _position - start);
@@ -991,16 +1036,16 @@ public static class RustLexer
             token = null;
             if (!MatchesAt(_position, "r#") ||
                 _position + 2 >= _scanLength ||
-                !IsIdentifierStart(_source[_position + 2]))
+                !IsIdentifierStartAt(_position + 2, out int firstWidth))
             {
                 return false;
             }
 
             int start = _position;
-            _position += 3;
-            while (_position < _scanLength && IsIdentifierContinue(_source[_position]))
+            _position += 2 + firstWidth;
+            while (IsIdentifierContinueAt(_position, out int width))
             {
-                _position++;
+                _position += width;
             }
 
             token = CreateToken(RustTokenKind.RawIdentifier, start, _position, false, null);
@@ -1212,11 +1257,42 @@ public static class RustLexer
             return value is '(' or ')' or '[' or ']' or '{' or '}';
         }
 
-        private static bool IsIdentifierStart(char value) =>
-            RustIdentifierFacts.IsIdentifierStart(value);
+        private bool IsIdentifierStartAt(int position, out int width) =>
+            TryReadRune(position, out Rune value, out width) && RustIdentifierFacts.IsIdentifierStart(value);
 
-        private static bool IsIdentifierContinue(char value) =>
-            RustIdentifierFacts.IsIdentifierContinue(value);
+        private bool IsIdentifierContinueAt(int position, out int width) =>
+            TryReadRune(position, out Rune value, out width) && RustIdentifierFacts.IsIdentifierContinue(value);
+
+        private bool TryReadRune(int position, out Rune value, out int width)
+        {
+            value = default;
+            width = 0;
+            if (position < 0 || position >= _scanLength)
+            {
+                return false;
+            }
+
+            char first = _source[position];
+            if (!char.IsSurrogate(first))
+            {
+                value = new Rune(first);
+                width = 1;
+                return true;
+            }
+
+            if (char.IsHighSurrogate(first) && position + 1 < _scanLength &&
+                Rune.TryCreate(first, _source[position + 1], out value))
+            {
+                width = 2;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsRustWhitespace(char value) => value is
+            '\u0009' or '\u000A' or '\u000B' or '\u000C' or '\u000D' or '\u0020' or
+            '\u0085' or '\u200E' or '\u200F' or '\u2028' or '\u2029';
 
         private static bool IsSimpleEscape(char value) => value is '\\' or '\'' or '"' or 'n' or 'r' or 't' or '0';
 

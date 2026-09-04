@@ -34,14 +34,16 @@ compile-fail）记录本地证据，因此对于声明的 `vertical-slice-v1` �
 冒烟证据。因此，P0-10、P0-16 和 P0-17 均为 ✅ 已完成。
 不受支持的 Rust 语法会产生带源位置的诊断，而不会被悄然赋予 C# 语义。
 
-早期 P1 前端工作也处于 🚧 进行中。无损词法分析器目前对数值、字节和 C 字面量形式提供
-有界覆盖；早期 `SafeCoreSyntax` 模型/解析器以稳定的 `RSP` 诊断处理具有代表性的
+早期 P1 前端工作也处于 🚧 进行中。无损词法分析器现在针对已声明的标识符、字面量、
+trivia、分隔符、词元树和格式错误输入诊断提供清单驱动的有界验收配置。该配置核对精确
+的词元/trivia/词元树证据以及无损源码重建，但其声明的语料并不是完整的 Rust 1.98
+词法一致性套件。早期 `SafeCoreSyntax` 模型/解析器以稳定的 `RSP` 诊断处理具有代表性的
 模块、项、语句、表达式、模式、类型、泛型和属性。有界的
 `SafeCoreNameResolution` 原型目前跨独立的类型/值命名空间收集模块、项和局部符号，
 并解析具有代表性的导入与限定路径。它的九项测试工具用例覆盖类型/值命名空间与限定
 路径、可见性、重复/歧义/未解析名称、导入环、声明顺序与合法遮蔽、拒绝通过限定路径
 访问函数局部变量/结构体字段/枚举泛型参数、Unicode 标识符规范化，以及导入嵌套
-限制。本地可执行测试工具的 73/73 项测试全部通过。有界的
+限制。本地可执行测试工具的 74/74 项测试全部通过。有界的
 `SafeCoreHirLowering` 原型目前会把成功的语法与名称解析结果转换为确定性的、名称已
 绑定的扁平 HIR arena。P1-01、P1-02 和 P1-03 仍处于 🚧 进行中，因为它们的依赖项、
 完整配置分母、多文件加载和生产编译器集成仍未完成。
@@ -91,6 +93,18 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --pr
 
 该工具在版本探测和夹具编译时都调用固定的 `rustc +1.98.0` 工具链，因此当前默认
 活动工具链不会悄然改变参照实现。
+
+清单驱动的 safe-core 词法验收配置将有界报告写入
+`artifacts/conformance/safe-core-lexing.json`：
+
+```text
+dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing
+```
+
+每个已声明夹具都必须与其精确词元、trivia、词元树、诊断、范围和源码重建结果匹配。
+Windows 与 Linux CI 还要求清单、汇总和实际执行用例的分母完全一致。这只属于
+RustSharp 词法分析器验收证据，并不构成 rustc 差分、运行时或完整 Rust 1.98 词法
+一致性证据，因此 P1-01 仍为 🚧 进行中。
 
 独立的 safe-core 语法配置通过当前包含六个用例的解析器验收清单，并写入
 `artifacts/conformance/safe-core-syntax.json`：

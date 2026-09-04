@@ -1,0 +1,6280 @@
+{
+  "profile": "safe-core-lexing",
+  "version": 1,
+  "lexer": "RustSharp.Syntax.RustLexer.Lex",
+  "denominator": 9,
+  "limits": {
+    "maximumSourceLength": 65536,
+    "maximumTokens": 4096,
+    "maximumTrivia": 4096,
+    "maximumDiagnostics": 128,
+    "maximumDelimiterDepth": 128
+  },
+  "cases": [
+    {
+      "id": "lossless-trivia",
+      "file": "safe-core-lexing-trivia.rs",
+      "expected": "lex-pass",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "keyword",
+          "text": "fn",
+          "start": 169,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ]
+        },
+        {
+          "index": 1,
+          "kind": "identifier",
+          "text": "main",
+          "start": 172,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            16
+          ]
+        },
+        {
+          "index": 2,
+          "kind": "open-delimiter",
+          "text": "(",
+          "start": 176,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 3,
+          "kind": "close-delimiter",
+          "text": ")",
+          "start": 177,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 4,
+          "kind": "open-delimiter",
+          "text": "{",
+          "start": 179,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            17
+          ]
+        },
+        {
+          "index": 5,
+          "kind": "close-delimiter",
+          "text": "}",
+          "start": 180,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 6,
+          "kind": "identifier",
+          "text": "tab",
+          "start": 194,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            18,
+            19,
+            20
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "identifier",
+          "text": "lf",
+          "start": 198,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            21
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "identifier",
+          "text": "vertical",
+          "start": 201,
+          "length": 8,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            22
+          ]
+        },
+        {
+          "index": 9,
+          "kind": "identifier",
+          "text": "form",
+          "start": 210,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            23
+          ]
+        },
+        {
+          "index": 10,
+          "kind": "identifier",
+          "text": "carriage",
+          "start": 215,
+          "length": 8,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            24
+          ]
+        },
+        {
+          "index": 11,
+          "kind": "identifier",
+          "text": "space",
+          "start": 224,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            25
+          ]
+        },
+        {
+          "index": 12,
+          "kind": "identifier",
+          "text": "next",
+          "start": 230,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            26
+          ]
+        },
+        {
+          "index": 13,
+          "kind": "identifier",
+          "text": "lrm",
+          "start": 235,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            27
+          ]
+        },
+        {
+          "index": 14,
+          "kind": "identifier",
+          "text": "rlm",
+          "start": 239,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            28
+          ]
+        },
+        {
+          "index": 15,
+          "kind": "identifier",
+          "text": "line",
+          "start": 243,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            29
+          ]
+        },
+        {
+          "index": 16,
+          "kind": "identifier",
+          "text": "paragraph",
+          "start": 248,
+          "length": 9,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            30
+          ]
+        },
+        {
+          "index": 17,
+          "kind": "identifier",
+          "text": "end",
+          "start": 258,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            31
+          ]
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "shebang",
+          "text": "#!/usr/bin/env rsc",
+          "start": 0,
+          "length": 18,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 18,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "line-comment",
+          "text": "//// ordinary line",
+          "start": 19,
+          "length": 18,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 37,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "line-comment",
+          "text": "/// outer docs",
+          "start": 38,
+          "length": 14,
+          "isDocumentation": true
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 52,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "line-comment",
+          "text": "//! inner docs",
+          "start": 53,
+          "length": 14,
+          "isDocumentation": true
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 67,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "block-comment",
+          "text": "/*** ordinary block */",
+          "start": 68,
+          "length": 22,
+          "isDocumentation": false
+        },
+        {
+          "index": 9,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 90,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 10,
+          "kind": "block-comment",
+          "text": "/** outer block docs */",
+          "start": 91,
+          "length": 23,
+          "isDocumentation": true
+        },
+        {
+          "index": 11,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 114,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 12,
+          "kind": "block-comment",
+          "text": "/*! inner block docs */",
+          "start": 115,
+          "length": 23,
+          "isDocumentation": true
+        },
+        {
+          "index": 13,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 138,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 14,
+          "kind": "block-comment",
+          "text": "/* outer /* nested */ done */",
+          "start": 139,
+          "length": 29,
+          "isDocumentation": false
+        },
+        {
+          "index": 15,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 168,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 16,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 171,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 17,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 178,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 18,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 181,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 19,
+          "kind": "line-comment",
+          "text": "// trailing",
+          "start": 182,
+          "length": 11,
+          "isDocumentation": false
+        },
+        {
+          "index": 20,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 193,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 21,
+          "kind": "whitespace",
+          "text": "\t",
+          "start": 197,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 22,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 200,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 23,
+          "kind": "whitespace",
+          "text": "\u000b",
+          "start": 209,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 24,
+          "kind": "whitespace",
+          "text": "\f",
+          "start": 214,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 25,
+          "kind": "whitespace",
+          "text": "\r",
+          "start": 223,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 26,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 229,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 27,
+          "kind": "whitespace",
+          "text": "\u0085",
+          "start": 234,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 28,
+          "kind": "whitespace",
+          "text": "‎",
+          "start": 238,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 29,
+          "kind": "whitespace",
+          "text": "‏",
+          "start": 242,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 30,
+          "kind": "whitespace",
+          "text": "\u2028",
+          "start": 247,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 31,
+          "kind": "whitespace",
+          "text": "\u2029",
+          "start": 257,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 32,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 261,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        32
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 169,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 172,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "delimited",
+          "start": 176,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": null,
+          "delimiter": "parenthesis",
+          "openTokenIndex": 2,
+          "closeTokenIndex": 3,
+          "isClosed": true
+        },
+        {
+          "path": "3",
+          "nodeKind": "delimited",
+          "start": 179,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": null,
+          "delimiter": "brace",
+          "openTokenIndex": 4,
+          "closeTokenIndex": 5,
+          "isClosed": true
+        },
+        {
+          "path": "4",
+          "nodeKind": "leaf",
+          "start": 194,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "5",
+          "nodeKind": "leaf",
+          "start": 198,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "6",
+          "nodeKind": "leaf",
+          "start": 201,
+          "length": 8,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "7",
+          "nodeKind": "leaf",
+          "start": 210,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 9,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "8",
+          "nodeKind": "leaf",
+          "start": 215,
+          "length": 8,
+          "childCount": 0,
+          "tokenIndex": 10,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "9",
+          "nodeKind": "leaf",
+          "start": 224,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 11,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "10",
+          "nodeKind": "leaf",
+          "start": 230,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 12,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "11",
+          "nodeKind": "leaf",
+          "start": 235,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 13,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "12",
+          "nodeKind": "leaf",
+          "start": 239,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 14,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "13",
+          "nodeKind": "leaf",
+          "start": 243,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 15,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "14",
+          "nodeKind": "leaf",
+          "start": 248,
+          "length": 9,
+          "childCount": 0,
+          "tokenIndex": 16,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "15",
+          "nodeKind": "leaf",
+          "start": 258,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 17,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "id": "identifiers-keywords-lifetimes",
+      "file": "safe-core-lexing-identifiers.rs",
+      "expected": "lex-pass",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "identifier",
+          "text": "plain",
+          "start": 0,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "raw-identifier",
+          "text": "r#type",
+          "start": 6,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "kind": "raw-identifier",
+          "text": "r#crate",
+          "start": 13,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 3,
+          "kind": "raw-identifier",
+          "text": "r#self",
+          "start": 21,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            2
+          ]
+        },
+        {
+          "index": 4,
+          "kind": "raw-identifier",
+          "text": "r#super",
+          "start": 28,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            3
+          ]
+        },
+        {
+          "index": 5,
+          "kind": "raw-identifier",
+          "text": "r#Self",
+          "start": 36,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            4
+          ]
+        },
+        {
+          "index": 6,
+          "kind": "raw-identifier",
+          "text": "r#_",
+          "start": 43,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            5
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "identifier",
+          "text": "pi",
+          "start": 47,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            6
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "identifier",
+          "text": "π",
+          "start": 50,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            7
+          ]
+        },
+        {
+          "index": 9,
+          "kind": "identifier",
+          "text": "café",
+          "start": 52,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            8
+          ]
+        },
+        {
+          "index": 10,
+          "kind": "identifier",
+          "text": "𐐀",
+          "start": 58,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            9
+          ]
+        },
+        {
+          "index": 11,
+          "kind": "identifier",
+          "text": "℘",
+          "start": 61,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            10
+          ]
+        },
+        {
+          "index": 12,
+          "kind": "identifier",
+          "text": "a·b",
+          "start": 63,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            11
+          ]
+        },
+        {
+          "index": 13,
+          "kind": "lifetime",
+          "text": "'static",
+          "start": 67,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            12
+          ]
+        },
+        {
+          "index": 14,
+          "kind": "lifetime",
+          "text": "'_",
+          "start": 75,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            13
+          ]
+        },
+        {
+          "index": 15,
+          "kind": "lifetime",
+          "text": "'a",
+          "start": 78,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            14
+          ]
+        },
+        {
+          "index": 16,
+          "kind": "punctuation",
+          "text": "+",
+          "start": 80,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 17,
+          "kind": "lifetime",
+          "text": "'b",
+          "start": 81,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 18,
+          "kind": "identifier",
+          "text": "_",
+          "start": 84,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            15
+          ]
+        },
+        {
+          "index": 19,
+          "kind": "keyword",
+          "text": "self",
+          "start": 86,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            16
+          ]
+        },
+        {
+          "index": 20,
+          "kind": "keyword",
+          "text": "Self",
+          "start": 91,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            17
+          ]
+        },
+        {
+          "index": 21,
+          "kind": "keyword",
+          "text": "crate",
+          "start": 96,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            18
+          ]
+        },
+        {
+          "index": 22,
+          "kind": "keyword",
+          "text": "super",
+          "start": 102,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            19
+          ]
+        },
+        {
+          "index": 23,
+          "kind": "keyword",
+          "text": "gen",
+          "start": 108,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            20
+          ]
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 5,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 12,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 20,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 27,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 35,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 42,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 46,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 49,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 51,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 9,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 57,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 10,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 60,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 11,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 62,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 12,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 66,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 13,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 74,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 14,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 77,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 15,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 83,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 16,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 85,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 17,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 90,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 18,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 95,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 19,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 101,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 20,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 107,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 21,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 111,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        21
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 6,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "leaf",
+          "start": 13,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 2,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "3",
+          "nodeKind": "leaf",
+          "start": 21,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 3,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4",
+          "nodeKind": "leaf",
+          "start": 28,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 4,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "5",
+          "nodeKind": "leaf",
+          "start": 36,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 5,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "6",
+          "nodeKind": "leaf",
+          "start": 43,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "7",
+          "nodeKind": "leaf",
+          "start": 47,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "8",
+          "nodeKind": "leaf",
+          "start": 50,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "9",
+          "nodeKind": "leaf",
+          "start": 52,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 9,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "10",
+          "nodeKind": "leaf",
+          "start": 58,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 10,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "11",
+          "nodeKind": "leaf",
+          "start": 61,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 11,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "12",
+          "nodeKind": "leaf",
+          "start": 63,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 12,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "13",
+          "nodeKind": "leaf",
+          "start": 67,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 13,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "14",
+          "nodeKind": "leaf",
+          "start": 75,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 14,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "15",
+          "nodeKind": "leaf",
+          "start": 78,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 15,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "16",
+          "nodeKind": "leaf",
+          "start": 80,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 16,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "17",
+          "nodeKind": "leaf",
+          "start": 81,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 17,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "18",
+          "nodeKind": "leaf",
+          "start": 84,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 18,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "19",
+          "nodeKind": "leaf",
+          "start": 86,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 19,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "20",
+          "nodeKind": "leaf",
+          "start": 91,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 20,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "21",
+          "nodeKind": "leaf",
+          "start": 96,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 21,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "22",
+          "nodeKind": "leaf",
+          "start": 102,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 22,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "23",
+          "nodeKind": "leaf",
+          "start": 108,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 23,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "id": "numeric-literals",
+      "file": "safe-core-lexing-numbers.rs",
+      "expected": "lex-pass",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "integer-literal",
+          "text": "0",
+          "start": 0,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "integer-literal",
+          "text": "42",
+          "start": 2,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "kind": "integer-literal",
+          "text": "1_000",
+          "start": 5,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 3,
+          "kind": "integer-literal",
+          "text": "0b1010_u8",
+          "start": 11,
+          "length": 9,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            2
+          ]
+        },
+        {
+          "index": 4,
+          "kind": "integer-literal",
+          "text": "0o755",
+          "start": 21,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            3
+          ]
+        },
+        {
+          "index": 5,
+          "kind": "integer-literal",
+          "text": "0xff_u16",
+          "start": 27,
+          "length": 8,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            4
+          ]
+        },
+        {
+          "index": 6,
+          "kind": "float-literal",
+          "text": "1.0",
+          "start": 36,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            5
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "float-literal",
+          "text": "1.25e+2",
+          "start": 40,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            6
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "float-literal",
+          "text": "2f32",
+          "start": 48,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            7
+          ]
+        },
+        {
+          "index": 9,
+          "kind": "float-literal",
+          "text": "3.0f64",
+          "start": 53,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            8
+          ]
+        },
+        {
+          "index": 10,
+          "kind": "integer-literal",
+          "text": "1",
+          "start": 60,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            9
+          ]
+        },
+        {
+          "index": 11,
+          "kind": "punctuation",
+          "text": "..",
+          "start": 61,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 12,
+          "kind": "integer-literal",
+          "text": "2",
+          "start": 63,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 13,
+          "kind": "integer-literal",
+          "text": "1",
+          "start": 65,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            10
+          ]
+        },
+        {
+          "index": 14,
+          "kind": "punctuation",
+          "text": ".",
+          "start": 66,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 15,
+          "kind": "identifier",
+          "text": "_field",
+          "start": 67,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 16,
+          "kind": "integer-literal",
+          "text": "1",
+          "start": 74,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            11
+          ]
+        },
+        {
+          "index": 17,
+          "kind": "punctuation",
+          "text": ".",
+          "start": 75,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 18,
+          "kind": "identifier",
+          "text": "e2",
+          "start": 76,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 1,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 4,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 10,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 20,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 26,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 35,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 39,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 47,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 52,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 9,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 59,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 10,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 64,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 11,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 73,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 12,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 78,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        12
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 2,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "leaf",
+          "start": 5,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 2,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "3",
+          "nodeKind": "leaf",
+          "start": 11,
+          "length": 9,
+          "childCount": 0,
+          "tokenIndex": 3,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4",
+          "nodeKind": "leaf",
+          "start": 21,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 4,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "5",
+          "nodeKind": "leaf",
+          "start": 27,
+          "length": 8,
+          "childCount": 0,
+          "tokenIndex": 5,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "6",
+          "nodeKind": "leaf",
+          "start": 36,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "7",
+          "nodeKind": "leaf",
+          "start": 40,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "8",
+          "nodeKind": "leaf",
+          "start": 48,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "9",
+          "nodeKind": "leaf",
+          "start": 53,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 9,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "10",
+          "nodeKind": "leaf",
+          "start": 60,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 10,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "11",
+          "nodeKind": "leaf",
+          "start": 61,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 11,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "12",
+          "nodeKind": "leaf",
+          "start": 63,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 12,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "13",
+          "nodeKind": "leaf",
+          "start": 65,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 13,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "14",
+          "nodeKind": "leaf",
+          "start": 66,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 14,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "15",
+          "nodeKind": "leaf",
+          "start": 67,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 15,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "16",
+          "nodeKind": "leaf",
+          "start": 74,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 16,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "17",
+          "nodeKind": "leaf",
+          "start": 75,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 17,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "18",
+          "nodeKind": "leaf",
+          "start": 76,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 18,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "id": "string-byte-c-literals",
+      "file": "safe-core-lexing-literals.rs",
+      "expected": "lex-pass",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "character-literal",
+          "text": "'a'",
+          "start": 0,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "character-literal",
+          "text": "'\\n'",
+          "start": 4,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "kind": "byte-character-literal",
+          "text": "b'A'",
+          "start": 9,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 3,
+          "kind": "byte-character-literal",
+          "text": "b'\\x41'",
+          "start": 14,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            2
+          ]
+        },
+        {
+          "index": 4,
+          "kind": "string-literal",
+          "text": "\"text\\n\"",
+          "start": 22,
+          "length": 8,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            3
+          ]
+        },
+        {
+          "index": 5,
+          "kind": "string-literal",
+          "text": "\"\\x7F\"",
+          "start": 31,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            4
+          ]
+        },
+        {
+          "index": 6,
+          "kind": "raw-string-literal",
+          "text": "r#\"raw\"#",
+          "start": 38,
+          "length": 8,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            5
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "byte-string-literal",
+          "text": "b\"bytes\"",
+          "start": 47,
+          "length": 8,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            6
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "byte-string-literal",
+          "text": "b\"\\x80\\xFF\"",
+          "start": 56,
+          "length": 11,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            7
+          ]
+        },
+        {
+          "index": 9,
+          "kind": "raw-byte-string-literal",
+          "text": "br#\"raw bytes\"#",
+          "start": 68,
+          "length": 15,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            8
+          ]
+        },
+        {
+          "index": 10,
+          "kind": "c-string-literal",
+          "text": "c\"cstr\"",
+          "start": 84,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            9
+          ]
+        },
+        {
+          "index": 11,
+          "kind": "raw-c-string-literal",
+          "text": "cr#\"raw c\"#",
+          "start": 92,
+          "length": 11,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            10
+          ]
+        },
+        {
+          "index": 12,
+          "kind": "raw-string-literal",
+          "text": "r###############################################################################################################################################################################################################################################################\"ok\"###############################################################################################################################################################################################################################################################",
+          "start": 104,
+          "length": 515,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            11
+          ]
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 3,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 8,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 13,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 21,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 30,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 37,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 46,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 55,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 67,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 9,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 83,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 10,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 91,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 11,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 103,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 12,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 619,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        12
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 4,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "leaf",
+          "start": 9,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 2,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "3",
+          "nodeKind": "leaf",
+          "start": 14,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 3,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4",
+          "nodeKind": "leaf",
+          "start": 22,
+          "length": 8,
+          "childCount": 0,
+          "tokenIndex": 4,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "5",
+          "nodeKind": "leaf",
+          "start": 31,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 5,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "6",
+          "nodeKind": "leaf",
+          "start": 38,
+          "length": 8,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "7",
+          "nodeKind": "leaf",
+          "start": 47,
+          "length": 8,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "8",
+          "nodeKind": "leaf",
+          "start": 56,
+          "length": 11,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "9",
+          "nodeKind": "leaf",
+          "start": 68,
+          "length": 15,
+          "childCount": 0,
+          "tokenIndex": 9,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "10",
+          "nodeKind": "leaf",
+          "start": 84,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 10,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "11",
+          "nodeKind": "leaf",
+          "start": 92,
+          "length": 11,
+          "childCount": 0,
+          "tokenIndex": 11,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "12",
+          "nodeKind": "leaf",
+          "start": 104,
+          "length": 515,
+          "childCount": 0,
+          "tokenIndex": 12,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "id": "punctuation-token-trees",
+      "file": "safe-core-lexing-punctuation.rs",
+      "expected": "lex-pass",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "punctuation",
+          "text": "<<=",
+          "start": 0,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "punctuation",
+          "text": ">>=",
+          "start": 4,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "kind": "punctuation",
+          "text": "..=",
+          "start": 8,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 3,
+          "kind": "punctuation",
+          "text": "...",
+          "start": 12,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            2
+          ]
+        },
+        {
+          "index": 4,
+          "kind": "punctuation",
+          "text": "=>",
+          "start": 16,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            3
+          ]
+        },
+        {
+          "index": 5,
+          "kind": "punctuation",
+          "text": "->",
+          "start": 19,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            4
+          ]
+        },
+        {
+          "index": 6,
+          "kind": "punctuation",
+          "text": "::",
+          "start": 22,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            5
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "punctuation",
+          "text": "==",
+          "start": 25,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            6
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "punctuation",
+          "text": "!=",
+          "start": 28,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            7
+          ]
+        },
+        {
+          "index": 9,
+          "kind": "punctuation",
+          "text": "<=",
+          "start": 31,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            8
+          ]
+        },
+        {
+          "index": 10,
+          "kind": "punctuation",
+          "text": ">=",
+          "start": 34,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            9
+          ]
+        },
+        {
+          "index": 11,
+          "kind": "punctuation",
+          "text": "&&",
+          "start": 37,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            10
+          ]
+        },
+        {
+          "index": 12,
+          "kind": "punctuation",
+          "text": "||",
+          "start": 40,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            11
+          ]
+        },
+        {
+          "index": 13,
+          "kind": "punctuation",
+          "text": "+=",
+          "start": 43,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            12
+          ]
+        },
+        {
+          "index": 14,
+          "kind": "punctuation",
+          "text": "-=",
+          "start": 46,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            13
+          ]
+        },
+        {
+          "index": 15,
+          "kind": "punctuation",
+          "text": "*=",
+          "start": 49,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            14
+          ]
+        },
+        {
+          "index": 16,
+          "kind": "punctuation",
+          "text": "/=",
+          "start": 52,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            15
+          ]
+        },
+        {
+          "index": 17,
+          "kind": "punctuation",
+          "text": "%=",
+          "start": 55,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            16
+          ]
+        },
+        {
+          "index": 18,
+          "kind": "punctuation",
+          "text": "^=",
+          "start": 58,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            17
+          ]
+        },
+        {
+          "index": 19,
+          "kind": "punctuation",
+          "text": "&=",
+          "start": 61,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            18
+          ]
+        },
+        {
+          "index": 20,
+          "kind": "punctuation",
+          "text": "|=",
+          "start": 64,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            19
+          ]
+        },
+        {
+          "index": 21,
+          "kind": "punctuation",
+          "text": "<<",
+          "start": 67,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            20
+          ]
+        },
+        {
+          "index": 22,
+          "kind": "punctuation",
+          "text": ">>",
+          "start": 70,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            21
+          ]
+        },
+        {
+          "index": 23,
+          "kind": "punctuation",
+          "text": "..",
+          "start": 73,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            22
+          ]
+        },
+        {
+          "index": 24,
+          "kind": "punctuation",
+          "text": "+",
+          "start": 76,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            23
+          ]
+        },
+        {
+          "index": 25,
+          "kind": "punctuation",
+          "text": "-",
+          "start": 78,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            24
+          ]
+        },
+        {
+          "index": 26,
+          "kind": "punctuation",
+          "text": "*",
+          "start": 80,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            25
+          ]
+        },
+        {
+          "index": 27,
+          "kind": "punctuation",
+          "text": "/",
+          "start": 82,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            26
+          ]
+        },
+        {
+          "index": 28,
+          "kind": "punctuation",
+          "text": "%",
+          "start": 84,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            27
+          ]
+        },
+        {
+          "index": 29,
+          "kind": "punctuation",
+          "text": "^",
+          "start": 86,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            28
+          ]
+        },
+        {
+          "index": 30,
+          "kind": "punctuation",
+          "text": "!",
+          "start": 88,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            29
+          ]
+        },
+        {
+          "index": 31,
+          "kind": "punctuation",
+          "text": "&",
+          "start": 90,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            30
+          ]
+        },
+        {
+          "index": 32,
+          "kind": "punctuation",
+          "text": "|",
+          "start": 92,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            31
+          ]
+        },
+        {
+          "index": 33,
+          "kind": "punctuation",
+          "text": "=",
+          "start": 94,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            32
+          ]
+        },
+        {
+          "index": 34,
+          "kind": "punctuation",
+          "text": "<",
+          "start": 96,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            33
+          ]
+        },
+        {
+          "index": 35,
+          "kind": "punctuation",
+          "text": ">",
+          "start": 98,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            34
+          ]
+        },
+        {
+          "index": 36,
+          "kind": "punctuation",
+          "text": "@",
+          "start": 100,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            35
+          ]
+        },
+        {
+          "index": 37,
+          "kind": "punctuation",
+          "text": "#",
+          "start": 102,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            36
+          ]
+        },
+        {
+          "index": 38,
+          "kind": "punctuation",
+          "text": "$",
+          "start": 104,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            37
+          ]
+        },
+        {
+          "index": 39,
+          "kind": "punctuation",
+          "text": "~",
+          "start": 106,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            38
+          ]
+        },
+        {
+          "index": 40,
+          "kind": "punctuation",
+          "text": "?",
+          "start": 108,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            39
+          ]
+        },
+        {
+          "index": 41,
+          "kind": "punctuation",
+          "text": ":",
+          "start": 110,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            40
+          ]
+        },
+        {
+          "index": 42,
+          "kind": "punctuation",
+          "text": ";",
+          "start": 112,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            41
+          ]
+        },
+        {
+          "index": 43,
+          "kind": "punctuation",
+          "text": ",",
+          "start": 114,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            42
+          ]
+        },
+        {
+          "index": 44,
+          "kind": "punctuation",
+          "text": ".",
+          "start": 116,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            43
+          ]
+        },
+        {
+          "index": 45,
+          "kind": "open-delimiter",
+          "text": "(",
+          "start": 118,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            44
+          ]
+        },
+        {
+          "index": 46,
+          "kind": "identifier",
+          "text": "alpha",
+          "start": 119,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 47,
+          "kind": "open-delimiter",
+          "text": "[",
+          "start": 125,
+          "length": 1,
+          "delimiter": "bracket",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            45
+          ]
+        },
+        {
+          "index": 48,
+          "kind": "identifier",
+          "text": "beta",
+          "start": 126,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 49,
+          "kind": "open-delimiter",
+          "text": "{",
+          "start": 131,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            46
+          ]
+        },
+        {
+          "index": 50,
+          "kind": "identifier",
+          "text": "gamma",
+          "start": 132,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 51,
+          "kind": "close-delimiter",
+          "text": "}",
+          "start": 137,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 52,
+          "kind": "close-delimiter",
+          "text": "]",
+          "start": 138,
+          "length": 1,
+          "delimiter": "bracket",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 53,
+          "kind": "close-delimiter",
+          "text": ")",
+          "start": 139,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 3,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 7,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 11,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 15,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 18,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 21,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 24,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 27,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 30,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 9,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 33,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 10,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 36,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 11,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 39,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 12,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 42,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 13,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 45,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 14,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 48,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 15,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 51,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 16,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 54,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 17,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 57,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 18,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 60,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 19,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 63,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 20,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 66,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 21,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 69,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 22,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 72,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 23,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 75,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 24,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 77,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 25,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 79,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 26,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 81,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 27,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 83,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 28,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 85,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 29,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 87,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 30,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 89,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 31,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 91,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 32,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 93,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 33,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 95,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 34,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 97,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 35,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 99,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 36,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 101,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 37,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 103,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 38,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 105,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 39,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 107,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 40,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 109,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 41,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 111,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 42,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 113,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 43,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 115,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 44,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 117,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 45,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 124,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 46,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 130,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 47,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 140,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        47
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 4,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "leaf",
+          "start": 8,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 2,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "3",
+          "nodeKind": "leaf",
+          "start": 12,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 3,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4",
+          "nodeKind": "leaf",
+          "start": 16,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 4,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "5",
+          "nodeKind": "leaf",
+          "start": 19,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 5,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "6",
+          "nodeKind": "leaf",
+          "start": 22,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "7",
+          "nodeKind": "leaf",
+          "start": 25,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "8",
+          "nodeKind": "leaf",
+          "start": 28,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "9",
+          "nodeKind": "leaf",
+          "start": 31,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 9,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "10",
+          "nodeKind": "leaf",
+          "start": 34,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 10,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "11",
+          "nodeKind": "leaf",
+          "start": 37,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 11,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "12",
+          "nodeKind": "leaf",
+          "start": 40,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 12,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "13",
+          "nodeKind": "leaf",
+          "start": 43,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 13,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "14",
+          "nodeKind": "leaf",
+          "start": 46,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 14,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "15",
+          "nodeKind": "leaf",
+          "start": 49,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 15,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "16",
+          "nodeKind": "leaf",
+          "start": 52,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 16,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "17",
+          "nodeKind": "leaf",
+          "start": 55,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 17,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "18",
+          "nodeKind": "leaf",
+          "start": 58,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 18,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "19",
+          "nodeKind": "leaf",
+          "start": 61,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 19,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "20",
+          "nodeKind": "leaf",
+          "start": 64,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 20,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "21",
+          "nodeKind": "leaf",
+          "start": 67,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 21,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "22",
+          "nodeKind": "leaf",
+          "start": 70,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 22,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "23",
+          "nodeKind": "leaf",
+          "start": 73,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 23,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "24",
+          "nodeKind": "leaf",
+          "start": 76,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 24,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "25",
+          "nodeKind": "leaf",
+          "start": 78,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 25,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "26",
+          "nodeKind": "leaf",
+          "start": 80,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 26,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "27",
+          "nodeKind": "leaf",
+          "start": 82,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 27,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "28",
+          "nodeKind": "leaf",
+          "start": 84,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 28,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "29",
+          "nodeKind": "leaf",
+          "start": 86,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 29,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "30",
+          "nodeKind": "leaf",
+          "start": 88,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 30,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "31",
+          "nodeKind": "leaf",
+          "start": 90,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 31,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "32",
+          "nodeKind": "leaf",
+          "start": 92,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 32,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "33",
+          "nodeKind": "leaf",
+          "start": 94,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 33,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "34",
+          "nodeKind": "leaf",
+          "start": 96,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 34,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "35",
+          "nodeKind": "leaf",
+          "start": 98,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 35,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "36",
+          "nodeKind": "leaf",
+          "start": 100,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 36,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "37",
+          "nodeKind": "leaf",
+          "start": 102,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 37,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "38",
+          "nodeKind": "leaf",
+          "start": 104,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 38,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "39",
+          "nodeKind": "leaf",
+          "start": 106,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 39,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "40",
+          "nodeKind": "leaf",
+          "start": 108,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 40,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "41",
+          "nodeKind": "leaf",
+          "start": 110,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 41,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "42",
+          "nodeKind": "leaf",
+          "start": 112,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 42,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "43",
+          "nodeKind": "leaf",
+          "start": 114,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 43,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "44",
+          "nodeKind": "leaf",
+          "start": 116,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 44,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "45",
+          "nodeKind": "delimited",
+          "start": 118,
+          "length": 22,
+          "childCount": 2,
+          "tokenIndex": null,
+          "delimiter": "parenthesis",
+          "openTokenIndex": 45,
+          "closeTokenIndex": 53,
+          "isClosed": true
+        },
+        {
+          "path": "45/0",
+          "nodeKind": "leaf",
+          "start": 119,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 46,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "45/1",
+          "nodeKind": "delimited",
+          "start": 125,
+          "length": 14,
+          "childCount": 2,
+          "tokenIndex": null,
+          "delimiter": "bracket",
+          "openTokenIndex": 47,
+          "closeTokenIndex": 52,
+          "isClosed": true
+        },
+        {
+          "path": "45/1/0",
+          "nodeKind": "leaf",
+          "start": 126,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 48,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "45/1/1",
+          "nodeKind": "delimited",
+          "start": 131,
+          "length": 7,
+          "childCount": 1,
+          "tokenIndex": null,
+          "delimiter": "brace",
+          "openTokenIndex": 49,
+          "closeTokenIndex": 51,
+          "isClosed": true
+        },
+        {
+          "path": "45/1/1/0",
+          "nodeKind": "leaf",
+          "start": 132,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 50,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "id": "invalid-numbers",
+      "file": "safe-core-lexing-invalid-numbers.rs",
+      "expected": "lex-fail",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "integer-literal",
+          "text": "0x_",
+          "start": 0,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "integer-literal",
+          "text": "0b__",
+          "start": 4,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "kind": "float-literal",
+          "text": "1e_",
+          "start": 9,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 3,
+          "kind": "float-literal",
+          "text": "1.0u8",
+          "start": 13,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            2
+          ]
+        },
+        {
+          "index": 4,
+          "kind": "float-literal",
+          "text": "1e2u8",
+          "start": 19,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            3
+          ]
+        },
+        {
+          "index": 5,
+          "kind": "integer-literal",
+          "text": "0b1f32",
+          "start": 25,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            4
+          ]
+        },
+        {
+          "index": 6,
+          "kind": "integer-literal",
+          "text": "0XFF",
+          "start": 32,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            5
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "integer-literal",
+          "text": "0O77",
+          "start": 37,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            6
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "integer-literal",
+          "text": "0B11",
+          "start": 42,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            7
+          ]
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 3,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 8,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 12,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 18,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 24,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 31,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 36,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 41,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 46,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        8
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 4,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "leaf",
+          "start": 9,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 2,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "3",
+          "nodeKind": "leaf",
+          "start": 13,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 3,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4",
+          "nodeKind": "leaf",
+          "start": 19,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 4,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "5",
+          "nodeKind": "leaf",
+          "start": 25,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 5,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "6",
+          "nodeKind": "leaf",
+          "start": 32,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "7",
+          "nodeKind": "leaf",
+          "start": 37,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "8",
+          "nodeKind": "leaf",
+          "start": 42,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 0,
+          "length": 3
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 4,
+          "length": 4
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 9,
+          "length": 3
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 13,
+          "length": 5
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 19,
+          "length": 5
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 25,
+          "length": 6
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 32,
+          "length": 4
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 37,
+          "length": 4
+        },
+        {
+          "code": "RSL1007",
+          "message": "Numeric literal contains an invalid digit or suffix.",
+          "start": 42,
+          "length": 4
+        }
+      ]
+    },
+    {
+      "id": "invalid-literals",
+      "file": "safe-core-lexing-invalid-literals.rs",
+      "expected": "lex-fail",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "byte-string-literal",
+          "text": "b\"é\"",
+          "start": 0,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "byte-string-literal",
+          "text": "b\"😀\"",
+          "start": 5,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "kind": "raw-byte-string-literal",
+          "text": "br\"😀\"",
+          "start": 11,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 3,
+          "kind": "c-string-literal",
+          "text": "c\"\\0\"",
+          "start": 18,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            2
+          ]
+        },
+        {
+          "index": 4,
+          "kind": "string-literal",
+          "text": "\"bad\\q\"",
+          "start": 24,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            3
+          ]
+        },
+        {
+          "index": 5,
+          "kind": "string-literal",
+          "text": "\"\\x80\"",
+          "start": 32,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            4
+          ]
+        },
+        {
+          "index": 6,
+          "kind": "string-literal",
+          "text": "\"\\xFF\"",
+          "start": 39,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            5
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "byte-character-literal",
+          "text": "b'ab'",
+          "start": 46,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            6
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "string-literal",
+          "text": "\"a\rb\"",
+          "start": 52,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            7
+          ]
+        },
+        {
+          "index": 9,
+          "kind": "byte-string-literal",
+          "text": "b\"a\rb\"",
+          "start": 58,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            8
+          ]
+        },
+        {
+          "index": 10,
+          "kind": "c-string-literal",
+          "text": "c\"a\rb\"",
+          "start": 65,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            9
+          ]
+        },
+        {
+          "index": 11,
+          "kind": "raw-string-literal",
+          "text": "r\"a\rb\"",
+          "start": 72,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            10
+          ]
+        },
+        {
+          "index": 12,
+          "kind": "raw-byte-string-literal",
+          "text": "br\"a\rb\"",
+          "start": 79,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            11
+          ]
+        },
+        {
+          "index": 13,
+          "kind": "raw-c-string-literal",
+          "text": "cr\"a\rb\"",
+          "start": 87,
+          "length": 7,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            12
+          ]
+        },
+        {
+          "index": 14,
+          "kind": "character-literal",
+          "text": "'\t'",
+          "start": 95,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            13
+          ]
+        },
+        {
+          "index": 15,
+          "kind": "byte-character-literal",
+          "text": "b'\t'",
+          "start": 99,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            14
+          ]
+        },
+        {
+          "index": 16,
+          "kind": "raw-string-literal",
+          "text": "r################################################################################################################################################################################################################################################################\"overflow\"################################################################################################################################################################################################################################################################",
+          "start": 104,
+          "length": 523,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            15
+          ]
+        },
+        {
+          "index": 17,
+          "kind": "raw-string-literal",
+          "text": "r#\"unterminated\n",
+          "start": 628,
+          "length": 16,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            16
+          ]
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 4,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 10,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 17,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 23,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 31,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 38,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 45,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 51,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 57,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 9,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 64,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 10,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 71,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 11,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 78,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 12,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 86,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 13,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 94,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 14,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 98,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 15,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 103,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 16,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 627,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 5,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "leaf",
+          "start": 11,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 2,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "3",
+          "nodeKind": "leaf",
+          "start": 18,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 3,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4",
+          "nodeKind": "leaf",
+          "start": 24,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 4,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "5",
+          "nodeKind": "leaf",
+          "start": 32,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 5,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "6",
+          "nodeKind": "leaf",
+          "start": 39,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "7",
+          "nodeKind": "leaf",
+          "start": 46,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "8",
+          "nodeKind": "leaf",
+          "start": 52,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "9",
+          "nodeKind": "leaf",
+          "start": 58,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 9,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "10",
+          "nodeKind": "leaf",
+          "start": 65,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 10,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "11",
+          "nodeKind": "leaf",
+          "start": 72,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 11,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "12",
+          "nodeKind": "leaf",
+          "start": 79,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 12,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "13",
+          "nodeKind": "leaf",
+          "start": 87,
+          "length": 7,
+          "childCount": 0,
+          "tokenIndex": 13,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "14",
+          "nodeKind": "leaf",
+          "start": 95,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 14,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "15",
+          "nodeKind": "leaf",
+          "start": 99,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 15,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "16",
+          "nodeKind": "leaf",
+          "start": 104,
+          "length": 523,
+          "childCount": 0,
+          "tokenIndex": 16,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "17",
+          "nodeKind": "leaf",
+          "start": 628,
+          "length": 16,
+          "childCount": 0,
+          "tokenIndex": 17,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "RSL1008",
+          "message": "Byte literals must contain ASCII text.",
+          "start": 2,
+          "length": 1
+        },
+        {
+          "code": "RSL1008",
+          "message": "Byte literals must contain ASCII text.",
+          "start": 7,
+          "length": 2
+        },
+        {
+          "code": "RSL1008",
+          "message": "Raw byte string literals must contain ASCII text.",
+          "start": 14,
+          "length": 2
+        },
+        {
+          "code": "RSL1008",
+          "message": "C string literals must not contain NUL characters.",
+          "start": 20,
+          "length": 2
+        },
+        {
+          "code": "RSL1008",
+          "message": "Unknown escape '\\q'.",
+          "start": 28,
+          "length": 2
+        },
+        {
+          "code": "RSL1008",
+          "message": "Hex escapes in string and character literals must be in the ASCII range \\x00..\\x7F.",
+          "start": 33,
+          "length": 4
+        },
+        {
+          "code": "RSL1008",
+          "message": "Hex escapes in string and character literals must be in the ASCII range \\x00..\\x7F.",
+          "start": 40,
+          "length": 4
+        },
+        {
+          "code": "RSL1008",
+          "message": "Character literal must contain exactly one character or escape.",
+          "start": 46,
+          "length": 5
+        },
+        {
+          "code": "RSL1008",
+          "message": "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+          "start": 54,
+          "length": 1
+        },
+        {
+          "code": "RSL1008",
+          "message": "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+          "start": 61,
+          "length": 1
+        },
+        {
+          "code": "RSL1008",
+          "message": "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+          "start": 68,
+          "length": 1
+        },
+        {
+          "code": "RSL1008",
+          "message": "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+          "start": 75,
+          "length": 1
+        },
+        {
+          "code": "RSL1008",
+          "message": "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+          "start": 83,
+          "length": 1
+        },
+        {
+          "code": "RSL1008",
+          "message": "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+          "start": 91,
+          "length": 1
+        },
+        {
+          "code": "RSL1008",
+          "message": "Character literal must contain exactly one character or escape.",
+          "start": 95,
+          "length": 3
+        },
+        {
+          "code": "RSL1008",
+          "message": "Character literal must contain exactly one character or escape.",
+          "start": 99,
+          "length": 4
+        },
+        {
+          "code": "RSL1008",
+          "message": "Raw string literals may use at most 255 delimiter hashes.",
+          "start": 105,
+          "length": 256
+        },
+        {
+          "code": "RSL1005",
+          "message": "Raw string literal is not terminated.",
+          "start": 628,
+          "length": 16
+        }
+      ]
+    },
+    {
+      "id": "delimiter-comment-errors",
+      "file": "safe-core-lexing-invalid-groups.rs",
+      "expected": "lex-fail",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "close-delimiter",
+          "text": ")",
+          "start": 0,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "close-delimiter",
+          "text": "]",
+          "start": 1,
+          "length": 1,
+          "delimiter": "bracket",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 2,
+          "kind": "open-delimiter",
+          "text": "(",
+          "start": 3,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 3,
+          "kind": "open-delimiter",
+          "text": "[",
+          "start": 4,
+          "length": 1,
+          "delimiter": "bracket",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 4,
+          "kind": "close-delimiter",
+          "text": ")",
+          "start": 5,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 5,
+          "kind": "close-delimiter",
+          "text": "]",
+          "start": 6,
+          "length": 1,
+          "delimiter": "bracket",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 6,
+          "kind": "open-delimiter",
+          "text": "(",
+          "start": 8,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "open-delimiter",
+          "text": "{",
+          "start": 9,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 8,
+          "kind": "close-delimiter",
+          "text": "}",
+          "start": 10,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 9,
+          "kind": "close-delimiter",
+          "text": ")",
+          "start": 11,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 2,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 7,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 12,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "block-comment",
+          "text": "/* outer /* nested */\n",
+          "start": 13,
+          "length": 22,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        2,
+        3
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 1,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "delimited",
+          "start": 3,
+          "length": 32,
+          "childCount": 2,
+          "tokenIndex": null,
+          "delimiter": "parenthesis",
+          "openTokenIndex": 2,
+          "closeTokenIndex": null,
+          "isClosed": false
+        },
+        {
+          "path": "2/0",
+          "nodeKind": "delimited",
+          "start": 4,
+          "length": 3,
+          "childCount": 1,
+          "tokenIndex": null,
+          "delimiter": "bracket",
+          "openTokenIndex": 3,
+          "closeTokenIndex": 5,
+          "isClosed": true
+        },
+        {
+          "path": "2/0/0",
+          "nodeKind": "leaf",
+          "start": 5,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 4,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2/1",
+          "nodeKind": "delimited",
+          "start": 8,
+          "length": 4,
+          "childCount": 1,
+          "tokenIndex": null,
+          "delimiter": "parenthesis",
+          "openTokenIndex": 6,
+          "closeTokenIndex": 9,
+          "isClosed": true
+        },
+        {
+          "path": "2/1/0",
+          "nodeKind": "delimited",
+          "start": 9,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": null,
+          "delimiter": "brace",
+          "openTokenIndex": 7,
+          "closeTokenIndex": 8,
+          "isClosed": true
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "RSL1002",
+          "message": "Closing delimiter has no matching opening delimiter.",
+          "start": 0,
+          "length": 1
+        },
+        {
+          "code": "RSL1002",
+          "message": "Closing delimiter has no matching opening delimiter.",
+          "start": 1,
+          "length": 1
+        },
+        {
+          "code": "RSL1004",
+          "message": "Closing delimiter does not match the innermost opening delimiter.",
+          "start": 5,
+          "length": 1
+        },
+        {
+          "code": "RSL1006",
+          "message": "Block comment is not terminated.",
+          "start": 13,
+          "length": 22
+        },
+        {
+          "code": "RSL1003",
+          "message": "Opening delimiter is not terminated.",
+          "start": 3,
+          "length": 32
+        }
+      ]
+    },
+    {
+      "id": "invalid-characters",
+      "file": "safe-core-lexing-invalid-characters.rs",
+      "expected": "lex-fail",
+      "tokens": [
+        {
+          "index": 0,
+          "kind": "keyword",
+          "text": "fn",
+          "start": 0,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 1,
+          "kind": "unknown",
+          "text": " ",
+          "start": 2,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 2,
+          "kind": "identifier",
+          "text": "main",
+          "start": 3,
+          "length": 4,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 3,
+          "kind": "open-delimiter",
+          "text": "(",
+          "start": 7,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 4,
+          "kind": "close-delimiter",
+          "text": ")",
+          "start": 8,
+          "length": 1,
+          "delimiter": "parenthesis",
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 5,
+          "kind": "open-delimiter",
+          "text": "{",
+          "start": 10,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            0
+          ]
+        },
+        {
+          "index": 6,
+          "kind": "keyword",
+          "text": "let",
+          "start": 12,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            1
+          ]
+        },
+        {
+          "index": 7,
+          "kind": "identifier",
+          "text": "value",
+          "start": 16,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            2
+          ]
+        },
+        {
+          "index": 8,
+          "kind": "punctuation",
+          "text": "=",
+          "start": 22,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            3
+          ]
+        },
+        {
+          "index": 9,
+          "kind": "unknown",
+          "text": "§",
+          "start": 24,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            4
+          ]
+        },
+        {
+          "index": 10,
+          "kind": "punctuation",
+          "text": ";",
+          "start": 25,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 11,
+          "kind": "keyword",
+          "text": "let",
+          "start": 27,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            5
+          ]
+        },
+        {
+          "index": 12,
+          "kind": "identifier",
+          "text": "digits",
+          "start": 31,
+          "length": 6,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            6
+          ]
+        },
+        {
+          "index": 13,
+          "kind": "punctuation",
+          "text": "=",
+          "start": 38,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            7
+          ]
+        },
+        {
+          "index": 14,
+          "kind": "unknown",
+          "text": "١",
+          "start": 40,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            8
+          ]
+        },
+        {
+          "index": 15,
+          "kind": "unknown",
+          "text": "٢",
+          "start": 41,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 16,
+          "kind": "unknown",
+          "text": "٣",
+          "start": 42,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 17,
+          "kind": "punctuation",
+          "text": ";",
+          "start": 43,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 18,
+          "kind": "keyword",
+          "text": "let",
+          "start": 45,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            9
+          ]
+        },
+        {
+          "index": 19,
+          "kind": "identifier",
+          "text": "excluded",
+          "start": 49,
+          "length": 8,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            10
+          ]
+        },
+        {
+          "index": 20,
+          "kind": "punctuation",
+          "text": "=",
+          "start": 58,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            11
+          ]
+        },
+        {
+          "index": 21,
+          "kind": "unknown",
+          "text": "ͺ",
+          "start": 60,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            12
+          ]
+        },
+        {
+          "index": 22,
+          "kind": "punctuation",
+          "text": ";",
+          "start": 61,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 23,
+          "kind": "keyword",
+          "text": "let",
+          "start": 63,
+          "length": 3,
+          "delimiter": null,
+          "isKeyword": true,
+          "leadingTriviaIndices": [
+            13
+          ]
+        },
+        {
+          "index": 24,
+          "kind": "identifier",
+          "text": "emoji",
+          "start": 67,
+          "length": 5,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            14
+          ]
+        },
+        {
+          "index": 25,
+          "kind": "punctuation",
+          "text": "=",
+          "start": 73,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            15
+          ]
+        },
+        {
+          "index": 26,
+          "kind": "unknown",
+          "text": "😀",
+          "start": 75,
+          "length": 2,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            16
+          ]
+        },
+        {
+          "index": 27,
+          "kind": "punctuation",
+          "text": ";",
+          "start": 77,
+          "length": 1,
+          "delimiter": null,
+          "isKeyword": false,
+          "leadingTriviaIndices": []
+        },
+        {
+          "index": 28,
+          "kind": "close-delimiter",
+          "text": "}",
+          "start": 79,
+          "length": 1,
+          "delimiter": "brace",
+          "isKeyword": false,
+          "leadingTriviaIndices": [
+            17
+          ]
+        }
+      ],
+      "trivia": [
+        {
+          "index": 0,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 9,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 1,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 11,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 2,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 15,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 3,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 21,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 4,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 23,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 5,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 26,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 6,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 30,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 7,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 37,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 8,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 39,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 9,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 44,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 10,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 48,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 11,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 57,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 12,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 59,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 13,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 62,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 14,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 66,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 15,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 72,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 16,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 74,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 17,
+          "kind": "whitespace",
+          "text": " ",
+          "start": 78,
+          "length": 1,
+          "isDocumentation": false
+        },
+        {
+          "index": 18,
+          "kind": "whitespace",
+          "text": "\n",
+          "start": 80,
+          "length": 1,
+          "isDocumentation": false
+        }
+      ],
+      "trailingTriviaIndices": [
+        18
+      ],
+      "trees": [
+        {
+          "path": "0",
+          "nodeKind": "leaf",
+          "start": 0,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 0,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "1",
+          "nodeKind": "leaf",
+          "start": 2,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 1,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "2",
+          "nodeKind": "leaf",
+          "start": 3,
+          "length": 4,
+          "childCount": 0,
+          "tokenIndex": 2,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "3",
+          "nodeKind": "delimited",
+          "start": 7,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": null,
+          "delimiter": "parenthesis",
+          "openTokenIndex": 3,
+          "closeTokenIndex": 4,
+          "isClosed": true
+        },
+        {
+          "path": "4",
+          "nodeKind": "delimited",
+          "start": 10,
+          "length": 70,
+          "childCount": 22,
+          "tokenIndex": null,
+          "delimiter": "brace",
+          "openTokenIndex": 5,
+          "closeTokenIndex": 28,
+          "isClosed": true
+        },
+        {
+          "path": "4/0",
+          "nodeKind": "leaf",
+          "start": 12,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 6,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/1",
+          "nodeKind": "leaf",
+          "start": 16,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 7,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/2",
+          "nodeKind": "leaf",
+          "start": 22,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 8,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/3",
+          "nodeKind": "leaf",
+          "start": 24,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 9,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/4",
+          "nodeKind": "leaf",
+          "start": 25,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 10,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/5",
+          "nodeKind": "leaf",
+          "start": 27,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 11,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/6",
+          "nodeKind": "leaf",
+          "start": 31,
+          "length": 6,
+          "childCount": 0,
+          "tokenIndex": 12,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/7",
+          "nodeKind": "leaf",
+          "start": 38,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 13,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/8",
+          "nodeKind": "leaf",
+          "start": 40,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 14,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/9",
+          "nodeKind": "leaf",
+          "start": 41,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 15,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/10",
+          "nodeKind": "leaf",
+          "start": 42,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 16,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/11",
+          "nodeKind": "leaf",
+          "start": 43,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 17,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/12",
+          "nodeKind": "leaf",
+          "start": 45,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 18,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/13",
+          "nodeKind": "leaf",
+          "start": 49,
+          "length": 8,
+          "childCount": 0,
+          "tokenIndex": 19,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/14",
+          "nodeKind": "leaf",
+          "start": 58,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 20,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/15",
+          "nodeKind": "leaf",
+          "start": 60,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 21,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/16",
+          "nodeKind": "leaf",
+          "start": 61,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 22,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/17",
+          "nodeKind": "leaf",
+          "start": 63,
+          "length": 3,
+          "childCount": 0,
+          "tokenIndex": 23,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/18",
+          "nodeKind": "leaf",
+          "start": 67,
+          "length": 5,
+          "childCount": 0,
+          "tokenIndex": 24,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/19",
+          "nodeKind": "leaf",
+          "start": 73,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 25,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/20",
+          "nodeKind": "leaf",
+          "start": 75,
+          "length": 2,
+          "childCount": 0,
+          "tokenIndex": 26,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        },
+        {
+          "path": "4/21",
+          "nodeKind": "leaf",
+          "start": 77,
+          "length": 1,
+          "childCount": 0,
+          "tokenIndex": 27,
+          "delimiter": null,
+          "openTokenIndex": null,
+          "closeTokenIndex": null,
+          "isClosed": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "RSL1001",
+          "message": "Unknown character U+00A0.",
+          "start": 2,
+          "length": 1
+        },
+        {
+          "code": "RSL1001",
+          "message": "Unknown character U+00A7.",
+          "start": 24,
+          "length": 1
+        },
+        {
+          "code": "RSL1001",
+          "message": "Unknown character U+0661.",
+          "start": 40,
+          "length": 1
+        },
+        {
+          "code": "RSL1001",
+          "message": "Unknown character U+0662.",
+          "start": 41,
+          "length": 1
+        },
+        {
+          "code": "RSL1001",
+          "message": "Unknown character U+0663.",
+          "start": 42,
+          "length": 1
+        },
+        {
+          "code": "RSL1001",
+          "message": "Unknown character U+037A.",
+          "start": 60,
+          "length": 1
+        },
+        {
+          "code": "RSL1001",
+          "message": "Unknown character U+1F600.",
+          "start": 75,
+          "length": 2
+        }
+      ]
+    }
+  ]
+}

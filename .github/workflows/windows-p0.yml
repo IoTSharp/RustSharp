@@ -114,6 +114,120 @@ jobs:
           if ($reportStatus -ne 'passed') {
             throw "Conformance harness returned exit code 0 with status '$reportStatus'."
           }
+      - name: Run safe-core lexing corpus
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reportPath = Join-Path $PWD 'artifacts/conformance/safe-core-lexing.json'
+          & dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-lexing
+          $harnessExitCode = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+            throw "Safe-core lexing harness did not write '$reportPath'."
+          }
+          if ($harnessExitCode -ne 0) {
+            exit $harnessExitCode
+          }
+          $report = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
+          if ($report.PSObject.Properties.Match('SchemaVersion').Count -ne 1 -or
+              $report.PSObject.Properties.Match('Cases').Count -ne 1 -or
+              $report.PSObject.Properties.Match('HarnessError').Count -ne 1 -or
+              $report.Scope.PSObject.Properties.Match('RustcConformance').Count -ne 1 -or
+              $report.Scope.PSObject.Properties.Match('RuntimeConformance').Count -ne 1 -or
+              $report.Scope.PSObject.Properties.Match('Statement').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Validated').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Path').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Sha256').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Version').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Lexer').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Denominator').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('CaseCount').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Error').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('Status').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('Denominator').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('Executed').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('Passed').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('Failed').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('Errors').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('Skipped').Count -ne 1 -or
+              $report.Summary.PSObject.Properties.Match('ExitCode').Count -ne 1 -or
+              $report.Execution.PSObject.Properties.Match('DeadlineExpired').Count -ne 1) {
+            throw 'Safe-core lexing evidence scope or manifest metadata is missing.'
+          }
+          if ($report.SchemaVersion -isnot [long] -or
+              $report.Manifest.Version -isnot [long] -or
+              $report.Manifest.Denominator -isnot [long] -or
+              $report.Manifest.CaseCount -isnot [long] -or
+              $report.Summary.Denominator -isnot [long] -or
+              $report.Summary.Executed -isnot [long] -or
+              $report.Summary.Passed -isnot [long] -or
+              $report.Summary.Failed -isnot [long] -or
+              $report.Summary.Errors -isnot [long] -or
+              $report.Summary.Skipped -isnot [long] -or
+              $report.Summary.ExitCode -isnot [long]) {
+            throw 'Safe-core lexing evidence integer metadata is missing or is not a JSON integer.'
+          }
+          if ($report.Scope.RustcConformance -isnot [bool] -or
+              $report.Scope.RuntimeConformance -isnot [bool] -or
+              $report.Manifest.Validated -isnot [bool] -or
+              $report.Execution.DeadlineExpired -isnot [bool]) {
+            throw 'Safe-core lexing evidence boolean metadata is missing or is not a JSON boolean.'
+          }
+          $expectedDenominator = 9
+          $expectedManifestSha256 = '63AE433CA9B965922BC32BEEF17E9DF1A8C532841266F1EEDCB04A75F8749648'
+          $denominator = $report.Summary.Denominator
+          $invalidCases = @($report.Cases | Where-Object {
+            $_.PSObject.Properties.Match('Status').Count -ne 1 -or
+            $_.PSObject.Properties.Match('LexerInvoked').Count -ne 1 -or
+            $_.PSObject.Properties.Match('ExpectationsMatched').Count -ne 1 -or
+            $_.PSObject.Properties.Match('IsTruncated').Count -ne 1 -or
+            $_.PSObject.Properties.Match('SourceRoundTrips').Count -ne 1 -or
+            $_.PSObject.Properties.Match('LexicalCoverageExact').Count -ne 1 -or
+            $_.PSObject.Properties.Match('SpansExact').Count -ne 1 -or
+            $_.LexerInvoked -isnot [bool] -or
+            $_.ExpectationsMatched -isnot [bool] -or
+            $_.IsTruncated -isnot [bool] -or
+            $_.SourceRoundTrips -isnot [bool] -or
+            $_.LexicalCoverageExact -isnot [bool] -or
+            $_.SpansExact -isnot [bool] -or
+            [string]::IsNullOrWhiteSpace([string] $_.Id) -or
+            [string]::IsNullOrWhiteSpace([string] $_.Source) -or
+            [string]::IsNullOrWhiteSpace([string] $_.SourceSha256) -or
+            [string] $_.Status -ne 'passed' -or
+            $_.LexerInvoked -ne $true -or
+            $_.ExpectationsMatched -ne $true -or
+            $_.IsTruncated -ne $false -or
+            $_.SourceRoundTrips -ne $true -or
+            $_.LexicalCoverageExact -ne $true -or
+            $_.SpansExact -ne $true
+          })
+          if ($report.SchemaVersion -ne 1 -or
+              [string] $report.Profile -ne 'safe-core-lexing' -or
+              [string] $report.EvidenceKind -ne 'lexer-acceptance' -or
+              [string] $report.Summary.Status -ne 'passed' -or
+              $denominator -ne $expectedDenominator -or
+              $report.Summary.Executed -ne $denominator -or
+              $report.Summary.Passed -ne $denominator -or
+              $report.Summary.Failed -ne 0 -or
+              $report.Summary.Errors -ne 0 -or
+              $report.Summary.Skipped -ne 0 -or
+              $report.Summary.ExitCode -ne 0 -or
+              $report.Scope.RustcConformance -ne $false -or
+              $report.Scope.RuntimeConformance -ne $false -or
+              [string] $report.Scope.Statement -ne 'This report measures only RustSharp safe-core lexer acceptance; it is not rustc differential or runtime conformance evidence.' -or
+              $report.Manifest.Validated -ne $true -or
+              [string] $report.Manifest.Path -ne 'tools/RustSharp.Conformance/fixtures/safe-core-lexing-manifest.json' -or
+              [string] $report.Manifest.Sha256 -ne $expectedManifestSha256 -or
+              $report.Manifest.Version -ne 1 -or
+              [string] $report.Manifest.Lexer -ne 'RustSharp.Syntax.RustLexer.Lex' -or
+              $report.Manifest.Denominator -ne $denominator -or
+              $report.Manifest.CaseCount -ne $denominator -or
+              @($report.Cases).Count -ne $denominator -or
+              $invalidCases.Count -ne 0 -or
+              $report.Execution.DeadlineExpired -ne $false -or
+              -not [string]::IsNullOrWhiteSpace([string] $report.Manifest.Error) -or
+              -not [string]::IsNullOrWhiteSpace([string] $report.HarnessError)) {
+            throw 'Safe-core lexing harness returned success without complete manifest-driven lexer-acceptance evidence.'
+          }
       - name: Run safe-core syntax corpus
         shell: pwsh
         run: |

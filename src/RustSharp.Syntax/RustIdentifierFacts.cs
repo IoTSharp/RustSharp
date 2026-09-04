@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 
 namespace RustSharp.Syntax;
@@ -7,27 +6,22 @@ internal static class RustIdentifierFacts
 {
     public static bool IsIdentifierStart(char value)
     {
-        if (value == '_')
-        {
-            return true;
-        }
+        return !char.IsSurrogate(value) && IsIdentifierStart(new Rune(value));
+    }
 
-        UnicodeCategory category = char.GetUnicodeCategory(value);
-        return category is UnicodeCategory.UppercaseLetter or UnicodeCategory.LowercaseLetter or
-            UnicodeCategory.TitlecaseLetter or UnicodeCategory.ModifierLetter or
-            UnicodeCategory.OtherLetter or UnicodeCategory.LetterNumber;
+    public static bool IsIdentifierStart(Rune value)
+    {
+        return value.Value == '_' || RustUnicodeIdentifierTables.IsXidStart(value.Value);
     }
 
     public static bool IsIdentifierContinue(char value)
     {
-        if (IsIdentifierStart(value) || char.IsDigit(value))
-        {
-            return true;
-        }
+        return !char.IsSurrogate(value) && IsIdentifierContinue(new Rune(value));
+    }
 
-        UnicodeCategory category = char.GetUnicodeCategory(value);
-        return category is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or
-            UnicodeCategory.ConnectorPunctuation;
+    public static bool IsIdentifierContinue(Rune value)
+    {
+        return RustUnicodeIdentifierTables.IsXidContinue(value.Value);
     }
 
     public static string Canonicalize(string identifier)
@@ -39,5 +33,5 @@ internal static class RustIdentifierFacts
     }
 
     public static bool IsForbiddenRawIdentifier(string identifier) =>
-        identifier is "r#crate" or "r#self" or "r#super" or "r#Self";
+        identifier is "r#crate" or "r#self" or "r#super" or "r#Self" or "r#_";
 }
