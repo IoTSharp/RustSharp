@@ -617,7 +617,7 @@ public static class RustLexer
                     {
                         int escapeStart = _position - 1;
                         int scalar;
-                        bool validUnicodeEscape = ConsumeUnicodeEscape(ref invalid, out scalar);
+                        bool validUnicodeEscape = ConsumeUnicodeEscape(quote, ref invalid, out scalar);
                         if (byteLiteral)
                         {
                             invalid = true;
@@ -788,7 +788,7 @@ public static class RustLexer
             return CreateToken(kind, start, _position, false, null);
         }
 
-        private bool ConsumeUnicodeEscape(ref bool invalid, out int scalar)
+        private bool ConsumeUnicodeEscape(char literalQuote, ref bool invalid, out int scalar)
         {
             int escapeStart = _position - 1;
             _position += 2;
@@ -811,12 +811,14 @@ public static class RustLexer
                         "Unicode escape must contain one to six hexadecimal digits.",
                         escapeStart,
                         Math.Max(1, _position - escapeStart));
-                    while (_position < _scanLength && _source[_position] != '}')
+                    while (_position < _scanLength &&
+                        _source[_position] != '}' &&
+                        _source[_position] != literalQuote)
                     {
                         _position++;
                     }
 
-                    if (_position < _scanLength)
+                    if (_position < _scanLength && _source[_position] == '}')
                     {
                         _position++;
                     }

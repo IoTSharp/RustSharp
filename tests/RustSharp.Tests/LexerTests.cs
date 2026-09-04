@@ -283,6 +283,44 @@ internal static class LexerTests
                 .SequenceEqual(OutOfRangeHexEscapeTexts),
             "Out-of-range hex diagnostics must cover the complete escape.");
 
+        const string missingUnicodeEscapeBraceMessage =
+            "Unicode escape must contain one to six hexadecimal digits.";
+        var missingUnicodeEscapeBraceCases = new[]
+        {
+            (Source: "\"\\u{41\" let x = 1;", LiteralText: "\"\\u{41\"", Kind: RustTokenKind.StringLiteral, EscapeStart: 1, DiagnosticCount: 1),
+            (Source: "'\\u{41' let x = 1;", LiteralText: "'\\u{41'", Kind: RustTokenKind.CharacterLiteral, EscapeStart: 1, DiagnosticCount: 2),
+            (Source: "c\"\\u{41\" let x = 1;", LiteralText: "c\"\\u{41\"", Kind: RustTokenKind.CStringLiteral, EscapeStart: 2, DiagnosticCount: 1),
+            (Source: "b\"\\u{41\" let x = 1;", LiteralText: "b\"\\u{41\"", Kind: RustTokenKind.ByteStringLiteral, EscapeStart: 2, DiagnosticCount: 2),
+            (Source: "b'\\u{41' let x = 1;", LiteralText: "b'\\u{41'", Kind: RustTokenKind.ByteCharacterLiteral, EscapeStart: 2, DiagnosticCount: 3),
+        };
+        string[] expectedRecoveredTokenTexts = ["let", "x", "=", "1", ";"];
+        foreach (var recoveryCase in missingUnicodeEscapeBraceCases)
+        {
+            RustLexResult recovery = RustLexer.Lex(recoveryCase.Source);
+            AssertEx.Equal(recoveryCase.Source, recovery.ToSourceText());
+            AssertEx.Equal(recoveryCase.DiagnosticCount, recovery.Diagnostics.Count);
+            AssertEx.True(
+                recovery.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidLiteral),
+                "A missing Unicode escape brace must produce only stable invalid-literal diagnostics.");
+
+            Diagnostic unicodeEscapeDiagnostic = recovery.Diagnostics.Single(diagnostic =>
+                diagnostic.Span.Start == recoveryCase.EscapeStart &&
+                diagnostic.Span.Length == 5 &&
+                diagnostic.Message == missingUnicodeEscapeBraceMessage);
+            AssertEx.Equal("\\u{41", recovery.GetText(unicodeEscapeDiagnostic.Span));
+            AssertEx.Equal(missingUnicodeEscapeBraceMessage, unicodeEscapeDiagnostic.Message);
+
+            RustToken literal = recovery.Tokens[0];
+            AssertEx.Equal(recoveryCase.Kind, literal.Kind);
+            AssertEx.Equal(recoveryCase.LiteralText, literal.Text);
+            AssertEx.Equal(0, literal.Span.Start);
+            AssertEx.Equal(recoveryCase.LiteralText.Length, literal.Span.Length);
+            AssertEx.True(
+                recovery.Tokens.Skip(1).Select(token => token.Text).SequenceEqual(expectedRecoveredTokenTexts),
+                "A malformed Unicode escape must not consume the closing quote or following tokens.");
+            AssertEx.Equal(recoveryCase.LiteralText.Length + 1, recovery.Tokens[1].Span.Start);
+        }
+
         RustLexResult supplementaryByteText = RustLexer.Lex("b\"\U0001F600\" br\"\U0001F600\"");
         AssertEx.Equal(2, supplementaryByteText.Diagnostics.Count);
         AssertEx.True(
