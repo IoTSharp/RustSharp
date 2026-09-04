@@ -19,6 +19,27 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.400
+      - name: Install SQLite
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & choco install sqlite --version=3.53.4 --yes --no-progress
+          $chocoExitCode = $LASTEXITCODE
+          if ($chocoExitCode -ne 0) {
+            throw "Chocolatey failed to install SQLite with exit code $chocoExitCode."
+          }
+          $sqlite = Get-Command sqlite3 -CommandType Application -ErrorAction Stop
+          $sqliteVersion = (& $sqlite.Source --version | Out-String).Trim()
+          $sqliteExitCode = $LASTEXITCODE
+          if ($sqliteExitCode -ne 0) {
+            throw "sqlite3 --version failed with exit code $sqliteExitCode."
+          }
+          Write-Host "sqlite3 version: $sqliteVersion"
+          if (-not $sqliteVersion.StartsWith('3.53.4 ', [StringComparison]::Ordinal) -and
+              $sqliteVersion -ne '3.53.4') {
+            throw "Expected sqlite3 version 3.53.4, got '$sqliteVersion'."
+          }
       - name: Install rustc 1.98 oracle
         run: rustup toolchain install 1.98.0 --profile minimal
       - name: Restore
