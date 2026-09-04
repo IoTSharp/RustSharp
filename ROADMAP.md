@@ -127,42 +127,43 @@ about the current harness.
 | P0-07 | ✅ Complete | Verify metadata, IL stack correctness, and deterministic output. | P0-06 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` plus `pwsh -NoProfile -File eng/Invoke-ILVerify.ps1` | PE/metadata/PDB readers, `ilspycmd`, and the on-disk deterministic-output test resolve the expected entry point, sequence points, IL stack/tokens, and byte-identical PE/PDB/runtimeconfig files. The pinned standalone `dotnet-ilverify` 10.0.11 run exits 0 with explicit `System.Private.CoreLib`/runtime references and archived JSON evidence. |
 | P0-08 | ✅ Complete | Run the generated assembly on CoreCLR. | P0-06 | `dotnet artifacts/p0/hello.dll` | Exit code is 0 and stdout is exactly `Hello from Rust#` plus the platform newline. This runtime smoke gate is independent of the optional standalone IL verifier in P0-07. |
 | P0-09 | ✅ Complete | Complete the bounded Native AOT publish adapter and run the native executable on Windows x64. | P0-04, P0-08 | `dotnet run --project src/RustSharp.Cli -- publish samples/hello.rs --runtime win-x64 --output artifacts/p0/aot` | Publish exits 0 with no observed AOT/trimming warnings (warnings are errors), the native executable prints the expected line, and the publisher removes its owned host directory before reporting success. |
-| P0-10 | 🚧 In progress | Repeat the executable slice on a Linux x64 native runner. | P0-09 | `bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300` | The bounded probe and CI workflow are present; a native Linux x64 runner must still produce an executable with the same exit code and text as CoreCLR. |
+| P0-10 | ✅ Complete | Repeat the executable slice on a Linux x64 native runner. | P0-09 | `bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300` | [Linux run `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620) produced and ran an x86-64 ELF with exit code 0 and the exact CoreCLR text; its bounded evidence records complete owned-resource cleanup. |
 | P0-11 | ✅ Complete | Build the rustc 1.98 differential/conformance harness. | P0-03, P0-04 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98` | The harness invokes `rustc +1.98.0`, emits a machine-readable report with pass/fail/run output, diagnostics, tool versions, timeouts, and profile denominator, and the local 4-case denominator passes. |
 | P0-12 | ✅ Complete | Prove typed IR feasibility for locals, calls, branches, and returns. | P0-07 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The eight CLR LIR cases pass in the executable harness; stack/type validation rejects invalid IR before PE emission and a valid branch/control-flow PE runs with the expected result. |
 | P0-13 | ✅ Complete | Prove move, shared/mutable borrow, non-lexical lifetime, and deterministic `Drop` on a small MIR. | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | Eight bounded ownership cases pass; use-after-move, overlapping mutable borrows, escaping references, explicit NLL end, and reverse declaration-order Drop are verified. |
 | P0-14 | ✅ Complete | Prove generics plus a bounded trait-resolution subset. | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | `Option<i32>` is deterministically monomorphized; exact, missing, and ambiguous bounded trait cases pass with depth/work limits. |
 | P0-15 | ✅ Complete | Prove the managed-hybrid runtime mapping and explicit .NET interop boundary. | P0-13 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | Shared/exclusive managed borrows, owner/drop scope, and an explicit static generic interop call pass without reflection or dynamic code. |
-| P0-16 | 🚧 In progress | Prove file, TCP, async, and SQLite vertical samples without reflection-based code generation. | P0-13, P0-15 | `dotnet run --project tools/RustSharp.Smoke -- --profile p0-io` | File, loopback TCP, and async probes pass locally; parameterized SQLite is executed when bounded `sqlite3` is available and otherwise recorded as ⛔ Blocked (`blocked`). |
-| P0-17 | 🚧 In progress | Add Windows/Linux x64 CI and archive gate evidence. | P0-07, P0-10, P0-11 | CI workflows plus bounded harnesses | Windows and Linux workflows are configured to collect and upload executable-test, IL/conformance, smoke, and Native AOT evidence; no successful native Linux run or complete two-platform archive is recorded yet. |
+| P0-16 | ✅ Complete | Prove file, TCP, async, and SQLite vertical samples without reflection-based code generation. | P0-13, P0-15 | `dotnet run --project tools/RustSharp.Smoke -- --profile p0-io` | The recorded Windows and Linux runs each pass all 4/4 bounded probes, including parameterized SQLite, with zero failed/skipped cases and no cleanup diagnostic. |
+| P0-17 | ✅ Complete | Add Windows/Linux x64 CI and archive gate evidence. | P0-07, P0-10, P0-11 | CI workflows plus bounded harnesses | Commit `286f139` passed [Windows run `33857817622`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817622) and [Linux run `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620); each uploaded a 14-file platform archive covering executable tests, IL/conformance, smoke, and Native AOT evidence. |
 
 ### Recorded vertical-slice evidence
 
-The following evidence was collected from 2026-09-02 through 2026-09-04 with
-.NET SDK 10.0.400 on Windows x64. These are local verification observations;
-generated
+The following local and CI evidence was collected from 2026-09-02 through
+2026-09-04 with .NET SDK 10.0.400 on Windows and Linux x64. Locally generated
 binaries and logs live under the ignored `artifacts/` directory and can be
-regenerated with the commands below.
+regenerated with the commands below; final platform archives are attached to
+the recorded GitHub Actions runs.
 
 - Release solution build completed with zero warnings and zero errors.
+- Commit `286f139` passed the recorded Windows and Linux x64 workflows linked in P0-17. Each platform artifact contains 14 files and seven parseable JSON reports; both record 73/73 executable tests, 4/4 vertical conformance, 6/6 safe-core syntax, 6/6 safe-core name resolution, successful standalone IL verification, and 4/4 I/O smoke probes. All 12 `.rs` source SHA-256 values in the safe-core syntax and name-resolution corpora match across platforms.
 - `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` completed 73/73 tests, including five bounded lexer cases, 13 safe-core syntax cases, nine safe-core name-resolution cases, four safe-core HIR lowering cases, on-disk deterministic-output and IL sanity gates, eight typed CLR LIR cases, eight ownership MIR cases, and bounded generic/runtime cases.
 - `dotnet run --project src/RustSharp.Cli -- check samples/hello.rs` and `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs` completed successfully. The `rsc` tool name is available after packing/installing the CLI tool; it is not assumed to be on PATH in a source checkout.
 - The generated DLL ran on CoreCLR and printed `Hello from Rust#`.
 - Windows x64 Native AOT publish completed with no observed AOT/trimming warnings (publish uses `-warnaserror`); the produced executable ran and printed `Hello from Rust#`.
-- `eng/Invoke-WindowsNativeAotProbe.ps1` completed a bounded local Windows x64 publish/run pass with `status=passed`, exact `Hello from Rust#` output, recorded PID/parent PID metadata, and complete temporary host cleanup. This is local evidence only; the two-platform CI archive gate remains 🚧 In progress.
+- `eng/Invoke-WindowsNativeAotProbe.ps1` completed bounded local and CI Windows x64 publish/run passes with `status=passed`, exact `Hello from Rust#` output, recorded PID/parent PID metadata, native PE32+ AMD64 validation, and complete temporary host cleanup.
 - `PEReader`, `MetadataReader`, and `ilspycmd --ilcode` inspection confirmed the managed entry point, generated IL, Portable PDB document, sequence points, and source checksum behavior (including UTF-8 BOM input).
 - The local `.config/dotnet-tools.json` manifest restored the pinned `dotnet-ilverify` 10.0.11 tool. It verified `artifacts/p0/hello.dll` with `System.Private.CoreLib` selected as the system module and the .NET 10.0.11 runtime reference directory. The process exited 0 and reported `All Classes and Methods ... Verified`; `eng/Invoke-ILVerify.ps1` archived the command, PID/start time, references, bounded output, SHA-256, environment, and cleanup state in `artifacts/p0/hello.ilverify.json`.
-- The Linux x64 probe passed shell/static checks and records a bounded `skipped` result on this Windows host because WSL has SDK 10.0.111 rather than the pinned 10.0.400. No Linux native execution pass is claimed; `.github/workflows/linux-native-aot.yml` runs the probe on an `ubuntu-24.04` native runner and uploads its evidence.
+- The Linux x64 probe records a bounded `skipped` result on this Windows host because WSL has SDK 10.0.111 rather than the pinned 10.0.400. Independently, recorded Linux run `33857817620` executed on native Ubuntu 24.04 x64, produced an x86-64 ELF, exited 0 with exact `Hello from Rust#` output, and archived complete process and cleanup evidence.
 - The conformance harness produced a passing report at `artifacts/conformance/vertical-slice-v1.json`: `rustc +1.98.0` reports `rustc 1.98.0`, and all four fixtures (two run-pass and two compile-fail) executed with matching outcomes and output. The report records the oracle/toolchain version, limits, process metadata, and cleanup result.
 - The `safe-core-name-resolution` acceptance report passes its six-case manifest and records the exact denominator, bounded parser/resolver limits, expected diagnostics and path resolutions, source hashes, and `name-resolution-acceptance` evidence scope. It explicitly records both rustc and runtime conformance as false.
 - The ownership MIR spike and bounded generic/runtime probes are included in the 73-case executable harness. Ownership records move/borrow/NLL/Drop traces; generic and managed-hybrid probes verify deterministic `Option<i32>` closure, bounded trait resolution, exclusive borrows, reverse cleanup, pinning, and static interop.
-- `dotnet run --project tools/RustSharp.Smoke -c Release --no-restore -- --profile p0-io` records a machine-readable report with 3 probes passed and 1 skipped on this Windows host; the SQLite case is `skipped` and the report summary status is ⛔ Blocked (`blocked`) because `sqlite3` is not installed. Linux/Windows CI runs the same bounded tool and is configured to upload its report.
+- `dotnet run --project tools/RustSharp.Smoke -c Release --no-restore -- --profile p0-io` records a machine-readable report. The local host without `sqlite3` remains explicitly ⛔ Blocked (`blocked`) at 3 passed and 1 skipped, while both recorded CI platforms pass 4/4 with the SQLite transaction executed; Windows CI installs and verifies SQLite 3.53.4 before running the unchanged strict gate.
 
 The current test project intentionally remains an executable harness; it does
-not claim `dotnet test` discovery. P0-10 remains 🚧 In progress until native
-Linux evidence is available; P0-11 is ✅ Complete for the local pinned 1.98
-oracle, and P0-12 is ✅ Complete based on the typed-LIR and executable-PE checks
-above.
+not claim `dotnet test` discovery. At recorded commit `286f139`, P0-04 through
+P0-17 all satisfy their observable results on clean CI builds, so the P0 phase
+is ✅ Complete. P1 language-profile work remains independently gated by its
+published denominators and production-pipeline integration.
 
 ### First 90-day batch sequence
 
@@ -181,9 +182,10 @@ above.
 | B11 | P0-15 | Managed hybrid storage and explicit .NET interop survive AOT. |
 | B12 | P0-16 | File, TCP, async, and SQLite end-to-end spikes pass. |
 
-P0 exits only when P0-04 through P0-17 pass on recorded clean builds. A failed
-borrow/Drop, verifiable-IL, or Native AOT spike triggers an ADR review before
-P1 expands the grammar.
+Commit `286f139` satisfies the P0 exit rule: P0-04 through P0-17 pass on
+recorded clean builds, so P0 is ✅ Complete. A future borrow/Drop,
+verifiable-IL, or Native AOT regression triggers an ADR review before P1
+expands the grammar further.
 
 ## P1: Implement the safe language core
 
@@ -191,7 +193,7 @@ An early P1-01 prototype in `RustLexer.cs` and `RustLexingModels.cs` preserves
 token/trivia spans, builds nested token trees, and bounds malformed-input
 diagnostics. Its five harness cases now cover numeric radix, separator and
 suffix behavior plus byte, raw-byte, and C literal constraints. This is
-implementation evidence only: the P0 gate remains 🚧 In progress, the existing
+implementation evidence only: the P0 gate is ✅ Complete, the existing
 vertical-slice parser is still the production path, and no full safe-core
 lexical denominator has been published.
 
@@ -416,8 +418,7 @@ gate it depends on.
 6. When scope changes, update the compatibility profile and ADR first, then the
    implementation and this roadmap.
 
-The next 🚧 In progress gates are P0-10 (native Linux x64), P0-16 (SQLite on a supported
-runner), and P0-17
-(recorded two-platform archive evidence). P0-13 through P0-15 now have bounded
-local feasibility evidence; their later language-profile claims remain gated
-on the full HIR/MIR and differential suites.
+The next 🚧 In progress gates are P1-01 (lossless lexing), P1-02 (safe-core
+syntax), and P1-03 (HIR and name resolution). P0-10, P0-16, and P0-17 are now
+✅ Complete on the recorded two-platform evidence; later language-profile
+claims remain gated on the full HIR/MIR and differential suites.

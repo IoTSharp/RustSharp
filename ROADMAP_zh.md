@@ -115,38 +115,40 @@ P0 在扩展语言表面之前，证明所选架构能够端到端工作。这�
 | P0-07 | ✅ 已完成 | 验证元数据、IL 栈正确性和确定性输出。 | P0-06 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` 加 `pwsh -NoProfile -File eng/Invoke-ILVerify.ps1` | PE/元数据/PDB 读取器、`ilspycmd` 和磁盘确定性输出测试解析出预期入口点、序列点、IL 栈/词元，以及字节完全相同的 PE/PDB/runtimeconfig 文件。固定版本的独立 `dotnet-ilverify` 10.0.11 运行使用显式 `System.Private.CoreLib`/运行时引用，以退出码 0 结束，并归档 JSON 证据。 |
 | P0-08 | ✅ 已完成 | 在 CoreCLR 上运行生成的程序集。 | P0-06 | `dotnet artifacts/p0/hello.dll` | 退出码为 0，stdout 恰好为 `Hello from Rust#` 加平台换行符。此运行时冒烟测试门槛独立于 P0-07 中可选的独立 IL 验证器。 |
 | P0-09 | ✅ 已完成 | 完成有界 Native AOT 发布适配器，并在 Windows x64 上运行原生可执行文件。 | P0-04, P0-08 | `dotnet run --project src/RustSharp.Cli -- publish samples/hello.rs --runtime win-x64 --output artifacts/p0/aot` | 发布以退出码 0 结束，未观察到 AOT/裁剪警告（警告视为错误）；原生可执行文件打印预期文本；发布器在报告成功前移除其自有宿主目录。 |
-| P0-10 | 🚧 进行中 | 在 Linux x64 原生运行器上重复可执行切片。 | P0-09 | `bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300` | 有界探测和 CI 工作流已经存在；Linux x64 原生运行器仍须生成与 CoreCLR 具有相同退出码和文本的可执行文件。 |
+| P0-10 | ✅ 已完成 | 在 Linux x64 原生运行器上重复可执行切片。 | P0-09 | `bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300` | [Linux 运行 `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620) 生成并运行了 x86-64 ELF，退出码为 0，文本与 CoreCLR 完全相同；其有界证据记录了完整的自有资源清理。 |
 | P0-11 | ✅ 已完成 | 构建 rustc 1.98 差异/一致性测试工具。 | P0-03, P0-04 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98` | 该工具调用 `rustc +1.98.0`，发出包含通过/失败/运行输出、诊断、工具版本、超时和配置档基准集合的机器可读报告，本地 4 用例基准集合通过。 |
 | P0-12 | ✅ 已完成 | 验证局部变量、调用、分支和返回的类型化 IR 可行性。 | P0-07 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 八个 CLR LIR 用例在可执行测试工具中通过；栈/类型验证在发出 PE 前拒绝无效 IR，有效的分支/控制流 PE 以预期结果运行。 |
 | P0-13 | ✅ 已完成 | 在小型 MIR 上验证移动、共享/可变借用、非词法生命周期和确定性 `Drop`。 | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 八个有界所有权用例通过；验证了移动后使用、重叠可变借用、引用逃逸、显式 NLL 结束和声明逆序 Drop。 |
 | P0-14 | ✅ 已完成 | 验证泛型以及有界 trait 解析子集。 | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | `Option<i32>` 以确定性方式单态化；精确、缺失和歧义的有界 trait 用例在深度/工作量限制下通过。 |
 | P0-15 | ✅ 已完成 | 验证托管混合运行时映射和明确的 .NET 互操作边界。 | P0-13 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 共享/独占托管借用、所有者/drop 作用域以及显式静态泛型互操作调用在不使用反射或动态代码的情况下通过。 |
-| P0-16 | 🚧 进行中 | 在不使用基于反射的代码生成的情况下，验证文件、TCP、异步和 SQLite 纵向示例。 | P0-13, P0-15 | `dotnet run --project tools/RustSharp.Smoke -- --profile p0-io` | 文件、环回 TCP 和异步探测在本地通过；当有界 `sqlite3` 可用时执行参数化 SQLite，否则记录为 ⛔ 已阻塞（`blocked`）。 |
-| P0-17 | 🚧 进行中 | 添加 Windows/Linux x64 CI 并归档门槛证据。 | P0-07, P0-10, P0-11 | CI 工作流加有界测试工具 | Windows 和 Linux 工作流已配置为收集并上传可执行测试、IL/一致性测试、冒烟测试和 Native AOT 证据；尚未记录成功的 Linux 原生运行或完整的双平台归档。 |
+| P0-16 | ✅ 已完成 | 在不使用基于反射的代码生成的情况下，验证文件、TCP、异步和 SQLite 纵向示例。 | P0-13, P0-15 | `dotnet run --project tools/RustSharp.Smoke -- --profile p0-io` | 已记录的 Windows 和 Linux 运行均通过全部 4/4 个有界探测，包括参数化 SQLite；失败/跳过项均为零，且无清理诊断。 |
+| P0-17 | ✅ 已完成 | 添加 Windows/Linux x64 CI 并归档门槛证据。 | P0-07, P0-10, P0-11 | CI 工作流加有界测试工具 | 提交 `286f139` 通过了 [Windows 运行 `33857817622`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817622) 和 [Linux 运行 `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620)；两者各自上传了含 14 个文件的平台归档，覆盖可执行测试、IL/一致性测试、冒烟测试和 Native AOT 证据。 |
 
 ### 已记录的纵向切片证据
 
-以下证据于 2026-09-02 至 2026-09-04 使用 Windows x64 上的 .NET SDK
-10.0.400 收集。这些是本地验证观察结果；生成的二进制文件和日志位于被忽略的
-`artifacts/` 目录下，可以使用下列命令重新生成。
+以下本地和 CI 证据于 2026-09-02 至 2026-09-04 使用 Windows 和 Linux x64
+上的 .NET SDK 10.0.400 收集。本地生成的二进制文件和日志位于被忽略的
+`artifacts/` 目录下，可以使用下列命令重新生成；最终的平台归档附加在已记录的
+GitHub Actions 运行中。
 
 - Release 解决方案构建完成，零警告、零错误。
+- 提交 `286f139` 通过了 P0-17 中链接的 Windows 和 Linux x64 工作流。每个平台制品包含 14 个文件和七份可解析的 JSON 报告；两者都记录了 73/73 可执行测试、4/4 纵向一致性、6/6 安全核心语法、6/6 安全核心名称解析、成功的独立 IL 验证和 4/4 I/O 冒烟探测。安全核心语法和名称解析语料中的全部 12 个 `.rs` 源 SHA-256 值在两平台间一致。
 - `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` 完成 73/73 项测试，包括五个有界词法分析用例、13 个安全核心语法用例、九个安全核心名称解析用例、四个安全核心 HIR 降低用例、磁盘确定性输出和 IL 健全性门槛、八个类型化 CLR LIR 用例、八个所有权 MIR 用例，以及有界泛型/运行时用例。
 - `dotnet run --project src/RustSharp.Cli -- check samples/hello.rs` 和 `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs` 成功完成。打包/安装 CLI 工具后可以使用 `rsc` 工具名称；不假定它在源码检出环境的 PATH 中。
 - 生成的 DLL 在 CoreCLR 上运行并打印 `Hello from Rust#`。
 - Windows x64 Native AOT 发布完成，未观察到 AOT/裁剪警告（发布使用 `-warnaserror`）；生成的可执行文件运行并打印 `Hello from Rust#`。
-- `eng/Invoke-WindowsNativeAotProbe.ps1` 完成有界的本地 Windows x64 发布/运行，并得到 `status=passed`、精确的 `Hello from Rust#` 输出、记录的 PID/父 PID 元数据，以及完整的临时宿主清理。这只是本地证据；双平台 CI 归档门槛仍处于 🚧 进行中。
+- `eng/Invoke-WindowsNativeAotProbe.ps1` 完成有界的本地和 CI Windows x64 发布/运行，并得到 `status=passed`、精确的 `Hello from Rust#` 输出、记录的 PID/父 PID 元数据、原生 PE32+ AMD64 验证，以及完整的临时宿主清理。
 - `PEReader`、`MetadataReader` 和 `ilspycmd --ilcode` 检查确认了托管入口点、生成的 IL、Portable PDB 文档、序列点和源校验和行为（包括 UTF-8 BOM 输入）。
 - 本地 `.config/dotnet-tools.json` 清单还原了固定版本的 `dotnet-ilverify` 10.0.11 工具。它以 `System.Private.CoreLib` 作为系统模块，并使用 .NET 10.0.11 运行时引用目录，验证了 `artifacts/p0/hello.dll`。该进程以退出码 0 结束并报告 `All Classes and Methods ... Verified`；`eng/Invoke-ILVerify.ps1` 将命令、PID/启动时间、引用、有界输出、SHA-256、环境和清理状态归档到 `artifacts/p0/hello.ilverify.json`。
-- Linux x64 探测通过了 shell/静态检查，但由于 WSL 安装的是 SDK 10.0.111，而非固定的 10.0.400，因此在此 Windows 宿主上记录有界的 `skipped` 结果。未声明 Linux 原生执行通过；`.github/workflows/linux-native-aot.yml` 在 `ubuntu-24.04` 原生运行器上运行该探测并上传其证据。
+- 由于 WSL 安装的是 SDK 10.0.111，而非固定的 10.0.400，Linux x64 探测在此 Windows 宿主上记录有界的 `skipped` 结果。与此独立的是，已记录的 Linux 运行 `33857817620` 在原生 Ubuntu 24.04 x64 上执行，生成 x86-64 ELF，以退出码 0 输出精确的 `Hello from Rust#`，并归档完整的进程与清理证据。
 - 一致性测试工具在 `artifacts/conformance/vertical-slice-v1.json` 生成通过报告：`rustc +1.98.0` 报告 `rustc 1.98.0`，全部四个用例（两个 run-pass 和两个 compile-fail）都以匹配的结果和输出执行。报告记录了预言工具/工具链版本、限制、进程元数据和清理结果。
 - `safe-core-name-resolution` 验收报告通过其六用例清单，并记录精确的基准集合、有界解析器/名称解析器限制、预期诊断和路径解析、源哈希，以及 `name-resolution-acceptance` 证据范围。它明确将 rustc 一致性和运行时一致性都记录为 false。
 - 所有权 MIR 探索性实现和有界泛型/运行时探测均包含在 73 用例可执行测试工具中。所有权部分记录移动/借用/NLL/Drop 跟踪；泛型和托管混合探测验证确定性的 `Option<i32>` 闭包、有界 trait 解析、独占借用、逆序清理、固定和静态互操作。
-- `dotnet run --project tools/RustSharp.Smoke -c Release --no-restore -- --profile p0-io` 记录机器可读报告，在此 Windows 宿主上有 3 个探测通过、1 个跳过；因为未安装 `sqlite3`，SQLite 用例为 `skipped`，报告摘要状态为 ⛔ 已阻塞（`blocked`）。Linux/Windows CI 运行同一个有界工具，并已配置为上传其报告。
+- `dotnet run --project tools/RustSharp.Smoke -c Release --no-restore -- --profile p0-io` 记录机器可读报告。未安装 `sqlite3` 的本地宿主仍明确处于 ⛔ 已阻塞（`blocked`）状态，为 3 项通过、1 项跳过；两个已记录的 CI 平台均执行 SQLite 事务并通过 4/4。Windows CI 在运行未放宽的严格门禁前安装并验证 SQLite 3.53.4。
 
-当前测试项目有意保持为可执行测试工具；它不声称支持 `dotnet test` 发现。P0-10 在取得
-Linux 原生证据前保持 🚧 进行中；对于本地固定的 1.98 预言工具，P0-11 为 ✅ 已完成；
-P0-12 根据上述类型化 LIR 和可执行 PE 检查判定为 ✅ 已完成。
+当前测试项目有意保持为可执行测试工具；它不声称支持 `dotnet test` 发现。在已记录的
+提交 `286f139` 上，P0-04 至 P0-17 均在干净 CI 构建中满足其可观察结果，因此 P0
+阶段为 ✅ 已完成。P1 语言配置档工作仍独立受其已发布分母和生产管线集成的门禁约束。
 
 ### 首个 90 天批次顺序
 
@@ -165,15 +167,16 @@ P0-12 根据上述类型化 LIR 和可执行 PE 检查判定为 ✅ 已完成。
 | B11 | P0-15 | 托管混合存储和明确的 .NET 互操作可经受 AOT。 |
 | B12 | P0-16 | 文件、TCP、异步和 SQLite 的端到端探索性实现通过。 |
 
-只有 P0-04 至 P0-17 在有记录的干净构建中全部通过，P0 才能退出。任何失败的
-借用/Drop、可验证 IL 或 Native AOT 探索性实现，都会在 P1 扩展语法前触发 ADR 评审。
+提交 `286f139` 满足 P0 退出规则：P0-04 至 P0-17 在有记录的干净构建中全部通过，
+因此 P0 为 ✅ 已完成。未来任何借用/Drop、可验证 IL 或 Native AOT 回归，都会在
+P1 进一步扩展语法前触发 ADR 评审。
 
 ## P1：实现安全语言核心
 
 `RustLexer.cs` 和 `RustLexingModels.cs` 中已有一个早期 P1-01 原型，它保留
 词元/trivia 范围、构建嵌套词元树，并限制格式错误输入的诊断。其五个测试工具用例
 目前覆盖数值基数、分隔符和后缀行为，以及字节、原始字节和 C 字面量约束。这只是
-实现证据：P0 门槛仍处于 🚧 进行中，现有纵向切片解析器仍是生产路径，也尚未发布完整的
+实现证据：P0 门槛为 ✅ 已完成，现有纵向切片解析器仍是生产路径，也尚未发布完整的
 安全核心词法基准集合。
 
 P1-02 也已有早期的有界 `SafeCoreSyntax` 模型/解析器，覆盖代表性的模块、项、语句、
@@ -359,6 +362,6 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 5. 只有可观察结果和所属阶段门槛都满足后，才将状态标记为 `✅ 已完成`；否则保持 `🚧 进行中` 并记录缺口。
 6. 当范围发生变化时，先更新兼容性配置档和 ADR，再更新实现与本路线图。
 
-接下来处于 🚧 进行中的门槛是 P0-10（原生 Linux x64）、P0-16（受支持运行器上的 SQLite）
-和 P0-17（已记录的双平台归档证据）。P0-13 至 P0-15 现在拥有有界的本地可行性证据；
-它们后续的语言配置档声明仍受完整 HIR/MIR 和差异测试套件的门槛约束。
+接下来处于 🚧 进行中的门槛是 P1-01（无损词法分析）、P1-02（安全核心语法）和
+P1-03（HIR 与名称解析）。P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为
+✅ 已完成；后续语言配置档声明仍受完整 HIR/MIR 和差异测试套件的门槛约束。

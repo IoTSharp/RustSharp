@@ -20,20 +20,20 @@ fn main() {
 }
 ```
 
-The current recorded Windows x64 evidence shows the same generated assembly
+The recorded Windows and Linux x64 evidence shows the same generated assembly
 running on CoreCLR and as a .NET 10 Native AOT executable. Direct PE,
 Portable PDB, deterministic-output, standalone IL verification, and typed CLR
 LIR evidence is tracked in `ROADMAP.md`. The pinned rustc 1.98 differential
 harness has local evidence for all four fixtures (two run-pass and two
 compile-fail), so P0-11 is ✅ Complete for the declared `vertical-slice-v1`
-denominator. Three P0 gates remain 🚧 In progress: P0-10 (native Linux x64
-Native AOT), P0-16 (the SQLite smoke case on a runner with bounded `sqlite3`),
-and P0-17
-(recorded Windows/Linux x64 CI archive evidence). The Linux probe and CI
-workflows are present, but no successful native Linux or two-platform CI run
-is recorded yet; the local smoke report currently has 3 passed and 1 skipped,
-with summary status ⛔ Blocked (`blocked`) because `sqlite3` is unavailable for
-the SQLite case.
+denominator. The P0 gate is now ✅ Complete at commit `286f139`: [Windows run
+`33857817622`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817622)
+and [Linux run
+`33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620)
+each archived a 73/73 executable harness, 4/4 vertical conformance, 6/6
+safe-core syntax, 6/6 safe-core name resolution, standalone IL verification,
+native x64 AOT execution, and 4/4 I/O smoke evidence including SQLite.
+Accordingly, P0-10, P0-16, and P0-17 are ✅ Complete.
 Unsupported Rust syntax is rejected with a source diagnostic rather than
 silently assigned C# semantics.
 

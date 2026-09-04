@@ -20,17 +20,18 @@ fn main() {
 }
 ```
 
-当前记录的 Windows x64 证据表明，同一个生成的程序集既能在 CoreCLR 上运行，
+已记录的 Windows 和 Linux x64 证据表明，同一个生成的程序集既能在 CoreCLR 上运行，
 也能作为 .NET 10 Native AOT 可执行文件运行。直接生成 PE、Portable PDB、
 确定性输出、独立 IL 验证以及带类型的 CLR LIR 证据均在 `ROADMAP_zh.md` 中跟踪。
 固定到 rustc 1.98 的差分测试工具已为全部四个夹具（两个 run-pass 和两个
 compile-fail）记录本地证据，因此对于声明的 `vertical-slice-v1` 分母，P0-11
-为 ✅ 已完成。目前仍有三个 P0 门禁处于 🚧 进行中：P0-10（原生 Linux x64
-Native AOT）、P0-16（在具有有界 `sqlite3` 的运行器上执行 SQLite 冒烟用例）
-以及 P0-17
-（已记录的 Windows/Linux x64 CI 归档证据）。Linux 探测器和 CI 工作流已经存在，
-但尚未记录成功的原生 Linux 运行或双平台 CI 运行；当前本地冒烟报告为 3 项通过、
-1 项跳过，汇总状态为 ⛔ 已阻塞（`blocked`），因为 SQLite 用例无法使用 `sqlite3`。
+为 ✅ 已完成。提交 `286f139` 上的 P0 门禁现在为 ✅ 已完成：[Windows 运行
+`33857817622`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817622)
+和 [Linux 运行
+`33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620)
+分别归档了 73/73 可执行测试工具、4/4 纵向一致性、6/6 安全核心语法、6/6
+安全核心名称解析、独立 IL 验证、原生 x64 AOT 执行，以及包含 SQLite 的 4/4 I/O
+冒烟证据。因此，P0-10、P0-16 和 P0-17 均为 ✅ 已完成。
 不受支持的 Rust 语法会产生带源位置的诊断，而不会被悄然赋予 C# 语义。
 
 早期 P1 前端工作也处于 🚧 进行中。无损词法分析器目前对数值、字节和 C 字面量形式提供
