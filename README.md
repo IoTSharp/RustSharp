@@ -21,11 +21,36 @@ fn main() {
 The current recorded Windows x64 evidence shows the same generated assembly
 running on CoreCLR and as a .NET 10 Native AOT executable. Direct PE,
 Portable PDB, deterministic-output, standalone IL verification, and typed CLR
-LIR evidence is tracked in `ROADMAP.md`. Linux Native AOT and rustc differential
-conformance are implemented as bounded gates but remain in progress until
-native Linux and rustc 1.98.x evidence is available.
+LIR evidence is tracked in `ROADMAP.md`. The pinned rustc 1.98 differential
+harness has local evidence for all four fixtures (two run-pass and two
+compile-fail), so P0-11 is complete for the declared `vertical-slice-v1`
+denominator. Three P0 gates remain open: P0-10 (native Linux x64 Native AOT),
+P0-16 (the SQLite smoke case on a runner with bounded `sqlite3`), and P0-17
+(recorded Windows/Linux x64 CI archive evidence). The Linux probe and CI
+workflows are present, but no successful native Linux or two-platform CI run
+is recorded yet; the local smoke report currently has 3 passed and 1 skipped,
+with summary status `blocked` because `sqlite3` is unavailable for the SQLite
+case.
 Unsupported Rust syntax is rejected with a source diagnostic rather than
 silently assigned C# semantics.
+
+Early P1 front-end work is also in progress. The lossless lexer now has
+bounded coverage for numeric, byte, and C literal forms, while the early
+`SafeCoreSyntax` model/parser handles representative modules, items,
+statements, expressions, patterns, types, generics, and attributes with stable
+`RSP` diagnostics. The bounded `SafeCoreNameResolution` prototype now collects
+module/item/local symbols across separate type/value namespaces and resolves
+representative imports and qualified paths. Its nine harness tests cover
+type/value namespaces and qualified paths, visibility, duplicate, ambiguous,
+and unresolved names, import cycles, declaration order and legal shadowing,
+rejected qualified access to function locals, struct fields, and enum generic
+parameters, Unicode identifier normalization, and the import nesting limit.
+The local executable harness passes 73/73 tests. A bounded
+`SafeCoreHirLowering` prototype now converts successful
+syntax and name-resolution results into a deterministic, name-bound flat HIR
+arena. P1-01, P1-02, and P1-03 remain in progress because their dependencies,
+full-profile denominators, multi-file loading, and production compiler
+integration are still open.
 
 ## Commands
 
@@ -75,6 +100,28 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --pr
 The harness invokes the pinned `rustc +1.98.0` toolchain for both version
 probing and fixture compilation, so the active default toolchain does not
 silently change the oracle.
+
+The separate safe-core syntax profile passes the current six-case parser
+acceptance manifest and writes `artifacts/conformance/safe-core-syntax.json`:
+
+```text
+dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax
+```
+
+That 6/6 report measures RustSharp parser acceptance only. It is not rustc
+differential or runtime conformance evidence.
+
+The six-case name-resolution acceptance profile writes
+`artifacts/conformance/safe-core-name-resolution.json`:
+
+```text
+dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution
+```
+
+That report covers the declared in-process parser/name-resolution denominator
+only; it is not rustc differential or runtime conformance evidence. The same
+executable test harness exercises the early HIR lowering prototype. Neither
+prototype is in the production compiler path yet.
 
 The Linux Native AOT probe is intended for a native Linux x64 runner and keeps
 the output directory exclusive to one invocation:

@@ -1,0 +1,293 @@
+{
+  "profile": "safe-core-name-resolution",
+  "version": 1,
+  "parser": "RustSharp.Syntax.SafeCoreSyntax.Parse",
+  "resolver": "RustSharp.Syntax.SafeCoreNameResolution.Resolve",
+  "denominator": 6,
+  "syntaxLimits": {
+    "maximumSourceLength": 65536,
+    "maximumTokens": 16384,
+    "maximumNodes": 8192,
+    "maximumDiagnostics": 64,
+    "maximumNestingDepth": 64,
+    "maximumOperations": 100000
+  },
+  "resolutionLimits": {
+    "maximumSymbols": 4096,
+    "maximumScopes": 2048,
+    "maximumPathSegments": 64,
+    "maximumNameLength": 256,
+    "maximumPathLength": 2048,
+    "maximumDiagnosticMessageLength": 512,
+    "maximumDiagnostics": 64,
+    "maximumNestingDepth": 64,
+    "maximumOperations": 200000
+  },
+  "cases": [
+    {
+      "id": "namespaces-import-alias-chain",
+      "file": "safe-core-name-resolution-namespaces.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "PublicModel::Shared",
+          "scopePath": "crate::consume",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "type-alias",
+          "symbolQualifiedName": "crate::api::model::Shared",
+          "candidateCount": 1
+        },
+        {
+          "path": "PublicModel::Shared",
+          "scopePath": "crate::consume",
+          "occurrence": 1,
+          "status": "resolved",
+          "symbolKind": "type-alias",
+          "symbolQualifiedName": "crate::api::model::Shared",
+          "candidateCount": 1
+        },
+        {
+          "path": "PublicModel::Shared",
+          "scopePath": "crate::consume",
+          "occurrence": 2,
+          "status": "resolved",
+          "symbolKind": "const",
+          "symbolQualifiedName": "crate::api::model::Shared",
+          "candidateCount": 1
+        },
+        {
+          "path": "value",
+          "scopePath": "crate::consume",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "parameter",
+          "symbolQualifiedName": "crate::consume::value",
+          "candidateCount": 1
+        }
+      ],
+      "minimumSymbols": 9,
+      "minimumScopes": 4
+    },
+    {
+      "id": "declaration-order-shadowing",
+      "file": "safe-core-name-resolution-shadowing.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "value",
+          "scopePath": "crate::shadow",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "parameter",
+          "symbolQualifiedName": "crate::shadow::value",
+          "candidateCount": 1
+        },
+        {
+          "path": "before",
+          "scopePath": "crate::shadow",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "local",
+          "symbolQualifiedName": "crate::shadow::before",
+          "candidateCount": 1
+        },
+        {
+          "path": "value",
+          "scopePath": "crate::shadow",
+          "occurrence": 1,
+          "status": "resolved",
+          "symbolKind": "local",
+          "symbolQualifiedName": "crate::shadow::value",
+          "candidateCount": 1
+        }
+      ],
+      "minimumSymbols": 4,
+      "minimumScopes": 2
+    },
+    {
+      "id": "duplicate-raw-equivalent-pattern",
+      "file": "safe-core-name-resolution-duplicate.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1002",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 17,
+              "length": 3
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "x",
+          "scopePath": "crate::duplicate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "parameter",
+          "symbolQualifiedName": "crate::duplicate::x",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "unresolved-and-private",
+      "file": "safe-core-name-resolution-unresolved-private.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1003",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 82,
+              "length": 7
+            }
+          ]
+        },
+        {
+          "code": "RSN1005",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 53,
+              "length": 21
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "crate::hidden::secret",
+          "scopePath": "crate::caller",
+          "occurrence": 0,
+          "status": "private",
+          "candidateCount": 1
+        },
+        {
+          "path": "missing",
+          "scopePath": "crate::caller",
+          "occurrence": 0,
+          "status": "unresolved",
+          "candidateCount": 0
+        }
+      ]
+    },
+    {
+      "id": "import-cycle",
+      "file": "safe-core-name-resolution-import-cycle.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1004",
+          "count": 3,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 21,
+              "length": 20
+            },
+            {
+              "occurrence": 1,
+              "start": 0,
+              "length": 20
+            },
+            {
+              "occurrence": 2,
+              "start": 61,
+              "length": 5
+            }
+          ]
+        },
+        {
+          "code": "RSN1006",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 0,
+              "length": 20
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "first",
+          "scopePath": "crate::caller",
+          "occurrence": 0,
+          "status": "ambiguous",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "illegal-qualified-lexical-members",
+      "file": "safe-core-name-resolution-illegal-qualified.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1003",
+          "count": 3,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 138,
+              "length": 9
+            },
+            {
+              "occurrence": 1,
+              "start": 169,
+              "length": 27
+            },
+            {
+              "occurrence": 2,
+              "start": 202,
+              "length": 20
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "T",
+          "scopePath": "crate::Choice",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "generic-parameter",
+          "symbolQualifiedName": "crate::Choice::T",
+          "candidateCount": 1
+        },
+        {
+          "path": "Choice::T",
+          "scopePath": "crate::Invalid",
+          "occurrence": 0,
+          "status": "unresolved",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::hidden_owner::hidden",
+          "scopePath": "crate::inspect",
+          "occurrence": 0,
+          "status": "unresolved",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::Record::field",
+          "scopePath": "crate::inspect",
+          "occurrence": 0,
+          "status": "unresolved",
+          "candidateCount": 1
+        }
+      ]
+    }
+  ]
+}

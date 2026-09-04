@@ -1,0 +1,51 @@
+{
+  "profile": "safe-core-syntax",
+  "version": 1,
+  "parser": "RustSharp.Syntax.SafeCoreSyntax.Parse",
+  "limits": {
+    "maximumSourceLength": 1000000,
+    "maximumTokens": 250000,
+    "maximumNodes": 100000,
+    "maximumDiagnostics": 128,
+    "maximumNestingDepth": 128,
+    "maximumOperations": 1000000
+  },
+  "cases": [
+    {
+      "id": "safe-core-items",
+      "file": "safe-core-items.rs",
+      "expected": "parse-pass",
+      "minimumItems": 2
+    },
+    {
+      "id": "safe-core-expressions",
+      "file": "safe-core-expressions.rs",
+      "expected": "parse-pass",
+      "minimumFunctions": 1
+    },
+    {
+      "id": "safe-core-unsupported-unsafe",
+      "file": "safe-core-unsupported.rs",
+      "expected": "parse-fail",
+      "diagnosticCode": "RSP1003"
+    },
+    {
+      "id": "safe-core-unsupported-loop",
+      "file": "safe-core-unsupported-loop.rs",
+      "expected": "parse-fail",
+      "diagnosticCode": "RSP1003"
+    },
+    {
+      "id": "safe-core-unsupported-break",
+      "file": "safe-core-unsupported-break.rs",
+      "expected": "parse-fail",
+      "diagnosticCode": "RSP1003"
+    },
+    {
+      "id": "safe-core-malformed",
+      "file": "safe-core-malformed.rs",
+      "expected": "parse-fail",
+      "diagnosticCode": "RSP1001"
+    }
+  ]
+}

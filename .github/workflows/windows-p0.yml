@@ -26,19 +26,151 @@ jobs:
       - name: Build
         run: dotnet build RustSharp.slnx -c Release --no-restore
       - name: Run executable harness
-        run: dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-build --no-restore
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/p0 | Out-Null
+          & dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-build --no-restore 2>&1 |
+            Tee-Object -FilePath artifacts/p0/test-harness.log
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
       - name: Restore IL verifier
         run: dotnet tool restore --tool-manifest .config/dotnet-tools.json
       - name: Compile vertical sample
         run: dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- compile samples/hello.rs --output artifacts/p0/hello.dll
       - name: Verify IL
         run: pwsh -NoProfile -File eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p0/hello.dll -EvidencePath artifacts/p0/hello.ilverify.json
+      - name: Run Windows x64 Native AOT probe
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidencePath = Join-Path $PWD 'artifacts/p0/windows-x64-aot.json'
+          $probeArguments = @(
+            '-NoLogo', '-NoProfile', '-File', 'eng/Invoke-WindowsNativeAotProbe.ps1',
+            '-SourcePath', 'samples/hello.rs',
+            '-OutputDirectory', 'artifacts/p0/windows-x64-aot',
+            '-EvidencePath', $evidencePath,
+            '-PublishTimeoutSeconds', '300',
+            '-RunTimeoutSeconds', '30'
+          )
+          & pwsh @probeArguments
+          $probeExitCode = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) {
+            throw "Windows Native AOT probe did not write evidence to '$evidencePath'."
+          }
+          $evidence = Get-Content -Raw -LiteralPath $evidencePath | ConvertFrom-Json
+          $probeStatus = [string] $evidence.Status
+          if ($probeExitCode -eq 2 -and $probeStatus -eq 'blocked') {
+            Write-Warning "Windows Native AOT probe is explicitly blocked: $($evidence.Reason) - $($evidence.Failure)"
+            exit $probeExitCode
+          }
+          if ($probeExitCode -ne 0) {
+            exit $probeExitCode
+          }
+          if ($probeStatus -ne 'passed') {
+            throw "Windows Native AOT probe returned exit code 0 with status '$probeStatus'."
+          }
       - name: Run conformance harness
-        continue-on-error: true
-        run: dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reportPath = Join-Path $PWD 'artifacts/conformance/vertical-slice-v1.json'
+          & dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98
+          $harnessExitCode = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+            throw "Conformance harness did not write '$reportPath'."
+          }
+          $report = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
+          $reportStatus = [string] $report.Summary.Status
+          if ($harnessExitCode -eq 2 -and $reportStatus -eq 'blocked') {
+            Write-Warning "Conformance harness is explicitly blocked: $($report.BlockedReason)"
+            exit $harnessExitCode
+          }
+          if ($harnessExitCode -ne 0) {
+            exit $harnessExitCode
+          }
+          if ($reportStatus -ne 'passed') {
+            throw "Conformance harness returned exit code 0 with status '$reportStatus'."
+          }
+      - name: Run safe-core syntax corpus
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reportPath = Join-Path $PWD 'artifacts/conformance/safe-core-syntax.json'
+          & dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-syntax
+          $harnessExitCode = $LASTEXITCODE
+          if ($harnessExitCode -ne 0) {
+            exit $harnessExitCode
+          }
+          if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+            throw "Safe-core syntax harness did not write '$reportPath'."
+          }
+          $report = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
+          if ($report.Manifest.PSObject.Properties.Match('Validated').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('CaseCount').Count -ne 1) {
+            throw 'Safe-core syntax evidence manifest metadata is missing.'
+          }
+          if ([string] $report.EvidenceKind -ne 'parser-acceptance' -or
+              [string] $report.Summary.Status -ne 'passed' -or
+              [int] $report.Summary.Denominator -ne 6 -or
+              [int] $report.Summary.Passed -ne 6 -or
+              [bool] $report.Manifest.Validated -ne $true -or
+              [int] $report.Manifest.CaseCount -ne 6) {
+            throw 'Safe-core syntax harness returned success without complete 6/6 parser-acceptance evidence.'
+          }
+      - name: Run safe-core name-resolution corpus
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reportPath = Join-Path $PWD 'artifacts/conformance/safe-core-name-resolution.json'
+          & dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-name-resolution
+          $harnessExitCode = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+            throw "Safe-core name-resolution harness did not write '$reportPath'."
+          }
+          if ($harnessExitCode -ne 0) {
+            exit $harnessExitCode
+          }
+          $report = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
+          if ($report.Scope.PSObject.Properties.Match('RustcConformance').Count -ne 1 -or
+              $report.Scope.PSObject.Properties.Match('RuntimeConformance').Count -ne 1 -or
+              $report.Manifest.PSObject.Properties.Match('Validated').Count -ne 1) {
+            throw 'Safe-core name-resolution evidence scope metadata is missing.'
+          }
+          if ([string] $report.EvidenceKind -ne 'name-resolution-acceptance' -or
+              [string] $report.Summary.Status -ne 'passed' -or
+              [int] $report.Summary.Denominator -ne 6 -or
+              [int] $report.Summary.Passed -ne 6 -or
+              [bool] $report.Scope.RustcConformance -ne $false -or
+              [bool] $report.Scope.RuntimeConformance -ne $false -or
+              [bool] $report.Manifest.Validated -ne $true -or
+              [int] $report.Manifest.Denominator -ne 6 -or
+              [int] $report.Manifest.CaseCount -ne 6) {
+            throw 'Safe-core name-resolution harness returned success without complete 6/6 name-resolution-acceptance evidence.'
+          }
       - name: Run I/O smoke probes
-        continue-on-error: true
-        run: dotnet run --project tools/RustSharp.Smoke -c Release --no-build --no-restore -- --profile p0-io
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reportPath = Join-Path $PWD 'artifacts/smoke/p0-io.json'
+          & dotnet run --project tools/RustSharp.Smoke -c Release --no-build --no-restore -- --profile p0-io
+          $smokeExitCode = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+            throw "I/O smoke probes did not write '$reportPath'."
+          }
+          $report = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
+          $reportStatus = [string] $report.Summary.Status
+          if ($smokeExitCode -eq 2 -and $reportStatus -eq 'blocked') {
+            Write-Warning "I/O smoke probes are explicitly blocked: $($report.RunDirectoryCleanupDiagnostic)"
+            exit $smokeExitCode
+          }
+          if ($smokeExitCode -ne 0) {
+            exit $smokeExitCode
+          }
+          if ($reportStatus -ne 'passed') {
+            throw "I/O smoke probes returned exit code 0 with status '$reportStatus'."
+          }
       - name: Upload P0 evidence
         if: always()
         uses: actions/upload-artifact@v4

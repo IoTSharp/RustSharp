@@ -43,11 +43,144 @@ jobs:
       - name: Verify IL
         run: pwsh -NoProfile -File eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p0/hello.dll -EvidencePath artifacts/p0/hello.ilverify.json
       - name: Run rustc differential harness
-        run: dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98
+          harness_exit=$?
+          set -e
+          report="artifacts/conformance/vertical-slice-v1.json"
+          if [[ ! -f "$report" ]]; then
+            echo "Conformance harness did not write $report" >&2
+            exit 1
+          fi
+          read_json_status() {
+            local report_path="$1"
+            local report_scope="$2"
+            REPORT_PATH="$report_path" REPORT_SCOPE="$report_scope" pwsh -NoLogo -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $report = Get-Content -Raw -LiteralPath $env:REPORT_PATH | ConvertFrom-Json; $value = if ($env:REPORT_SCOPE -eq "summary") { $report.Summary.Status } else { $report.Status }; if ([string]::IsNullOrWhiteSpace([string]$value)) { throw "Report status is missing." }; [Console]::Write([string]$value)'
+          }
+          if ! report_status="$(read_json_status "$report" summary)"; then
+            echo "Could not parse conformance report status from $report" >&2
+            exit 1
+          fi
+          if (( harness_exit == 2 )) && [[ "$report_status" == "blocked" ]]; then
+            echo "::warning::Conformance harness is explicitly blocked; see $report"
+            exit "$harness_exit"
+          fi
+          if (( harness_exit != 0 )); then
+            exit "$harness_exit"
+          fi
+          if [[ "$report_status" != "passed" ]]; then
+            echo "Conformance harness returned success without a passed summary report (status=$report_status)" >&2
+            exit 1
+          fi
+      - name: Run safe-core syntax corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-syntax
+          report="artifacts/conformance/safe-core-syntax.json"
+          if [[ ! -f "$report" ]]; then
+            echo "Safe-core syntax harness did not write $report" >&2
+            exit 1
+          fi
+          if ! report_metadata="$(REPORT_PATH="$report" pwsh -NoLogo -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $report = Get-Content -Raw -LiteralPath $env:REPORT_PATH | ConvertFrom-Json; if ($report.Manifest.PSObject.Properties.Match("Validated").Count -ne 1 -or $report.Manifest.PSObject.Properties.Match("CaseCount").Count -ne 1) { throw "Safe-core syntax evidence manifest metadata is missing." }; [Console]::Write(([string]$report.EvidenceKind) + "|" + ([string]$report.Summary.Status) + "|" + ([int]$report.Summary.Denominator) + "|" + ([int]$report.Summary.Passed) + "|" + ([bool]$report.Manifest.Validated) + "|" + ([int]$report.Manifest.CaseCount))')"; then
+            echo "Could not parse safe-core syntax evidence metadata from $report" >&2
+            exit 1
+          fi
+          if [[ "$report_metadata" != "parser-acceptance|passed|6|6|True|6" ]]; then
+            echo "Safe-core syntax harness returned success without complete 6/6 parser-acceptance evidence" >&2
+            exit 1
+          fi
+      - name: Run safe-core name-resolution corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-name-resolution
+          harness_exit=$?
+          set -e
+          report="artifacts/conformance/safe-core-name-resolution.json"
+          if [[ ! -f "$report" ]]; then
+            echo "Safe-core name-resolution harness did not write $report" >&2
+            exit 1
+          fi
+          if (( harness_exit != 0 )); then
+            exit "$harness_exit"
+          fi
+          if ! report_metadata="$(REPORT_PATH="$report" pwsh -NoLogo -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $report = Get-Content -Raw -LiteralPath $env:REPORT_PATH | ConvertFrom-Json; if ($report.Scope.PSObject.Properties.Match("RustcConformance").Count -ne 1 -or $report.Scope.PSObject.Properties.Match("RuntimeConformance").Count -ne 1 -or $report.Manifest.PSObject.Properties.Match("Validated").Count -ne 1) { throw "Safe-core name-resolution evidence scope metadata is missing." }; [Console]::Write(([string]$report.EvidenceKind) + "|" + ([string]$report.Summary.Status) + "|" + ([int]$report.Summary.Denominator) + "|" + ([int]$report.Summary.Passed) + "|" + ([bool]$report.Scope.RustcConformance) + "|" + ([bool]$report.Scope.RuntimeConformance) + "|" + ([bool]$report.Manifest.Validated) + "|" + ([int]$report.Manifest.Denominator) + "|" + ([int]$report.Manifest.CaseCount))')"; then
+            echo "Could not parse safe-core name-resolution evidence metadata from $report" >&2
+            exit 1
+          fi
+          if [[ "$report_metadata" != "name-resolution-acceptance|passed|6|6|False|False|True|6|6" ]]; then
+            echo "Safe-core name-resolution harness returned success without complete 6/6 name-resolution-acceptance evidence" >&2
+            exit 1
+          fi
       - name: Run Linux x64 Native AOT probe
-        run: bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300
+          probe_exit=$?
+          set -e
+          evidence="artifacts/p0/linux-x64/linux-aot-evidence.json"
+          read_json_status() {
+            local report_path="$1"
+            REPORT_PATH="$report_path" pwsh -NoLogo -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $report = Get-Content -Raw -LiteralPath $env:REPORT_PATH | ConvertFrom-Json; $value = $report.Status; if ([string]::IsNullOrWhiteSpace([string]$value)) { throw "Report status is missing." }; [Console]::Write([string]$value)'
+          }
+          if [[ ! -f "$evidence" ]]; then
+            echo "Linux Native AOT probe did not write $evidence" >&2
+            exit 1
+          fi
+          if ! evidence_status="$(read_json_status "$evidence")"; then
+            echo "Could not parse Linux Native AOT evidence status from $evidence" >&2
+            exit 1
+          fi
+          if (( probe_exit == 77 )) && [[ "$evidence_status" == "skipped" ]]; then
+            echo "::warning::Linux Native AOT probe is explicitly blocked; see $evidence"
+            exit "$probe_exit"
+          fi
+          if (( probe_exit != 0 )); then
+            exit "$probe_exit"
+          fi
+          if [[ "$evidence_status" != "passed" ]]; then
+            echo "Linux Native AOT probe returned success without passed evidence (status=$evidence_status)" >&2
+            exit 1
+          fi
       - name: Run P0 I/O smoke probes
-        run: dotnet run --project tools/RustSharp.Smoke -c Release --no-build --no-restore -- --profile p0-io
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          dotnet run --project tools/RustSharp.Smoke -c Release --no-build --no-restore -- --profile p0-io
+          smoke_exit=$?
+          set -e
+          report="artifacts/smoke/p0-io.json"
+          if [[ ! -f "$report" ]]; then
+            echo "I/O smoke probes did not write $report" >&2
+            exit 1
+          fi
+          read_json_status() {
+            local report_path="$1"
+            REPORT_PATH="$report_path" pwsh -NoLogo -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $report = Get-Content -Raw -LiteralPath $env:REPORT_PATH | ConvertFrom-Json; $value = $report.Summary.Status; if ([string]::IsNullOrWhiteSpace([string]$value)) { throw "Report summary status is missing." }; [Console]::Write([string]$value)'
+          }
+          if ! report_status="$(read_json_status "$report")"; then
+            echo "Could not parse smoke report summary status from $report" >&2
+            exit 1
+          fi
+          if (( smoke_exit == 2 )) && [[ "$report_status" == "blocked" ]]; then
+            echo "::warning::I/O smoke probes are explicitly blocked; see $report"
+            exit "$smoke_exit"
+          fi
+          if (( smoke_exit != 0 )); then
+            exit "$smoke_exit"
+          fi
+          if [[ "$report_status" != "passed" ]]; then
+            echo "I/O smoke probes returned success without a passed summary report (status=$report_status)" >&2
+            exit 1
+          fi
       - name: Upload Linux evidence
         if: always()
         uses: actions/upload-artifact@v4

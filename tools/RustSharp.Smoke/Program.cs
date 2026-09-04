@@ -42,6 +42,7 @@ internal static class Program
         var deadline = new CancellationTokenSource(options.Timeout);
         var cases = new List<ProbeResult>(MaximumCases);
         string? cleanupDiagnostic = null;
+        bool deadlineExpired = false;
         try
         {
             cases.Add(await RunProbeSafelyAsync("file-roundtrip", () => RunFileProbeAsync(runDirectory, deadline.Token), deadline.Token).ConfigureAwait(false));
@@ -51,14 +52,19 @@ internal static class Program
         }
         finally
         {
-            deadline.Dispose();
             cleanupDiagnostic = TryDeleteDirectory(runDirectory);
+            deadlineExpired = deadline.IsCancellationRequested;
+            deadline.Dispose();
         }
 
         int passed = cases.Count(static item => item.Status == "passed");
         int skipped = cases.Count(static item => item.Status == "skipped");
         int failed = cases.Count(static item => item.Status == "failed");
-        string status = failed != 0 ? "failed" : skipped != 0 ? "blocked" : "passed";
+        string status = failed != 0 || cleanupDiagnostic is not null || deadlineExpired
+            ? "failed"
+            : skipped != 0
+                ? "blocked"
+                : "passed";
         var report = new SmokeReport(
             1,
             DateTimeOffset.UtcNow,
@@ -95,9 +101,12 @@ internal static class Program
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
-            return new ProbeResult(name, "blocked", "overall timeout expired");
+            // An execution deadline is a failed probe. The only intentionally
+            // blocked case is an optional environment dependency such as the
+            // sqlite3 executable being unavailable before it can start.
+            return new ProbeResult(name, "failed", "overall timeout expired");
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or NotSupportedException)
+        catch (Exception exception) when (exception is IOException or SocketException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or NotSupportedException or TimeoutException)
         {
             string diagnostic = exception.Message.Length <= 512 ? exception.Message : exception.Message[..512] + "...";
             return new ProbeResult(name, "failed", diagnostic);
@@ -107,20 +116,45 @@ internal static class Program
     private static async Task<ProbeResult> RunTcpProbeAsync(CancellationToken token)
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
+        using var serverCancellation = CancellationTokenSource.CreateLinkedTokenSource(token);
+        Task? server = null;
         listener.Start(1);
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        Task server = ServeOnceAsync(listener, token);
-        using var client = new TcpClient();
-        await client.ConnectAsync(IPAddress.Loopback, port, token).ConfigureAwait(false);
-        await using NetworkStream stream = client.GetStream();
-        byte[] request = Encoding.UTF8.GetBytes("ping");
-        await stream.WriteAsync(request, token).ConfigureAwait(false);
-        byte[] response = new byte[4];
-        int read = await stream.ReadAsync(response, token).ConfigureAwait(false);
-        await server.WaitAsync(token).ConfigureAwait(false);
-        return read == 4 && Encoding.UTF8.GetString(response) == "pong"
-            ? new("loopback-tcp", "passed", null)
-            : new("loopback-tcp", "failed", "loopback response differed");
+        try
+        {
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            server = ServeOnceAsync(listener, serverCancellation.Token);
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, port, token).ConfigureAwait(false);
+            await using NetworkStream stream = client.GetStream();
+            byte[] request = Encoding.UTF8.GetBytes("ping");
+            await stream.WriteAsync(request, token).ConfigureAwait(false);
+            byte[] response = new byte[4];
+            await stream.ReadExactlyAsync(response, token).ConfigureAwait(false);
+            await server.WaitAsync(token).ConfigureAwait(false);
+            return Encoding.UTF8.GetString(response) == "pong"
+                ? new("loopback-tcp", "passed", null)
+                : new("loopback-tcp", "failed", "loopback response differed");
+        }
+        finally
+        {
+            // A client-side failure can otherwise leave ServeOnceAsync waiting on
+            // AcceptTcpClientAsync with its exception never observed. Cancel and
+            // stop the listener, then observe the task within a fixed bound.
+            serverCancellation.Cancel();
+            listener.Stop();
+            if (server is not null)
+            {
+                try
+                {
+                    await server.WaitAsync(TimeSpan.FromSeconds(1), CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
+                    // The primary probe exception, if any, is reported by the
+                    // caller; this await only prevents an unobserved task fault.
+                }
+            }
+        }
     }
 
     private static async Task ServeOnceAsync(TcpListener listener, CancellationToken token)
@@ -128,8 +162,8 @@ internal static class Program
         using TcpClient connection = await listener.AcceptTcpClientAsync(token).ConfigureAwait(false);
         await using NetworkStream stream = connection.GetStream();
         byte[] request = new byte[4];
-        int read = await stream.ReadAsync(request, token).ConfigureAwait(false);
-        if (read == 4 && Encoding.UTF8.GetString(request) == "ping")
+        await stream.ReadExactlyAsync(request, token).ConfigureAwait(false);
+        if (Encoding.UTF8.GetString(request) == "ping")
         {
             await stream.WriteAsync(Encoding.UTF8.GetBytes("pong"), token).ConfigureAwait(false);
         }
@@ -160,33 +194,85 @@ internal static class Program
 
     private static async Task<ProbeResult> RunSqliteProbeAsync(string runDirectory, CancellationToken token)
     {
-        string scriptPath = Path.Combine(runDirectory, "transaction.sql");
-        string databasePath = Path.Combine(runDirectory, "probe.db");
-        const string script = ".parameter init\n.parameter set :value 41\nBEGIN; CREATE TABLE values_table(value INTEGER); INSERT INTO values_table VALUES(:value); SELECT value + 1 FROM values_table; COMMIT;\n";
+        string resolvedRunDirectory = Path.GetFullPath(runDirectory);
+        const string scriptFileName = "transaction.sql";
+        const string databaseFileName = "probe.db";
+        string scriptPath = Path.Combine(resolvedRunDirectory, scriptFileName);
+        string databasePath = Path.Combine(resolvedRunDirectory, databaseFileName);
+        const string script = ".bail on\n.parameter init\n.parameter set :value 41\nBEGIN IMMEDIATE;\nCREATE TABLE values_table(value INTEGER);\nINSERT INTO values_table VALUES(:value);\nSELECT value + 1 FROM values_table;\nCOMMIT;\n";
         await File.WriteAllTextAsync(scriptPath, script, new UTF8Encoding(false), token).ConfigureAwait(false);
         var runner = new BoundedProcessRunner(TimeSpan.FromSeconds(2));
         BoundedProcessResult version;
         try
         {
-            version = await runner.RunAsync(new BoundedProcessRequest("sqlite3", ["--version"], runDirectory, TimeSpan.FromSeconds(5)), token).ConfigureAwait(false);
+            version = await runner.RunAsync(new BoundedProcessRequest("sqlite3", ["--version"], resolvedRunDirectory, TimeSpan.FromSeconds(5)), token).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is Win32Exception or FileNotFoundException or InvalidOperationException)
         {
             return new("sqlite-transaction", "skipped", $"sqlite3 unavailable: {exception.Message}");
         }
 
-        if (!version.Succeeded)
+        if (!IsBoundedSuccess(version))
         {
-            return new("sqlite-transaction", "skipped", "sqlite3 unavailable on this runner");
+            return new("sqlite-transaction", "failed", DescribeSqliteFailure(version));
         }
 
-        BoundedProcessResult result = await runner.RunAsync(
-            new BoundedProcessRequest("sqlite3", ["-batch", databasePath, $".read {scriptPath}"], runDirectory, TimeSpan.FromSeconds(10)),
-            token).ConfigureAwait(false);
-        return result.Succeeded && result.StandardOutput.Trim() == "42"
+        BoundedProcessResult result;
+        try
+        {
+            // Keep paths as individual argv values. The -init option lets sqlite3 open the
+            // script directly, so spaces, quotes, and platform-specific separators are not
+            // re-parsed as part of a .read dot-command string. The final no-op SQL argument
+            // prevents the CLI from waiting on inherited stdin after the init script finishes.
+            result = await runner.RunAsync(
+                new BoundedProcessRequest("sqlite3", ["-batch", "-init", scriptPath, databasePath, "SELECT 1 WHERE 0;"], resolvedRunDirectory, TimeSpan.FromSeconds(10)),
+                token).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is Win32Exception or FileNotFoundException or InvalidOperationException)
+        {
+            return new("sqlite-transaction", "failed", $"sqlite3 became unavailable after its version probe: {exception.Message}");
+        }
+
+        return IsBoundedSuccess(result) && result.StandardOutput.Trim() == "42"
             ? new("sqlite-transaction", "passed", null)
-            : new("sqlite-transaction", "failed", $"sqlite3 transaction failed: {result.StandardError.Trim()}");
+            : new("sqlite-transaction", "failed", DescribeSqliteFailure(result));
     }
+
+    private static bool IsBoundedSuccess(BoundedProcessResult result) =>
+        result.Succeeded &&
+        !result.OutputTruncated &&
+        !result.OutputReadTimedOut &&
+        !result.OutputDrainTimedOut &&
+        !result.OutputReadLimitReached &&
+        !result.ProcessTreeCleanupIncomplete;
+
+    private static string DescribeSqliteFailure(BoundedProcessResult result)
+    {
+        string detail = FirstSqliteDiagnostic(result);
+        return string.IsNullOrWhiteSpace(detail)
+            ? "sqlite3 transaction failed"
+            : $"sqlite3 transaction failed: {detail}";
+    }
+
+    private static string FirstSqliteDiagnostic(BoundedProcessResult result)
+    {
+        string? line = FirstNonEmptyLine(result.StandardError);
+        line ??= FirstNonEmptyLine(result.StandardOutput);
+        line ??= FirstNonEmptyLine(result.OutputDiagnostic);
+        if (line is null && result.ProcessTreeCleanupDiagnostic is not null)
+        {
+            line = FirstNonEmptyLine(result.ProcessTreeCleanupDiagnostic);
+        }
+
+        return line is null
+            ? string.Empty
+            : line.Length <= 512 ? line : line[..512] + "...";
+    }
+
+    private static string? FirstNonEmptyLine(string? text) =>
+        text?.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(static line => line.Trim())
+            .FirstOrDefault(static line => line.Length > 0);
 
     private static Options Parse(string[] args)
     {

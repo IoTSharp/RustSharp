@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/RustSharp.Compiler/RustSharp.Compiler.csproj" />
+    <ProjectReference Include="../../src/RustSharp.Syntax/RustSharp.Syntax.csproj" />
   </ItemGroup>
 </Project>

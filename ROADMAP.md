@@ -132,26 +132,29 @@ about the current harness.
 | P0-14 | [x] Complete | Prove generics plus a bounded trait-resolution subset. | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | `Option<i32>` is deterministically monomorphized; exact, missing, and ambiguous bounded trait cases pass with depth/work limits. |
 | P0-15 | [x] Complete | Prove the managed-hybrid runtime mapping and explicit .NET interop boundary. | P0-13 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | Shared/exclusive managed borrows, owner/drop scope, and an explicit static generic interop call pass without reflection or dynamic code. |
 | P0-16 | [ ] In progress | Prove file, TCP, async, and SQLite vertical samples without reflection-based code generation. | P0-13, P0-15 | `dotnet run --project tools/RustSharp.Smoke -- --profile p0-io` | File, loopback TCP, and async probes pass locally; parameterized SQLite is executed when bounded `sqlite3` is available and otherwise recorded as blocked. |
-| P0-17 | [ ] In progress | Add Windows/Linux x64 CI and archive gate evidence. | P0-07, P0-10, P0-11 | CI workflows plus bounded harnesses | Windows and Linux workflows now archive executable tests, IL/conformance, smoke, and Native AOT evidence; native Linux and rustc 1.98 results remain runner-dependent. |
+| P0-17 | [ ] In progress | Add Windows/Linux x64 CI and archive gate evidence. | P0-07, P0-10, P0-11 | CI workflows plus bounded harnesses | Windows and Linux workflows are configured to collect and upload executable-test, IL/conformance, smoke, and Native AOT evidence; no successful native Linux run or complete two-platform archive is recorded yet. |
 
 ### Recorded vertical-slice evidence
 
-The following evidence was collected on 2026-09-02 with .NET SDK 10.0.400 on
-Windows x64. These are local verification observations; generated binaries and
-logs live under the ignored `artifacts/` directory and can be regenerated with
-the commands below.
+The following evidence was collected from 2026-09-02 through 2026-09-04 with
+.NET SDK 10.0.400 on Windows x64. These are local verification observations;
+generated
+binaries and logs live under the ignored `artifacts/` directory and can be
+regenerated with the commands below.
 
 - Release solution build completed with zero warnings and zero errors.
-- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` completed 42/42 tests, including the on-disk deterministic-output and IL sanity gates, eight typed CLR LIR cases, eight ownership MIR cases, and bounded generic/runtime cases; the same command was repeated successfully.
+- `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` completed 73/73 tests, including five bounded lexer cases, 13 safe-core syntax cases, nine safe-core name-resolution cases, four safe-core HIR lowering cases, on-disk deterministic-output and IL sanity gates, eight typed CLR LIR cases, eight ownership MIR cases, and bounded generic/runtime cases.
 - `dotnet run --project src/RustSharp.Cli -- check samples/hello.rs` and `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs` completed successfully. The `rsc` tool name is available after packing/installing the CLI tool; it is not assumed to be on PATH in a source checkout.
 - The generated DLL ran on CoreCLR and printed `Hello from Rust#`.
 - Windows x64 Native AOT publish completed with no observed AOT/trimming warnings (publish uses `-warnaserror`); the produced executable ran and printed `Hello from Rust#`.
+- `eng/Invoke-WindowsNativeAotProbe.ps1` completed a bounded local Windows x64 publish/run pass with `status=passed`, exact `Hello from Rust#` output, recorded PID/parent PID metadata, and complete temporary host cleanup. This is local evidence only; the two-platform CI archive gate remains open.
 - `PEReader`, `MetadataReader`, and `ilspycmd --ilcode` inspection confirmed the managed entry point, generated IL, Portable PDB document, sequence points, and source checksum behavior (including UTF-8 BOM input).
 - The local `.config/dotnet-tools.json` manifest restored the pinned `dotnet-ilverify` 10.0.11 tool. It verified `artifacts/p0/hello.dll` with `System.Private.CoreLib` selected as the system module and the .NET 10.0.11 runtime reference directory. The process exited 0 and reported `All Classes and Methods ... Verified`; `eng/Invoke-ILVerify.ps1` archived the command, PID/start time, references, bounded output, SHA-256, environment, and cleanup state in `artifacts/p0/hello.ilverify.json`.
 - The Linux x64 probe passed shell/static checks and records a bounded `skipped` result on this Windows host because WSL has SDK 10.0.111 rather than the pinned 10.0.400. No Linux native execution pass is claimed; `.github/workflows/linux-native-aot.yml` runs the probe on an `ubuntu-24.04` native runner and uploads its evidence.
 - The conformance harness produced a passing report at `artifacts/conformance/vertical-slice-v1.json`: `rustc +1.98.0` reports `rustc 1.98.0`, and all four fixtures (two run-pass and two compile-fail) executed with matching outcomes and output. The report records the oracle/toolchain version, limits, process metadata, and cleanup result.
-- The ownership MIR spike and bounded generic/runtime probes are included in the executable harness (40/40 pass). Ownership records move/borrow/NLL/Drop traces; generic and managed-hybrid probes verify deterministic `Option<i32>` closure, bounded trait resolution, exclusive borrows, reverse cleanup, pinning, and static interop.
-- `dotnet run --project tools/RustSharp.Smoke -c Release --no-restore -- --profile p0-io` records a machine-readable report with 3/4 probes passing on this Windows host; SQLite is explicitly `skipped` because `sqlite3` is not installed. Linux/Windows CI runs the same bounded tool and archives its report.
+- The `safe-core-name-resolution` acceptance report passes its six-case manifest and records the exact denominator, bounded parser/resolver limits, expected diagnostics and path resolutions, source hashes, and `name-resolution-acceptance` evidence scope. It explicitly records both rustc and runtime conformance as false.
+- The ownership MIR spike and bounded generic/runtime probes are included in the 73-case executable harness. Ownership records move/borrow/NLL/Drop traces; generic and managed-hybrid probes verify deterministic `Option<i32>` closure, bounded trait resolution, exclusive borrows, reverse cleanup, pinning, and static interop.
+- `dotnet run --project tools/RustSharp.Smoke -c Release --no-restore -- --profile p0-io` records a machine-readable report with 3 probes passed and 1 skipped on this Windows host; the SQLite case is `skipped` and the report summary is `blocked` because `sqlite3` is not installed. Linux/Windows CI runs the same bounded tool and is configured to upload its report.
 
 The current test project intentionally remains an executable harness; it does
 not claim `dotnet test` discovery. P0-10 remains in progress until native Linux
@@ -181,11 +184,48 @@ P1 expands the grammar.
 
 ## P1: Implement the safe language core
 
+An early P1-01 prototype in `RustLexer.cs` and `RustLexingModels.cs` preserves
+token/trivia spans, builds nested token trees, and bounds malformed-input
+diagnostics. Its five harness cases now cover numeric radix, separator and
+suffix behavior plus byte, raw-byte, and C literal constraints. This is
+implementation evidence only: the P0 gate remains open, the existing
+vertical-slice parser is still the production path, and no full safe-core
+lexical denominator has been published.
+
+P1-02 also has an early bounded `SafeCoreSyntax` model/parser for
+representative modules, items, statements, expressions, patterns, types,
+generics, and attributes, with stable `RSP` diagnostics. A six-case
+`safe-core-syntax` manifest and the acceptance command below produce
+`artifacts/conformance/safe-core-syntax.json`. The current report passes 6/6
+cases and is parser-acceptance evidence only, not rustc differential or runtime
+conformance evidence. P1-02 remains in progress because the P0 and P1-01
+dependencies are open and the full syntax denominator has not been published.
+
+P1-03 now has a bounded `SafeCoreNameResolution` prototype over that syntax
+model. It collects module, import, item, generic, parameter, and local symbols
+in separate type/value namespaces and implements aliases, qualified paths,
+`crate`/`self`/`super`, visibility, duplicate/ambiguous/unresolved names, import
+cycle diagnostics, canonical raw and NFC-normalized identifiers, and explicit
+work limits. Its nine local harness cases cover
+namespace/symbol collection, imports and qualified paths, duplicate/ambiguous
+names, visibility and unresolved names, import cycles, declaration order and
+legal shadowing, rejection of qualified access to function locals, struct
+fields, and enum generic parameters, Unicode normalization, and
+symbol/import-nesting limits. A
+six-case `safe-core-name-resolution` manifest publishes the current bounded
+acceptance denominator. `SafeCoreHirLowering` also lowers successful trees into
+a deterministic flat arena with bound declaration/reference symbols; four
+harness cases cover deterministic IDs, representative node shapes, dependency
+failures, Unicode-equivalent bindings, and explicit work limits. This is
+prototype evidence only:
+workspace/module loading, production compiler integration, a full safe-core
+denominator, and broader diagnostic coverage remain open.
+
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | [ ] Planned | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet test RustSharp.slnx -c Release --filter Lexer` | Declared identifiers, literals, comments, delimiters, and error spans match the profile corpus. |
-| P1-02 | [ ] Planned | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core-syntax` | Every case in the published syntax-profile denominator has the expected parse result; unsupported syntax is rejected explicitly. |
-| P1-03 | [ ] Planned | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet test RustSharp.slnx -c Release --filter NameResolution` | Positive module/workspace samples resolve stable symbols; ambiguity, privacy, and unresolved names have stable diagnostics. |
+| P1-01 | [ ] In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The five lexer harness cases cover declared identifiers, literals, comments, delimiters, and bounded error spans; a standalone lexer acceptance denominator remains open. |
+| P1-02 | [ ] In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | Every case in the published syntax-profile denominator has the expected parse result; unsupported syntax is rejected explicitly. |
+| P1-03 | [ ] In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator resolves expected symbols and diagnostics; four executable-harness cases cover bounded HIR lowering, while multi-file workspace and production pipeline integration remain open. |
 | P1-04 | [ ] Planned | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet test RustSharp.slnx -c Release --filter TypeChecking` | Declared compile-pass/fail type cases agree with rustc 1.98 for the profile. |
 | P1-05 | [ ] Planned | Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | Generic functions/types emit closed AOT-reachable bodies; overlap, ambiguity, and missing bounds fail predictably. |
 | P1-06 | [ ] Planned | Define typed MIR, CFG validation, desugaring, and source mapping. | P1-04 | `dotnet test RustSharp.slnx -c Release --filter Mir` | MIR snapshots are deterministic; invalid edges/types are rejected; diagnostics map back to `.rs` spans. |

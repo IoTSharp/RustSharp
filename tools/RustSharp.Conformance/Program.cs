@@ -18,6 +18,8 @@ internal static class Program
     private static readonly TimeSpan CleanupTimeout = TimeSpan.FromSeconds(5);
     private const int MaximumCases = 64;
     private const string ProfileName = "vertical-slice-v1";
+    private const string SafeCoreSyntaxProfileName = "safe-core-syntax";
+    private const string SafeCoreNameResolutionProfileName = "safe-core-name-resolution";
     private const string OracleName = "rustc-1.98";
     private const string RustcToolchain = "1.98.0";
 
@@ -37,6 +39,50 @@ internal static class Program
         }
 
         string repositoryRoot = FindRepositoryRoot();
+        if (string.Equals(options.Profile, SafeCoreSyntaxProfileName, StringComparison.Ordinal))
+        {
+            try
+            {
+                string syntaxReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(syntaxReportPath)!);
+                return await SafeCoreSyntaxProfileRunner.RunAsync(
+                    repositoryRoot,
+                    syntaxReportPath,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                Console.Error.WriteLine($"conformance: safe-core-syntax harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+
+        if (string.Equals(options.Profile, SafeCoreNameResolutionProfileName, StringComparison.Ordinal))
+        {
+            try
+            {
+                string nameResolutionReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(nameResolutionReportPath)!);
+                return await SafeCoreNameResolutionProfileRunner.RunAsync(
+                    repositoryRoot,
+                    nameResolutionReportPath,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                Console.Error.WriteLine($"conformance: safe-core-name-resolution harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+
         string reportPath = options.ReportPath is null
             ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
             : Path.GetFullPath(options.ReportPath, repositoryRoot);
@@ -393,6 +439,8 @@ internal static class Program
 
         string profile = ProfileName;
         string oracle = OracleName;
+        bool oracleSpecified = false;
+        bool timeoutSpecified = false;
         string? report = null;
         int timeoutSeconds = DefaultTimeoutSeconds;
         int deadlineSeconds = DefaultDeadlineSeconds;
@@ -404,15 +452,46 @@ internal static class Program
                 if (++index >= args.Length) throw new ArgumentException($"Option '{value}' requires a value.");
                 string argument = args[index];
                 if (value == "--profile") profile = argument;
-                else if (value == "--oracle") oracle = argument;
+                else if (value == "--oracle")
+                {
+                    oracle = argument;
+                    oracleSpecified = true;
+                }
                 else if (value == "--report") report = argument;
-                else if (value == "--timeout" && (!int.TryParse(argument, out timeoutSeconds) || timeoutSeconds is < 1 or > MaximumTimeoutSeconds)) throw new ArgumentException("--timeout must be 1..300 seconds.");
+                else if (value == "--timeout")
+                {
+                    timeoutSpecified = true;
+                    if (!int.TryParse(argument, out timeoutSeconds) || timeoutSeconds is < 1 or > MaximumTimeoutSeconds)
+                    {
+                        throw new ArgumentException("--timeout must be 1..300 seconds.");
+                    }
+                }
                 else if (value == "--deadline" && (!int.TryParse(argument, out deadlineSeconds) || deadlineSeconds is < 1 or > MaximumDeadlineSeconds)) throw new ArgumentException("--deadline must be 1..900 seconds.");
             }
             else throw new ArgumentException($"Unknown option '{value}'.");
         }
-        if (!string.Equals(profile, ProfileName, StringComparison.Ordinal)) throw new ArgumentException($"Only profile '{ProfileName}' is supported.");
-        if (!string.Equals(oracle, OracleName, StringComparison.Ordinal)) throw new ArgumentException($"Only oracle '{OracleName}' is supported.");
+        if (profile is not ProfileName and not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName)
+        {
+            throw new ArgumentException(
+                $"Supported profiles are '{ProfileName}', '{SafeCoreSyntaxProfileName}', and '{SafeCoreNameResolutionProfileName}'.");
+        }
+
+        bool inProcessAcceptanceProfile = profile is SafeCoreSyntaxProfileName or SafeCoreNameResolutionProfileName;
+        if (inProcessAcceptanceProfile && oracleSpecified)
+        {
+            throw new ArgumentException($"Profile '{profile}' is in-process acceptance only and does not accept --oracle.");
+        }
+
+        if (inProcessAcceptanceProfile && timeoutSpecified)
+        {
+            throw new ArgumentException($"Profile '{profile}' runs in-process; --timeout is not applicable. Use --deadline to bound the harness.");
+        }
+
+        if (string.Equals(profile, ProfileName, StringComparison.Ordinal) && !string.Equals(oracle, OracleName, StringComparison.Ordinal))
+        {
+            throw new ArgumentException($"Only oracle '{OracleName}' is supported for profile '{ProfileName}'.");
+        }
+
         return new Options(profile, report, TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(deadlineSeconds));
     }
 
