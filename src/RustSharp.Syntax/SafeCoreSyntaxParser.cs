@@ -1267,6 +1267,7 @@ public static class SafeCoreSyntax
 
             if (Current is { } literal && IsLiteral(literal))
             {
+                ValidateLiteralSuffix(literal);
                 Consume();
                 return NewNode(new SafeCoreLiteralExpressionSyntax(
                     literal.Kind,
@@ -1555,6 +1556,7 @@ public static class SafeCoreSyntax
 
                 if (Current is { } literal && IsLiteral(literal))
                 {
+                    ValidateLiteralSuffix(literal);
                     Consume();
                     return NewNode(new SafeCoreLiteralPatternSyntax(literal.Kind, literal.Text, literal.Span));
                 }
@@ -1656,7 +1658,7 @@ public static class SafeCoreSyntax
                 {
                     RustToken start = Consume()!;
                     string? lifetime = null;
-                    if (Current is { Kind: RustTokenKind.Lifetime } lifetimeToken)
+                    if (Current is { Kind: RustTokenKind.Lifetime or RustTokenKind.RawLifetime } lifetimeToken)
                     {
                         lifetime = lifetimeToken.Text;
                         Consume();
@@ -2093,6 +2095,49 @@ public static class SafeCoreSyntax
             RustTokenKind.RawStringLiteral or RustTokenKind.ByteStringLiteral or RustTokenKind.RawByteStringLiteral or
             RustTokenKind.CStringLiteral or RustTokenKind.RawCStringLiteral or RustTokenKind.CharacterLiteral or
             RustTokenKind.ByteCharacterLiteral || token.Text is "true" or "false";
+
+        private void ValidateLiteralSuffix(RustToken literal)
+        {
+            if (literal.LiteralSuffix is not { } suffix)
+            {
+                return;
+            }
+
+            bool valid = literal.Kind switch
+            {
+                RustTokenKind.IntegerLiteral =>
+                    IsIntegerLiteralSuffix(suffix) ||
+                    (IsFloatLiteralSuffix(suffix) && IsDecimalIntegerLiteral(literal)),
+                RustTokenKind.FloatLiteral => IsFloatLiteralSuffix(suffix),
+                _ => false,
+            };
+            if (valid)
+            {
+                return;
+            }
+
+            TextSpan suffixSpan = literal.LiteralSuffixSpan!.Value;
+            AddDiagnostic(
+                SafeCoreSyntaxDiagnosticCodes.InvalidLiteralSuffix,
+                $"Literal suffix '{suffix}' is not valid for this literal.",
+                suffixSpan.Start,
+                suffixSpan.Length);
+        }
+
+        private static bool IsDecimalIntegerLiteral(RustToken literal)
+        {
+            int primaryLength = literal.Text.Length - literal.LiteralSuffix!.Length;
+            ReadOnlySpan<char> primary = literal.Text.AsSpan(0, primaryLength);
+            return !primary.StartsWith("0b", StringComparison.Ordinal) &&
+                !primary.StartsWith("0o", StringComparison.Ordinal) &&
+                !primary.StartsWith("0x", StringComparison.Ordinal);
+        }
+
+        private static bool IsIntegerLiteralSuffix(string suffix) => suffix is
+            "u8" or "u16" or "u32" or "u64" or "u128" or "usize" or
+            "i8" or "i16" or "i32" or "i64" or "i128" or "isize";
+
+        private static bool IsFloatLiteralSuffix(string suffix) => suffix is "f32" or "f64";
 
         private static bool IsUnaryOperator(string text) => text is "!" or "-" or "+" or "&" or "*";
 

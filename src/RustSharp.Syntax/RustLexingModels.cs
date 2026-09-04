@@ -56,6 +56,15 @@ public enum RustTokenKind
 
     /// <summary>A source character that is not part of the Rust lexical profile.</summary>
     Unknown,
+
+    /// <summary>A lifetime written with the Edition 2021+ <c>'r#</c> raw prefix.</summary>
+    RawLifetime,
+
+    /// <summary>An Edition 2024 reserved guarded string literal.</summary>
+    ReservedGuardedStringLiteral,
+
+    /// <summary>An Edition 2024 reserved pair of adjacent <c>#</c> characters.</summary>
+    ReservedPounds,
 }
 
 /// <summary>Classifies source text that is preserved outside lexical tokens.</summary>
@@ -114,7 +123,7 @@ public static class RustLexDiagnosticCodes
     /// <summary>A nested block comment was not terminated.</summary>
     public const string UnterminatedComment = "RSL1006";
 
-    /// <summary>A numeric literal contains an invalid digit or suffix.</summary>
+    /// <summary>A numeric literal contains an invalid digit or an incomplete numeric body.</summary>
     public const string InvalidNumber = "RSL1007";
 
     /// <summary>A quoted literal contains an invalid lexical form.</summary>
@@ -122,6 +131,18 @@ public static class RustLexDiagnosticCodes
 
     /// <summary>The configured delimiter nesting limit was exceeded.</summary>
     public const string DelimiterDepthLimit = "RSL1009";
+
+    /// <summary>A lifetime starts with a decimal digit.</summary>
+    public const string InvalidLifetime = "RSL1010";
+
+    /// <summary>An identifier or lifetime uses an Edition 2021+ reserved prefix.</summary>
+    public const string ReservedPrefix = "RSL1011";
+
+    /// <summary>Source uses an Edition 2024 reserved guarded string literal.</summary>
+    public const string ReservedGuardedString = "RSL1012";
+
+    /// <summary>Source uses an Edition 2024 reserved pair of adjacent pound characters.</summary>
+    public const string ReservedPounds = "RSL1013";
 }
 
 /// <summary>Options that bound a <see cref="RustLexer"/> invocation.</summary>
@@ -171,6 +192,18 @@ public sealed record RustToken
         bool isKeyword,
         RustDelimiterKind? delimiter,
         IReadOnlyList<RustTrivia>? leadingTrivia)
+        : this(kind, span, text, isKeyword, delimiter, leadingTrivia, null)
+    {
+    }
+
+    internal RustToken(
+        RustTokenKind kind,
+        TextSpan span,
+        string text,
+        bool isKeyword,
+        RustDelimiterKind? delimiter,
+        IReadOnlyList<RustTrivia>? leadingTrivia,
+        string? literalSuffix)
     {
         ArgumentNullException.ThrowIfNull(text);
         Kind = kind;
@@ -179,6 +212,7 @@ public sealed record RustToken
         IsKeyword = isKeyword || kind == RustTokenKind.Keyword;
         Delimiter = delimiter;
         LeadingTrivia = leadingTrivia ?? Array.Empty<RustTrivia>();
+        LiteralSuffix = literalSuffix;
     }
 
     /// <summary>The lexical category.</summary>
@@ -201,6 +235,14 @@ public sealed record RustToken
 
     /// <summary>Whether this token opens or closes a delimiter group.</summary>
     public bool IsDelimiter => Kind is RustTokenKind.OpenDelimiter or RustTokenKind.CloseDelimiter;
+
+    /// <summary>The exact literal suffix, or <see langword="null"/> when the token has none.</summary>
+    public string? LiteralSuffix { get; }
+
+    /// <summary>The source span of <see cref="LiteralSuffix"/>, when present.</summary>
+    public TextSpan? LiteralSuffixSpan => LiteralSuffix is null
+        ? null
+        : new TextSpan(Span.End - LiteralSuffix.Length, LiteralSuffix.Length);
 
     /// <summary>Trivia immediately preceding this token.</summary>
     public IReadOnlyList<RustTrivia> LeadingTrivia { get; }

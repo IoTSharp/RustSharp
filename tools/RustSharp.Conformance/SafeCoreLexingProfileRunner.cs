@@ -54,6 +54,10 @@ internal static class SafeCoreLexingProfileRunner
         RustLexDiagnosticCodes.InvalidNumber,
         RustLexDiagnosticCodes.InvalidLiteral,
         RustLexDiagnosticCodes.DelimiterDepthLimit,
+        RustLexDiagnosticCodes.InvalidLifetime,
+        RustLexDiagnosticCodes.ReservedPrefix,
+        RustLexDiagnosticCodes.ReservedGuardedString,
+        RustLexDiagnosticCodes.ReservedPounds,
     };
     private static readonly HashSet<string> KnownTokenKinds = Enum.GetValues<RustTokenKind>()
         .Select(ToTokenKind)
@@ -1347,6 +1351,9 @@ internal static class SafeCoreLexingProfileRunner
         RustTokenKind.CloseDelimiter => "close-delimiter",
         RustTokenKind.Punctuation => "punctuation",
         RustTokenKind.Unknown => "unknown",
+        RustTokenKind.RawLifetime => "raw-lifetime",
+        RustTokenKind.ReservedGuardedStringLiteral => "reserved-guarded-string-literal",
+        RustTokenKind.ReservedPounds => "reserved-pounds",
         _ => throw new InvalidDataException($"Unknown lexer token kind '{kind}'."),
     };
 

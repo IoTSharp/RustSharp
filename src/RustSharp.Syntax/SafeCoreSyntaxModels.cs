@@ -37,6 +37,9 @@ public static class SafeCoreSyntaxDiagnosticCodes
     /// <summary>A parser delimiter or construct was not terminated.</summary>
     public const string UnterminatedConstruct = "RSP1004";
 
+    /// <summary>A literal suffix is invalid when interpreted as an expression or pattern.</summary>
+    public const string InvalidLiteralSuffix = "RSP1005";
+
     /// <summary>The parser reached one of its configured work limits.</summary>
     public const string LimitReached = "RSP0002";
 

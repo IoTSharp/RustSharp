@@ -46,6 +46,7 @@ internal static class SafeCoreSyntaxProfileRunner
         SafeCoreSyntaxDiagnosticCodes.UnexpectedToken,
         SafeCoreSyntaxDiagnosticCodes.UnsupportedSyntax,
         SafeCoreSyntaxDiagnosticCodes.UnterminatedConstruct,
+        SafeCoreSyntaxDiagnosticCodes.InvalidLiteralSuffix,
         SafeCoreSyntaxDiagnosticCodes.LimitReached,
         SafeCoreSyntaxDiagnosticCodes.LexicalTruncation,
         RustLexDiagnosticCodes.SourceTooLong,
@@ -58,6 +59,10 @@ internal static class SafeCoreSyntaxProfileRunner
         RustLexDiagnosticCodes.UnterminatedComment,
         RustLexDiagnosticCodes.InvalidNumber,
         RustLexDiagnosticCodes.InvalidLiteral,
+        RustLexDiagnosticCodes.InvalidLifetime,
+        RustLexDiagnosticCodes.ReservedPrefix,
+        RustLexDiagnosticCodes.ReservedGuardedString,
+        RustLexDiagnosticCodes.ReservedPounds,
     };
 
     public static async Task<int> RunAsync(

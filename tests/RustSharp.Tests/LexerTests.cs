@@ -7,12 +7,18 @@ internal static class LexerTests
     private static readonly string[] UppercaseRadixPrefixTexts = ["0XFF", "0O77", "0B11"];
     private static readonly string[] OutOfRangeHexEscapeTexts = ["\\x80", "\\xFF"];
     private static readonly string[] AdjacentLifetimeTexts = ["'a", "'b", "'a", "'b"];
+    private static readonly string[] NumericLifetimeDiagnosticTexts = ["'0", "'9abc"];
+    private static readonly string[] ReservedPrefixDiagnosticTexts = ["foo", "foo", "foo", "'foo", "π"];
+    private static readonly string[] MalformedRawPrefixDiagnosticTexts = ["r", "r", "br", "cr"];
     private const int MaximumRawStringHashCountForTest = 255;
 
     public static IReadOnlyList<TestCase> All { get; } =
     [
         new("Lexer preserves token and trivia spans", PreservesSourceSpansAsync),
         new("Lexer recognizes Rust lexical forms", RecognizesLexicalFormsAsync),
+        new("Lexer keeps literal suffixes in one token", KeepsLiteralSuffixesInOneTokenAsync),
+        new("Lexer recognizes raw and numeric lifetime boundaries", RecognizesLifetimeBoundariesAsync),
+        new("Lexer diagnoses Edition 2024 reserved syntax", DiagnosesReservedSyntaxAsync),
         new("Lexer builds nested delimiter token trees", BuildsTokenTreesAsync),
         new("Lexer reports stable malformed-source diagnostics", ReportsDiagnosticsAsync),
         new("Lexer obeys explicit work limits", ObeysWorkLimitsAsync),
@@ -87,6 +93,131 @@ internal static class LexerTests
         RustLexResult patternWhitespaceResult = RustLexer.Lex("alpha" + patternWhitespace + "omega");
         AssertEx.Equal(0, patternWhitespaceResult.Diagnostics.Count);
         AssertEx.Equal(patternWhitespace, patternWhitespaceResult.Trivia.Single().Text);
+        return Task.CompletedTask;
+    }
+
+    private static Task KeepsLiteralSuffixesInOneTokenAsync()
+    {
+        (string Text, RustTokenKind Kind, string Suffix)[] expected =
+        [
+            ("\"s\"tag", RustTokenKind.StringLiteral, "tag"),
+            ("'x'tag", RustTokenKind.CharacterLiteral, "tag"),
+            ("b\"b\"tag", RustTokenKind.ByteStringLiteral, "tag"),
+            ("b'x'tag", RustTokenKind.ByteCharacterLiteral, "tag"),
+            ("c\"c\"tag", RustTokenKind.CStringLiteral, "tag"),
+            ("r\"r\"tag", RustTokenKind.RawStringLiteral, "tag"),
+            ("br\"br\"tag", RustTokenKind.RawByteStringLiteral, "tag"),
+            ("cr\"cr\"tag", RustTokenKind.RawCStringLiteral, "tag"),
+            ("123tag", RustTokenKind.IntegerLiteral, "tag"),
+            ("1.0tag", RustTokenKind.FloatLiteral, "tag"),
+            ("2f32", RustTokenKind.IntegerLiteral, "f32"),
+            ("0XFF", RustTokenKind.IntegerLiteral, "XFF"),
+        ];
+        string source = string.Join(' ', expected.Select(item => item.Text));
+        RustLexResult result = RustLexer.Lex(source, "literal-suffixes.rs");
+
+        AssertEx.Equal(0, result.Diagnostics.Count);
+        AssertEx.Equal(expected.Length, result.Tokens.Count);
+        AssertEx.Equal(source, result.ToSourceText());
+        for (int index = 0; index < expected.Length; index++)
+        {
+            RustToken token = result.Tokens[index];
+            AssertEx.Equal(expected[index].Text, token.Text);
+            AssertEx.Equal(expected[index].Kind, token.Kind);
+            AssertEx.Equal(expected[index].Suffix, token.LiteralSuffix!);
+            AssertEx.Equal(expected[index].Suffix, result.GetText(token.LiteralSuffixSpan!.Value));
+        }
+
+        RustLexResult separated = RustLexer.Lex("\"s\" tag");
+        AssertEx.Equal(2, separated.Tokens.Count);
+        AssertEx.True(separated.Tokens[0].LiteralSuffix is null, "Whitespace must end a literal token.");
+
+        RustLexResult underscore = RustLexer.Lex("\"s\"_");
+        AssertEx.Equal("\"s\"_", underscore.Tokens.Single().Text);
+        AssertEx.Equal("_", underscore.Tokens.Single().LiteralSuffix!);
+        AssertEx.Equal(RustLexDiagnosticCodes.InvalidLiteral, underscore.Diagnostics.Single().Code);
+        AssertEx.Equal("_", underscore.GetText(underscore.Diagnostics.Single().Span));
+        return Task.CompletedTask;
+    }
+
+    private static Task RecognizesLifetimeBoundariesAsync()
+    {
+        const string source = "'r#type 'r#name '0 + next '9abc '0'";
+        RustLexResult result = RustLexer.Lex(source, "lifetime-boundaries.rs");
+
+        AssertEx.Equal(source, result.ToSourceText());
+        AssertEx.Equal(RustTokenKind.RawLifetime, FindToken(result, "'r#type").Kind);
+        AssertEx.Equal(RustTokenKind.RawLifetime, FindToken(result, "'r#name").Kind);
+        AssertEx.Equal(RustTokenKind.Lifetime, FindToken(result, "'0").Kind);
+        AssertEx.Equal(RustTokenKind.Lifetime, FindToken(result, "'9abc").Kind);
+        AssertEx.Equal(RustTokenKind.CharacterLiteral, FindToken(result, "'0'").Kind);
+        AssertEx.Equal(2, result.Diagnostics.Count);
+        AssertEx.True(
+            result.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidLifetime),
+            "Numeric lifetime diagnostics must use the stable invalid-lifetime code.");
+        AssertEx.True(
+            result.Diagnostics.Select(diagnostic => result.GetText(diagnostic.Span)).SequenceEqual(NumericLifetimeDiagnosticTexts),
+            "Numeric lifetime diagnostics must cover exactly one complete lifetime token.");
+
+        RustLexResult reservedRaw = RustLexer.Lex("'r#_ 'r#crate 'r#self 'r#Self 'r#super");
+        AssertEx.Equal(5, reservedRaw.Tokens.Count);
+        AssertEx.True(
+            reservedRaw.Tokens.All(token => token.Kind == RustTokenKind.RawLifetime),
+            "Reserved raw lifetime spellings must remain complete raw-lifetime tokens.");
+        AssertEx.Equal(5, reservedRaw.Diagnostics.Count);
+        AssertEx.True(
+            reservedRaw.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidLifetime),
+            "Reserved raw lifetime spellings need stable invalid-lifetime diagnostics.");
+        return Task.CompletedTask;
+    }
+
+    private static Task DiagnosesReservedSyntaxAsync()
+    {
+        const string guardedSource = "#\"g\"# ##\"h\"##tag ### # \"split\" # # r#\"raw\"#";
+        RustLexResult guarded = RustLexer.Lex(guardedSource, "guarded.rs");
+        AssertEx.Equal(guardedSource, guarded.ToSourceText());
+        AssertEx.Equal(RustTokenKind.ReservedGuardedStringLiteral, FindToken(guarded, "#\"g\"#").Kind);
+        RustToken suffixedGuarded = FindToken(guarded, "##\"h\"##tag");
+        AssertEx.Equal(RustTokenKind.ReservedGuardedStringLiteral, suffixedGuarded.Kind);
+        AssertEx.Equal("tag", suffixedGuarded.LiteralSuffix!);
+        AssertEx.Equal(RustTokenKind.ReservedPounds, FindToken(guarded, "##").Kind);
+        AssertEx.Equal(RustTokenKind.RawStringLiteral, FindToken(guarded, "r#\"raw\"#").Kind);
+        AssertEx.Equal(3, guarded.Diagnostics.Count);
+        AssertEx.Equal(2, guarded.Diagnostics.Count(diagnostic =>
+            diagnostic.Code == RustLexDiagnosticCodes.ReservedGuardedString));
+        AssertEx.Equal(1, guarded.Diagnostics.Count(diagnostic =>
+            diagnostic.Code == RustLexDiagnosticCodes.ReservedPounds));
+
+        const string prefixSource = "foo#bar foo\"bar\" foo'x' 'foo#bar π#x";
+        RustLexResult prefixes = RustLexer.Lex(prefixSource, "reserved-prefixes.rs");
+        AssertEx.Equal(prefixSource, prefixes.ToSourceText());
+        AssertEx.Equal(5, prefixes.Diagnostics.Count);
+        AssertEx.True(
+            prefixes.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.ReservedPrefix),
+            "Identifier and lifetime prefixes need the stable reserved-prefix diagnostic.");
+        AssertEx.True(
+            prefixes.Diagnostics.Select(diagnostic => prefixes.GetText(diagnostic.Span)).SequenceEqual(ReservedPrefixDiagnosticTexts),
+            "Reserved-prefix diagnostics must cover only the prefix token.");
+
+        RustLexResult malformedRawPrefixes = RustLexer.Lex("r# r#~ br#name cr#name");
+        AssertEx.Equal(4, malformedRawPrefixes.Diagnostics.Count);
+        AssertEx.True(
+            malformedRawPrefixes.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.ReservedPrefix),
+            "Malformed raw starters must not bypass reserved-prefix diagnostics.");
+        AssertEx.True(
+            malformedRawPrefixes.Diagnostics
+                .Select(diagnostic => malformedRawPrefixes.GetText(diagnostic.Span))
+                .SequenceEqual(MalformedRawPrefixDiagnosticTexts),
+            "Malformed raw starter diagnostics must cover only the candidate prefix.");
+
+        const string allowedSource =
+            "r#ident r#\"raw\"# br#\"raw\"# cr#\"raw\"# b\"bytes\" b'x' c\"c\" r\"r\" " +
+            "foo # bar foo \"bar\" foo 'x' 'foo #";
+        AssertEx.Equal(0, RustLexer.Lex(allowedSource).Diagnostics.Count);
+
+        RustLexResult unterminated = RustLexer.Lex("#\"guard");
+        AssertEx.Equal(RustTokenKind.ReservedGuardedStringLiteral, unterminated.Tokens.Single().Kind);
+        AssertEx.Equal(RustLexDiagnosticCodes.UnterminatedLiteral, unterminated.Diagnostics.Single().Code);
         return Task.CompletedTask;
     }
 
@@ -260,17 +391,20 @@ internal static class LexerTests
 
         RustLexResult malformedNumbers = RustLexer.Lex("0x_ 0b__ 1e_ 1.0u8 1e2u8 0b1f32");
         AssertEx.True(
-            malformedNumbers.Diagnostics.Count(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidNumber) == 6,
-            "Missing digits and incompatible numeric suffixes must be diagnosed without losing token spans.");
+            malformedNumbers.Diagnostics.Count(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidNumber) == 3,
+            "Only malformed numeric bodies must be diagnosed by the lexer; suffix validity belongs to parsing.");
+        AssertEx.True(
+            malformedNumbers.Tokens.Skip(3).All(token => token.LiteralSuffix is not null),
+            "Incompatible numeric suffixes must remain attached for downstream validation.");
 
         RustLexResult uppercaseRadixPrefixes = RustLexer.Lex("0XFF 0O77 0B11");
-        AssertEx.Equal(3, uppercaseRadixPrefixes.Diagnostics.Count);
-        AssertEx.True(
-            uppercaseRadixPrefixes.Diagnostics.All(diagnostic => diagnostic.Code == RustLexDiagnosticCodes.InvalidNumber),
-            "Uppercase radix prefixes must be rejected as invalid numeric literals.");
+        AssertEx.Equal(0, uppercaseRadixPrefixes.Diagnostics.Count);
         AssertEx.True(
             uppercaseRadixPrefixes.Tokens.Select(token => token.Text).SequenceEqual(UppercaseRadixPrefixTexts),
-            "Invalid uppercase radix prefixes must remain complete lossless tokens.");
+            "Uppercase radix-like spellings must remain single literals with arbitrary suffixes.");
+        AssertEx.True(
+            uppercaseRadixPrefixes.Tokens.Select(token => token.LiteralSuffix).SequenceEqual(UppercaseRadixPrefixTexts.Select(text => text[1..])),
+            "Uppercase radix-like spellings must expose their suffixes for downstream validation.");
 
         RustLexResult outOfRangeHexEscapes = RustLexer.Lex("\"\\x80\" \"\\xFF\"");
         AssertEx.Equal(2, outOfRangeHexEscapes.Diagnostics.Count);

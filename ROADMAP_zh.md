@@ -177,9 +177,11 @@ P1 进一步扩展语法前触发 ADR 评审。
 词元/trivia 范围、构建嵌套词元树，并限制格式错误输入的诊断。版本化的
 `safe-core-lexing` 清单现在为已声明的标识符、字面量、trivia、分隔符、词元树和
 非法形式发布有界的词法分析器验收分母。其报告在声明的限制内核对精确证据、范围和
-无损源码重建。这只属于 RustSharp 词法分析器验收证据，并不构成 rustc 差分或运行时
-一致性证据，而且该语料也不是完整的 Rust 1.98 词法分母。现有纵向切片解析器仍是
-生产路径，因此 P1-01 仍为 🚧 进行中。
+无损源码重建。当前实现和清单按优先顺序覆盖已审计的本批行为：字面量后缀归入同一个
+字面量词元；原始生命周期和包括 `'0` 在内以数字开头的生命周期形式；Edition 2024
+受保护字符串（guarded strings）；以及保留前缀。这只属于 RustSharp 词法分析器验收
+证据，并不构成 rustc 差分或运行时一致性证据，而且该语料也不是完整的 Rust 1.98
+词法分母。现有纵向切片解析器仍是生产路径，因此 P1-01 仍为 🚧 进行中。
 
 P1-02 也已有早期的有界 `SafeCoreSyntax` 模型/解析器，覆盖代表性的模块、项、语句、
 表达式、模式、类型、泛型和属性，并提供稳定的 `RSP` 诊断。一个六用例
@@ -202,7 +204,7 @@ Unicode 等价绑定和明确的工作量限制。这只是原型证据：工作
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 进行中 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | 已发布有界清单中的每个用例都必须与精确的词元、trivia、词元树、诊断、范围和源码重建证据匹配；生产路径和完整 Rust 1.98 词法分母仍未完成。 |
+| P1-01 | 🚧 进行中 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | 当前实现和清单覆盖字面量后缀单词元化、原始生命周期和包括 `'0` 在内以数字开头的生命周期形式、Edition 2024 受保护字符串（guarded strings）以及保留前缀；每个用例都必须与精确的词元、trivia、词元树、诊断、范围和源码重建证据匹配。生产路径和完整 Rust 1.98 词法分母仍未完成。 |
 | P1-02 | 🚧 进行中 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | 已发布语法配置档基准集合中的每个用例都具有预期解析结果；明确拒绝不支持的语法。 |
 | P1-03 | 🚧 进行中 | 将 AST 降低为 HIR，并实现模块、命名空间、可见性、导入和名称解析。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 六用例内存验收基准集合解析出预期符号和诊断；四个可执行测试工具用例覆盖有界 HIR 降低，而多文件工作区和生产流水线集成仍未完成。 |
 | P1-04 | ⏳ 计划中 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet test RustSharp.slnx -c Release --filter TypeChecking` | 配置档声明的编译通过/失败类型用例与 rustc 1.98 一致。 |

@@ -15,6 +15,7 @@ internal static class SafeCoreSyntaxTests
         new("safe-core rejects dangling item prefixes", RejectsDanglingItemPrefixesAsync),
         new("safe-core rejects unmodeled restricted visibility", RejectsRestrictedVisibilityAsync),
         new("safe-core preserves unary precedence and assignment associativity", ParsesOperatorBindingAsync),
+        new("safe-core validates literal suffixes after lexing", ValidatesLiteralSuffixesAsync),
         new("safe-core rejects dangling path-pattern separators", RejectsDanglingPathPatternSeparatorAsync),
         new("safe-core rejects external module declarations", RejectsExternalModuleDeclarationsAsync),
         new("safe-core reports malformed syntax with stable diagnostics", ReportsMalformedAsync),
@@ -51,6 +52,29 @@ internal static class SafeCoreSyntaxTests
         AssertEx.Equal("identity", identity.Name);
         AssertEx.Equal(1, identity.Parameters.Count);
         AssertEx.Equal("T", identity.GenericParameters[0].Name);
+        return Task.CompletedTask;
+    }
+
+    private static Task ValidatesLiteralSuffixesAsync()
+    {
+        SafeCoreSyntaxResult valid = SafeCoreSyntax.Parse(
+            "fn valid() { 1u8; 2f32; 3.0f64; }",
+            "valid-literal-suffixes.rs");
+        AssertSuccessful(valid);
+
+        foreach (string literal in new[] { "1foo", "1.0u8", "0b1f32", "0XFF", "\"x\"tag", "'x'tag" })
+        {
+            SafeCoreSyntaxResult invalid = SafeCoreSyntax.Parse(
+                $"fn invalid() {{ {literal}; }}",
+                "invalid-literal-suffix.rs");
+            AssertEx.False(invalid.IsSuccessful, $"Literal expression '{literal}' must reject its suffix.");
+            Diagnostic diagnostic = invalid.Diagnostics.Single(item =>
+                item.Code == SafeCoreSyntaxDiagnosticCodes.InvalidLiteralSuffix);
+            AssertEx.Equal(
+                invalid.LexResult.Tokens.First(token => token.LiteralSuffix is not null).LiteralSuffix!,
+                invalid.GetText(diagnostic.Span));
+        }
+
         return Task.CompletedTask;
     }
 

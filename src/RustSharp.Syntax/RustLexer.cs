@@ -285,6 +285,11 @@ public static class RustLexer
         {
             int start = _position;
 
+            if (TryScanReservedGuardedSyntax(out RustToken? reservedGuardedSyntax))
+            {
+                return reservedGuardedSyntax!;
+            }
+
             if (TryScanRawString(out RustToken? rawString))
             {
                 return rawString!;
@@ -355,6 +360,95 @@ public static class RustLexer
                 start,
                 width);
             return CreateToken(RustTokenKind.Unknown, start, _position, false, null);
+        }
+
+        private bool TryScanReservedGuardedSyntax(out RustToken? token)
+        {
+            token = null;
+            if (!MatchesAt(_position, "#\"") && !MatchesAt(_position, "##"))
+            {
+                return false;
+            }
+
+            int start = _position;
+            int quote = start;
+            while (quote < _scanLength && _source[quote] == '#')
+            {
+                quote++;
+            }
+
+            if (quote >= _scanLength || _source[quote] != '"')
+            {
+                _position = start + 2;
+                AddDiagnostic(
+                    RustLexDiagnosticCodes.ReservedPounds,
+                    "Two adjacent pound characters are reserved in Edition 2024.",
+                    start,
+                    2);
+                token = CreateToken(RustTokenKind.ReservedPounds, start, _position, false, null);
+                return true;
+            }
+
+            int hashCount = quote - start;
+            _position = quote + 1;
+            bool terminated = false;
+            while (_position < _scanLength)
+            {
+                char current = _source[_position];
+                if (current == '"')
+                {
+                    _position++;
+                    terminated = true;
+                    break;
+                }
+
+                if (current == '\\' && _position + 1 < _scanLength &&
+                    _source[_position + 1] is '\\' or '"')
+                {
+                    _position += 2;
+                    continue;
+                }
+
+                _position += TryReadRune(_position, out _, out int width) ? width : 1;
+            }
+
+            if (!terminated)
+            {
+                AddDiagnostic(
+                    RustLexDiagnosticCodes.UnterminatedLiteral,
+                    "Guarded string literal is not terminated.",
+                    start,
+                    _position - start);
+                token = CreateToken(
+                    RustTokenKind.ReservedGuardedStringLiteral,
+                    start,
+                    _position,
+                    false,
+                    null);
+                return true;
+            }
+
+            int closingHashes = 0;
+            while (_position < _scanLength && _source[_position] == '#' && closingHashes < hashCount)
+            {
+                closingHashes++;
+                _position++;
+            }
+
+            int? suffixStart = ScanLiteralSuffix(reportBareUnderscore: false);
+            AddDiagnostic(
+                RustLexDiagnosticCodes.ReservedGuardedString,
+                "Guarded string literals are reserved in Edition 2024.",
+                start,
+                _position - start);
+            token = CreateToken(
+                RustTokenKind.ReservedGuardedStringLiteral,
+                start,
+                _position,
+                false,
+                null,
+                suffixStart);
+            return true;
         }
 
         private bool TryScanRawString(out RustToken? token)
@@ -429,7 +523,9 @@ public static class RustLexer
                     _position = closingHashEnd;
                     ReportRawLiteralRestrictions(kind, quote + 1, cursor);
 
-                    token = CreateToken(kind, start, _position, false, null);
+                    int? suffixStart = ScanLiteralSuffix(reportBareUnderscore: true);
+
+                    token = CreateToken(kind, start, _position, false, null, suffixStart);
                     return true;
                 }
 
@@ -535,9 +631,39 @@ public static class RustLexer
 
         private RustToken ScanApostropheToken(int start)
         {
-            if (_position + 1 < _scanLength && IsIdentifierStartAt(_position + 1, out int firstWidth))
+            int contentStart = _position + 1;
+            if (MatchesAt(contentStart, "r#") &&
+                IsIdentifierStartAt(contentStart + 2, out int rawFirstWidth))
             {
-                int identifierEnd = _position + 1 + firstWidth;
+                _position = contentStart + 2 + rawFirstWidth;
+                while (IsIdentifierContinueAt(_position, out int width))
+                {
+                    _position += width;
+                }
+
+                ReadOnlySpan<char> rawName = _source.AsSpan(
+                    contentStart + 2,
+                    _position - contentStart - 2);
+                if (IsReservedRawLifetime(rawName))
+                {
+                    AddDiagnostic(
+                        RustLexDiagnosticCodes.InvalidLifetime,
+                        "This name cannot be used as a raw lifetime.",
+                        start,
+                        _position - start);
+                }
+
+                return CreateToken(RustTokenKind.RawLifetime, start, _position, false, null);
+            }
+
+            bool startsWithNumber = contentStart < _scanLength && IsAsciiDigit(_source[contentStart]);
+            bool startsWithIdentifier = IsIdentifierStartAt(contentStart, out int identifierFirstWidth);
+            if (contentStart < _scanLength && (startsWithNumber || startsWithIdentifier))
+            {
+                int firstWidth = startsWithNumber
+                    ? 1
+                    : identifierFirstWidth;
+                int identifierEnd = contentStart + firstWidth;
                 while (IsIdentifierContinueAt(identifierEnd, out int width))
                 {
                     identifierEnd += width;
@@ -546,6 +672,23 @@ public static class RustLexer
                 if (identifierEnd >= _scanLength || _source[identifierEnd] != '\'')
                 {
                     _position = identifierEnd;
+                    if (startsWithNumber)
+                    {
+                        AddDiagnostic(
+                            RustLexDiagnosticCodes.InvalidLifetime,
+                            "Lifetimes cannot start with a number.",
+                            start,
+                            _position - start);
+                    }
+                    else if (_position < _scanLength && _source[_position] == '#')
+                    {
+                        AddDiagnostic(
+                            RustLexDiagnosticCodes.ReservedPrefix,
+                            "Lifetime prefixes followed by '#' are reserved in Edition 2021 and later.",
+                            start,
+                            _position - start);
+                    }
+
                     return CreateToken(RustTokenKind.Lifetime, start, _position, false, null);
                 }
             }
@@ -785,7 +928,8 @@ public static class RustLexer
                     _position - start);
             }
 
-            return CreateToken(kind, start, _position, false, null);
+            int? suffixStart = closed ? ScanLiteralSuffix(reportBareUnderscore: true) : null;
+            return CreateToken(kind, start, _position, false, null, suffixStart);
         }
 
         private bool ConsumeUnicodeEscape(char literalQuote, ref bool invalid, out int scalar)
@@ -856,21 +1000,21 @@ public static class RustLexer
         {
             bool floating = false;
             bool invalid = false;
+            int? suffixStart = null;
 
             if (_source[_position] == '0' && _position + 1 < _scanLength)
             {
                 char prefix = _source[_position + 1];
                 int radix = prefix switch
                 {
-                    'b' or 'B' => 2,
-                    'o' or 'O' => 8,
-                    'x' or 'X' => 16,
+                    'b' => 2,
+                    'o' => 8,
+                    'x' => 16,
                     _ => 0,
                 };
 
                 if (radix != 0)
                 {
-                    invalid = prefix is 'B' or 'O' or 'X';
                     _position += 2;
                     int digitCount = 0;
                     while (_position < _scanLength)
@@ -882,9 +1026,18 @@ public static class RustLexer
                             continue;
                         }
 
-                        if (IsDigitForRadix(current, radix))
+                        bool numericBodyCharacter = radix == 16 ? IsHex(current) : IsAsciiDigit(current);
+                        if (numericBodyCharacter)
                         {
-                            digitCount++;
+                            if (IsDigitForRadix(current, radix))
+                            {
+                                digitCount++;
+                            }
+                            else
+                            {
+                                invalid = true;
+                            }
+
                             _position++;
                             continue;
                         }
@@ -897,30 +1050,29 @@ public static class RustLexer
                         invalid = true;
                     }
 
-                    if (IsIdentifierContinueAt(_position, out _))
+                    suffixStart = ScanLiteralSuffix(reportBareUnderscore: true);
+                    if (radix is 2 or 8 && suffixStart is int radixSuffixStart &&
+                        _source[radixSuffixStart] is 'e' or 'E')
                     {
-                        int tailStart = _position;
-                        while (IsIdentifierContinueAt(_position, out int width))
-                        {
-                            _position += width;
-                        }
-
-                        if (!IsIntegerSuffix(_source.AsSpan(tailStart, _position - tailStart)))
-                        {
-                            invalid = true;
-                        }
+                        invalid = true;
                     }
 
                     if (invalid)
                     {
                         AddDiagnostic(
                             RustLexDiagnosticCodes.InvalidNumber,
-                            "Numeric literal contains an invalid digit or suffix.",
+                            "Numeric literal contains an invalid digit or incomplete numeric body.",
                             start,
                             _position - start);
                     }
 
-                    return CreateToken(RustTokenKind.IntegerLiteral, start, _position, false, null);
+                    return CreateToken(
+                        RustTokenKind.IntegerLiteral,
+                        start,
+                        _position,
+                        false,
+                        null,
+                        suffixStart);
                 }
             }
 
@@ -981,37 +1133,19 @@ public static class RustLexer
                 }
             }
 
-            if (IsIdentifierStartAt(_position, out _))
-            {
-                int suffixStart = _position;
-                while (IsIdentifierContinueAt(_position, out int width))
-                {
-                    _position += width;
-                }
-
-                ReadOnlySpan<char> suffix = _source.AsSpan(suffixStart, _position - suffixStart);
-                if (IsFloatSuffix(suffix))
-                {
-                    floating = true;
-                }
-
-                if (floating ? !IsFloatSuffix(suffix) : !IsIntegerSuffix(suffix))
-                {
-                    invalid = true;
-                }
-            }
+            suffixStart = ScanLiteralSuffix(reportBareUnderscore: true);
 
             if (invalid)
             {
                 AddDiagnostic(
                     RustLexDiagnosticCodes.InvalidNumber,
-                    "Numeric literal contains an invalid digit or suffix.",
+                    "Numeric literal contains an invalid digit or incomplete numeric body.",
                     start,
                     _position - start);
             }
 
             RustTokenKind kind = floating ? RustTokenKind.FloatLiteral : RustTokenKind.IntegerLiteral;
-            return CreateToken(kind, start, _position, false, null);
+            return CreateToken(kind, start, _position, false, null, suffixStart);
         }
 
         private RustToken ScanIdentifier(int start)
@@ -1025,6 +1159,15 @@ public static class RustLexer
 
             string text = _source.Substring(start, _position - start);
             bool keyword = Keywords.Contains(text);
+            if (_position < _scanLength && _source[_position] is '#' or '"' or '\'')
+            {
+                AddDiagnostic(
+                    RustLexDiagnosticCodes.ReservedPrefix,
+                    $"Prefix '{text}' is reserved in Edition 2021 and later.",
+                    start,
+                    _position - start);
+            }
+
             return CreateToken(
                 keyword ? RustTokenKind.Keyword : RustTokenKind.Identifier,
                 start,
@@ -1054,19 +1197,63 @@ public static class RustLexer
             return true;
         }
 
+        private int? ScanLiteralSuffix(bool reportBareUnderscore)
+        {
+            if (!IsIdentifierStartAt(_position, out int firstWidth))
+            {
+                return null;
+            }
+
+            int start = _position;
+            _position += firstWidth;
+            while (IsIdentifierContinueAt(_position, out int width))
+            {
+                _position += width;
+            }
+
+            if (reportBareUnderscore && _position - start == 1 && _source[start] == '_')
+            {
+                AddDiagnostic(
+                    RustLexDiagnosticCodes.InvalidLiteral,
+                    "Underscore literal suffix is not allowed.",
+                    start,
+                    1);
+            }
+
+            return start;
+        }
+
+        private static bool IsReservedRawLifetime(ReadOnlySpan<char> name) =>
+            name.SequenceEqual("_") ||
+            name.SequenceEqual("crate") ||
+            name.SequenceEqual("self") ||
+            name.SequenceEqual("Self") ||
+            name.SequenceEqual("super");
+
         private RustToken CreateToken(
             RustTokenKind kind,
             int start,
             int end,
             bool isKeyword,
-            RustDelimiterKind? delimiter)
+            RustDelimiterKind? delimiter,
+            int? literalSuffixStart = null)
         {
             IReadOnlyList<RustTrivia> leadingTrivia = _pendingTrivia.Count == 0
                 ? Array.Empty<RustTrivia>()
                 : Array.AsReadOnly(_pendingTrivia.ToArray());
             _pendingTrivia.Clear();
             string text = _source.Substring(start, end - start);
-            return new RustToken(kind, new TextSpan(start, end - start), text, isKeyword, delimiter, leadingTrivia);
+            string? literalSuffix = literalSuffixStart is int suffixStart
+                ? _source.Substring(suffixStart, end - suffixStart)
+                : null;
+            return new RustToken(
+                kind,
+                new TextSpan(start, end - start),
+                text,
+                isKeyword,
+                delimiter,
+                leadingTrivia,
+                literalSuffix);
         }
 
         private void AddToken(RustToken token)
@@ -1318,22 +1505,6 @@ public static class RustLexer
             16 => IsHex(value),
             _ => false,
         };
-
-        private static bool IsIntegerSuffix(ReadOnlySpan<char> suffix)
-        {
-            if (suffix.IsEmpty)
-            {
-                return true;
-            }
-
-            return suffix.SequenceEqual("u8") || suffix.SequenceEqual("u16") || suffix.SequenceEqual("u32") ||
-                suffix.SequenceEqual("u64") || suffix.SequenceEqual("u128") || suffix.SequenceEqual("usize") ||
-                suffix.SequenceEqual("i8") || suffix.SequenceEqual("i16") || suffix.SequenceEqual("i32") ||
-                suffix.SequenceEqual("i64") || suffix.SequenceEqual("i128") || suffix.SequenceEqual("isize");
-        }
-
-        private static bool IsFloatSuffix(ReadOnlySpan<char> suffix) =>
-            suffix.IsEmpty || suffix.SequenceEqual("f32") || suffix.SequenceEqual("f64");
 
         private abstract class MutableTreeNode
         {

@@ -40,6 +40,10 @@ silently assigned C# semantics.
 Early P1 front-end work is also 🚧 In progress. The lossless lexer now has a
 manifest-driven, bounded acceptance profile for declared identifiers,
 literals, trivia, delimiters, token trees, and malformed-input diagnostics.
+The lexer and acceptance profile now cover the audited batch in priority
+order: literal suffixes as part of a single literal token; raw lifetimes and
+digit-starting lifetime forms, including `'0`; Edition 2024 guarded strings;
+and reserved prefixes.
 The profile checks exact token/trivia/tree evidence and lossless source
 reconstruction, but its declared corpus is not a complete Rust 1.98 lexical
 conformance suite. The early `SafeCoreSyntax` model/parser handles
@@ -115,6 +119,10 @@ report to `artifacts/conformance/safe-core-lexing.json`:
 dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing
 ```
 
+The current manifest includes that implemented four-category batch in the same
+priority order: single-token literal suffixes; raw lifetimes and digit-starting
+lifetime forms, including `'0`; Edition 2024 guarded strings; and reserved
+prefixes.
 Each declared fixture must match its exact tokens, trivia, token trees,
 diagnostics, spans, and source reconstruction. Windows and Linux CI also
 require the manifest, summary, and executed-case denominators to agree. This is

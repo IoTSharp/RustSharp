@@ -36,8 +36,11 @@ compile-fail）记录本地证据，因此对于声明的 `vertical-slice-v1` �
 
 早期 P1 前端工作也处于 🚧 进行中。无损词法分析器现在针对已声明的标识符、字面量、
 trivia、分隔符、词元树和格式错误输入诊断提供清单驱动的有界验收配置。该配置核对精确
-的词元/trivia/词元树证据以及无损源码重建，但其声明的语料并不是完整的 Rust 1.98
-词法一致性套件。早期 `SafeCoreSyntax` 模型/解析器以稳定的 `RSP` 诊断处理具有代表性的
+的词元/trivia/词元树证据以及无损源码重建。词法分析器及其验收配置现在按优先顺序覆盖
+已审计的本批行为：字面量后缀归入同一个字面量词元；原始生命周期和包括 `'0` 在内以
+数字开头的生命周期形式；Edition 2024 受保护字符串（guarded strings）；以及保留前缀。
+但其声明的语料并不是完整的 Rust 1.98 词法一致性套件。早期 `SafeCoreSyntax` 模型/解析器
+以稳定的 `RSP` 诊断处理具有代表性的
 模块、项、语句、表达式、模式、类型、泛型和属性。有界的
 `SafeCoreNameResolution` 原型目前跨独立的类型/值命名空间收集模块、项和局部符号，
 并解析具有代表性的导入与限定路径。它的九项测试工具用例覆盖类型/值命名空间与限定
@@ -101,6 +104,9 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --pr
 dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing
 ```
 
+当前清单按相同优先顺序纳入了本批已实现的四类行为：字面量后缀单词元化；原始生命周期
+和包括 `'0` 在内以数字开头的生命周期形式；Edition 2024 受保护字符串（guarded
+strings）；以及保留前缀。
 每个已声明夹具都必须与其精确词元、trivia、词元树、诊断、范围和源码重建结果匹配。
 Windows 与 Linux CI 还要求清单、汇总和实际执行用例的分母完全一致。这只属于
 RustSharp 词法分析器验收证据，并不构成 rustc 差分、运行时或完整 Rust 1.98 词法

@@ -194,11 +194,14 @@ token/trivia spans, builds nested token trees, and bounds malformed-input
 diagnostics. A versioned `safe-core-lexing` manifest now publishes a bounded
 lexer-acceptance denominator for declared identifiers, literals, trivia,
 delimiters, token trees, and invalid forms. Its report checks exact evidence,
-spans, and lossless source reconstruction under declared limits. This is
-RustSharp lexer-acceptance evidence only, not rustc differential or runtime
-conformance evidence, and the corpus is not a complete Rust 1.98 lexical
-denominator. The existing vertical-slice parser remains the production path,
-so P1-01 remains 🚧 In progress.
+spans, and lossless source reconstruction under declared limits. The current
+implementation and manifest cover the audited batch in priority order: literal
+suffixes as part of a single literal token; raw lifetimes and digit-starting
+lifetime forms, including `'0`; Edition 2024 guarded strings; and reserved
+prefixes. This is RustSharp lexer-acceptance evidence only, not rustc
+differential or runtime conformance evidence, and the corpus is not a complete
+Rust 1.98 lexical denominator. The existing vertical-slice parser remains the
+production path, so P1-01 remains 🚧 In progress.
 
 P1-02 also has an early bounded `SafeCoreSyntax` model/parser for
 representative modules, items, statements, expressions, patterns, types,
@@ -231,7 +234,7 @@ denominator, and broader diagnostic coverage remain open.
 
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | Every case in the published bounded manifest must match exact token, trivia, token-tree, diagnostic, span, and source-reconstruction evidence; the production path and complete Rust 1.98 lexical denominator remain open. |
+| P1-01 | 🚧 In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | The current implementation and manifest cover single-token literal suffixes, raw lifetimes and digit-starting lifetime forms including `'0`, Edition 2024 guarded strings, and reserved prefixes; every case must match exact token, trivia, token-tree, diagnostic, span, and source-reconstruction evidence. The production path and complete Rust 1.98 lexical denominator remain open. |
 | P1-02 | 🚧 In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | Every case in the published syntax-profile denominator has the expected parse result; unsupported syntax is rejected explicitly. |
 | P1-03 | 🚧 In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator resolves expected symbols and diagnostics; four executable-harness cases cover bounded HIR lowering, while multi-file workspace and production pipeline integration remain open. |
 | P1-04 | ⏳ Planned | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet test RustSharp.slnx -c Release --filter TypeChecking` | Declared compile-pass/fail type cases agree with rustc 1.98 for the profile. |
