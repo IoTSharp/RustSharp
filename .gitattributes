@@ -1,2 +1,7 @@
 *.rs text eol=lf
 tools/RustSharp.Conformance/fixtures/*-manifest.json text eol=lf
+# These lexer fixtures deliberately contain raw CR and CRLF input bytes.
+tools/RustSharp.Conformance/fixtures/safe-core-lexing-comment-boundaries.rs -text
+tools/RustSharp.Conformance/fixtures/safe-core-lexing-invalid-doc-carriage-returns.rs -text
+tools/RustSharp.Conformance/fixtures/safe-core-lexing-input-line-endings.rs -text
+tools/RustSharp.Conformance/fixtures/safe-core-lexing-trivia-only.rs -text

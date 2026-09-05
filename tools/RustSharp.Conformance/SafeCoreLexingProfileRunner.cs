@@ -13,13 +13,13 @@ internal static class SafeCoreLexingProfileRunner
     private const string ProfileName = "safe-core-lexing";
     private const string LexerName = "RustSharp.Syntax.RustLexer.Lex";
     private const string ManifestFileName = "safe-core-lexing-manifest.json";
-    private const int ManifestVersion = 1;
-    private const int MaximumManifestBytes = 256 * 1024;
+    private const int ManifestVersion = 2;
+    private const int MaximumManifestBytes = 512 * 1024;
     private const int MaximumCases = 32;
     private const int MaximumIdentifierLength = 128;
     private const int MaximumFixturePathLength = 512;
     private const int MaximumTreePathLength = 512;
-    private const int MaximumJsonTokens = 16_384;
+    private const int MaximumJsonTokens = 65_536;
     private const int MaximumSourceLength = 65_536;
     private const int MaximumTokens = 4_096;
     private const int MaximumTrivia = 4_096;
@@ -29,6 +29,15 @@ internal static class SafeCoreLexingProfileRunner
     private const int PassedExitCode = 0;
     private const int FailedExitCode = 1;
     private const int HarnessErrorExitCode = 2;
+
+    private static readonly string[] RequiredCategories =
+    [
+        "input-preamble", "whitespace", "comments", "documentation-comments",
+        "identifiers", "keywords", "lifetimes", "integer-literals", "float-literals",
+        "character-literals", "byte-literals", "string-literals", "raw-string-literals",
+        "byte-string-literals", "raw-byte-string-literals", "c-string-literals", "raw-c-string-literals",
+        "literal-suffixes", "punctuation", "delimiters-token-trees", "reserved-forms", "malformed-input",
+    ];
 
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private static readonly JsonSerializerOptions ManifestJsonOptions = new(JsonSerializerDefaults.Web)
@@ -58,6 +67,7 @@ internal static class SafeCoreLexingProfileRunner
         RustLexDiagnosticCodes.ReservedPrefix,
         RustLexDiagnosticCodes.ReservedGuardedString,
         RustLexDiagnosticCodes.ReservedPounds,
+        RustLexDiagnosticCodes.InvalidDocumentationComment,
     };
     private static readonly HashSet<string> KnownTokenKinds = Enum.GetValues<RustTokenKind>()
         .Select(ToTokenKind)
@@ -179,7 +189,11 @@ internal static class SafeCoreLexingProfileRunner
                 Denominator: validatedManifest?.Denominator,
                 Validated: validatedManifest is not null,
                 CaseCount: validatedManifest?.Cases.Count,
-                Error: harnessError),
+                Error: harnessError,
+                RustVersion: validatedManifest is null ? null : "1.98.0",
+                Edition: validatedManifest is null ? null : "2024",
+                UnicodeVersion: validatedManifest is null ? null : "17.0.0",
+                Coverage: validatedManifest?.Coverage),
             Lexer: new LexerReport(
                 Name: LexerName,
                 Invocation: "RustSharp.Syntax.RustLexer.Lex(source, sourcePath, manifestLimits)",
@@ -236,6 +250,11 @@ internal static class SafeCoreLexingProfileRunner
         if (manifest.Version != ManifestVersion)
         {
             throw new InvalidDataException($"Manifest version must be {ManifestVersion}.");
+        }
+
+        if (manifest.RustVersion != "1.98.0" || manifest.Edition != "2024" || manifest.UnicodeVersion != "17.0.0")
+        {
+            throw new InvalidDataException("Lexical baseline must be Rust 1.98.0, Edition 2024, Unicode 17.0.0.");
         }
 
         if (!string.Equals(manifest.Lexer, LexerName, StringComparison.Ordinal))
@@ -347,12 +366,38 @@ internal static class SafeCoreLexingProfileRunner
                 trailingTriviaIndices));
         }
 
+        Dictionary<string, string[]> coverage = manifest.Coverage
+            ?? throw new InvalidDataException("The complete lexical category map is required.");
+        if (coverage.Count != RequiredCategories.Length)
+        {
+            throw new InvalidDataException($"Coverage must declare exactly {RequiredCategories.Length} lexical categories.");
+        }
+
+        var coveredCases = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string category in RequiredCategories)
+        {
+            if (!coverage.TryGetValue(category, out string[]? references) || references is null ||
+                references.Length is < 1 or > MaximumCases || references.Distinct(StringComparer.Ordinal).Count() != references.Length ||
+                references.Any(id => !ids.Contains(id)))
+            {
+                throw new InvalidDataException($"Coverage category '{category}' must reference distinct declared case IDs.");
+            }
+
+            coveredCases.UnionWith(references);
+        }
+
+        if (!coveredCases.SetEquals(ids))
+        {
+            throw new InvalidDataException("Every corpus case must be referenced by the lexical category map.");
+        }
+
         return new ValidatedManifest(
             manifest.Version,
             manifest.Lexer!,
             manifest.Denominator,
             options,
-            validatedCases);
+            validatedCases,
+            coverage);
     }
 
     private static void ValidateTokens(
@@ -555,7 +600,7 @@ internal static class SafeCoreLexingProfileRunner
 
             cancellationToken.ThrowIfCancellationRequested();
             lexerInvoked = true;
-            RustLexResult result = RustLexer.Lex(source, fixture.File, options);
+            RustLexResult result = RustLexer.Lex(source, fixture.File, options, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             LexTriviaReport[] trivia = BuildTriviaReport(result);
@@ -1273,8 +1318,7 @@ internal static class SafeCoreLexingProfileRunner
     {
         try
         {
-            string source = StrictUtf8.GetString(bytes);
-            return source.Length > 0 && source[0] == '\uFEFF' ? source[1..] : source;
+            return StrictUtf8.GetString(bytes);
         }
         catch (DecoderFallbackException exception)
         {
@@ -1287,7 +1331,7 @@ internal static class SafeCoreLexingProfileRunner
 
     private static bool IsExpectedHarnessException(Exception exception) => exception is
         IOException or UnauthorizedAccessException or InvalidDataException or JsonException or
-        ArgumentException or NotSupportedException or OverflowException;
+        ArgumentException or NotSupportedException or OverflowException or TimeoutException;
 
     private static string TrimDiagnostic(string value) =>
         value.Length <= MaximumDiagnosticMessageLength
@@ -1363,6 +1407,7 @@ internal static class SafeCoreLexingProfileRunner
         RustTriviaKind.LineComment => "line-comment",
         RustTriviaKind.BlockComment => "block-comment",
         RustTriviaKind.Shebang => "shebang",
+        RustTriviaKind.ByteOrderMark => "byte-order-mark",
         _ => throw new InvalidDataException($"Unknown lexer trivia kind '{kind}'."),
     };
 
@@ -1378,6 +1423,10 @@ internal static class SafeCoreLexingProfileRunner
     {
         public string? Profile { get; init; }
         public int Version { get; init; }
+        public string? RustVersion { get; init; }
+        public string? Edition { get; init; }
+        public string? UnicodeVersion { get; init; }
+        public Dictionary<string, string[]>? Coverage { get; init; }
         public string? Lexer { get; init; }
         public int Denominator { get; init; }
         public ManifestLimits? Limits { get; init; }
@@ -1410,7 +1459,8 @@ internal static class SafeCoreLexingProfileRunner
         string Lexer,
         int Denominator,
         RustLexerOptions Options,
-        IReadOnlyList<ValidatedCase> Cases);
+        IReadOnlyList<ValidatedCase> Cases,
+        IReadOnlyDictionary<string, string[]> Coverage);
 
     private sealed record ValidatedCase(
         string Id,
@@ -1482,7 +1532,11 @@ internal static class SafeCoreLexingProfileRunner
         int? Denominator,
         bool Validated,
         int? CaseCount,
-        string? Error);
+        string? Error,
+        string? RustVersion,
+        string? Edition,
+        string? UnicodeVersion,
+        IReadOnlyDictionary<string, string[]>? Coverage);
 
     private sealed record LexerReport(string Name, string Invocation, string? AssemblyVersion);
 

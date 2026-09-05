@@ -37,16 +37,18 @@ Accordingly, P0-10, P0-16, and P0-17 are ✅ Complete.
 Unsupported Rust syntax is rejected with a source diagnostic rather than
 silently assigned C# semantics.
 
-Early P1 front-end work is also 🚧 In progress. The lossless lexer now has a
-manifest-driven, bounded acceptance profile for declared identifiers,
-literals, trivia, delimiters, token trees, and malformed-input diagnostics.
-The lexer and acceptance profile now cover the audited batch in priority
-order: literal suffixes as part of a single literal token; raw lifetimes and
-digit-starting lifetime forms, including `'0`; Edition 2024 guarded strings;
-and reserved prefixes.
-The profile checks exact token/trivia/tree evidence and lossless source
-reconstruction, but its declared corpus is not a complete Rust 1.98 lexical
-conformance suite. The early `SafeCoreSyntax` model/parser handles
+P1 front-end work is 🚧 In progress, with P1-01 now ✅ Complete. The lossless
+lexer has a version 2 acceptance manifest containing 24 fixtures and a required
+22-category map for Rust 1.98.0 / Edition 2024 / Unicode 17.0.0. It covers source
+preambles, identifiers, all literal families and suffixes, lifetimes, trivia,
+punctuation, delimiters, token trees, reserved forms and malformed-input
+diagnostics. BOM/shebang handling, comment/CRLF boundaries and nondecimal float
+rejection are verified alongside cancellation, deadlines and iterative tree
+construction. Exact evidence and source reconstruction pass for all 24 cases;
+the full executable regression harness passes 103/103. See the
+[lexical contract](docs/lexical-profile.md) for the category denominator and
+the distinction from semantic or rustc differential conformance.
+The early `SafeCoreSyntax` model/parser handles
 representative modules, items,
 statements, expressions, patterns, types, generics, and attributes with stable
 `RSP` diagnostics. The bounded `SafeCoreNameResolution` prototype now collects
@@ -60,8 +62,8 @@ The earlier local executable harness recorded 74/74 tests. A bounded
 `SafeCoreHirLowering` prototype now converts successful
 syntax and name-resolution results into a deterministic, name-bound flat HIR
 arena. These front-end passes now feed the opt-in executable primitive profile
-below. P1-01, P1-02, and P1-03 remain 🚧 In progress because their dependencies,
-full-profile denominators and multi-file loading are still open.
+below. P1-02 and P1-03 remain 🚧 In progress because their full-profile
+denominators and multi-file loading are still open.
 
 ## Executable safe-core profile
 
@@ -156,16 +158,13 @@ report to `artifacts/conformance/safe-core-lexing.json`:
 dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing
 ```
 
-The current manifest includes that implemented four-category batch in the same
-priority order: single-token literal suffixes; raw lifetimes and digit-starting
-lifetime forms, including `'0`; Edition 2024 guarded strings; and reserved
-prefixes.
-Each declared fixture must match its exact tokens, trivia, token trees,
-diagnostics, spans, and source reconstruction. Windows and Linux CI also
-require the manifest, summary, and executed-case denominators to agree. This is
-RustSharp lexer-acceptance evidence only; it is not rustc differential,
-runtime, or complete Rust 1.98 lexical conformance evidence, so P1-01 remains
-🚧 In progress.
+Version 2 requires all 24 cases to match exact tokens, trivia, token trees,
+diagnostics, spans and source reconstruction, with a complete 22-category map.
+Windows and Linux CI verify the current manifest hash, baseline, category map,
+case IDs and all denominators. P1-01 is ✅ Complete on the recorded local
+acceptance evidence; a new remote CI run is not claimed. The report remains
+RustSharp lexer-acceptance evidence, separate from rustc differential and
+runtime conformance. The full P1 milestone remains 🚧 In progress.
 
 The separate safe-core syntax profile passes the current six-case parser
 acceptance manifest and writes `artifacts/conformance/safe-core-syntax.json`:

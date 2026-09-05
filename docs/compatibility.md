@@ -13,6 +13,16 @@ CLR constructs. Unsupported input must produce a stable diagnostic. Rust ABI,
 `.rlib` binary compatibility, and `repr(Rust)` compatibility are not promised.
 Explicit C ABI and .NET interop are separate, versioned contracts.
 
+## Lexical acceptance profile
+
+P1-01 is ✅ Complete for `safe-core-lexing` manifest version 2, covering the
+Rust 1.98.0 / Edition 2024 lexical grammar categories with Unicode 17.0.0
+identifiers. Its 24 fixtures and mandatory 22-category map check lossless
+tokens, trivia, token trees, diagnostics and spans. See the
+[lexical contract](lexical-profile.md) for input handling, downstream checks,
+resource limits and acceptance evidence. This lexical gate does not expand
+the executable language profiles or establish semantic/runtime conformance.
+
 ## Executable primitive profile
 
 `safe-core-primitives-v1` is an opt-in P1 profile, selected by `--profile` on

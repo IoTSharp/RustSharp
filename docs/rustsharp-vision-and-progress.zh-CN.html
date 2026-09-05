@@ -1,0 +1,54 @@
+---
+title: "RustSharp：Rust 到 .NET AOT 的实现之路"
+digest: "RustSharp 正在以 C#/.NET 10 实现 Rust 1.98 的受控兼容配置档。本文说明它为何选择直接生成 IL、P0 已验证了什么，以及安全核心为何仍处于严格受限的 P1 阶段。"
+author: "RustSharp 项目"
+thumb_media_id: ""
+content_source_url: ""
+---
+
+<section>
+  <p><strong>审阅稿状态：🚧 进行中</strong></p>
+  <p>证据快照：2026-09-05，仓库 <code>master</code> 当前 HEAD。本文以仓库中的路线图、兼容性契约、架构决策记录、已记录 CI 证据和本地可执行测试结果为依据；它不是功能发布公告，也不扩大项目已声明的兼容范围。</p>
+
+  <h2>愿景：让 Rust 源码获得可验证的 .NET 运行与 AOT 交付路径</h2>
+  <p>RustSharp 是一个用 C# 和 .NET 10 编写的实验性 Rust 1.98 / Edition 2024 语言实现。它读取 <code>.rs</code> 源文件，进行 RustSharp 语言分析，直接生成 ECMA-335 程序集和 Portable PDB；IL 是编译器输出，而不是项目的实现语言。生成物的目标是运行在 CoreCLR 上，并在已支持的配置档内通过 .NET 10 Native AOT 发布流程。</p>
+  <p>这不是“把 Rust 翻译成 C#”的项目。它选择一条更严格的编译器路线：从词法和词元树出发，经过解析、名称解析、类型与控制流表示、所有权与生命周期检查、泛型与布局，再降低到面向 CLR 的低级 IR，最后由 <code>System.Reflection.Metadata</code> 发出 PE、PDB 和 RustSharp 元数据。这样的分层为错误诊断、确定性制品和 AOT 可达性提供了可检查的边界。</p>
+  <blockquote>项目的核心承诺不是笼统的“兼容 Rust”，而是为每一个声明的语言、运行时和库配置档给出明确分母、可复现命令和可观察证据。</blockquote>
+  <p>因此，RustSharp 采用托管混合存储模型，但不让 GC 弱化 Rust 的移动、借用、生命周期、别名和确定性 <code>Drop</code> 规则。普通 .NET 输出、Native AOT 可执行文件和将来明确导出的 C ABI Native AOT 库，都应在各自版本化的约束下成立。</p>
+
+  <h2>当前进展：P0 已闭环，P1 正在扩大安全核心</h2>
+  <h3>✅ 已完成：第一条端到端纵向切片</h3>
+  <p>P0 的目标不是尽快堆叠语法，而是先证明“Rust 源码到可运行、可验证、可 AOT 的 .NET 制品”这条架构链路可行。当前 <code>vertical-slice-v1</code> 只承诺极小的源代码配置：<code>fn main()</code> 中包含零条或多条 <code>println!(string-literal);</code>。不支持的语法必须给出带源位置的稳定诊断，不能被静默赋予 C# 或 CLR 语义。</p>
+  <ul>
+    <li>已建立 .NET 10 的语法、编译器、IL 代码生成、运行时、语义、CLI、测试与一致性工具边界，并以 ADR 固化语言基线、输出模型和第一条纵向切片。</li>
+    <li>直接发出的 PE 和 Portable PDB 已通过元数据检查、确定性输出检查和独立 ILVerify；生成程序集已在 CoreCLR 运行，并完成 Windows x64 Native AOT 发布与执行。</li>
+    <li>提交 <code>286f139</code> 的 Windows 与 Linux x64 CI 记录均归档了 <code>73/73</code> 可执行测试、<code>4/4</code> 纵向一致性、IL 验证、Native AOT 执行和 <code>4/4</code> I/O 冒烟证据，其中包含参数化 SQLite 事务。</li>
+    <li>当前 HEAD 的本地可执行测试工具在本次审阅中实际运行并通过 <code>78/78</code>。这个数字是当前工作树的本地测试结果，不应替代或误写为双平台 CI 的历史 <code>73/73</code> 证据。</li>
+    <li>有界进程执行、超时、取消、输出限制和自有子进程清理已进入测试范围；这对未来宏、工具链和外部依赖操作是基础能力，而非附属细节。</li>
+  </ul>
+
+  <h3>🚧 进行中：安全核心前端的有界原型</h3>
+  <p>P1 正在把纵向切片扩展为安全语言核心，但当前工作刻意保持在“可衡量的原型”范围内。无损词法分析器已用清单驱动的验收配置覆盖一批优先级最高的形式：字面量后缀作为单一词元、原始生命周期和包括 <code>'0</code> 在内的数字开头生命周期、Edition 2024 guarded strings，以及保留前缀。它同时核对精确词元、trivia、词元树、诊断、跨度和源码重建。</p>
+  <p>在该词法基础之上，<code>SafeCoreSyntax</code> 已能表示和解析具有代表性的模块、项、语句、表达式、模式、类型、泛型与属性，并给出稳定的 <code>RSP</code> 诊断。<code>SafeCoreNameResolution</code> 原型分别管理类型和值命名空间，处理导入、限定路径、可见性、重复/歧义/未解析名称、导入环、合法遮蔽和 Unicode 标识符规范化。随后的 <code>SafeCoreHirLowering</code> 能将成功结果降低为确定性的、名称已绑定的扁平 HIR arena。</p>
+  <p>这些成果说明前端分层正在成形，但并不等于已实现完整 Rust 1.98。词法语料尚非完整分母；语法、名称解析和 HIR 仍缺少多文件工作区加载、完整安全核心基准和生产编译器路径集成。P1-01、P1-02 与 P1-03 因此保持 🚧 进行中，而不是提前标记为完成。</p>
+
+  <h2>这条路线的价值：先把“能否相信”做成工程问题</h2>
+  <p>语言实现最容易出现的误区，是把少量能跑的样例误读成语言兼容性。RustSharp 的路线图把语法、语义、公共 API、运行时行为、IL/PDB、Native AOT 和性能拆分度量，并为每项声明对应分母。一个解析器通过若干案例，不能证明借用检查正确；一个 DLL 能运行，不能证明 IL、PDB、AOT 或跨平台行为正确；一个库名出现在计划中，也不能承诺上游 crate 可直接编译。</p>
+  <p>这种证据优先的做法也服务于 .NET 生态集成。后续 <code>extern &quot;dotnet&quot;</code> 风格互操作会先冻结为版本化边界；依赖库需要经过 AOT 审计；Native AOT 不能依靠反射、动态代码或跨编译结果来冒充目标平台验证。对编译器项目而言，这些约束会放慢表面功能扩张，却能尽早暴露架构不可承受的语义差异。</p>
+
+  <h2>尚未完成的部分：从安全核心到可用 SDK 仍有长链路</h2>
+  <p>接下来的 P1 仍需完成原始类型与 ADT、类型推断与强制转换、可发布的泛型/trait 子集、类型化 MIR、借用检查、<code>Drop</code>/panic 语义、通过 CLR LIR 的安全核心代码生成，以及覆盖编译通过、编译失败、运行通过和 rustc 差异的回归套件。只有版本化安全核心在 CoreCLR 与 Windows/Linux x64 Native AOT 上通过，并且借用与 <code>Drop</code> 行为没有未解决差异，P1 才能退出。</p>
+  <p>P2 之后才是 <code>core</code>/<code>alloc</code>/<code>std</code> 配置档、Cargo 兼容的清单与依赖图、受控 NuGet 恢复、稳定 CLI、格式化、文档、缓存、LSP 和调试。宏、异步、受限 <code>unsafe</code>/FFI、HTTP/WebSocket、数据库与 ORM 兼容配置档，以及更多平台和发布工程，则处于更后续阶段。路线图中的 <code>tokio</code>、<code>reqwest</code>、<code>axum</code>、<code>sqlx</code>、<code>tiberius</code> 和 <code>sea-orm</code> 指的是精确版本和特性范围的 RustSharp 配置档，不是“任意上游源码均可运行”的承诺。</p>
+
+  <h2>结语：以明确边界换取可持续的兼容性</h2>
+  <p>RustSharp 已经完成了最关键的起点验证：以 C#/.NET 10 实现语言工具链、直接产生可验证的 IL/PDB、在 CoreCLR 运行，并在 Windows/Linux x64 的记录证据中完成 Native AOT 纵向闭环。现在真正的挑战不再是演示“Hello from Rust#”，而是把安全核心的每一层扩展为有配置档、有分母、有差异解释且能进入生产路径的能力。</p>
+  <p>对关注项目的人，最准确的判断是：P0 为 ✅ 已完成，P1 为 🚧 进行中，P2 及以后为 ⏳ 计划中。项目的可信度将由每次新增配置档能否同时经受语义、IL、AOT、跨平台与资源清理证据的检验来决定。</p>
+
+  <h2>审阅依据</h2>
+  <ul>
+    <li><a href="../README_zh.md">README_zh.md</a>：当前里程碑、可执行命令与已知边界。</li>
+    <li><a href="../ROADMAP_zh.md">ROADMAP_zh.md</a>：产品边界、P0-P6 依赖关系、状态、验收命令和已记录的双平台证据。</li>
+    <li><a href="compatibility.md">docs/compatibility.md</a>：<code>vertical-slice-v1</code> 的明确兼容性契约与非承诺。</li>
+    <li><a href="adr/0001-language-baseline.md">ADR 0001</a>、<a href="adr/0002-csharp-compiler-and-il-output.md">ADR 0002</a>、<a href="adr/0003-first-vertical-slice.md">ADR 0003</a>：语言基线、编译器/IL 输出和第一条纵向切片的决策记录。</li>
+  </ul>
+</section>

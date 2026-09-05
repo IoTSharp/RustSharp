@@ -173,23 +173,32 @@ P1 进一步扩展语法前触发 ADR 评审。
 
 ## P1：实现安全语言核心
 
-`RustLexer.cs` 和 `RustLexingModels.cs` 中已有一个早期 P1-01 原型，它保留
-词元/trivia 范围、构建嵌套词元树，并限制格式错误输入的诊断。版本化的
-`safe-core-lexing` 清单现在为已声明的标识符、字面量、trivia、分隔符、词元树和
-非法形式发布有界的词法分析器验收分母。其报告在声明的限制内核对精确证据、范围和
-无损源码重建。当前实现和清单按优先顺序覆盖已审计的本批行为：字面量后缀归入同一个
-字面量词元；原始生命周期和包括 `'0` 在内以数字开头的生命周期形式；Edition 2024
-受保护字符串（guarded strings）；以及保留前缀。这只属于 RustSharp 词法分析器验收
-证据，并不构成 rustc 差分或运行时一致性证据，而且该语料也不是完整的 Rust 1.98
-词法分母。纵向切片解析器仍是默认路径；按需启用的基础类型配置现在已在生产路径中
-使用安全核心词法/语法分析器。完整词法分母仍未完成，因此 P1-01 保持 🚧 进行中。
+P1-01 为 ✅ 已完成。`RustLexer.cs` 和 `RustLexingModels.cs` 实现了 Rust 1.98.0 /
+Edition 2024 无损词元化，使用 Unicode 17.0.0 标识符、有界诊断和迭代式词元树。
+`safe-core-lexing` 第 2 版发布了 24 个夹具及强制的 22 类映射，覆盖源码前导、
+空白/注释、标识符/关键字、全部字面量族及后缀、生命周期、标点、分隔符、保留形式和
+格式错误输入。所有用例的精确词元/trivia/词元树/诊断、范围和完整源码重建均通过。
+覆盖了 BOM/shebang 前瞻、空块注释、裸 CR 与 CRLF、非十进制浮点、非法源码标量
+及工作量限制。[词法契约](docs/lexical-profile.md) 记录参考基线、类别分母、表示方式
+和下游检查。这属于 RustSharp 词法分析器验收证据；语义、rustc 差分和运行时一致性
+分开衡量。纵向切片解析器仍是默认路径；按需启用的基础类型配置已在生产路径中使用
+安全核心词法/语法分析器。
+
+2026-09-06 的本地 P1-01 证据，Windows x64、.NET SDK 10.0.400/runtime 10.0.11：
+✅ 已完成，Release 构建零警告/错误、103/103 项可执行测试、24/24 项词法用例、
+22/22 类映射、6/6 项语法、6/6 项名称解析，以及对照 rustc 1.98.0 的 14/14 项基础
+类型差分。新增十二项测试覆盖词法边界、取消/超时、各集合独立限制、4096 层词元树、
+256 个确定性格式错误输入、四种非法清单变异及错误的预期词元证据。报告保留在
+`artifacts/conformance/` 和 `artifacts/p1-01/`。Windows/Linux CI 现在检查当前清单
+哈希、基线、类别映射、用例 ID 和分母；本地记录不宣称新的远程 CI 运行已经通过，
+也不代表完整 P1 门槛已关闭。
 
 P1-02 也已有早期的有界 `SafeCoreSyntax` 模型/解析器，覆盖代表性的模块、项、语句、
 表达式、模式、类型、泛型和属性，并提供稳定的 `RSP` 诊断。一个六用例
 `safe-core-syntax` 清单和下方验收命令生成
 `artifacts/conformance/safe-core-syntax.json`。当前报告通过 6/6 个用例，且仅作为
-解析器验收证据，而不是 rustc 差异或运行时一致性证据。P1-02 保持 🚧 进行中，因为
-它的 P1-01 依赖仍未完成，完整语法基准集合也尚未发布。
+解析器验收证据，而不是 rustc 差异或运行时一致性证据。其 P1-01 依赖现为 ✅ 已完成；
+P1-02 保持 🚧 进行中，因为完整语法基准集合尚未发布。
 
 P1-03 现在基于该语法模型提供了有界的 `SafeCoreNameResolution` 原型。它在独立的
 类型/值命名空间中收集模块、导入、项、泛型、参数和局部符号，并实现别名、限定路径、
@@ -239,7 +248,7 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 进行中 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | 当前实现和清单覆盖字面量后缀单词元化、原始生命周期和包括 `'0` 在内以数字开头的生命周期形式、Edition 2024 受保护字符串（guarded strings）以及保留前缀；每个用例都必须与精确的词元、trivia、词元树、诊断、范围和源码重建证据匹配。按需启用的基础类型配置已接入生产路径；完整 Rust 1.98 词法分母仍未完成。 |
+| P1-01 | ✅ 已完成 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 第 2 版清单通过 24/24 个精确词元/trivia/词元树/诊断/范围/源码重建夹具，并强制要求完整的 22 类词法映射。103/103 项回归工具覆盖边界、取消/超时、集合限制、4096 层深度和非法清单拒绝。按需启用的基础类型编译器使用该词法器；见上方记录的证据和词法契约。 |
 | P1-02 | 🚧 进行中 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | 已发布语法配置档基准集合中的每个用例都具有预期解析结果；明确拒绝不支持的语法。 |
 | P1-03 | 🚧 进行中 | 将 AST 降低为 HIR，并实现模块、命名空间、可见性、导入和名称解析。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 保留六用例内存验收基准集合和四个 HIR 用例；基础类型编译现在使用 HIR 和规范化的导入目标。多文件工作区加载仍未完成。 |
 | P1-04 | 🚧 进行中 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 基础类型配置已实现 i32/bool/unit、直接函数签名、局部推断、可变性、条件/返回检查和发散控制流。聚合/引用类型与完整推断/强制转换基准集合仍未完成。 |
@@ -401,7 +410,7 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 5. 只有可观察结果和所属阶段门槛都满足后，才将状态标记为 `✅ 已完成`；否则保持 `🚧 进行中` 并记录缺口。
 6. 当范围发生变化时，先更新兼容性配置档和 ADR，再更新实现与本路线图。
 
-接下来处于 🚧 进行中的门槛是 P1-01（无损词法分析）、P1-02（安全核心语法）、
-P1-03（HIR 与名称解析）、P1-04（类型）、P1-09（IL 发射）和 P1-10（差分回归）。
+P1-01（无损词法分析）为 ✅ 已完成。接下来处于 🚧 进行中的门槛是 P1-02（安全核心
+语法）、P1-03（HIR 与名称解析）、P1-04（类型）、P1-09（IL 发射）和 P1-10（差分回归）。
 P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为
 ✅ 已完成；后续语言配置档声明仍受完整 HIR/MIR 和差异测试套件的门槛约束。

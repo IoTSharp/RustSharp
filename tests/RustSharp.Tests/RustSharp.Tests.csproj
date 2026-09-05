@@ -10,5 +10,6 @@
     <ProjectReference Include="../../src/RustSharp.Compiler/RustSharp.Compiler.csproj" />
     <ProjectReference Include="../../src/RustSharp.Runtime/RustSharp.Runtime.csproj" />
     <ProjectReference Include="../../src/RustSharp.Semantics/RustSharp.Semantics.csproj" />
+    <ProjectReference Include="../../tools/RustSharp.Conformance/RustSharp.Conformance.csproj" />
   </ItemGroup>
 </Project>

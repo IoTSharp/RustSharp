@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Text;
 
 namespace RustSharp.Syntax;
@@ -56,11 +57,18 @@ public static class RustLexer
     public static RustLexResult Lex(
         string? source,
         string? sourcePath,
-        RustLexerOptions? options)
+        RustLexerOptions? options) => Lex(source, sourcePath, options, CancellationToken.None);
+
+    /// <summary>Lexes with cooperative cancellation; cancellation and deadline expiry throw before returning partial evidence.</summary>
+    public static RustLexResult Lex(
+        string? source,
+        string? sourcePath,
+        RustLexerOptions? options,
+        CancellationToken cancellationToken)
     {
         source ??= string.Empty;
         sourcePath ??= string.Empty;
-        var scanner = new Scanner(source, sourcePath, NormalizeOptions(options));
+        var scanner = new Scanner(source, sourcePath, NormalizeOptions(options), cancellationToken);
         return scanner.Run();
     }
 
@@ -78,6 +86,11 @@ public static class RustLexer
     private static RustLexerOptions NormalizeOptions(RustLexerOptions? options)
     {
         options ??= new RustLexerOptions();
+        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), "Lexer timeout must be positive and at most one minute.");
+        }
+
         return options with
         {
             MaximumSourceLength = Math.Clamp(
@@ -100,6 +113,9 @@ public static class RustLexer
         private readonly string _sourcePath;
         private readonly RustLexerOptions _options;
         private readonly int _scanLength;
+        private readonly CancellationToken _cancellationToken;
+        private readonly long _startedAt = Stopwatch.GetTimestamp();
+        private int _workSinceBudgetCheck;
         private readonly List<RustToken> _tokens = [];
         private readonly List<RustTrivia> _trivia = [];
         private readonly List<RustTrivia> _pendingTrivia = [];
@@ -107,16 +123,18 @@ public static class RustLexer
         private readonly List<MutableTreeNode> _roots = [];
         private readonly Stack<MutableGroup> _groups = new();
         private int _position;
+        private int _reservedPoundsEnd;
         private bool _stopped;
         private bool _limitReported;
         private bool _delimiterDepthReported;
         private bool _sourceWasTruncated;
 
-        internal Scanner(string source, string sourcePath, RustLexerOptions options)
+        internal Scanner(string source, string sourcePath, RustLexerOptions options, CancellationToken cancellationToken)
         {
             _source = source;
             _sourcePath = sourcePath;
             _options = options;
+            _cancellationToken = cancellationToken;
             _scanLength = Math.Min(source.Length, options.MaximumSourceLength);
 
             if (_scanLength < source.Length)
@@ -132,8 +150,11 @@ public static class RustLexer
 
         internal RustLexResult Run()
         {
+            CheckBudgetNow();
+            ValidateUnicodeScalars();
             while (!_stopped && _position < _scanLength)
             {
+                CheckBudget();
                 if (TryScanTrivia())
                 {
                     continue;
@@ -155,10 +176,12 @@ public static class RustLexer
             }
 
             IReadOnlyList<RustTokenTree> trees = FreezeRoots();
+            CheckBudgetNow();
             IReadOnlyList<RustToken> tokens = Array.AsReadOnly(_tokens.ToArray());
             IReadOnlyList<RustTrivia> trivia = Array.AsReadOnly(_trivia.ToArray());
             IReadOnlyList<RustTrivia> trailing = Array.AsReadOnly(_pendingTrivia.ToArray());
             IReadOnlyList<Diagnostic> diagnostics = Array.AsReadOnly(_diagnostics.ToArray());
+            CheckBudgetNow();
 
             return new RustLexResult(
                 _source,
@@ -179,12 +202,25 @@ public static class RustLexer
             }
 
             int start = _position;
-            if (_position == 0 && IsShebangStart())
+            if (_position == 0 && _source[0] == '\uFEFF')
+            {
+                _position++;
+                AddTrivia(RustTriviaKind.ByteOrderMark, start, _position, false);
+                return true;
+            }
+
+            if ((_position == 0 || (_position == 1 && _source[0] == '\uFEFF')) && IsShebangStart())
             {
                 _position += 2;
-                while (_position < _scanLength && _source[_position] is not ('\r' or '\n'))
+                while (_position < _scanLength && _source[_position] != '\n')
                 {
+                    CheckBudget();
                     _position++;
+                }
+
+                if (_position < _scanLength && _position > start && _source[_position - 1] == '\r')
+                {
+                    _position--;
                 }
 
                 AddTrivia(RustTriviaKind.Shebang, start, _position, false);
@@ -196,6 +232,7 @@ public static class RustLexer
                 _position++;
                 while (_position < _scanLength && IsRustWhitespace(_source[_position]))
                 {
+                    CheckBudget();
                     _position++;
                 }
 
@@ -212,8 +249,9 @@ public static class RustLexer
             if (next == '/')
             {
                 _position += 2;
-                while (_position < _scanLength && _source[_position] is not ('\r' or '\n'))
+                while (_position < _scanLength && _source[_position] != '\n')
                 {
+                    CheckBudget();
                     _position++;
                 }
 
@@ -221,6 +259,17 @@ public static class RustLexer
                     (_source[start + 2] == '!' ||
                         (_source[start + 2] == '/' &&
                             (_position - start == 3 || _source[start + 3] != '/')));
+                // Keep the original CRLF in whitespace, while a lone CR remains comment content.
+                if (_position < _scanLength && _position > start && _source[_position - 1] == '\r')
+                {
+                    _position--;
+                }
+
+                if (documentation)
+                {
+                    ReportBareCarriageReturns(start, _position, RustLexDiagnosticCodes.InvalidDocumentationComment);
+                }
+
                 AddTrivia(RustTriviaKind.LineComment, start, _position, documentation);
                 return true;
             }
@@ -235,6 +284,7 @@ public static class RustLexer
             bool depthReported = false;
             while (_position < _scanLength && depth > 0)
             {
+                CheckBudget();
                 if (_source[_position] == '/' &&
                     _position + 1 < _scanLength &&
                     _source[_position + 1] == '*')
@@ -277,6 +327,12 @@ public static class RustLexer
                 (_source[start + 2] == '!' ||
                     (_source[start + 2] == '*' &&
                         (_position - start == 3 || _source[start + 3] != '*')));
+            documentationBlock &= !MatchesAt(start, "/**/");
+            if (documentationBlock)
+            {
+                ReportBareCarriageReturns(start, _position, RustLexDiagnosticCodes.InvalidDocumentationComment);
+            }
+
             AddTrivia(RustTriviaKind.BlockComment, start, _position, documentationBlock);
             return true;
         }
@@ -354,11 +410,15 @@ public static class RustLexer
             }
 
             _position += width;
-            AddDiagnostic(
-                RustLexDiagnosticCodes.UnknownCharacter,
-                $"Unknown character U+{scalar:X4}.",
-                start,
-                width);
+            if (!char.IsSurrogate(_source[start]) || width == 2)
+            {
+                AddDiagnostic(
+                    RustLexDiagnosticCodes.UnknownCharacter,
+                    $"Unknown character U+{scalar:X4}.",
+                    start,
+                    width);
+            }
+
             return CreateToken(RustTokenKind.Unknown, start, _position, false, null);
         }
 
@@ -371,14 +431,17 @@ public static class RustLexer
             }
 
             int start = _position;
-            int quote = start;
+            // Reuse a known non-string pound run instead of rescanning its tail for each ## token.
+            int quote = Math.Max(start, _reservedPoundsEnd);
             while (quote < _scanLength && _source[quote] == '#')
             {
+                CheckBudget();
                 quote++;
             }
 
             if (quote >= _scanLength || _source[quote] != '"')
             {
+                _reservedPoundsEnd = quote;
                 _position = start + 2;
                 AddDiagnostic(
                     RustLexDiagnosticCodes.ReservedPounds,
@@ -394,6 +457,7 @@ public static class RustLexer
             bool terminated = false;
             while (_position < _scanLength)
             {
+                CheckBudget();
                 char current = _source[_position];
                 if (current == '"')
                 {
@@ -431,6 +495,7 @@ public static class RustLexer
             int closingHashes = 0;
             while (_position < _scanLength && _source[_position] == '#' && closingHashes < hashCount)
             {
+                CheckBudget();
                 closingHashes++;
                 _position++;
             }
@@ -481,6 +546,7 @@ public static class RustLexer
             int quote = hashStart;
             while (quote < _scanLength && _source[quote] == '#')
             {
+                CheckBudget();
                 quote++;
             }
 
@@ -503,6 +569,7 @@ public static class RustLexer
             int cursor = quote + 1;
             while (cursor < _scanLength)
             {
+                CheckBudget();
                 if (_source[cursor] != '"')
                 {
                     cursor++;
@@ -516,6 +583,7 @@ public static class RustLexer
                     closingHashEnd - closingHashStart < hashCount)
                 {
                     closingHashEnd++;
+                    CheckBudget();
                 }
 
                 if (closingHashEnd - closingHashStart == hashCount)
@@ -529,7 +597,7 @@ public static class RustLexer
                     return true;
                 }
 
-                cursor++;
+                cursor = closingHashEnd;
             }
 
             _position = _scanLength;
@@ -568,6 +636,7 @@ public static class RustLexer
             {
                 for (int position = contentStart; position < contentEnd; position++)
                 {
+                    CheckBudget();
                     if (_source[position] <= 0x7f)
                     {
                         continue;
@@ -585,10 +654,14 @@ public static class RustLexer
             }
         }
 
-        private void ReportBareCarriageReturns(int contentStart, int contentEnd)
+        private void ReportBareCarriageReturns(
+            int contentStart,
+            int contentEnd,
+            string code = RustLexDiagnosticCodes.InvalidLiteral)
         {
             for (int position = contentStart; position < contentEnd; position++)
             {
+                CheckBudget();
                 if (_source[position] != '\r' ||
                     (position + 1 < contentEnd && _source[position + 1] == '\n'))
                 {
@@ -596,8 +669,10 @@ public static class RustLexer
                 }
 
                 AddDiagnostic(
-                    RustLexDiagnosticCodes.InvalidLiteral,
-                    "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
+                    code,
+                    code == RustLexDiagnosticCodes.InvalidDocumentationComment
+                        ? "Bare carriage returns are not allowed in documentation comments."
+                        : "Bare carriage returns are not allowed in literal content; use \\r or CRLF.",
                     position,
                     1);
             }
@@ -638,6 +713,7 @@ public static class RustLexer
                 _position = contentStart + 2 + rawFirstWidth;
                 while (IsIdentifierContinueAt(_position, out int width))
                 {
+                    CheckBudget();
                     _position += width;
                 }
 
@@ -666,6 +742,7 @@ public static class RustLexer
                 int identifierEnd = contentStart + firstWidth;
                 while (IsIdentifierContinueAt(identifierEnd, out int width))
                 {
+                    CheckBudget();
                     identifierEnd += width;
                 }
 
@@ -712,6 +789,7 @@ public static class RustLexer
 
             while (_position < _scanLength)
             {
+                CheckBudget();
                 char current = _source[_position];
                 if (current == quote && !escapePending)
                 {
@@ -940,6 +1018,7 @@ public static class RustLexer
             scalar = 0;
             while (_position < _scanLength && _source[_position] != '}')
             {
+                CheckBudget();
                 char current = _source[_position];
                 if (current == '_' && digits > 0)
                 {
@@ -960,6 +1039,7 @@ public static class RustLexer
                         _source[_position] != literalQuote)
                     {
                         _position++;
+                        CheckBudget();
                     }
 
                     if (_position < _scanLength && _source[_position] == '}')
@@ -1001,11 +1081,13 @@ public static class RustLexer
             bool floating = false;
             bool invalid = false;
             int? suffixStart = null;
+            int radix = 10;
+            bool emptyRadixBody = false;
 
             if (_source[_position] == '0' && _position + 1 < _scanLength)
             {
                 char prefix = _source[_position + 1];
-                int radix = prefix switch
+                int prefixRadix = prefix switch
                 {
                     'b' => 2,
                     'o' => 8,
@@ -1013,12 +1095,14 @@ public static class RustLexer
                     _ => 0,
                 };
 
-                if (radix != 0)
+                if (prefixRadix != 0)
                 {
+                    radix = prefixRadix;
                     _position += 2;
                     int digitCount = 0;
                     while (_position < _scanLength)
                     {
+                        CheckBudget();
                         char current = _source[_position];
                         if (current == '_')
                         {
@@ -1029,15 +1113,12 @@ public static class RustLexer
                         bool numericBodyCharacter = radix == 16 ? IsHex(current) : IsAsciiDigit(current);
                         if (numericBodyCharacter)
                         {
-                            if (IsDigitForRadix(current, radix))
-                            {
-                                digitCount++;
-                            }
-                            else
+                            if (!IsDigitForRadix(current, radix))
                             {
                                 invalid = true;
                             }
 
+                            digitCount++;
                             _position++;
                             continue;
                         }
@@ -1048,36 +1129,14 @@ public static class RustLexer
                     if (digitCount == 0)
                     {
                         invalid = true;
+                        emptyRadixBody = true;
                     }
-
-                    suffixStart = ScanLiteralSuffix(reportBareUnderscore: true);
-                    if (radix is 2 or 8 && suffixStart is int radixSuffixStart &&
-                        _source[radixSuffixStart] is 'e' or 'E')
-                    {
-                        invalid = true;
-                    }
-
-                    if (invalid)
-                    {
-                        AddDiagnostic(
-                            RustLexDiagnosticCodes.InvalidNumber,
-                            "Numeric literal contains an invalid digit or incomplete numeric body.",
-                            start,
-                            _position - start);
-                    }
-
-                    return CreateToken(
-                        RustTokenKind.IntegerLiteral,
-                        start,
-                        _position,
-                        false,
-                        null,
-                        suffixStart);
                 }
             }
 
-            while (_position < _scanLength)
+            while (radix == 10 && _position < _scanLength)
             {
+                CheckBudget();
                 char current = _source[_position];
                 if (current == '_')
                 {
@@ -1093,7 +1152,7 @@ public static class RustLexer
                 _position++;
             }
 
-            if (_position < _scanLength && _source[_position] == '.' &&
+            if (!emptyRadixBody && _position < _scanLength && _source[_position] == '.' &&
                 !(_position + 1 < _scanLength && _source[_position + 1] == '.') &&
                 (_position + 1 >= _scanLength ||
                     !IsIdentifierStartAt(_position + 1, out _) ||
@@ -1103,11 +1162,12 @@ public static class RustLexer
                 _position++;
                 while (_position < _scanLength && (IsAsciiDigit(_source[_position]) || _source[_position] == '_'))
                 {
+                    CheckBudget();
                     _position++;
                 }
             }
 
-            if (_position < _scanLength && _source[_position] is 'e' or 'E')
+            if (!emptyRadixBody && _position < _scanLength && _source[_position] is 'e' or 'E')
             {
                 floating = true;
                 _position++;
@@ -1119,6 +1179,7 @@ public static class RustLexer
                 int exponentDigits = 0;
                 while (_position < _scanLength && (IsAsciiDigit(_source[_position]) || _source[_position] == '_'))
                 {
+                    CheckBudget();
                     if (IsAsciiDigit(_source[_position]))
                     {
                         exponentDigits++;
@@ -1135,11 +1196,14 @@ public static class RustLexer
 
             suffixStart = ScanLiteralSuffix(reportBareUnderscore: true);
 
+            invalid |= floating && radix != 10;
             if (invalid)
             {
                 AddDiagnostic(
                     RustLexDiagnosticCodes.InvalidNumber,
-                    "Numeric literal contains an invalid digit or incomplete numeric body.",
+                    floating && radix != 10
+                        ? "Floating-point literals must use decimal notation."
+                        : "Numeric literal contains an invalid digit or incomplete numeric body.",
                     start,
                     _position - start);
             }
@@ -1154,6 +1218,7 @@ public static class RustLexer
             _position += firstWidth;
             while (IsIdentifierContinueAt(_position, out int width))
             {
+                CheckBudget();
                 _position += width;
             }
 
@@ -1190,6 +1255,7 @@ public static class RustLexer
             _position += 2 + firstWidth;
             while (IsIdentifierContinueAt(_position, out int width))
             {
+                CheckBudget();
                 _position += width;
             }
 
@@ -1208,6 +1274,7 @@ public static class RustLexer
             _position += firstWidth;
             while (IsIdentifierContinueAt(_position, out int width))
             {
+                CheckBudget();
                 _position += width;
             }
 
@@ -1284,6 +1351,7 @@ public static class RustLexer
                             token.Span.Length);
                     }
 
+                    _stopped = true;
                     return;
                 }
 
@@ -1379,9 +1447,39 @@ public static class RustLexer
         private ReadOnlyCollection<RustTokenTree> FreezeRoots()
         {
             var trees = new RustTokenTree[_roots.Count];
+            var pending = new Stack<(MutableTreeNode Node, RustTokenTree[] Target, int Index, RustTokenTree[]? Children)>();
             for (int index = 0; index < _roots.Count; index++)
             {
-                trees[index] = _roots[index].Freeze(_scanLength);
+                CheckBudget();
+                pending.Push((_roots[index], trees, index, null));
+                // Each node is visited at most twice; CLR stack depth is independent of source nesting.
+                while (pending.TryPop(out var work))
+                {
+                    CheckBudget();
+                    if (work.Node is MutableLeaf leaf)
+                    {
+                        work.Target[work.Index] = new RustLeafTokenTree(leaf.Token);
+                    }
+                    else if (work.Node is MutableGroup group)
+                    {
+                        if (work.Children is not null)
+                        {
+                            int end = group.CloseToken?.Span.End ?? _scanLength;
+                            work.Target[work.Index] = new RustDelimitedTokenTree(
+                                group.Delimiter, group.OpenToken, Array.AsReadOnly(work.Children),
+                                group.CloseToken, new TextSpan(group.OpenToken.Span.Start, end - group.OpenToken.Span.Start));
+                            continue;
+                        }
+
+                        var children = new RustTokenTree[group.Children.Count];
+                        pending.Push((group, work.Target, work.Index, children));
+                        for (int child = group.Children.Count - 1; child >= 0; child--)
+                        {
+                            CheckBudget();
+                            pending.Push((group.Children[child], children, child, null));
+                        }
+                    }
+                }
             }
 
             return Array.AsReadOnly(trees);
@@ -1422,9 +1520,104 @@ public static class RustLexer
                 new TextSpan(safeStart, 0)));
         }
 
-        private bool IsShebangStart() =>
-            _scanLength >= 2 && _source[0] == '#' && _source[1] == '!' &&
-            (_scanLength == 2 || _source[2] != '[');
+        private bool IsShebangStart()
+        {
+            if (!MatchesAt(_position, "#!"))
+            {
+                return false;
+            }
+
+            int cursor = _position + 2;
+            // Rust skips whitespace and non-doc comments before deciding whether this is an inner attribute.
+            while (cursor < _scanLength)
+            {
+                CheckBudget();
+                if (IsRustWhitespace(_source[cursor]))
+                {
+                    cursor++;
+                }
+                else if (MatchesAt(cursor, "//") && !MatchesAt(cursor, "//!") &&
+                    (!MatchesAt(cursor, "///") || MatchesAt(cursor, "////")))
+                {
+                    cursor += 2;
+                    while (cursor < _scanLength && _source[cursor] != '\n')
+                    {
+                        CheckBudget();
+                        cursor++;
+                    }
+                }
+                else if (MatchesAt(cursor, "/*") && !MatchesAt(cursor, "/*!") &&
+                    (!MatchesAt(cursor, "/**") || MatchesAt(cursor, "/***") || MatchesAt(cursor, "/**/")))
+                {
+                    cursor += 2;
+                    int depth = 1;
+                    while (cursor < _scanLength && depth > 0)
+                    {
+                        CheckBudget();
+                        if (MatchesAt(cursor, "/*"))
+                        {
+                            depth++;
+                            cursor += 2;
+                        }
+                        else if (MatchesAt(cursor, "*/"))
+                        {
+                            depth--;
+                            cursor += 2;
+                        }
+                        else
+                        {
+                            cursor++;
+                        }
+                    }
+                }
+                else
+                {
+                    return _source[cursor] != '[';
+                }
+            }
+
+            return true;
+        }
+
+        private void ValidateUnicodeScalars()
+        {
+            for (int position = 0; position < _scanLength && !_stopped; position++)
+            {
+                CheckBudget();
+                if (!char.IsSurrogate(_source[position]))
+                {
+                    continue;
+                }
+
+                if (TryReadRune(position, out _, out int width))
+                {
+                    position += width - 1;
+                }
+                else
+                {
+                    AddDiagnostic(RustLexDiagnosticCodes.UnknownCharacter,
+                        $"Unknown character U+{(int)_source[position]:X4}.", position, 1);
+                }
+            }
+        }
+
+        private void CheckBudget()
+        {
+            if (++_workSinceBudgetCheck >= 1024)
+            {
+                _workSinceBudgetCheck = 0;
+                CheckBudgetNow();
+            }
+        }
+
+        private void CheckBudgetNow()
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+            if (Stopwatch.GetElapsedTime(_startedAt) >= _options.Timeout)
+            {
+                throw new TimeoutException("Lexer wall-clock budget expired.");
+            }
+        }
 
         private bool MatchesAt(int position, string text)
         {
@@ -1508,7 +1701,6 @@ public static class RustLexer
 
         private abstract class MutableTreeNode
         {
-            internal abstract RustTokenTree Freeze(int sourceLength);
         }
 
         private sealed class MutableLeaf : MutableTreeNode
@@ -1519,8 +1711,6 @@ public static class RustLexer
             }
 
             internal RustToken Token { get; }
-
-            internal override RustTokenTree Freeze(int sourceLength) => new RustLeafTokenTree(Token);
         }
 
         private sealed class MutableGroup(RustDelimiterKind delimiter, RustToken openToken) : MutableTreeNode
@@ -1529,23 +1719,6 @@ public static class RustLexer
             internal RustToken OpenToken { get; } = openToken;
             internal RustToken? CloseToken { get; set; }
             internal List<MutableTreeNode> Children { get; } = [];
-
-            internal override RustTokenTree Freeze(int sourceLength)
-            {
-                var children = new RustTokenTree[Children.Count];
-                for (int index = 0; index < Children.Count; index++)
-                {
-                    children[index] = Children[index].Freeze(sourceLength);
-                }
-
-                int end = CloseToken?.Span.End ?? sourceLength;
-                return new RustDelimitedTokenTree(
-                    Delimiter,
-                    OpenToken,
-                    Array.AsReadOnly(children),
-                    CloseToken,
-                    new TextSpan(OpenToken.Span.Start, Math.Max(0, end - OpenToken.Span.Start)));
-            }
         }
     }
 }

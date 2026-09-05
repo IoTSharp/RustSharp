@@ -189,20 +189,31 @@ expands the grammar further.
 
 ## P1: Implement the safe language core
 
-An early P1-01 prototype in `RustLexer.cs` and `RustLexingModels.cs` preserves
-token/trivia spans, builds nested token trees, and bounds malformed-input
-diagnostics. A versioned `safe-core-lexing` manifest now publishes a bounded
-lexer-acceptance denominator for declared identifiers, literals, trivia,
-delimiters, token trees, and invalid forms. Its report checks exact evidence,
-spans, and lossless source reconstruction under declared limits. The current
-implementation and manifest cover the audited batch in priority order: literal
-suffixes as part of a single literal token; raw lifetimes and digit-starting
-lifetime forms, including `'0`; Edition 2024 guarded strings; and reserved
-prefixes. This is RustSharp lexer-acceptance evidence only, not rustc
-differential or runtime conformance evidence, and the corpus is not a complete
-Rust 1.98 lexical denominator. The vertical-slice parser remains the default;
-the opt-in primitive profile now uses the safe-core lexer/parser in production.
-P1-01 remains 🚧 In progress pending the complete lexical denominator.
+P1-01 is ✅ Complete. `RustLexer.cs` and `RustLexingModels.cs` implement
+lossless Rust 1.98.0 / Edition 2024 tokenization with Unicode 17.0.0 identifiers,
+bounded diagnostics and iterative token trees. Version 2 of `safe-core-lexing`
+publishes 24 fixtures and a mandatory 22-category map covering source preambles,
+whitespace/comments, identifiers/keywords, every literal family and suffixes,
+lifetimes, punctuation, delimiters, reserved forms and malformed input. Exact
+tokens/trivia/trees/diagnostics, spans and complete source reconstruction pass
+for all cases. BOM/shebang lookahead, empty block comments, bare CR versus
+CRLF, nondecimal floats, invalid source scalars and work limits are covered.
+The [lexical contract](docs/lexical-profile.md) records the reference baseline,
+category denominator, representation choices and downstream checks. This is
+RustSharp lexer-acceptance evidence; semantic, rustc differential and runtime
+conformance are separate. The vertical-slice parser remains the default; the
+opt-in primitive profile uses the safe-core lexer/parser in production.
+
+Local P1-01 evidence on 2026-09-06, Windows x64, .NET SDK 10.0.400/runtime
+10.0.11: ✅ Complete, Release build with zero warnings/errors, 103/103 executable
+tests, 24/24 lexical cases, 22/22 categories, 6/6 syntax, 6/6 name resolution,
+and 14/14 primitive differential cases against rustc 1.98.0. The twelve added
+tests cover lexical boundaries, cancellation/timeouts, independent collection
+limits, 4096-level trees, 256 deterministic malformed inputs, four invalid
+manifest mutations and incorrect expected-token evidence. Reports are retained
+under `artifacts/conformance/` and `artifacts/p1-01/`. Windows/Linux CI now check
+the current manifest hash, baseline, category map, case IDs and denominators;
+this local record does not claim a new remote CI run or close the full P1 gate.
 
 P1-02 also has an early bounded `SafeCoreSyntax` model/parser for
 representative modules, items, statements, expressions, patterns, types,
@@ -210,8 +221,8 @@ generics, and attributes, with stable `RSP` diagnostics. A six-case
 `safe-core-syntax` manifest and the acceptance command below produce
 `artifacts/conformance/safe-core-syntax.json`. The current report passes 6/6
 cases and is parser-acceptance evidence only, not rustc differential or runtime
-conformance evidence. P1-02 remains 🚧 In progress because its P1-01 dependency
-is open and the full syntax denominator has not been published.
+conformance evidence. Its P1-01 dependency is now ✅ Complete; P1-02 remains
+🚧 In progress because the full syntax denominator has not been published.
 
 P1-03 now has a bounded `SafeCoreNameResolution` prototype over that syntax
 model. It collects module, import, item, generic, parameter, and local symbols
@@ -273,7 +284,7 @@ publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
 
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | The current implementation and manifest cover single-token literal suffixes, raw lifetimes and digit-starting lifetime forms including `'0`, Edition 2024 guarded strings, and reserved prefixes; every case must match exact token, trivia, token-tree, diagnostic, span, and source-reconstruction evidence. Production integration exists for the opt-in primitive profile; the complete Rust 1.98 lexical denominator remains open. |
+| P1-01 | ✅ Complete | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | Manifest v2 passes 24/24 exact token/trivia/tree/diagnostic/span/source-reconstruction fixtures and enforces the complete 22-category lexical map. The 103/103 regression harness covers boundaries, cancellation/deadlines, collection limits, depth 4096 and malformed-manifest rejection. The opt-in primitive compiler consumes the lexer; see the recorded evidence and lexical contract above. |
 | P1-02 | 🚧 In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | Every case in the published syntax-profile denominator has the expected parse result; unsupported syntax is rejected explicitly. |
 | P1-03 | 🚧 In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator and four HIR cases remain; primitive compilation now consumes HIR and canonical import targets. Multi-file workspace loading remains open. |
 | P1-04 | 🚧 In progress | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | i32/bool/unit, direct function signatures, local inference, mutability, conditional/return checks and divergence are implemented for the primitive profile. Aggregate/reference types and the full inference/coercion denominator remain open. |
@@ -463,8 +474,8 @@ gate it depends on.
 6. When scope changes, update the compatibility profile and ADR first, then the
    implementation and this roadmap.
 
-The next 🚧 In progress gates are P1-01 (lossless lexing), P1-02 (safe-core
-syntax), P1-03 (HIR and name resolution), P1-04 (types), P1-09 (IL emission),
-and P1-10 (differential regression). P0-10, P0-16, and P0-17 are now
+P1-01 (lossless lexing) is ✅ Complete. The next 🚧 In progress gates are
+P1-02 (safe-core syntax), P1-03 (HIR and name resolution), P1-04 (types),
+P1-09 (IL emission), and P1-10 (differential regression). P0-10, P0-16, and P0-17 are now
 ✅ Complete on the recorded two-platform evidence; later language-profile
 claims remain gated on the full HIR/MIR and differential suites.

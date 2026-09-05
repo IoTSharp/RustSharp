@@ -172,8 +172,15 @@ jobs:
               $report.Execution.DeadlineExpired -isnot [bool]) {
             throw 'Safe-core lexing evidence boolean metadata is missing or is not a JSON boolean.'
           }
-          $expectedDenominator = 10
-          $expectedManifestSha256 = 'E17D43874233DE703BAE24DBDF0070A7564600BDF0ECDDBF26977829A5BAAAF3'
+          $manifestPath = Join-Path $PWD 'tools/RustSharp.Conformance/fixtures/safe-core-lexing-manifest.json'
+          $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+          $expectedDenominator = $manifest.denominator
+          $expectedManifestSha256 = (Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256).Hash
+          if ($expectedDenominator -ne 24 -or @($manifest.cases).Count -ne $expectedDenominator -or
+              ($manifest.coverage | ConvertTo-Json -Depth 8 -Compress) -cne ($report.Manifest.Coverage | ConvertTo-Json -Depth 8 -Compress) -or
+              (@($manifest.cases.id | Sort-Object) -join ',') -cne (@($report.Cases.Id | Sort-Object) -join ',')) {
+            throw 'Lexical category or case identity evidence differs from the versioned corpus.'
+          }
           $denominator = $report.Summary.Denominator
           $invalidCases = @($report.Cases | Where-Object {
             $_.PSObject.Properties.Match('Status').Count -ne 1 -or
@@ -217,7 +224,11 @@ jobs:
               $report.Manifest.Validated -ne $true -or
               [string] $report.Manifest.Path -ne 'tools/RustSharp.Conformance/fixtures/safe-core-lexing-manifest.json' -or
               [string] $report.Manifest.Sha256 -ne $expectedManifestSha256 -or
-              $report.Manifest.Version -ne 1 -or
+              $report.Manifest.Version -ne 2 -or
+              $report.Manifest.RustVersion -ne '1.98.0' -or
+              $report.Manifest.Edition -ne '2024' -or
+              $report.Manifest.UnicodeVersion -ne '17.0.0' -or
+              @($report.Manifest.Coverage.PSObject.Properties).Count -ne 22 -or
               [string] $report.Manifest.Lexer -ne 'RustSharp.Syntax.RustLexer.Lex' -or
               $report.Manifest.Denominator -ne $denominator -or
               $report.Manifest.CaseCount -ne $denominator -or

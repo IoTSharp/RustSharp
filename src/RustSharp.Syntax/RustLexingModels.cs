@@ -81,6 +81,9 @@ public enum RustTriviaKind
 
     /// <summary>A file-level shebang line beginning with <c>#!</c>.</summary>
     Shebang,
+
+    /// <summary>The optional U+FEFF marker at the beginning of a source file.</summary>
+    ByteOrderMark,
 }
 
 /// <summary>Identifies one of Rust's three grouping delimiters.</summary>
@@ -143,11 +146,18 @@ public static class RustLexDiagnosticCodes
 
     /// <summary>Source uses an Edition 2024 reserved pair of adjacent pound characters.</summary>
     public const string ReservedPounds = "RSL1013";
+
+    /// <summary>A documentation comment contains a bare carriage return.</summary>
+    public const string InvalidDocumentationComment = "RSL1014";
+
 }
 
 /// <summary>Options that bound a <see cref="RustLexer"/> invocation.</summary>
 public sealed record RustLexerOptions
 {
+    /// <summary>Wall-clock budget for one pass, including tree construction (0..1 minute, exclusive of zero).</summary>
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
+
     /// <summary>Maximum source characters inspected by one invocation.</summary>
     public int MaximumSourceLength { get; init; } = RustLexer.DefaultMaximumSourceLength;
 
