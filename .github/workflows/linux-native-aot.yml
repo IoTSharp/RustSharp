@@ -295,6 +295,17 @@ jobs:
             echo "I/O smoke probes returned success without a passed summary report (status=$report_status)" >&2
             exit 1
           fi
+      - name: Verify primitive safe-core profile
+        shell: pwsh
+        timeout-minutes: 5
+        env:
+          DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll', '--profile', 'safe-core-primitives-v1', '--oracle', 'rustc-1.98', '--report', 'artifacts/p1/safe-core-primitives-v1.json') -TimeoutSeconds 200
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('src/RustSharp.Cli/bin/Release/net10.0/rsc.dll', 'compile', 'samples/safe-core.rs', '--profile', 'safe-core-primitives-v1', '--output', 'artifacts/p1/safe-core.dll') -TimeoutSeconds 30
+          & ./eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1/safe-core.dll -EvidencePath artifacts/p1/safe-core.ilverify.json
       - name: Upload Linux evidence
         if: always()
         uses: actions/upload-artifact@v4

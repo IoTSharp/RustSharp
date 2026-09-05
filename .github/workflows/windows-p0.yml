@@ -306,6 +306,26 @@ jobs:
           if ($reportStatus -ne 'passed') {
             throw "I/O smoke probes returned exit code 0 with status '$reportStatus'."
           }
+      - name: Verify primitive safe-core profile
+        shell: pwsh
+        timeout-minutes: 5
+        env:
+          DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll', '--profile', 'safe-core-primitives-v1', '--oracle', 'rustc-1.98', '--report', 'artifacts/p1/safe-core-primitives-v1.json') -TimeoutSeconds 200
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('src/RustSharp.Cli/bin/Release/net10.0/rsc.dll', 'compile', 'samples/safe-core.rs', '--profile', 'safe-core-primitives-v1', '--output', 'artifacts/p1/safe-core.dll') -TimeoutSeconds 30
+          & ./eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1/safe-core.dll -EvidencePath artifacts/p1/safe-core.ilverify.json
+      - name: Verify primitive Windows x64 Native AOT
+        shell: pwsh
+        timeout-minutes: 6
+        env:
+          DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          & ./eng/Invoke-WindowsNativeAotProbe.ps1 -SourcePath samples/safe-core.rs -OutputDirectory artifacts/p1/windows-x64-aot -EvidencePath artifacts/p1/windows-x64-aot.json -Profile safe-core-primitives-v1 -ExpectedStandardOutput "Safe core on .NET`n42`ntrue`n"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload P0 evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -5,9 +5,8 @@ using System.Text;
 namespace RustSharp.Syntax;
 
 /// <summary>
-/// Bounded symbol collection and path-resolution spike for the safe-core AST.
-/// The compiler does not call this prototype; it exists to make the P1-03
-/// shape and diagnostics reviewable before HIR is introduced.
+/// Bounded symbol collection and path resolution for the safe-core AST.
+/// Feeds HIR lowering and the opt-in primitive compilation profile.
 /// </summary>
 public static class SafeCoreNameResolution
 {
@@ -251,7 +250,10 @@ public static class SafeCoreNameResolution
             symbol.IsImport,
             symbol.TargetPath,
             symbol.Span,
-            symbol.DeclaringScope.Path);
+            symbol.DeclaringScope.Path)
+        {
+            ResolvedImportTargetQualifiedName = symbol.ResolvedImportTarget?.QualifiedName,
+        };
 
         private void CollectItems(
             IReadOnlyList<SafeCoreItemSyntax> items,
@@ -717,6 +719,13 @@ public static class SafeCoreNameResolution
 
                 switch (expression)
                 {
+                    case SafeCorePrintExpressionSyntax print:
+                        for (var index = 0; index < print.Arguments.Count && !_truncated; index++)
+                        {
+                            CollectNestedExpressionScopes(print.Arguments[index], parent, depth + 1);
+                        }
+
+                        break;
                     case SafeCoreUnaryExpressionSyntax unary:
                         CollectNestedExpressionScopes(unary.Operand, parent, depth + 1);
                         break;
@@ -1231,6 +1240,13 @@ public static class SafeCoreNameResolution
                         for (var index = 0; index < call.Arguments.Count; index++)
                         {
                             ResolveExpression(call.Arguments[index], scope, depth + 1);
+                        }
+
+                        break;
+                    case SafeCorePrintExpressionSyntax print:
+                        for (var index = 0; index < print.Arguments.Count && !_truncated; index++)
+                        {
+                            ResolveExpression(print.Arguments[index], scope, depth + 1);
                         }
 
                         break;

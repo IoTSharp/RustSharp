@@ -21,6 +21,7 @@ internal static class Program
     private const string SafeCoreLexingProfileName = "safe-core-lexing";
     private const string SafeCoreSyntaxProfileName = "safe-core-syntax";
     private const string SafeCoreNameResolutionProfileName = "safe-core-name-resolution";
+    private const string SafeCorePrimitivesProfileName = "safe-core-primitives-v1";
     private const string OracleName = "rustc-1.98";
     private const string RustcToolchain = "1.98.0";
 
@@ -115,6 +116,8 @@ internal static class Program
         Directory.CreateDirectory(runDirectory);
 
         using var deadline = new CancellationTokenSource(options.Deadline);
+        Fixture[] catalog = options.Profile == SafeCorePrimitivesProfileName ? PrimitiveFixtureCatalog : FixtureCatalog;
+        if (catalog.Length > MaximumCases) throw new InvalidOperationException("Fixture count exceeds the harness bound.");
         try
         {
             var runner = new BoundedProcessRunner();
@@ -140,10 +143,10 @@ internal static class Program
                 .ConfigureAwait(false);
             string? rustSharpVersion = FindRustSharpVersion(rustSharpVersionProbe);
             bool rustSharpAvailable = rustSharpVersionProbe.Succeeded && rustSharpVersion is not null;
-            var cases = new List<CaseReport>(FixtureCatalog.Length);
+            var cases = new List<CaseReport>(catalog.Length);
             if (oracleAvailable)
             {
-                foreach (Fixture fixture in FixtureCatalog)
+                foreach (Fixture fixture in catalog)
                 {
                     if (deadline.IsCancellationRequested)
                     {
@@ -164,7 +167,7 @@ internal static class Program
             }
             else
             {
-                foreach (Fixture fixture in FixtureCatalog)
+                foreach (Fixture fixture in catalog)
                 {
                     cases.Add(CaseReport.Skipped(fixture, blockedReason!));
                 }
@@ -202,7 +205,7 @@ internal static class Program
                     VersionProbe = rustSharpVersionProbe.ToEvidence(),
                 },
                 new LimitsReport(options.Timeout.TotalSeconds, options.Deadline.TotalSeconds, MaximumCases, BoundedProcessRunner.MaximumTotalOutputBytes),
-                new SummaryReport(status, FixtureCatalog.Length, cases.Count - skipped, passed, failed, skipped),
+                new SummaryReport(status, catalog.Length, cases.Count - skipped, passed, failed, skipped),
                 cases,
                 null)
             {
@@ -250,6 +253,24 @@ internal static class Program
         new("syntax-error", "unsupported.rs", false, null),
     ];
 
+    private static readonly Fixture[] PrimitiveFixtureCatalog =
+    [
+        new("primitive-functions", "primitives-functions.rs", true, "42\ntrue\n", SafeCorePrimitivesProfileName),
+        new("primitive-short-circuit", "primitives-short-circuit.rs", true, "false\ntrue\nprobe\ntrue\n", SafeCorePrimitivesProfileName),
+        new("primitive-returns", "primitives-returns.rs", true, "left\n11\nleft\n7\n2\n", SafeCorePrimitivesProfileName),
+        new("primitive-integers", "primitives-integers.rs", true, "37\n-2147483648\n-1\ntrue\n", SafeCorePrimitivesProfileName),
+        new("primitive-shadowing", "primitives-shadowing.rs", true, "true\n8\n21\n", SafeCorePrimitivesProfileName),
+        new("primitive-immutable", "primitives-immutable.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-type-error", "primitives-type-error.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-branch-error", "primitives-branch-error.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-return-error", "primitives-return-error.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-call-error", "primitives-call-error.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-range-error", "primitives-range-error.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-overflow-error", "primitives-overflow-error.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-unreachable-tail-error", "primitives-unreachable-tail-error.rs", false, null, SafeCorePrimitivesProfileName),
+        new("primitive-comparison-error", "primitives-comparison-error.rs", false, null, SafeCorePrimitivesProfileName),
+    ];
+
     private static async Task<CaseReport> RunCaseAsync(
         BoundedProcessRunner runner,
         string repositoryRoot,
@@ -265,14 +286,14 @@ internal static class Program
         ProcessResult rustcCompile = await RunAsync(
             runner,
             "rustc",
-            [$"+{RustcToolchain}", sourcePath, "--edition", "2024", "-o", rustcOutput],
+            [$"+{RustcToolchain}", sourcePath, "--edition", "2024", "-C", "overflow-checks=yes", "-o", rustcOutput],
             repositoryRoot,
             timeout,
             cancellationToken).ConfigureAwait(false);
         ProcessResult rustSharpCheck = await RunAsync(
             runner,
             "dotnet",
-            ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--", "check", sourcePath],
+            ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--no-build", "--no-restore", "--", "check", sourcePath, "--profile", fixture.Profile],
             repositoryRoot,
             timeout,
             cancellationToken).ConfigureAwait(false);
@@ -293,7 +314,7 @@ internal static class Program
                 rustSharpCompile = await RunAsync(
                     runner,
                     "dotnet",
-                    ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--", "compile", sourcePath, "--output", managedOutput],
+                    ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--no-build", "--no-restore", "--", "compile", sourcePath, "--output", managedOutput, "--profile", fixture.Profile],
                     repositoryRoot,
                     timeout,
                     cancellationToken).ConfigureAwait(false);
@@ -306,7 +327,9 @@ internal static class Program
 
         bool outcomeMatches = fixture.ExpectedSuccess
             ? rustcCompile.Succeeded && rustSharpCheck.Succeeded && rustcRun?.Succeeded == true && rustSharpRun?.Succeeded == true && NormalizeOutput(rustcRun.StandardOutput) == NormalizeOutput(rustSharpRun.StandardOutput) && NormalizeOutput(rustSharpRun.StandardOutput) == NormalizeOutput(fixture.ExpectedOutput)
-            : !rustcCompile.Succeeded && !rustSharpCheck.Succeeded;
+            : rustcCompile.Termination == "exited" && rustcCompile.ExitCode == 1 &&
+                rustSharpCheck.Termination == "exited" && rustSharpCheck.ExitCode == 1 &&
+                !rustcCompile.CleanupIncomplete && !rustSharpCheck.CleanupIncomplete;
         string? difference = outcomeMatches ? null : DescribeCaseDifference(
             fixture,
             rustcCompile,
@@ -449,7 +472,7 @@ internal static class Program
 
     private static async Task<ProcessResult> ReadRustSharpVersionAsync(BoundedProcessRunner runner, string root, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        return await RunAsync(runner, "dotnet", ["run", "--project", Path.Combine(root, "src", "RustSharp.Cli"), "-c", "Release", "--", "--version"], root, timeout, cancellationToken).ConfigureAwait(false);
+        return await RunAsync(runner, "dotnet", ["run", "--project", Path.Combine(root, "src", "RustSharp.Cli"), "-c", "Release", "--no-build", "--no-restore", "--", "--version"], root, timeout, cancellationToken).ConfigureAwait(false);
     }
 
     private static Options ParseOptions(string[] args)
@@ -493,10 +516,10 @@ internal static class Program
             else throw new ArgumentException($"Unknown option '{value}'.");
         }
         if (profile is not ProfileName and not SafeCoreLexingProfileName and
-            not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName)
+            not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName and not SafeCorePrimitivesProfileName)
         {
             throw new ArgumentException(
-                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', and '{SafeCoreNameResolutionProfileName}'.");
+                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', '{SafeCoreNameResolutionProfileName}', and '{SafeCorePrimitivesProfileName}'.");
         }
 
         bool inProcessAcceptanceProfile = profile is SafeCoreLexingProfileName or
@@ -511,7 +534,7 @@ internal static class Program
             throw new ArgumentException($"Profile '{profile}' runs in-process; --timeout is not applicable. Use --deadline to bound the harness.");
         }
 
-        if (string.Equals(profile, ProfileName, StringComparison.Ordinal) && !string.Equals(oracle, OracleName, StringComparison.Ordinal))
+        if (!inProcessAcceptanceProfile && !string.Equals(oracle, OracleName, StringComparison.Ordinal))
         {
             throw new ArgumentException($"Only oracle '{OracleName}' is supported for profile '{ProfileName}'.");
         }
@@ -644,7 +667,7 @@ internal static class Program
     }
 
     private sealed record Options(string Profile, string? ReportPath, TimeSpan Timeout, TimeSpan Deadline);
-    private sealed record Fixture(string Id, string FileName, bool ExpectedSuccess, string? ExpectedOutput);
+    private sealed record Fixture(string Id, string FileName, bool ExpectedSuccess, string? ExpectedOutput, string Profile = ProfileName);
     private sealed record ConformanceReport(int SchemaVersion, DateTimeOffset GeneratedAtUtc, string Profile, OracleReport Oracle, ToolReport RustSharp, LimitsReport Limits, SummaryReport Summary, IReadOnlyList<CaseReport> Cases, string? RunDirectoryCleanupDiagnostic)
     {
         // These additive fields make a report useful when it is collected from a CI runner
@@ -713,7 +736,8 @@ internal static class Program
 
     private sealed record ProcessResult(string CommandLine, int ProcessId, int? ExitCode, string Termination, TimeSpan Elapsed, string StandardOutput, string StandardError, bool OutputTruncated, bool OutputReadTimedOut, bool OutputDrainTimedOut, bool CleanupIncomplete, int ParentProcessId, DateTimeOffset? StartedAtUtc, bool OutputReadLimitReached, string? OutputDiagnostic, bool CleanupAttempted, string? CleanupDiagnostic)
     {
-        public bool Succeeded => Termination == "exited" && ExitCode == 0;
+        public bool Succeeded => Termination == "exited" && ExitCode == 0 && !CleanupIncomplete &&
+            !OutputTruncated && !OutputReadTimedOut && !OutputDrainTimedOut && !OutputReadLimitReached;
         public static ProcessResult From(BoundedProcessResult result) => new(result.StartedProcess.CommandLine, result.StartedProcess.ProcessId, result.ExitCode, result.Termination.ToString().ToLowerInvariant(), result.Elapsed, result.StandardOutput, result.StandardError, result.OutputTruncated, result.OutputReadTimedOut, result.OutputDrainTimedOut, result.ProcessTreeCleanupIncomplete, result.StartedProcess.ParentProcessId, result.StartedProcess.StartedAt, result.OutputReadLimitReached, result.OutputDiagnostic, result.ProcessTreeCleanupAttempted, result.ProcessTreeCleanupDiagnostic);
         public ProcessEvidence ToEvidence() => new(CommandLine, ProcessId, ParentProcessId, StartedAtUtc, ExitCode, Termination, Elapsed.TotalMilliseconds, StandardOutput, StandardError, OutputTruncated, OutputReadTimedOut, OutputDrainTimedOut, OutputReadLimitReached, OutputDiagnostic, CleanupAttempted, CleanupIncomplete, CleanupDiagnostic);
     }

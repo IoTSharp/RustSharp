@@ -35,8 +35,8 @@ internal static class Program
             {
                 CommandKind.Help => WriteHelp(),
                 CommandKind.Version => WriteVersion(),
-                CommandKind.Check => Check(options),
-                CommandKind.Compile => Compile(options),
+                CommandKind.Check => Check(options, cancellation.Token),
+                CommandKind.Compile => Compile(options, cancellation.Token),
                 CommandKind.Run => await RunAsync(options, cancellation.Token).ConfigureAwait(false),
                 CommandKind.Publish => await PublishAsync(options, cancellation.Token).ConfigureAwait(false),
                 _ => 2,
@@ -53,9 +53,9 @@ internal static class Program
         }
     }
 
-    private static int Check(CommandLineOptions options)
+    private static int Check(CommandLineOptions options, CancellationToken cancellationToken)
     {
-        var result = CompilerDriver.CheckFile(options.SourcePath!);
+        var result = CompilerDriver.CheckFile(options.SourcePath!, options.Profile, cancellationToken);
         if (!result.Success)
         {
             WriteDiagnostics(options.SourcePath!, result.Diagnostics);
@@ -66,7 +66,7 @@ internal static class Program
         return 0;
     }
 
-    private static int Compile(CommandLineOptions options)
+    private static int Compile(CommandLineOptions options, CancellationToken cancellationToken)
     {
         var sourcePath = Path.GetFullPath(options.SourcePath!);
         var assemblyName = GetAssemblyName(sourcePath);
@@ -74,7 +74,7 @@ internal static class Program
             ? Path.Combine(Environment.CurrentDirectory, assemblyName + ".dll")
             : Path.GetFullPath(options.OutputPath);
 
-        var result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName);
+        var result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
         if (!result.Success)
         {
             WriteDiagnostics(sourcePath, result.Diagnostics);
@@ -100,7 +100,7 @@ internal static class Program
                 assemblyName + ".dll")
             : Path.GetFullPath(options.OutputPath);
 
-        var result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName);
+        var result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
         if (!result.Success)
         {
             WriteDiagnostics(sourcePath, result.Diagnostics);
@@ -146,7 +146,9 @@ internal static class Program
         var compilation = CompilerDriver.CompileFile(
             sourcePath,
             managedAssemblyPath,
-            assemblyName);
+            assemblyName,
+            options.Profile,
+            cancellationToken);
         if (!compilation.Success)
         {
             WriteDiagnostics(sourcePath, compilation.Diagnostics);
@@ -204,9 +206,9 @@ internal static class Program
               rsc publish <source.rs> [--runtime <rid>] [--output <directory>] [--timeout <seconds>]
               rsc --version
 
-            Current profile:
-              Rust 1.98 / Edition 2024 vertical-slice-v1
-              fn main() with zero or more println!(string-literal); statements
+            Profiles (Rust 1.98 / Edition 2024):
+              --profile vertical-slice-v1         (default: literal println!)
+              --profile safe-core-primitives-v1   (i32/bool functions, locals, branches)
             """);
         return 0;
     }

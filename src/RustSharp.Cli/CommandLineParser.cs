@@ -41,12 +41,21 @@ internal static class CommandLineParser
         string? outputPath = null;
         string? runtimeIdentifier = null;
         var timeoutSeconds = 600;
+        var profile = RustSharp.Compiler.CompilationProfile.VerticalSlice;
 
         for (var index = 1; index < arguments.Length; index++)
         {
             var argument = arguments[index];
             switch (argument)
             {
+                case "--profile":
+                    if (!TryTakeValue(arguments, ref index, out var profileName) ||
+                        profileName is not ("vertical-slice-v1" or "safe-core-primitives-v1"))
+                        return Failure("Option '--profile' requires vertical-slice-v1 or safe-core-primitives-v1.");
+                    profile = profileName == "safe-core-primitives-v1"
+                        ? RustSharp.Compiler.CompilationProfile.SafeCorePrimitives
+                        : RustSharp.Compiler.CompilationProfile.VerticalSlice;
+                    break;
                 case "--output" or "-o":
                     if (!TryTakeValue(arguments, ref index, out outputPath))
                     {
@@ -109,7 +118,8 @@ internal static class CommandLineParser
             sourcePath,
             outputPath,
             runtimeIdentifier,
-            timeoutSeconds));
+            timeoutSeconds,
+            profile));
     }
 
     private static bool TryTakeValue(

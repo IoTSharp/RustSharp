@@ -71,6 +71,7 @@ public static class ClrLirEmitter
         }
 
         var labels = new Dictionary<string, LabelHandle>(StringComparer.Ordinal);
+        (MemberReferenceHandle Culture, MemberReferenceHandle Convert)? invariantFormat = null;
         foreach (ClrLirBlock block in method.Blocks)
         {
             labels.Add(block.Label, encoder.DefineLabel());
@@ -98,6 +99,30 @@ public static class ClrLirEmitter
                     case ClrLirStoreLocal storeLocal:
                         encoder.StoreLocal(storeLocal.Index);
                         break;
+                    case ClrLirLoadArgument argument:
+                        encoder.LoadArgument(argument.Index);
+                        break;
+                    case ClrLirDiscard:
+                        encoder.OpCode(ILOpCode.Pop);
+                        break;
+                    case ClrLirFormatInt32:
+                        invariantFormat ??= AddInvariantFormatReferences(metadata);
+                        encoder.Call(invariantFormat.Value.Culture);
+                        encoder.Call(invariantFormat.Value.Convert);
+                        break;
+                    case ClrLirBinary binary:
+                        encoder.OpCode(binary.Operator switch
+                        {
+                            ClrLirBinaryOperator.AddChecked => ILOpCode.Add_ovf,
+                            ClrLirBinaryOperator.SubtractChecked => ILOpCode.Sub_ovf,
+                            ClrLirBinaryOperator.MultiplyChecked => ILOpCode.Mul_ovf,
+                            ClrLirBinaryOperator.Equal => ILOpCode.Ceq,
+                            ClrLirBinaryOperator.LessThan => ILOpCode.Clt,
+                            ClrLirBinaryOperator.GreaterThan => ILOpCode.Cgt,
+                            ClrLirBinaryOperator.ExclusiveOr => ILOpCode.Xor,
+                            _ => throw new InvalidOperationException("Invalid binary operator."),
+                        });
+                        break;
                     case ClrLirCall call:
                         EntityHandle target = callResolver(call.Site);
                         if (target.IsNil)
@@ -122,6 +147,29 @@ public static class ClrLirEmitter
             }
         }
 
-        return Math.Max(1, method.Blocks.Sum(static block => block.Instructions.Length));
+        return Math.Max(1, validation.MaximumStackDepth);
+    }
+
+    private static (MemberReferenceHandle Culture, MemberReferenceHandle Convert) AddInvariantFormatReferences(MetadataBuilder metadata)
+    {
+        AssemblyReferenceHandle runtime = metadata.AddAssemblyReference(metadata.GetOrAddString("System.Runtime"),
+            new Version(10, 0, 0, 0), default,
+            metadata.GetOrAddBlob((ImmutableArray<byte>)[0xb0, 0x3f, 0x5f, 0x7f, 0x11, 0xd5, 0x0a, 0x3a]), default, default);
+        TypeReferenceHandle culture = metadata.AddTypeReference(runtime, metadata.GetOrAddString("System.Globalization"), metadata.GetOrAddString("CultureInfo"));
+        TypeReferenceHandle provider = metadata.AddTypeReference(runtime, metadata.GetOrAddString("System"), metadata.GetOrAddString("IFormatProvider"));
+        TypeReferenceHandle convert = metadata.AddTypeReference(runtime, metadata.GetOrAddString("System"), metadata.GetOrAddString("Convert"));
+        var cultureSignature = new BlobBuilder();
+        new BlobEncoder(cultureSignature).MethodSignature().Parameters(0,
+            result => result.Type().Type(culture, isValueType: false), _ => { });
+        var convertSignature = new BlobBuilder();
+        new BlobEncoder(convertSignature).MethodSignature().Parameters(2,
+            result => result.Type().String(), parameters =>
+            {
+                parameters.AddParameter().Type().Int32();
+                parameters.AddParameter().Type().Type(provider, isValueType: false);
+            });
+        return (
+            metadata.AddMemberReference(culture, metadata.GetOrAddString("get_InvariantCulture"), metadata.GetOrAddBlob(cultureSignature)),
+            metadata.AddMemberReference(convert, metadata.GetOrAddString("ToString"), metadata.GetOrAddBlob(convertSignature)));
     }
 }

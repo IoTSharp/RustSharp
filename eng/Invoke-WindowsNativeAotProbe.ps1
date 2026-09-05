@@ -15,7 +15,15 @@ param(
 
     [Parameter()]
     [ValidateRange(1, 300)]
-    [int] $RunTimeoutSeconds = 30
+    [int] $RunTimeoutSeconds = 30,
+
+    [Parameter()]
+    [ValidateSet('vertical-slice-v1', 'safe-core-primitives-v1')]
+    [string] $Profile = 'vertical-slice-v1',
+
+    [Parameter()]
+    [ValidateLength(0, 4096)]
+    [string] $ExpectedStandardOutput = ('Hello from Rust#' + [char] 10)
 )
 
 Set-StrictMode -Version 3.0
@@ -773,6 +781,7 @@ try {
     $publishArguments = @(
         'run', '--project', $projectPath, '--configuration', 'Release', '--no-restore', '--',
         'publish', $sourceFullPath, '--runtime', 'win-x64', '--output', $outputFullPath,
+        '--profile', $Profile,
         '--timeout', $PublishTimeoutSeconds.ToString([Globalization.CultureInfo]::InvariantCulture)
     )
     $publishResult = Invoke-BoundedProcess `
@@ -807,7 +816,7 @@ try {
         -TimeoutSeconds $RunTimeoutSeconds
     $newLine = [Environment]::NewLine
     $actualOutput = $runResult.StandardOutput.Replace($newLine, [string][char] 10).Replace([string][char] 13, [string][char] 10)
-    $expectedOutput = 'Hello from Rust#' + [string][char] 10
+    $expectedOutput = $ExpectedStandardOutput.Replace($newLine, [string][char] 10).Replace([string][char] 13, [string][char] 10)
     if ($runResult.Termination -ne 'Exited' -or
         $runResult.ExitCode -ne 0 -or
         $runResult.CleanupIncomplete -or
@@ -869,6 +878,8 @@ finally {
     }
     $evidence = [ordered] @{
         SchemaVersion = 1
+        Profile = $Profile
+        ExpectedStandardOutput = $ExpectedStandardOutput
         Status = $status
         Reason = $reason
         Failure = $failure

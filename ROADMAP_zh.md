@@ -181,7 +181,8 @@ P1 进一步扩展语法前触发 ADR 评审。
 字面量词元；原始生命周期和包括 `'0` 在内以数字开头的生命周期形式；Edition 2024
 受保护字符串（guarded strings）；以及保留前缀。这只属于 RustSharp 词法分析器验收
 证据，并不构成 rustc 差分或运行时一致性证据，而且该语料也不是完整的 Rust 1.98
-词法分母。现有纵向切片解析器仍是生产路径，因此 P1-01 仍为 🚧 进行中。
+词法分母。纵向切片解析器仍是默认路径；按需启用的基础类型配置现在已在生产路径中
+使用安全核心词法/语法分析器。完整词法分母仍未完成，因此 P1-01 保持 🚧 进行中。
 
 P1-02 也已有早期的有界 `SafeCoreSyntax` 模型/解析器，覆盖代表性的模块、项、语句、
 表达式、模式、类型、泛型和属性，并提供稳定的 `RSP` 诊断。一个六用例
@@ -199,21 +200,55 @@ P1-03 现在基于该语法模型提供了有界的 `SafeCoreNameResolution` 原
 以及符号/导入嵌套限制。一个六用例 `safe-core-name-resolution` 清单发布当前的有界
 验收基准集合。`SafeCoreHirLowering` 还将成功的树降低为确定性的平面 arena，其中包含
 已绑定的声明/引用符号；四个测试工具用例覆盖确定性 ID、代表性节点形态、依赖失败、
-Unicode 等价绑定和明确的工作量限制。这只是原型证据：工作区/模块加载、生产编译器
-集成、完整的安全核心基准集合和更广泛的诊断覆盖仍未完成。
+Unicode 等价绑定和明确的工作量限制。这些属于前端证据；基础类型配置现在已将这些
+阶段接入编译器。工作区/多文件模块加载、完整的安全核心基准集合和更广泛的诊断覆盖
+仍未完成。
+
+### P1 首个可执行批次
+
+按需启用的 `safe-core-primitives-v1` 配置遵循
+[ADR 0007](docs/adr/0007-safe-core-primitives.md)：C# 前端 -> 名称绑定 HIR ->
+基础类型检查 -> 经过验证的 CLR LIR -> 直接生成 IL/Portable PDB -> CoreCLR 或
+Native AOT。它支持内联模块/导入、i32/bool 函数、带初始化器的局部变量、可变性、
+调用、条件分支、返回、带检查的算术运算、比较、短路逻辑和受限的内置打印。
+不支持的类型和具有所有权的构造会被拒绝。完整的类型化 MIR、借用/NLL 和确定性
+Drop 仍是独立门槛。
+
+基础类型回归测试工具和包含 14 个用例的 rustc 1.98.0 差分套件检查运行行为与输出前
+拒绝。验收命令如下：
+
+```text
+dotnet build RustSharp.slnx -c Release
+dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore
+dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-primitives-v1 --oracle rustc-1.98 --report artifacts/p1/safe-core-primitives-v1.json
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- compile samples/safe-core.rs --profile safe-core-primitives-v1 --output artifacts/p1/safe-core.dll
+pwsh -NoProfile -File eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1/safe-core.dll -EvidencePath artifacts/p1/safe-core.ilverify.json
+```
+
+Windows/Linux CI 现在包含基础类型差分和 IL 门槛；Windows 还包含基础类型 Native
+AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux Native AOT 和完整 P1
+退出门槛仍未完成。此前记录的 P0 CI 证据不能验证这些新修改。
+
+2026-09-06 在 Windows x64 上使用 .NET SDK 10.0.400、运行时 10.0.11 和 rustc
+1.98.0 记录的本地证据：本批次 91/91 项可执行回归、14/14 项基础类型差分、4/4 项
+纵向差分、6/6 项语法和 6/6 项名称解析验收均为 ✅ 已完成。Release 解决方案构建
+零警告、零错误。`artifacts/p1/safe-core.ilverify.json` 记录独立 ILVerify 验证通过。
+`artifacts/p1/windows-x64-aot-final.json` 记录不带 CLR 头的原生 AMD64 PE、退出码 0、
+未观察到发布警告且没有清理诊断。CoreCLR 和 Native AOT 都输出 `Safe core on .NET`、
+`42` 和 `true`。完整 P1 里程碑仍为 🚧 进行中。
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 进行中 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | 当前实现和清单覆盖字面量后缀单词元化、原始生命周期和包括 `'0` 在内以数字开头的生命周期形式、Edition 2024 受保护字符串（guarded strings）以及保留前缀；每个用例都必须与精确的词元、trivia、词元树、诊断、范围和源码重建证据匹配。生产路径和完整 Rust 1.98 词法分母仍未完成。 |
+| P1-01 | 🚧 进行中 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | 当前实现和清单覆盖字面量后缀单词元化、原始生命周期和包括 `'0` 在内以数字开头的生命周期形式、Edition 2024 受保护字符串（guarded strings）以及保留前缀；每个用例都必须与精确的词元、trivia、词元树、诊断、范围和源码重建证据匹配。按需启用的基础类型配置已接入生产路径；完整 Rust 1.98 词法分母仍未完成。 |
 | P1-02 | 🚧 进行中 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | 已发布语法配置档基准集合中的每个用例都具有预期解析结果；明确拒绝不支持的语法。 |
-| P1-03 | 🚧 进行中 | 将 AST 降低为 HIR，并实现模块、命名空间、可见性、导入和名称解析。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 六用例内存验收基准集合解析出预期符号和诊断；四个可执行测试工具用例覆盖有界 HIR 降低，而多文件工作区和生产流水线集成仍未完成。 |
-| P1-04 | ⏳ 计划中 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet test RustSharp.slnx -c Release --filter TypeChecking` | 配置档声明的编译通过/失败类型用例与 rustc 1.98 一致。 |
+| P1-03 | 🚧 进行中 | 将 AST 降低为 HIR，并实现模块、命名空间、可见性、导入和名称解析。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 保留六用例内存验收基准集合和四个 HIR 用例；基础类型编译现在使用 HIR 和规范化的导入目标。多文件工作区加载仍未完成。 |
+| P1-04 | 🚧 进行中 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 基础类型配置已实现 i32/bool/unit、直接函数签名、局部推断、可变性、条件/返回检查和发散控制流。聚合/引用类型与完整推断/强制转换基准集合仍未完成。 |
 | P1-05 | ⏳ 计划中 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | 泛型函数/类型发出封闭且 AOT 可达的主体；重叠、歧义和缺失约束会以可预测方式失败。 |
 | P1-06 | ⏳ 计划中 | 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet test RustSharp.slnx -c Release --filter Mir` | MIR 快照具有确定性；无效边/类型被拒绝；诊断映射回 `.rs` 范围。 |
 | P1-07 | ⏳ 计划中 | 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core-borrow` | 所有已声明的借用编译通过/失败用例都与 rustc 结果匹配，且不会在 CLR 规则下静默接受被拒绝的构造。 |
 | P1-08 | ⏳ 计划中 | 实现作用域清理、确定性 `Drop`、展开/中止配置档行为和 panic 边界。 | P1-06, P1-07 | `dotnet test RustSharp.slnx -c Release --filter DropAndPanic` | 正常/提前返回/分支/panic 路径在 CoreCLR 和 AOT 上按指定顺序恰好运行一次析构函数。 |
-| P1-09 | ⏳ 计划中 | 通过 CLR LIR 发出带有 Rust# 跨包元数据的安全核心程序。 | P0-07, P1-05, P1-08 | `rsc build tests/programs/safe-core/Cargo.toml` | 多模块泛型程序在没有运行时代码生成的情况下完成构建；元数据支持单独的消费者编译。 |
-| P1-10 | ⏳ 计划中 | 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-09 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core --fail-on-difference` | 报告在已声明配置档内没有无法解释的差异，并发布其精确基准集合。 |
+| P1-09 | 🚧 进行中 | 通过 CLR LIR 发出带有 Rust# 跨包元数据的安全核心程序。 | P0-07, P1-05, P1-08 | `rsc build tests/programs/safe-core/Cargo.toml`（未来完整门槛；当前基础类型命令见上文） | 基础类型多函数 IL/PDB 发射已接入。泛型/所有权降低、跨包元数据和独立消费者编译仍未完成。 |
+| P1-10 | 🚧 进行中 | 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-09 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-primitives-v1 --oracle rustc-1.98` | 初始 14 用例基准集合包含 5 个运行通过用例和 9 个编译失败用例。完整安全核心和借用/Drop 差分基准集合仍未完成。 |
 
 当版本化安全核心配置档在 CoreCLR 以及 Windows/Linux x64 Native AOT 上通过，且该
 配置档内的借用/Drop 行为不存在未解决的语义差异时，P1 才能退出。
@@ -366,6 +401,7 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 5. 只有可观察结果和所属阶段门槛都满足后，才将状态标记为 `✅ 已完成`；否则保持 `🚧 进行中` 并记录缺口。
 6. 当范围发生变化时，先更新兼容性配置档和 ADR，再更新实现与本路线图。
 
-接下来处于 🚧 进行中的门槛是 P1-01（无损词法分析）、P1-02（安全核心语法）和
-P1-03（HIR 与名称解析）。P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为
+接下来处于 🚧 进行中的门槛是 P1-01（无损词法分析）、P1-02（安全核心语法）、
+P1-03（HIR 与名称解析）、P1-04（类型）、P1-09（IL 发射）和 P1-10（差分回归）。
+P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为
 ✅ 已完成；后续语言配置档声明仍受完整 HIR/MIR 和差异测试套件的门槛约束。

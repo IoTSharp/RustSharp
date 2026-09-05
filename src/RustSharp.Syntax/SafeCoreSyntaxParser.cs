@@ -1050,6 +1050,11 @@ public static class SafeCoreSyntax
                         {
                             tail = expression;
                         }
+                        else if (expression is SafeCoreIfExpressionSyntax or SafeCoreBlockExpressionSyntax)
+                        {
+                            statements.Add(NewNode(new SafeCoreExpressionStatementSyntax(
+                                expression, false, expression.Span)));
+                        }
                         else
                         {
                             ReportExpected("';' or '}' after an expression");
@@ -1192,6 +1197,12 @@ public static class SafeCoreSyntax
                         break;
                     }
 
+                    if (op is "==" or "!=" or "<" or "<=" or ">" or ">=" &&
+                        left is SafeCoreBinaryExpressionSyntax { Operator: "==" or "!=" or "<" or "<=" or ">" or ">=" })
+                    {
+                        ReportUnexpected("Comparison operators cannot be chained; parenthesize the comparison result explicitly.");
+                    }
+
                     Consume();
                     int rightMinimumPrecedence = IsAssignmentOperator(op!)
                         ? precedence
@@ -1220,6 +1231,16 @@ public static class SafeCoreSyntax
 
         private SafeCoreExpressionSyntax? ParsePrefixExpression()
         {
+            if (At("println") && _index + 1 < _tokens.Count && _tokens[_index + 1].Text == "!")
+            {
+                RustToken start = Consume()!;
+                Consume();
+                SafeCoreCallExpressionSyntax? arguments = ParseCallExpression(
+                    new SafeCoreNameExpressionSyntax(start.Text, start.Span));
+                return arguments is null ? null : NewNode(new SafeCorePrintExpressionSyntax(
+                    arguments.Arguments, arguments.Span));
+            }
+
             if (At("if"))
             {
                 return ParseIfExpression();

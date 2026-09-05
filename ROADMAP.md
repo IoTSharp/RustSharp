@@ -200,8 +200,9 @@ suffixes as part of a single literal token; raw lifetimes and digit-starting
 lifetime forms, including `'0`; Edition 2024 guarded strings; and reserved
 prefixes. This is RustSharp lexer-acceptance evidence only, not rustc
 differential or runtime conformance evidence, and the corpus is not a complete
-Rust 1.98 lexical denominator. The existing vertical-slice parser remains the
-production path, so P1-01 remains 🚧 In progress.
+Rust 1.98 lexical denominator. The vertical-slice parser remains the default;
+the opt-in primitive profile now uses the safe-core lexer/parser in production.
+P1-01 remains 🚧 In progress pending the complete lexical denominator.
 
 P1-02 also has an early bounded `SafeCoreSyntax` model/parser for
 representative modules, items, statements, expressions, patterns, types,
@@ -228,22 +229,60 @@ acceptance denominator. `SafeCoreHirLowering` also lowers successful trees into
 a deterministic flat arena with bound declaration/reference symbols; four
 harness cases cover deterministic IDs, representative node shapes, dependency
 failures, Unicode-equivalent bindings, and explicit work limits. This is
-prototype evidence only:
-workspace/module loading, production compiler integration, a full safe-core
-denominator, and broader diagnostic coverage remain open.
+front-end evidence; the primitive profile now integrates these passes into
+the compiler. Workspace/multi-file module loading, a full safe-core denominator
+and broader diagnostic coverage remain open.
+
+### First executable P1 batch
+
+The opt-in `safe-core-primitives-v1` profile follows
+[ADR 0007](docs/adr/0007-safe-core-primitives.md): C# front end -> name-bound
+HIR -> primitive type checking -> validated CLR LIR -> direct IL/Portable PDB
+-> CoreCLR or Native AOT. It supports inline modules/imports, i32/bool
+functions, initialized locals, mutability, calls, conditionals, returns,
+checked arithmetic, comparisons, short-circuit logic and bounded built-in
+printing. It rejects unsupported types and ownership-bearing constructs.
+Full typed MIR, borrow/NLL and deterministic Drop remain separate gates.
+
+The primitive regression harness and 14-case rustc 1.98.0 differential suite
+exercise runtime behavior and rejection before output. Acceptance commands are:
+
+```text
+dotnet build RustSharp.slnx -c Release
+dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore
+dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-primitives-v1 --oracle rustc-1.98 --report artifacts/p1/safe-core-primitives-v1.json
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- compile samples/safe-core.rs --profile safe-core-primitives-v1 --output artifacts/p1/safe-core.dll
+pwsh -NoProfile -File eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1/safe-core.dll -EvidencePath artifacts/p1/safe-core.ilverify.json
+```
+
+Windows/Linux CI now includes the primitive differential and IL gates; Windows
+also includes the primitive Native AOT probe. These workflow changes require a
+new CI run. Linux Native AOT for this profile and the full P1 exit gate remain
+open. Existing recorded P0 CI evidence does not validate these new changes.
+
+Local evidence recorded on 2026-09-06 with .NET SDK 10.0.400, runtime 10.0.11
+and rustc 1.98.0 on Windows x64: ✅ Complete for this batch's 91/91 executable
+regressions, 14/14 primitive differential cases, 4/4 vertical differential
+cases, 6/6 syntax cases and 6/6 name-resolution cases. The Release solution
+build has zero warnings/errors. `artifacts/p1/safe-core.ilverify.json` records
+successful standalone ILVerify. `artifacts/p1/windows-x64-aot-final.json`
+records a native AMD64 PE without a CLR header, exit code 0, no observed
+publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
+`Safe core on .NET`, `42` and `true`. The full P1 milestone remains
+🚧 In progress.
 
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | 🚧 In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | The current implementation and manifest cover single-token literal suffixes, raw lifetimes and digit-starting lifetime forms including `'0`, Edition 2024 guarded strings, and reserved prefixes; every case must match exact token, trivia, token-tree, diagnostic, span, and source-reconstruction evidence. The production path and complete Rust 1.98 lexical denominator remain open. |
+| P1-01 | 🚧 In progress | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing` | The current implementation and manifest cover single-token literal suffixes, raw lifetimes and digit-starting lifetime forms including `'0`, Edition 2024 guarded strings, and reserved prefixes; every case must match exact token, trivia, token-tree, diagnostic, span, and source-reconstruction evidence. Production integration exists for the opt-in primitive profile; the complete Rust 1.98 lexical denominator remains open. |
 | P1-02 | 🚧 In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | Every case in the published syntax-profile denominator has the expected parse result; unsupported syntax is rejected explicitly. |
-| P1-03 | 🚧 In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator resolves expected symbols and diagnostics; four executable-harness cases cover bounded HIR lowering, while multi-file workspace and production pipeline integration remain open. |
-| P1-04 | ⏳ Planned | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet test RustSharp.slnx -c Release --filter TypeChecking` | Declared compile-pass/fail type cases agree with rustc 1.98 for the profile. |
+| P1-03 | 🚧 In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator and four HIR cases remain; primitive compilation now consumes HIR and canonical import targets. Multi-file workspace loading remains open. |
+| P1-04 | 🚧 In progress | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | i32/bool/unit, direct function signatures, local inference, mutability, conditional/return checks and divergence are implemented for the primitive profile. Aggregate/reference types and the full inference/coercion denominator remain open. |
 | P1-05 | ⏳ Planned | Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | Generic functions/types emit closed AOT-reachable bodies; overlap, ambiguity, and missing bounds fail predictably. |
 | P1-06 | ⏳ Planned | Define typed MIR, CFG validation, desugaring, and source mapping. | P1-04 | `dotnet test RustSharp.slnx -c Release --filter Mir` | MIR snapshots are deterministic; invalid edges/types are rejected; diagnostics map back to `.rs` spans. |
 | P1-07 | ⏳ Planned | Implement move paths, borrow checking, non-lexical lifetimes, reborrowing, and escape analysis for the profile. | P0-13, P1-06 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core-borrow` | All declared borrow compile-pass/fail cases match rustc outcome and no rejected construct is silently accepted under CLR rules. |
 | P1-08 | ⏳ Planned | Implement scope cleanup, deterministic `Drop`, unwind/abort profile behavior, and panic boundaries. | P1-06, P1-07 | `dotnet test RustSharp.slnx -c Release --filter DropAndPanic` | Normal/early-return/branch/panic paths run destructors once in specified order on CoreCLR and AOT. |
-| P1-09 | ⏳ Planned | Emit safe-core programs through CLR LIR with Rust# cross-package metadata. | P0-07, P1-05, P1-08 | `rsc build tests/programs/safe-core/Cargo.toml` | Multi-module generic programs build without runtime code generation; metadata supports a separate consumer compilation. |
-| P1-10 | ⏳ Planned | Establish compile-pass, compile-fail, run-pass, and differential regression suites. | P0-11, P1-09 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core --fail-on-difference` | The report has no unexplained differences inside the declared profile and publishes its exact denominator. |
+| P1-09 | 🚧 In progress | Emit safe-core programs through CLR LIR with Rust# cross-package metadata. | P0-07, P1-05, P1-08 | `rsc build tests/programs/safe-core/Cargo.toml` (future full gate; current primitive commands above) | Primitive multi-function IL/PDB emission is integrated. Generic/ownership lowering, cross-package metadata and separate consumer compilation remain open. |
+| P1-10 | 🚧 In progress | Establish compile-pass, compile-fail, run-pass, and differential regression suites. | P0-11, P1-09 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-primitives-v1 --oracle rustc-1.98` | The initial 14-case denominator includes five run-pass and nine compile-fail cases. The full safe-core and borrow/Drop differential denominator remains open. |
 
 P1 exits when the versioned safe-core profile passes on CoreCLR and Windows/
 Linux x64 Native AOT, and when borrow/Drop behavior has no unresolved semantic
@@ -425,6 +464,7 @@ gate it depends on.
    implementation and this roadmap.
 
 The next 🚧 In progress gates are P1-01 (lossless lexing), P1-02 (safe-core
-syntax), and P1-03 (HIR and name resolution). P0-10, P0-16, and P0-17 are now
+syntax), P1-03 (HIR and name resolution), P1-04 (types), P1-09 (IL emission),
+and P1-10 (differential regression). P0-10, P0-16, and P0-17 are now
 ✅ Complete on the recorded two-platform evidence; later language-profile
 claims remain gated on the full HIR/MIR and differential suites.

@@ -46,10 +46,41 @@ trivia、分隔符、词元树和格式错误输入诊断提供清单驱动的�
 并解析具有代表性的导入与限定路径。它的九项测试工具用例覆盖类型/值命名空间与限定
 路径、可见性、重复/歧义/未解析名称、导入环、声明顺序与合法遮蔽、拒绝通过限定路径
 访问函数局部变量/结构体字段/枚举泛型参数、Unicode 标识符规范化，以及导入嵌套
-限制。本地可执行测试工具的 74/74 项测试全部通过。有界的
+限制。此前记录的本地可执行测试工具通过了 74/74 项测试。有界的
 `SafeCoreHirLowering` 原型目前会把成功的语法与名称解析结果转换为确定性的、名称已
-绑定的扁平 HIR arena。P1-01、P1-02 和 P1-03 仍处于 🚧 进行中，因为它们的依赖项、
-完整配置分母、多文件加载和生产编译器集成仍未完成。
+绑定的扁平 HIR arena。这些前端阶段现在已接入下方按需启用的基础类型可执行配置。
+P1-01、P1-02 和 P1-03 仍处于 🚧 进行中，因为它们的依赖项、完整配置分母和多文件
+加载仍未完成。
+
+## 可执行安全核心配置
+
+P1 处于 🚧 进行中。使用 `--profile safe-core-primitives-v1` 可以编译内联模块/导入、
+非泛型函数、`i32`/`bool`、带初始化器的 `let` 绑定、`mut` 赋值、调用、代码块、
+`if`/`else`、返回、带溢出检查的 `+`/`-`/`*`、比较以及短路布尔运算。C# 流水线现在将
+名称绑定 HIR 和基础类型检查连接到经过验证的 CLR LIR、直接生成的 IL 程序集以及
+Portable PDB 函数入口映射。它不会把 Rust 程序逻辑转译为 C#。
+
+`println!` 接受不带大括号的普通字符串字面量，或带一个整数/布尔参数的 `"{}"`。
+整数输出使用固定格式；布尔输出使用小写。[safe-core.rs](samples/safe-core.rs) 示例
+输出 `Safe core on .NET`、`42` 和 `true`。运行或发布方式如下：
+
+```text
+dotnet build RustSharp.slnx -c Release
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run samples/safe-core.rs --profile safe-core-primitives-v1
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- publish samples/safe-core.rs --profile safe-core-primitives-v1 --runtime win-x64 --output artifacts/p1/windows-x64-aot
+dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-primitives-v1 --oracle rustc-1.98
+```
+
+差分套件声明了 14 个夹具：5 个运行通过用例和 9 个编译失败用例，rustc 显式启用溢出
+检查。默认配置仍是 `vertical-slice-v1`。引用、借用/NLL 检查、ADT、泛型、完整的
+类型化 MIR、确定性 Drop、类库和 Cargo 构建仍属于后续 P1/P2 工作。不支持的构造会在
+输出前产生诊断。运行时整数溢出触发托管异常；不宣称兼容 Rust panic/展开语义。
+精确配置和工作量限制见 [ADR 0007](docs/adr/0007-safe-core-primitives.md)，验收证据
+见 [ROADMAP_zh.md](ROADMAP_zh.md)。
+
+本批次 ✅ 已完成：91/91 项可执行回归、14/14 项基础类型差分、ILVerify 和 Windows
+x64 Native AOT 示例。此配置的 Linux Native AOT 为 ⏳ 计划中；完整 P1 退出门槛仍为
+🚧 进行中。
 
 ## 命令
 
@@ -87,7 +118,8 @@ pwsh -NoProfile -File eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p0/hello.d
 进程树，并写入机器可读的证据文件。`.config/dotnet-tools.json` 将
 `dotnet-ilverify` 固定为 10.0.11 版。
 
-rustc 差分测试工具会记录带版本的报告；当所请求的 `rustc 1.98.x` 参照实现不可用时，
+完成 Release 解决方案构建后，rustc 差分测试工具会记录带版本的报告；当所请求的
+`rustc 1.98.x` 参照实现不可用时，
 以退出码 2 结束：
 
 ```text

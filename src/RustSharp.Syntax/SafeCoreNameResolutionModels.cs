@@ -77,7 +77,11 @@ public sealed record SafeCoreSymbol(
     bool IsImport,
     string? TargetPath,
     TextSpan Span,
-    string ScopePath);
+    string ScopePath)
+{
+    /// <summary>The canonical declaration behind a resolved import, after following aliases.</summary>
+    public string? ResolvedImportTargetQualifiedName { get; init; }
+}
 
 /// <summary>A lexical/module scope and its directly declared symbols.</summary>
 public sealed record SafeCoreScope(
@@ -99,8 +103,8 @@ public sealed record SafeCorePathResolution(
 }
 
 /// <summary>
-/// Result of the bounded P1-03 name-resolution prototype. This API is
-/// evidence/prototyping only and is not used by the production compiler path.
+/// Result of bounded P1-03 name resolution, consumed by HIR lowering and
+/// the opt-in primitive compilation profile.
 /// </summary>
 public sealed class SafeCoreNameResolutionResult
 {

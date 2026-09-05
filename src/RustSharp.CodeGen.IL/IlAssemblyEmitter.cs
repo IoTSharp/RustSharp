@@ -267,10 +267,11 @@ public sealed class IlAssemblyEmitter
         return (pdbImage, pdbId);
     }
 
-    private static BlobHandle CreateSequencePointsBlob(
+    internal static BlobHandle CreateSequencePointsBlob(
         MetadataBuilder pdbMetadata,
         string sourceText,
-        IReadOnlyList<SequencePointData> sequencePoints)
+        IReadOnlyList<SequencePointData> sequencePoints,
+        int localSignatureRow = 0)
     {
         if (sequencePoints.Count == 0)
         {
@@ -280,8 +281,7 @@ public sealed class IlAssemblyEmitter
         var lineStarts = BuildLineStarts(sourceText);
         var blob = new BlobBuilder();
 
-        // No local signature is emitted by the first vertical slice.
-        blob.WriteCompressedInteger(0);
+        blob.WriteCompressedInteger(localSignatureRow);
 
         var previousIlOffset = 0;
         var previousStartLine = 0;
@@ -446,7 +446,7 @@ public sealed class IlAssemblyEmitter
         return BlobContentId.FromHash(hash.GetHashAndReset());
     }
 
-    private readonly record struct SequencePointData(int IlOffset, TextSpan Span);
+    internal readonly record struct SequencePointData(int IlOffset, TextSpan Span);
 
     private readonly record struct SourcePoint(int Line, int Column);
 

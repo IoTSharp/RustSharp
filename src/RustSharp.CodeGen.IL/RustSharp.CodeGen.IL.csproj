@@ -5,5 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../RustSharp.Syntax/RustSharp.Syntax.csproj" />
+    <ProjectReference Include="../RustSharp.Semantics/RustSharp.Semantics.csproj" />
   </ItemGroup>
 </Project>

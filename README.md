@@ -56,12 +56,48 @@ type/value namespaces and qualified paths, visibility, duplicate, ambiguous,
 and unresolved names, import cycles, declaration order and legal shadowing,
 rejected qualified access to function locals, struct fields, and enum generic
 parameters, Unicode identifier normalization, and the import nesting limit.
-The local executable harness passes 74/74 tests. A bounded
+The earlier local executable harness recorded 74/74 tests. A bounded
 `SafeCoreHirLowering` prototype now converts successful
 syntax and name-resolution results into a deterministic, name-bound flat HIR
-arena. P1-01, P1-02, and P1-03 remain 🚧 In progress because their dependencies,
-full-profile denominators, multi-file loading, and production compiler
-integration are still open.
+arena. These front-end passes now feed the opt-in executable primitive profile
+below. P1-01, P1-02, and P1-03 remain 🚧 In progress because their dependencies,
+full-profile denominators and multi-file loading are still open.
+
+## Executable safe-core profile
+
+P1 is 🚧 In progress. Select `--profile safe-core-primitives-v1` to compile
+inline modules/imports, nongeneric functions, `i32`/`bool`, initialized `let`
+bindings, `mut` assignment, calls, blocks, `if`/`else`, returns, checked
+`+`/`-`/`*`, comparisons and short-circuit boolean operations. The C# pipeline
+now connects name-bound HIR and primitive type checking to validated CLR LIR,
+direct IL assemblies and Portable PDB function-entry mappings. It does not
+translate Rust program logic into C#.
+
+`println!` accepts a regular literal without braces, or `"{}"` with one integer
+or boolean. Integer display is invariant; boolean display is lowercase.
+The sample [safe-core.rs](samples/safe-core.rs) prints `Safe core on .NET`,
+`42` and `true`. Run or publish it with:
+
+```text
+dotnet build RustSharp.slnx -c Release
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run samples/safe-core.rs --profile safe-core-primitives-v1
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- publish samples/safe-core.rs --profile safe-core-primitives-v1 --runtime win-x64 --output artifacts/p1/windows-x64-aot
+dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-primitives-v1 --oracle rustc-1.98
+```
+
+The differential suite declares 14 fixtures: five run-pass and nine compile-fail
+cases, with rustc overflow checks enabled. The default profile remains
+`vertical-slice-v1`. References, borrow/NLL checking, ADTs, generics, full typed
+MIR, deterministic Drop, libraries and Cargo builds remain later P1/P2 work.
+Unsupported constructs receive diagnostics before output. Runtime integer
+overflow raises a managed exception; Rust panic/unwind compatibility is not
+claimed. See [ADR 0007](docs/adr/0007-safe-core-primitives.md) for the exact
+profile and work limits, and [ROADMAP.md](ROADMAP.md) for acceptance evidence.
+
+✅ Complete for this batch: 91/91 executable regressions, 14/14 primitive
+differential cases, ILVerify and the Windows x64 Native AOT sample. Linux
+Native AOT for this profile is ⏳ Planned; the full P1 exit gate remains
+🚧 In progress.
 
 ## Commands
 
@@ -101,7 +137,8 @@ execution and captured output, cleans owned process trees, and writes the
 machine-readable evidence file. `dotnet-ilverify` is pinned to version 10.0.11
 in `.config/dotnet-tools.json`.
 
-The rustc differential harness records a versioned report and exits with code 2
+After a Release solution build, the rustc differential harness records a
+versioned report and exits with code 2
 when the requested `rustc 1.98.x` oracle is unavailable:
 
 ```text
@@ -149,8 +186,8 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --pr
 
 That report covers the declared in-process parser/name-resolution denominator
 only; it is not rustc differential or runtime conformance evidence. The same
-executable test harness exercises the early HIR lowering prototype. Neither
-prototype is in the production compiler path yet.
+executable test harness exercises HIR lowering, which also feeds the opt-in
+`safe-core-primitives-v1` compiler path.
 
 The Linux Native AOT probe is intended for a native Linux x64 runner and keeps
 the output directory exclusive to one invocation:

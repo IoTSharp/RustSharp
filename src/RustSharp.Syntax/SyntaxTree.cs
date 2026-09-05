@@ -23,6 +23,13 @@ public sealed class SyntaxTree
 
     public IReadOnlyList<Diagnostic> Diagnostics { get; }
 
+    /// <summary>Decodes one complete regular Rust string literal using the vertical-slice escape rules.</summary>
+    public static bool TryDecodeStringLiteral(string literal, out string value)
+    {
+        ArgumentNullException.ThrowIfNull(literal);
+        return new Parser(literal).TryDecodeCompleteString(out value);
+    }
+
     public static SyntaxTree Parse(string source, string sourcePath)
     {
         source ??= string.Empty;
@@ -66,6 +73,9 @@ public sealed class SyntaxTree
         }
 
         internal List<Diagnostic> Diagnostics => _diagnostics;
+
+        internal bool TryDecodeCompleteString(out string value) =>
+            TryParseString(out value) && IsAtEnd && _diagnostics.Count == 0;
 
         internal CompilationUnitSyntax? ParseCompilationUnit()
         {

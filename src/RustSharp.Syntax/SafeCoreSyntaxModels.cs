@@ -278,10 +278,17 @@ public enum SafeCoreExpressionKind
     Block,
     If,
     Index,
+    Print,
 }
 
 /// <summary>Base type for expressions.</summary>
 public abstract record SafeCoreExpressionSyntax(SafeCoreExpressionKind Kind, TextSpan Span);
+
+/// <summary>The explicitly supported built-in println! macro expression.</summary>
+public sealed record SafeCorePrintExpressionSyntax(
+    IReadOnlyList<SafeCoreExpressionSyntax> Arguments,
+    TextSpan Span)
+    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Print, Span);
 
 /// <summary>A name or path expression.</summary>
 public sealed record SafeCoreNameExpressionSyntax(

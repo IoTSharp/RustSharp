@@ -3,6 +3,7 @@ using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Text;
 using RustSharp.CodeGen.IL;
+using RustSharp.Semantics;
 using RustSharp.Syntax;
 
 namespace RustSharp.Compiler;
@@ -25,7 +26,8 @@ public sealed class CompilerDriver
     private static readonly object OutputLockRegistryGate = new();
     private static readonly Dictionary<string, OutputLockEntry> OutputLockEntries = new(StringComparer.Ordinal);
 
-    public static CompilationResult CheckFile(string sourcePath)
+    public static CompilationResult CheckFile(string sourcePath,
+        CompilationProfile profile = CompilationProfile.VerticalSlice, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
 
@@ -36,10 +38,11 @@ public sealed class CompilerDriver
             return CompilationResult.Failed([readResult.Diagnostic]);
         }
 
-        return Check(readResult.Document!.Source, fullSourcePath);
+        return Check(readResult.Document!.Source, fullSourcePath, profile, cancellationToken);
     }
 
-    public static CompilationResult Check(string source, string sourcePath = "<memory>")
+    public static CompilationResult Check(string source, string sourcePath = "<memory>",
+        CompilationProfile profile = CompilationProfile.VerticalSlice, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
@@ -48,6 +51,13 @@ public sealed class CompilerDriver
         if (sourceDiagnostic is not null)
         {
             return CompilationResult.Failed([sourceDiagnostic]);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (profile != CompilationProfile.VerticalSlice)
+        {
+            SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken);
+            return result.IsSuccessful ? new(true, [], null) : CompilationResult.Failed(result.Diagnostics);
         }
 
         var syntaxTree = SyntaxTree.Parse(source, sourcePath);
@@ -59,7 +69,9 @@ public sealed class CompilerDriver
     public static CompilationResult CompileFile(
         string sourcePath,
         string outputPath,
-        string? assemblyName = null)
+        string? assemblyName = null,
+        CompilationProfile profile = CompilationProfile.VerticalSlice,
+        CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
@@ -76,14 +88,18 @@ public sealed class CompilerDriver
             fullSourcePath,
             Path.GetFullPath(outputPath),
             assemblyName,
-            readResult.Document.Bytes);
+            readResult.Document.Bytes,
+            profile,
+            cancellationToken);
     }
 
     public static CompilationResult Compile(
         string source,
         string sourcePath,
         string outputPath,
-        string? assemblyName = null)
+        string? assemblyName = null,
+        CompilationProfile profile = CompilationProfile.VerticalSlice,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
@@ -115,7 +131,9 @@ public sealed class CompilerDriver
             sourcePath,
             fullOutputPath,
             assemblyName,
-            sourceBytes);
+            sourceBytes,
+            profile,
+            cancellationToken);
     }
 
     private static CompilationResult CompileCore(
@@ -123,12 +141,23 @@ public sealed class CompilerDriver
         string sourcePath,
         string outputPath,
         string? assemblyName,
-        ReadOnlyMemory<byte> sourceBytes)
+        ReadOnlyMemory<byte> sourceBytes,
+        CompilationProfile profile,
+        CancellationToken cancellationToken)
     {
-        var syntaxTree = SyntaxTree.Parse(source, sourcePath);
-        if (syntaxTree.Diagnostics.Count != 0 || syntaxTree.Root is null)
+        cancellationToken.ThrowIfCancellationRequested();
+        SyntaxTree? syntaxTree = null;
+        SafeCoreClrResult? safeCore = null;
+        if (profile == CompilationProfile.VerticalSlice)
         {
-            return CompilationResult.Failed(syntaxTree.Diagnostics);
+            syntaxTree = SyntaxTree.Parse(source, sourcePath);
+            if (syntaxTree.Diagnostics.Count != 0 || syntaxTree.Root is null)
+                return CompilationResult.Failed(syntaxTree.Diagnostics);
+        }
+        else
+        {
+            safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken);
+            if (!safeCore.IsSuccessful) return CompilationResult.Failed(safeCore.Diagnostics);
         }
 
         var resolvedAssemblyName = assemblyName ?? Path.GetFileNameWithoutExtension(outputPath);
@@ -161,8 +190,12 @@ public sealed class CompilerDriver
 
         try
         {
-            var generated = IlAssemblyEmitter.Emit(
-                syntaxTree.Root,
+            cancellationToken.ThrowIfCancellationRequested();
+            var generated = safeCore is not null
+                ? ClrLirAssemblyEmitter.EmitProgram(safeCore, resolvedAssemblyName, source,
+                    fullSourcePath, Path.GetFileName(pdbPath), sourceBytes)
+                : IlAssemblyEmitter.Emit(
+                syntaxTree!.Root!,
                 source,
                 fullSourcePath,
                 resolvedAssemblyName,
@@ -188,6 +221,21 @@ public sealed class CompilerDriver
                     $"Could not write compiler output: {exception.Message}",
                     new TextSpan(0, 0))]);
         }
+    }
+
+    private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
+        CompilationProfile profile, CancellationToken cancellationToken)
+    {
+        if (profile != CompilationProfile.SafeCorePrimitives)
+            return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
+        cancellationToken.ThrowIfCancellationRequested();
+        SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, sourcePath);
+        if (!syntax.IsSuccessful) return new([], [], syntax.Diagnostics);
+        cancellationToken.ThrowIfCancellationRequested();
+        SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax);
+        SafeCoreTypeCheckResult types = SafeCoreTypeChecking.Check(hir, cancellationToken);
+        return types.IsSuccessful ? SafeCoreClrLowering.Lower(types.Program!, cancellationToken)
+            : new([], [], types.Diagnostics);
     }
 
     private static void WriteArtifactsTransactionally(

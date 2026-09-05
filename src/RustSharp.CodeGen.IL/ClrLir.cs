@@ -136,6 +136,23 @@ public sealed record ClrLirLoadString : ClrLirInstruction
 
 public sealed record ClrLirLoadLocal(int Index) : ClrLirInstruction;
 public sealed record ClrLirStoreLocal(int Index) : ClrLirInstruction;
+public sealed record ClrLirLoadArgument(int Index) : ClrLirInstruction;
+public sealed record ClrLirDiscard(ClrLirType Type) : ClrLirInstruction;
+/// <summary>Formats i32 using the invariant .NET format provider, independent of host culture.</summary>
+public sealed record ClrLirFormatInt32 : ClrLirInstruction;
+
+public enum ClrLirBinaryOperator
+{
+    AddChecked,
+    SubtractChecked,
+    MultiplyChecked,
+    Equal,
+    LessThan,
+    GreaterThan,
+    ExclusiveOr,
+}
+
+public sealed record ClrLirBinary(ClrLirBinaryOperator Operator, ClrLirType OperandType) : ClrLirInstruction;
 public sealed record ClrLirCall : ClrLirInstruction
 {
     public ClrLirCall(ClrLirCallSite site)
@@ -208,6 +225,7 @@ public sealed record ClrLirDiagnostic(string Code, string Message, string? Block
 public sealed record ClrLirValidationResult(ImmutableArray<ClrLirDiagnostic> Diagnostics)
 {
     public bool IsValid => Diagnostics.IsEmpty;
+    public int MaximumStackDepth { get; init; }
 }
 
 /// <summary>
@@ -308,6 +326,7 @@ public sealed class ClrLirMethod
         var work = new Queue<ClrLirBlock>();
         work.Enqueue(Blocks[0]);
         int stateCount = 0;
+        int maximumStackDepth = 0;
         var stateLimitExceeded = false;
         while (work.Count > 0)
         {
@@ -332,6 +351,13 @@ public sealed class ClrLirMethod
 
                 if (!Apply(instruction, block.Label, index, ref stack, diagnostics))
                 {
+                    break;
+                }
+
+                maximumStackDepth = Math.Max(maximumStackDepth, stack.Length + (instruction is ClrLirFormatInt32 ? 1 : 0));
+                if (maximumStackDepth > ushort.MaxValue)
+                {
+                    diagnostics.Add(new("LIR017", "Evaluation stack exceeds the ECMA-335 maxstack limit.", block.Label, index));
                     break;
                 }
 
@@ -380,7 +406,7 @@ public sealed class ClrLirMethod
             }
         }
 
-        return new(diagnostics.ToImmutable());
+        return new(diagnostics.ToImmutable()) { MaximumStackDepth = maximumStackDepth };
     }
 
     private bool Apply(
@@ -400,6 +426,35 @@ public sealed class ClrLirMethod
                 return true;
             case ClrLirLoadString:
                 stack = stack.Add(ClrLirType.Text);
+                return true;
+            case ClrLirLoadArgument argument:
+                if ((uint)argument.Index >= (uint)Parameters.Length)
+                {
+                    diagnostics.Add(new("LIR015", "Argument index is out of range.", blockLabel, instructionIndex));
+                    return false;
+                }
+
+                stack = stack.Add(Parameters[argument.Index]);
+                return true;
+            case ClrLirDiscard discard:
+                return TryPop(discard.Type, ref stack, blockLabel, instructionIndex, diagnostics);
+            case ClrLirFormatInt32:
+                if (!TryPop(ClrLirType.I32, ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(ClrLirType.Text);
+                return true;
+            case ClrLirBinary binary:
+                bool comparison = binary.Operator is ClrLirBinaryOperator.Equal or ClrLirBinaryOperator.LessThan or ClrLirBinaryOperator.GreaterThan;
+                bool validOperand = binary.OperandType == ClrLirType.I32 ||
+                    (binary.OperandType == ClrLirType.Bool && binary.Operator is ClrLirBinaryOperator.Equal or ClrLirBinaryOperator.ExclusiveOr);
+                if (!Enum.IsDefined(binary.Operator) || !validOperand)
+                {
+                    diagnostics.Add(new("LIR016", "Invalid binary operator or operand type.", blockLabel, instructionIndex));
+                    return false;
+                }
+
+                if (!TryPop(binary.OperandType, ref stack, blockLabel, instructionIndex, diagnostics) ||
+                    !TryPop(binary.OperandType, ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(comparison ? ClrLirType.Bool : binary.OperandType);
                 return true;
             case ClrLirLoadLocal load:
                 if (!TryGetLocal(load.Index, blockLabel, instructionIndex, diagnostics, out ClrLirLocal local)) return false;

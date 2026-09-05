@@ -6,7 +6,7 @@ namespace RustSharp.Semantics;
 
 /// <summary>
 /// Lowers the bounded safe-core syntax model into a flat, name-bound HIR arena.
-/// This prototype is not used by the production compiler pipeline.
+/// Used by the opt-in safe-core compilation profile.
 /// </summary>
 public static class SafeCoreHirLowering
 {
@@ -828,6 +828,7 @@ public static class SafeCoreHirLowering
             SafeCoreUnaryExpressionSyntax unary => LowerUnary(unary),
             SafeCoreBinaryExpressionSyntax binary => LowerBinary(binary),
             SafeCoreCallExpressionSyntax call => LowerCall(call),
+            SafeCorePrintExpressionSyntax print => LowerPrint(print),
             SafeCoreTupleExpressionSyntax tuple => LowerTupleExpression(tuple),
             SafeCoreArrayExpressionSyntax array => LowerArrayExpression(array),
             SafeCoreBlockExpressionSyntax block => LowerBlockExpression(block),
@@ -891,6 +892,28 @@ public static class SafeCoreHirLowering
             try
             {
                 AddChild(node, LowerExpression(syntax.Callee));
+                for (var index = 0; index < syntax.Arguments.Count && !_truncated; index++)
+                {
+                    AddChild(node, LowerExpression(syntax.Arguments[index]));
+                }
+
+                return node.Id;
+            }
+            finally
+            {
+                Exit();
+            }
+        }
+
+        private int LowerPrint(SafeCorePrintExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.PrintExpression, syntax.Span, out NodeBuilder? node))
+            {
+                return -1;
+            }
+
+            try
+            {
                 for (var index = 0; index < syntax.Arguments.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerExpression(syntax.Arguments[index]));
