@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace RustSharp.Syntax;
 
@@ -20,27 +21,41 @@ public static class SafeCoreSyntax
     public static SafeCoreSyntaxResult Parse(
         string? source,
         string? sourcePath = null,
-        SafeCoreSyntaxOptions? options = null)
+        SafeCoreSyntaxOptions? options = null) => Parse(source, sourcePath, options, CancellationToken.None);
+
+    /// <summary>Parses with cooperative cancellation and a shared lexer/parser deadline. Cancellation and timeout throw.</summary>
+    public static SafeCoreSyntaxResult Parse(
+        string? source,
+        string? sourcePath,
+        SafeCoreSyntaxOptions? options,
+        CancellationToken cancellationToken)
     {
         source ??= string.Empty;
         sourcePath ??= string.Empty;
         SafeCoreSyntaxOptions normalized = NormalizeOptions(options);
+        long startedAt = Stopwatch.GetTimestamp();
         var lexOptions = new RustLexerOptions
         {
+            Timeout = normalized.Timeout,
             MaximumSourceLength = normalized.MaximumSourceLength,
             MaximumTokens = normalized.MaximumTokens,
             MaximumTrivia = Math.Min(normalized.MaximumTokens * 2, 1_000_000),
             MaximumDiagnostics = normalized.MaximumDiagnostics,
             MaximumDelimiterDepth = normalized.MaximumNestingDepth,
         };
-        RustLexResult lexResult = RustLexer.Lex(source, sourcePath, lexOptions);
-        var parser = new Parser(source, sourcePath, lexResult, normalized);
+        RustLexResult lexResult = RustLexer.Lex(source, sourcePath, lexOptions, cancellationToken);
+        var parser = new Parser(source, sourcePath, lexResult, normalized, startedAt, cancellationToken);
         return parser.Run();
     }
 
     private static SafeCoreSyntaxOptions NormalizeOptions(SafeCoreSyntaxOptions? options)
     {
         options ??= new SafeCoreSyntaxOptions();
+        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), "Parser timeout must be positive and at most one minute.");
+        }
+
         return options with
         {
             MaximumSourceLength = Math.Clamp(options.MaximumSourceLength, 1, AbsoluteMaximumSourceLength),
@@ -65,12 +80,14 @@ public static class SafeCoreSyntax
         private readonly SafeCoreSyntaxOptions _options;
         private readonly IReadOnlyList<RustToken> _tokens;
         private readonly List<Diagnostic> _diagnostics;
+        private readonly CancellationToken _cancellationToken;
+        private readonly long _startedAt;
         private int _index;
         private int _nodeCount;
         private int _operationCount;
         private int _depth;
-        private int _pendingGreaterClosers;
-        private RustToken? _pendingGreaterToken;
+        private RustToken? _pendingToken;
+        private int _previousEnd;
         private bool _terminated;
         private bool _limitReported;
 
@@ -78,12 +95,16 @@ public static class SafeCoreSyntax
             string source,
             string sourcePath,
             RustLexResult lexResult,
-            SafeCoreSyntaxOptions options)
+            SafeCoreSyntaxOptions options,
+            long startedAt,
+            CancellationToken cancellationToken)
         {
             _source = source;
             _sourcePath = sourcePath;
             _lexResult = lexResult;
             _options = options;
+            _cancellationToken = cancellationToken;
+            _startedAt = startedAt;
             _tokens = lexResult.Tokens;
             _diagnostics = new List<Diagnostic>(Math.Min(options.MaximumDiagnostics, lexResult.Diagnostics.Count + 8));
             foreach (Diagnostic diagnostic in lexResult.Diagnostics)
@@ -99,10 +120,11 @@ public static class SafeCoreSyntax
 
         internal SafeCoreSyntaxResult Run()
         {
+            CheckDeadline();
             SafeCoreCompilationUnitSyntax? root = null;
             if (_lexResult.IsTruncated)
             {
-                AddDiagnostic(
+                AddDiagnosticCore(
                     SafeCoreSyntaxDiagnosticCodes.LexicalTruncation,
                     "The lexical pass was truncated before safe-core parsing could finish.",
                     _source.Length,
@@ -111,8 +133,17 @@ public static class SafeCoreSyntax
 
             if (_lexResult.Diagnostics.Count == 0 && !_lexResult.IsTruncated)
             {
-                root = ParseCompilationUnit();
+                try
+                {
+                    root = ParseCompilationUnit();
+                }
+                catch (ParseLimitException)
+                {
+                    root = null;
+                }
             }
+
+            CheckDeadline();
 
             if (_diagnostics.Count != 0 || _terminated)
             {
@@ -138,7 +169,7 @@ public static class SafeCoreSyntax
             try
             {
                 int start = _tokens.Count == 0 ? 0 : _tokens[0].Span.Start;
-                IReadOnlyList<SafeCoreAttributeSyntax> leadingAttributes = ParseAttributes();
+                IReadOnlyList<SafeCoreAttributeSyntax> leadingAttributes = ParseAttributes(allowInner: true);
                 SafeCoreAttributeSyntax[] rootAttributes = leadingAttributes
                     .Where(static attribute => attribute.IsInner)
                     .ToArray();
@@ -325,39 +356,47 @@ public static class SafeCoreSyntax
 
             var pieces = new List<string>();
             string? alias = null;
-            var nestedDepth = 0;
+            if (At("::") || At("{") || At("*"))
+            {
+                ReportUnsupported("absolute, grouped or glob imports");
+                return null;
+            }
+
             while (!AtEnd && !_terminated)
             {
-                if (At(";") && nestedDepth == 0)
+                (string? segment, _) = ConsumePathName("import path segment");
+                if (segment is null)
+                {
+                    return null;
+                }
+
+                pieces.Add(segment);
+                if (!At("::"))
                 {
                     break;
                 }
 
-                if (At("{") || At("(") || At("["))
+                Consume();
+                if (At("{") || At("*"))
                 {
-                    nestedDepth++;
+                    ReportUnsupported("grouped or glob imports");
+                    return null;
                 }
-                else if (At("}") || At(")") || At("]"))
+            }
+
+            if (At("as"))
+            {
+                Consume();
+                if (At("_"))
                 {
-                    nestedDepth = Math.Max(0, nestedDepth - 1);
+                    ReportUnsupported("underscore imports");
+                    return null;
                 }
 
-                if (At("as") && nestedDepth == 0)
+                (alias, _) = ConsumeName("import alias");
+                if (alias is null)
                 {
-                    Consume();
-                    (alias, _) = ConsumeName("import alias");
-                    if (alias is null)
-                    {
-                        return null;
-                    }
-                }
-                else
-                {
-                    RustToken? token = Consume();
-                    if (token is not null)
-                    {
-                        pieces.Add(token.Text);
-                    }
+                    return null;
                 }
             }
 
@@ -374,7 +413,7 @@ public static class SafeCoreSyntax
             }
 
             return NewNode(new SafeCoreUseSyntax(
-                string.Concat(pieces),
+                string.Join("::", pieces),
                 alias,
                 isPublic,
                 attributes,
@@ -507,8 +546,10 @@ public static class SafeCoreSyntax
             }
 
             IReadOnlyList<SafeCoreGenericParameterSyntax> generics = ParseGenericParameters();
+            RejectWhereClause();
             var fields = new List<SafeCoreFieldSyntax>();
             bool tupleStruct;
+            bool unitStruct = false;
             RustToken? endToken;
             if (At("{"))
             {
@@ -566,6 +607,7 @@ public static class SafeCoreSyntax
                 while (!AtEnd && !At(")") && !_terminated)
                 {
                     int fieldStart = CurrentStart;
+                    bool fieldPublic = ParseVisibility();
                     SafeCoreTypeSyntax? fieldType = ParseType();
                     if (fieldType is null)
                     {
@@ -581,7 +623,7 @@ public static class SafeCoreSyntax
                     fields.Add(NewNode(new SafeCoreFieldSyntax(
                         null,
                         fieldType,
-                        false,
+                        fieldPublic,
                         SpanFrom(fieldStart, fieldType.Span.End))));
                     if (!At(")") && !Expect(","))
                     {
@@ -600,9 +642,15 @@ public static class SafeCoreSyntax
 
                 endToken = ConsumeExpected(";");
             }
+            else if (At(";"))
+            {
+                tupleStruct = false;
+                unitStruct = true;
+                endToken = Consume();
+            }
             else
             {
-                ReportExpected("'{' or '(' after a struct name");
+                ReportExpected("'{', '(' or ';' after a struct name");
                 return null;
             }
 
@@ -618,7 +666,7 @@ public static class SafeCoreSyntax
                 tupleStruct,
                 isPublic,
                 attributes,
-                SpanFrom(startToken, endToken)));
+                SpanFrom(startToken, endToken)) { IsUnitStruct = unitStruct });
         }
 
         private SafeCoreEnumSyntax? ParseEnum(
@@ -638,6 +686,7 @@ public static class SafeCoreSyntax
             }
 
             IReadOnlyList<SafeCoreGenericParameterSyntax> generics = ParseGenericParameters();
+            RejectWhereClause();
             if (!Expect("{"))
             {
                 return null;
@@ -697,13 +746,10 @@ public static class SafeCoreSyntax
                     SkipBalancedGroup();
                 }
 
-                RustToken? variantEnd = fields.Count == 0
-                    ? variantToken
-                    : TokenAtEnd(fields[^1].Span.End);
                 variants.Add(NewNode(new SafeCoreEnumVariantSyntax(
                     variantName,
                     Array.AsReadOnly(fields.ToArray()),
-                    SpanFrom(variantStart, variantEnd?.Span.End ?? CurrentStart))));
+                    SpanFrom(variantStart, PreviousEnd))));
 
                 if (At("="))
                 {
@@ -760,6 +806,7 @@ public static class SafeCoreSyntax
             }
 
             IReadOnlyList<SafeCoreGenericParameterSyntax> generics = ParseGenericParameters();
+            RejectWhereClause();
             if (!Expect("="))
             {
                 return null;
@@ -828,20 +875,21 @@ public static class SafeCoreSyntax
 
             Consume();
             var parameters = new List<SafeCoreGenericParameterSyntax>();
-            while (!AtEnd && !At(">") && !_terminated)
+            while (!AtEnd && !AtGreater && !_terminated)
             {
                 int start = CurrentStart;
-                if (At("'"))
+                if (Current is { Kind: RustTokenKind.Lifetime or RustTokenKind.RawLifetime })
                 {
                     ReportUnsupported("lifetime generic parameters");
-                    Consume();
-                    continue;
+                    RecoverUntil(">");
+                    break;
                 }
 
                 if (At("const"))
                 {
                     ReportUnsupported("const generic parameters");
-                    Consume();
+                    RecoverUntil(">");
+                    break;
                 }
 
                 (string? name, _) = ConsumeName("generic parameter");
@@ -860,12 +908,16 @@ public static class SafeCoreSyntax
                 if (At(":"))
                 {
                     Consume();
-                    while (!AtEnd && !At(",") && !At(">") && !_terminated)
+                    while (!AtEnd && !At(",") && !AtGreater && !_terminated)
                     {
                         SafeCoreTypeSyntax? bound = ParseType();
                         if (bound is not null)
                         {
                             bounds.Add(bound);
+                            if (bound is not SafeCorePathTypeSyntax)
+                            {
+                                ReportUnsupported("non-path generic bounds");
+                            }
                         }
 
                         if (!At("+"))
@@ -877,7 +929,7 @@ public static class SafeCoreSyntax
                     }
                 }
 
-                int end = bounds.Count == 0 ? PreviousEnd : bounds[^1].Span.End;
+                int end = PreviousEnd;
                 parameters.Add(NewNode(new SafeCoreGenericParameterSyntax(
                     name,
                     Array.AsReadOnly(bounds.ToArray()),
@@ -886,8 +938,13 @@ public static class SafeCoreSyntax
                 {
                     Consume();
                 }
-                else if (!At(">"))
+                else if (!AtGreater)
                 {
+                    if (At("="))
+                    {
+                        ReportUnsupported("generic parameter defaults");
+                    }
+
                     ReportExpected("',' or '>' after a generic parameter");
                     RecoverUntil(",", ">");
                     if (At(","))
@@ -905,7 +962,16 @@ public static class SafeCoreSyntax
             return Array.AsReadOnly(parameters.ToArray());
         }
 
-        private IReadOnlyList<SafeCoreAttributeSyntax> ParseAttributes()
+        private void RejectWhereClause()
+        {
+            if (At("where"))
+            {
+                ReportUnsupported("where clauses");
+                RecoverUntil("{", "(", "=", ";");
+            }
+        }
+
+        private IReadOnlyList<SafeCoreAttributeSyntax> ParseAttributes(bool allowInner = false)
         {
             if (!At("#"))
             {
@@ -920,7 +986,16 @@ public static class SafeCoreSyntax
                 if (At("!"))
                 {
                     inner = true;
+                    if (!allowInner)
+                    {
+                        ReportUnsupported("inner attributes outside the compilation-unit preamble");
+                    }
+
                     Consume();
+                }
+                else
+                {
+                    allowInner = false;
                 }
 
                 if (!Expect("["))
@@ -928,43 +1003,57 @@ public static class SafeCoreSyntax
                     break;
                 }
 
-                int contentStart = CurrentStart;
-                int nesting = 1;
-                RustToken? endToken = null;
-                while (!AtEnd && nesting != 0 && !_terminated)
+                var segments = new List<string>();
+                do
                 {
-                    if (At("["))
+                    (string? segment, _) = ConsumePathName("attribute path segment");
+                    if (segment is null)
                     {
-                        nesting++;
+                        return Array.AsReadOnly(attributes.ToArray());
                     }
-                    else if (At("]"))
+
+                    segments.Add(segment);
+                    if (!At("::"))
                     {
-                        nesting--;
-                        if (nesting == 0)
-                        {
-                            endToken = Consume();
-                            break;
-                        }
+                        break;
                     }
 
                     Consume();
                 }
+                while (!AtEnd && !_terminated);
 
+                int argumentsStart = CurrentStart;
+                if (At("(") || At("[") || At("{"))
+                {
+                    SkipBalancedGroup();
+                }
+                else if (At("="))
+                {
+                    Consume();
+                    if (Current is not { } value || !IsLiteral(value))
+                    {
+                        ReportUnsupported("non-literal attribute values");
+                        return Array.AsReadOnly(attributes.ToArray());
+                    }
+
+                    ValidateLiteralSuffix(value);
+                    Consume();
+                }
+
+                int argumentsEnd = PreviousEnd;
+                RustToken? endToken = ConsumeExpected("]");
                 if (endToken is null)
                 {
                     ReportUnterminated("attribute");
                     break;
                 }
 
-                int contentEnd = Math.Clamp(endToken.Span.Start, contentStart, _source.Length);
-                string content = _source.Substring(contentStart, contentEnd - contentStart).Trim();
-                string path = ExtractAttributePath(content);
-                string arguments = content.Length <= path.Length
+                string arguments = argumentsEnd <= argumentsStart
                     ? string.Empty
-                    : content[path.Length..].TrimStart();
+                    : _source.Substring(argumentsStart, argumentsEnd - argumentsStart);
                 attributes.Add(NewNode(new SafeCoreAttributeSyntax(
                     inner,
-                    path,
+                    string.Join("::", segments),
                     arguments,
                     SpanFrom(startToken!, endToken))));
             }
@@ -1113,6 +1202,11 @@ public static class SafeCoreSyntax
                 initializer = ParseExpression();
             }
 
+            if (At("else"))
+            {
+                ReportUnsupported("let-else statements");
+            }
+
             RustToken? endToken = ConsumeExpected(";");
             if (pattern is null || endToken is null)
             {
@@ -1134,8 +1228,8 @@ public static class SafeCoreSyntax
                 return null;
             }
 
-            SafeCoreExpressionSyntax? value = At(";") ? null : ParseExpression();
-            RustToken? endToken = ConsumeExpected(";");
+            SafeCoreExpressionSyntax? value = At(";") || At("}") ? null : ParseExpression();
+            RustToken? endToken = At("}") ? TokenAtEnd(PreviousEnd) : ConsumeExpected(";");
             if (endToken is null)
             {
                 return null;
@@ -1194,6 +1288,12 @@ public static class SafeCoreSyntax
                     int precedence = GetBinaryPrecedence(op);
                     if (precedence < minimumPrecedence)
                     {
+                        if (op is "." or "?" or "as" or ".." or "..=" or "!" or "::")
+                        {
+                            ReportUnsupported($"expression continuation '{op}'");
+                            return null;
+                        }
+
                         break;
                     }
 
@@ -1266,7 +1366,7 @@ public static class SafeCoreSyntax
 
             if (Current is { } token && IsUnaryOperator(token.Text))
             {
-                RustToken start = Consume()!;
+                RustToken start = At("&&") ? ConsumeLeadingPunctuation() : Consume()!;
                 string op = start.Text;
                 if (op == "&" && At("mut"))
                 {
@@ -1304,7 +1404,7 @@ public static class SafeCoreSyntax
             if (Current is { } unsupported)
             {
                 if (unsupported.Text is "match" or "loop" or "while" or "for" or "break" or "continue" or
-                    "move" or "async" or "|" or "unsafe")
+                    "move" or "async" or "|" or "||" or "unsafe" or "let" or "const" or "return" or "#")
                 {
                     ReportUnsupported($"expression '{unsupported.Text}'");
                 }
@@ -1314,6 +1414,10 @@ public static class SafeCoreSyntax
                 }
 
                 Consume();
+            }
+            else
+            {
+                ReportExpected("a safe-core expression");
             }
 
             return null;
@@ -1339,7 +1443,7 @@ public static class SafeCoreSyntax
             {
                 Consume();
                 @else = At("if")
-                    ? ParseIfExpression()
+                    ? ParseNestedIfExpression()
                     : At("{")
                         ? ParsePrefixExpression()
                         : null;
@@ -1355,6 +1459,23 @@ public static class SafeCoreSyntax
                 then,
                 @else,
                 SpanFrom(startToken, end)));
+        }
+
+        private SafeCoreIfExpressionSyntax? ParseNestedIfExpression()
+        {
+            if (!EnterDepth())
+            {
+                return null;
+            }
+
+            try
+            {
+                return ParseIfExpression();
+            }
+            finally
+            {
+                ExitDepth();
+            }
         }
 
         private SafeCoreNameExpressionSyntax? ParseNameExpression()
@@ -1484,6 +1605,11 @@ public static class SafeCoreSyntax
 
                 if (At(";"))
                 {
+                    if (elements.Count != 1)
+                    {
+                        ReportUnexpected("An array repeat expression requires exactly one element before ';'.");
+                    }
+
                     Consume();
                     repeatCount = ParseExpression();
                     break;
@@ -1519,6 +1645,22 @@ public static class SafeCoreSyntax
 
             try
             {
+                if (At("-"))
+                {
+                    RustToken sign = Consume()!;
+                    if (Current is not { Kind: RustTokenKind.IntegerLiteral or RustTokenKind.FloatLiteral } number)
+                    {
+                        ReportExpected("a numeric literal after '-' in a pattern");
+                        return null;
+                    }
+
+                    ValidateLiteralSuffix(number);
+                    Consume();
+                    TextSpan span = SpanFrom(sign, number);
+                    return NewNode(new SafeCoreLiteralPatternSyntax(number.Kind,
+                        _source.Substring(span.Start, span.Length), span));
+                }
+
                 if (At("mut"))
                 {
                     RustToken start = Consume()!;
@@ -1584,6 +1726,12 @@ public static class SafeCoreSyntax
 
                 if (!IsNameToken(Current))
                 {
+                    if (CurrentText is "ref" or "&" or "&&" or "[" or ".." or "..=")
+                    {
+                        ReportUnsupported($"pattern form '{CurrentText}'");
+                        return null;
+                    }
+
                     ReportExpected("a safe-core pattern");
                     return null;
                 }
@@ -1675,9 +1823,9 @@ public static class SafeCoreSyntax
 
             try
             {
-                if (At("&"))
+                if (At("&") || At("&&"))
                 {
-                    RustToken start = Consume()!;
+                    RustToken start = ConsumeLeadingPunctuation();
                     string? lifetime = null;
                     if (Current is { Kind: RustTokenKind.Lifetime or RustTokenKind.RawLifetime } lifetimeToken)
                     {
@@ -1776,7 +1924,7 @@ public static class SafeCoreSyntax
                         : NewNode(new SafeCoreSliceTypeSyntax(element, SpanFrom(start, sliceEnd)));
                 }
 
-                if (CurrentText is "dyn" or "impl" or "fn" or "unsafe")
+                if (CurrentText is "dyn" or "impl" or "fn" or "unsafe" or "*" or "_" or "::" or "<")
                 {
                     ReportUnsupported($"type form '{CurrentText}'");
                     Consume();
@@ -1804,8 +1952,16 @@ public static class SafeCoreSyntax
                     if (At("<"))
                     {
                         Consume();
-                        while (!AtEnd && !At(">") && !_terminated)
+                        while (!AtEnd && !AtGreater && !_terminated)
                         {
+                            if (Current is { Kind: RustTokenKind.Lifetime or RustTokenKind.RawLifetime } ||
+                                CurrentText is "{" || Current is { Kind: RustTokenKind.IntegerLiteral })
+                            {
+                                ReportUnsupported("lifetime or const generic arguments");
+                                RecoverUntil(">");
+                                break;
+                            }
+
                             SafeCoreTypeSyntax? argument = ParseType();
                             if (argument is not null)
                             {
@@ -1816,7 +1972,7 @@ public static class SafeCoreSyntax
                             {
                                 Consume();
                             }
-                            else if (!At(">"))
+                            else if (!AtGreater)
                             {
                                 ReportExpected("',' or '>' in generic type arguments");
                                 RecoverUntil(",", ">");
@@ -1834,7 +1990,7 @@ public static class SafeCoreSyntax
                         }
                     }
 
-                    int segmentEnd = arguments.Count == 0 ? nameToken.Span.End : arguments[^1].Span.End;
+                    int segmentEnd = PreviousEnd;
                     segments.Add(NewNode(new SafeCorePathSegmentSyntax(
                         name,
                         Array.AsReadOnly(arguments.ToArray()),
@@ -1895,7 +2051,8 @@ public static class SafeCoreSyntax
             int localDepth = 0;
             while (!AtEnd && !_terminated)
             {
-                if (localDepth == 0 && CurrentText is not null && stops.Contains(CurrentText))
+                if (localDepth == 0 && CurrentText is not null &&
+                    (stops.Contains(CurrentText) || (AtGreater && stops.Contains(">"))))
                 {
                     return;
                 }
@@ -1969,22 +2126,9 @@ public static class SafeCoreSyntax
 
         private RustToken? ConsumeGreater()
         {
-            if (At(">"))
+            if (AtGreater)
             {
-                return Consume();
-            }
-
-            if (_pendingGreaterClosers > 0)
-            {
-                return Consume();
-            }
-
-            if (CurrentText == ">>")
-            {
-                RustToken token = Consume()!;
-                _pendingGreaterClosers = 1;
-                _pendingGreaterToken = token;
-                return token;
+                return ConsumeLeadingPunctuation();
             }
 
             ReportExpected("'>'");
@@ -2022,23 +2166,11 @@ public static class SafeCoreSyntax
                 return null;
             }
 
-            if (_pendingGreaterClosers > 0 && _pendingGreaterToken is not null)
+            if (_pendingToken is { } pending)
             {
-                RustToken sourceToken = _pendingGreaterToken;
-                int offset = sourceToken.Span.Start + sourceToken.Span.Length - _pendingGreaterClosers;
-                _pendingGreaterClosers--;
-                if (_pendingGreaterClosers == 0)
-                {
-                    _pendingGreaterToken = null;
-                }
-
-                return new RustToken(
-                    RustTokenKind.Punctuation,
-                    new TextSpan(Math.Max(0, offset), 1),
-                    ">",
-                    false,
-                    null,
-                    Array.Empty<RustTrivia>());
+                _pendingToken = null;
+                _previousEnd = pending.Span.End;
+                return pending;
             }
 
             if (_index >= _tokens.Count)
@@ -2046,14 +2178,43 @@ public static class SafeCoreSyntax
                 return null;
             }
 
-            return _tokens[_index++];
+            RustToken token = _tokens[_index++];
+            _previousEnd = token.Span.End;
+            return token;
+        }
+
+        // Rust's grammar may consume one punctuation character from a joint lexical token.
+        private RustToken ConsumeLeadingPunctuation()
+        {
+            RustToken token = Consume()!;
+            if (token.Text.Length == 1)
+            {
+                return token;
+            }
+
+            _pendingToken = new RustToken(RustTokenKind.Punctuation,
+                new TextSpan(token.Span.Start + 1, token.Span.Length - 1), token.Text[1..],
+                false, null, Array.Empty<RustTrivia>());
+            _previousEnd = token.Span.Start + 1;
+            return new RustToken(RustTokenKind.Punctuation, new TextSpan(token.Span.Start, 1),
+                token.Text[..1], false, null, token.LeadingTrivia);
+        }
+
+        private void CheckDeadline()
+        {
+            _cancellationToken.ThrowIfCancellationRequested();
+            if (Stopwatch.GetElapsedTime(_startedAt) >= _options.Timeout)
+            {
+                throw new TimeoutException("Safe-core parsing exceeded its wall-clock budget.");
+            }
         }
 
         private bool Step()
         {
+            CheckDeadline();
             if (_terminated)
             {
-                return false;
+                throw new ParseLimitException();
             }
 
             _operationCount++;
@@ -2068,6 +2229,7 @@ public static class SafeCoreSyntax
 
         private bool EnterDepth()
         {
+            Step();
             if (_depth >= _options.MaximumNestingDepth)
             {
                 AddLimitDiagnostic(CurrentStart);
@@ -2088,24 +2250,24 @@ public static class SafeCoreSyntax
 
         private bool At(string text) => string.Equals(CurrentText, text, StringComparison.Ordinal);
 
-        private bool AtEnd => _index >= _tokens.Count && _pendingGreaterClosers == 0;
+        private bool AtEnd => _index >= _tokens.Count && _pendingToken is null;
 
-        private string? CurrentText => _pendingGreaterClosers > 0 ? ">" : Current?.Text;
+        private string? CurrentText => Current?.Text;
 
-        private RustToken? Current => _index < _tokens.Count ? _tokens[_index] : null;
+        private RustToken? Current => _pendingToken ?? (_index < _tokens.Count ? _tokens[_index] : null);
 
-        private int CurrentStart => _pendingGreaterClosers > 0 && _pendingGreaterToken is not null
-            ? _pendingGreaterToken.Span.End - _pendingGreaterClosers
-            : Current?.Span.Start ?? _source.Length;
+        private int CurrentStart => Current?.Span.Start ?? _source.Length;
 
-        private int PreviousEnd => _index > 0 ? _tokens[_index - 1].Span.End : 0;
+        private int PreviousEnd => _previousEnd;
+
+        private bool AtGreater => CurrentText is ">" or ">>" or ">=" or ">>=";
 
         private static bool IsNameToken(RustToken? token) =>
             IsIdentifierToken(token) ||
             token is { Kind: RustTokenKind.Keyword, Text: "self" or "Self" or "crate" or "super" };
 
         private static bool IsIdentifierToken(RustToken? token) =>
-            token is { Kind: RustTokenKind.Identifier or RustTokenKind.RawIdentifier };
+            token is { Kind: RustTokenKind.Identifier or RustTokenKind.RawIdentifier, Text: not "_" };
 
         private static bool IsName(string? text) => text is not null &&
             (text.Length != 0 && (char.IsLetter(text[0]) || text[0] == '_' || text[0] == 'r' ||
@@ -2160,7 +2322,7 @@ public static class SafeCoreSyntax
 
         private static bool IsFloatLiteralSuffix(string suffix) => suffix is "f32" or "f64";
 
-        private static bool IsUnaryOperator(string text) => text is "!" or "-" or "+" or "&" or "*";
+        private static bool IsUnaryOperator(string text) => text is "!" or "-" or "&" or "&&" or "*";
 
         private static int GetBinaryPrecedence(string? text) => text switch
         {
@@ -2168,11 +2330,10 @@ public static class SafeCoreSyntax
                 "<<=" or ">>=" => 1,
             "||" => 2,
             "&&" => 3,
-            "|" => 4,
-            "^" => 5,
-            "&" => 6,
-            "==" or "!=" => 7,
-            "<" or ">" or "<=" or ">=" => 8,
+            "==" or "!=" or "<" or ">" or "<=" or ">=" => 4,
+            "|" => 5,
+            "^" => 6,
+            "&" => 7,
             "<<" or ">>" => 9,
             "+" or "-" => 10,
             "*" or "/" or "%" => 11,
@@ -2182,21 +2343,6 @@ public static class SafeCoreSyntax
         private static bool IsAssignmentOperator(string text) => text is
             "=" or "+=" or "-=" or "*=" or "/=" or "%=" or "^=" or "&=" or "|=" or
             "<<=" or ">>=";
-
-        private static string ExtractAttributePath(string content)
-        {
-            int cut = content.Length;
-            foreach (char marker in new[] { '(', '=', ',', ' ' })
-            {
-                int position = content.IndexOf(marker);
-                if (position >= 0)
-                {
-                    cut = Math.Min(cut, position);
-                }
-            }
-
-            return content[..cut].Trim();
-        }
 
         private SafeCoreCompilationUnitSyntax NewNode(SafeCoreCompilationUnitSyntax node) =>
             RegisterNode() ? node : node;
@@ -2210,6 +2356,7 @@ public static class SafeCoreSyntax
 
         private bool RegisterNode()
         {
+            Step();
             if (_terminated)
             {
                 return false;
@@ -2240,6 +2387,7 @@ public static class SafeCoreSyntax
                 "Safe-core parsing stopped after reaching a configured safety limit.",
                 start,
                 0);
+            throw new ParseLimitException();
         }
 
         private void ReportExpected(string expected) =>
@@ -2288,7 +2436,9 @@ public static class SafeCoreSyntax
             }
         }
 
-        private int CurrentLength => _pendingGreaterClosers > 0 ? 1 : Current?.Span.Length ?? 0;
+        private int CurrentLength => Current?.Span.Length ?? 0;
+
+        private sealed class ParseLimitException : Exception;
 
         private static RustToken TokenAtEnd(int end) => new(
             RustTokenKind.Punctuation,

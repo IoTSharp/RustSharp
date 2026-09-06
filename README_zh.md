@@ -39,12 +39,14 @@ P1 前端工作处于 🚧 进行中，其中 P1-01 现为 ✅ 已完成。无�
 的 22 类词法映射。它覆盖源码前导、标识符、全部字面量族及后缀、生命周期、trivia、
 标点、分隔符、词元树、保留形式和格式错误输入诊断。BOM/shebang 处理、注释/CRLF
 边界、非十进制浮点拒绝，以及取消、超时和迭代式词元树构建均已验证。全部 24 个用例
-的精确证据和源码重建检查通过；完整可执行回归工具通过 103/103 项测试。
+的精确证据和源码重建检查通过；P1-01 可执行回归工具记录了 103/103 项测试通过。
 类别分母及其与语义或 rustc 差分一致性的区别见[词法契约](docs/lexical-profile.md)。
-早期 `SafeCoreSyntax` 模型/解析器
-以稳定的 `RSP` 诊断处理具有代表性的
-模块、项、语句、表达式、模式、类型、泛型和属性。有界的
-`SafeCoreNameResolution` 原型目前跨独立的类型/值命名空间收集模块、项和局部符号，
+`SafeCoreSyntax` 现已发布第 2 版解析器验收清单，包含 36 个夹具和 16 个必需类别，
+覆盖模块、项、语句、表达式、模式、类型、泛型和属性。它校验导入和属性语法、Rust
+运算符优先级、嵌套泛型闭合符、元组字段可见性、单元结构体、引用和负数字面量模式，
+并覆盖解析取消/超时及有界恢复。当前语法范围和 P1-02 剩余工作见
+[语法契约](docs/syntax-profile.md)。有界的 `SafeCoreNameResolution` 原型目前跨独立
+的类型/值命名空间收集模块、项和局部符号，
 并解析具有代表性的导入与限定路径。它的九项测试工具用例覆盖类型/值命名空间与限定
 路径、可见性、重复/歧义/未解析名称、导入环、声明顺序与合法遮蔽、拒绝通过限定路径
 访问函数局部变量/结构体字段/枚举泛型参数、Unicode 标识符规范化，以及导入嵌套
@@ -143,15 +145,23 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --pr
 远程 CI 运行已经通过。报告仍属于 RustSharp 词法分析器验收证据，与 rustc 差分和
 运行时一致性分开衡量。完整 P1 里程碑仍处于 🚧 进行中。
 
-独立的 safe-core 语法配置通过当前包含六个用例的解析器验收清单，并写入
+独立的 safe-core 语法配置发布了 36 个解析器验收用例，并写入
 `artifacts/conformance/safe-core-syntax.json`：
 
 ```text
 dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax
+pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1
 ```
 
-该 6/6 报告只衡量 RustSharp 解析器验收结果，并不构成 rustc 差分证据或运行时一致性
-证据。
+第 2 版报告只衡量 RustSharp 解析器验收结果，强制要求全部 16 类映射；拒绝用例必须
+匹配诊断代码及其范围下的精确源码文本。Windows/Linux CI 校验当前清单和夹具哈希、
+用例 ID、结果及诊断范围。这不构成 rustc 差分证据或运行时一致性证据。P1-02 仍为
+🚧 进行中，尚需更广泛的语法和完整 AST 验收基准集合。
+
+2026-09-06 在 Windows x64 上，本轮 P1-02 增量验证为 ✅ 已完成：Release 构建零
+警告/错误、116/116 项可执行回归、36/36 项语法用例、16/16 类映射、6/6 项名称解析
+以及对照 rustc 1.98.0 的 14/14 项基础类型差分用例。CI 证据检查器接受当前源码报告，
+并拒绝过期报告；这些是本地结果，不代表新的远程 CI 运行。
 
 包含六个用例的名称解析验收配置会写入
 `artifacts/conformance/safe-core-name-resolution.json`：

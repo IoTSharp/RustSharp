@@ -1,8 +1,12 @@
 {
   "profile": "safe-core-syntax",
-  "version": 1,
+  "version": 2,
+  "rustVersion": "1.98.0",
+  "edition": "2024",
+  "denominator": 36,
   "parser": "RustSharp.Syntax.SafeCoreSyntax.Parse",
   "limits": {
+    "timeoutMilliseconds": 10000,
     "maximumSourceLength": 1000000,
     "maximumTokens": 250000,
     "maximumNodes": 100000,
@@ -27,25 +31,77 @@
       "id": "safe-core-unsupported-unsafe",
       "file": "safe-core-unsupported.rs",
       "expected": "parse-fail",
-      "diagnosticCode": "RSP1003"
+      "diagnosticCode": "RSP1003",
+      "diagnosticText": "unsafe"
     },
     {
       "id": "safe-core-unsupported-loop",
       "file": "safe-core-unsupported-loop.rs",
       "expected": "parse-fail",
-      "diagnosticCode": "RSP1003"
+      "diagnosticCode": "RSP1003",
+      "diagnosticText": "loop"
     },
     {
       "id": "safe-core-unsupported-break",
       "file": "safe-core-unsupported-break.rs",
       "expected": "parse-fail",
-      "diagnosticCode": "RSP1003"
+      "diagnosticCode": "RSP1003",
+      "diagnosticText": "break"
     },
     {
       "id": "safe-core-malformed",
       "file": "safe-core-malformed.rs",
       "expected": "parse-fail",
-      "diagnosticCode": "RSP1001"
-    }
-  ]
+      "diagnosticCode": "RSP1001",
+      "diagnosticText": "}"
+    },
+    { "id": "syntax-modules", "file": "syntax-modules.rs", "expected": "parse-pass", "minimumItems": 2, "minimumFunctions": 2 },
+    { "id": "syntax-imports", "file": "syntax-imports.rs", "expected": "parse-pass", "minimumItems": 3 },
+    { "id": "syntax-items", "file": "syntax-items.rs", "expected": "parse-pass", "minimumItems": 6 },
+    { "id": "syntax-generics", "file": "syntax-generics.rs", "expected": "parse-pass", "minimumItems": 2, "minimumFunctions": 1 },
+    { "id": "syntax-types", "file": "syntax-types.rs", "expected": "parse-pass", "minimumItems": 7 },
+    { "id": "syntax-patterns", "file": "syntax-patterns.rs", "expected": "parse-pass", "minimumFunctions": 1 },
+    { "id": "syntax-aggregates", "file": "syntax-aggregates.rs", "expected": "parse-pass", "minimumFunctions": 1 },
+    { "id": "syntax-operators", "file": "syntax-operators.rs", "expected": "parse-pass", "minimumFunctions": 1 },
+    { "id": "syntax-attributes", "file": "syntax-attributes.rs", "expected": "parse-pass", "minimumFunctions": 1 },
+    { "id": "syntax-literals", "file": "syntax-literals.rs", "expected": "parse-pass", "minimumFunctions": 1 },
+    { "id": "syntax-returns", "file": "syntax-returns.rs", "expected": "parse-pass", "minimumFunctions": 3 },
+    { "id": "syntax-blocks", "file": "syntax-blocks.rs", "expected": "parse-pass", "minimumFunctions": 1 },
+    { "id": "syntax-malformed-import", "file": "syntax-malformed-import.rs", "expected": "parse-fail", "diagnosticCode": "RSP1001", "diagnosticText": "bar" },
+    { "id": "syntax-malformed-attribute", "file": "syntax-malformed-attribute.rs", "expected": "parse-fail", "diagnosticCode": "RSP1001", "diagnosticText": "]" },
+    { "id": "syntax-malformed-repeat", "file": "syntax-malformed-repeat.rs", "expected": "parse-fail", "diagnosticCode": "RSP1002", "diagnosticText": ";" },
+    { "id": "syntax-malformed-generics", "file": "syntax-malformed-generics.rs", "expected": "parse-fail", "diagnosticCode": "RSP1001", "diagnosticText": "+" },
+    { "id": "syntax-malformed-comparison", "file": "syntax-malformed-comparison.rs", "expected": "parse-fail", "diagnosticCode": "RSP1002", "diagnosticText": "<" },
+    { "id": "syntax-malformed-unary", "file": "syntax-malformed-unary.rs", "expected": "parse-fail", "diagnosticCode": "RSP1002", "diagnosticText": "+" },
+    { "id": "syntax-malformed-expression", "file": "syntax-malformed-expression.rs", "expected": "parse-fail", "diagnosticCode": "RSP1002", "diagnosticText": ";" },
+    { "id": "syntax-malformed-keyword", "file": "syntax-malformed-keyword.rs", "expected": "parse-fail", "diagnosticCode": "RSP1001", "diagnosticText": "loop" },
+    { "id": "syntax-unsupported-group-import", "file": "syntax-unsupported-group-import.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "{" },
+    { "id": "syntax-unsupported-lifetime", "file": "syntax-unsupported-lifetime.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "'a" },
+    { "id": "syntax-unsupported-const-generic", "file": "syntax-unsupported-const-generic.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "const" },
+    { "id": "syntax-unsupported-where", "file": "syntax-unsupported-where.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "where" },
+    { "id": "syntax-unsupported-member", "file": "syntax-unsupported-member.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "." },
+    { "id": "syntax-unsupported-raw-type", "file": "syntax-unsupported-raw-type.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "*" },
+    { "id": "syntax-unsupported-inner-attribute", "file": "syntax-unsupported-inner-attribute.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "!" },
+    { "id": "syntax-unsupported-closure", "file": "syntax-unsupported-closure.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "||" },
+    { "id": "syntax-unsupported-generic-default", "file": "syntax-unsupported-generic-default.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "=" },
+    { "id": "syntax-unsupported-let-else", "file": "syntax-unsupported-let-else.rs", "expected": "parse-fail", "diagnosticCode": "RSP1003", "diagnosticText": "else" }
+  ],
+  "coverage": {
+    "modules": ["safe-core-items", "syntax-modules"],
+    "imports": ["syntax-imports", "syntax-malformed-import", "syntax-unsupported-group-import"],
+    "functions": ["safe-core-items", "syntax-returns"],
+    "structs": ["syntax-items"],
+    "enums": ["syntax-items"],
+    "aliases-constants": ["syntax-items", "syntax-types"],
+    "statements": ["safe-core-expressions", "syntax-returns", "syntax-unsupported-let-else"],
+    "expressions": ["syntax-aggregates", "syntax-blocks", "syntax-operators"],
+    "operator-binding": ["syntax-operators", "syntax-malformed-comparison", "syntax-malformed-unary"],
+    "patterns": ["syntax-patterns"],
+    "types": ["syntax-types", "syntax-unsupported-raw-type"],
+    "generics": ["syntax-generics", "syntax-malformed-generics", "syntax-unsupported-lifetime", "syntax-unsupported-const-generic", "syntax-unsupported-where", "syntax-unsupported-generic-default"],
+    "attributes": ["syntax-attributes", "syntax-malformed-attribute", "syntax-unsupported-inner-attribute"],
+    "literals": ["syntax-literals"],
+    "malformed": ["safe-core-malformed", "syntax-malformed-import", "syntax-malformed-attribute", "syntax-malformed-repeat", "syntax-malformed-generics", "syntax-malformed-comparison", "syntax-malformed-unary", "syntax-malformed-expression", "syntax-malformed-keyword"],
+    "unsupported": ["safe-core-unsupported-unsafe", "safe-core-unsupported-loop", "safe-core-unsupported-break", "syntax-unsupported-group-import", "syntax-unsupported-lifetime", "syntax-unsupported-const-generic", "syntax-unsupported-where", "syntax-unsupported-member", "syntax-unsupported-raw-type", "syntax-unsupported-inner-attribute", "syntax-unsupported-closure", "syntax-unsupported-generic-default", "syntax-unsupported-let-else"]
+  }
 }

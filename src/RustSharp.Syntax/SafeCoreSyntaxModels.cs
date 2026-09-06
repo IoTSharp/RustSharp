@@ -3,6 +3,9 @@ namespace RustSharp.Syntax;
 /// <summary>Bounds applied to one safe-core syntax parse.</summary>
 public sealed record SafeCoreSyntaxOptions
 {
+    /// <summary>Wall-clock budget including lexing; must be positive and at most one minute.</summary>
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
+
     /// <summary>Maximum UTF-16 source characters inspected by the parse.</summary>
     public int MaximumSourceLength { get; init; } = 1_000_000;
 
@@ -155,7 +158,7 @@ public sealed record SafeCoreParameterSyntax(
     SafeCoreTypeSyntax Type,
     TextSpan Span);
 
-/// <summary>A generic type or const parameter and its bounds.</summary>
+/// <summary>A generic type parameter and its path bounds.</summary>
 public sealed record SafeCoreGenericParameterSyntax(
     string Name,
     IReadOnlyList<SafeCoreTypeSyntax> Bounds,
@@ -189,7 +192,11 @@ public sealed record SafeCoreStructSyntax(
     bool IsPublic,
     IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
     TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.Struct, Attributes, IsPublic, Span);
+    : SafeCoreItemSyntax(SafeCoreItemKind.Struct, Attributes, IsPublic, Span)
+{
+    /// <summary>Distinguishes <c>struct Name;</c> from an empty braced or tuple struct.</summary>
+    public bool IsUnitStruct { get; init; }
+}
 
 /// <summary>An enum variant and optional tuple payload fields.</summary>
 public sealed record SafeCoreEnumVariantSyntax(

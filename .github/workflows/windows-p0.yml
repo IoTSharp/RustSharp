@@ -243,28 +243,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $reportPath = Join-Path $PWD 'artifacts/conformance/safe-core-syntax.json'
-          & dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-syntax
-          $harnessExitCode = $LASTEXITCODE
-          if ($harnessExitCode -ne 0) {
-            exit $harnessExitCode
-          }
-          if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
-            throw "Safe-core syntax harness did not write '$reportPath'."
-          }
-          $report = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
-          if ($report.Manifest.PSObject.Properties.Match('Validated').Count -ne 1 -or
-              $report.Manifest.PSObject.Properties.Match('CaseCount').Count -ne 1) {
-            throw 'Safe-core syntax evidence manifest metadata is missing.'
-          }
-          if ([string] $report.EvidenceKind -ne 'parser-acceptance' -or
-              [string] $report.Summary.Status -ne 'passed' -or
-              [int] $report.Summary.Denominator -ne 6 -or
-              [int] $report.Summary.Passed -ne 6 -or
-              [bool] $report.Manifest.Validated -ne $true -or
-              [int] $report.Manifest.CaseCount -ne 6) {
-            throw 'Safe-core syntax harness returned success without complete 6/6 parser-acceptance evidence.'
-          }
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('run', '--project', 'tools/RustSharp.Conformance', '-c', 'Release', '--no-build', '--no-restore', '--', '--profile', 'safe-core-syntax') -TimeoutSeconds 240
+          & ./eng/Test-SyntaxEvidence.ps1
       - name: Run safe-core name-resolution corpus
         shell: pwsh
         run: |

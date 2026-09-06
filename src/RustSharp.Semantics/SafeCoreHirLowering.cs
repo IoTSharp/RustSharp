@@ -385,6 +385,10 @@ public static class SafeCoreHirLowering
             {
                 flags |= SafeCoreHirNodeModifiers.TupleStruct;
             }
+            if (syntax.IsUnitStruct)
+            {
+                flags |= SafeCoreHirNodeModifiers.UnitStruct;
+            }
 
             if (!TryCreateNode(
                     SafeCoreHirNodeKind.Struct,

@@ -23,6 +23,16 @@ tokens, trivia, token trees, diagnostics and spans. See the
 resource limits and acceptance evidence. This lexical gate does not expand
 the executable language profiles or establish semantic/runtime conformance.
 
+## Syntax acceptance profile
+
+P1-02 remains 🚧 In progress. `safe-core-syntax` manifest version 2 declares
+36 cases and 16 required categories for the current parser increment. It
+validates expected parse outcomes and diagnostic source text, with AST shape,
+cancellation/deadline and malformed-input regression coverage. See the
+[syntax contract](syntax-profile.md) for included grammar and the remaining
+full-profile work. Syntax acceptance does not expand the executable profile
+or establish rustc differential or runtime conformance.
+
 ## Executable primitive profile
 
 `safe-core-primitives-v1` is an opt-in P1 profile, selected by `--profile` on

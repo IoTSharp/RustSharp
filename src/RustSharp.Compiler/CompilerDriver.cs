@@ -229,7 +229,7 @@ public sealed class CompilerDriver
         if (profile != CompilationProfile.SafeCorePrimitives)
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
         cancellationToken.ThrowIfCancellationRequested();
-        SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, sourcePath);
+        SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, sourcePath, null, cancellationToken);
         if (!syntax.IsSuccessful) return new([], [], syntax.Diagnostics);
         cancellationToken.ThrowIfCancellationRequested();
         SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax);

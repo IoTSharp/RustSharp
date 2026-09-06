@@ -297,16 +297,18 @@ internal static class SafeCoreSyntaxTests
         string manifestPath = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", "safe-core-syntax-manifest.json");
         using JsonDocument manifest = JsonDocument.Parse(File.ReadAllText(manifestPath));
         JsonElement cases = manifest.RootElement.GetProperty("cases");
-        AssertEx.Equal(6, cases.GetArrayLength());
+        AssertEx.Equal(36, cases.GetArrayLength());
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         var inspected = 0;
         foreach (JsonElement item in cases.EnumerateArray())
         {
             inspected++;
-            AssertEx.True(inspected <= 8, "The syntax corpus must remain explicitly bounded.");
+            AssertEx.True(inspected <= 64, "The syntax corpus must remain explicitly bounded.");
+            deadline.Token.ThrowIfCancellationRequested();
             string fileName = item.GetProperty("file").GetString()!;
             string source = File.ReadAllText(Path.Combine(Path.GetDirectoryName(manifestPath)!, fileName));
-            SafeCoreSyntaxResult result = SafeCoreSyntax.Parse(source, fileName);
+            SafeCoreSyntaxResult result = SafeCoreSyntax.Parse(source, fileName, null, deadline.Token);
             string expected = item.GetProperty("expected").GetString()!;
             if (expected == "parse-pass")
             {

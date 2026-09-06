@@ -78,6 +78,7 @@ internal static class SafeCoreHirTests
     private static Task PreservesShapesAsync()
     {
         const string source =
+            "struct Unit; struct Empty {}\n" +
             "fn compute(value: &mut [i32; 2], flag: bool) -> i32 {\n" +
             "    let (left, right): (i32, i32) = (1, 2);\n" +
             "    let repeated: [i32; 2] = [left; 2];\n" +
@@ -89,6 +90,11 @@ internal static class SafeCoreHirTests
         AssertEx.True(syntax.IsSuccessful, FormatDiagnostics(syntax.Diagnostics));
         SafeCoreHirResult result = SafeCoreHirLowering.Lower(syntax);
         AssertEx.True(result.IsSuccessful, FormatDiagnostics(result.Diagnostics));
+
+        AssertEx.True(result.Nodes.Single(node => node.Kind == SafeCoreHirNodeKind.Struct && node.Name == "Unit")
+            .Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct), "HIR must preserve unit struct syntax.");
+        AssertEx.False(result.Nodes.Single(node => node.Kind == SafeCoreHirNodeKind.Struct && node.Name == "Empty")
+            .Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct), "Empty braced structs remain distinct in HIR.");
 
         AssertKind(result, SafeCoreHirNodeKind.ReferenceType);
         AssertKind(result, SafeCoreHirNodeKind.ArrayType);

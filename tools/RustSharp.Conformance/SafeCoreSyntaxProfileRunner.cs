@@ -12,7 +12,7 @@ internal static class SafeCoreSyntaxProfileRunner
     private const string ProfileName = "safe-core-syntax";
     private const string ParserName = "RustSharp.Syntax.SafeCoreSyntax.Parse";
     private const string ManifestFileName = "safe-core-syntax-manifest.json";
-    private const int ManifestVersion = 1;
+    private const int ManifestVersion = 2;
     private const int MaximumManifestBytes = 256 * 1024;
     private const int MaximumCases = 64;
     private const int MaximumIdentifierLength = 128;
@@ -28,6 +28,13 @@ internal static class SafeCoreSyntaxProfileRunner
     private const int PassedExitCode = 0;
     private const int FailedExitCode = 1;
     private const int HarnessErrorExitCode = 2;
+
+    private static readonly string[] RequiredCategories =
+    [
+        "modules", "imports", "functions", "structs", "enums", "aliases-constants",
+        "statements", "expressions", "operator-binding", "patterns", "types", "generics",
+        "attributes", "literals", "malformed", "unsupported",
+    ];
 
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private static readonly JsonSerializerOptions ManifestJsonOptions = new(JsonSerializerDefaults.Web)
@@ -163,7 +170,7 @@ internal static class SafeCoreSyntaxProfileRunner
             _ => "error",
         };
         var report = new SafeCoreSyntaxReport(
-            SchemaVersion: 1,
+            SchemaVersion: 2,
             GeneratedAtUtc: DateTimeOffset.UtcNow,
             Profile: ProfileName,
             EvidenceKind: "parser-acceptance",
@@ -181,7 +188,7 @@ internal static class SafeCoreSyntaxProfileRunner
                 Error: harnessError),
             Parser: new SyntaxParserReport(
                 Name: ParserName,
-                Invocation: "RustSharp.Syntax.SafeCoreSyntax.Parse(source, sourcePath, manifestLimits)",
+                Invocation: "RustSharp.Syntax.SafeCoreSyntax.Parse(source, sourcePath, manifestLimits, cancellationToken)",
                 AssemblyVersion: typeof(SafeCoreSyntax).Assembly.GetName().Version?.ToString()),
             Limits: validatedManifest is null
                 ? null
@@ -205,6 +212,12 @@ internal static class SafeCoreSyntaxProfileRunner
                 DeadlineExpired: deadlineSource.IsCancellationRequested),
             HarnessError: harnessErrorReason);
 
+        report = report with
+        {
+            RustVersion = validatedManifest is null ? null : "1.98.0",
+            Edition = validatedManifest is null ? null : "2024",
+            Coverage = validatedManifest?.Coverage,
+        };
         await WriteReportAsync(reportPath, report).ConfigureAwait(false);
         if (exitCode == HarnessErrorExitCode)
         {
@@ -234,6 +247,11 @@ internal static class SafeCoreSyntaxProfileRunner
             throw new InvalidDataException($"Manifest version must be {ManifestVersion}.");
         }
 
+        if (manifest.RustVersion != "1.98.0" || manifest.Edition != "2024")
+        {
+            throw new InvalidDataException("Syntax baseline must be Rust 1.98.0 / Edition 2024.");
+        }
+
         if (!string.Equals(manifest.Parser, ParserName, StringComparison.Ordinal))
         {
             throw new InvalidDataException($"Manifest parser must be '{ParserName}'.");
@@ -243,6 +261,8 @@ internal static class SafeCoreSyntaxProfileRunner
             ?? throw new InvalidDataException("Manifest limits are required.");
         var options = new SafeCoreSyntaxOptions
         {
+            Timeout = TimeSpan.FromMilliseconds(ValidateLimit(
+                nameof(limits.TimeoutMilliseconds), limits.TimeoutMilliseconds, 60_000)),
             MaximumSourceLength = ValidateLimit(
                 nameof(limits.MaximumSourceLength),
                 limits.MaximumSourceLength,
@@ -274,6 +294,11 @@ internal static class SafeCoreSyntaxProfileRunner
         if (manifestCases.Count is < 1 or > MaximumCases)
         {
             throw new InvalidDataException($"Manifest case count must be 1..{MaximumCases}; found {manifestCases.Count}.");
+        }
+
+        if (manifest.Denominator != manifestCases.Count)
+        {
+            throw new InvalidDataException("Syntax denominator must equal the declared case count.");
         }
 
         var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -331,6 +356,17 @@ internal static class SafeCoreSyntaxProfileRunner
                 throw new InvalidDataException($"Manifest parse-pass case '{id}' cannot specify diagnosticCode.");
             }
 
+            if (item.Expected == "parse-fail" &&
+                (item.DiagnosticText is null || item.DiagnosticText.Length > 256))
+            {
+                throw new InvalidDataException($"Case '{id}' must declare bounded diagnosticText.");
+            }
+
+            if (item.Expected == "parse-pass" && item.DiagnosticText is not null)
+            {
+                throw new InvalidDataException($"Case '{id}' cannot specify diagnosticText on parse-pass.");
+            }
+
             validatedCases.Add(new ValidatedCase(
                 id,
                 file,
@@ -338,10 +374,37 @@ internal static class SafeCoreSyntaxProfileRunner
                 item.Expected,
                 diagnosticCode,
                 minimumItems,
-                minimumFunctions));
+                minimumFunctions,
+                item.DiagnosticText));
         }
 
-        return new ValidatedManifest(manifest.Version, manifest.Parser!, options, validatedCases);
+        Dictionary<string, string[]> coverage = manifest.Coverage
+            ?? throw new InvalidDataException("Syntax coverage categories are required.");
+        if (coverage.Count != RequiredCategories.Length)
+        {
+            throw new InvalidDataException($"Syntax coverage requires exactly {RequiredCategories.Length} categories.");
+        }
+
+        var coveredCases = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string category in RequiredCategories)
+        {
+            if (!coverage.TryGetValue(category, out string[]? references) || references is null ||
+                references.Length is < 1 or > MaximumCases ||
+                references.Distinct(StringComparer.Ordinal).Count() != references.Length ||
+                references.Any(id => !ids.Contains(id)))
+            {
+                throw new InvalidDataException($"Syntax category '{category}' must reference distinct declared case IDs.");
+            }
+
+            coveredCases.UnionWith(references);
+        }
+
+        if (!coveredCases.SetEquals(ids))
+        {
+            throw new InvalidDataException("Every syntax fixture must belong to a declared category.");
+        }
+
+        return new ValidatedManifest(manifest.Version, manifest.Parser!, options, validatedCases, coverage);
     }
 
     private static async Task<SyntaxCaseReport> RunCaseAsync(
@@ -368,13 +431,18 @@ internal static class SafeCoreSyntaxProfileRunner
 
             cancellationToken.ThrowIfCancellationRequested();
             parserInvoked = true;
-            SafeCoreSyntaxResult result = SafeCoreSyntax.Parse(source, fixture.File, options);
+            SafeCoreSyntaxResult result = SafeCoreSyntax.Parse(source, fixture.File, options, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             int itemCount = result.Root?.Items.Count ?? 0;
             int functionCount = CountFunctions(result.Root, options.MaximumNodes, cancellationToken);
             bool diagnosticMatched = fixture.DiagnosticCode is null || result.Diagnostics.Any(
-                diagnostic => string.Equals(diagnostic.Code, fixture.DiagnosticCode, StringComparison.Ordinal));
+                diagnostic => string.Equals(diagnostic.Code, fixture.DiagnosticCode, StringComparison.Ordinal) &&
+                    result.GetText(diagnostic.Span) == fixture.DiagnosticText);
             var differences = new List<string>(3);
+            if (!result.IsTruncated && result.LexResult.ToSourceText() != source)
+            {
+                differences.Add("Lexical source reconstruction differed from the fixture.");
+            }
             if (fixture.Expected == "parse-pass")
             {
                 if (!result.IsSuccessful)
@@ -406,7 +474,7 @@ internal static class SafeCoreSyntaxProfileRunner
 
                 if (!diagnosticMatched)
                 {
-                    differences.Add($"Expected diagnostic '{fixture.DiagnosticCode}' was not emitted.");
+                    differences.Add($"Expected diagnostic '{fixture.DiagnosticCode}' over '{fixture.DiagnosticText}' was not emitted.");
                 }
             }
 
@@ -433,7 +501,7 @@ internal static class SafeCoreSyntaxProfileRunner
                 IsTruncated: result.IsTruncated,
                 ParserInvoked: parserInvoked,
                 ElapsedMilliseconds: clock.Elapsed.TotalMilliseconds,
-                Diagnostics: diagnostics);
+                Diagnostics: diagnostics) { ExpectedDiagnosticText = fixture.DiagnosticText };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -724,7 +792,7 @@ internal static class SafeCoreSyntaxProfileRunner
 
     private static bool IsExpectedHarnessException(Exception exception) => exception is
         IOException or UnauthorizedAccessException or InvalidDataException or JsonException or
-        ArgumentException or NotSupportedException;
+        ArgumentException or NotSupportedException or TimeoutException;
 
     private static string TrimDiagnostic(string value)
     {
@@ -773,6 +841,10 @@ internal static class SafeCoreSyntaxProfileRunner
     {
         public string? Profile { get; init; }
         public int Version { get; init; }
+        public string? RustVersion { get; init; }
+        public string? Edition { get; init; }
+        public int Denominator { get; init; }
+        public Dictionary<string, string[]>? Coverage { get; init; }
         public string? Parser { get; init; }
         public ManifestLimits? Limits { get; init; }
         public List<ManifestCase>? Cases { get; init; }
@@ -780,6 +852,7 @@ internal static class SafeCoreSyntaxProfileRunner
 
     private sealed class ManifestLimits
     {
+        public int TimeoutMilliseconds { get; init; }
         public int MaximumSourceLength { get; init; }
         public int MaximumTokens { get; init; }
         public int MaximumNodes { get; init; }
@@ -794,6 +867,7 @@ internal static class SafeCoreSyntaxProfileRunner
         public string? File { get; init; }
         public string? Expected { get; init; }
         public string? DiagnosticCode { get; init; }
+        public string? DiagnosticText { get; init; }
         public int? MinimumItems { get; init; }
         public int? MinimumFunctions { get; init; }
     }
@@ -802,7 +876,8 @@ internal static class SafeCoreSyntaxProfileRunner
         int Version,
         string Parser,
         SafeCoreSyntaxOptions Options,
-        IReadOnlyList<ValidatedCase> Cases);
+        IReadOnlyList<ValidatedCase> Cases,
+        IReadOnlyDictionary<string, string[]> Coverage);
 
     private sealed record ValidatedCase(
         string Id,
@@ -811,7 +886,8 @@ internal static class SafeCoreSyntaxProfileRunner
         string Expected,
         string? DiagnosticCode,
         int MinimumItems,
-        int MinimumFunctions);
+        int MinimumFunctions,
+        string? DiagnosticText);
 
     private sealed record BoundedFile(byte[] Bytes, string Sha256);
 
@@ -828,7 +904,12 @@ internal static class SafeCoreSyntaxProfileRunner
         IReadOnlyList<SyntaxCaseReport> Cases,
         SyntaxHostReport Host,
         SyntaxExecutionReport Execution,
-        string? HarnessError);
+        string? HarnessError)
+    {
+        public string? RustVersion { get; init; }
+        public string? Edition { get; init; }
+        public IReadOnlyDictionary<string, string[]>? Coverage { get; init; }
+    }
 
     private sealed record SyntaxScopeReport(
         bool RustcConformance,
@@ -858,7 +939,8 @@ internal static class SafeCoreSyntaxProfileRunner
         int MaximumOperations,
         int MaximumCases,
         int MaximumManifestBytes,
-        double DeadlineSeconds)
+        double DeadlineSeconds,
+        double ParserTimeoutSeconds)
     {
         public static SyntaxLimitsReport From(
             SafeCoreSyntaxOptions options,
@@ -873,7 +955,8 @@ internal static class SafeCoreSyntaxProfileRunner
                 options.MaximumOperations,
                 maximumCases,
                 maximumManifestBytes,
-                deadline.TotalSeconds);
+                deadline.TotalSeconds,
+                options.Timeout.TotalSeconds);
     }
 
     private sealed record SyntaxSummaryReport(
@@ -906,6 +989,8 @@ internal static class SafeCoreSyntaxProfileRunner
         double ElapsedMilliseconds,
         IReadOnlyList<SyntaxDiagnosticReport> Diagnostics)
     {
+        public string? ExpectedDiagnosticText { get; init; }
+
         public static SyntaxCaseReport Error(
             ValidatedCase fixture,
             TimeSpan elapsed,

@@ -193,12 +193,29 @@ Edition 2024 无损词元化，使用 Unicode 17.0.0 标识符、有界诊断和
 哈希、基线、类别映射、用例 ID 和分母；本地记录不宣称新的远程 CI 运行已经通过，
 也不代表完整 P1 门槛已关闭。
 
-P1-02 也已有早期的有界 `SafeCoreSyntax` 模型/解析器，覆盖代表性的模块、项、语句、
-表达式、模式、类型、泛型和属性，并提供稳定的 `RSP` 诊断。一个六用例
-`safe-core-syntax` 清单和下方验收命令生成
-`artifacts/conformance/safe-core-syntax.json`。当前报告通过 6/6 个用例，且仅作为
-解析器验收证据，而不是 rustc 差异或运行时一致性证据。其 P1-01 依赖现为 ✅ 已完成；
-P1-02 保持 🚧 进行中，因为完整语法基准集合尚未发布。
+P1-02 现已发布第 2 版 `safe-core-syntax`：36 个夹具和必需的 16 类映射，详见
+[语法契约](docs/syntax-profile.md)。解析器校验导入/属性语法和 Rust 运算符优先级，
+按精确范围拆分嵌套泛型闭合符，并表示单元结构体、公开元组字段、嵌套引用和负数
+字面量模式。单元结构体形态在 HIR 降低后仍会保留。经 rustc 1.98.0 核对，空泛型
+参数表/约束以及约束末尾的 `+` 继续被接受。解析取消和词法/语法共享超时贯通编译器
+及验收工具；错误恢复、节点/操作预算和递归 `else if` 均受限。
+
+清单与报告记录 Rust 1.98.0 / Edition 2024、类别/用例 ID、哈希、解析器限制、预期
+结果和诊断源码文本。解析失败用例必须同时匹配代码及范围文本。测试覆盖 AST 形态、
+128 个生成的格式错误输入、五种非法契约变异和两种错误预期变异。Windows/Linux CI
+现通过 `eng/Test-SyntaxEvidence.ps1` 校验当前清单/夹具哈希和完整证据；此处不宣称
+新的远程运行已通过。报告仍属于解析器验收证据，与 rustc 差分和运行时一致性分开。
+
+其 P1-01 依赖为 ✅ 已完成。P1-02 仍为 🚧 进行中：`where`、生命周期/const 泛型、
+trait/impl、更丰富的模式、`match`、循环、闭包、其他语法扩展及完整 AST 验收基准
+集合仍未完成。语法契约列出了当前排除项，并未把本轮增量当作完整安全核心语法完成。
+
+2026-09-06 的本地 P1-02 增量证据，环境为 Windows x64、.NET SDK 10.0.400/runtime
+10.0.11：零警告/错误的 Release 构建、116/116 项可执行回归、36/36 项语法用例、
+16/16 类映射、6/6 项名称解析以及对照 rustc 1.98.0 的 14/14 项基础类型差分均为
+✅ 已完成。PowerShell 7 证据检查器接受当前报告，并拒绝过期清单哈希。当前前端报告
+位于 `artifacts/conformance/`；差分报告为
+`artifacts/p1-02/safe-core-primitives-v1.json`。
 
 P1-03 现在基于该语法模型提供了有界的 `SafeCoreNameResolution` 原型。它在独立的
 类型/值命名空间中收集模块、导入、项、泛型、参数和局部符号，并实现别名、限定路径、
@@ -249,7 +266,7 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
 | P1-01 | ✅ 已完成 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 第 2 版清单通过 24/24 个精确词元/trivia/词元树/诊断/范围/源码重建夹具，并强制要求完整的 22 类词法映射。103/103 项回归工具覆盖边界、取消/超时、集合限制、4096 层深度和非法清单拒绝。按需启用的基础类型编译器使用该词法器；见上方记录的证据和词法契约。 |
-| P1-02 | 🚧 进行中 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | 已发布语法配置档基准集合中的每个用例都具有预期解析结果；明确拒绝不支持的语法。 |
+| P1-02 | 🚧 进行中 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | 第 2 版清单发布 36 个夹具和 16 个必需类别，记录预期结果及诊断源码文本。语法、AST 形态、取消/超时和错误恢复均有回归覆盖。完整语法配置档基准集合中的每个用例必须具有预期解析结果，并明确拒绝不支持的语法；更广泛的语法和完整 AST 基准集合仍未完成。 |
 | P1-03 | 🚧 进行中 | 将 AST 降低为 HIR，并实现模块、命名空间、可见性、导入和名称解析。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 保留六用例内存验收基准集合和四个 HIR 用例；基础类型编译现在使用 HIR 和规范化的导入目标。多文件工作区加载仍未完成。 |
 | P1-04 | 🚧 进行中 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 基础类型配置已实现 i32/bool/unit、直接函数签名、局部推断、可变性、条件/返回检查和发散控制流。聚合/引用类型与完整推断/强制转换基准集合仍未完成。 |
 | P1-05 | ⏳ 计划中 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | 泛型函数/类型发出封闭且 AOT 可达的主体；重叠、歧义和缺失约束会以可预测方式失败。 |

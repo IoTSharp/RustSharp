@@ -215,14 +215,38 @@ under `artifacts/conformance/` and `artifacts/p1-01/`. Windows/Linux CI now chec
 the current manifest hash, baseline, category map, case IDs and denominators;
 this local record does not claim a new remote CI run or close the full P1 gate.
 
-P1-02 also has an early bounded `SafeCoreSyntax` model/parser for
-representative modules, items, statements, expressions, patterns, types,
-generics, and attributes, with stable `RSP` diagnostics. A six-case
-`safe-core-syntax` manifest and the acceptance command below produce
-`artifacts/conformance/safe-core-syntax.json`. The current report passes 6/6
-cases and is parser-acceptance evidence only, not rustc differential or runtime
-conformance evidence. Its P1-01 dependency is now ✅ Complete; P1-02 remains
-🚧 In progress because the full syntax denominator has not been published.
+P1-02 now publishes version 2 of `safe-core-syntax`: 36 fixtures and a required
+16-category map, documented in the [syntax contract](docs/syntax-profile.md).
+The parser validates import/attribute grammar and Rust operator precedence,
+splits nested generic closers with exact spans, and represents unit structs,
+public tuple fields, nested references and negative literal patterns. Unit
+struct shape survives HIR lowering. Empty generic lists/bounds and trailing
+bound `+` remain accepted, as checked with rustc 1.98.0. Parse cancellation and
+a shared lexer/parser timeout propagate through the compiler and acceptance
+runners; recovery, node/operation budgets and recursive `else if` are bounded.
+
+The manifest and report record Rust 1.98.0 / Edition 2024, category/case IDs,
+hashes, parser limits, expected outcomes and diagnostic source text. Parse-fail
+cases must match both code and span text. Tests cover AST shapes, 128 generated
+malformed inputs, five invalid contract mutations and two incorrect expectation
+mutations. Windows/Linux CI now verify current manifest/fixture hashes and
+complete evidence with `eng/Test-SyntaxEvidence.ps1`; a new remote run is not
+claimed. Reports remain parser-acceptance evidence, separate from rustc
+differential or runtime conformance.
+
+Its P1-01 dependency is ✅ Complete. P1-02 remains 🚧 In progress: `where`,
+lifetime/const generics, traits/impls, richer patterns, `match`, loops, closures,
+other grammar extensions and the full AST acceptance denominator remain open.
+The syntax contract lists the current exclusions rather than treating this
+increment as full safe-core syntax completion.
+
+Local P1-02 increment evidence on 2026-09-06, Windows x64, .NET SDK
+10.0.400/runtime 10.0.11: ✅ Complete for a zero-warning/error Release build,
+116/116 executable regressions, 36/36 syntax cases, 16/16 categories, 6/6 name
+resolution and 14/14 primitive differential cases against rustc 1.98.0. The
+PowerShell 7 evidence checker accepts the current report and rejects a stale
+manifest hash. Current front-end reports are under `artifacts/conformance/`;
+the differential report is `artifacts/p1-02/safe-core-primitives-v1.json`.
 
 P1-03 now has a bounded `SafeCoreNameResolution` prototype over that syntax
 model. It collects module, import, item, generic, parameter, and local symbols
@@ -285,7 +309,7 @@ publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
 | P1-01 | ✅ Complete | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | Manifest v2 passes 24/24 exact token/trivia/tree/diagnostic/span/source-reconstruction fixtures and enforces the complete 22-category lexical map. The 103/103 regression harness covers boundaries, cancellation/deadlines, collection limits, depth 4096 and malformed-manifest rejection. The opt-in primitive compiler consumes the lexer; see the recorded evidence and lexical contract above. |
-| P1-02 | 🚧 In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax` | Every case in the published syntax-profile denominator has the expected parse result; unsupported syntax is rejected explicitly. |
+| P1-02 | 🚧 In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | Manifest v2 publishes 36 fixtures and 16 mandatory categories with expected outcomes and diagnostic source text. Grammar, AST shapes, cancellation/deadlines and recovery have regression coverage. Every case in the full syntax-profile denominator must have the expected parse result and unsupported syntax must be rejected explicitly; broader grammar and the full AST denominator remain open. |
 | P1-03 | 🚧 In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator and four HIR cases remain; primitive compilation now consumes HIR and canonical import targets. Multi-file workspace loading remains open. |
 | P1-04 | 🚧 In progress | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | i32/bool/unit, direct function signatures, local inference, mutability, conditional/return checks and divergence are implemented for the primitive profile. Aggregate/reference types and the full inference/coercion denominator remain open. |
 | P1-05 | ⏳ Planned | Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | Generic functions/types emit closed AOT-reachable bodies; overlap, ambiguity, and missing bounds fail predictably. |

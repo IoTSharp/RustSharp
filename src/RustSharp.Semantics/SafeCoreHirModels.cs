@@ -82,6 +82,7 @@ public enum SafeCoreHirNodeModifiers
     TupleStruct = 1 << 5,
     MutableReference = 1 << 6,
     RepeatedArray = 1 << 7,
+    UnitStruct = 1 << 8,
 }
 
 /// <summary>

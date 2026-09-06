@@ -171,7 +171,6 @@ internal static class SafeCoreCompilationTests
             "fn main() { let x: u32 = 1; }",
             "fn main() { let x = 1u32; }",
             "fn main() { let x = 1.5; }",
-            "fn main() { let x = +1; }",
             "fn main() { let x = 4 / 2; }",
             "fn main() { let mut x = 1; x += 1; }",
             "fn f<T>(x: T) {} fn main() {}",
@@ -182,6 +181,7 @@ internal static class SafeCoreCompilationTests
         ];
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         foreach (string source in sources) AssertRejected(source, "RST1001", deadline.Token);
+        AssertRejected("fn main() { let x = +1; }", "RSP1002", deadline.Token);
         return Task.CompletedTask;
     }
 

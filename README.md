@@ -45,13 +45,17 @@ punctuation, delimiters, token trees, reserved forms and malformed-input
 diagnostics. BOM/shebang handling, comment/CRLF boundaries and nondecimal float
 rejection are verified alongside cancellation, deadlines and iterative tree
 construction. Exact evidence and source reconstruction pass for all 24 cases;
-the full executable regression harness passes 103/103. See the
+the P1-01 executable regression harness recorded 103/103. See the
 [lexical contract](docs/lexical-profile.md) for the category denominator and
 the distinction from semantic or rustc differential conformance.
-The early `SafeCoreSyntax` model/parser handles
-representative modules, items,
-statements, expressions, patterns, types, generics, and attributes with stable
-`RSP` diagnostics. The bounded `SafeCoreNameResolution` prototype now collects
+`SafeCoreSyntax` now publishes a version 2 parser acceptance manifest with
+36 fixtures and 16 required categories for modules, items, statements,
+expressions, patterns, types, generics and attributes. It validates import and
+attribute grammar, Rust operator precedence, nested generic closers, tuple
+field visibility, unit structs, references and negative patterns. Parser
+cancellation/deadlines and bounded recovery are covered. See the
+[syntax contract](docs/syntax-profile.md) for the current grammar and remaining
+P1-02 work. The bounded `SafeCoreNameResolution` prototype now collects
 module/item/local symbols across separate type/value namespaces and resolves
 representative imports and qualified paths. Its nine harness tests cover
 type/value namespaces and qualified paths, visibility, duplicate, ambiguous,
@@ -166,15 +170,26 @@ acceptance evidence; a new remote CI run is not claimed. The report remains
 RustSharp lexer-acceptance evidence, separate from rustc differential and
 runtime conformance. The full P1 milestone remains 🚧 In progress.
 
-The separate safe-core syntax profile passes the current six-case parser
-acceptance manifest and writes `artifacts/conformance/safe-core-syntax.json`:
+The separate safe-core syntax profile publishes 36 parser acceptance cases
+and writes `artifacts/conformance/safe-core-syntax.json`:
 
 ```text
 dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax
+pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1
 ```
 
-That 6/6 report measures RustSharp parser acceptance only. It is not rustc
-differential or runtime conformance evidence.
+The version 2 report measures RustSharp parser acceptance only. All 16 category
+mappings are required; rejection cases must match a diagnostic code and the
+exact source text under its span. Windows/Linux CI verify current manifest and
+fixture hashes, case IDs, outcomes and diagnostic spans. This is not rustc
+differential or runtime conformance evidence. P1-02 remains 🚧 In progress for
+the broader grammar and full AST acceptance denominator.
+
+✅ Complete for this P1-02 increment on 2026-09-06, Windows x64: Release build
+with zero warnings/errors, 116/116 executable regressions, 36/36 syntax cases,
+16/16 categories, 6/6 name-resolution cases and 14/14 primitive differential
+cases against rustc 1.98.0. The CI evidence checker accepts current sources and
+rejects a stale report; these are local results, not a new remote CI run.
 
 The six-case name-resolution acceptance profile writes
 `artifacts/conformance/safe-core-name-resolution.json`:

@@ -648,7 +648,7 @@ internal static class SafeCoreNameResolutionProfileRunner
 
             cancellationToken.ThrowIfCancellationRequested();
             parserInvoked = true;
-            SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, fixture.File, syntaxOptions);
+            SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, fixture.File, syntaxOptions, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             SafeCoreNameResolutionResult? resolution = null;
@@ -1218,7 +1218,7 @@ internal static class SafeCoreNameResolutionProfileRunner
 
     private static bool IsExpectedHarnessException(Exception exception) => exception is
         IOException or UnauthorizedAccessException or InvalidDataException or JsonException or
-        ArgumentException or NotSupportedException;
+        ArgumentException or NotSupportedException or TimeoutException;
 
     private static string TrimDiagnostic(string value)
     {
