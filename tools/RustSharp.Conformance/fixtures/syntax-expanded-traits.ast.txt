@@ -1,0 +1,141 @@
+unit@0:480
+  trait@0:191 name=U3RyZWFt
+    visibility@0:0 kind=Private path=-
+    generic@13:2 name=J2E= kind=Lifetime
+    generic@17:14 name=Tg== kind=Const
+      path-type@26:5 absolute=0
+        segment@26:5 name=dXNpemU= fn=0 generic=0
+    trait-bound@34:5 optional=0
+      path-type@34:5 absolute=0
+        segment@34:5 name=U2l6ZWQ= fn=0 generic=0
+    where@40:14
+      where-predicate@46:8
+        path-type@46:4 absolute=0
+          segment@46:4 name=U2VsZg== fn=0 generic=0
+        lifetime-bound@52:2 name=J2E=
+    associated@61:35 name=SXRlbQ== visibility=Private visibility-path=- kind=type
+      visibility@61:0 kind=Private path=-
+      generic@71:2 name=J2I= kind=Lifetime
+      trait-bound@76:4 optional=0
+        path-type@76:4 absolute=0
+          segment@76:4 name=Q29weQ== fn=0 generic=0
+      where@81:14
+        where-predicate@87:8
+          path-type@87:4 absolute=0
+            segment@87:4 name=U2VsZg== fn=0 generic=0
+          lifetime-bound@93:2 name=J2I=
+    associated@101:18 name=U0laRQ== visibility=Private visibility-path=- kind=const
+      visibility@101:0 kind=Private path=-
+      path-type@113:5 absolute=0
+        segment@113:5 name=dXNpemU= fn=0 generic=0
+    associated@124:40 name=bmV4dA== visibility=Private visibility-path=- kind=function
+      visibility@124:0 kind=Private path=-
+      associated-function@124:40 const=0
+        parameter@132:12
+          identifier-pattern@140:4 name=c2VsZg== mut=1 ref=0
+          reference-type@132:12 mut=1 life=J2E=
+            path-type@140:4 absolute=0
+              segment@140:4 name=U2VsZg== fn=0 generic=0
+          receiver@132:12 ref=1 mut=1 life=J2E=
+        path-type@149:14 absolute=0
+          segment@149:4 name=U2VsZg== fn=0 generic=0
+          segment@155:8 name=SXRlbQ== fn=0 generic=1
+            lifetime-arg@160:2 name=J2E=
+    associated@169:20 name=dGFrZQ== visibility=Private visibility-path=- kind=function
+      visibility@169:0 kind=Private path=-
+      associated-function@169:20 const=0
+        parameter@177:8
+          identifier-pattern@181:4 name=c2VsZg== mut=1 ref=0
+          path-type@181:4 absolute=0
+            segment@181:4 name=U2VsZg== fn=0 generic=0
+          receiver@177:8 ref=0 mut=1 life=-
+        block@187:2
+  impl@192:219
+    visibility@192:0 kind=Private path=-
+    generic@197:2 name=J2E= kind=Lifetime
+    generic@201:14 name=Tg== kind=Const
+      path-type@210:5 absolute=0
+        segment@210:5 name=dXNpemU= fn=0 generic=0
+    path-type@217:13 absolute=0
+      segment@217:13 name=U3RyZWFt fn=0 generic=1
+        lifetime-arg@224:2 name=J2E=
+        type-arg@228:1
+          path-type@228:1 absolute=0
+            segment@228:1 name=Tg== fn=0 generic=0
+    path-type@235:13 absolute=0
+      segment@235:13 name=QnVmZmVy fn=0 generic=1
+        lifetime-arg@242:2 name=J2E=
+        type-arg@246:1
+          path-type@246:1 absolute=0
+            segment@246:1 name=Tg== fn=0 generic=0
+    where@249:17
+      where-predicate@255:11
+        path-type@255:4 absolute=0
+          segment@255:4 name=U2VsZg== fn=0 generic=0
+        trait-bound@261:5 optional=0
+          path-type@261:5 absolute=0
+            segment@261:5 name=U2l6ZWQ= fn=0 generic=0
+    associated@273:34 name=SXRlbQ== visibility=Private visibility-path=- kind=type
+      visibility@273:0 kind=Private path=-
+      generic@283:2 name=J2I= kind=Lifetime
+      where@292:14
+        where-predicate@298:8
+          path-type@298:4 absolute=0
+            segment@298:4 name=U2VsZg== fn=0 generic=0
+          lifetime-bound@304:2 name=J2I=
+      path-type@289:2 absolute=0
+        segment@289:2 name=dTg= fn=0 generic=0
+    associated@312:22 name=U0laRQ== visibility=Private visibility-path=- kind=const
+      visibility@312:0 kind=Private path=-
+      path-type@324:5 absolute=0
+        segment@324:5 name=dXNpemU= fn=0 generic=0
+      name@332:1 path=Tg==
+        path-segment@332:1 name=Tg== generic=0
+    associated@339:45 name=bmV4dA== visibility=Private visibility-path=- kind=function
+      visibility@339:0 kind=Private path=-
+      associated-function@339:45 const=0
+        parameter@347:12
+          identifier-pattern@355:4 name=c2VsZg== mut=1 ref=0
+          reference-type@347:12 mut=1 life=J2E=
+            path-type@355:4 absolute=0
+              segment@355:4 name=U2VsZg== fn=0 generic=0
+          receiver@347:12 ref=1 mut=1 life=J2E=
+        path-type@364:14 absolute=0
+          segment@364:4 name=U2VsZg== fn=0 generic=0
+          segment@370:8 name=SXRlbQ== fn=0 generic=1
+            lifetime-arg@375:2 name=J2E=
+        block@379:5
+          literal@381:1 kind=IntegerLiteral raw=MA==
+    associated@389:20 name=dGFrZQ== visibility=Private visibility-path=- kind=function
+      visibility@389:0 kind=Private path=-
+      associated-function@389:20 const=0
+        parameter@397:8
+          identifier-pattern@401:4 name=c2VsZg== mut=1 ref=0
+          path-type@401:4 absolute=0
+            segment@401:4 name=U2VsZg== fn=0 generic=0
+          receiver@397:8 ref=0 mut=1 life=-
+        block@407:2
+  impl@412:67
+    visibility@412:0 kind=Private path=-
+    path-type@417:18 absolute=0
+      segment@417:18 name=QnVmZmVy fn=0 generic=1
+        lifetime-arg@424:7 name=J3N0YXRpYw==
+        const-arg@433:1
+          literal@433:1 kind=IntegerLiteral raw=NA==
+    associated@449:28 name=dHlwZWQ= visibility=Crate visibility-path=Y3JhdGU= kind=function
+      visibility@438:10 kind=Crate path=Y3JhdGU=
+      associated-function@449:28 const=0
+        parameter@458:15
+          identifier-pattern@458:4 name=c2VsZg== mut=0 ref=0
+          path-type@464:9 absolute=0
+            segment@464:9 name=Qm94 fn=0 generic=1
+              type-arg@468:4
+                path-type@468:4 absolute=0
+                  segment@468:4 name=U2VsZg== fn=0 generic=0
+          receiver@458:15 ref=0 mut=0 life=-
+            path-type@464:9 absolute=0
+              segment@464:9 name=Qm94 fn=0 generic=1
+                type-arg@468:4
+                  path-type@468:4 absolute=0
+                    segment@468:4 name=U2VsZg== fn=0 generic=0
+        block@475:2

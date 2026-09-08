@@ -1,0 +1,7 @@
+unit@0:26
+  function@0:25 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    generic@5:14 name=Tg== kind=Const
+      path-type@14:5 absolute=0
+        segment@14:5 name=dXNpemU= fn=0 generic=0
+    block@23:2

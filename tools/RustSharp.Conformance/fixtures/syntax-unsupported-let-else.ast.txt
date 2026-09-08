@@ -1,0 +1,9 @@
+unit@0:38
+  function@0:37 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:30
+      statement@9:26 kind=Let
+        identifier-pattern@13:4 name=aXRlbQ== mut=0 ref=0
+        name@20:6 path=c291cmNl
+          path-segment@20:6 name=c291cmNl generic=0
+        block@32:2

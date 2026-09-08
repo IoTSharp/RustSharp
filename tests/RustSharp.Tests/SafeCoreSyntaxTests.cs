@@ -13,11 +13,11 @@ internal static class SafeCoreSyntaxTests
         new("safe-core rejects unsupported syntax explicitly", RejectsUnsupportedAsync),
         new("safe-core does not reinterpret keywords as names", RejectsKeywordsAsNamesAsync),
         new("safe-core rejects dangling item prefixes", RejectsDanglingItemPrefixesAsync),
-        new("safe-core rejects unmodeled restricted visibility", RejectsRestrictedVisibilityAsync),
+        new("safe-core retains restricted visibility without widening access", RejectsRestrictedVisibilityAsync),
         new("safe-core preserves unary precedence and assignment associativity", ParsesOperatorBindingAsync),
         new("safe-core validates literal suffixes after lexing", ValidatesLiteralSuffixesAsync),
         new("safe-core rejects dangling path-pattern separators", RejectsDanglingPathPatternSeparatorAsync),
-        new("safe-core rejects external module declarations", RejectsExternalModuleDeclarationsAsync),
+        new("safe-core distinguishes external module declarations", RejectsExternalModuleDeclarationsAsync),
         new("safe-core reports malformed syntax with stable diagnostics", ReportsMalformedAsync),
         new("safe-core obeys explicit node and operation limits", ObeysLimitsAsync),
         new("safe-core published corpus has bounded outcomes", CorpusAsync),
@@ -117,9 +117,9 @@ internal static class SafeCoreSyntaxTests
         (string Name, string Source, string Keyword)[] cases =
         [
             ("unsafe", "unsafe fn dangerous() {}", "unsafe"),
-            ("loop", "fn main() { loop {} }", "loop"),
-            ("break", "fn main() { break; }", "break"),
-            ("continue", "fn main() { continue; }", "continue"),
+            ("async", "async fn pending() {}", "async"),
+            ("extern", "extern \"C\" { fn foreign(); }", "extern"),
+            ("union", "union Raw { value: i32 }", "union"),
         ];
 
         foreach ((string name, string source, string keyword) in cases)
@@ -142,7 +142,7 @@ internal static class SafeCoreSyntaxTests
     private static Task RejectsKeywordsAsNamesAsync()
     {
         SafeCoreSyntaxResult expression = SafeCoreSyntax.Parse(
-            "fn main() { loop; }",
+            "fn main() { async; }",
             "keyword-expression.rs");
         AssertEx.False(expression.IsSuccessful, "An unsupported keyword must not become a name expression.");
         AssertEx.True(
@@ -175,19 +175,18 @@ internal static class SafeCoreSyntaxTests
 
     private static Task RejectsRestrictedVisibilityAsync()
     {
-        foreach (string visibility in new[] { "pub(crate)", "pub(self)", "pub(super)", "pub(in crate)", "pub(foo)" })
+        foreach (string visibility in new[] { "pub(crate)", "pub(self)", "pub(super)", "pub(in crate)" })
         {
             SafeCoreSyntaxResult result = SafeCoreSyntax.Parse(
                 $"{visibility} fn exposed() {{}}",
                 "restricted-visibility.rs");
-            AssertEx.False(
-                result.IsSuccessful,
-                $"'{visibility}' must not be treated as unrestricted public visibility.");
-            AssertEx.True(result.Root is null, "Unsupported visibility must not expose a syntax root.");
-            Diagnostic diagnostic = result.Diagnostics.Single();
-            AssertEx.Equal(SafeCoreSyntaxDiagnosticCodes.UnsupportedSyntax, diagnostic.Code);
-            AssertEx.Equal("(", result.GetText(diagnostic.Span));
+            AssertSuccessful(result);
+            SafeCoreItemSyntax item = result.Root!.Items.Single();
+            AssertEx.False(item.IsPublic, $"'{visibility}' must not become unrestricted public visibility.");
+            AssertEx.Equal(visibility, result.GetText(item.Visibility.Span));
         }
+
+        AssertEx.False(SafeCoreSyntax.Parse("pub(foo) fn exposed() {}").IsSuccessful, "Invalid visibility must fail.");
 
         return Task.CompletedTask;
     }
@@ -247,13 +246,10 @@ internal static class SafeCoreSyntaxTests
         SafeCoreSyntaxResult result = SafeCoreSyntax.Parse(
             "mod platform; fn main() {}",
             "external-module.rs");
-        AssertEx.False(
-            result.IsSuccessful,
-            "An external module must not be modeled as an empty inline module.");
-        AssertEx.True(result.Root is null, "An unsupported external module must not expose a syntax root.");
-        Diagnostic diagnostic = result.Diagnostics.Single();
-        AssertEx.Equal(SafeCoreSyntaxDiagnosticCodes.UnsupportedSyntax, diagnostic.Code);
-        AssertEx.Equal(";", result.GetText(diagnostic.Span));
+        AssertSuccessful(result);
+        var module = (SafeCoreModuleSyntax)result.Root!.Items[0];
+        AssertEx.True(module.IsExternal, "External declarations must retain their distinct form.");
+        AssertEx.Equal("mod platform;", result.GetText(module.Span));
         return Task.CompletedTask;
     }
 
@@ -297,14 +293,14 @@ internal static class SafeCoreSyntaxTests
         string manifestPath = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", "safe-core-syntax-manifest.json");
         using JsonDocument manifest = JsonDocument.Parse(File.ReadAllText(manifestPath));
         JsonElement cases = manifest.RootElement.GetProperty("cases");
-        AssertEx.Equal(36, cases.GetArrayLength());
+        AssertEx.Equal(manifest.RootElement.GetProperty("denominator").GetInt32(), cases.GetArrayLength());
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         var inspected = 0;
         foreach (JsonElement item in cases.EnumerateArray())
         {
             inspected++;
-            AssertEx.True(inspected <= 64, "The syntax corpus must remain explicitly bounded.");
+            AssertEx.True(inspected <= 256, "The syntax corpus must remain explicitly bounded.");
             deadline.Token.ThrowIfCancellationRequested();
             string fileName = item.GetProperty("file").GetString()!;
             string source = File.ReadAllText(Path.Combine(Path.GetDirectoryName(manifestPath)!, fileName));

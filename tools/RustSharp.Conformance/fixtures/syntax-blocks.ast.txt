@@ -1,0 +1,64 @@
+unit@0:210
+  function@0:209 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    parameter@5:10
+      identifier-pattern@5:4 name=ZmxhZw== mut=0 ref=0
+      path-type@11:4 absolute=0
+        segment@11:4 name=Ym9vbA== fn=0 generic=0
+    path-type@20:3 absolute=0
+      segment@20:3 name=aTMy fn=0 generic=0
+    block@24:185
+      statement@30:23 kind=Let
+        identifier-pattern@34:13 name=dW5pbml0aWFsaXplZA== mut=0 ref=0
+        path-type@49:3 absolute=0
+          segment@49:3 name=aTMy fn=0 generic=0
+      statement@58:41 kind=Let
+        identifier-pattern@62:9 name=dmFsdWU= mut=1 ref=0
+        block-expr@74:24
+          block@74:24
+            statement@76:14 kind=Let
+              identifier-pattern@80:5 name=aW5uZXI= mut=0 ref=0
+              literal@88:1 kind=IntegerLiteral raw=MQ==
+            name@91:5 path=aW5uZXI=
+              path-segment@91:5 name=aW5uZXI= generic=0
+      statement@104:14 kind=Expression
+        semicolon@104:14 value=0
+        block-expr@104:14
+          block@104:14
+            statement@106:10 kind=Expression
+              semicolon@106:10 value=1
+              binary@106:9 op=PQ==
+                name@106:5 path=dmFsdWU=
+                  path-segment@106:5 name=dmFsdWU= generic=0
+                literal@114:1 kind=IntegerLiteral raw=Mg==
+      statement@123:51 kind=Expression
+        semicolon@123:51 value=0
+        if@123:51
+          name@126:4 path=ZmxhZw==
+            path-segment@126:4 name=ZmxhZw== generic=0
+          block@131:14
+            statement@133:10 kind=Expression
+              semicolon@133:10 value=1
+              binary@133:9 op=PQ==
+                name@133:5 path=dmFsdWU=
+                  path-segment@133:5 name=dmFsdWU= generic=0
+                literal@141:1 kind=IntegerLiteral raw=Mw==
+          if@151:23
+            name@154:5 path=b3RoZXI=
+              path-segment@154:5 name=b3RoZXI= generic=0
+            block@160:14
+              statement@162:10 kind=Expression
+                semicolon@162:10 value=1
+                binary@162:9 op=PQ==
+                  name@162:5 path=dmFsdWU=
+                    path-segment@162:5 name=dmFsdWU= generic=0
+                  literal@170:1 kind=IntegerLiteral raw=NA==
+      if@179:28
+        name@182:4 path=ZmxhZw==
+          path-segment@182:4 name=ZmxhZw== generic=0
+        block@187:9
+          name@189:5 path=dmFsdWU=
+            path-segment@189:5 name=dmFsdWU= generic=0
+        block-expr@202:5
+          block@202:5
+            literal@204:1 kind=IntegerLiteral raw=MA==

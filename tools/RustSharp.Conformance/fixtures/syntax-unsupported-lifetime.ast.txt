@@ -1,0 +1,5 @@
+unit@0:14
+  function@0:13 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    generic@5:2 name=J2E= kind=Lifetime
+    block@11:2

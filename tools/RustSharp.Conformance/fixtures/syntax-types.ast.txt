@@ -1,0 +1,41 @@
+unit@0:174
+  type-alias@0:15 name=VW5pdA==
+    visibility@0:0 kind=Private path=-
+    unit-type@12:2
+  type-alias@16:15 name=TmV2ZXI=
+    visibility@16:0 kind=Private path=-
+    never-type@29:1
+  type-alias@32:24 name=UGFpcg==
+    visibility@32:0 kind=Private path=-
+    tuple-type@44:11 trailing=0
+      path-type@45:3 absolute=0
+        segment@45:3 name=aTMy fn=0 generic=0
+      path-type@50:4 absolute=0
+        segment@50:4 name=Ym9vbA== fn=0 generic=0
+  type-alias@57:21 name=U2luZ2xl
+    visibility@57:0 kind=Private path=-
+    tuple-type@71:6 trailing=1
+      path-type@72:3 absolute=0
+        segment@72:3 name=aTMy fn=0 generic=0
+  type-alias@79:19 name=R3JvdXA=
+    visibility@79:0 kind=Private path=-
+    tuple-type@92:5 trailing=0
+      path-type@93:3 absolute=0
+        segment@93:3 name=aTMy fn=0 generic=0
+  type-alias@99:32 name=UmVmcw==
+    visibility@99:0 kind=Private path=-
+    reference-type@111:19 mut=0 life=-
+      reference-type@112:18 mut=1 life=J3N0YXRpYw==
+        slice-type@125:5
+          path-type@126:3 absolute=0
+            segment@126:3 name=aTMy fn=0 generic=0
+  type-alias@132:41 name=QXJyYXk=
+    visibility@132:0 kind=Private path=-
+    array-type@145:27
+      path-type@146:18 absolute=0
+        segment@146:5 name=Y3JhdGU= fn=0 generic=0
+        segment@153:5 name=bW9kZWw= fn=0 generic=0
+        segment@160:4 name=SXRlbQ== fn=0 generic=0
+      binary@166:5 op=Kw==
+        literal@166:1 kind=IntegerLiteral raw=MQ==
+        literal@170:1 kind=IntegerLiteral raw=Mg==

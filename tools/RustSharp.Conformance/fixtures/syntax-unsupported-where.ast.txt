@@ -1,0 +1,11 @@
+unit@0:32
+  struct@0:31 name=SXRlbQ== tuple=0 unit=0
+    visibility@0:0 kind=Private path=-
+    generic@12:1 name=VA== kind=Type
+    where@15:13
+      where-predicate@21:7
+        path-type@21:1 absolute=0
+          segment@21:1 name=VA== fn=0 generic=0
+        trait-bound@24:4 optional=0
+          path-type@24:4 absolute=0
+            segment@24:4 name=Q29weQ== fn=0 generic=0

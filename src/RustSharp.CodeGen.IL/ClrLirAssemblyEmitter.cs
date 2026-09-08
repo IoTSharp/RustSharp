@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -51,12 +53,14 @@ public static class ClrLirAssemblyEmitter
         string sourceText,
         string sourcePath,
         string pdbFileName,
-        ReadOnlyMemory<byte> sourceBytes = default)
+        ReadOnlyMemory<byte> sourceBytes = default,
+        SafeCoreSourceMap? sourceMap = null,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(program);
         if (!program.IsSuccessful) throw new ArgumentException("A successful lowered program is required.", nameof(program));
         return EmitCore(program.Methods, "Main", assemblyName, sourceText, sourcePath,
-            pdbFileName, sourceBytes, program.MethodSpans);
+            pdbFileName, sourceBytes, program.MethodSpans, sourceMap, cancellationToken);
     }
 
     private static GeneratedAssembly EmitCore(
@@ -67,10 +71,16 @@ public static class ClrLirAssemblyEmitter
         string? sourcePath,
         string? pdbFileName,
         ReadOnlyMemory<byte> sourceBytes,
-        IReadOnlyList<TextSpan>? methodSpans = null)
+        IReadOnlyList<TextSpan>? methodSpans = null,
+        SafeCoreSourceMap? sourceMap = null,
+        CancellationToken cancellationToken = default)
     {
+        var sourceMapClock = Stopwatch.StartNew();
+        cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
         if (methods.Count is < 1 or > 128) throw new ArgumentException("Expected 1 to 128 methods.", nameof(methods));
+        if (sourceMap is not null && sourceMap.Documents.Count is (< 1 or > 1024))
+            throw new ArgumentException("Expected 1 to 1024 source documents.", nameof(sourceMap));
         var definitions = new Dictionary<string, (ClrLirMethod Method, MethodDefinitionHandle Handle)>(StringComparer.Ordinal);
         for (int index = 0; index < methods.Count; index++)
         {
@@ -100,6 +110,24 @@ public static class ClrLirAssemblyEmitter
         foreach (ClrLirMethod method in methods)
             identity.AppendData(CreateModuleVersionId(assemblyName, method).ToByteArray());
         identity.AppendData(sourceBytes.Span);
+        if (sourceMap is not null)
+        {
+            Span<byte> encodedLength = stackalloc byte[sizeof(int)];
+            BinaryPrimitives.WriteInt32LittleEndian(encodedLength, sourceMap.Documents.Count);
+            identity.AppendData(encodedLength);
+            for (int index = 0; index < sourceMap.Documents.Count; index++)
+            {
+                CheckSourceMapBudget();
+                SafeCoreSourceDocument sourceDocument = sourceMap.Documents[index];
+                byte[] pathBytes = Encoding.UTF8.GetBytes(sourceDocument.Path);
+                BinaryPrimitives.WriteInt32LittleEndian(encodedLength, pathBytes.Length);
+                identity.AppendData(encodedLength);
+                identity.AppendData(pathBytes);
+                BinaryPrimitives.WriteInt32LittleEndian(encodedLength, sourceDocument.Bytes.Length);
+                identity.AppendData(encodedLength);
+                identity.AppendData(sourceDocument.Bytes.Span);
+            }
+        }
         Guid moduleVersionId = new(identity.GetHashAndReset().AsSpan(0, 16));
 
         metadata.AddModule(
@@ -179,16 +207,38 @@ public static class ClrLirAssemblyEmitter
         {
             ReadOnlyMemory<byte> effectiveBytes = sourceBytes.IsEmpty ? Encoding.UTF8.GetBytes(sourceText) : sourceBytes;
             var pdbMetadata = new MetadataBuilder();
-            DocumentHandle document = pdbMetadata.AddDocument(
-                pdbMetadata.GetOrAddDocumentName(sourcePath),
-                pdbMetadata.GetOrAddGuid(new Guid("8829d00f-11b8-4213-878b-770e8597ac16")),
-                pdbMetadata.GetOrAddBlob(SHA256.HashData(effectiveBytes.Span)), default);
+            var sourceDocuments = new Dictionary<string, DocumentHandle>(StringComparer.Ordinal);
+            DocumentHandle document = default;
+            if (sourceMap is null)
+            {
+                document = AddSourceDocument(sourcePath, effectiveBytes);
+            }
+            else
+            {
+                for (int index = 0; index < sourceMap.Documents.Count; index++)
+                {
+                    CheckSourceMapBudget();
+                    SafeCoreSourceDocument sourceDocument = sourceMap.Documents[index];
+                    sourceDocuments.Add(sourceDocument.Path, AddSourceDocument(sourceDocument.Path, sourceDocument.Bytes));
+                }
+            }
             for (int index = 0; index < methods.Count; index++)
             {
-                BlobHandle points = IlAssemblyEmitter.CreateSequencePointsBlob(pdbMetadata, sourceText,
-                    [new IlAssemblyEmitter.SequencePointData(0, methodSpans[index])],
+                CheckSourceMapBudget();
+                string methodSource = sourceText;
+                TextSpan methodSpan = methodSpans[index];
+                DocumentHandle methodDocument = document;
+                if (sourceMap is not null)
+                {
+                    SafeCoreSourceLocation location = sourceMap.MapSpan(methodSpan);
+                    methodSource = location.Document.Text;
+                    methodSpan = location.Span;
+                    methodDocument = sourceDocuments[location.Document.Path];
+                }
+                BlobHandle points = IlAssemblyEmitter.CreateSequencePointsBlob(pdbMetadata, methodSource,
+                    [new IlAssemblyEmitter.SequencePointData(0, methodSpan)],
                     MetadataTokens.GetRowNumber(localSignatures[index]));
-                pdbMetadata.AddMethodDebugInformation(points.IsNil ? default : document, points);
+                pdbMetadata.AddMethodDebugInformation(points.IsNil ? default : methodDocument, points);
             }
 
             var pdbImage = new BlobBuilder();
@@ -196,6 +246,11 @@ public static class ClrLirAssemblyEmitter
             pdbBytes = pdbImage.ToArray();
             debugDirectory = new DebugDirectoryBuilder();
             debugDirectory.AddCodeViewEntry(pdbFileName, pdbId, 0x0100);
+
+            DocumentHandle AddSourceDocument(string path, ReadOnlyMemory<byte> bytes) => pdbMetadata.AddDocument(
+                pdbMetadata.GetOrAddDocumentName(path),
+                pdbMetadata.GetOrAddGuid(new Guid("8829d00f-11b8-4213-878b-770e8597ac16")),
+                pdbMetadata.GetOrAddBlob(SHA256.HashData(bytes.Span)), default);
         }
 
         var peHeader = new PEHeaderBuilder(
@@ -213,6 +268,13 @@ public static class ClrLirAssemblyEmitter
         peBuilder.Serialize(peImage);
 
         return new GeneratedAssembly(peImage.ToArray(), pdbBytes, RuntimeConfig);
+
+        void CheckSourceMapBudget()
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (sourceMapClock.Elapsed > TimeSpan.FromSeconds(10))
+                throw new TimeoutException("CLR source-map emission exceeded its time limit.");
+        }
     }
 
     private static EntityHandle ResolveCall(

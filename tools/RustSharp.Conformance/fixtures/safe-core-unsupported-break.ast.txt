@@ -1,0 +1,7 @@
+unit@0:25
+  function@0:24 name=bWFpbg== const=0
+    visibility@0:0 kind=Private path=-
+    block@10:14
+      statement@16:6 kind=Expression
+        semicolon@16:6 value=1
+        break-expr@16:5 label=-

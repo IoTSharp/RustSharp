@@ -1,0 +1,79 @@
+unit@0:249
+  type-alias@0:56 name=QWxpYXM=
+    visibility@0:0 kind=Private path=-
+    generic@11:25 name=VA== kind=Type
+      trait-bound@14:15 optional=0
+        path-type@14:15 absolute=0
+          segment@14:15 name=Qm91bmQ= fn=0 generic=1
+            type-arg@20:8
+              path-type@20:8 absolute=0
+                segment@20:8 name=VmVj fn=0 generic=1
+                  type-arg@24:3
+                    path-type@24:3 absolute=0
+                      segment@24:3 name=aTMy fn=0 generic=0
+      trait-bound@32:4 optional=0
+        path-type@32:4 absolute=0
+          segment@32:4 name=Q29weQ== fn=0 generic=0
+    path-type@40:15 absolute=0
+      segment@40:15 name=T3V0ZXI= fn=0 generic=1
+        type-arg@46:8
+          path-type@46:8 absolute=0
+            segment@46:8 name=SW5uZXI= fn=0 generic=1
+              type-arg@52:1
+                path-type@52:1 absolute=0
+                  segment@52:1 name=VA== fn=0 generic=0
+  function@57:118 name=Zg== const=0
+    visibility@57:0 kind=Private path=-
+    generic@62:7 name=VA== kind=Type
+      trait-bound@65:4 optional=0
+        path-type@65:4 absolute=0
+          segment@65:4 name=Q29weQ== fn=0 generic=0
+    generic@71:1 name=VQ== kind=Type
+    parameter@74:8
+      identifier-pattern@74:5 name=dmFsdWU= mut=0 ref=0
+      path-type@81:1 absolute=0
+        segment@81:1 name=VA== fn=0 generic=0
+    parameter@84:8
+      identifier-pattern@84:5 name=b3RoZXI= mut=0 ref=0
+      path-type@91:1 absolute=0
+        segment@91:1 name=VQ== fn=0 generic=0
+    path-type@97:1 absolute=0
+      segment@97:1 name=VA== fn=0 generic=0
+    block@99:76
+      statement@105:31 kind=Let
+        identifier-pattern@109:1 name=YQ== mut=0 ref=0
+        path-type@112:17 absolute=0
+          segment@112:17 name=T3V0ZXI= fn=0 generic=1
+            type-arg@118:10
+              path-type@118:10 absolute=0
+                segment@118:10 name=SW5uZXI= fn=0 generic=1
+                  type-arg@124:3
+                    path-type@124:3 absolute=0
+                      segment@124:3 name=aTMy fn=0 generic=0
+        name@130:5 path=dmFsdWU=
+          path-segment@130:5 name=dmFsdWU= generic=0
+      statement@141:22 kind=Let
+        identifier-pattern@145:1 name=Yg== mut=0 ref=0
+        path-type@148:8 absolute=0
+          segment@148:8 name=VmVj fn=0 generic=1
+            type-arg@152:3
+              path-type@152:3 absolute=0
+                segment@152:3 name=aTMy fn=0 generic=0
+        name@157:5 path=dmFsdWU=
+          path-segment@157:5 name=dmFsdWU= generic=0
+      name@168:5 path=dmFsdWU=
+        path-segment@168:5 name=dmFsdWU= generic=0
+  function@176:15 name=ZW1wdHk= const=0
+    visibility@176:0 kind=Private path=-
+    block@189:2
+  function@192:23 name=ZW1wdHlfYm91bmQ= const=0
+    visibility@192:0 kind=Private path=-
+    generic@207:2 name=VA== kind=Type
+    block@213:2
+  function@216:32 name=dHJhaWxpbmdfYm91bmQ= const=0
+    visibility@216:0 kind=Private path=-
+    generic@234:8 name=VA== kind=Type
+      trait-bound@237:4 optional=0
+        path-type@237:4 absolute=0
+          segment@237:4 name=Q29weQ== fn=0 generic=0
+    block@246:2

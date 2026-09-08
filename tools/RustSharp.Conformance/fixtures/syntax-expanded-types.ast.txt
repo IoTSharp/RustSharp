@@ -1,0 +1,63 @@
+unit@0:249
+  type-alias@0:75 name=Q2FsbGJhY2s=
+    visibility@0:0 kind=Private path=-
+    function-type@16:58
+      generic@20:2 name=J2E= kind=Lifetime
+      function-parameter@27:30 name=dmFsdWU=
+        attribute@27:15 inner=0 doc=0 path=Y2Zn args=KGVuYWJsZWQp text=-
+        reference-type@50:7 mut=0 life=J2E=
+          path-type@54:3 absolute=0
+            segment@54:3 name=c3Ry fn=0 generic=0
+      function-parameter@59:6 name=Xw==
+        path-type@62:3 absolute=0
+          segment@62:3 name=aTMy fn=0 generic=0
+      path-type@70:4 absolute=0
+        segment@70:4 name=Ym9vbA== fn=0 generic=0
+  type-alias@76:58 name=Q2xvc3VyZQ==
+    visibility@76:0 kind=Private path=-
+    bounded-type@91:42 dyn=1
+      trait-bound@95:28 optional=0
+        generic@99:2 name=J2I= kind=Lifetime
+        path-type@103:20 absolute=0
+          segment@103:20 name=Rm4= fn=1 generic=0
+            reference-type@106:7 mut=0 life=J2I=
+              path-type@110:3 absolute=0
+                segment@110:3 name=c3Ry fn=0 generic=0
+            path-type@118:5 absolute=0
+              segment@118:5 name=dXNpemU= fn=0 generic=0
+      lifetime-bound@126:7 name=J3N0YXRpYw==
+  type-alias@135:34 name=T3BhcXVl
+    visibility@135:0 kind=Private path=-
+    bounded-type@149:19 dyn=0
+      trait-bound@154:4 optional=0
+        path-type@154:4 absolute=0
+          segment@154:4 name=Q29weQ== fn=0 generic=0
+      lifetime-bound@161:7 name=J3N0YXRpYw==
+  type-alias@170:78 name=QQ==
+    visibility@170:0 kind=Private path=-
+    generic@177:1 name=VA== kind=Type
+    path-type@182:65 absolute=0
+      segment@182:65 name=T3V0ZXI= fn=0 generic=1
+        lifetime-arg@188:7 name=J3N0YXRpYw==
+        type-arg@197:1
+          path-type@197:1 absolute=0
+            segment@197:1 name=VA== fn=0 generic=0
+        const-arg@200:1
+          literal@200:1 kind=IntegerLiteral raw=Mw==
+        const-arg@203:9
+          block-expr@203:9
+            block@203:9
+              binary@205:5 op=Kw==
+                literal@205:1 kind=IntegerLiteral raw=MQ==
+                literal@209:1 kind=IntegerLiteral raw=Mg==
+        const-arg@214:2
+          unary@214:2 op=LQ==
+            literal@215:1 kind=IntegerLiteral raw=MQ==
+        associated-type-arg@218:16 name=SXRlbQ==
+          lifetime-arg@223:7 name=J3N0YXRpYw==
+          path-type@232:2 absolute=0
+            segment@232:2 name=dTg= fn=0 generic=0
+        associated-constraint-arg@236:10 name=SXRlbQ==
+          trait-bound@242:4 optional=0
+            path-type@242:4 absolute=0
+              segment@242:4 name=Q29weQ== fn=0 generic=0

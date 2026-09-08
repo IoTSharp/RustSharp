@@ -62,6 +62,7 @@ internal static class SafeCoreNameResolutionProfileRunner
         SafeCoreNameResolutionDiagnosticCodes.AmbiguousName,
         SafeCoreNameResolutionDiagnosticCodes.PrivateName,
         SafeCoreNameResolutionDiagnosticCodes.ImportCycle,
+        SafeCoreNameResolutionDiagnosticCodes.UnsupportedSyntax,
     };
 
     public static async Task<int> RunAsync(
@@ -381,7 +382,8 @@ internal static class SafeCoreNameResolutionProfileRunner
             IReadOnlyList<ValidatedExpectedResolution> expectedResolutions = ValidateExpectedResolutions(
                 item.ExpectedResolutions,
                 id,
-                resolutionOptions);
+                resolutionOptions,
+                allowEmpty: item.Expected == "resolution-fail");
             int minimumSymbols = ValidateMinimum(
                 item.MinimumSymbols,
                 resolutionOptions.MaximumSymbols,
@@ -544,12 +546,14 @@ internal static class SafeCoreNameResolutionProfileRunner
     private static List<ValidatedExpectedResolution> ValidateExpectedResolutions(
         List<ExpectedResolution>? expectedResolutions,
         string caseId,
-        SafeCoreNameResolutionOptions options)
+        SafeCoreNameResolutionOptions options,
+        bool allowEmpty)
     {
-        if (expectedResolutions is null || expectedResolutions.Count is < 1 or > MaximumExpectedResolutions)
+        int minimum = allowEmpty ? 0 : 1;
+        if (expectedResolutions is null || expectedResolutions.Count < minimum || expectedResolutions.Count > MaximumExpectedResolutions)
         {
             throw new InvalidDataException(
-                $"Manifest case '{caseId}' expectedResolutions count must be 1..{MaximumExpectedResolutions}.");
+                $"Manifest case '{caseId}' expectedResolutions count must be {minimum}..{MaximumExpectedResolutions}.");
         }
 
         var selectors = new HashSet<string>(StringComparer.Ordinal);

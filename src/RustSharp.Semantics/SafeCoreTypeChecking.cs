@@ -123,12 +123,16 @@ public static class SafeCoreTypeChecking
             Step(node, depth);
             switch (node.Kind)
             {
+                case SafeCoreHirNodeKind.Attribute:
+                    if (!IsDocumentation(node)) Unsupported(node);
+                    break;
                 case SafeCoreHirNodeKind.CompilationUnit:
                 case SafeCoreHirNodeKind.Module:
+                case SafeCoreHirNodeKind.ImportGroup:
                     foreach (int child in node.ChildIds) Collect(hir.GetNode(child), depth + 1);
                     break;
                 case SafeCoreHirNodeKind.Import:
-                    foreach (int child in node.ChildIds) Unsupported(hir.GetNode(child));
+                    foreach (int child in node.ChildIds) Collect(hir.GetNode(child), depth + 1);
                     break;
                 case SafeCoreHirNodeKind.Function:
                     if (_functions.Count >= 128) Limit(node);
@@ -139,6 +143,11 @@ public static class SafeCoreTypeChecking
                     {
                         SafeCoreHirNode part = hir.GetNode(child);
                         Step(part, depth + 1);
+                        if (part.Kind == SafeCoreHirNodeKind.Attribute)
+                        {
+                            Collect(part, depth + 1);
+                            continue;
+                        }
                         if (part.Kind == SafeCoreHirNodeKind.Parameter)
                         {
                             if (parameters.Count >= 128) Limit(part);
@@ -169,6 +178,9 @@ public static class SafeCoreTypeChecking
             SafeCorePrimitiveType type;
             switch (node.Kind)
             {
+                case SafeCoreHirNodeKind.Attribute when IsDocumentation(node):
+                    type = SafeCorePrimitiveType.Unit;
+                    break;
                 case SafeCoreHirNodeKind.Block:
                     type = SafeCorePrimitiveType.Unit;
                     bool diverges = false;
@@ -180,7 +192,7 @@ public static class SafeCoreTypeChecking
 
                     // An explicit tail still has to type-check even when earlier code returns.
                     bool hasTail = node.ChildIds.Count != 0 && Child(node, node.ChildIds.Count - 1).Kind is not
-                        (SafeCoreHirNodeKind.LetStatement or SafeCoreHirNodeKind.ReturnStatement or SafeCoreHirNodeKind.ExpressionStatement);
+                        (SafeCoreHirNodeKind.LetStatement or SafeCoreHirNodeKind.ReturnStatement or SafeCoreHirNodeKind.ExpressionStatement or SafeCoreHirNodeKind.Attribute);
                     if (diverges && !hasTail) type = SafeCorePrimitiveType.Never;
                     break;
                 case SafeCoreHirNodeKind.BlockExpression:
@@ -465,6 +477,9 @@ public static class SafeCoreTypeChecking
         }
 
         private SafeCoreHirNode Child(SafeCoreHirNode node, int index) => hir.GetNode(node.ChildIds[index]);
+        private static bool IsDocumentation(SafeCoreHirNode node) => node.Kind == SafeCoreHirNodeKind.Attribute &&
+            node.Name == "doc" && node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.DocumentationAttribute);
+
         private static bool IsType(SafeCoreHirNode node) => node.Kind is >= SafeCoreHirNodeKind.PathType and <= SafeCoreHirNodeKind.NeverType;
         [DoesNotReturn]
         private static void Unsupported(SafeCoreHirNode node) => Fail(node, "RST1001", $"{node.Kind} is outside {Profile}.");

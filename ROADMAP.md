@@ -215,58 +215,139 @@ under `artifacts/conformance/` and `artifacts/p1-01/`. Windows/Linux CI now chec
 the current manifest hash, baseline, category map, case IDs and denominators;
 this local record does not claim a new remote CI run or close the full P1 gate.
 
-P1-02 now publishes version 2 of `safe-core-syntax`: 36 fixtures and a required
-16-category map, documented in the [syntax contract](docs/syntax-profile.md).
-The parser validates import/attribute grammar and Rust operator precedence,
-splits nested generic closers with exact spans, and represents unit structs,
-public tuple fields, nested references and negative literal patterns. Unit
-struct shape survives HIR lowering. Empty generic lists/bounds and trailing
-bound `+` remain accepted, as checked with rustc 1.98.0. Parse cancellation and
-a shared lexer/parser timeout propagate through the compiler and acceptance
-runners; recovery, node/operation budgets and recursive `else if` are bounded.
+P1-02 publishes version 3 of `safe-core-syntax`: 49 fixtures, 18 required
+categories and 34 exact AST snapshots, documented in the
+[syntax contract](docs/syntax-profile.md). The parser now covers recursive
+imports, restricted visibility, external module declarations, documentation
+desugaring and inner attributes, lifetime/type/const generics and defaults,
+`where`, traits/impls and associated items, function and bounded types,
+qualified paths, struct/enum forms, member/method access, casts/ranges/`?`,
+rich patterns, `match`, loops, closures and `let`-`else`/let-chains.
+Cancellation, a shared lexer/parser deadline, recovery and collection,
+operation and nesting limits remain enforced.
 
 The manifest and report record Rust 1.98.0 / Edition 2024, category/case IDs,
-hashes, parser limits, expected outcomes and diagnostic source text. Parse-fail
-cases must match both code and span text. Tests cover AST shapes, 128 generated
-malformed inputs, five invalid contract mutations and two incorrect expectation
-mutations. Windows/Linux CI now verify current manifest/fixture hashes and
-complete evidence with `eng/Test-SyntaxEvidence.ps1`; a new remote run is not
-claimed. Reports remain parser-acceptance evidence, separate from rustc
-differential or runtime conformance.
+source/manifest/snapshot hashes, parser limits and expected outcomes. Every
+parse-pass must match its committed AST snapshot, including distinguishing
+fields and spans; every parse-fail must match both diagnostic code and exact
+source text. Regressions cover AST structure, malformed inputs, cancellation,
+resource exhaustion, six invalid contract mutations and three incorrect
+expectation mutations, including a wrong AST snapshot. Windows/Linux CI use
+`eng/Test-SyntaxEvidence.ps1` to verify current evidence; this local record
+does not claim a new remote CI run.
 
-Its P1-01 dependency is ✅ Complete. P1-02 remains 🚧 In progress: `where`,
-lifetime/const generics, traits/impls, richer patterns, `match`, loops, closures,
-other grammar extensions and the full AST acceptance denominator remain open.
-The syntax contract lists the current exclusions rather than treating this
-increment as full safe-core syntax completion.
+Its P1-01 dependency is ✅ Complete. The syntax contract explicitly excludes
+unsafe/FFI, async/await, static/union items and general macros. External module
+loading belongs to P1-03. New syntax that the current name-resolution/HIR
+profile cannot represent receives `RSN1007`, including nested generic bounds,
+anonymous `const` items, absolute expression/pattern paths, unsupported structured
+AST extensions and non-documentation Rust attributes. The P1-03 module batch below
+implements a bounded subset of the previously deferred module syntax.
+The diagnostic code and source span are preserved
+through HIR lowering and compiler check/compile results; compilation rejects
+the input before writing output artifacts. Syntax acceptance does not establish
+semantic, rustc differential or runtime conformance; the full P1 gate remains
+🚧 In progress.
 
-Local P1-02 increment evidence on 2026-09-06, Windows x64, .NET SDK
-10.0.400/runtime 10.0.11: ✅ Complete for a zero-warning/error Release build,
-116/116 executable regressions, 36/36 syntax cases, 16/16 categories, 6/6 name
-resolution and 14/14 primitive differential cases against rustc 1.98.0. The
-PowerShell 7 evidence checker accepts the current report and rejects a stale
-manifest hash. Current front-end reports are under `artifacts/conformance/`;
-the differential report is `artifacts/p1-02/safe-core-primitives-v1.json`.
+Earlier local P1-02 closure evidence on 2026-09-08, Windows x64, .NET SDK
+10.0.400/runtime 10.0.11: ✅ Complete, zero-warning/error Release build,
+141/141 executable regressions, 49/49 syntax cases, 34/34 AST snapshots,
+18/18 categories, 24/24 lexical cases, 6/6 name-resolution cases and 14/14
+primitive differential cases against rustc 1.98.0. The PowerShell 7 checker
+accepts current evidence and rejects stale manifest/snapshot hashes. Reports
+are under `artifacts/conformance/`; the differential report is
+`artifacts/p1-02/safe-core-primitives-v1.json`.
+
+The earlier `RSN1007` boundary check on 2026-09-08 is ✅ Complete: Release
+build with zero warnings/errors, 145/145 executable regressions, 49/49 syntax
+cases (34/34 AST snapshots, 18/18 categories), the PowerShell 7 evidence
+checker, and 6/6 name-resolution cases. The rustc differential and dedicated
+lexical suites were not rerun in this follow-up.
 
 P1-03 now has a bounded `SafeCoreNameResolution` prototype over that syntax
 model. It collects module, import, item, generic, parameter, and local symbols
 in separate type/value namespaces and implements aliases, qualified paths,
 `crate`/`self`/`super`, visibility, duplicate/ambiguous/unresolved names, import
 cycle diagnostics, canonical raw and NFC-normalized identifiers, and explicit
-work limits. Its nine local harness cases cover
+work limits. Its ten baseline local harness cases cover
 namespace/symbol collection, imports and qualified paths, duplicate/ambiguous
 names, visibility and unresolved names, import cycles, declaration order and
 legal shadowing, rejection of qualified access to function locals, struct
-fields, and enum generic parameters, Unicode normalization, and
-symbol/import-nesting limits. A
-six-case `safe-core-name-resolution` manifest publishes the current bounded
+fields, and enum generic parameters, Unicode normalization,
+supplementary-plane Unicode identifiers, and
+symbol/import-nesting limits. The
+25-case `safe-core-name-resolution` manifest extends the earlier six-case bounded
 acceptance denominator. `SafeCoreHirLowering` also lowers successful trees into
 a deterministic flat arena with bound declaration/reference symbols; four
 harness cases cover deterministic IDs, representative node shapes, dependency
 failures, Unicode-equivalent bindings, and explicit work limits. This is
 front-end evidence; the primitive profile now integrates these passes into
-the compiler. Workspace/multi-file module loading, a full safe-core denominator
-and broader diagnostic coverage remain open.
+the compiler.
+
+The P1-03 module batch supports nested grouped and glob imports, grouped `self` aliases,
+anonymous `_` imports and restricted `pub(crate)`, `pub(self)`, `pub(super)`,
+`pub(in ancestor)` visibility without widening re-exports. The primitive profile's
+`CheckFile`/`CompileFile` and CLI file commands now load declared modules from
+`foo.rs` or `foo/mod.rs`, retaining source-file diagnostics and Portable PDB
+checksums/function locations. Loading is bounded and rejects missing,
+ambiguous, invalid or unsafe module paths before output; every loaded source
+is checked against output paths. String-based APIs still reject external
+modules with `RSN1007`. Leading `::` still receives `RSN1007` because the
+Edition 2024 extern prelude lookup remains an explicit boundary. P1-03 is ✅ Complete for the declared semantic/HIR and local-package profile; broader attribute, feature and registry-package support remains planned. The [module contract](docs/module-profile.md) defines
+the exact layout, diagnostics, budgets and remaining work.
+
+Glob imports from modules/enums now converge through bounded fixed-point
+resolution, including transitive re-exports and cycles. Local and explicit
+bindings shadow globs per namespace; qualified-path prefixes use the type
+namespace; repeated canonical targets collapse, ambiguity is diagnosed on
+use, and imported visibility is intersected with
+the target's visibility. HIR `ImportGroup` nodes retain expanded bindings.
+Explicit `use` imports resolve type and value namespaces independently,
+including alias/re-export chains. A shared canonical target is exposed as one
+`Both` binding; distinct targets lower to separate bindings in an `ImportGroup`.
+An absent namespace branch does not create ambiguity or shadow a glob in that
+namespace. All imports participate in bounded fixed-point resolution.
+Source `///`, `//!`, `/** ... */` and `/*! ... */` comments retain source spans,
+inner placement and `DocumentationAttribute` through root/item/module/block/
+field/variant HIR. Primitive execution ignores this documentation metadata.
+Explicit `#[doc]`, unknown root/item attributes, and parameter/generic-parameter
+attributes remain rejected with `RSN1007`; unsupported root/item attributes
+point to the exact attribute span.
+
+Earlier file-module batch evidence on 2026-09-08 is ✅ Complete: Release build with
+zero warnings/errors and 171/171 executable regressions, including 12 workspace,
+7 module-resolution, 5 module-compilation and 2 PDB tests. Syntax acceptance
+passes 49/49 cases (34/34 AST snapshots, 18/18 categories) and the PowerShell
+evidence checker; name resolution passes 6/6 cases. The original primitive
+differential suite was rerun against rustc 1.98.0 and passes 14/14 cases.
+CLI check/compile succeeds and the generated module sample prints `42` and
+`true`; independent ILVerify passes. Reports are in `artifacts/p1-03/`:
+`safe-core-syntax.json`, `safe-core-name-resolution.json`,
+`safe-core-primitives-v1.json` and `modules.ilverify.json`. A separate 12-case
+module-rule metadata check against rustc is supplementary evidence, not a
+complete module differential manifest. P1-03 is ✅ Complete for the declared profile; broader differential coverage remains planned.
+
+The earlier glob/documentation continuation on 2026-09-08 is ✅ Complete for that
+increment: Release build with zero warnings/errors and 180/180 executable
+regressions, including 12 workspace, 13 module-resolution, 7 module-compilation
+and 2 PDB tests. The nine additions cover six glob regressions, one attribute
+boundary regression and two HIR/execution integration regressions. Syntax
+passes 49/49 cases (34/34 AST snapshots, 18/18 categories) and the PowerShell
+evidence checker; name resolution passes 6/6; the primitive differential suite
+passes 14/14 against rustc 1.98.0. CLI check/compile, the generated module
+sample's `42`/`true` output and independent ILVerify pass. The
+[validation summary](artifacts/p1-03/glob-documentation-validation.json)
+records this batch. A new 12-case glob metadata check against rustc accepts
+10 cases and rejects 2; it supplements the executable tests. The
+name-resolution manifest denominator was still six, and a complete module
+differential denominator remains open. P1-03 is ✅ Complete for the declared profile; broader differential coverage remains planned.
+
+The current name-resolution manifest expands the six-case baseline to 25
+cases with exact binding and diagnostic-span expectations. It adds
+grouped/self/anonymous imports, glob precedence and ambiguity, fixed-point
+chains and cycles, restricted visibility, independent type/value imports,
+documentation and `RSN1007` rejection of absolute imports and unevaluated
+attributes. Earlier 6/6 reports remain evidence only for their original six cases. This increment is ✅ Complete: the Release build has zero warnings/errors, the executable harness passes 186/186, the expanded manifest passes 25/25, and the bounded PowerShell 7 evidence checker accepts the report. A full module differential and semantic/HIR denominator remains open.
 
 ### First executable P1 batch
 
@@ -309,8 +390,8 @@ publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
 | P1-01 | ✅ Complete | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | Manifest v2 passes 24/24 exact token/trivia/tree/diagnostic/span/source-reconstruction fixtures and enforces the complete 22-category lexical map. The 103/103 regression harness covers boundaries, cancellation/deadlines, collection limits, depth 4096 and malformed-manifest rejection. The opt-in primitive compiler consumes the lexer; see the recorded evidence and lexical contract above. |
-| P1-02 | 🚧 In progress | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | Manifest v2 publishes 36 fixtures and 16 mandatory categories with expected outcomes and diagnostic source text. Grammar, AST shapes, cancellation/deadlines and recovery have regression coverage. Every case in the full syntax-profile denominator must have the expected parse result and unsupported syntax must be rejected explicitly; broader grammar and the full AST denominator remain open. |
-| P1-03 | 🚧 In progress | Lower AST to HIR and implement modules, namespaces, visibility, imports, and name resolution. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | The six-case in-memory acceptance denominator and four HIR cases remain; primitive compilation now consumes HIR and canonical import targets. Multi-file workspace loading remains open. |
+| P1-02 | ✅ Complete | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | Manifest v3 passes 49/49 cases, 34/34 exact AST snapshots and 18/18 required categories. Rejections match diagnostic codes and source text; cancellation/deadlines, recovery and invalid evidence are tested in the 141/141 regression harness. The declared syntax profile is complete; unsupported semantic/HIR extensions explicitly report RSN1007. See the syntax contract and local evidence above. |
+| P1-03 | ✅ Complete | Lower AST to HIR and implement the declared safe-core modules, namespaces, visibility, imports, name resolution, and Cargo package entry point. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | The acceptance manifest and executable harness pass 25/25 and 190/190. HIR preserves const-function qualifiers and deterministic declaration/reference bindings. Grouped/glob/self/anonymous imports, restricted visibility, source documentation, bounded file modules, original-file diagnostics and PDB mappings are integrated. `Cargo.toml` is accepted by `check`, `build`/`compile`, `run` and `publish`; package metadata, deterministic local `path` dependencies, source discovery, cycle/limit checks and explicit registry-dependency diagnostics are implemented. Leading `::`, unevaluated attributes, registry packages, Cargo features/lockfiles and macro expansion remain explicit profile boundaries for later milestones. |
 | P1-04 | 🚧 In progress | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | i32/bool/unit, direct function signatures, local inference, mutability, conditional/return checks and divergence are implemented for the primitive profile. Aggregate/reference types and the full inference/coercion denominator remain open. |
 | P1-05 | ⏳ Planned | Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | Generic functions/types emit closed AOT-reachable bodies; overlap, ambiguity, and missing bounds fail predictably. |
 | P1-06 | ⏳ Planned | Define typed MIR, CFG validation, desugaring, and source mapping. | P1-04 | `dotnet test RustSharp.slnx -c Release --filter Mir` | MIR snapshots are deterministic; invalid edges/types are rejected; diagnostics map back to `.rs` spans. |
@@ -498,8 +579,8 @@ gate it depends on.
 6. When scope changes, update the compatibility profile and ADR first, then the
    implementation and this roadmap.
 
-P1-01 (lossless lexing) is ✅ Complete. The next 🚧 In progress gates are
-P1-02 (safe-core syntax), P1-03 (HIR and name resolution), P1-04 (types),
+P1-01 (lossless lexing) and P1-02 (safe-core syntax) are ✅ Complete. The next
+🚧 In progress gates are P1-03 (HIR and name resolution), P1-04 (types),
 P1-09 (IL emission), and P1-10 (differential regression). P0-10, P0-16, and P0-17 are now
 ✅ Complete on the recorded two-platform evidence; later language-profile
 claims remain gated on the full HIR/MIR and differential suites.

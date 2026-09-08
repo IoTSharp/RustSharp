@@ -21,17 +21,19 @@ internal static class SyntaxManifestTests
         manifest => manifest["rustVersion"] = "1.97.0",
         manifest => manifest["denominator"] = 35,
         manifest => manifest["cases"]![2]!.AsObject().Remove("diagnosticText"),
+        manifest => manifest["cases"]![0]!.AsObject().Remove("snapshotPath"),
     ], 2);
 
     private static Task RejectsIncorrectExpectationAsync() => RunMutationsAsync(
     [
         manifest => manifest["cases"]![2]!["diagnosticText"] = "fn",
         manifest => manifest["cases"]![0]!["minimumItems"] = 99,
+        manifest => manifest["cases"]![0]!["snapshotPath"] = manifest["cases"]![1]!["snapshotPath"]!.GetValue<string>(),
     ], 1);
 
     private static async Task RunMutationsAsync(Action<JsonObject>[] mutations, int expectedExitCode)
     {
-        AssertEx.True(mutations.Length is > 0 and <= 5, "Mutation denominator is bounded.");
+        AssertEx.True(mutations.Length is > 0 and <= 8, "Mutation denominator is bounded.");
         string repositoryRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
         string originals = Path.Combine(repositoryRoot, "tools", "RustSharp.Conformance", "fixtures");
         string artifactRoot = Path.GetFullPath(Path.Combine(repositoryRoot, "artifacts", "tests"));
@@ -45,13 +47,19 @@ internal static class SyntaxManifestTests
             Directory.CreateDirectory(fixtures);
             JsonObject seed = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(originals, ManifestName), deadline.Token).ConfigureAwait(false))!.AsObject();
             JsonArray cases = seed["cases"]!.AsArray();
-            AssertEx.Equal(36, cases.Count);
+            AssertEx.True(cases.Count is > 0 and <= 256, "Syntax denominator is bounded.");
             foreach (JsonNode? item in cases)
             {
                 deadline.Token.ThrowIfCancellationRequested();
                 string file = item!["file"]!.GetValue<string>();
                 AssertEx.Equal(file, Path.GetFileName(file));
                 File.Copy(Path.Combine(originals, file), Path.Combine(fixtures, file));
+                if (item["snapshotPath"] is JsonValue snapshotValue)
+                {
+                    string snapshot = snapshotValue.GetValue<string>();
+                    AssertEx.Equal(snapshot, Path.GetFileName(snapshot));
+                    File.Copy(Path.Combine(originals, snapshot), Path.Combine(fixtures, snapshot));
+                }
             }
 
             Console.SetOut(TextWriter.Null);
@@ -69,7 +77,7 @@ internal static class SyntaxManifestTests
                 JsonNode report = JsonNode.Parse(await File.ReadAllTextAsync(reportPath, deadline.Token).ConfigureAwait(false))!;
                 AssertEx.Equal(expectedExitCode, report["summary"]!["exitCode"]!.GetValue<int>());
                 AssertEx.Equal(expectedExitCode == 1, report["manifest"]!["validated"]!.GetValue<bool>());
-                AssertEx.Equal(expectedExitCode == 1 ? 36 : 0, report["summary"]!["executed"]!.GetValue<int>());
+                AssertEx.Equal(expectedExitCode == 1 ? cases.Count : 0, report["summary"]!["executed"]!.GetValue<int>());
                 if (expectedExitCode == 1)
                 {
                     AssertEx.Equal(1, report["summary"]!["failed"]!.GetValue<int>());

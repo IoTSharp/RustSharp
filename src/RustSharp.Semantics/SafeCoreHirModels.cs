@@ -5,6 +5,8 @@ namespace RustSharp.Semantics;
 /// <summary>Bounds for one experimental safe-core HIR lowering operation.</summary>
 public sealed record SafeCoreHirLoweringOptions
 {
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
+    public CancellationToken CancellationToken { get; init; }
     public int MaximumNodes { get; init; } = 100_000;
     public int MaximumNestingDepth { get; init; } = 128;
     public int MaximumOperations { get; init; } = 1_000_000;
@@ -67,6 +69,7 @@ public enum SafeCoreHirNodeKind
     UnitType,
     NeverType,
     PrintExpression,
+    ImportGroup,
 }
 
 /// <summary>Compact properties whose meaning is determined by a HIR node kind.</summary>
@@ -83,6 +86,8 @@ public enum SafeCoreHirNodeModifiers
     MutableReference = 1 << 6,
     RepeatedArray = 1 << 7,
     UnitStruct = 1 << 8,
+    DocumentationAttribute = 1 << 9,
+    ConstFunction = 1 << 10,
 }
 
 /// <summary>

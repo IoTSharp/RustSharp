@@ -1,0 +1,56 @@
+unit@0:363
+  attribute@0:10 inner=1 doc=0 path=bm9fc3Rk args= text=-
+  module@32:291 name=bW9kZWw= external=0
+    visibility@28:3 kind=Public path=-
+    attribute@11:16 inner=0 doc=0 path=ZGVyaXZl args=KERlYnVnKQ== text=-
+    struct@52:71 name=UGFpcg== tuple=0 unit=0
+      visibility@48:3 kind=Public path=-
+      generic@64:7 name=VA== kind=Type
+        trait-bound@67:4 optional=0
+          path-type@67:4 absolute=0
+            segment@67:4 name=Q29weQ== fn=0 generic=0
+      field@83:12 name=Zmlyc3Q= public=1
+        visibility@83:3 kind=Public path=-
+        path-type@94:1 absolute=0
+          segment@94:1 name=VA== fn=0 generic=0
+      field@105:11 name=c2Vjb25k public=0
+        visibility@105:0 kind=Private path=-
+        path-type@113:3 absolute=0
+          segment@113:3 name=aTMy fn=0 generic=0
+    enum@133:52 name=Q2hvaWNl
+      visibility@129:3 kind=Public path=-
+      generic@145:1 name=VA== kind=Type
+      variant@158:6 name=T25l kind=Tuple
+        field@162:1 name=- public=0
+          visibility@162:0 kind=Private path=-
+          path-type@162:1 absolute=0
+            segment@162:1 name=VA== fn=0 generic=0
+      variant@174:4 name=Tm9uZQ== kind=Unit
+    type-alias@195:19 name=Q291bnQ=
+      visibility@191:3 kind=Public path=-
+      path-type@208:5 absolute=0
+        segment@208:5 name=dXNpemU= fn=0 generic=0
+    const@223:23 name=TElNSVQ=
+      visibility@219:3 kind=Public path=-
+      path-type@236:5 absolute=0
+        segment@236:5 name=dXNpemU= fn=0 generic=0
+      literal@244:1 kind=IntegerLiteral raw=NA==
+    function@256:65 name=aWRlbnRpdHk= const=0
+      visibility@252:3 kind=Public path=-
+      generic@268:7 name=VA== kind=Type
+        trait-bound@271:4 optional=0
+          path-type@271:4 absolute=0
+            segment@271:4 name=Q29weQ== fn=0 generic=0
+      parameter@277:8
+        identifier-pattern@277:5 name=dmFsdWU= mut=0 ref=0
+        path-type@284:1 absolute=0
+          segment@284:1 name=VA== fn=0 generic=0
+      path-type@290:1 absolute=0
+        segment@290:1 name=VA== fn=0 generic=0
+      block@292:29
+        statement@302:13 kind=Return
+          name@309:5 path=dmFsdWU=
+            path-segment@309:5 name=dmFsdWU= generic=0
+  use@325:37 path=Y3JhdGU6Om1vZGVsOjpQYWly alias=UHVibGljUGFpcg==
+    visibility@325:0 kind=Private path=-
+    use-tree@329:32 kind=Path absolute=0 prefix=Y3JhdGU6Om1vZGVsOjpQYWly alias=UHVibGljUGFpcg==

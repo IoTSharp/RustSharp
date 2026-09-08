@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using RustSharp.Syntax;
@@ -22,25 +23,42 @@ public static class SafeCoreHirLowering
     {
         ArgumentNullException.ThrowIfNull(syntax);
         SafeCoreHirLoweringOptions normalized = NormalizeOptions(options);
+        normalized.CancellationToken.ThrowIfCancellationRequested();
+        long startedAt = Stopwatch.GetTimestamp();
         if (!syntax.IsSuccessful || syntax.Root is null)
         {
             return RejectInvalidSyntax(syntax, normalized);
         }
 
-        SafeCoreNameResolutionResult resolution = SafeCoreNameResolution.Resolve(
-            syntax,
-            normalized.NameResolution);
+        using var resolutionCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            normalized.CancellationToken, normalized.NameResolution.CancellationToken);
+        SafeCoreNameResolutionResult resolution = SafeCoreNameResolution.Resolve(syntax,
+            normalized.NameResolution with
+            {
+                Timeout = normalized.NameResolution.Timeout > TimeSpan.Zero &&
+                    normalized.NameResolution.Timeout < normalized.Timeout
+                    ? normalized.NameResolution.Timeout : normalized.Timeout,
+                CancellationToken = resolutionCancellation.Token,
+            });
         if (!resolution.IsSuccessful)
         {
             return RejectInvalidResolution(syntax, resolution, normalized);
         }
 
-        return new Lowerer(syntax.SourcePath, resolution, normalized).Run(syntax.Root);
+        normalized.CancellationToken.ThrowIfCancellationRequested();
+        TimeSpan remaining = normalized.Timeout - Stopwatch.GetElapsedTime(startedAt);
+        if (remaining <= TimeSpan.Zero)
+            return RejectedResult(syntax.SourcePath, resolution,
+                [new Diagnostic(SafeCoreHirDiagnosticCodes.LimitReached,
+                    "HIR lowering exceeded its time budget.", syntax.Root.Span)], isTruncated: true, normalized);
+        return new Lowerer(syntax.SourcePath, resolution, normalized with { Timeout = remaining }).Run(syntax.Root);
     }
 
     private static SafeCoreHirLoweringOptions NormalizeOptions(SafeCoreHirLoweringOptions? options)
     {
         options ??= new SafeCoreHirLoweringOptions();
+        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1))
+            throw new ArgumentOutOfRangeException(nameof(options), "HIR timeout must be positive and at most one minute.");
         return options with
         {
             MaximumNodes = Math.Clamp(options.MaximumNodes, 1, AbsoluteMaximumNodes),
@@ -156,6 +174,7 @@ public static class SafeCoreHirLowering
         private readonly string _sourcePath;
         private readonly SafeCoreNameResolutionResult _resolution;
         private readonly SafeCoreHirLoweringOptions _options;
+        private readonly long _startedAt = Stopwatch.GetTimestamp();
         private readonly List<NodeBuilder> _nodes = [];
         private readonly List<Diagnostic> _diagnostics = [];
         private readonly Dictionary<DeclarationKey, List<SafeCoreSymbol>> _declarations = [];
@@ -300,6 +319,7 @@ public static class SafeCoreHirLowering
             try
             {
                 LowerAttributes(syntax.Attributes, node);
+                LowerAttributes(syntax.InnerAttributes, node);
                 for (var index = 0; index < syntax.Items.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerItem(syntax.Items[index]));
@@ -315,6 +335,26 @@ public static class SafeCoreHirLowering
 
         private int LowerUse(SafeCoreUseSyntax syntax)
         {
+            if (syntax.Tree is { Kind: SafeCoreUseTreeKind.Group or SafeCoreUseTreeKind.Glob } ||
+                _declarations.TryGetValue(new(syntax.Span, SafeCoreSymbolKind.Import), out var bindings) && bindings.Count > 1)
+            {
+                if (!TryCreateNode(SafeCoreHirNodeKind.ImportGroup, syntax.Span, out NodeBuilder? group,
+                    flags: VisibilityFlag(syntax.IsPublic))) return -1;
+                try
+                {
+                    LowerAttributes(syntax.Attributes, group);
+                    foreach (SafeCoreSymbol symbol in _resolution.Symbols)
+                    {
+                        if (!Step(syntax.Span)) return -1;
+                        if (symbol.Kind == SafeCoreSymbolKind.Import && symbol.Span.Start >= syntax.Span.Start &&
+                            symbol.Span.End <= syntax.Span.End)
+                            AddChild(group, LowerImportSymbol(symbol));
+                    }
+                    return group.Id;
+                }
+                finally { Exit(); }
+            }
+
             string declaredName = syntax.Alias ?? GetLastPathSegment(syntax.Path);
             if (!TryCreateNode(
                     SafeCoreHirNodeKind.Import,
@@ -339,14 +379,28 @@ public static class SafeCoreHirLowering
             }
         }
 
+        private int LowerImportSymbol(SafeCoreSymbol symbol)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.Import, symbol.Span, out NodeBuilder? node,
+                symbol.Name, symbol.TargetPath, VisibilityFlag(symbol.IsPublic), symbol)) return -1;
+            try { return node.Id; }
+            finally { Exit(); }
+        }
+
         private int LowerFunction(SafeCoreFunctionSyntax syntax)
         {
+            SafeCoreHirNodeModifiers functionFlags = VisibilityFlag(syntax.IsPublic);
+            if (syntax.IsConst)
+            {
+                functionFlags |= SafeCoreHirNodeModifiers.ConstFunction;
+            }
+
             if (!TryCreateNode(
                     SafeCoreHirNodeKind.Function,
                     syntax.Span,
                     out NodeBuilder? node,
                     syntax.Name,
-                    flags: VisibilityFlag(syntax.IsPublic),
+                    flags: functionFlags,
                     declaredSymbol: FindDeclaration(
                         syntax.Span,
                         SafeCoreSymbolKind.Function,
@@ -471,6 +525,7 @@ public static class SafeCoreHirLowering
 
             try
             {
+                LowerAttributes(syntax.Attributes, node);
                 for (var index = 0; index < syntax.Fields.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerField(syntax.Fields[index]));
@@ -611,6 +666,7 @@ public static class SafeCoreHirLowering
 
             try
             {
+                LowerAttributes(syntax.Attributes, node);
                 AddChild(node, LowerType(syntax.Type, requireBinding: true));
                 return node.Id;
             }
@@ -629,6 +685,7 @@ public static class SafeCoreHirLowering
 
             try
             {
+                LowerAttributes(syntax.Attributes, node);
                 for (var index = 0; index < syntax.Statements.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerStatement(syntax.Statements[index]));
@@ -1227,6 +1284,7 @@ public static class SafeCoreHirLowering
                 SafeCoreHirNodeModifiers flags = attribute.IsInner
                     ? SafeCoreHirNodeModifiers.InnerAttribute
                     : SafeCoreHirNodeModifiers.None;
+                if (attribute.IsDocumentation) flags |= SafeCoreHirNodeModifiers.DocumentationAttribute;
                 AddChild(parent, LowerLeaf(
                     SafeCoreHirNodeKind.Attribute,
                     attribute.Span,
@@ -1423,6 +1481,12 @@ public static class SafeCoreHirLowering
 
         private bool Step(TextSpan span)
         {
+            _options.CancellationToken.ThrowIfCancellationRequested();
+            if (Stopwatch.GetElapsedTime(_startedAt) >= _options.Timeout)
+            {
+                StopLimit(span);
+                return false;
+            }
             if (_truncated)
             {
                 return false;

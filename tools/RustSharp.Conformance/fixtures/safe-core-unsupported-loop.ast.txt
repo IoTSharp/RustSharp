@@ -1,0 +1,6 @@
+unit@0:26
+  function@0:25 name=bWFpbg== const=0
+    visibility@0:0 kind=Private path=-
+    block@10:15
+      loop@16:7 label=-
+        block@21:2

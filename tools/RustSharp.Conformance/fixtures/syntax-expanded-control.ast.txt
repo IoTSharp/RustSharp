@@ -1,0 +1,93 @@
+unit@0:284
+  function@0:283 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:276
+      statement@13:86 kind=Expression
+        semicolon@13:86 value=0
+        loop@13:86 label=J291dGVy
+          block@26:73
+            statement@28:53 kind=Expression
+              semicolon@28:53 value=0
+              for@28:53 label=-
+                tuple-pattern@32:6 trailing=0
+                  identifier-pattern@33:1 name=eA== mut=0 ref=0
+                  identifier-pattern@36:1 name=eQ== mut=0 ref=0
+                range@42:4 inclusive=0 start=1 end=1
+                  literal@42:1 kind=IntegerLiteral raw=MA==
+                  literal@45:1 kind=IntegerLiteral raw=Mw==
+                block@47:34
+                  if@49:30
+                    binary@52:6 op=PT0=
+                      name@52:1 path=eA==
+                        path-segment@52:1 name=eA== generic=0
+                      name@57:1 path=eQ==
+                        path-segment@57:1 name=eQ== generic=0
+                    block@59:20
+                      statement@61:16 kind=Expression
+                        semicolon@61:16 value=1
+                        continue-expr@61:15 label=J291dGVy
+            statement@82:15 kind=Expression
+              semicolon@82:15 value=1
+              break-expr@82:14 label=J291dGVy
+              literal@95:1 kind=IntegerLiteral raw=NA==
+      statement@104:37 kind=Expression
+        semicolon@104:37 value=0
+        while@104:37 label=-
+          let-expr@110:20
+            path-pattern@114:7 path=U29tZQ== arguments=1
+              path-segment@114:4 name=U29tZQ== generic=0
+              identifier-pattern@119:1 name=eA== mut=0 ref=0
+            name@124:6 path=c291cmNl
+              path-segment@124:6 name=c291cmNl generic=0
+          block@131:10
+            statement@133:6 kind=Expression
+              semicolon@133:6 value=1
+              break-expr@133:5 label=-
+      statement@146:61 kind=Expression
+        semicolon@146:61 value=0
+        if@146:61
+          binary@149:51 op=JiY=
+            binary@149:29 op=JiY=
+              let-expr@149:20
+                path-pattern@153:7 path=U29tZQ== arguments=1
+                  path-segment@153:4 name=U29tZQ== generic=0
+                  identifier-pattern@158:1 name=eQ== mut=0 ref=0
+                name@163:6 path=c291cmNl
+                  path-segment@163:6 name=c291cmNl generic=0
+              binary@173:5 op=Pg==
+                name@173:1 path=eQ==
+                  path-segment@173:1 name=eQ== generic=0
+                literal@177:1 kind=IntegerLiteral raw=MA==
+            let-expr@182:18
+              path-pattern@186:7 path=U29tZQ== arguments=1
+                path-segment@186:4 name=U29tZQ== generic=0
+                identifier-pattern@191:1 name=eg== mut=0 ref=0
+              name@196:4 path=bmV4dA==
+                path-segment@196:4 name=bmV4dA== generic=0
+          block@201:6
+            statement@203:2 kind=Expression
+              semicolon@203:2 value=1
+              name@203:1 path=eg==
+                path-segment@203:1 name=eg== generic=0
+      statement@212:28 kind=Expression
+        semicolon@212:28 value=1
+        labeled-block@212:27 label=J3Njb3Bl
+        block@220:19
+          statement@222:15 kind=Expression
+            semicolon@222:15 value=1
+            break-expr@222:14 label=J3Njb3Bl
+            literal@235:1 kind=IntegerLiteral raw=Mg==
+      statement@245:16 kind=Expression
+        semicolon@245:16 value=1
+        const-block@245:15
+        block@251:9
+          binary@253:5 op=Kw==
+            literal@253:1 kind=IntegerLiteral raw=MQ==
+            literal@257:1 kind=IntegerLiteral raw=Mg==
+      statement@266:15 kind=Expression
+        semicolon@266:15 value=1
+        call@266:14
+          name@266:4 path=Y2FsbA==
+            path-segment@266:4 name=Y2FsbA== generic=0
+          return-expr@271:8
+          literal@278:1 kind=IntegerLiteral raw=MQ==

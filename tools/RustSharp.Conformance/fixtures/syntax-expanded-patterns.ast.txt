@@ -1,0 +1,75 @@
+unit@0:275
+  function@0:274 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:267
+      statement@13:18 kind=Let
+        identifier-pattern@17:9 name=eA== mut=1 ref=1
+        name@29:1 path=eQ==
+          path-segment@29:1 name=eQ== generic=0
+      statement@36:36 kind=Let
+        reference-pattern@40:22 mut=0
+        slice-pattern@41:21
+          identifier-pattern@42:4 name=aGVhZA== mut=0 ref=0
+          at-pattern@48:13
+            identifier-pattern@48:8 name=dGFpbA== mut=0 ref=1
+            rest-pattern@59:2
+        name@65:6 path=dmFsdWVz
+          path-segment@65:6 name=dmFsdWVz generic=0
+      statement@77:58 kind=Let
+        struct-pattern@81:45 path=UGFpcg== rest=1
+          path-segment@81:4 name=UGFpcg== generic=0
+          struct-pattern-field@88:16 name=Zmlyc3Q= short=0
+          at-pattern@95:9
+            identifier-pattern@95:1 name=bg== mut=0 ref=0
+            range-pattern@99:5 inclusive=1 start=1 end=1
+              literal-pattern@99:1 kind=IntegerLiteral raw=MQ==
+              literal-pattern@103:1 kind=IntegerLiteral raw=OQ==
+          struct-pattern-field@106:14 name=c2Vjb25k short=1
+          identifier-pattern@106:14 name=c2Vjb25k mut=1 ref=1
+        name@129:5 path=dmFsdWU=
+          path-segment@129:5 name=dmFsdWU= generic=0
+      statement@140:23 kind=Let
+        tuple-pattern@144:10 trailing=0
+          identifier-pattern@145:1 name=YQ== mut=0 ref=0
+          rest-pattern@148:2
+          identifier-pattern@152:1 name=Yg== mut=0 ref=0
+        name@157:5 path=dHVwbGU=
+          path-segment@157:5 name=dHVwbGU= generic=0
+      statement@168:25 kind=Let
+        path-pattern@172:12 path=U29tZQ== arguments=1
+          path-segment@172:9 name=U29tZQ== generic=1
+            type-arg@179:1
+              path-type@179:1 absolute=0
+                segment@179:1 name=VA== fn=0 generic=0
+          identifier-pattern@182:1 name=eA== mut=0 ref=0
+        name@187:5 path=dmFsdWU=
+          path-segment@187:5 name=dmFsdWU= generic=0
+      statement@198:74 kind=Expression
+        semicolon@198:74 value=1
+        match@198:73
+          name@204:5 path=dmFsdWU=
+            path-segment@204:5 name=dmFsdWU= generic=0
+          arm@212:24
+            path-pattern@212:19 path=VkFMVUU= arguments=0
+              qualified-name@212:19
+                path-type@213:1 absolute=0
+                  segment@213:1 name=VA== fn=0 generic=0
+                path-type@218:5 absolute=0
+                  segment@218:5 name=VHJhaXQ= fn=0 generic=0
+                name@226:5 path=VkFMVUU=
+                  path-segment@226:5 name=VkFMVUU= generic=0
+              path-segment@226:5 name=VkFMVUU= generic=0
+            literal@235:1 kind=IntegerLiteral raw=MA==
+          arm@238:23
+            or-pattern@238:18
+              path-pattern@238:7 path=U29tZQ== arguments=1
+                path-segment@238:4 name=U29tZQ== generic=0
+                identifier-pattern@243:1 name=eA== mut=0 ref=0
+              path-pattern@248:8 path=T3RoZXI= arguments=1
+                path-segment@248:5 name=T3RoZXI= generic=0
+                identifier-pattern@254:1 name=eA== mut=0 ref=0
+            name@260:1 path=eA==
+              path-segment@260:1 name=eA== generic=0
+          arm@263:6
+            wildcard-pattern@263:1
+            literal@268:1 kind=IntegerLiteral raw=MQ==

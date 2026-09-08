@@ -12,15 +12,15 @@ $manifestPath = Join-Path $RepositoryRoot 'tools/RustSharp.Conformance/fixtures/
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json -AsHashtable
 $report = Get-Content -Raw -LiteralPath $ReportPath | ConvertFrom-Json -AsHashtable
 $denominator = $manifest.denominator
-if ($denominator -isnot [long] -or $denominator -lt 1 -or $denominator -gt 64 -or
+if ($denominator -isnot [long] -or $denominator -lt 1 -or $denominator -gt 256 -or
     $manifest.cases.Count -ne $denominator -or $report.cases.Count -ne $denominator -or
-    $report.schemaVersion -ne 2 -or $report.profile -cne 'safe-core-syntax' -or
+    $report.schemaVersion -ne 3 -or $report.profile -cne 'safe-core-syntax' -or
     $report.evidenceKind -cne 'parser-acceptance' -or
     $report.rustVersion -cne '1.98.0' -or $report.edition -cne '2024' -or
     $report.scope.rustcConformance -isnot [bool] -or $report.scope.rustcConformance -or
     $report.scope.runtimeConformance -isnot [bool] -or $report.scope.runtimeConformance -or
     $report.manifest.validated -isnot [bool] -or -not $report.manifest.validated -or
-    $manifest.version -ne 2 -or $report.manifest.version -ne 2 -or
+    $manifest.version -ne 3 -or $report.manifest.version -ne 3 -or
     $report.manifest.caseCount -ne $denominator -or
     $report.manifest.sha256 -cne (Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256).Hash -or
     $report.summary.status -cne 'passed' -or $report.summary.exitCode -ne 0 -or
@@ -33,7 +33,7 @@ if ($denominator -isnot [long] -or $denominator -lt 1 -or $denominator -gt 64 -o
 
 $categories = @('modules', 'imports', 'functions', 'structs', 'enums', 'aliases-constants',
     'statements', 'expressions', 'operator-binding', 'patterns', 'types', 'generics',
-    'attributes', 'literals', 'malformed', 'unsupported')
+    'attributes', 'literals', 'malformed', 'unsupported', 'control-flow', 'traits')
 if ($report.coverage.Count -ne $categories.Count -or $manifest.coverage.Count -ne $categories.Count) {
     throw 'Syntax coverage category counts differ.'
 }
@@ -41,7 +41,7 @@ foreach ($category in $categories) {
     if ($clock.Elapsed.TotalSeconds -gt 30) { throw 'Syntax evidence verification timed out.' }
     $expectedIds = $manifest.coverage[$category]
     $actualIds = $report.coverage[$category]
-    if ($null -eq $expectedIds -or $null -eq $actualIds -or $expectedIds.Count -gt 64 -or
+    if ($null -eq $expectedIds -or $null -eq $actualIds -or $expectedIds.Count -gt 256 -or
         ($expectedIds -join '|') -cne ($actualIds -join '|')) {
         throw "Syntax coverage differs for '$category'."
     }
@@ -62,6 +62,22 @@ for ($index = 0; $index -lt $denominator; $index++) {
         $actual.diagnosticsTruncated -isnot [bool] -or $actual.diagnosticsTruncated -or
         $actual.sourceSha256 -cne (Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash) {
         throw "Syntax case '$($expected.id)' is incomplete or stale."
+    }
+    if ($expected.expected -ceq 'parse-pass') {
+        if ([string]::IsNullOrWhiteSpace($expected.snapshotPath) -or
+            $actual.snapshotPath -cne $expected.snapshotPath -or
+            [string]::IsNullOrWhiteSpace($actual.snapshotSha256)) {
+            throw "Syntax case '$($expected.id)' lacks its reviewed AST snapshot reference."
+        }
+        $snapshotPath = Join-Path (Split-Path -Parent $manifestPath) $expected.snapshotPath
+        if ([IO.Path]::GetFileName($expected.snapshotPath) -cne $expected.snapshotPath -or
+            -not (Test-Path -LiteralPath $snapshotPath -PathType Leaf) -or
+            $actual.status -ne 'passed') {
+            throw "Syntax case '$($expected.id)' has no valid AST snapshot evidence."
+        }
+        if ($actual.snapshotSha256 -cne (Get-FileHash -LiteralPath $snapshotPath -Algorithm SHA256).Hash) {
+            throw "Syntax case '$($expected.id)' AST snapshot hash is stale."
+        }
     }
     if ($expected.expected -ceq 'parse-fail') {
         if ($actual.diagnostics.Count -gt 128) { throw 'Syntax diagnostics exceed the report bound.' }

@@ -32,6 +32,17 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
+        var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
+        if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
+        fullSourcePath = cargo ?? fullSourcePath;
+        if (profile == CompilationProfile.SafeCorePrimitives)
+        {
+            SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
+            if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
+            CompilationResult result = Check(workspace.SourceText, fullSourcePath, profile, cancellationToken);
+            return result with { Diagnostics = MapDiagnostics(result.Diagnostics, workspace.SourceMap!) };
+        }
+
         var readResult = ReadSource(fullSourcePath);
         if (readResult.Diagnostic is not null)
         {
@@ -77,6 +88,17 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
+        var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
+        if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
+        fullSourcePath = cargo ?? fullSourcePath;
+        if (profile == CompilationProfile.SafeCorePrimitives)
+        {
+            SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
+            if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
+            return CompileCore(workspace.SourceText, fullSourcePath, Path.GetFullPath(outputPath),
+                assemblyName, workspace.SourceMap!.Documents[0].Bytes, profile, cancellationToken, workspace.SourceMap);
+        }
+
         var readResult = ReadSource(fullSourcePath);
         if (readResult.Diagnostic is not null)
         {
@@ -143,7 +165,8 @@ public sealed class CompilerDriver
         string? assemblyName,
         ReadOnlyMemory<byte> sourceBytes,
         CompilationProfile profile,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        SafeCoreSourceMap? sourceMap = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         SyntaxTree? syntaxTree = null;
@@ -157,7 +180,7 @@ public sealed class CompilerDriver
         else
         {
             safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken);
-            if (!safeCore.IsSuccessful) return CompilationResult.Failed(safeCore.Diagnostics);
+            if (!safeCore.IsSuccessful) return CompilationResult.Failed(MapDiagnostics(safeCore.Diagnostics, sourceMap));
         }
 
         var resolvedAssemblyName = assemblyName ?? Path.GetFileNameWithoutExtension(outputPath);
@@ -174,6 +197,20 @@ public sealed class CompilerDriver
         var fullOutputPath = Path.GetFullPath(outputPath);
         var pdbPath = Path.ChangeExtension(fullOutputPath, ".pdb");
         var runtimeConfigPath = Path.ChangeExtension(fullOutputPath, ".runtimeconfig.json");
+        if (sourceMap is not null)
+        {
+            // Every loaded document is an input, including modules whose names resemble output files.
+            foreach (SafeCoreSourceDocument document in sourceMap.Documents)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (PathsCollide(document.Path, fullOutputPath) || PathsCollide(document.Path, pdbPath) ||
+                    PathsCollide(document.Path, runtimeConfigPath))
+                    return CompilationResult.Failed([new Diagnostic("RSC0006",
+                        "The source and compiler output paths must be distinct.", new TextSpan(0, 0))
+                        { SourcePath = document.Path }]);
+            }
+        }
+
         if (PathsCollide(fullSourcePath, fullOutputPath) ||
             PathsCollide(fullSourcePath, pdbPath) ||
             PathsCollide(fullSourcePath, runtimeConfigPath) ||
@@ -193,7 +230,7 @@ public sealed class CompilerDriver
             cancellationToken.ThrowIfCancellationRequested();
             var generated = safeCore is not null
                 ? ClrLirAssemblyEmitter.EmitProgram(safeCore, resolvedAssemblyName, source,
-                    fullSourcePath, Path.GetFileName(pdbPath), sourceBytes)
+                    fullSourcePath, Path.GetFileName(pdbPath), sourceBytes, sourceMap, cancellationToken)
                 : IlAssemblyEmitter.Emit(
                 syntaxTree!.Root!,
                 source,
@@ -221,6 +258,11 @@ public sealed class CompilerDriver
                     $"Could not write compiler output: {exception.Message}",
                     new TextSpan(0, 0))]);
         }
+        catch (TimeoutException)
+        {
+            return CompilationResult.Failed([new Diagnostic("RSC0008",
+                "Compiler emission exceeded its time budget.", new TextSpan(0, 0))]);
+        }
     }
 
     private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
@@ -229,13 +271,50 @@ public sealed class CompilerDriver
         if (profile != CompilationProfile.SafeCorePrimitives)
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
         cancellationToken.ThrowIfCancellationRequested();
-        SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, sourcePath, null, cancellationToken);
+        SafeCoreSyntaxResult syntax;
+        try { syntax = SafeCoreSyntax.Parse(source, sourcePath, null, cancellationToken); }
+        catch (TimeoutException)
+        {
+            return new([], [], [new Diagnostic(SafeCoreSyntaxDiagnosticCodes.LimitReached,
+                "Safe-core parsing exceeded its time budget.", new TextSpan(0, 0))]);
+        }
         if (!syntax.IsSuccessful) return new([], [], syntax.Diagnostics);
         cancellationToken.ThrowIfCancellationRequested();
-        SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax);
+        SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new SafeCoreHirLoweringOptions
+        {
+            CancellationToken = cancellationToken,
+            NameResolution = new SafeCoreNameResolutionOptions { CancellationToken = cancellationToken },
+        });
         SafeCoreTypeCheckResult types = SafeCoreTypeChecking.Check(hir, cancellationToken);
         return types.IsSuccessful ? SafeCoreClrLowering.Lower(types.Program!, cancellationToken)
             : new([], [], types.Diagnostics);
+    }
+
+    private static string? TryResolveCargo(string path, CancellationToken cancellationToken, out IReadOnlyList<Diagnostic>? diagnostics)
+    {
+        diagnostics = null;
+        if (!string.Equals(Path.GetFileName(path), "Cargo.toml", StringComparison.OrdinalIgnoreCase)) return null;
+        CargoWorkspaceResult workspace = CargoWorkspace.Load(path, cancellationToken: cancellationToken);
+        if (!workspace.IsSuccessful)
+        {
+            diagnostics = workspace.Diagnostics;
+            return null;
+        }
+        return workspace.RootPackage.SourcePath;
+    }
+
+    private static IReadOnlyList<Diagnostic> MapDiagnostics(
+        IReadOnlyList<Diagnostic> diagnostics, SafeCoreSourceMap? sourceMap)
+    {
+        if (sourceMap is null || diagnostics.Count == 0) return diagnostics;
+        var mapped = new Diagnostic[diagnostics.Count];
+        for (var index = 0; index < diagnostics.Count; index++)
+        {
+            Diagnostic diagnostic = diagnostics[index];
+            SafeCoreSourceLocation location = sourceMap.MapSpan(diagnostic.Span);
+            mapped[index] = diagnostic with { SourcePath = location.Document.Path, Span = location.Span };
+        }
+        return mapped;
     }
 
     private static void WriteArtifactsTransactionally(

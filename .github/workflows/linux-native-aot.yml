@@ -207,29 +207,12 @@ jobs:
           & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('run', '--project', 'tools/RustSharp.Conformance', '-c', 'Release', '--no-build', '--no-restore', '--', '--profile', 'safe-core-syntax') -TimeoutSeconds 240
           & ./eng/Test-SyntaxEvidence.ps1
       - name: Run safe-core name-resolution corpus
-        shell: bash
+        shell: pwsh
+        timeout-minutes: 5
         run: |
-          set -euo pipefail
-          set +e
-          dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-name-resolution
-          harness_exit=$?
-          set -e
-          report="artifacts/conformance/safe-core-name-resolution.json"
-          if [[ ! -f "$report" ]]; then
-            echo "Safe-core name-resolution harness did not write $report" >&2
-            exit 1
-          fi
-          if (( harness_exit != 0 )); then
-            exit "$harness_exit"
-          fi
-          if ! report_metadata="$(REPORT_PATH="$report" pwsh -NoLogo -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $report = Get-Content -Raw -LiteralPath $env:REPORT_PATH | ConvertFrom-Json; if ($report.Scope.PSObject.Properties.Match("RustcConformance").Count -ne 1 -or $report.Scope.PSObject.Properties.Match("RuntimeConformance").Count -ne 1 -or $report.Manifest.PSObject.Properties.Match("Validated").Count -ne 1) { throw "Safe-core name-resolution evidence scope metadata is missing." }; [Console]::Write(([string]$report.EvidenceKind) + "|" + ([string]$report.Summary.Status) + "|" + ([int]$report.Summary.Denominator) + "|" + ([int]$report.Summary.Passed) + "|" + ([bool]$report.Scope.RustcConformance) + "|" + ([bool]$report.Scope.RuntimeConformance) + "|" + ([bool]$report.Manifest.Validated) + "|" + ([int]$report.Manifest.Denominator) + "|" + ([int]$report.Manifest.CaseCount))')"; then
-            echo "Could not parse safe-core name-resolution evidence metadata from $report" >&2
-            exit 1
-          fi
-          if [[ "$report_metadata" != "name-resolution-acceptance|passed|6|6|False|False|True|6|6" ]]; then
-            echo "Safe-core name-resolution harness returned success without complete 6/6 name-resolution-acceptance evidence" >&2
-            exit 1
-          fi
+          $ErrorActionPreference = 'Stop'
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('run', '--project', 'tools/RustSharp.Conformance', '-c', 'Release', '--no-build', '--no-restore', '--', '--profile', 'safe-core-name-resolution') -TimeoutSeconds 240
+          & ./eng/Test-NameResolutionEvidence.ps1
       - name: Run Linux x64 Native AOT probe
         shell: bash
         run: |

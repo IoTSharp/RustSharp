@@ -1,0 +1,21 @@
+unit@0:101
+  module@4:59 name=b3V0ZXI= external=0
+    visibility@0:3 kind=Public path=-
+    module@20:41 name=aW5uZXI= external=0
+      visibility@16:3 kind=Public path=-
+      function@36:23 name=dmFsdWU= const=0
+        visibility@32:3 kind=Public path=-
+        path-type@50:3 absolute=0
+          segment@50:3 name=aTMy fn=0 generic=0
+        block@54:5
+          literal@56:1 kind=IntegerLiteral raw=MQ==
+  function@64:36 name=bWFpbg== const=0
+    visibility@64:0 kind=Private path=-
+    block@74:26
+      statement@76:22 kind=Expression
+        semicolon@76:22 value=1
+        call@76:21
+          name@76:19 path=b3V0ZXI6OmlubmVyOjp2YWx1ZQ==
+            path-segment@76:5 name=b3V0ZXI= generic=0
+            path-segment@83:5 name=aW5uZXI= generic=0
+            path-segment@90:5 name=dmFsdWU= generic=0

@@ -7,6 +7,8 @@ namespace RustSharp.Syntax;
 /// </summary>
 public sealed record SafeCoreNameResolutionOptions
 {
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
+    public CancellationToken CancellationToken { get; init; }
     public int MaximumSymbols { get; init; } = 100_000;
     public int MaximumScopes { get; init; } = 50_000;
     public int MaximumPathSegments { get; init; } = 128;
@@ -29,6 +31,8 @@ public static class SafeCoreNameResolutionDiagnosticCodes
     public const string AmbiguousName = "RSN1004";
     public const string PrivateName = "RSN1005";
     public const string ImportCycle = "RSN1006";
+    /// <summary>Parsed syntax exceeds the current name-resolution and HIR profile.</summary>
+    public const string UnsupportedSyntax = "RSN1007";
 }
 
 /// <summary>The namespace in which a safe-core symbol can be referenced.</summary>
@@ -81,6 +85,12 @@ public sealed record SafeCoreSymbol(
 {
     /// <summary>The canonical declaration behind a resolved import, after following aliases.</summary>
     public string? ResolvedImportTargetQualifiedName { get; init; }
+
+    /// <summary>Module subtree allowed to access this declaration; null means unrestricted public visibility.</summary>
+    public string? VisibilityScopePath { get; init; } = IsPublic ? null : ScopePath;
+
+    /// <summary>An underscore import validates its target without introducing a lookup name.</summary>
+    public bool IsAnonymousImport { get; init; }
 }
 
 /// <summary>A lexical/module scope and its directly declared symbols.</summary>

@@ -1,0 +1,31 @@
+unit@0:116
+  function@0:20 name=dW5pdA== const=0
+    visibility@0:0 kind=Private path=-
+    block@10:10
+      statement@12:6 kind=Return
+  function@21:30 name=dmFsdWU= const=0
+    visibility@21:0 kind=Private path=-
+    path-type@35:3 absolute=0
+      segment@35:3 name=aTMy fn=0 generic=0
+    block@39:12
+      statement@41:8 kind=Return
+        literal@48:1 kind=IntegerLiteral raw=MQ==
+  function@52:63 name=ZWFybHk= const=0
+    visibility@52:0 kind=Private path=-
+    parameter@61:10
+      identifier-pattern@61:4 name=ZmxhZw== mut=0 ref=0
+      path-type@67:4 absolute=0
+        segment@67:4 name=Ym9vbA== fn=0 generic=0
+    path-type@76:3 absolute=0
+      segment@76:3 name=aTMy fn=0 generic=0
+    block@80:35
+      statement@82:21 kind=Expression
+        semicolon@82:21 value=0
+        if@82:21
+          name@85:4 path=ZmxhZw==
+            path-segment@85:4 name=ZmxhZw== generic=0
+          block@90:13
+            statement@92:9 kind=Return
+              literal@99:1 kind=IntegerLiteral raw=MQ==
+      statement@104:9 kind=Return
+        literal@111:1 kind=IntegerLiteral raw=Mg==

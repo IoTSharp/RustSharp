@@ -26,7 +26,7 @@ internal static class CommandLineParser
         var command = arguments[0] switch
         {
             "check" => CommandKind.Check,
-            "compile" => CommandKind.Compile,
+            "compile" or "build" => CommandKind.Compile,
             "run" => CommandKind.Run,
             "publish" => CommandKind.Publish,
             _ => (CommandKind?)null,
@@ -100,7 +100,7 @@ internal static class CommandLineParser
 
         if (sourcePath is null)
         {
-            return Failure($"Command '{arguments[0]}' requires a RustSharp source file.");
+            return Failure($"Command '{arguments[0]}' requires a RustSharp source file or Cargo.toml.");
         }
 
         if (command != CommandKind.Publish && runtimeIdentifier is not null)

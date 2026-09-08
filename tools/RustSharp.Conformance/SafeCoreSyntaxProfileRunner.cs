@@ -12,9 +12,9 @@ internal static class SafeCoreSyntaxProfileRunner
     private const string ProfileName = "safe-core-syntax";
     private const string ParserName = "RustSharp.Syntax.SafeCoreSyntax.Parse";
     private const string ManifestFileName = "safe-core-syntax-manifest.json";
-    private const int ManifestVersion = 2;
+    private const int ManifestVersion = 3;
     private const int MaximumManifestBytes = 256 * 1024;
-    private const int MaximumCases = 64;
+    private const int MaximumCases = 256;
     private const int MaximumIdentifierLength = 128;
     private const int MaximumFixturePathLength = 512;
     private const int MaximumReportedDiagnostics = 128;
@@ -33,7 +33,7 @@ internal static class SafeCoreSyntaxProfileRunner
     [
         "modules", "imports", "functions", "structs", "enums", "aliases-constants",
         "statements", "expressions", "operator-binding", "patterns", "types", "generics",
-        "attributes", "literals", "malformed", "unsupported",
+        "attributes", "literals", "malformed", "unsupported", "control-flow", "traits",
     ];
 
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
@@ -170,7 +170,7 @@ internal static class SafeCoreSyntaxProfileRunner
             _ => "error",
         };
         var report = new SafeCoreSyntaxReport(
-            SchemaVersion: 2,
+            SchemaVersion: 3,
             GeneratedAtUtc: DateTimeOffset.UtcNow,
             Profile: ProfileName,
             EvidenceKind: "parser-acceptance",
@@ -337,6 +337,23 @@ internal static class SafeCoreSyntaxProfileRunner
 
             int minimumItems = ValidateMinimum(item.MinimumItems, options.MaximumNodes, "minimumItems", id);
             int minimumFunctions = ValidateMinimum(item.MinimumFunctions, options.MaximumNodes, "minimumFunctions", id);
+            string? snapshotPath = item.SnapshotPath;
+            string? snapshotFullPath = null;
+            if (item.Expected == "parse-pass")
+            {
+                if (string.IsNullOrWhiteSpace(snapshotPath))
+                {
+                    throw new InvalidDataException($"Manifest parse-pass case '{id}' requires snapshotPath.");
+                }
+                snapshotPath = ValidateSnapshotPath(snapshotPath, index);
+                snapshotFullPath = GetContainedPath(fixturesDirectory, snapshotPath, $"case '{id}' snapshot");
+                if (!File.Exists(snapshotFullPath)) throw new InvalidDataException($"Case '{id}' snapshot '{snapshotPath}' does not exist.");
+                EnsureRegularFileWithoutReparsePoint(snapshotFullPath, $"case '{id}' snapshot");
+            }
+            else if (snapshotPath is not null)
+            {
+                throw new InvalidDataException($"Manifest parse-fail case '{id}' cannot specify snapshotPath.");
+            }
             string? diagnosticCode = item.DiagnosticCode;
             if (item.Expected == "parse-fail")
             {
@@ -375,7 +392,9 @@ internal static class SafeCoreSyntaxProfileRunner
                 diagnosticCode,
                 minimumItems,
                 minimumFunctions,
-                item.DiagnosticText));
+                item.DiagnosticText,
+                snapshotPath,
+                snapshotFullPath));
         }
 
         Dictionary<string, string[]> coverage = manifest.Coverage
@@ -439,6 +458,7 @@ internal static class SafeCoreSyntaxProfileRunner
                 diagnostic => string.Equals(diagnostic.Code, fixture.DiagnosticCode, StringComparison.Ordinal) &&
                     result.GetText(diagnostic.Span) == fixture.DiagnosticText);
             var differences = new List<string>(3);
+            string? snapshotSha256 = null;
             if (!result.IsTruncated && result.LexResult.ToSourceText() != source)
             {
                 differences.Add("Lexical source reconstruction differed from the fixture.");
@@ -458,6 +478,19 @@ internal static class SafeCoreSyntaxProfileRunner
                 if (functionCount < fixture.MinimumFunctions)
                 {
                     differences.Add($"Parsed function count {functionCount} is below minimum {fixture.MinimumFunctions}.");
+                }
+
+                if (result.IsSuccessful && fixture.SnapshotFullPath is not null)
+                {
+                    BoundedFile expectedSnapshotFile = await ReadBoundedFileAsync(
+                        fixture.SnapshotFullPath, 512 * 1024, cancellationToken).ConfigureAwait(false);
+                    string expectedSnapshot = DecodeUtf8(expectedSnapshotFile.Bytes, fixture.SnapshotPath!);
+                    snapshotSha256 = expectedSnapshotFile.Sha256;
+                    string actualSnapshot = SyntaxAstSnapshotWriter.Write(result.Root!, cancellationToken);
+                    if (!string.Equals(actualSnapshot, expectedSnapshot, StringComparison.Ordinal))
+                    {
+                        differences.Add("AST snapshot differs from the reviewed expected snapshot.");
+                    }
                 }
             }
             else
@@ -501,7 +534,12 @@ internal static class SafeCoreSyntaxProfileRunner
                 IsTruncated: result.IsTruncated,
                 ParserInvoked: parserInvoked,
                 ElapsedMilliseconds: clock.Elapsed.TotalMilliseconds,
-                Diagnostics: diagnostics) { ExpectedDiagnosticText = fixture.DiagnosticText };
+                Diagnostics: diagnostics)
+            {
+                ExpectedDiagnosticText = fixture.DiagnosticText,
+                SnapshotPath = fixture.SnapshotPath,
+                SnapshotSha256 = snapshotSha256,
+            };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -620,6 +658,24 @@ internal static class SafeCoreSyntaxProfileRunner
         if (!string.Equals(Path.GetExtension(file), ".rs", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidDataException($"Manifest fixture '{file}' must have the .rs extension.");
+        }
+
+        return file;
+    }
+
+    private static string ValidateSnapshotPath(string? file, int index)
+    {
+        if (string.IsNullOrWhiteSpace(file) || file.Length > MaximumFixturePathLength ||
+            !string.Equals(file, file.Trim(), StringComparison.Ordinal) || Path.IsPathFullyQualified(file) ||
+            file.IndexOfAny(['/', '\\']) >= 0 || !string.Equals(Path.GetFileName(file), file, StringComparison.Ordinal) ||
+            file.Any(static character => !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_' and not '.'))
+        {
+            throw new InvalidDataException($"Manifest snapshot at index {index} has an invalid path.");
+        }
+
+        if (!string.Equals(Path.GetExtension(file), ".txt", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException($"Manifest snapshot '{file}' must have the .txt extension.");
         }
 
         return file;
@@ -868,6 +924,7 @@ internal static class SafeCoreSyntaxProfileRunner
         public string? Expected { get; init; }
         public string? DiagnosticCode { get; init; }
         public string? DiagnosticText { get; init; }
+        public string? SnapshotPath { get; init; }
         public int? MinimumItems { get; init; }
         public int? MinimumFunctions { get; init; }
     }
@@ -887,7 +944,9 @@ internal static class SafeCoreSyntaxProfileRunner
         string? DiagnosticCode,
         int MinimumItems,
         int MinimumFunctions,
-        string? DiagnosticText);
+        string? DiagnosticText,
+        string? SnapshotPath,
+        string? SnapshotFullPath);
 
     private sealed record BoundedFile(byte[] Bytes, string Sha256);
 
@@ -990,6 +1049,8 @@ internal static class SafeCoreSyntaxProfileRunner
         IReadOnlyList<SyntaxDiagnosticReport> Diagnostics)
     {
         public string? ExpectedDiagnosticText { get; init; }
+        public string? SnapshotPath { get; init; }
+        public string? SnapshotSha256 { get; init; }
 
         public static SyntaxCaseReport Error(
             ValidatedCase fixture,

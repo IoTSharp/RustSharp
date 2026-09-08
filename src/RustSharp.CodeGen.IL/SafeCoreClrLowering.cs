@@ -96,6 +96,8 @@ public static class SafeCoreClrLowering
                 case SafeCoreHirNodeKind.Block:
                     foreach (int child in node.ChildIds) Expression(program.Hir.GetNode(child), depth + 1);
                     break;
+                case SafeCoreHirNodeKind.Attribute when node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.DocumentationAttribute):
+                    break;
                 case SafeCoreHirNodeKind.BlockExpression:
                     Expression(Child(node, 0), depth + 1);
                     break;

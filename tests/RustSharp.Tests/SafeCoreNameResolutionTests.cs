@@ -428,6 +428,8 @@ internal static class SafeCoreNameResolutionTests
         SafeCorePathResolution remoteGeneric = AssertEx.NotNull(
             result.FindResolution("crate::api::RemoteChoice::T"),
             "The cross-module enum generic path should be recorded.");
+        AssertEx.Equal(0, result.FindResolution("crate::hidden_owner::hidden")!.Candidates.Count,
+            "Intermediate path components search the type namespace; a function cannot become a namespace candidate.");
         AssertEx.True(
             result.Diagnostics.Any(diagnostic =>
                 diagnostic.Code == SafeCoreNameResolutionDiagnosticCodes.UnresolvedName &&

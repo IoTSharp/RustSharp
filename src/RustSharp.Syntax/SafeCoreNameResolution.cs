@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -112,6 +113,9 @@ public static class SafeCoreNameResolution
         options ??= new SafeCoreNameResolutionOptions();
         return new SafeCoreNameResolutionOptions
         {
+            Timeout = options.Timeout > TimeSpan.Zero && options.Timeout <= TimeSpan.FromMinutes(1)
+                ? options.Timeout : TimeSpan.FromSeconds(10),
+            CancellationToken = options.CancellationToken,
             MaximumSymbols = Math.Clamp(options.MaximumSymbols, 1, AbsoluteMaximumSymbols),
             MaximumScopes = Math.Clamp(options.MaximumScopes, 1, AbsoluteMaximumScopes),
             MaximumPathSegments = Math.Clamp(options.MaximumPathSegments, 1, AbsoluteMaximumPathSegments),
@@ -135,6 +139,8 @@ public static class SafeCoreNameResolution
         private readonly List<ScopeBuilder> _scopes = [];
         private readonly List<SymbolBuilder> _symbols = [];
         private readonly List<SymbolBuilder> _imports = [];
+        private readonly List<GlobImport> _globImports = [];
+        private readonly List<(string Path, ScopeBuilder Scope, TextSpan Span)> _importGroupPrefixes = [];
         private readonly List<PathRecord> _pathRecords = [];
         private readonly Dictionary<SafeCoreItemSyntax, ScopeBuilder> _itemScopes =
             new(ReferenceComparer<SafeCoreItemSyntax>.Instance);
@@ -147,6 +153,8 @@ public static class SafeCoreNameResolution
         private int _depth;
         private bool _truncated;
         private bool _limitReported;
+        private bool _probingImports;
+        private readonly long _started = Stopwatch.GetTimestamp();
 
         public Resolver(SafeCoreNameResolutionOptions options, string sourcePath)
         {
@@ -164,7 +172,21 @@ public static class SafeCoreNameResolution
 
             _root.Span = rootSyntax.Span;
 
+            // Documentation comments are retained as inert `doc` attributes in
+            // the HIR. Every other attribute would require evaluation (for
+            // example `cfg`, `path`, or a tool attribute), which is outside
+            // this profile and must fail with the semantic boundary code.
+            RejectUnsupportedRootAttributes(rootSyntax.Attributes, rootSyntax.Span);
+            if (_diagnostics.Any(static diagnostic => diagnostic.Code == SafeCoreNameResolutionDiagnosticCodes.UnsupportedSyntax))
+            {
+                return BuildResult();
+            }
+
             CollectItems(rootSyntax.Items, _root, depth: 0);
+            if (_diagnostics.Any(static diagnostic => diagnostic.Code == SafeCoreNameResolutionDiagnosticCodes.UnsupportedSyntax))
+            {
+                return BuildResult();
+            }
             ResolveImports();
             ResolveItems(rootSyntax.Items, _root, depth: 0);
             return BuildResult();
@@ -187,6 +209,20 @@ public static class SafeCoreNameResolution
             var publicSymbols = new Dictionary<SymbolBuilder, SafeCoreSymbol>(ReferenceComparer<SymbolBuilder>.Instance);
             foreach (SymbolBuilder symbol in _symbols)
             {
+                if (symbol.IsGlobImport && !symbol.IsActiveGlobImport) continue;
+                if (symbol.ImportPeer is { } peer)
+                {
+                    if (symbol.ImportResolution.Status != SafeCoreNameResolutionStatus.Resolved &&
+                        peer.ImportResolution.Status == SafeCoreNameResolutionStatus.Resolved) continue;
+                    if (symbol.ImportResolution.Status == peer.ImportResolution.Status &&
+                        ReferenceEquals(symbol.ResolvedImportTarget, peer.ResolvedImportTarget) &&
+                        symbol.VisibilityScopePath == peer.VisibilityScopePath)
+                    {
+                        if (publicSymbols.TryGetValue(peer, out SafeCoreSymbol? shared)) publicSymbols[symbol] = shared;
+                        else publicSymbols[symbol] = ToPublicSymbol(symbol) with { Namespace = SafeCoreSymbolNamespace.Both };
+                        continue;
+                    }
+                }
                 publicSymbols[symbol] = ToPublicSymbol(symbol);
             }
 
@@ -194,9 +230,11 @@ public static class SafeCoreNameResolution
             foreach (ScopeBuilder scope in _scopes)
             {
                 var scopeSymbols = new List<SafeCoreSymbol>(scope.Symbols.Count);
+                var seenSymbols = new HashSet<SafeCoreSymbol>();
                 foreach (SymbolBuilder symbol in scope.Symbols)
                 {
-                    scopeSymbols.Add(publicSymbols[symbol]);
+                    if (publicSymbols.TryGetValue(symbol, out SafeCoreSymbol? publicSymbol) && seenSymbols.Add(publicSymbol))
+                        scopeSymbols.Add(publicSymbol);
                 }
 
                 publicScopes.Add(new(
@@ -210,11 +248,12 @@ public static class SafeCoreNameResolution
             foreach (PathRecord record in _pathRecords)
             {
                 var candidates = new List<SafeCoreSymbol>(record.Candidates.Count);
+                var seenCandidates = new HashSet<SafeCoreSymbol>();
                 foreach (SymbolBuilder candidate in record.Candidates)
                 {
                     if (publicSymbols.TryGetValue(candidate, out SafeCoreSymbol? publicCandidate))
                     {
-                        candidates.Add(publicCandidate);
+                        if (seenCandidates.Add(publicCandidate)) candidates.Add(publicCandidate);
                     }
                 }
 
@@ -235,7 +274,7 @@ public static class SafeCoreNameResolution
                 _sourcePath,
                 publicScopes[0],
                 publicScopes.AsReadOnly(),
-                _symbols.Select(symbol => publicSymbols[symbol]).ToArray(),
+                publicSymbols.Values.Distinct().ToArray(),
                 publicRecords.AsReadOnly(),
                 _diagnostics.AsReadOnly(),
                 _truncated);
@@ -253,6 +292,8 @@ public static class SafeCoreNameResolution
             symbol.DeclaringScope.Path)
         {
             ResolvedImportTargetQualifiedName = symbol.ResolvedImportTarget?.QualifiedName,
+            VisibilityScopePath = symbol.VisibilityScopePath,
+            IsAnonymousImport = symbol.IsAnonymousImport,
         };
 
         private void CollectItems(
@@ -295,6 +336,28 @@ public static class SafeCoreNameResolution
                 return;
             }
 
+            RejectUnsupportedAttributes(item.Attributes, item.Span);
+            if (_truncated)
+            {
+                return;
+            }
+
+            if (item is SafeCoreModuleSyntax { IsExternal: true } or
+                    SafeCoreFunctionSyntax { WhereClause: not null } or
+                    SafeCoreStructSyntax { WhereClause: not null } or SafeCoreEnumSyntax { WhereClause: not null } or
+                    SafeCoreTypeAliasSyntax { WhereClause: not null } or SafeCoreConstSyntax { Name: "_" })
+            {
+                RejectNewSyntax(item.Span);
+                return;
+            }
+
+            if (item is SafeCoreModuleSyntax moduleItem &&
+                HasUnsupportedAttributes(moduleItem.InnerAttributes))
+            {
+                RejectUnsupportedAttributes(moduleItem.InnerAttributes, moduleItem.Span);
+                return;
+            }
+
             switch (item)
             {
                 case SafeCoreModuleSyntax module:
@@ -307,7 +370,8 @@ public static class SafeCoreNameResolution
                         module.IsPublic,
                         module.Span,
                         isImport: false,
-                        targetPath: null);
+                        targetPath: null,
+                        visibility: module.Visibility);
                     ScopeBuilder? moduleScope = symbol is null
                         ? null
                         : CreateScope(scope, symbol.QualifiedName, symbol.QualifiedName);
@@ -345,37 +409,145 @@ public static class SafeCoreNameResolution
                         constant.IsPublic,
                         constant.Span,
                         isImport: false,
-                        targetPath: null);
+                        targetPath: null,
+                        visibility: constant.Visibility);
                     break;
                 default:
-                    AddDiagnostic(
-                        SafeCoreNameResolutionDiagnosticCodes.InvalidSyntax,
-                        "The syntax tree contains an unsupported safe-core item node.",
-                        item.Span);
+                    RejectNewSyntax(item.Span);
                     break;
             }
         }
 
         private void CollectUse(SafeCoreUseSyntax use, ScopeBuilder scope)
         {
-            if (!TrySplitPath(use.Path, use.Span, out IReadOnlyList<string>? segments))
+            if (!TryResolveVisibility(scope, use.Visibility, use.IsPublic, use.Span, out _)) return;
+            if (use.Tree is null)
             {
+                CollectImportLeaf(use.Path, use.Alias, use.Visibility, use.Span, scope);
                 return;
             }
+            CollectUseTree(use.Tree, string.Empty, use.Visibility, scope, use.Tree.Kind == SafeCoreUseTreeKind.Path ? use.Span : null, 0);
+        }
 
-            string name = use.Alias ?? segments[^1];
+        private void CollectUseTree(SafeCoreUseTreeSyntax tree, string prefix, SafeCoreVisibilitySyntax visibility,
+            ScopeBuilder scope, TextSpan? simpleSpan, int depth)
+        {
+            if (!Enter(depth, tree.Span)) return;
+            try
+            {
+                if (!Step(tree.Span)) return;
+                if (tree.IsAbsolute)
+                {
+                    RejectNewSyntax(tree.Span);
+                    return;
+                }
+                if (tree.Prefix.Count > _options.MaximumPathSegments)
+                {
+                    StopLimit(tree.Span);
+                    return;
+                }
+                var path = new StringBuilder(prefix);
+                if (path.Length > _options.MaximumPathLength)
+                {
+                    StopLimit(tree.Span);
+                    return;
+                }
+                bool isSelfImport = false;
+                for (var index = 0; index < tree.Prefix.Count; index++)
+                {
+                    if (!Step(tree.Span)) return;
+                    string segment = tree.Prefix[index];
+                    // In a group, `self` imports the accumulated prefix itself.
+                    if (segment == "self" && index == tree.Prefix.Count - 1 && path.Length > 0 && tree.Kind == SafeCoreUseTreeKind.Path)
+                    {
+                        isSelfImport = true;
+                        continue;
+                    }
+                    if (path.Length > 0) path.Append("::");
+                    path.Append(segment);
+                    if (path.Length > _options.MaximumPathLength) { StopLimit(tree.Span); return; }
+                }
+                string targetPath = path.ToString();
+                if (tree.Kind == SafeCoreUseTreeKind.Glob)
+                {
+                    if (tree.Alias is not null || tree.Children.Count != 0 || targetPath.Length == 0)
+                    {
+                        RejectNewSyntax(tree.Span);
+                        return;
+                    }
+
+                    if (_globImports.Count >= _options.MaximumSymbols)
+                    {
+                        StopLimit(tree.Span);
+                        return;
+                    }
+
+                    _globImports.Add(new GlobImport(targetPath, scope, visibility, tree.Span));
+                    return;
+                }
+                if (tree.Kind == SafeCoreUseTreeKind.Path)
+                {
+                    if (tree.Children.Count > 0) { RejectNewSyntax(tree.Span); return; }
+                    CollectImportLeaf(targetPath, tree.Alias, visibility, simpleSpan ?? tree.Span, scope, isSelfImport);
+                    return;
+                }
+                if (tree.Kind != SafeCoreUseTreeKind.Group || tree.Alias is not null)
+                {
+                    RejectNewSyntax(tree.Span);
+                    return;
+                }
+                if (targetPath.Length > 0)
+                {
+                    if (_importGroupPrefixes.Count >= _options.MaximumSymbols) { StopLimit(tree.Span); return; }
+                    _importGroupPrefixes.Add((targetPath, scope, tree.Span));
+                }
+                for (var index = 0; index < tree.Children.Count && !_truncated; index++)
+                {
+                    if (!Step(tree.Children[index].Span)) return;
+                    CollectUseTree(tree.Children[index], targetPath, visibility, scope, null, depth + 1);
+                }
+            }
+            finally { Exit(); }
+        }
+
+        private void CollectImportLeaf(string path, string? alias, SafeCoreVisibilitySyntax visibility, TextSpan span,
+            ScopeBuilder scope, bool isSelfImport = false)
+        {
+            if (path.StartsWith("::", StringComparison.Ordinal)) { RejectNewSyntax(span); return; }
+            if (!TrySplitPath(path, span, out IReadOnlyList<string>? segments)) return;
+            // A crate-root alias requires a first-class crate symbol, outside this in-memory profile.
+            if (segments.Count == 1 && segments[0] is "crate" or "self" or "super")
+            {
+                RejectNewSyntax(span);
+                return;
+            }
+            string name = alias ?? segments[^1];
             SymbolBuilder? symbol = AddSymbol(
                 scope,
                 name,
                 SafeCoreSymbolKind.Import,
-                SafeCoreSymbolNamespace.Both,
-                use.IsPublic,
-                use.Span,
+                SafeCoreSymbolNamespace.Type,
+                visibility.Kind == SafeCoreVisibilityKind.Public,
+                span,
                 isImport: true,
-                targetPath: use.Path);
+                targetPath: path,
+                visibility: visibility,
+                isAnonymousImport: name == "_");
             if (symbol is not null)
             {
+                symbol.IsSelfImport = isSelfImport;
                 _imports.Add(symbol);
+                if (!isSelfImport)
+                {
+                    SymbolBuilder? valueBinding = AddSymbol(scope, name, SafeCoreSymbolKind.Import,
+                        SafeCoreSymbolNamespace.Value, visibility.Kind == SafeCoreVisibilityKind.Public,
+                        span, isImport: true, targetPath: path, visibility: visibility, isAnonymousImport: name == "_");
+                    if (valueBinding is null) return;
+                    symbol.ImportPeer = valueBinding;
+                    valueBinding.ImportPeer = symbol;
+                    valueBinding.IsSecondaryImportBinding = true;
+                    _imports.Add(valueBinding);
+                }
             }
         }
 
@@ -389,7 +561,8 @@ public static class SafeCoreNameResolution
                 function.IsPublic,
                 function.Span,
                 isImport: false,
-                targetPath: null);
+                targetPath: null,
+                visibility: function.Visibility);
             if (symbol is null)
             {
                 return;
@@ -430,7 +603,8 @@ public static class SafeCoreNameResolution
                 structure.IsPublic,
                 structure.Span,
                 isImport: false,
-                targetPath: null);
+                targetPath: null,
+                visibility: structure.Visibility);
             if (symbol is null)
             {
                 return;
@@ -463,7 +637,8 @@ public static class SafeCoreNameResolution
                         field.IsPublic,
                         field.Span,
                         isImport: false,
-                        targetPath: null);
+                        targetPath: null,
+                        visibility: field.Visibility);
                 }
             }
         }
@@ -478,7 +653,8 @@ public static class SafeCoreNameResolution
                 enumeration.IsPublic,
                 enumeration.Span,
                 isImport: false,
-                targetPath: null);
+                targetPath: null,
+                visibility: enumeration.Visibility);
             if (symbol is null)
             {
                 return;
@@ -515,6 +691,7 @@ public static class SafeCoreNameResolution
                 {
                     return;
                 }
+                variantSymbol.VisibilityScopePath = symbol.VisibilityScopePath;
             }
         }
 
@@ -528,7 +705,8 @@ public static class SafeCoreNameResolution
                 alias.IsPublic,
                 alias.Span,
                 isImport: false,
-                targetPath: null);
+                targetPath: null,
+                visibility: alias.Visibility);
             if (symbol is null)
             {
                 return;
@@ -555,6 +733,14 @@ public static class SafeCoreNameResolution
                 if (!Step(parameter.Span))
                 {
                     return;
+                }
+
+                if (parameter.Attributes.Count > 0 || parameter.Kind != SafeCoreGenericParameterKind.Type || parameter.DefaultType is not null ||
+                    parameter.DefaultValue is not null || parameter.ConstType is not null || parameter.Constraints.Any(static bound =>
+                        bound is not SafeCoreTraitBoundSyntax { IsOptional: false, GenericParameters.Count: 0 }))
+                {
+                    RejectNewSyntax(parameter.Span);
+                    continue;
                 }
 
                 _ = AddSymbol(
@@ -798,6 +984,28 @@ public static class SafeCoreNameResolution
 
         private void ResolveImports()
         {
+            if (_imports.Count > 0 || _globImports.Count > 0)
+            {
+                ResolveImportFixedPoint();
+                if (_truncated) return;
+            }
+
+            for (var index = 0; index < _importGroupPrefixes.Count; index++)
+            {
+                (string path, ScopeBuilder scope, TextSpan span) = _importGroupPrefixes[index];
+                if (!Step(span)) return;
+                PathResult result = ResolvePathInternal(path, scope, SafeCoreSymbolNamespace.Type, span, emitDiagnostic: true);
+                _pathRecords.Add(new(path, scope.Path, result.Status, result.Symbol, result.Candidates, span));
+                if (result.Status == SafeCoreNameResolutionStatus.Resolved && result.Symbol is not null &&
+                    GetResolvedImportTarget(result.Symbol).Kind is not (SafeCoreSymbolKind.Module or SafeCoreSymbolKind.Enum))
+                    AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.InvalidPath, "An import group prefix must name a module or enum.", span);
+            }
+            for (var index = 0; index < _globImports.Count; index++)
+            {
+                if (!Step(_globImports[index].Span)) return;
+                _ = ResolveGlobScope(_globImports[index], emitDiagnostic: true);
+                if (_truncated) return;
+            }
             for (var index = 0; index < _imports.Count; index++)
             {
                 if (!Step(_imports[index].Span))
@@ -806,9 +1014,188 @@ public static class SafeCoreNameResolution
                 }
 
                 _ = EnsureImportResolved(_imports[index]);
+                if (!_imports[index].IsSecondaryImportBinding) ReportImportDiagnostics(_imports[index]);
             }
 
             CheckImportDuplicates();
+        }
+
+        private void ResolveImportFixedPoint()
+        {
+            _probingImports = true;
+            try
+            {
+                // Recompute until imports and visible glob bindings stabilize.
+                // Both the round bound and Step's deadline/cancellation budget
+                // apply, including cycles whose candidates do not stabilize.
+                for (var round = 0; round < _options.MaximumSymbols; round++)
+                {
+                    if (!Step(_root!.Span)) return;
+                    var previous = new (ImportResolution Resolution, string? Visibility)[_imports.Count];
+                    for (var index = 0; index < _imports.Count; index++)
+                    {
+                        if (!Step(_imports[index].Span)) return;
+                        previous[index] = (_imports[index].ImportResolution, _imports[index].VisibilityScopePath);
+                        ResetImport(_imports[index]);
+                    }
+
+                    for (var index = 0; index < _imports.Count; index++)
+                    {
+                        if (!Step(_imports[index].Span)) return;
+                        _ = EnsureImportResolved(_imports[index]);
+                    }
+
+                    bool changed = false;
+                    for (var index = 0; index < _globImports.Count; index++)
+                    {
+                        if (!Step(_globImports[index].Span)) return;
+                        changed |= ExpandGlobImport(_globImports[index]);
+                        if (_truncated) return;
+                    }
+
+                    for (var index = 0; index < _imports.Count; index++)
+                    {
+                        if (!Step(_imports[index].Span)) return;
+                        changed |= previous[index] != (_imports[index].ImportResolution, _imports[index].VisibilityScopePath);
+                    }
+
+                    if (!changed) return;
+                }
+
+                StopLimit(_root!.Span);
+            }
+            finally
+            {
+                _probingImports = false;
+            }
+        }
+
+        private static void ResetImport(SymbolBuilder import)
+        {
+            import.ImportResolutionAttempted = false;
+            import.ResolvedImportTarget = null;
+            import.MemberScope = null;
+            import.ImportCycleReported = false;
+            import.ImportVisibilityError = false;
+            import.ImportResolution = new(SafeCoreNameResolutionStatus.Invalid, null);
+            import.VisibilityScopePath = import.DeclaredImportVisibilityScopePath;
+            import.IsPublic = import.VisibilityScopePath is null;
+        }
+
+        private ScopeBuilder? ResolveGlobScope(GlobImport glob, bool emitDiagnostic)
+        {
+            PathResult result = ResolvePathInternal(glob.TargetPath, glob.Scope,
+                SafeCoreSymbolNamespace.Type, glob.Span, emitDiagnostic);
+            if (emitDiagnostic)
+                _pathRecords.Add(new(glob.TargetPath, glob.Scope.Path, result.Status, result.Symbol, result.Candidates, glob.Span));
+            if (result.Status != SafeCoreNameResolutionStatus.Resolved) return null;
+
+            ScopeBuilder? members;
+            if (result.Symbol is not null)
+            {
+                members = GetMemberScope(GetResolvedImportTarget(result.Symbol));
+            }
+            else
+            {
+                // Root module paths have no first-class declaration symbol.
+                members = null;
+                if (TrySplitPath(glob.TargetPath, glob.Span, out IReadOnlyList<string> segments))
+                {
+                    members = segments[0] == "crate" ? _root : FindModuleScope(glob.Scope);
+                    for (var index = 0; index < segments.Count; index++)
+                    {
+                        if (!Step(glob.Span)) return null;
+                        if (segments[index] == "super") members = members?.Parent;
+                        else if (index != 0 || segments[index] is not ("crate" or "self")) { members = null; break; }
+                    }
+                }
+            }
+
+            if (members is null || ReferenceEquals(members, glob.Scope))
+            {
+                if (emitDiagnostic)
+                    AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.InvalidPath,
+                        members is null ? "A glob import prefix must name a module or enum." : "A module cannot glob-import itself.", glob.Span);
+                return null;
+            }
+
+            return members;
+        }
+
+        private bool ExpandGlobImport(GlobImport glob)
+        {
+            ScopeBuilder? members = ResolveGlobScope(glob, emitDiagnostic: false);
+            if (!TryResolveVisibility(glob.Scope, glob.Visibility, false, glob.Span, out string? visibility)) return false;
+            var desired = new Dictionary<(string Name, SymbolBuilder Target), (SafeCoreSymbolNamespace Namespace, string? Visibility)>();
+            bool changed = false;
+            int visited = 0;
+            if (members is not null)
+            foreach (string name in members.ByName.Keys)
+            {
+                if (++visited > _options.MaximumSymbols || !Step(glob.Span)) return changed;
+                for (var namespaceIndex = 0; namespaceIndex < 2; namespaceIndex++)
+                {
+                    SafeCoreSymbolNamespace @namespace = namespaceIndex == 0 ? SafeCoreSymbolNamespace.Type : SafeCoreSymbolNamespace.Value;
+                    List<SymbolBuilder> candidates = LookupAccessible(members, name, @namespace, glob.Scope, out _);
+                    for (var index = 0; index < candidates.Count; index++)
+                    {
+                        if (!Step(glob.Span)) return changed;
+                        SymbolBuilder member = candidates[index];
+                        if (member.IsImport && member.ImportResolution.Status != SafeCoreNameResolutionStatus.Resolved) continue;
+                        if (members.Path != members.ModulePath && member.Kind != SafeCoreSymbolKind.EnumVariant) continue;
+                        SymbolBuilder target = GetResolvedImportTarget(member);
+                        if (target.IsImport) continue;
+                        string? allowed = VisibilityContains(visibility, member.VisibilityScopePath) ? member.VisibilityScopePath : visibility;
+                        var key = (member.Name, target);
+                        if (desired.TryGetValue(key, out var previous))
+                        {
+                            desired[key] = (previous.Namespace == @namespace ? @namespace : SafeCoreSymbolNamespace.Both,
+                                VisibilityContains(previous.Visibility, allowed) ? previous.Visibility : allowed);
+                        }
+                        else desired.Add(key, (@namespace, allowed));
+                    }
+                }
+            }
+
+            visited = 0;
+            foreach (var binding in glob.Bindings)
+            {
+                if (++visited > _options.MaximumSymbols || !Step(glob.Span)) return changed;
+                bool active = desired.ContainsKey(binding.Key);
+                changed |= binding.Value.IsActiveGlobImport != active;
+                binding.Value.IsActiveGlobImport = active;
+            }
+
+            visited = 0;
+            foreach (var binding in desired)
+            {
+                if (++visited > _options.MaximumSymbols || !Step(glob.Span)) return changed;
+                (string name, SymbolBuilder target) = binding.Key;
+                (SafeCoreSymbolNamespace @namespace, string? allowed) = binding.Value;
+                if (glob.Bindings.TryGetValue(binding.Key, out SymbolBuilder? imported))
+                {
+                    changed |= imported.Namespace != @namespace || imported.VisibilityScopePath != allowed;
+                    imported.Namespace = @namespace;
+                    imported.VisibilityScopePath = allowed;
+                    imported.IsPublic = allowed is null;
+                    continue;
+                }
+
+                imported = AddSymbol(glob.Scope, name, SafeCoreSymbolKind.Import, @namespace,
+                    allowed is null, glob.Span, isImport: true, targetPath: target.QualifiedName);
+                if (imported is null) return changed;
+                imported.IsGlobImport = true;
+                imported.IsActiveGlobImport = true;
+                imported.VisibilityScopePath = allowed;
+                imported.ResolvedImportTarget = target;
+                imported.MemberScope = GetMemberScope(target);
+                imported.ImportResolutionAttempted = true;
+                imported.ImportResolution = new(SafeCoreNameResolutionStatus.Resolved, target);
+                glob.Bindings.Add(binding.Key, imported);
+                changed = true;
+            }
+
+            return changed;
         }
 
         private void CheckImportDuplicates()
@@ -836,7 +1223,9 @@ public static class SafeCoreNameResolution
 
                             SymbolBuilder left = group[leftIndex];
                             SymbolBuilder right = group[rightIndex];
-                            if ((!left.IsImport && !right.IsImport) ||
+                            if (left.IsImport && left.ImportResolution.Status != SafeCoreNameResolutionStatus.Resolved ||
+                                right.IsImport && right.ImportResolution.Status != SafeCoreNameResolutionStatus.Resolved) continue;
+                            if (left.IsGlobImport || right.IsGlobImport || (!left.IsImport && !right.IsImport) ||
                                 !NamespacesConflict(left.Namespace, right.Namespace))
                             {
                                 continue;
@@ -856,13 +1245,12 @@ public static class SafeCoreNameResolution
         {
             if (_activeImports.Contains(import))
             {
-                AddDiagnostic(
-                    SafeCoreNameResolutionDiagnosticCodes.ImportCycle,
-                    $"Import cycle encountered while resolving '{import.TargetPath}'.",
-                    import.Span);
-                import.ImportResolutionAttempted = true;
-                import.ImportResolution = new(SafeCoreNameResolutionStatus.Ambiguous, null);
-                return import.ImportResolution;
+                import.ImportCycleReported = true;
+                // This is a transient result while the same binding is being
+                // probed as a path prefix. Do not cache it: a concrete module
+                // or value candidate may resolve the outer path immediately
+                // after this placeholder is skipped by LookupAccessible.
+                return new(SafeCoreNameResolutionStatus.Ambiguous, null);
             }
 
             if (import.ImportResolutionAttempted)
@@ -892,22 +1280,31 @@ public static class SafeCoreNameResolution
                 PathResult result = ResolvePathInternal(
                     import.TargetPath,
                     import.DeclaringScope,
-                    expectedNamespace: null,
+                    expectedNamespace: import.Namespace,
                     import.Span,
-                    emitDiagnostic: true);
+                    emitDiagnostic: false);
                 if (result.Status == SafeCoreNameResolutionStatus.Resolved && result.Symbol is not null)
                 {
                     SymbolBuilder resolvedTarget = GetResolvedImportTarget(result.Symbol);
+                    if (import.IsSelfImport && !MatchesNamespace(result.Symbol.Namespace, SafeCoreSymbolNamespace.Type))
+                    {
+                        AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.UnresolvedName,
+                            "A self import requires a declaration in the type namespace.", import.Span);
+                        import.ImportResolution = new(SafeCoreNameResolutionStatus.Unresolved, null);
+                        return import.ImportResolution;
+                    }
                     import.ResolvedImportTarget = resolvedTarget;
-                    import.Namespace = resolvedTarget.Namespace;
                     import.MemberScope = GetMemberScope(resolvedTarget);
                     import.ImportResolution = new(result.Status, resolvedTarget);
-                    if (import.IsPublic && !result.Symbol.IsPublic)
+                    if (!VisibilityContains(result.Symbol.VisibilityScopePath, import.VisibilityScopePath) ||
+                        !VisibilityContains(resolvedTarget.VisibilityScopePath, import.VisibilityScopePath))
                     {
-                        AddDiagnostic(
-                            SafeCoreNameResolutionDiagnosticCodes.PrivateName,
-                            $"Public import '{import.Name}' re-exports a private symbol.",
-                            import.Span);
+                        import.ImportVisibilityError = true;
+                        if (VisibilityContains(import.VisibilityScopePath, result.Symbol.VisibilityScopePath))
+                            import.VisibilityScopePath = result.Symbol.VisibilityScopePath;
+                        if (VisibilityContains(import.VisibilityScopePath, resolvedTarget.VisibilityScopePath))
+                            import.VisibilityScopePath = resolvedTarget.VisibilityScopePath;
+                        import.IsPublic = import.VisibilityScopePath is null;
                     }
                 }
                 else
@@ -921,6 +1318,36 @@ public static class SafeCoreNameResolution
             {
                 _activeImports.Remove(import);
             }
+        }
+
+        private void ReportImportDiagnostics(SymbolBuilder import)
+        {
+            SymbolBuilder? peer = import.ImportPeer;
+            bool hasTarget = import.ImportResolution.Status == SafeCoreNameResolutionStatus.Resolved ||
+                peer?.ImportResolution.Status == SafeCoreNameResolutionStatus.Resolved;
+            bool hasExportableTarget = import.ImportResolution.Status == SafeCoreNameResolutionStatus.Resolved && !import.ImportVisibilityError ||
+                peer?.ImportResolution.Status == SafeCoreNameResolutionStatus.Resolved && !peer.ImportVisibilityError;
+            if (!hasExportableTarget && (import.ImportVisibilityError || peer?.ImportVisibilityError == true))
+            {
+                AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.PrivateName,
+                    $"Import '{import.Name}' cannot re-export its target with broader visibility.", import.Span);
+                return;
+            }
+
+            if (!hasTarget && (import.ImportCycleReported || peer?.ImportCycleReported == true))
+                AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.ImportCycle,
+                    $"Import cycle encountered while resolving '{import.TargetPath}'.", import.Span);
+
+            // A use binds every available namespace. An absent or inaccessible
+            // counterpart is legal, but ambiguity in either namespace is not.
+            SafeCoreNameResolutionStatus status = import.ImportResolution.Status;
+            SafeCoreNameResolutionStatus other = peer?.ImportResolution.Status ?? status;
+            if (status == SafeCoreNameResolutionStatus.Ambiguous || other == SafeCoreNameResolutionStatus.Ambiguous)
+                status = SafeCoreNameResolutionStatus.Ambiguous;
+            else if (hasTarget) return;
+            else if (status == SafeCoreNameResolutionStatus.Private || other == SafeCoreNameResolutionStatus.Private)
+                status = SafeCoreNameResolutionStatus.Private;
+            ReportPathResult(new(status, null, []), import.TargetPath!, import.Span, emitDiagnostic: true);
         }
 
         private void ResolveItems(
@@ -991,6 +1418,7 @@ public static class SafeCoreNameResolution
             for (var index = 0; index < function.Parameters.Count; index++)
             {
                 SafeCoreParameterSyntax parameter = function.Parameters[index];
+                if (parameter.Attributes.Count > 0 || parameter.Receiver is not null) RejectNewSyntax(parameter.Span);
                 ResolvePattern(parameter.Pattern, scope, depth + 1);
                 ResolveType(parameter.Type, scope, depth + 1);
                 if (_truncated)
@@ -1012,6 +1440,13 @@ public static class SafeCoreNameResolution
             ResolveGenericBounds(structure.GenericParameters, scope);
             for (var index = 0; index < structure.Fields.Count; index++)
             {
+                if (HasUnsupportedAttributes(structure.Fields[index].Attributes))
+                {
+                    RejectNewSyntax(structure.Fields[index].Span);
+                }
+                if (structure.Fields[index].Name is null)
+                    _ = TryResolveVisibility(scope, structure.Fields[index].Visibility, structure.Fields[index].IsPublic,
+                        structure.Fields[index].Span, out _);
                 ResolveType(structure.Fields[index].Type, scope, depth: 0);
                 if (_truncated)
                 {
@@ -1026,8 +1461,13 @@ public static class SafeCoreNameResolution
             for (var variantIndex = 0; variantIndex < enumeration.Variants.Count; variantIndex++)
             {
                 SafeCoreEnumVariantSyntax variant = enumeration.Variants[variantIndex];
+                if (HasUnsupportedAttributes(variant.Attributes) || variant.Kind == SafeCoreEnumVariantKind.Struct || variant.Discriminant is not null)
+                {
+                    RejectNewSyntax(variant.Span);
+                }
                 for (var fieldIndex = 0; fieldIndex < variant.Fields.Count; fieldIndex++)
                 {
+                    if (HasUnsupportedAttributes(variant.Fields[fieldIndex].Attributes)) RejectNewSyntax(variant.Fields[fieldIndex].Span);
                     ResolveType(variant.Fields[fieldIndex].Type, scope, depth: 0);
                     if (_truncated)
                     {
@@ -1041,17 +1481,179 @@ public static class SafeCoreNameResolution
             IReadOnlyList<SafeCoreGenericParameterSyntax> parameters,
             ScopeBuilder scope)
         {
-            // Trait declarations are outside the current safe-core AST. Keep
-            // bounds in the syntax model and defer binding them until that
+            // Trait resolution is outside the current semantic profile. Keep
+            // legacy path bounds in the syntax model and defer binding until that
             // namespace is introduced, avoiding false unresolved diagnostics.
             if (parameters.Count > _options.MaximumPathSegments)
             {
                 StopLimit(scope.Span);
+                return;
+            }
+
+            for (var index = 0; index < parameters.Count && !_truncated; index++)
+            {
+                SafeCoreGenericParameterSyntax parameter = parameters[index];
+                if (!Step(parameter.Span)) return;
+                for (var boundIndex = 0; boundIndex < parameter.Bounds.Count && !_truncated; boundIndex++)
+                {
+                    ValidateDeferredBoundSyntax(parameter.Bounds[boundIndex]);
+                }
+                // Also inspect the structured view so an externally supplied AST cannot hide a
+                // new type by omitting it from the backwards-compatible Bounds collection.
+                for (var constraintIndex = 0; constraintIndex < parameter.Constraints.Count && !_truncated; constraintIndex++)
+                {
+                    SafeCoreTypeBoundSyntax constraint = parameter.Constraints[constraintIndex];
+                    if (!Step(constraint.Span)) return;
+                    if (constraint is SafeCoreTraitBoundSyntax { IsOptional: false, GenericParameters.Count: 0 } trait)
+                        ValidateDeferredBoundSyntax(trait.Type);
+                    else RejectNewSyntax(constraint.Span);
+                }
+            }
+        }
+
+        // Bounds deliberately defer name binding, but must still retain only syntax that HIR
+        // understands. The explicit work stack observes the same depth and operation limits as
+        // resolution, including types nested inside generic arguments and array-length expressions.
+        private void ValidateDeferredBoundSyntax(SafeCoreTypeSyntax root)
+        {
+            var pending = new Stack<(object Syntax, int Depth)>();
+            pending.Push((root, 0));
+            while (pending.Count > 0 && !_truncated)
+            {
+                (object syntax, int depth) = pending.Pop();
+                TextSpan span = syntax switch
+                {
+                    SafeCoreTypeSyntax type => type.Span,
+                    SafeCorePathSegmentSyntax segment => segment.Span,
+                    SafeCoreExpressionSyntax expression => expression.Span,
+                    SafeCorePatternSyntax pattern => pattern.Span,
+                    SafeCoreStatementSyntax statement => statement.Span,
+                    SafeCoreBlockSyntax block => block.Span,
+                    _ => root.Span,
+                };
+                if (!Enter(depth, span)) return;
+                try
+                {
+                    if (!Step(span)) return;
+                    switch (syntax)
+                    {
+                        case SafeCorePathTypeSyntax path:
+                            if (path.IsAbsolute) RejectNewSyntax(path.Span);
+                            if (path.Segments.Count > _options.MaximumPathSegments) { StopLimit(path.Span); return; }
+                            for (var index = 0; index < path.Segments.Count && Step(span); index++)
+                                pending.Push((path.Segments[index], depth + 1));
+                            break;
+                        case SafeCorePathSegmentSyntax segment:
+                            if (segment.HasFunctionArguments || segment.FunctionParameters.Count > 0 || segment.FunctionReturnType is not null)
+                                RejectNewSyntax(segment.Span);
+                            for (var index = 0; index < segment.GenericArguments.Count && Step(span); index++)
+                                pending.Push((segment.GenericArguments[index], depth + 1));
+                            for (var index = 0; index < segment.Arguments.Count && Step(span); index++)
+                            {
+                                if (segment.Arguments[index] is not SafeCoreTypeArgumentSyntax argument)
+                                    RejectNewSyntax(segment.Arguments[index].Span);
+                                else if (index >= segment.GenericArguments.Count || !ReferenceEquals(argument.Type, segment.GenericArguments[index]))
+                                    pending.Push((argument.Type, depth + 1));
+                            }
+                            break;
+                        case SafeCoreReferenceTypeSyntax reference:
+                            pending.Push((reference.Inner, depth + 1));
+                            break;
+                        case SafeCoreTupleTypeSyntax tuple:
+                            for (var index = 0; index < tuple.Elements.Count && Step(span); index++) pending.Push((tuple.Elements[index], depth + 1));
+                            break;
+                        case SafeCoreArrayTypeSyntax array:
+                            pending.Push((array.Element, depth + 1)); pending.Push((array.Length, depth + 1));
+                            break;
+                        case SafeCoreSliceTypeSyntax slice:
+                            pending.Push((slice.Element, depth + 1));
+                            break;
+                        case SafeCoreUnitTypeSyntax:
+                        case SafeCoreNeverTypeSyntax:
+                            break;
+                        case SafeCoreExpressionSyntax expression when expression.Attributes.Count > 0:
+                            RejectNewSyntax(span);
+                            break;
+                        case SafeCoreNameExpressionSyntax name:
+                            if (name.Path.StartsWith("::", StringComparison.Ordinal) ||
+                                name.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count > 0)) RejectNewSyntax(span);
+                            break;
+                        case SafeCoreLiteralExpressionSyntax:
+                            break;
+                        case SafeCoreUnaryExpressionSyntax unary:
+                            pending.Push((unary.Operand, depth + 1));
+                            break;
+                        case SafeCoreBinaryExpressionSyntax binary:
+                            pending.Push((binary.Left, depth + 1)); pending.Push((binary.Right, depth + 1));
+                            break;
+                        case SafeCoreCallExpressionSyntax call:
+                            pending.Push((call.Callee, depth + 1));
+                            for (var index = 0; index < call.Arguments.Count && Step(span); index++) pending.Push((call.Arguments[index], depth + 1));
+                            break;
+                        case SafeCorePrintExpressionSyntax print:
+                            for (var index = 0; index < print.Arguments.Count && Step(span); index++) pending.Push((print.Arguments[index], depth + 1));
+                            break;
+                        case SafeCoreTupleExpressionSyntax tuple:
+                            for (var index = 0; index < tuple.Elements.Count && Step(span); index++) pending.Push((tuple.Elements[index], depth + 1));
+                            break;
+                        case SafeCoreArrayExpressionSyntax array:
+                            for (var index = 0; index < array.Elements.Count && Step(span); index++) pending.Push((array.Elements[index], depth + 1));
+                            if (array.RepeatCount is not null) pending.Push((array.RepeatCount, depth + 1));
+                            break;
+                        case SafeCoreIndexExpressionSyntax indexExpression:
+                            pending.Push((indexExpression.Target, depth + 1)); pending.Push((indexExpression.Index, depth + 1));
+                            break;
+                        case SafeCoreIfExpressionSyntax conditional:
+                            pending.Push((conditional.Condition, depth + 1)); pending.Push((conditional.Then, depth + 1));
+                            if (conditional.Else is not null) pending.Push((conditional.Else, depth + 1));
+                            break;
+                        case SafeCoreBlockExpressionSyntax block:
+                            pending.Push((block.Block, depth + 1));
+                            break;
+                        case SafeCoreBlockSyntax block:
+                            RejectUnsupportedAttributes(block.Attributes, span);
+                            for (var index = 0; index < block.Statements.Count && Step(span); index++) pending.Push((block.Statements[index], depth + 1));
+                            if (block.TailExpression is not null) pending.Push((block.TailExpression, depth + 1));
+                            break;
+                        case SafeCoreStatementSyntax statement when statement.Attributes.Count > 0:
+                            RejectNewSyntax(span);
+                            break;
+                        case SafeCoreLetStatementSyntax let:
+                            if (let.ElseBlock is not null) RejectNewSyntax(span);
+                            pending.Push((let.Pattern, depth + 1));
+                            if (let.Type is not null) pending.Push((let.Type, depth + 1));
+                            if (let.Initializer is not null) pending.Push((let.Initializer, depth + 1));
+                            break;
+                        case SafeCoreReturnStatementSyntax result:
+                            if (result.Value is not null) pending.Push((result.Value, depth + 1));
+                            break;
+                        case SafeCoreExpressionStatementSyntax statement:
+                            pending.Push((statement.Expression, depth + 1));
+                            break;
+                        case SafeCoreIdentifierPatternSyntax { IsByReference: false }:
+                        case SafeCoreWildcardPatternSyntax:
+                        case SafeCoreLiteralPatternSyntax:
+                            break;
+                        case SafeCoreTuplePatternSyntax tuple:
+                            for (var index = 0; index < tuple.Elements.Count && Step(span); index++) pending.Push((tuple.Elements[index], depth + 1));
+                            break;
+                        case SafeCorePathPatternSyntax path:
+                            if (path.Qualifier is not null || path.Path.StartsWith("::", StringComparison.Ordinal) ||
+                                path.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count > 0)) RejectNewSyntax(span);
+                            for (var index = 0; index < path.Arguments.Count && Step(span); index++) pending.Push((path.Arguments[index], depth + 1));
+                            break;
+                        default:
+                            RejectNewSyntax(span);
+                            break;
+                    }
+                }
+                finally { Exit(); }
             }
         }
 
         private void ResolveBlock(SafeCoreBlockSyntax block, ScopeBuilder fallbackScope, int depth)
         {
+            RejectUnsupportedAttributes(block.Attributes, block.Span);
             if (!Enter(depth, block.Span))
             {
                 return;
@@ -1065,6 +1667,7 @@ public static class SafeCoreNameResolution
                 for (var index = 0; index < block.Statements.Count; index++)
                 {
                     SafeCoreStatementSyntax statement = block.Statements[index];
+                    if (statement.Attributes.Count > 0) RejectNewSyntax(statement.Span);
                     if (!Step(statement.Span))
                     {
                         return;
@@ -1073,6 +1676,7 @@ public static class SafeCoreNameResolution
                     switch (statement)
                     {
                         case SafeCoreLetStatementSyntax let:
+                            if (let.ElseBlock is not null) RejectNewSyntax(let.ElseBlock.Span);
                             ResolvePattern(let.Pattern, scope, depth + 1);
                             if (let.Type is not null)
                             {
@@ -1100,6 +1704,11 @@ public static class SafeCoreNameResolution
                             break;
                         case SafeCoreExpressionStatementSyntax expression:
                             ResolveExpression(expression.Expression, scope, depth + 1);
+                            break;
+                        case SafeCoreReturnStatementSyntax:
+                            break;
+                        default:
+                            RejectNewSyntax(statement.Span);
                             break;
                     }
 
@@ -1132,6 +1741,11 @@ public static class SafeCoreNameResolution
                 switch (pattern)
                 {
                     case SafeCorePathPatternSyntax path:
+                        if (path.Qualifier is not null || path.Path.StartsWith("::", StringComparison.Ordinal) ||
+                            path.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count > 0))
+                        {
+                            RejectNewSyntax(path.Span);
+                        }
                         ResolveAndRecord(path.Path, scope, SafeCoreSymbolNamespace.Value, path.Span);
                         for (var index = 0; index < path.Arguments.Count; index++)
                         {
@@ -1145,6 +1759,13 @@ public static class SafeCoreNameResolution
                             ResolvePattern(tuple.Elements[index], scope, depth + 1);
                         }
 
+                        break;
+                    case SafeCoreIdentifierPatternSyntax { IsByReference: false }:
+                    case SafeCoreLiteralPatternSyntax:
+                    case SafeCoreWildcardPatternSyntax:
+                        break;
+                    default:
+                        RejectNewSyntax(pattern.Span);
                         break;
                 }
             }
@@ -1167,6 +1788,7 @@ public static class SafeCoreNameResolution
                 {
                     case SafeCorePathTypeSyntax path:
                     {
+                        if (path.IsAbsolute) RejectNewSyntax(path.Span);
                         string pathText = string.Join("::", path.Segments.Select(segment => segment.Name));
                         if (!(path.Segments.Count == 1 && PrimitiveTypeNames.Contains(pathText)))
                         {
@@ -1176,9 +1798,23 @@ public static class SafeCoreNameResolution
                         for (var segmentIndex = 0; segmentIndex < path.Segments.Count; segmentIndex++)
                         {
                             SafeCorePathSegmentSyntax segment = path.Segments[segmentIndex];
+                            if (segment.HasFunctionArguments || segment.FunctionParameters.Count > 0 || segment.FunctionReturnType is not null)
+                            {
+                                RejectNewSyntax(segment.Span);
+                            }
                             for (var argumentIndex = 0; argumentIndex < segment.GenericArguments.Count; argumentIndex++)
                             {
                                 ResolveType(segment.GenericArguments[argumentIndex], scope, depth + 1);
+                            }
+                            for (var argumentIndex = 0; argumentIndex < segment.Arguments.Count && !_truncated; argumentIndex++)
+                            {
+                                SafeCoreGenericArgumentSyntax argument = segment.Arguments[argumentIndex];
+                                if (!Step(argument.Span)) return;
+                                if (argument is not SafeCoreTypeArgumentSyntax typeArgument)
+                                    RejectNewSyntax(argument.Span);
+                                else if (argumentIndex >= segment.GenericArguments.Count ||
+                                    !ReferenceEquals(typeArgument.Type, segment.GenericArguments[argumentIndex]))
+                                    ResolveType(typeArgument.Type, scope, depth + 1);
                             }
                         }
 
@@ -1201,6 +1837,12 @@ public static class SafeCoreNameResolution
                     case SafeCoreSliceTypeSyntax slice:
                         ResolveType(slice.Element, scope, depth + 1);
                         break;
+                    case SafeCoreUnitTypeSyntax:
+                    case SafeCoreNeverTypeSyntax:
+                        break;
+                    default:
+                        RejectNewSyntax(type.Span);
+                        break;
                 }
             }
             finally
@@ -1211,6 +1853,7 @@ public static class SafeCoreNameResolution
 
         private void ResolveExpression(SafeCoreExpressionSyntax expression, ScopeBuilder scope, int depth)
         {
+            if (expression.Attributes.Count > 0) RejectNewSyntax(expression.Span);
             if (!Enter(depth, expression.Span))
             {
                 return;
@@ -1226,6 +1869,8 @@ public static class SafeCoreNameResolution
                 switch (expression)
                 {
                     case SafeCoreNameExpressionSyntax name:
+                        if (name.Path.StartsWith("::", StringComparison.Ordinal) ||
+                            name.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count != 0)) RejectNewSyntax(name.Span);
                         ResolveAndRecord(name.Path, scope, SafeCoreSymbolNamespace.Value, name.Span);
                         break;
                     case SafeCoreUnaryExpressionSyntax unary:
@@ -1284,6 +1929,11 @@ public static class SafeCoreNameResolution
                     case SafeCoreIndexExpressionSyntax indexExpression:
                         ResolveExpression(indexExpression.Target, scope, depth + 1);
                         ResolveExpression(indexExpression.Index, scope, depth + 1);
+                        break;
+                    case SafeCoreLiteralExpressionSyntax:
+                        break;
+                    default:
+                        RejectNewSyntax(expression.Span);
                         break;
                 }
             }
@@ -1383,7 +2033,7 @@ public static class SafeCoreNameResolution
                 start = FindScopeContainingFirstSegment(
                     context,
                     segments[0],
-                    segments.Count == 1 ? expectedNamespace : null,
+                    segments.Count == 1 ? expectedNamespace : SafeCoreSymbolNamespace.Type,
                     out PathResult? firstResult);
                 if (firstResult is not null)
                 {
@@ -1417,7 +2067,7 @@ public static class SafeCoreNameResolution
             IReadOnlyList<SymbolBuilder> candidates = LookupAccessible(
                 start,
                 segments[position],
-                position + 1 == segments.Count ? expectedNamespace : null,
+                position + 1 == segments.Count ? expectedNamespace : SafeCoreSymbolNamespace.Type,
                 context,
                 out bool privateOnly);
             if (candidates.Count == 0)
@@ -1479,7 +2129,7 @@ public static class SafeCoreNameResolution
                 List<SymbolBuilder> next = LookupAccessible(
                     memberScope,
                     segments[position],
-                    expectedNamespace: position + 1 == segments.Count ? expectedNamespace : null,
+                    expectedNamespace: position + 1 == segments.Count ? expectedNamespace : SafeCoreSymbolNamespace.Type,
                     context,
                     out bool privateOnly,
                     requiredKind: memberOwner.Kind == SafeCoreSymbolKind.Enum
@@ -1620,12 +2270,38 @@ public static class SafeCoreNameResolution
 
             var accessible = new List<SymbolBuilder>(declared.Count);
             SymbolBuilder? latestLocal = null;
+            bool hasExplicitType = false;
+            bool hasExplicitValue = false;
+            bool hasResolvedType = false;
+            bool hasResolvedValue = false;
             for (var index = 0; index < declared.Count; index++)
             {
                 SymbolBuilder symbol = declared[index];
                 if (!Step(symbol.Span))
                 {
                     return accessible;
+                }
+
+                if (symbol.IsGlobImport && !symbol.IsActiveGlobImport) continue;
+
+                // Resolve only the requested namespace, so a type dependency
+                // does not create a spurious cycle in the value dependency.
+                if (expectedNamespace is not null && !MatchesNamespace(symbol.Namespace, expectedNamespace.Value)) continue;
+
+                if (symbol.IsImport && !symbol.IsGlobImport)
+                {
+                    // Keep failed explicit bindings as candidates so the path
+                    // retains its actual failure (including import cycles).
+                    // They also reserve their namespaces against globs.
+                    _ = EnsureImportResolved(symbol);
+                    if (symbol.ImportResolution.Status is SafeCoreNameResolutionStatus.Unresolved or SafeCoreNameResolutionStatus.Private)
+                        continue;
+                }
+
+                if (!symbol.IsGlobImport && (!symbol.IsImport || symbol.ImportResolution.Status == SafeCoreNameResolutionStatus.Resolved))
+                {
+                    hasExplicitType |= MatchesNamespace(symbol.Namespace, SafeCoreSymbolNamespace.Type);
+                    hasExplicitValue |= MatchesNamespace(symbol.Namespace, SafeCoreSymbolNamespace.Value);
                 }
 
                 if (expectedNamespace is not null && !MatchesNamespace(symbol.Namespace, expectedNamespace.Value))
@@ -1645,13 +2321,55 @@ public static class SafeCoreNameResolution
                 }
 
                 accessible.Add(symbol);
+                if (!symbol.IsImport || symbol.ImportResolution.Status == SafeCoreNameResolutionStatus.Resolved)
+                {
+                    hasResolvedType |= MatchesNamespace(symbol.Namespace, SafeCoreSymbolNamespace.Type);
+                    hasResolvedValue |= MatchesNamespace(symbol.Namespace, SafeCoreSymbolNamespace.Value);
+                }
                 if (symbol.Kind == SafeCoreSymbolKind.Local)
                 {
                     latestLocal = symbol;
                 }
             }
 
-            return latestLocal is null ? accessible : [latestLocal];
+            if (latestLocal is not null) return [latestLocal];
+            var selected = new List<SymbolBuilder>(accessible.Count);
+            for (var index = 0; index < accessible.Count; index++)
+            {
+                SymbolBuilder candidate = accessible[index];
+                if (!Step(candidate.Span)) return selected;
+                if (candidate.IsImport && candidate.ImportResolution.Status != SafeCoreNameResolutionStatus.Resolved &&
+                    (candidate.Namespace == SafeCoreSymbolNamespace.Type && hasResolvedType ||
+                     candidate.Namespace == SafeCoreSymbolNamespace.Value && hasResolvedValue ||
+                     candidate.Namespace == SafeCoreSymbolNamespace.Both && hasResolvedType && hasResolvedValue)) continue;
+                if (candidate.IsGlobImport &&
+                    ((expectedNamespace is SafeCoreSymbolNamespace.Type && hasExplicitType) ||
+                     (expectedNamespace is SafeCoreSymbolNamespace.Value && hasExplicitValue) ||
+                     (expectedNamespace is null &&
+                      (candidate.Namespace == SafeCoreSymbolNamespace.Type && hasExplicitType ||
+                       candidate.Namespace == SafeCoreSymbolNamespace.Value && hasExplicitValue ||
+                       candidate.Namespace == SafeCoreSymbolNamespace.Both && hasExplicitType && hasExplicitValue)))) continue;
+
+                bool duplicate = false;
+                for (var selectedIndex = 0; selectedIndex < selected.Count; selectedIndex++)
+                {
+                    if (!Step(candidate.Span)) return selected;
+                    SymbolBuilder existing = selected[selectedIndex];
+                    if (candidate.IsGlobImport && existing.IsGlobImport &&
+                        ReferenceEquals(GetResolvedImportTarget(existing), GetResolvedImportTarget(candidate)))
+                    {
+                        // Duplicate routes to one declaration retain the
+                        // broadest visibility available to this requester.
+                        if (VisibilityContains(candidate.VisibilityScopePath, existing.VisibilityScopePath))
+                            selected[selectedIndex] = candidate;
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if (!duplicate) selected.Add(candidate);
+            }
+
+            return selected;
         }
 
         private static bool MatchesNamespace(
@@ -1661,15 +2379,62 @@ public static class SafeCoreNameResolution
 
         private static bool IsAccessible(SymbolBuilder symbol, ScopeBuilder requester)
         {
-            if (symbol.IsPublic)
-            {
-                return true;
-            }
+            return VisibilityContains(symbol.VisibilityScopePath, requester.ModulePath);
+        }
 
-            string owner = symbol.DeclaringScope.ModulePath;
-            string requesterPath = requester.ModulePath;
-            return string.Equals(owner, requesterPath, StringComparison.Ordinal) ||
-                requesterPath.StartsWith(owner + "::", StringComparison.Ordinal);
+        private static bool VisibilityContains(string? outer, string? inner) =>
+            outer is null || inner is not null && (string.Equals(outer, inner, StringComparison.Ordinal) ||
+                inner.StartsWith(outer + "::", StringComparison.Ordinal));
+
+        private bool TryResolveVisibility(ScopeBuilder scope, SafeCoreVisibilitySyntax? visibility,
+            bool isPublic, TextSpan span, out string? visibilityScope)
+        {
+            ScopeBuilder module = FindModuleScope(scope);
+            visibilityScope = isPublic ? null : module.Path;
+            if (visibility is null) return true;
+            switch (visibility.Kind)
+            {
+                case SafeCoreVisibilityKind.Public: visibilityScope = null; return true;
+                case SafeCoreVisibilityKind.Private:
+                case SafeCoreVisibilityKind.Self: visibilityScope = module.Path; return true;
+                case SafeCoreVisibilityKind.Crate: visibilityScope = "crate"; return true;
+                case SafeCoreVisibilityKind.Super:
+                    if (module.Parent is not null) { visibilityScope = FindModuleScope(module.Parent).Path; return true; }
+                    break;
+                case SafeCoreVisibilityKind.Restricted:
+                    if (visibility.Path is null) break;
+                    if (!TrySplitPath(visibility.Path, span, out IReadOnlyList<string> segments)) return false;
+                    ScopeBuilder? target = segments[0] switch { "crate" => _root, "self" or "super" => module, _ => null };
+                    if (target is null) break;
+                    var position = segments[0] == "super" ? 0 : 1;
+                    for (; position < segments.Count && segments[position] == "super"; position++)
+                    {
+                        if (!Step(span)) return false;
+                        target = target?.Parent;
+                    }
+                    if (target is null) break;
+                    string path = target.Path;
+                    for (; position < segments.Count; position++)
+                    {
+                        if (!Step(span)) return false;
+                        path += "::" + CanonicalizeIdentifier(segments[position]);
+                        if (path.Length > _options.MaximumPathLength) { StopLimit(span); return false; }
+                    }
+                    // An ancestor path denotes a real module, and cannot resolve through an import alias.
+                    for (ScopeBuilder? ancestor = module; ancestor is not null; ancestor = ancestor.Parent)
+                    {
+                        if (!Step(span)) return false;
+                        if (ancestor.Path == path && ancestor.Path == ancestor.ModulePath)
+                        {
+                            visibilityScope = path;
+                            return true;
+                        }
+                    }
+                    break;
+            }
+            AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.InvalidPath,
+                "A visibility restriction must name the current module or one of its ancestors.", visibility.Span);
+            return false;
         }
 
         private ScopeBuilder FindModuleScope(ScopeBuilder scope)
@@ -1769,12 +2534,17 @@ public static class SafeCoreNameResolution
             TextSpan span,
             bool isImport,
             string? targetPath,
-            bool allowShadowing = false)
+            bool allowShadowing = false,
+            SafeCoreVisibilitySyntax? visibility = null,
+            bool isAnonymousImport = false)
         {
             if (!Step(span))
             {
                 return null;
             }
+
+            if (!TryResolveVisibility(scope, visibility, isPublic, span, out string? visibilityScope)) return null;
+            if (visibility is not null) isPublic = visibility.Kind == SafeCoreVisibilityKind.Public;
 
             if (name is null || name.Length == 0 || name.Length > _options.MaximumNameLength)
             {
@@ -1812,14 +2582,25 @@ public static class SafeCoreNameResolution
 
             var symbol = new SymbolBuilder(
                 canonicalName,
-                scope.Path == "crate" ? "crate::" + canonicalName : scope.Path + "::" + canonicalName,
+                scope.Path + "::" + canonicalName + (isAnonymousImport ? "@" + span.Start : string.Empty),
                 kind,
                 @namespace,
                 isPublic,
                 isImport,
                 targetPath,
                 span,
-                scope);
+                scope)
+            {
+                VisibilityScopePath = visibilityScope,
+                DeclaredImportVisibilityScopePath = visibilityScope,
+                IsAnonymousImport = isAnonymousImport,
+            };
+            if (isAnonymousImport)
+            {
+                scope.Symbols.Add(symbol);
+                _symbols.Add(symbol);
+                return symbol;
+            }
             if (scope.ByName.TryGetValue(canonicalName, out List<SymbolBuilder>? existing))
             {
                 if (!isImport && !allowShadowing)
@@ -2023,7 +2804,8 @@ public static class SafeCoreNameResolution
             }
 
             _operations++;
-            if (_operations <= _options.MaximumOperations)
+            _options.CancellationToken.ThrowIfCancellationRequested();
+            if (_operations <= _options.MaximumOperations && Stopwatch.GetElapsedTime(_started) <= _options.Timeout)
             {
                 return true;
             }
@@ -2047,8 +2829,75 @@ public static class SafeCoreNameResolution
                 span);
         }
 
+        private bool HasUnsupportedAttributes(IReadOnlyList<SafeCoreAttributeSyntax> attributes)
+        {
+            for (var index = 0; index < attributes.Count; index++)
+            {
+                SafeCoreAttributeSyntax attribute = attributes[index];
+                if (!Step(attribute.Span) || !IsDocumentationAttribute(attribute))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void RejectUnsupportedRootAttributes(
+            IReadOnlyList<SafeCoreAttributeSyntax> attributes,
+            TextSpan fallbackSpan)
+        {
+            for (var index = 0; index < attributes.Count; index++)
+            {
+                SafeCoreAttributeSyntax attribute = attributes[index];
+                if (!Step(attribute.Span))
+                {
+                    return;
+                }
+                // Preserve the legacy HIR-only root marker; executable type
+                // checking still rejects no_std rather than ignoring it.
+                if (IsDocumentationAttribute(attribute) ||
+                    (attribute.IsInner && string.Equals(attribute.Path, "no_std", StringComparison.Ordinal) &&
+                     string.IsNullOrEmpty(attribute.ArgumentsText)))
+                {
+                    continue;
+                }
+
+                RejectNewSyntax(attribute.Span.Length == 0 ? fallbackSpan : attribute.Span);
+                return;
+            }
+        }
+
+        private void RejectUnsupportedAttributes(
+            IReadOnlyList<SafeCoreAttributeSyntax> attributes,
+            TextSpan fallbackSpan)
+        {
+            for (var index = 0; index < attributes.Count; index++)
+            {
+                SafeCoreAttributeSyntax attribute = attributes[index];
+                if (!Step(attribute.Span))
+                {
+                    return;
+                }
+                if (!IsDocumentationAttribute(attribute))
+                {
+                    RejectNewSyntax(attribute.Span.Length == 0 ? fallbackSpan : attribute.Span);
+                    return;
+                }
+            }
+        }
+
+        private static bool IsDocumentationAttribute(SafeCoreAttributeSyntax attribute) =>
+            attribute.IsDocumentation && attribute.Path == "doc";
+
+        private void RejectNewSyntax(TextSpan span) => AddDiagnostic(
+            SafeCoreNameResolutionDiagnosticCodes.UnsupportedSyntax,
+            "This syntax is parsed, but its semantics are not implemented by the current safe-core name-resolution/HIR profile.",
+            span);
+
         private void AddDiagnostic(string code, string message, TextSpan span)
         {
+            if (_probingImports) return;
             if (_diagnostics.Count >= _options.MaximumDiagnostics - 1)
             {
                 StopLimit(span);
@@ -2117,19 +2966,38 @@ public static class SafeCoreNameResolution
             public string QualifiedName { get; }
             public SafeCoreSymbolKind Kind { get; }
             public SafeCoreSymbolNamespace Namespace { get; set; }
-            public bool IsPublic { get; }
+            public bool IsPublic { get; set; }
+            public string? VisibilityScopePath { get; set; }
+            public string? DeclaredImportVisibilityScopePath { get; init; }
+            public bool IsAnonymousImport { get; init; }
+            public bool IsSelfImport { get; set; }
+            public SymbolBuilder? ImportPeer { get; set; }
+            public bool IsSecondaryImportBinding { get; set; }
+            public bool ImportVisibilityError { get; set; }
+            public bool IsGlobImport { get; set; }
+            public bool IsActiveGlobImport { get; set; }
             public bool IsImport { get; }
             public string? TargetPath { get; }
             public TextSpan Span { get; }
             public ScopeBuilder DeclaringScope { get; }
             public ScopeBuilder? MemberScope { get; set; }
             public bool ImportResolutionAttempted { get; set; }
+            public bool ImportCycleReported { get; set; }
             public ImportResolution ImportResolution { get; set; } =
                 new(SafeCoreNameResolutionStatus.Invalid, null);
             public SymbolBuilder? ResolvedImportTarget { get; set; }
         }
 
         private sealed record ImportResolution(SafeCoreNameResolutionStatus Status, SymbolBuilder? Target);
+
+        private sealed record GlobImport(
+            string TargetPath,
+            ScopeBuilder Scope,
+            SafeCoreVisibilitySyntax Visibility,
+            TextSpan Span)
+        {
+            public Dictionary<(string Name, SymbolBuilder Target), SymbolBuilder> Bindings { get; } = [];
+        }
 
         private sealed record PathResult(
             SafeCoreNameResolutionStatus Status,

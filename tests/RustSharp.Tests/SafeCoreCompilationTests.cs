@@ -180,7 +180,14 @@ internal static class SafeCoreCompilationTests
             "fn main() { let x = (); }",
         ];
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-        foreach (string source in sources) AssertRejected(source, "RST1001", deadline.Token);
+        foreach (string source in sources)
+        {
+            // The parser accepts attribute syntax, while name resolution
+            // explicitly rejects its unevaluated semantics with RSN1007.
+            AssertRejected(source, source.StartsWith("#[cfg", StringComparison.Ordinal)
+                ? SafeCoreNameResolutionDiagnosticCodes.UnsupportedSyntax
+                : "RST1001", deadline.Token);
+        }
         AssertRejected("fn main() { let x = +1; }", "RSP1002", deadline.Token);
         return Task.CompletedTask;
     }
@@ -195,6 +202,27 @@ internal static class SafeCoreCompilationTests
                 Path.Combine(directory, "rejected.rs"), path, profile: Profile);
             AssertEx.False(result.Success, "A type error must fail compilation.");
             AssertEx.Equal(0, Directory.GetFiles(directory).Length, "Rejected input must not create output or transaction files.");
+
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            foreach (string source in new[]
+            {
+                "mod external; fn main() {}",
+                "const _: i32 = 1; fn main() {}",
+                "const VALUE: i32 = 1; fn main() { ::VALUE; }",
+                "fn main() { loop {} }",
+                "fn main() { #[local] let value = 1; }",
+            })
+            {
+                deadline.Token.ThrowIfCancellationRequested();
+                result = CompilerDriver.Compile(source, Path.Combine(directory, "rejected.rs"), path,
+                    profile: Profile, cancellationToken: deadline.Token);
+                AssertEx.False(result.Success, "Unimplemented syntax must fail compilation: " + source);
+                AssertEx.True(result.Diagnostics.Any(static diagnostic =>
+                    diagnostic.Code == SafeCoreNameResolutionDiagnosticCodes.UnsupportedSyntax),
+                    "Compilation must expose RSN1007: " + source);
+                AssertEx.Equal(0, Directory.GetFiles(directory).Length,
+                    "Semantic rejection must precede output and transaction file creation: " + source);
+            }
         }
         finally { DeleteOwnedDirectory(directory); }
         return Task.CompletedTask;

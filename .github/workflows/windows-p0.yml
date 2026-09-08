@@ -247,34 +247,11 @@ jobs:
           & ./eng/Test-SyntaxEvidence.ps1
       - name: Run safe-core name-resolution corpus
         shell: pwsh
+        timeout-minutes: 5
         run: |
           $ErrorActionPreference = 'Stop'
-          $reportPath = Join-Path $PWD 'artifacts/conformance/safe-core-name-resolution.json'
-          & dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-name-resolution
-          $harnessExitCode = $LASTEXITCODE
-          if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
-            throw "Safe-core name-resolution harness did not write '$reportPath'."
-          }
-          if ($harnessExitCode -ne 0) {
-            exit $harnessExitCode
-          }
-          $report = Get-Content -Raw -LiteralPath $reportPath | ConvertFrom-Json
-          if ($report.Scope.PSObject.Properties.Match('RustcConformance').Count -ne 1 -or
-              $report.Scope.PSObject.Properties.Match('RuntimeConformance').Count -ne 1 -or
-              $report.Manifest.PSObject.Properties.Match('Validated').Count -ne 1) {
-            throw 'Safe-core name-resolution evidence scope metadata is missing.'
-          }
-          if ([string] $report.EvidenceKind -ne 'name-resolution-acceptance' -or
-              [string] $report.Summary.Status -ne 'passed' -or
-              [int] $report.Summary.Denominator -ne 6 -or
-              [int] $report.Summary.Passed -ne 6 -or
-              [bool] $report.Scope.RustcConformance -ne $false -or
-              [bool] $report.Scope.RuntimeConformance -ne $false -or
-              [bool] $report.Manifest.Validated -ne $true -or
-              [int] $report.Manifest.Denominator -ne 6 -or
-              [int] $report.Manifest.CaseCount -ne 6) {
-            throw 'Safe-core name-resolution harness returned success without complete 6/6 name-resolution-acceptance evidence.'
-          }
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('run', '--project', 'tools/RustSharp.Conformance', '-c', 'Release', '--no-build', '--no-restore', '--', '--profile', 'safe-core-name-resolution') -TimeoutSeconds 240
+          & ./eng/Test-NameResolutionEvidence.ps1
       - name: Run I/O smoke probes
         shell: pwsh
         run: |

@@ -1,0 +1,44 @@
+unit@0:164
+  struct@0:12 name=VW5pdA== tuple=0 unit=1
+    visibility@0:0 kind=Private path=-
+  struct@13:15 name=RW1wdHk= tuple=0 unit=0
+    visibility@13:0 kind=Private path=-
+  struct@33:28 name=VHVwbGU= tuple=1 unit=0
+    visibility@29:3 kind=Public path=-
+    generic@46:1 name=VA== kind=Type
+    field@49:5 name=- public=1
+      visibility@49:3 kind=Public path=-
+      path-type@53:1 absolute=0
+        segment@53:1 name=VA== fn=0 generic=0
+    field@56:3 name=- public=0
+      visibility@56:0 kind=Private path=-
+      path-type@56:3 absolute=0
+        segment@56:3 name=aTMy fn=0 generic=0
+  enum@62:53 name=Q2hvaWNl
+    visibility@62:0 kind=Private path=-
+    generic@74:1 name=VA== kind=Type
+    variant@79:4 name=Tm9uZQ== kind=Unit
+    variant@85:7 name=RW1wdHk= kind=Tuple
+    variant@94:6 name=T25l kind=Tuple
+      field@98:1 name=- public=0
+        visibility@98:0 kind=Private path=-
+        path-type@98:1 absolute=0
+          segment@98:1 name=VA== fn=0 generic=0
+    variant@102:10 name=UGFpcg== kind=Tuple
+      field@107:1 name=- public=0
+        visibility@107:0 kind=Private path=-
+        path-type@107:1 absolute=0
+          segment@107:1 name=VA== fn=0 generic=0
+      field@110:1 name=- public=0
+        visibility@110:0 kind=Private path=-
+        path-type@110:1 absolute=0
+          segment@110:1 name=VA== fn=0 generic=0
+  type-alias@116:19 name=Q291bnQ=
+    visibility@116:0 kind=Private path=-
+    path-type@129:5 absolute=0
+      segment@129:5 name=dXNpemU= fn=0 generic=0
+  const@140:23 name=TElNSVQ=
+    visibility@136:3 kind=Public path=-
+    path-type@153:5 absolute=0
+      segment@153:5 name=dXNpemU= fn=0 generic=0
+    literal@161:1 kind=IntegerLiteral raw=NA==

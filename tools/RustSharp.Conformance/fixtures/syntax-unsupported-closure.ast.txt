@@ -1,0 +1,8 @@
+unit@0:17
+  function@0:16 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:9
+      statement@9:5 kind=Expression
+        semicolon@9:5 value=1
+        closure@9:4 move=0
+          literal@12:1 kind=IntegerLiteral raw=MQ==

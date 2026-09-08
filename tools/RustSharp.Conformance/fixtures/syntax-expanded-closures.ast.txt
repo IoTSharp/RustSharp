@@ -1,0 +1,21 @@
+unit@0:62
+  function@0:60 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:53
+      statement@9:35 kind=Let
+        identifier-pattern@13:1 name=eA== mut=0 ref=0
+        closure@17:26 move=1
+          closure-parameter@23:6
+          identifier-pattern@23:1 name=eA== mut=0 ref=0
+          path-type@26:3 absolute=0
+            segment@26:3 name=aTMy fn=0 generic=0
+          path-type@34:3 absolute=0
+            segment@34:3 name=aTMy fn=0 generic=0
+          block-expr@38:5
+            block@38:5
+              name@40:1 path=eA==
+                path-segment@40:1 name=eA== generic=0
+      statement@45:13 kind=Let
+        identifier-pattern@49:1 name=eQ== mut=0 ref=0
+        closure@53:4 move=0
+          literal@56:1 kind=IntegerLiteral raw=MQ==

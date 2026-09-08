@@ -1,0 +1,9 @@
+unit@0:23
+  function@0:22 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:15
+      statement@9:11 kind=Expression
+        semicolon@9:11 value=1
+        member@9:10 name=ZmllbGQ= generic=0
+          name@9:4 path=aXRlbQ==
+            path-segment@9:4 name=aXRlbQ== generic=0

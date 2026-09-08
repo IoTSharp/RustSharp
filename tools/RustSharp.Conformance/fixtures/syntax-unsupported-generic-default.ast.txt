@@ -1,0 +1,6 @@
+unit@0:22
+  struct@0:21 name=SXRlbQ== tuple=0 unit=1
+    visibility@0:0 kind=Private path=-
+    generic@12:7 name=VA== kind=Type
+      path-type@16:3 absolute=0
+        segment@16:3 name=aTMy fn=0 generic=0

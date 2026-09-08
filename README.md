@@ -48,32 +48,104 @@ construction. Exact evidence and source reconstruction pass for all 24 cases;
 the P1-01 executable regression harness recorded 103/103. See the
 [lexical contract](docs/lexical-profile.md) for the category denominator and
 the distinction from semantic or rustc differential conformance.
-`SafeCoreSyntax` now publishes a version 2 parser acceptance manifest with
-36 fixtures and 16 required categories for modules, items, statements,
-expressions, patterns, types, generics and attributes. It validates import and
-attribute grammar, Rust operator precedence, nested generic closers, tuple
-field visibility, unit structs, references and negative patterns. Parser
-cancellation/deadlines and bounded recovery are covered. See the
-[syntax contract](docs/syntax-profile.md) for the current grammar and remaining
-P1-02 work. The bounded `SafeCoreNameResolution` prototype now collects
+`SafeCoreSyntax` now publishes a version 3 parser acceptance manifest with
+18 required categories and exact AST snapshots for every parse-pass fixture.
+It covers recursive imports, restricted visibility, documentation attributes,
+lifetime/type/const generics, defaults and `where`, traits/impls and associated
+items, function types, qualified paths, struct expressions, richer patterns,
+`match`, loops, closures and `let`-`else`. Parser cancellation/deadlines and
+bounded recovery are covered. See the [syntax contract](docs/syntax-profile.md)
+for the grammar denominator and explicit exclusions. Newly parsed syntax whose
+semantics are not implemented receives `RSN1007` before successful HIR lowering.
+This still includes anonymous `const` items, absolute expression/pattern paths,
+unsupported structured AST extensions and non-documentation Rust attributes. The
+diagnostic code and source span are preserved through HIR lowering and compiler
+check/compile results. Compilation rejects the input before writing output
+artifacts.
+The bounded `SafeCoreNameResolution` prototype now collects
 module/item/local symbols across separate type/value namespaces and resolves
-representative imports and qualified paths. Its nine harness tests cover
+representative imports and qualified paths. Its ten baseline harness tests cover
 type/value namespaces and qualified paths, visibility, duplicate, ambiguous,
 and unresolved names, import cycles, declaration order and legal shadowing,
 rejected qualified access to function locals, struct fields, and enum generic
-parameters, Unicode identifier normalization, and the import nesting limit.
+parameters, Unicode identifier normalization, supplementary-plane Unicode
+identifiers, and the import nesting limit.
 The earlier local executable harness recorded 74/74 tests. A bounded
 `SafeCoreHirLowering` prototype now converts successful
 syntax and name-resolution results into a deterministic, name-bound flat HIR
 arena. These front-end passes now feed the opt-in executable primitive profile
-below. P1-02 and P1-03 remain 🚧 In progress because their full-profile
-denominators and multi-file loading are still open.
+below. P1-02 is ✅ Complete for the declared syntax profile.
+
+P1-03 now supports grouped and glob imports, grouped `self` aliases, anonymous
+`_` imports and `pub(crate)`, `pub(self)`, `pub(super)`, `pub(in ancestor)` visibility.
+With the primitive profile, `CheckFile`/`CompileFile` and CLI file commands
+load declared external modules from `foo.rs` or `foo/mod.rs`, including nested layouts. Diagnostics
+retain each original file path and span; Portable PDBs retain original source
+checksums and function locations. String-based compiler APIs still reject
+external modules with `RSN1007`. Glob resolution handles transitive imports
+and cycles within fixed-point budgets, keeps type/value shadowing separate,
+deduplicates canonical targets and diagnoses ambiguity when a name is used.
+Explicit `use` imports now resolve type and value bindings independently,
+including aliases and re-export chains. A shared canonical target is exposed
+as one `Both` binding; distinct targets remain separate in a HIR `ImportGroup`.
+A missing namespace branch neither introduces ambiguity nor shadows a glob
+binding in that namespace. Bounded fixed-point resolution applies to all imports.
+Source documentation comments in supported positions are retained through HIR
+and ignored during execution; explicit `#[doc]` and other unevaluated attributes
+are rejected.
+Leading `::` remains an explicit profile boundary and receives `RSN1007` when
+it would require an extern-prelude lookup. P1-03 is ✅ Complete for the
+declared semantic/HIR and package profile: `Cargo.toml` works with `rsc check`,
+`build`/`compile`, `run` and `publish`, including bounded local `path`
+dependencies, deterministic source discovery, cycle/limit diagnostics and
+clear rejection of registry dependencies. Cargo features, lockfile semantics,
+macro expansion and broader attribute evaluation remain later profile work.
+See the [module contract](docs/module-profile.md) for supported paths,
+visibility rules and resource budgets.
+
+The documented three-file [module sample](samples/modules/main.rs) uses
+`arithmetic::{self as math, *}` and prints `42` and `true`:
+
+```text
+dotnet build RustSharp.slnx -c Release
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- check samples/modules/main.rs --profile safe-core-primitives-v1
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- compile samples/modules/main.rs --profile safe-core-primitives-v1 --output artifacts/p1-03/modules.dll
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run samples/modules/main.rs --profile safe-core-primitives-v1
+```
+
+Earlier file-module batch evidence on 2026-09-08 is ✅ Complete: Release build with
+zero warnings/errors, 171/171 executable regressions, 49/49 syntax cases
+(34/34 AST snapshots, 18/18 categories), the PowerShell evidence checker,
+6/6 name-resolution cases and 14/14 primitive differential cases against
+rustc 1.98.0. CLI check/compile and execution of the generated module sample
+produced `42` and `true`; independent ILVerify passed. Reports are under
+`artifacts/p1-03/`, including `modules.ilverify.json`. A separate 12-case
+module-rule metadata check against rustc is supplementary evidence, not a
+complete module differential manifest. P1-03 is ✅ Complete for the declared profile; broader differential coverage remains planned.
+
+The earlier glob/documentation continuation on 2026-09-08 is ✅ Complete for that
+increment: zero-warning/error Release build, 180/180 executable regressions,
+49/49 syntax cases (34/34 AST snapshots, 18/18 categories), the PowerShell
+evidence checker, 6/6 name-resolution cases and 14/14 primitive differential
+cases against rustc 1.98.0. The module sample again passes CLI check/compile,
+prints `42` and `true`, and passes independent ILVerify. The
+[validation summary](artifacts/p1-03/glob-documentation-validation.json)
+records this batch. A new 12-case glob metadata check against rustc accepts
+10 cases and rejects 2; it supplements the executable tests and did not
+expand the then-six-case name-resolution manifest. P1-03 is ✅ Complete for the declared profile; broader differential coverage remains planned.
+
+The current `safe-core-name-resolution` acceptance manifest expands that
+six-case baseline to 25 cases. It specifies exact bindings and diagnostic
+spans for grouped/self/anonymous imports, glob precedence and ambiguity,
+fixed-point chains and cycles, visibility, independent type/value imports,
+and the `RSN1007` absolute-import and attribute boundaries. Earlier 6/6 reports
+cover their original denominator. This increment is ✅ Complete: the Release build has zero warnings/errors, the executable harness passes 186/186, the expanded resolver manifest passes 25/25, and the bounded PowerShell 7 evidence checker accepts the report. This does not complete the P1-03 semantic/HIR gate.
 
 ## Executable safe-core profile
 
 P1 is 🚧 In progress. Select `--profile safe-core-primitives-v1` to compile
-inline modules/imports, nongeneric functions, `i32`/`bool`, initialized `let`
-bindings, `mut` assignment, calls, blocks, `if`/`else`, returns, checked
+inline or file-loaded modules/imports, nongeneric functions, `i32`/`bool`,
+initialized `let` bindings, `mut` assignment, calls, blocks, `if`/`else`, returns, checked
 `+`/`-`/`*`, comparisons and short-circuit boolean operations. The C# pipeline
 now connects name-bound HIR and primitive type checking to validated CLR LIR,
 direct IL assemblies and Portable PDB function-entry mappings. It does not
@@ -100,8 +172,8 @@ overflow raises a managed exception; Rust panic/unwind compatibility is not
 claimed. See [ADR 0007](docs/adr/0007-safe-core-primitives.md) for the exact
 profile and work limits, and [ROADMAP.md](ROADMAP.md) for acceptance evidence.
 
-✅ Complete for this batch: 91/91 executable regressions, 14/14 primitive
-differential cases, ILVerify and the Windows x64 Native AOT sample. Linux
+✅ Complete for the earlier executable batch: 91/91 executable regressions,
+14/14 primitive differential cases, ILVerify and the Windows x64 Native AOT sample. Linux
 Native AOT for this profile is ⏳ Planned; the full P1 exit gate remains
 🚧 In progress.
 
@@ -170,7 +242,7 @@ acceptance evidence; a new remote CI run is not claimed. The report remains
 RustSharp lexer-acceptance evidence, separate from rustc differential and
 runtime conformance. The full P1 milestone remains 🚧 In progress.
 
-The separate safe-core syntax profile publishes 36 parser acceptance cases
+The separate safe-core syntax profile publishes 49 parser acceptance cases
 and writes `artifacts/conformance/safe-core-syntax.json`:
 
 ```text
@@ -178,20 +250,28 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --pr
 pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1
 ```
 
-The version 2 report measures RustSharp parser acceptance only. All 16 category
-mappings are required; rejection cases must match a diagnostic code and the
-exact source text under its span. Windows/Linux CI verify current manifest and
-fixture hashes, case IDs, outcomes and diagnostic spans. This is not rustc
-differential or runtime conformance evidence. P1-02 remains 🚧 In progress for
-the broader grammar and full AST acceptance denominator.
+The version 3 report measures RustSharp parser acceptance only. All 18 category
+mappings are required; 34 successful cases must match exact AST snapshots and
+15 rejection cases must match diagnostic codes and source text. Windows/Linux
+CI verify current manifest, fixture and snapshot hashes, case IDs, outcomes and
+diagnostic spans. Syntax acceptance does not establish rustc differential or
+runtime conformance.
 
-✅ Complete for this P1-02 increment on 2026-09-06, Windows x64: Release build
-with zero warnings/errors, 116/116 executable regressions, 36/36 syntax cases,
-16/16 categories, 6/6 name-resolution cases and 14/14 primitive differential
-cases against rustc 1.98.0. The CI evidence checker accepts current sources and
-rejects a stale report; these are local results, not a new remote CI run.
+Earlier P1-02 evidence, ✅ Complete on 2026-09-08, Windows x64, .NET SDK
+10.0.400/runtime 10.0.11: zero-warning/error Release build, 141/141 executable regressions,
+49/49 syntax cases, 34/34 AST snapshots, 18/18 categories, 24/24 lexical cases,
+6/6 name-resolution cases and 14/14 primitive differential cases against
+rustc 1.98.0. The evidence checker accepts current sources and rejects stale
+manifest/snapshot hashes. These are local results; no new remote CI run is
+claimed. The full P1 milestone remains 🚧 In progress.
 
-The six-case name-resolution acceptance profile writes
+The earlier `RSN1007` boundary check on 2026-09-08 is ✅ Complete: Release
+build with zero warnings/errors, 145/145 executable regressions, 49/49 syntax
+cases (34/34 AST snapshots, 18/18 categories), the PowerShell 7 evidence
+checker, and 6/6 name-resolution cases. The rustc differential and dedicated
+lexical suites were not rerun in this follow-up.
+
+The 25-case name-resolution acceptance profile writes
 `artifacts/conformance/safe-core-name-resolution.json`:
 
 ```text
@@ -213,8 +293,9 @@ bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 3
 The probe exits 77 with structured `skipped` evidence when the host is not a
 native Linux x64 environment; a WSL result is not treated as native CI proof.
 
-`build` and Cargo workspace commands are ⏳ Planned for later milestones; the
-vertical prototype command is `compile`.
+`build` accepts either a `.rs` source file or a `Cargo.toml`; `compile` remains
+its compatibility alias. Cargo loading is bounded to package metadata and
+local `path` dependencies in the safe-core profile.
 
 The Native AOT prototype expects its output directory to be exclusive to one
 publish invocation. Concurrent publishes, filesystem-alias collision handling,

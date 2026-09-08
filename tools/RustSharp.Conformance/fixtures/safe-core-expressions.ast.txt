@@ -1,0 +1,39 @@
+unit@0:142
+  function@0:141 name=Y29tcHV0ZQ== const=0
+    visibility@0:0 kind=Private path=-
+    parameter@11:20
+      identifier-pattern@11:5 name=dmFsdWU= mut=0 ref=0
+      reference-type@18:13 mut=1 life=-
+        array-type@23:8
+          path-type@24:3 absolute=0
+            segment@24:3 name=aTMy fn=0 generic=0
+          literal@29:1 kind=IntegerLiteral raw=Mg==
+    parameter@33:10
+      identifier-pattern@33:4 name=ZmxhZw== mut=0 ref=0
+      path-type@39:4 absolute=0
+        segment@39:4 name=Ym9vbA== fn=0 generic=0
+    path-type@48:3 absolute=0
+      segment@48:3 name=aTMy fn=0 generic=0
+    block@52:89
+      statement@58:39 kind=Let
+        identifier-pattern@62:10 name=cmVzdWx0 mut=1 ref=0
+        path-type@74:3 absolute=0
+          segment@74:3 name=aTMy fn=0 generic=0
+        binary@80:16 op=Kw==
+          index@80:8
+            name@80:5 path=dmFsdWU=
+              path-segment@80:5 name=dmFsdWU= generic=0
+            literal@86:1 kind=IntegerLiteral raw=MA==
+          binary@91:5 op=Kg==
+            literal@91:1 kind=IntegerLiteral raw=Mg==
+            literal@95:1 kind=IntegerLiteral raw=Mw==
+      if@102:37
+        name@105:4 path=ZmxhZw==
+          path-segment@105:4 name=ZmxhZw== generic=0
+        block@110:10
+          name@112:6 path=cmVzdWx0
+            path-segment@112:6 name=cmVzdWx0 generic=0
+        block-expr@126:13
+          block@126:13
+            statement@128:9 kind=Return
+              literal@135:1 kind=IntegerLiteral raw=MA==

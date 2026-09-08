@@ -1,0 +1,7 @@
+unit@0:35
+  module@0:34 name=bW9kZWw= external=0
+    visibility@0:0 kind=Private path=-
+    attribute@12:10 inner=1 doc=0 path=bm9fc3Rk args= text=-
+    function@23:9 name=Zg== const=0
+      visibility@23:0 kind=Private path=-
+      block@30:2

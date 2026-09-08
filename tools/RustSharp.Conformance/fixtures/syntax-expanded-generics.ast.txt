@@ -1,0 +1,87 @@
+unit@0:298
+  struct@0:128 name=QnVmZmVy tuple=0 unit=0
+    visibility@0:0 kind=Private path=-
+    generic@14:6 name=J2E= kind=Lifetime
+      lifetime-bound@18:2 name=J2I=
+    generic@22:2 name=J2I= kind=Lifetime
+    generic@26:19 name=VA== kind=Type
+      trait-bound@29:6 optional=1
+        path-type@30:5 absolute=0
+          segment@30:5 name=U2l6ZWQ= fn=0 generic=0
+      lifetime-bound@38:2 name=J2E=
+      path-type@43:2 absolute=0
+        segment@43:2 name=dTg= fn=0 generic=0
+    generic@47:26 name=Tg== kind=Const
+      path-type@56:5 absolute=0
+        segment@56:5 name=dXNpemU= fn=0 generic=0
+      block-expr@64:9
+        block@64:9
+          binary@66:5 op=Kw==
+            literal@66:1 kind=IntegerLiteral raw=Mg==
+            literal@70:1 kind=IntegerLiteral raw=Mg==
+    where@75:21
+      where-predicate@81:7
+        path-type@81:1 absolute=0
+          segment@81:1 name=VA== fn=0 generic=0
+        trait-bound@84:4 optional=0
+          path-type@84:4 absolute=0
+            segment@84:4 name=Q29weQ== fn=0 generic=0
+      where-predicate@90:6
+        lifetime@90:6 name=J2E=
+        lifetime-bound@94:2 name=J2I=
+    field@99:12 name=dmFsdWU= public=0
+      visibility@99:0 kind=Private path=-
+      reference-type@106:5 mut=0 life=J2E=
+        path-type@110:1 absolute=0
+          segment@110:1 name=VA== fn=0 generic=0
+    field@113:13 name=ZGF0YQ== public=0
+      visibility@113:0 kind=Private path=-
+      array-type@119:7
+        path-type@120:2 absolute=0
+          segment@120:2 name=dTg= fn=0 generic=0
+        name@124:1 path=Tg==
+          path-segment@124:1 name=Tg== generic=0
+  function@129:74 name=cHJvamVjdA== const=0
+    visibility@129:0 kind=Private path=-
+    generic@140:1 name=VA== kind=Type
+    where@145:55
+      where-predicate@151:23
+        generic@155:2 name=J2E= kind=Lifetime
+        reference-type@159:5 mut=0 life=J2E=
+          path-type@163:1 absolute=0
+            segment@163:1 name=VA== fn=0 generic=0
+        trait-bound@166:8 optional=0
+          path-type@166:8 absolute=0
+            segment@166:8 name=SW50bw== fn=0 generic=1
+              type-arg@171:2
+                path-type@171:2 absolute=0
+                  segment@171:2 name=dTg= fn=0 generic=0
+      where-predicate@176:24
+        qualified-path-type@176:18
+          path-type@177:1 absolute=0
+            segment@177:1 name=VA== fn=0 generic=0
+          path-type@182:5 absolute=0
+            segment@182:5 name=VHJhaXQ= fn=0 generic=0
+          segment@190:4 name=SXRlbQ== fn=0 generic=0
+        trait-bound@196:4 optional=0
+          path-type@196:4 absolute=0
+            segment@196:4 name=Q29weQ== fn=0 generic=0
+    block@201:2
+  enum@204:93 name=RQ==
+    visibility@204:0 kind=Private path=-
+    variant@213:18 name=RW1wdHk= kind=Struct
+      attribute@213:9 inner=0 doc=0 path=bWFya2Vy args= text=-
+    variant@233:7 name=VHVwbGU= kind=Tuple
+    variant@242:27 name=TmFtZWQ= kind=Struct
+      field@250:17 name=a2V5 public=0
+        visibility@259:0 kind=Private path=-
+        attribute@250:8 inner=0 doc=0 path=ZmllbGQ= args= text=-
+        path-type@264:3 absolute=0
+          segment@264:3 name=aTMy fn=0 generic=0
+    variant@271:9 name=VW5pdA== kind=Unit
+      unary@278:2 op=LQ==
+        literal@279:1 kind=IntegerLiteral raw=MQ==
+    variant@282:12 name=TmV4dA== kind=Unit
+      binary@289:5 op=Kw==
+        literal@289:1 kind=IntegerLiteral raw=Mg==
+        literal@293:1 kind=IntegerLiteral raw=Mw==

@@ -42,7 +42,7 @@ internal static class SyntaxGrammarTests
         AssertEx.Equal("tool::hint", function.Attributes[0].Path);
         AssertEx.Equal("(a, [b], {c})", function.Attributes[0].ArgumentsText);
         AssertEx.Equal("= \"text\"", function.Attributes[1].ArgumentsText);
-        foreach (string source in new[] { "#[] fn f() {}", "#[123] fn f() {}", "#[a b] fn f() {}", "#[a::] fn f() {}", "#[a(x) y] fn f() {}", "#[a =] fn f() {}", "#[a] #![b] fn f() {}", "fn f() {} #![b] fn g() {}", "mod m { #![a] fn f() {} }" })
+        foreach (string source in new[] { "#[] fn f() {}", "#[123] fn f() {}", "#[a b] fn f() {}", "#[a::] fn f() {}", "#[a(x) y] fn f() {}", "#[a =] fn f() {}", "#[a] #![b] fn f() {}", "fn f() {} #![b] fn g() {}" })
         {
             Fail(source);
         }
@@ -127,7 +127,11 @@ internal static class SyntaxGrammarTests
 
     private static Task UnsupportedAsync()
     {
-        foreach (string source in new[] { "use a::{b};", "use a::*;", "use a as _;", "fn f<'a>() {}", "fn f<const N: usize>() {}", "struct S<T = i32>;", "struct S<T> where T: Copy {}", "fn f() { let a = b else {}; }", "fn f() { a.field; }", "fn f() { other!(); }", "fn f() { a as i32; }", "fn f() { || 1; }", "type F = fn(i32);", "type P = *const i32;", "type A = Vec<'a>;", "fn f() { let ref a = b; }" })
+        foreach (string source in new[]
+        {
+            "fn f() { other!(); }", "type P = *const i32;", "unsafe fn f() {}",
+            "extern \"C\" { fn f(); }", "async fn f() {}", "union U { x: i32 }",
+        })
         {
             SafeCoreSyntaxResult result = Fail(source);
             AssertEx.True(result.Diagnostics.Any(d => d.Code == SafeCoreSyntaxDiagnosticCodes.UnsupportedSyntax), source + " needs RSP1003.");
@@ -135,7 +139,6 @@ internal static class SyntaxGrammarTests
 
         return Task.CompletedTask;
     }
-
     private static Task LimitsAsync()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));

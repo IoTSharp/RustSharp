@@ -10,6 +10,7 @@ internal static class SafeCoreHirTests
         new("safe-core HIR binds declarations and references deterministically", BindsSymbolsAsync),
         new("safe-core HIR binds NFC-equivalent identifiers", BindsUnicodeIdentifiersAsync),
         new("safe-core HIR preserves expression type and pattern shapes", PreservesShapesAsync),
+        new("safe-core HIR retains const function qualifiers", RetainsConstFunctionAsync),
         new("safe-core HIR rejects invalid input and obeys limits", RejectsInvalidAndBoundedAsync),
     ];
 
@@ -121,6 +122,25 @@ internal static class SafeCoreHirTests
         AssertEx.True(
             mutableBinding.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable),
             "Mutable bindings must retain their modifier.");
+        return Task.CompletedTask;
+    }
+
+    private static Task RetainsConstFunctionAsync()
+    {
+        const string source = "const fn answer() -> i32 { 42 } fn main() { answer(); }";
+        SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(source, "hir-const-fn.rs");
+        AssertEx.True(syntax.IsSuccessful, FormatDiagnostics(syntax.Diagnostics));
+
+        SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax);
+        AssertEx.True(hir.IsSuccessful, FormatDiagnostics(hir.Diagnostics));
+        SafeCoreHirNode answer = hir.Nodes.Single(node =>
+            node.Kind == SafeCoreHirNodeKind.Function && node.Name == "answer");
+        AssertEx.True(
+            answer.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ConstFunction),
+            "HIR must preserve the const qualifier on function declarations.");
+
+        SafeCoreTypeCheckResult checkedProgram = SafeCoreTypeChecking.Check(hir);
+        AssertEx.True(checkedProgram.IsSuccessful, FormatDiagnostics(checkedProgram.Diagnostics));
         return Task.CompletedTask;
     }
 

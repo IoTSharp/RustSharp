@@ -2,7 +2,7 @@ namespace RustSharp.Tests;
 
 internal static class Program
 {
-    private const int MaximumTestCount = 128;
+    private const int MaximumTestCount = 256;
 
     public static async Task<int> Main(string[] args)
     {
@@ -12,7 +12,7 @@ internal static class Program
         }
 
         IReadOnlyList<TestCase> tests =
-            [.. SyntaxTests.All, .. LexerTests.All, .. LexerClosureTests.All, .. LexingManifestTests.All, .. SafeCoreSyntaxTests.All, .. SyntaxGrammarTests.All, .. SyntaxManifestTests.All, .. SafeCoreNameResolutionTests.All, .. SafeCoreHirTests.All, .. SafeCoreCompilationTests.All, .. EmissionTests.All, .. NativeAotTests.All, .. BoundedProcessTests.All, .. ClrLirTests.All, .. VerticalProofTests.All, .. OwnershipTests.All];
+            [.. SyntaxTests.All, .. LexerTests.All, .. LexerClosureTests.All, .. LexingManifestTests.All, .. SafeCoreSyntaxTests.All, .. SyntaxGrammarTests.All, .. SyntaxModuleExpansionTests.All, .. SyntaxItemExpansionTests.All, .. SyntaxExpressionExpansionTests.All, .. SyntaxProfileBoundaryTests.All, .. SemanticAstBoundaryTests.All, .. SyntaxManifestTests.All, .. NameResolutionManifestTests.All, .. SafeCoreNameResolutionTests.All, .. SafeCoreModuleResolutionTests.All, .. SafeCoreHirTests.All, .. SafeCoreCompilationTests.All, .. SafeCoreWorkspaceTests.All, .. CargoWorkspaceTests.All, .. SafeCoreModuleCompilationTests.All, .. WorkspaceSourceMapTests.All, .. EmissionTests.All, .. NativeAotTests.All, .. BoundedProcessTests.All, .. ClrLirTests.All, .. VerticalProofTests.All, .. OwnershipTests.All];
         if (tests.Count > MaximumTestCount)
         {
             Console.Error.WriteLine($"Test count {tests.Count} exceeds the safety limit {MaximumTestCount}.");

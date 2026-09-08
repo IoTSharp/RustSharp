@@ -1,0 +1,46 @@
+unit@0:112
+  function@0:110 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:103
+      statement@9:34 kind=Let
+        identifier-pattern@13:1 name=eA== mut=0 ref=0
+        struct-expr@17:25
+          name@17:1 path=Uw==
+            path-segment@17:1 name=Uw== generic=0
+          struct-field@21:8 name=ZmllbGQ= short=0
+          literal@28:1 kind=IntegerLiteral raw=MQ==
+          struct-field@31:1 name=eQ== short=1
+          name@31:1 path=eQ==
+          name@36:4 path=YmFzZQ==
+            path-segment@36:4 name=YmFzZQ== generic=0
+      statement@44:47 kind=Expression
+        semicolon@44:47 value=1
+        match@44:46
+          name@50:5 path=aW5wdXQ=
+            path-segment@50:5 name=aW5wdXQ= generic=0
+          arm@58:21
+            path-pattern@58:7 path=U29tZQ== arguments=1
+              path-segment@58:4 name=U29tZQ== generic=0
+              identifier-pattern@63:1 name=eA== mut=0 ref=0
+            binary@69:5 op=Pg==
+              name@69:1 path=eA==
+                path-segment@69:1 name=eA== generic=0
+              literal@73:1 kind=IntegerLiteral raw=MA==
+            name@78:1 path=eA==
+              path-segment@78:1 name=eA== generic=0
+          arm@81:7
+            wildcard-pattern@81:1
+            unary@86:2 op=LQ==
+              literal@87:1 kind=IntegerLiteral raw=MQ==
+      statement@92:9 kind=Expression
+        semicolon@92:9 value=1
+        cast@92:8
+          name@92:1 path=eA==
+            path-segment@92:1 name=eA== generic=0
+          path-type@97:3 absolute=0
+            segment@97:3 name=aTY0 fn=0 generic=0
+      statement@102:6 kind=Expression
+        semicolon@102:6 value=1
+        range@102:5 inclusive=1 start=1 end=1
+          literal@102:1 kind=IntegerLiteral raw=MQ==
+          literal@106:1 kind=IntegerLiteral raw=Mw==

@@ -200,10 +200,11 @@ internal static class Program
             RustSharp compiler (rsc)
 
             Usage:
-              rsc check <source.rs>
-              rsc compile <source.rs> [--output <program.dll>]
-              rsc run <source.rs> [--output <program.dll>] [--timeout <seconds>]
-              rsc publish <source.rs> [--runtime <rid>] [--output <directory>] [--timeout <seconds>]
+              rsc check <source.rs|Cargo.toml>
+              rsc build <source.rs|Cargo.toml> [--output <program.dll>]
+              rsc compile <source.rs|Cargo.toml> [--output <program.dll>]
+              rsc run <source.rs|Cargo.toml> [--output <program.dll>] [--timeout <seconds>]
+              rsc publish <source.rs|Cargo.toml> [--runtime <rid>] [--output <directory>] [--timeout <seconds>]
               rsc --version
 
             Profiles (Rust 1.98 / Edition 2024):
@@ -226,7 +227,7 @@ internal static class Program
         {
             var diagnostic = diagnostics[index];
             Console.Error.WriteLine(
-                $"{sourcePath}[{diagnostic.Span.Start}..{diagnostic.Span.End}]: error {diagnostic.Code}: {diagnostic.Message}");
+                $"{diagnostic.SourcePath ?? sourcePath}[{diagnostic.Span.Start}..{diagnostic.Span.End}]: error {diagnostic.Code}: {diagnostic.Message}");
         }
 
         if (diagnostics.Count > displayed)
@@ -273,7 +274,20 @@ internal static class Program
 
     private static string GetAssemblyName(string sourcePath)
     {
-        var candidate = Path.GetFileNameWithoutExtension(sourcePath);
+        if (string.Equals(Path.GetFileName(sourcePath), "Cargo.toml", StringComparison.OrdinalIgnoreCase))
+        {
+            CargoWorkspaceResult manifest = CargoWorkspace.Load(sourcePath);
+            if (manifest.IsSuccessful && manifest.RootPackage.Name.Length != 0)
+            {
+                sourcePath = manifest.RootPackage.SourcePath;
+                return SanitizeAssemblyName(manifest.RootPackage.Name);
+            }
+        }
+        return SanitizeAssemblyName(Path.GetFileNameWithoutExtension(sourcePath));
+    }
+
+    private static string SanitizeAssemblyName(string candidate)
+    {
         Span<char> buffer = stackalloc char[Math.Min(candidate.Length, 128)];
         var length = 0;
 

@@ -3,7 +3,7 @@
   "version": 1,
   "parser": "RustSharp.Syntax.SafeCoreSyntax.Parse",
   "resolver": "RustSharp.Syntax.SafeCoreNameResolution.Resolve",
-  "denominator": 6,
+  "denominator": 25,
   "syntaxLimits": {
     "maximumSourceLength": 65536,
     "maximumTokens": 16384,
@@ -192,12 +192,12 @@
           "occurrences": [
             {
               "occurrence": 0,
-              "start": 21,
+              "start": 0,
               "length": 20
             },
             {
               "occurrence": 1,
-              "start": 0,
+              "start": 21,
               "length": 20
             },
             {
@@ -278,13 +278,764 @@
           "scopePath": "crate::inspect",
           "occurrence": 0,
           "status": "unresolved",
-          "candidateCount": 1
+          "candidateCount": 0
         },
         {
           "path": "crate::Record::field",
           "scopePath": "crate::inspect",
           "occurrence": 0,
           "status": "unresolved",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "nested-groups-self-alias-empty-group",
+      "file": "safe-core-name-resolution-grouped-self.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::api",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::api::nested",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api::nested",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::api",
+          "scopePath": "crate",
+          "occurrence": 1,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api",
+          "candidateCount": 1
+        },
+        {
+          "path": "run",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::run",
+          "candidateCount": 1
+        },
+        {
+          "path": "a::f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::api::f",
+          "candidateCount": 1
+        },
+        {
+          "path": "number",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::number",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "anonymous-imports-do-not-bind-names",
+      "file": "safe-core-name-resolution-anonymous-unbound.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1003",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 96,
+              "length": 1
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "crate::api",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api",
+          "candidateCount": 1
+        },
+        {
+          "path": "f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "unresolved",
+          "candidateCount": 0
+        }
+      ]
+    },
+    {
+      "id": "anonymous-import-checks-private-target",
+      "file": "safe-core-name-resolution-anonymous-private.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1005",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 22,
+              "length": 23
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "local",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::local",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "module-and-enum-glob-imports",
+      "file": "safe-core-name-resolution-module-enum-globs.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::api",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::Choice",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "enum",
+          "symbolQualifiedName": "crate::Choice",
+          "candidateCount": 1
+        },
+        {
+          "path": "f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::f",
+          "candidateCount": 1
+        },
+        {
+          "path": "A",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::A",
+          "candidateCount": 1
+        },
+        {
+          "path": "B",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::B",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "glob-explicit-namespace-precedence",
+      "file": "safe-core-name-resolution-glob-precedence.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::api",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api",
+          "candidateCount": 1
+        },
+        {
+          "path": "f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::f",
+          "candidateCount": 1
+        },
+        {
+          "path": "Name",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::Name",
+          "candidateCount": 1
+        },
+        {
+          "path": "A",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "const",
+          "symbolQualifiedName": "crate::A",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-glob-ambiguity-is-legal",
+      "file": "safe-core-name-resolution-glob-unused-ambiguity.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::a",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::a",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::b",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::b",
+          "candidateCount": 1
+        },
+        {
+          "path": "local",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::local",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "used-glob-ambiguity-is-diagnosed",
+      "file": "safe-core-name-resolution-glob-used-ambiguity.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1004",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 94,
+              "length": 1
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "crate::a",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::a",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::b",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::b",
+          "candidateCount": 1
+        },
+        {
+          "path": "f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "ambiguous",
+          "candidateCount": 2
+        }
+      ]
+    },
+    {
+      "id": "repeated-diamond-globs-deduplicate-targets",
+      "file": "safe-core-name-resolution-glob-diamond.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::a",
+          "scopePath": "crate::b",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::a",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::a",
+          "scopePath": "crate::c",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::a",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::b",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::b",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::c",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::c",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::b",
+          "scopePath": "crate",
+          "occurrence": 1,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::b",
+          "candidateCount": 1
+        },
+        {
+          "path": "f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::f",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "reverse-glob-chain-and-late-explicit-alias",
+      "file": "safe-core-name-resolution-glob-fixed-point.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::first",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::first",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::second",
+          "scopePath": "crate::first",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::second",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::third",
+          "scopePath": "crate::second",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::third",
+          "candidateCount": 1
+        },
+        {
+          "path": "f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::f",
+          "candidateCount": 1
+        },
+        {
+          "path": "g",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::g",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "seeded-glob-cycle-reaches-fixed-point",
+      "file": "safe-core-name-resolution-glob-seeded-cycle.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::b",
+          "scopePath": "crate::a",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::b",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::a",
+          "scopePath": "crate::b",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::a",
+          "candidateCount": 1
+        },
+        {
+          "path": "crate::a",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::a",
+          "candidateCount": 1
+        },
+        {
+          "path": "f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::f",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "restricted-visibility-all-supported-forms",
+      "file": "safe-core-name-resolution-restricted-visibility.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "super::own",
+          "scopePath": "crate::outer::inner::child::check",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::outer::inner::own",
+          "candidateCount": 1
+        },
+        {
+          "path": "inner::parent",
+          "scopePath": "crate::outer::check",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::outer::inner::parent",
+          "candidateCount": 1
+        },
+        {
+          "path": "inner::ancestor",
+          "scopePath": "crate::outer::check",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::outer::inner::ancestor",
+          "candidateCount": 1
+        },
+        {
+          "path": "outer::inner::wide",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::outer::inner::wide",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "glob-reexport-retains-target-visibility",
+      "file": "safe-core-name-resolution-glob-private-reexport.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1005",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 95,
+              "length": 8
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "self::source",
+          "scopePath": "crate::outer",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::outer::source",
+          "candidateCount": 1
+        },
+        {
+          "path": "outer::f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "private",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "grouped-reexport-rejects-visibility-widening",
+      "file": "safe-core-name-resolution-grouped-widening.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1005",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 54,
+              "length": 1
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "crate::api",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api",
+          "candidateCount": 1
+        },
+        {
+          "path": "local",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::local",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "absolute-imports-remain-unsupported",
+      "file": "safe-core-name-resolution-absolute-imports.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1007",
+          "count": 2,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 30,
+              "length": 15
+            },
+            {
+              "occurrence": 1,
+              "start": 51,
+              "length": 15
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": []
+    },
+    {
+      "id": "outer-attribute-semantics-remain-unsupported",
+      "file": "safe-core-name-resolution-outer-attributes.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1007",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 0,
+              "length": 13
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": []
+    },
+    {
+      "id": "inner-attribute-semantics-remain-unsupported",
+      "file": "safe-core-name-resolution-inner-attributes.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1007",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 18,
+              "length": 20
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": []
+    },
+    {
+      "id": "anonymous-import-checks-missing-target",
+      "file": "safe-core-name-resolution-anonymous-missing.rs",
+      "expected": "resolution-fail",
+      "expectedDiagnostics": [
+        {
+          "code": "RSN1003",
+          "count": 1,
+          "occurrences": [
+            {
+              "occurrence": 0,
+              "start": 0,
+              "length": 24
+            }
+          ]
+        }
+      ],
+      "expectedResolutions": [
+        {
+          "path": "local",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::local",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "documentation-attributes-do-not-alter-binding",
+      "file": "safe-core-name-resolution-documented-module.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "crate::api",
+          "scopePath": "crate",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "module",
+          "symbolQualifiedName": "crate::api",
+          "candidateCount": 1
+        },
+        {
+          "path": "run",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::run",
+          "candidateCount": 1
+        },
+        {
+          "path": "facade::f",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "function",
+          "symbolQualifiedName": "crate::api::f",
+          "candidateCount": 1
+        }
+      ]
+    },
+    {
+      "id": "explicit-import-binds-both-namespaces",
+      "file": "safe-core-name-resolution-dual-namespace.rs",
+      "expected": "resolution-pass",
+      "expectedDiagnostics": [],
+      "expectedResolutions": [
+        {
+          "path": "Both",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::Both",
+          "candidateCount": 1
+        },
+        {
+          "path": "Both",
+          "scopePath": "crate::main",
+          "occurrence": 1,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::Both",
+          "candidateCount": 1
+        },
+        {
+          "path": "Both",
+          "scopePath": "crate::main",
+          "occurrence": 2,
+          "status": "resolved",
+          "symbolKind": "import",
+          "symbolQualifiedName": "crate::Both",
+          "candidateCount": 1
+        },
+        {
+          "path": "value",
+          "scopePath": "crate::main",
+          "occurrence": 0,
+          "status": "resolved",
+          "symbolKind": "parameter",
+          "symbolQualifiedName": "crate::main::value",
           "candidateCount": 1
         }
       ]

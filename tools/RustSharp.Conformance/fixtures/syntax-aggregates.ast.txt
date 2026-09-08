@@ -1,0 +1,50 @@
+unit@0:114
+  function@0:113 name=Zg== const=0
+    visibility@0:0 kind=Private path=-
+    block@7:106
+      statement@13:3 kind=Expression
+        semicolon@13:3 value=1
+        tuple@13:2 trailing=0
+      statement@17:4 kind=Expression
+        semicolon@17:4 value=1
+        tuple@17:3 trailing=0
+          literal@18:1 kind=IntegerLiteral raw=MQ==
+      statement@22:5 kind=Expression
+        semicolon@22:5 value=1
+        tuple@22:4 trailing=1
+          literal@23:1 kind=IntegerLiteral raw=MQ==
+      statement@28:8 kind=Expression
+        semicolon@28:8 value=1
+        tuple@28:7 trailing=1
+          literal@29:1 kind=IntegerLiteral raw=MQ==
+          literal@32:1 kind=IntegerLiteral raw=Mg==
+      statement@41:3 kind=Expression
+        semicolon@41:3 value=1
+        array@41:2
+      statement@45:8 kind=Expression
+        semicolon@45:8 value=1
+        array@45:7
+          literal@46:1 kind=IntegerLiteral raw=MQ==
+          literal@49:1 kind=IntegerLiteral raw=Mg==
+      statement@54:7 kind=Expression
+        semicolon@54:7 value=1
+        array@54:6
+          literal@55:1 kind=IntegerLiteral raw=MQ==
+          literal@58:1 kind=IntegerLiteral raw=Mw==
+      statement@66:22 kind=Expression
+        semicolon@66:22 value=1
+        index@66:21
+          call@66:18
+            name@66:4 path=Y2FsbA==
+              path-segment@66:4 name=Y2FsbA== generic=0
+            literal@71:1 kind=IntegerLiteral raw=MQ==
+            call@74:8
+              name@74:5 path=b3RoZXI=
+                path-segment@74:5 name=b3RoZXI= generic=0
+              literal@80:1 kind=IntegerLiteral raw=Mg==
+          literal@85:1 kind=IntegerLiteral raw=MA==
+      statement@93:18 kind=Expression
+        semicolon@93:18 value=1
+        print@93:17
+          literal@102:4 kind=StringLiteral raw=Int9Ig==
+          literal@108:1 kind=IntegerLiteral raw=MQ==

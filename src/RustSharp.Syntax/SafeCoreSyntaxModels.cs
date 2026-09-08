@@ -113,7 +113,14 @@ public sealed record SafeCoreAttributeSyntax(
     bool IsInner,
     string Path,
     string ArgumentsText,
-    TextSpan Span);
+    TextSpan Span)
+{
+    /// <summary>Whether this attribute was desugared from a documentation comment.</summary>
+    public bool IsDocumentation { get; init; }
+
+    /// <summary>The documentation content, with its comment delimiters removed.</summary>
+    public string? DocumentationText { get; init; }
+}
 
 /// <summary>Classifies safe-core item nodes.</summary>
 public enum SafeCoreItemKind
@@ -125,14 +132,35 @@ public enum SafeCoreItemKind
     Enum,
     TypeAlias,
     Const,
+    Trait,
+    Implementation,
 }
+
+/// <summary>The written visibility restriction, before name resolution.</summary>
+public enum SafeCoreVisibilityKind
+{
+    Private,
+    Public,
+    Crate,
+    Self,
+    Super,
+    Restricted,
+}
+
+/// <summary>A visibility modifier with its exact span and optional restriction path.</summary>
+public sealed record SafeCoreVisibilitySyntax(SafeCoreVisibilityKind Kind, string? Path, TextSpan Span);
 
 /// <summary>Base type for a module-level item.</summary>
 public abstract record SafeCoreItemSyntax(
     SafeCoreItemKind Kind,
     IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
     bool IsPublic,
-    TextSpan Span);
+    TextSpan Span)
+{
+    /// <summary>Retains restrictions separately from unrestricted public visibility.</summary>
+    public SafeCoreVisibilitySyntax Visibility { get; init; } = new(
+        IsPublic ? SafeCoreVisibilityKind.Public : SafeCoreVisibilityKind.Private, null, new TextSpan(Span.Start, 0));
+}
 
 /// <summary>A nested <c>mod name { ... }</c> item.</summary>
 public sealed record SafeCoreModuleSyntax(
@@ -141,7 +169,14 @@ public sealed record SafeCoreModuleSyntax(
     bool IsPublic,
     IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
     TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.Module, Attributes, IsPublic, Span);
+    : SafeCoreItemSyntax(SafeCoreItemKind.Module, Attributes, IsPublic, Span)
+{
+    /// <summary>True for a semicolon declaration whose body must be loaded separately.</summary>
+    public bool IsExternal { get; init; }
+
+    /// <summary>Attributes in the inline module's preamble.</summary>
+    public IReadOnlyList<SafeCoreAttributeSyntax> InnerAttributes { get; init; } = Array.Empty<SafeCoreAttributeSyntax>();
+}
 
 /// <summary>A path import item.</summary>
 public sealed record SafeCoreUseSyntax(
@@ -150,327 +185,25 @@ public sealed record SafeCoreUseSyntax(
     bool IsPublic,
     IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
     TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.Use, Attributes, IsPublic, Span);
-
-/// <summary>A function parameter.</summary>
-public sealed record SafeCoreParameterSyntax(
-    SafeCorePatternSyntax Pattern,
-    SafeCoreTypeSyntax Type,
-    TextSpan Span);
-
-/// <summary>A generic type parameter and its path bounds.</summary>
-public sealed record SafeCoreGenericParameterSyntax(
-    string Name,
-    IReadOnlyList<SafeCoreTypeSyntax> Bounds,
-    TextSpan Span);
-
-/// <summary>A safe-core function item.</summary>
-public sealed record SafeCoreFunctionSyntax(
-    string Name,
-    IReadOnlyList<SafeCoreGenericParameterSyntax> GenericParameters,
-    IReadOnlyList<SafeCoreParameterSyntax> Parameters,
-    SafeCoreTypeSyntax? ReturnType,
-    SafeCoreBlockSyntax Body,
-    bool IsPublic,
-    IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
-    TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.Function, Attributes, IsPublic, Span);
-
-/// <summary>A named struct field.</summary>
-public sealed record SafeCoreFieldSyntax(
-    string? Name,
-    SafeCoreTypeSyntax Type,
-    bool IsPublic,
-    TextSpan Span);
-
-/// <summary>A safe-core struct item.</summary>
-public sealed record SafeCoreStructSyntax(
-    string Name,
-    IReadOnlyList<SafeCoreGenericParameterSyntax> GenericParameters,
-    IReadOnlyList<SafeCoreFieldSyntax> Fields,
-    bool IsTupleStruct,
-    bool IsPublic,
-    IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
-    TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.Struct, Attributes, IsPublic, Span)
+    : SafeCoreItemSyntax(SafeCoreItemKind.Use, Attributes, IsPublic, Span)
 {
-    /// <summary>Distinguishes <c>struct Name;</c> from an empty braced or tuple struct.</summary>
-    public bool IsUnitStruct { get; init; }
+    /// <summary>The complete import tree; Path and Alias retain the simple-import API.</summary>
+    public SafeCoreUseTreeSyntax? Tree { get; init; }
 }
 
-/// <summary>An enum variant and optional tuple payload fields.</summary>
-public sealed record SafeCoreEnumVariantSyntax(
-    string Name,
-    IReadOnlyList<SafeCoreFieldSyntax> Fields,
-    TextSpan Span);
-
-/// <summary>A safe-core enum item.</summary>
-public sealed record SafeCoreEnumSyntax(
-    string Name,
-    IReadOnlyList<SafeCoreGenericParameterSyntax> GenericParameters,
-    IReadOnlyList<SafeCoreEnumVariantSyntax> Variants,
-    bool IsPublic,
-    IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
-    TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.Enum, Attributes, IsPublic, Span);
-
-/// <summary>A type alias item.</summary>
-public sealed record SafeCoreTypeAliasSyntax(
-    string Name,
-    IReadOnlyList<SafeCoreGenericParameterSyntax> GenericParameters,
-    SafeCoreTypeSyntax Type,
-    bool IsPublic,
-    IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
-    TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.TypeAlias, Attributes, IsPublic, Span);
-
-/// <summary>A typed constant item.</summary>
-public sealed record SafeCoreConstSyntax(
-    string Name,
-    SafeCoreTypeSyntax Type,
-    SafeCoreExpressionSyntax Value,
-    bool IsPublic,
-    IReadOnlyList<SafeCoreAttributeSyntax> Attributes,
-    TextSpan Span)
-    : SafeCoreItemSyntax(SafeCoreItemKind.Const, Attributes, IsPublic, Span);
-
-/// <summary>Classifies safe-core statements.</summary>
-public enum SafeCoreStatementKind
-{
-    Let,
-    Return,
-    Expression,
-}
-
-/// <summary>Base type for statements in a safe-core block.</summary>
-public abstract record SafeCoreStatementSyntax(SafeCoreStatementKind Kind, TextSpan Span);
-
-/// <summary>A local binding statement.</summary>
-public sealed record SafeCoreLetStatementSyntax(
-    SafeCorePatternSyntax Pattern,
-    SafeCoreTypeSyntax? Type,
-    SafeCoreExpressionSyntax? Initializer,
-    TextSpan Span)
-    : SafeCoreStatementSyntax(SafeCoreStatementKind.Let, Span);
-
-/// <summary>A return statement.</summary>
-public sealed record SafeCoreReturnStatementSyntax(
-    SafeCoreExpressionSyntax? Value,
-    TextSpan Span)
-    : SafeCoreStatementSyntax(SafeCoreStatementKind.Return, Span);
-
-/// <summary>An expression statement.</summary>
-public sealed record SafeCoreExpressionStatementSyntax(
-    SafeCoreExpressionSyntax Expression,
-    bool HasSemicolon,
-    TextSpan Span)
-    : SafeCoreStatementSyntax(SafeCoreStatementKind.Expression, Span);
-
-/// <summary>A brace-delimited block.</summary>
-public sealed record SafeCoreBlockSyntax(
-    IReadOnlyList<SafeCoreStatementSyntax> Statements,
-    SafeCoreExpressionSyntax? TailExpression,
-    TextSpan Span);
-
-/// <summary>Classifies safe-core expressions.</summary>
-public enum SafeCoreExpressionKind
-{
-    Name,
-    Literal,
-    Unary,
-    Binary,
-    Call,
-    Tuple,
-    Array,
-    Block,
-    If,
-    Index,
-    Print,
-}
-
-/// <summary>Base type for expressions.</summary>
-public abstract record SafeCoreExpressionSyntax(SafeCoreExpressionKind Kind, TextSpan Span);
-
-/// <summary>The explicitly supported built-in println! macro expression.</summary>
-public sealed record SafeCorePrintExpressionSyntax(
-    IReadOnlyList<SafeCoreExpressionSyntax> Arguments,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Print, Span);
-
-/// <summary>A name or path expression.</summary>
-public sealed record SafeCoreNameExpressionSyntax(
-    string Path,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Name, Span);
-
-/// <summary>A lexical literal expression.</summary>
-public sealed record SafeCoreLiteralExpressionSyntax(
-    RustTokenKind LiteralKind,
-    string RawText,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Literal, Span);
-
-/// <summary>A prefix unary expression.</summary>
-public sealed record SafeCoreUnaryExpressionSyntax(
-    string Operator,
-    SafeCoreExpressionSyntax Operand,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Unary, Span);
-
-/// <summary>A binary expression.</summary>
-public sealed record SafeCoreBinaryExpressionSyntax(
-    string Operator,
-    SafeCoreExpressionSyntax Left,
-    SafeCoreExpressionSyntax Right,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Binary, Span);
-
-/// <summary>A function or constructor call.</summary>
-public sealed record SafeCoreCallExpressionSyntax(
-    SafeCoreExpressionSyntax Callee,
-    IReadOnlyList<SafeCoreExpressionSyntax> Arguments,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Call, Span);
-
-/// <summary>A parenthesized or tuple expression.</summary>
-public sealed record SafeCoreTupleExpressionSyntax(
-    IReadOnlyList<SafeCoreExpressionSyntax> Elements,
-    bool HasTrailingComma,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Tuple, Span);
-
-/// <summary>An array literal expression.</summary>
-public sealed record SafeCoreArrayExpressionSyntax(
-    IReadOnlyList<SafeCoreExpressionSyntax> Elements,
-    SafeCoreExpressionSyntax? RepeatCount,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Array, Span);
-
-/// <summary>A block expression.</summary>
-public sealed record SafeCoreBlockExpressionSyntax(
-    SafeCoreBlockSyntax Block,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Block, Span);
-
-/// <summary>An <c>if</c>/<c>else</c> expression.</summary>
-public sealed record SafeCoreIfExpressionSyntax(
-    SafeCoreExpressionSyntax Condition,
-    SafeCoreBlockSyntax Then,
-    SafeCoreExpressionSyntax? Else,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.If, Span);
-
-/// <summary>An indexed expression such as <c>values[0]</c>.</summary>
-public sealed record SafeCoreIndexExpressionSyntax(
-    SafeCoreExpressionSyntax Target,
-    SafeCoreExpressionSyntax Index,
-    TextSpan Span)
-    : SafeCoreExpressionSyntax(SafeCoreExpressionKind.Index, Span);
-
-/// <summary>Classifies safe-core patterns.</summary>
-public enum SafeCorePatternKind
-{
-    Identifier,
-    Wildcard,
-    Literal,
-    Tuple,
-    Path,
-}
-
-/// <summary>Base type for patterns.</summary>
-public abstract record SafeCorePatternSyntax(SafeCorePatternKind Kind, TextSpan Span);
-
-/// <summary>An identifier binding pattern.</summary>
-public sealed record SafeCoreIdentifierPatternSyntax(
-    string Name,
-    bool IsMutable,
-    TextSpan Span)
-    : SafeCorePatternSyntax(SafeCorePatternKind.Identifier, Span);
-
-/// <summary>The wildcard <c>_</c> pattern.</summary>
-public sealed record SafeCoreWildcardPatternSyntax(TextSpan Span)
-    : SafeCorePatternSyntax(SafeCorePatternKind.Wildcard, Span);
-
-/// <summary>A literal pattern.</summary>
-public sealed record SafeCoreLiteralPatternSyntax(
-    RustTokenKind LiteralKind,
-    string RawText,
-    TextSpan Span)
-    : SafeCorePatternSyntax(SafeCorePatternKind.Literal, Span);
-
-/// <summary>A tuple pattern.</summary>
-public sealed record SafeCoreTuplePatternSyntax(
-    IReadOnlyList<SafeCorePatternSyntax> Elements,
-    bool HasTrailingComma,
-    TextSpan Span)
-    : SafeCorePatternSyntax(SafeCorePatternKind.Tuple, Span);
-
-/// <summary>A path pattern such as <c>Some(value)</c>.</summary>
-public sealed record SafeCorePathPatternSyntax(
-    string Path,
-    IReadOnlyList<SafeCorePatternSyntax> Arguments,
-    TextSpan Span)
-    : SafeCorePatternSyntax(SafeCorePatternKind.Path, Span);
-
-/// <summary>Classifies safe-core types.</summary>
-public enum SafeCoreTypeKind
+/// <summary>Distinguishes a single import, a glob and a nested import group.</summary>
+public enum SafeCoreUseTreeKind
 {
     Path,
-    Reference,
-    Tuple,
-    Array,
-    Slice,
-    Unit,
-    Never,
+    Glob,
+    Group,
 }
 
-/// <summary>Base type for type syntax.</summary>
-public abstract record SafeCoreTypeSyntax(SafeCoreTypeKind Kind, TextSpan Span);
-
-/// <summary>A path type, optionally with generic arguments on each segment.</summary>
-public sealed record SafeCorePathTypeSyntax(
-    IReadOnlyList<SafeCorePathSegmentSyntax> Segments,
-    TextSpan Span)
-    : SafeCoreTypeSyntax(SafeCoreTypeKind.Path, Span);
-
-/// <summary>One path segment and its generic arguments.</summary>
-public sealed record SafeCorePathSegmentSyntax(
-    string Name,
-    IReadOnlyList<SafeCoreTypeSyntax> GenericArguments,
+/// <summary>A recursive use tree, preserving aliases, absolute roots and empty groups.</summary>
+public sealed record SafeCoreUseTreeSyntax(
+    SafeCoreUseTreeKind Kind,
+    bool IsAbsolute,
+    IReadOnlyList<string> Prefix,
+    string? Alias,
+    IReadOnlyList<SafeCoreUseTreeSyntax> Children,
     TextSpan Span);
-
-/// <summary>A shared or mutable reference type.</summary>
-public sealed record SafeCoreReferenceTypeSyntax(
-    string? Lifetime,
-    bool IsMutable,
-    SafeCoreTypeSyntax Inner,
-    TextSpan Span)
-    : SafeCoreTypeSyntax(SafeCoreTypeKind.Reference, Span);
-
-/// <summary>A tuple type.</summary>
-public sealed record SafeCoreTupleTypeSyntax(
-    IReadOnlyList<SafeCoreTypeSyntax> Elements,
-    bool HasTrailingComma,
-    TextSpan Span)
-    : SafeCoreTypeSyntax(SafeCoreTypeKind.Tuple, Span);
-
-/// <summary>An array type with a bounded length expression.</summary>
-public sealed record SafeCoreArrayTypeSyntax(
-    SafeCoreTypeSyntax Element,
-    SafeCoreExpressionSyntax Length,
-    TextSpan Span)
-    : SafeCoreTypeSyntax(SafeCoreTypeKind.Array, Span);
-
-/// <summary>A slice type.</summary>
-public sealed record SafeCoreSliceTypeSyntax(
-    SafeCoreTypeSyntax Element,
-    TextSpan Span)
-    : SafeCoreTypeSyntax(SafeCoreTypeKind.Slice, Span);
-
-/// <summary>The unit type <c>()</c>.</summary>
-public sealed record SafeCoreUnitTypeSyntax(TextSpan Span)
-    : SafeCoreTypeSyntax(SafeCoreTypeKind.Unit, Span);
-
-/// <summary>The never type <c>!</c>.</summary>
-public sealed record SafeCoreNeverTypeSyntax(TextSpan Span)
-    : SafeCoreTypeSyntax(SafeCoreTypeKind.Never, Span);
