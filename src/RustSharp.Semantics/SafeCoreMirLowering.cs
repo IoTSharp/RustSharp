@@ -1,0 +1,618 @@
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Numerics;
+using System.Text;
+using RustSharp.Syntax;
+using K = RustSharp.Semantics.SafeCoreSemanticTypeKind;
+using N = RustSharp.Semantics.SafeCoreHirNodeKind;
+
+namespace RustSharp.Semantics;
+
+/// <summary>Independent bounds for the opt-in scalar MIR lowering pass.</summary>
+public sealed record SafeCoreMirLoweringOptions
+{
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
+    public int MaximumOperations { get; init; } = 1_000_000;
+    public int MaximumNestingDepth { get; init; } = 128;
+    public int MaximumFunctions { get; init; } = 1_024;
+    public int MaximumBlocksPerFunction { get; init; } = 16_384;
+    public int MaximumLocalsPerFunction { get; init; } = 65_536;
+}
+
+/// <summary>No partial program is published when lowering or validation fails.</summary>
+public sealed record SafeCoreMirLoweringResult(
+    SafeCoreMirProgram? Program,
+    IReadOnlyList<Diagnostic> Diagnostics,
+    SafeCoreMirValidationResult? Validation,
+    bool IsTruncated)
+{
+    public bool IsSuccessful => Program is not null && Diagnostics.Count == 0 &&
+        !IsTruncated && Validation is { IsSuccessful: true };
+}
+
+/// <summary>
+/// Lowers resolved P1-04 evidence to the experimental scalar MIR profile.
+/// This API does not change the existing compiler driver or IL emission path.
+/// </summary>
+public static class SafeCoreMirLowering
+{
+    public const string Profile = "safe-core-mir-v1";
+    public const string InvalidEvidence = "RSM2001";
+    public const string UnsupportedSyntax = "RSM2002";
+    public const string LimitReached = "RSM2003";
+
+    public static SafeCoreMirLoweringResult Lower(SafeCoreTypeAnalysisProgram program,
+        SafeCoreMirLoweringOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(program);
+        ArgumentNullException.ThrowIfNull(program.Hir);
+        ArgumentNullException.ThrowIfNull(program.Types);
+        ArgumentNullException.ThrowIfNull(program.Coercions);
+        cancellationToken.ThrowIfCancellationRequested();
+        options ??= new();
+        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1) ||
+            options.MaximumOperations is < 1 or > 4_000_000 ||
+            options.MaximumNestingDepth is < 1 or > 128 ||
+            options.MaximumFunctions is < 1 or > 4_096 ||
+            options.MaximumBlocksPerFunction is < 1 or > 65_536 ||
+            options.MaximumLocalsPerFunction is < 1 or > 262_144)
+            throw new ArgumentOutOfRangeException(nameof(options));
+        if (!program.Hir.IsSuccessful)
+            return new(null, [new Diagnostic(InvalidEvidence, "MIR requires successful, resolved HIR type evidence.",
+                program.Hir.Root?.Span ?? new TextSpan(0, 0)) { SourcePath = program.Hir.SourcePath }], null, false);
+        try
+        {
+            var lowerer = new Lowerer(program, options, cancellationToken);
+            SafeCoreMirProgram mir = lowerer.Run();
+            SafeCoreMirValidationResult validation = SafeCoreMirValidation.Validate(mir,
+                new() { CancellationToken = cancellationToken, Timeout = lowerer.Remaining,
+                    MaximumOperations = lowerer.RemainingOperations });
+            return validation.IsSuccessful
+                ? new(mir, [], validation, false)
+                : new(null, validation.Diagnostics.Select(d => new Diagnostic(d.Code, d.Message,
+                    d.Source?.Span ?? program.Hir.Root!.Span) { SourcePath = d.Source?.SourcePath ?? program.Hir.SourcePath }).ToArray(),
+                    validation, validation.IsTruncated);
+        }
+        catch (LoweringException exception)
+        {
+            return new(null, [exception.Diagnostic with { SourcePath = program.Hir.SourcePath }], null,
+                exception.Diagnostic.Code == LimitReached);
+        }
+        catch (SafeCoreMirLimitException)
+        {
+            return new(null, [new Diagnostic(LimitReached, "MIR construction exceeded its bounded collection limits.",
+                program.Hir.Root!.Span) { SourcePath = program.Hir.SourcePath }], null, true);
+        }
+    }
+
+    private sealed class LoweringException(Diagnostic diagnostic) : Exception(diagnostic.Message)
+    {
+        public Diagnostic Diagnostic { get; } = diagnostic;
+    }
+
+    private sealed class Lowerer(SafeCoreTypeAnalysisProgram input, SafeCoreMirLoweringOptions options,
+        CancellationToken cancellation)
+    {
+        private readonly Stopwatch _clock = Stopwatch.StartNew();
+        private readonly List<SafeCoreHirNode> _functionNodes = [];
+        private readonly Dictionary<string, int> _functions = new(StringComparer.Ordinal);
+        private readonly List<SafeCoreMirLocal> _locals = [];
+        private readonly Dictionary<SafeCoreSymbol, int> _bindings = [];
+        private readonly List<BlockBuilder> _blocks = [];
+        private readonly List<LoopContext> _loops = [];
+        private BlockBuilder? _current;
+        private int _operations;
+
+        private sealed class BlockBuilder(int id, SafeCoreMirSource source)
+        {
+            public int Id { get; } = id;
+            public SafeCoreMirSource Source { get; } = source;
+            public List<SafeCoreMirStatement> Statements { get; } = [];
+            public SafeCoreMirTerminator? Terminator { get; set; }
+        }
+
+        private sealed class LoopContext(string? label, int header, int exit, int? result)
+        {
+            public string? Label { get; } = label;
+            public int Header { get; } = header;
+            public int Exit { get; } = exit;
+            public int? Result { get; } = result;
+            public bool HasBreak { get; set; }
+        }
+
+        public TimeSpan Remaining
+        {
+            get
+            {
+                Step(input.Hir.Root!, 0);
+                TimeSpan remaining = options.Timeout - _clock.Elapsed;
+                if (remaining <= TimeSpan.Zero) Limit(input.Hir.Root!);
+                return remaining;
+            }
+        }
+
+        public int RemainingOperations
+        {
+            get
+            {
+                if (_operations >= options.MaximumOperations) Limit(input.Hir.Root!);
+                return options.MaximumOperations - _operations;
+            }
+        }
+
+        public SafeCoreMirProgram Run()
+        {
+            Collect(input.Hir.Root!, 0);
+            var functions = new List<SafeCoreMirFunction>(_functionNodes.Count);
+            for (int index = 0; index < _functionNodes.Count; index++)
+            {
+                Step(_functionNodes[index], 0);
+                functions.Add(Function(_functionNodes[index], index));
+            }
+            return new(functions, cancellation);
+        }
+
+        private void Collect(SafeCoreHirNode node, int depth)
+        {
+            Step(node, depth);
+            if (node.Kind is N.CompilationUnit or N.Module)
+            {
+                for (int index = 0; index < node.ChildIds.Count; index++) Collect(Child(node, index), depth + 1);
+                return;
+            }
+            if (node.Kind is N.Attribute or N.Import or N.ImportGroup or N.TypeAlias) return;
+            if (node.Kind != N.Function) Unsupported(node);
+            if (_functionNodes.Count >= options.MaximumFunctions) Limit(node);
+            SafeCoreType signature = Type(node);
+            if (signature.Kind != K.Function || node.DeclaredSymbol is null) Invalid(node);
+            Scalar(signature.ReturnType, node, allowNever: true);
+            for (int index = 0; index < signature.ParameterTypes.Count; index++)
+            {
+                Step(node, depth);
+                Scalar(signature.ParameterTypes[index], node);
+            }
+            if (!_functions.TryAdd(SymbolKey(node.DeclaredSymbol!), _functionNodes.Count)) Invalid(node);
+            _functionNodes.Add(node);
+        }
+
+        private SafeCoreMirFunction Function(SafeCoreHirNode node, int id)
+        {
+            _locals.Clear(); _bindings.Clear(); _blocks.Clear(); _loops.Clear();
+            SafeCoreType signature = Type(node);
+            int parameterIndex = 0;
+            for (int index = 0; index < node.ChildIds.Count; index++)
+            {
+                SafeCoreHirNode child = Child(node, index);
+                Step(child, 0);
+                if (child.Kind != N.Parameter) continue;
+                SafeCoreHirNode pattern = UnwrapPattern(Child(child, 0));
+                if (pattern.Kind is not (N.IdentifierPattern or N.WildcardPattern) ||
+                    pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ByReference)) Unsupported(pattern);
+                int local = Local(pattern.Name ?? $"arg{parameterIndex.ToString(CultureInfo.InvariantCulture)}",
+                    signature.ParameterTypes[parameterIndex++], SafeCoreMirLocalKind.Parameter,
+                    pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
+                if (pattern.DeclaredSymbol is not null) _bindings.Add(pattern.DeclaredSymbol, local);
+            }
+            if (parameterIndex != signature.ParameterTypes.Count) Invalid(node);
+            _current = Block(node);
+            SafeCoreMirOperand? body = Expr(Child(node, node.ChildIds.Count - 1), 0);
+            if (_current is not null)
+                End(SafeCoreMirTerminator.Return(signature.ReturnType.Kind == K.Unit ? null : body, Source(node)));
+            var blocks = new List<SafeCoreMirBlock>(_blocks.Count);
+            for (int index = 0; index < _blocks.Count; index++)
+            {
+                Step(node, 0);
+                BlockBuilder block = _blocks[index];
+                blocks.Add(new(block.Id, block.Statements,
+                    block.Terminator ?? SafeCoreMirTerminator.Unreachable(block.Source), block.Source, cancellation));
+            }
+            return new(id, signature.Name!, signature.ReturnType, _locals.ToArray(), blocks, 0, Source(node), cancellation);
+        }
+
+        private SafeCoreMirOperand? Expr(SafeCoreHirNode node, int depth)
+        {
+            Step(node, depth);
+            if (_current is null) return null;
+            SafeCoreMirOperand? value = ExprCore(node, depth);
+            if (value is not null && _current is not null && input.Coercions.TryGetValue(node.Id, out SafeCoreType? target) &&
+                !value.Type.Equals(target))
+            {
+                Scalar(target, node);
+                value = Emit(SafeCoreMirRvalue.Coerce(value, target, Source(node)), target, node);
+            }
+            return value;
+        }
+
+        private SafeCoreMirOperand? ExprCore(SafeCoreHirNode node, int depth)
+        {
+            switch (node.Kind)
+            {
+                case N.Attribute: return Unit(node);
+                case N.Block:
+                    SafeCoreMirOperand? result = Unit(node);
+                    for (int index = 0; index < node.ChildIds.Count && _current is not null; index++)
+                        result = Expr(Child(node, index), depth + 1);
+                    return result;
+                case N.BlockExpression: return Expr(Child(node, 0), depth + 1);
+                case N.TupleExpression when node.ChildIds.Count == 0: return Unit(node);
+                case N.TupleExpression when node.ChildIds.Count == 1 &&
+                    !node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasTrailingComma):
+                    return Expr(Child(node, 0), depth + 1);
+                case N.ExpressionStatement:
+                    _ = Expr(Child(node, 0), depth + 1);
+                    return _current is null ? null : Unit(node);
+                case N.LetStatement: return Let(node, depth);
+                case N.LiteralExpression: return Literal(node, Type(node));
+                case N.NameExpression:
+                    int binding = -1;
+                    if (node.ReferencedSymbol is null || !_bindings.TryGetValue(node.ReferencedSymbol, out binding)) Unsupported(node);
+                    SafeCoreMirLocal local = _locals[binding];
+                    // Snapshot the read before a later operand can mutate the user local.
+                    return Emit(SafeCoreMirRvalue.Use(SafeCoreMirOperand.Local(binding, local.Type, Source(node)), Source(node)), local.Type, node);
+                case N.UnaryExpression:
+                    if (node.Value is not ("!" or "-")) Unsupported(node);
+                    SafeCoreHirNode inner = UnwrapExpression(Child(node, 0), depth + 1);
+                    if (node.Value == "-" && inner.Kind == N.LiteralExpression && Type(node).IsInteger)
+                        return Literal(inner, Type(node), negate: true, origin: node);
+                    SafeCoreMirOperand? operand = Expr(Child(node, 0), depth + 1);
+                    return operand is null ? null : Emit(SafeCoreMirRvalue.Unary(node.Value!, operand, Type(node), Source(node)), Type(node), node);
+                case N.BinaryExpression: return Binary(node, depth);
+                case N.CastExpression:
+                    SafeCoreMirOperand? cast = Expr(Child(node, 0), depth + 1);
+                    Scalar(Type(node), node);
+                    return cast is null ? null : Emit(SafeCoreMirRvalue.Cast(cast, Type(node), Source(node)), Type(node), node);
+                case N.CallExpression: return Call(node, depth);
+                case N.IfExpression: return If(node, depth);
+                case N.LoopExpression:
+                case N.WhileExpression: return Loop(node, depth);
+                case N.BreakExpression:
+                case N.ContinueExpression: return LoopControl(node, depth);
+                case N.ReturnExpression:
+                case N.ReturnStatement:
+                    SafeCoreMirOperand? returned = node.ChildIds.Count == 0 ? null : Expr(Child(node, 0), depth + 1);
+                    if (_current is not null) End(SafeCoreMirTerminator.Return(returned?.Type.Kind == K.Unit ? null : returned, Source(node)));
+                    return null;
+                default: Unsupported(node); return null;
+            }
+        }
+
+        private SafeCoreMirOperand? Let(SafeCoreHirNode node, int depth)
+        {
+            if (node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasElse)) Unsupported(node);
+            SafeCoreHirNode pattern = UnwrapPattern(Child(node, 0));
+            if (pattern.Kind is not (N.IdentifierPattern or N.WildcardPattern) ||
+                pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ByReference)) Unsupported(pattern);
+            SafeCoreMirOperand? value = Expr(Child(node, node.ChildIds.Count - 1), depth + 1);
+            if (_current is null || value is null) return null;
+            if (pattern.Kind == N.WildcardPattern) return Unit(node);
+            if (pattern.DeclaredSymbol is null) Invalid(pattern);
+            int local = Local(pattern.Name!, Type(pattern), SafeCoreMirLocalKind.User,
+                pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
+            _bindings.Add(pattern.DeclaredSymbol!, local);
+            Assign(local, value, node);
+            return Unit(node);
+        }
+
+        private SafeCoreMirOperand? Binary(SafeCoreHirNode node, int depth)
+        {
+            string op = node.Value!;
+            if (op is "&&" or "||") return ShortCircuit(node, depth);
+            if (op is "=" or "+=" or "-=" or "*=" or "/=" or "%=" or "&=" or "|=" or "^=" or "<<=" or ">>=")
+            {
+                SafeCoreHirNode place = UnwrapExpression(Child(node, 0), depth + 1);
+                int destination = -1;
+                if (place.Kind != N.NameExpression || place.ReferencedSymbol is null ||
+                    !_bindings.TryGetValue(place.ReferencedSymbol, out destination)) Unsupported(place);
+                SafeCoreMirOperand? right = Expr(Child(node, 1), depth + 1);
+                if (right is null || _current is null) return null;
+                if (op != "=")
+                    right = Emit(SafeCoreMirRvalue.Binary(op[..^1],
+                        SafeCoreMirOperand.Local(destination, _locals[destination].Type, Source(place)),
+                        right, _locals[destination].Type, Source(node)), _locals[destination].Type, node);
+                Assign(destination, right, node);
+                return Unit(node);
+            }
+            SafeCoreMirOperand? leftValue = Expr(Child(node, 0), depth + 1);
+            SafeCoreMirOperand? rightValue = Expr(Child(node, 1), depth + 1);
+            if (leftValue is null || rightValue is null || _current is null) return null;
+            return Emit(SafeCoreMirRvalue.Binary(op, leftValue, rightValue, Type(node), Source(node)), Type(node), node);
+        }
+
+        private SafeCoreMirOperand? Call(SafeCoreHirNode node, int depth)
+        {
+            SafeCoreHirNode calleeNode = UnwrapExpression(Child(node, 0), depth + 1);
+            int function = -1;
+            if (calleeNode.Kind != N.NameExpression || calleeNode.ReferencedSymbol is null ||
+                !_functions.TryGetValue(SymbolKey(calleeNode.ReferencedSymbol), out function)) Unsupported(calleeNode);
+            SafeCoreType signature = Type(_functionNodes[function]);
+            var arguments = new List<SafeCoreMirOperand>();
+            for (int index = 1; index < node.ChildIds.Count && _current is not null; index++)
+            {
+                SafeCoreMirOperand? argument = Expr(Child(node, index), depth + 1);
+                if (argument is not null) arguments.Add(argument);
+            }
+            if (_current is null) return null;
+            int? destination = signature.ReturnType.Kind is K.Unit or K.Never ? null : Temp(signature.ReturnType, node);
+            BlockBuilder continuation = Block(node);
+            End(SafeCoreMirTerminator.Call(SafeCoreMirOperand.Function(function, signature, Source(calleeNode)),
+                arguments, destination, continuation.Id, Source(node), cancellation));
+            _current = continuation;
+            if (signature.ReturnType.Kind == K.Never)
+            {
+                End(SafeCoreMirTerminator.Unreachable(Source(node)));
+                return null;
+            }
+            return destination is int local ? SafeCoreMirOperand.Local(local, signature.ReturnType, Source(node)) : Unit(node);
+        }
+
+        private SafeCoreMirOperand? If(SafeCoreHirNode node, int depth)
+        {
+            SafeCoreMirOperand? condition = Expr(Child(node, 0), depth + 1);
+            if (condition is null || _current is null) return null;
+            SafeCoreType type = EffectiveType(node);
+            int? destination = type.Kind is K.Unit or K.Never ? null : Temp(type, node);
+            BlockBuilder thenBlock = Block(Child(node, 1));
+            BlockBuilder elseBlock = Block(node.ChildIds.Count == 3 ? Child(node, 2) : node);
+            BlockBuilder join = Block(node);
+            End(SafeCoreMirTerminator.Branch(condition, thenBlock.Id, elseBlock.Id, Source(node)));
+            _current = thenBlock;
+            SafeCoreMirOperand? then = Expr(Child(node, 1), depth + 1);
+            bool thenReturns = Join(destination, then, join, node);
+            _current = elseBlock;
+            SafeCoreMirOperand? other = node.ChildIds.Count == 3 ? Expr(Child(node, 2), depth + 1) : Unit(node);
+            bool elseReturns = Join(destination, other, join, node);
+            _current = thenReturns || elseReturns ? join : null;
+            return _current is null ? null : destination is int local ? SafeCoreMirOperand.Local(local, type, Source(node)) : Unit(node);
+        }
+
+        private SafeCoreMirOperand? ShortCircuit(SafeCoreHirNode node, int depth)
+        {
+            SafeCoreMirOperand? left = Expr(Child(node, 0), depth + 1);
+            if (left is null || _current is null) return null;
+            int result = Temp(SafeCoreType.Primitive(K.Bool), node);
+            BlockBuilder rhs = Block(Child(node, 1)), shortcut = Block(node), join = Block(node);
+            bool and = node.Value == "&&";
+            End(SafeCoreMirTerminator.Branch(left, and ? rhs.Id : shortcut.Id, and ? shortcut.Id : rhs.Id, Source(node)));
+            _current = shortcut;
+            Assign(result, SafeCoreMirOperand.Constant(SafeCoreType.Primitive(K.Bool), and ? "false" : "true", Source(node)), node);
+            End(SafeCoreMirTerminator.Goto(join.Id, Source(node)));
+            _current = rhs;
+            _ = Join(result, Expr(Child(node, 1), depth + 1), join, node);
+            _current = join;
+            return SafeCoreMirOperand.Local(result, SafeCoreType.Primitive(K.Bool), Source(node));
+        }
+
+        private SafeCoreMirOperand? Loop(SafeCoreHirNode node, int depth)
+        {
+            bool isWhile = node.Kind == N.WhileExpression;
+            SafeCoreType type = EffectiveType(node);
+            int? result = type.Kind is K.Unit or K.Never ? null : Temp(type, node);
+            BlockBuilder header = Block(node), body = Block(node), exit = Block(node);
+            End(SafeCoreMirTerminator.Goto(header.Id, Source(node)));
+            var context = new LoopContext(node.Name, header.Id, exit.Id, result);
+            _loops.Add(context);
+            _current = header;
+            if (isWhile)
+            {
+                SafeCoreMirOperand? condition = Expr(Child(node, 0), depth + 1);
+                if (_current is not null && condition is not null)
+                    End(SafeCoreMirTerminator.Branch(condition, body.Id, exit.Id, Source(node)));
+                else
+                {
+                    _loops.RemoveAt(_loops.Count - 1);
+                    _current = context.HasBreak ? exit : null;
+                    return _current is null ? null : Unit(node);
+                }
+            }
+            else End(SafeCoreMirTerminator.Goto(body.Id, Source(node)));
+            _current = body;
+            _ = Expr(Child(node, isWhile ? 1 : 0), depth + 1);
+            if (_current is not null) End(SafeCoreMirTerminator.Goto(header.Id, Source(node)));
+            _loops.RemoveAt(_loops.Count - 1);
+            _current = isWhile || context.HasBreak ? exit : null;
+            return _current is null ? null : result is int local ? SafeCoreMirOperand.Local(local, type, Source(node)) : Unit(node);
+        }
+
+        private SafeCoreMirOperand? LoopControl(SafeCoreHirNode node, int depth)
+        {
+            LoopContext? context = null;
+            for (int index = _loops.Count - 1; index >= 0; index--)
+            {
+                Step(node, depth);
+                if (node.Name is null || node.Name == _loops[index].Label) { context = _loops[index]; break; }
+            }
+            if (context is null) Invalid(node);
+            if (node.Kind == N.ContinueExpression)
+            {
+                End(SafeCoreMirTerminator.Goto(context!.Header, Source(node)));
+                return null;
+            }
+            SafeCoreMirOperand? value = node.ChildIds.Count == 0 ? Unit(node) : Expr(Child(node, 0), depth + 1);
+            if (_current is null || value is null) return null;
+            if (context!.Result is int result) Assign(result, value, node);
+            context.HasBreak = true;
+            End(SafeCoreMirTerminator.Goto(context.Exit, Source(node)));
+            return null;
+        }
+
+        private bool Join(int? destination, SafeCoreMirOperand? value, BlockBuilder join, SafeCoreHirNode node)
+        {
+            if (_current is null) return false;
+            if (destination is int local)
+            {
+                if (value is null) Invalid(node);
+                Assign(local, value!, node);
+            }
+            End(SafeCoreMirTerminator.Goto(join.Id, Source(node)));
+            return true;
+        }
+
+        private SafeCoreMirOperand Literal(SafeCoreHirNode node, SafeCoreType type, bool negate = false,
+            SafeCoreHirNode? origin = null)
+        {
+            Scalar(type, node);
+            string text = node.Value ?? string.Empty;
+            if (text.Length is 0 or > 4_096) Unsupported(node);
+            string value;
+            if (type.Kind == K.Bool) value = text;
+            else if (type.Kind == K.Char || text.StartsWith("b'", StringComparison.Ordinal))
+            {
+                string character = text[(type.Kind == K.Char ? 1 : 2)..^1];
+                int scalar = character.StartsWith("\\u{", StringComparison.Ordinal)
+                    ? int.Parse(character[3..^1].Replace("_", string.Empty, StringComparison.Ordinal), NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                    : character.StartsWith("\\x", StringComparison.Ordinal)
+                        ? int.Parse(character[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                        : character switch
+                        {
+                            "\\n" => '\n', "\\r" => '\r', "\\t" => '\t', "\\0" => 0,
+                            "\\\\" => '\\', "\\'" => '\'', "\\\"" => '"',
+                            _ => Rune.GetRuneAt(character, 0).Value,
+                        };
+                value = scalar.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                string suffix = type.ToString();
+                text = text.Replace("_", string.Empty, StringComparison.Ordinal);
+                if (text.EndsWith(suffix, StringComparison.Ordinal)) text = text[..^suffix.Length];
+                if (type.IsFloat)
+                {
+                    double number = double.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
+                    value = type.Kind == K.F32 ? ((float)number).ToString("R", CultureInfo.InvariantCulture)
+                        : number.ToString("R", CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    int radix = text.StartsWith("0x", StringComparison.Ordinal) ? 16 :
+                        text.StartsWith("0o", StringComparison.Ordinal) ? 8 : text.StartsWith("0b", StringComparison.Ordinal) ? 2 : 10;
+                    int start = radix == 10 ? 0 : 2;
+                    BigInteger number = BigInteger.Zero;
+                    for (int index = start; index < text.Length; index++)
+                    {
+                        Step(node, 0);
+                        char c = char.ToLowerInvariant(text[index]);
+                        int digit = c is >= 'a' and <= 'f' ? c - 'a' + 10 : c - '0';
+                        if (digit < 0 || digit >= radix) Invalid(node);
+                        number = number * radix + digit;
+                    }
+                    value = (negate ? -number : number).ToString(CultureInfo.InvariantCulture);
+                }
+            }
+            return SafeCoreMirOperand.Constant(type, value, Source(origin ?? node));
+        }
+
+        private SafeCoreHirNode UnwrapExpression(SafeCoreHirNode node, int depth)
+        {
+            for (int index = 0; index <= options.MaximumNestingDepth; index++)
+            {
+                Step(node, depth + index);
+                if (node.Kind != N.TupleExpression || node.ChildIds.Count != 1 ||
+                    node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasTrailingComma)) return node;
+                node = Child(node, 0);
+            }
+            Limit(node); return null!;
+        }
+
+        private SafeCoreHirNode UnwrapPattern(SafeCoreHirNode node)
+        {
+            for (int depth = 0; depth <= options.MaximumNestingDepth; depth++)
+            {
+                Step(node, depth);
+                if (node.Kind != N.TuplePattern || node.ChildIds.Count != 1 ||
+                    node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasTrailingComma)) return node;
+                node = Child(node, 0);
+            }
+            Limit(node); return null!;
+        }
+
+        private SafeCoreMirOperand Emit(SafeCoreMirRvalue value, SafeCoreType type, SafeCoreHirNode node)
+        {
+            int local = Temp(type, node);
+            _current!.Statements.Add(new(local, value, Source(node)));
+            return SafeCoreMirOperand.Local(local, type, Source(node));
+        }
+
+        private void Assign(int local, SafeCoreMirOperand value, SafeCoreHirNode node) =>
+            _current!.Statements.Add(new(local, SafeCoreMirRvalue.Use(value, Source(node)), Source(node)));
+
+        private int Temp(SafeCoreType type, SafeCoreHirNode node) => Local(
+            $"tmp{_locals.Count.ToString(CultureInfo.InvariantCulture)}", type, SafeCoreMirLocalKind.Temporary, false, node);
+
+        private int Local(string name, SafeCoreType type, SafeCoreMirLocalKind kind, bool mutable, SafeCoreHirNode node)
+        {
+            Step(node, 0);
+            Scalar(type, node);
+            if (_locals.Count >= options.MaximumLocalsPerFunction) Limit(node);
+            int id = _locals.Count;
+            _locals.Add(new(id, name, type, kind, mutable, Source(node)));
+            return id;
+        }
+
+        private BlockBuilder Block(SafeCoreHirNode node)
+        {
+            Step(node, 0);
+            if (_blocks.Count >= options.MaximumBlocksPerFunction) Limit(node);
+            var block = new BlockBuilder(_blocks.Count, Source(node));
+            _blocks.Add(block);
+            return block;
+        }
+
+        private void End(SafeCoreMirTerminator terminator)
+        {
+            _current!.Terminator = terminator;
+            _current = null;
+        }
+
+        private SafeCoreType EffectiveType(SafeCoreHirNode node) =>
+            input.Coercions.TryGetValue(node.Id, out SafeCoreType? target) ? target : Type(node);
+
+        private SafeCoreType Type(SafeCoreHirNode node)
+        {
+            if (!input.Types.TryGetValue(node.Id, out SafeCoreType? type) || type is null) Invalid(node);
+            return type!;
+        }
+
+        private static void Scalar(SafeCoreType type, SafeCoreHirNode node, bool allowNever = false)
+        {
+            if (!(type.IsInteger || type.IsFloat || type.Kind is K.Unit or K.Bool or K.Char || allowNever && type.Kind == K.Never))
+                Unsupported(node);
+        }
+
+        private SafeCoreHirNode Child(SafeCoreHirNode node, int index)
+        {
+            if ((uint)index >= (uint)node.ChildIds.Count) Invalid(node);
+            int id = node.ChildIds[index];
+            if ((uint)id >= (uint)input.Hir.Nodes.Count) Invalid(node);
+            return input.Hir.GetNode(id);
+        }
+
+        private SafeCoreMirSource Source(SafeCoreHirNode node) =>
+            new(input.Hir.SourcePath, node.Span, node.Id, input.Hir.Root!.Span.End);
+
+        private SafeCoreMirOperand Unit(SafeCoreHirNode node) =>
+            SafeCoreMirOperand.Constant(SafeCoreType.Primitive(K.Unit), "()", Source(node));
+
+        private static string SymbolKey(SafeCoreSymbol symbol) =>
+            symbol.ResolvedImportTargetQualifiedName ?? symbol.QualifiedName;
+
+        private void Step(SafeCoreHirNode node, int depth)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            if (++_operations > options.MaximumOperations || depth > options.MaximumNestingDepth || _clock.Elapsed >= options.Timeout)
+                Limit(node);
+        }
+
+        [DoesNotReturn]
+        private static void Invalid(SafeCoreHirNode node) => throw new LoweringException(new(InvalidEvidence,
+            "MIR lowering requires complete and consistent resolved type evidence.", node.Span));
+
+        [DoesNotReturn]
+        private static void Unsupported(SafeCoreHirNode node) => throw new LoweringException(new(UnsupportedSyntax,
+            "This construct is outside the scalar MIR profile; aggregate, reference, closure, pattern and const lowering are not yet available.", node.Span));
+
+        [DoesNotReturn]
+        private static void Limit(SafeCoreHirNode node) => throw new LoweringException(new(LimitReached,
+            "MIR lowering exceeded its configured work, size, depth or time limit.", node.Span));
+    }
+}
