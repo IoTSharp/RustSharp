@@ -429,7 +429,7 @@ publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
 | P1-02 | ✅ Complete | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | Manifest v3 passes 49/49 cases, 34/34 exact AST snapshots and 18/18 required categories. Rejections match diagnostic codes and source text; cancellation/deadlines, recovery and invalid evidence are tested in the 141/141 regression harness. The declared syntax profile is complete; unsupported semantic/HIR extensions explicitly report RSN1007. See the syntax contract and local evidence above. |
 | P1-03 | ✅ Complete | Lower AST to HIR and implement the declared safe-core modules, namespaces, visibility, imports, name resolution, and Cargo package entry point. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | The acceptance manifest and executable harness pass 25/25 and 190/190. HIR preserves const-function qualifiers and deterministic declaration/reference bindings. Grouped/glob/self/anonymous imports, restricted visibility, source documentation, bounded file modules, original-file diagnostics and PDB mappings are integrated. `Cargo.toml` is accepted by `check`, `build`/`compile`, `run` and `publish`; package metadata, deterministic local `path` dependencies, source discovery, cycle/limit checks and explicit registry-dependency diagnostics are implemented. Leading `::`, unevaluated attributes, registry packages, Cargo features/lockfiles and macro expansion remain explicit profile boundaries for later milestones. |
 | P1-04 | ✅ Complete | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98` | The monomorphic check-only contract includes primitive numeric types, aggregates, references, function pointers, nongeneric ADTs, aliases, patterns/match, closures, bounded const evaluation, inference and directional coercions. All 265/265 regressions and 96/96 version 2 differential cases across sixteen required categories pass, with zero failures/skips and no cleanup diagnostic. File/Cargo checking is integrated; executable commands reject with RSC0009 before output. Generic/trait, MIR, ownership and executable-lowering gates remain separate. |
-| P1-05 | ⏳ Planned | Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | Generic functions/types emit closed AOT-reachable bodies; overlap, ambiguity, and missing bounds fail predictably. |
+| P1-05 | 🚧 In progress | Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | The first PR adds bounded structural substitution, trait obligations/coherence and deterministic closed-instance planning; see the [generic foundation contract](docs/generic-profile.md). Generic source/HIR integration, body specialization and AOT-reachable emission remain required for the full gate. |
 | P1-06 | ⏳ Planned | Define typed MIR, CFG validation, desugaring, and source mapping. | P1-04 | `dotnet test RustSharp.slnx -c Release --filter Mir` | MIR snapshots are deterministic; invalid edges/types are rejected; diagnostics map back to `.rs` spans. |
 | P1-07 | ⏳ Planned | Implement move paths, borrow checking, non-lexical lifetimes, reborrowing, and escape analysis for the profile. | P0-13, P1-06 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core-borrow` | All declared borrow compile-pass/fail cases match rustc outcome and no rejected construct is silently accepted under CLR rules. |
 | P1-08 | ⏳ Planned | Implement scope cleanup, deterministic `Drop`, unwind/abort profile behavior, and panic boundaries. | P1-06, P1-07 | `dotnet test RustSharp.slnx -c Release --filter DropAndPanic` | Normal/early-return/branch/panic paths run destructors once in specified order on CoreCLR and AOT. |
@@ -439,6 +439,20 @@ publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
 P1 exits when the versioned safe-core profile passes on CoreCLR and Windows/
 Linux x64 Native AOT, and when borrow/Drop behavior has no unresolved semantic
 difference inside that profile.
+
+### PR execution order after P1-04
+
+The next two implementation tracks may run in parallel: P1-05 depends on
+P0-14/P1-04, and P1-06 depends on P1-04. Review and merge the generic foundation
+PR first, followed by the typed-MIR foundation PR. Each PR states its exact
+implemented subset, regression evidence and remaining milestone criteria.
+
+Continue P1-05 with source/HIR generic binding and body specialization, and
+P1-06 with aggregate, pattern and closure lowering. P1-07 starts when its typed
+MIR prerequisites are usable; P1-08 follows the move/borrow gate. P1-09 combines
+generic specialization and ownership-aware lowering before P1-10 closes the
+full differential denominator. Completing a foundation PR does not mark its
+entire milestone complete.
 
 ## P2: Deliver the core library and usable toolchain
 
