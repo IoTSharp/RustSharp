@@ -7,6 +7,8 @@ namespace RustSharp.Syntax;
 /// </summary>
 public sealed record SafeCoreNameResolutionOptions
 {
+    /// <summary>Enables the bounded P1-04 type-checking syntax without changing the legacy profile.</summary>
+    public bool EnableTypeSystemExtensions { get; init; }
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
     public CancellationToken CancellationToken { get; init; }
     public int MaximumSymbols { get; init; } = 100_000;
@@ -146,6 +148,9 @@ public sealed class SafeCoreNameResolutionResult
     public IReadOnlyList<SafeCoreScope> Scopes { get; }
     public IReadOnlyList<SafeCoreSymbol> Symbols { get; }
     public IReadOnlyList<SafeCorePathResolution> Resolutions { get; }
+    /// <summary>Canonical binding identity for each pattern occurrence, including or-pattern alternatives.</summary>
+    public IReadOnlyDictionary<TextSpan, SafeCoreSymbol> PatternBindings { get; internal init; } =
+        new System.Collections.ObjectModel.ReadOnlyDictionary<TextSpan, SafeCoreSymbol>(new Dictionary<TextSpan, SafeCoreSymbol>());
     public IReadOnlyList<Diagnostic> Diagnostics { get; }
     public bool IsTruncated { get; }
     public bool IsSuccessful => !IsTruncated && RootScope is not null && Diagnostics.Count == 0;

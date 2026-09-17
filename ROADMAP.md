@@ -349,6 +349,42 @@ chains and cycles, restricted visibility, independent type/value imports,
 documentation and `RSN1007` rejection of absolute imports and unevaluated
 attributes. Earlier 6/6 reports remain evidence only for their original six cases. This increment is ✅ Complete: the Release build has zero warnings/errors, the executable harness passes 186/186, the expanded manifest passes 25/25, and the bounded PowerShell 7 evidence checker accepts the report. A full module differential and semantic/HIR denominator remains open.
 
+### P1-04 type-analysis profile
+
+The opt-in `safe-core-types-v1` profile adds type checking for all declared
+primitive numeric types, tuples, arrays, slices, references, function pointers,
+nongeneric ADTs, aliases and never, including patterns/match, closures,
+bounded const evaluation, inference and directional coercions. `rsc check`
+accepts source files, file modules and the existing
+bounded Cargo package entry point. Library-like inputs need no `main`.
+`build`, `compile`, `run` and `publish` report `RSC0009` before creating output.
+The [type-system contract](docs/type-system-profile.md) records the supported
+type rules, diagnostics and limits. Lifetimes, borrow/NLL, move safety and
+reference escape remain P1-07 work; richer executable lowering remains P1-09.
+
+```text
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- check samples/type-system.rs --profile safe-core-types-v1
+dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore
+dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98 --report artifacts/p1-04/safe-core-types-v1.json
+```
+
+The version 2 acceptance catalog covers 96 cases across sixteen required
+categories, each with positive and negative cases. Category membership,
+required fixture IDs and exact failure codes/spans are enforced. P1-04 is
+✅ Complete for this declared monomorphic type contract. Generic/trait reasoning,
+typed MIR, ownership/lifetimes and executable lowering retain their separate
+milestones, as recorded in [ADR 0008](docs/adr/0008-safe-core-type-checking.md).
+
+Recorded on 2026-09-17: ✅ Complete for 265/265 executable regressions, a
+successful updated type-system sample check and 96/96 version 2 differential
+cases (60 compile-pass, 36 compile-fail) across all sixteen required categories,
+with zero failures or skips. The report is `artifacts/p1-04/safe-core-types-v1.json`; it records
+`rustc 1.98.0 (88d9e12ae 2026-08-18)`, .NET runtime 10.0.12, `win-x64` and no
+cleanup diagnostic or remaining owned test/run directory. The Release build has zero
+warnings/errors. This local verification used the installed .NET SDK 10.0.401
+MSBuild explicitly; the repository SDK pin remains 10.0.400. Exact bounded
+commands are recorded in the [type-system contract](docs/type-system-profile.md).
+
 ### First executable P1 batch
 
 The opt-in `safe-core-primitives-v1` profile follows
@@ -392,7 +428,7 @@ publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
 | P1-01 | ✅ Complete | Implement lossless tokenization and token trees for Rust 1.98 lexical forms. | P0 gate | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | Manifest v2 passes 24/24 exact token/trivia/tree/diagnostic/span/source-reconstruction fixtures and enforces the complete 22-category lexical map. The 103/103 regression harness covers boundaries, cancellation/deadlines, collection limits, depth 4096 and malformed-manifest rejection. The opt-in primitive compiler consumes the lexer; see the recorded evidence and lexical contract above. |
 | P1-02 | ✅ Complete | Parse modules, items, statements, expressions, patterns, types, generics, and attributes in the safe-core profile. | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | Manifest v3 passes 49/49 cases, 34/34 exact AST snapshots and 18/18 required categories. Rejections match diagnostic codes and source text; cancellation/deadlines, recovery and invalid evidence are tested in the 141/141 regression harness. The declared syntax profile is complete; unsupported semantic/HIR extensions explicitly report RSN1007. See the syntax contract and local evidence above. |
 | P1-03 | ✅ Complete | Lower AST to HIR and implement the declared safe-core modules, namespaces, visibility, imports, name resolution, and Cargo package entry point. | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | The acceptance manifest and executable harness pass 25/25 and 190/190. HIR preserves const-function qualifiers and deterministic declaration/reference bindings. Grouped/glob/self/anonymous imports, restricted visibility, source documentation, bounded file modules, original-file diagnostics and PDB mappings are integrated. `Cargo.toml` is accepted by `check`, `build`/`compile`, `run` and `publish`; package metadata, deterministic local `path` dependencies, source discovery, cycle/limit checks and explicit registry-dependency diagnostics are implemented. Leading `::`, unevaluated attributes, registry packages, Cargo features/lockfiles and macro expansion remain explicit profile boundaries for later milestones. |
-| P1-04 | 🚧 In progress | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | i32/bool/unit, direct function signatures, local inference, mutability, conditional/return checks and divergence are implemented for the primitive profile. Aggregate/reference types and the full inference/coercion denominator remain open. |
+| P1-04 | ✅ Complete | Implement primitive, tuple, array, slice, reference, function, ADT, and never types with inference/coercion rules. | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98` | The monomorphic check-only contract includes primitive numeric types, aggregates, references, function pointers, nongeneric ADTs, aliases, patterns/match, closures, bounded const evaluation, inference and directional coercions. All 265/265 regressions and 96/96 version 2 differential cases across sixteen required categories pass, with zero failures/skips and no cleanup diagnostic. File/Cargo checking is integrated; executable commands reject with RSC0009 before output. Generic/trait, MIR, ownership and executable-lowering gates remain separate. |
 | P1-05 | ⏳ Planned | Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | Generic functions/types emit closed AOT-reachable bodies; overlap, ambiguity, and missing bounds fail predictably. |
 | P1-06 | ⏳ Planned | Define typed MIR, CFG validation, desugaring, and source mapping. | P1-04 | `dotnet test RustSharp.slnx -c Release --filter Mir` | MIR snapshots are deterministic; invalid edges/types are rejected; diagnostics map back to `.rs` spans. |
 | P1-07 | ⏳ Planned | Implement move paths, borrow checking, non-lexical lifetimes, reborrowing, and escape analysis for the profile. | P0-13, P1-06 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core-borrow` | All declared borrow compile-pass/fail cases match rustc outcome and no rejected construct is silently accepted under CLR rules. |
@@ -579,8 +615,8 @@ gate it depends on.
 6. When scope changes, update the compatibility profile and ADR first, then the
    implementation and this roadmap.
 
-P1-01 (lossless lexing) and P1-02 (safe-core syntax) are ✅ Complete. The next
-🚧 In progress gates are P1-03 (HIR and name resolution), P1-04 (types),
-P1-09 (IL emission), and P1-10 (differential regression). P0-10, P0-16, and P0-17 are now
+P1-01 (lossless lexing), P1-02 (safe-core syntax), P1-03 (HIR and name resolution)
+and P1-04 (types) are ✅ Complete. The remaining 🚧 In progress gates are
+P1-09 (IL emission) and P1-10 (differential regression). P0-10, P0-16, and P0-17 are now
 ✅ Complete on the recorded two-platform evidence; later language-profile
 claims remain gated on the full HIR/MIR and differential suites.

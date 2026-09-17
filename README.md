@@ -26,6 +26,7 @@ RustSharp is implemented in C# on .NET 10 and targets a deliberately scoped Rust
 | --- | --- |
 | `vertical-slice-v1` | The default profile: `fn main()` with literal `println!` statements. |
 | `safe-core-primitives-v1` | An opt-in profile with bounded file modules and local `path` packages, nongeneric functions, `i32` / `bool`, initialized mutable locals, `if` / `else`, returns, checked arithmetic, comparisons, boolean operators, and `println!`. |
+| `safe-core-types-v1` | An opt-in, check-only type profile: primitive numeric types, tuples, arrays, slices, references, function pointers, nongeneric ADTs, aliases, patterns/match, closures, bounded const evaluation, inference and directional coercions. It does not check borrowing or emit executable output. |
 | Output | Direct ECMA-335 and Portable PDB emission, CoreCLR execution, and Native AOT publishing for covered profiles. |
 
 RustSharp is not a drop-in replacement for `rustc`. Full Rust compatibility, standard-library parity, general Cargo registry resolution, macro expansion, ownership and borrow checking, Rust ABI compatibility, and arbitrary `unsafe` code are not current commitments. See the [compatibility contract](docs/compatibility.md) for exact boundaries.
@@ -64,19 +65,28 @@ rsc publish <source.rs|Cargo.toml> [--runtime <rid>] [--output <directory>] [--t
 
 `compile` is retained as a compatibility alias for `build`.
 
+Use `rsc check samples/type-system.rs --profile safe-core-types-v1` for the
+type-system sample. This profile accepts `check`; executable commands report
+`RSC0009` before creating output. See the [type-system contract](docs/type-system-profile.md)
+for its scope and the separate lifetime/borrow-checking boundary.
+
+P1-04 is ✅ Complete for this declared monomorphic type contract. The recorded
+Windows x64 gate passes 265/265 regressions and 96/96 rustc differential cases
+across sixteen required categories, with zero failures or skips.
+
 ## Repository guide
 
 | Path | Purpose |
 | --- | --- |
 | [src](src) | Compiler, syntax, semantic, IL code generation, runtime, and CLI projects. |
-| [samples](samples) | Small runnable RustSharp programs. |
+| [samples](samples) | Small RustSharp programs for execution and type checking. |
 | [tests](tests) | Bounded executable regression harness. |
 | [docs](docs) | Compatibility contracts and architecture decisions. |
 
 ## Documentation
 
 - [Compatibility contract](docs/compatibility.md): declared language and runtime boundaries.
-- [Language contracts](docs/lexical-profile.md): lexical, [syntax](docs/syntax-profile.md), and [module](docs/module-profile.md) profile details.
+- [Language contracts](docs/lexical-profile.md): lexical, [syntax](docs/syntax-profile.md), [module](docs/module-profile.md), and [type-system](docs/type-system-profile.md) profile details.
 - [Roadmap](ROADMAP.md): milestones, acceptance criteria, and recorded evidence.
 - [Architecture decisions](docs/adr): decisions that constrain the implementation, including the [safe-core primitive profile](docs/adr/0007-safe-core-primitives.md).
 

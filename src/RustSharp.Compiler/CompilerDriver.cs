@@ -35,7 +35,7 @@ public sealed class CompilerDriver
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
-        if (profile == CompilationProfile.SafeCorePrimitives)
+        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreTypes)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -65,6 +65,8 @@ public sealed class CompilerDriver
         }
 
         cancellationToken.ThrowIfCancellationRequested();
+        if (profile == CompilationProfile.SafeCoreTypes)
+            return CheckSafeCoreTypes(source, sourcePath, cancellationToken);
         if (profile != CompilationProfile.VerticalSlice)
         {
             SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken);
@@ -86,6 +88,9 @@ public sealed class CompilerDriver
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (profile == CompilationProfile.SafeCoreTypes) return RejectTypeProfileEmission(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
@@ -126,6 +131,9 @@ public sealed class CompilerDriver
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (profile == CompilationProfile.SafeCoreTypes) return RejectTypeProfileEmission(sourcePath);
 
         Diagnostic? sourceDiagnostic = ValidateSourceText(source, sourcePath);
         if (sourceDiagnostic is not null)
@@ -263,6 +271,38 @@ public sealed class CompilerDriver
             return CompilationResult.Failed([new Diagnostic("RSC0008",
                 "Compiler emission exceeded its time budget.", new TextSpan(0, 0))]);
         }
+    }
+
+    private static CompilationResult RejectTypeProfileEmission(string sourcePath) =>
+        CompilationResult.Failed([new Diagnostic("RSC0009",
+            "The safe-core-types-v1 profile supports type checking only. Use 'rsc check'; " +
+            "build, compile, run and publish require an executable profile.", new TextSpan(0, 0))
+            { SourcePath = sourcePath }]);
+
+    private static CompilationResult CheckSafeCoreTypes(string source, string sourcePath,
+        CancellationToken cancellationToken)
+    {
+        SafeCoreSyntaxResult syntax;
+        try { syntax = SafeCoreSyntax.Parse(source, sourcePath, null, cancellationToken); }
+        catch (TimeoutException)
+        {
+            return CompilationResult.Failed([new Diagnostic(SafeCoreSyntaxDiagnosticCodes.LimitReached,
+                "Safe-core parsing exceeded its time budget.", new TextSpan(0, 0))]);
+        }
+        if (!syntax.IsSuccessful) return CompilationResult.Failed(syntax.Diagnostics);
+        cancellationToken.ThrowIfCancellationRequested();
+        SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new SafeCoreHirLoweringOptions
+        {
+            CancellationToken = cancellationToken,
+            NameResolution = new SafeCoreNameResolutionOptions
+            {
+                CancellationToken = cancellationToken,
+                EnableTypeSystemExtensions = true,
+            },
+        });
+        if (!hir.IsSuccessful) return CompilationResult.Failed(hir.Diagnostics);
+        var result = SafeCoreTypeAnalysis.Check(hir, cancellationToken: cancellationToken);
+        return result.IsSuccessful ? new(true, [], null) : CompilationResult.Failed(result.Diagnostics);
     }
 
     private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,

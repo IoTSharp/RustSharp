@@ -285,6 +285,36 @@ P1-03 对声明的配置档已 ✅ 已完成；更广泛的差分覆盖仍在计
 分组/self/匿名导入、glob 优先级与歧义、固定点导入链与循环、受限可见性、独立类型/值
 导入、文档注释，以及绝对导入和未求值属性的 `RSN1007` 拒绝契约。此前 6/6 报告仅作为原有六用例的证据。本次增量 ✅ 已完成：Release 构建零警告/错误，可执行回归通过 186/186，扩展清单通过 25/25，PowerShell 7 有界证据检查器验证通过。完整模块差分及语义/HIR 基准集合仍待实现。
 
+### P1-04 类型分析配置档
+
+可选的 `safe-core-types-v1` 配置档为已声明的全部基础数值类型、元组、数组、切片、
+引用、函数指针、非泛型 ADT、别名和 never 增加类型检查，包括模式/match、闭包、
+有界 const 求值、推断和有方向的强制转换。
+`rsc check` 接受源文件、文件模块及已有的有界 Cargo 包入口；类似库的输入不要求 `main`。
+`build`、`compile`、`run` 和 `publish` 会在创建输出前报告 `RSC0009`。
+[类型系统契约](docs/type-system-profile.md) 记录受支持的类型规则、诊断和限制。
+生命周期、借用/NLL、移动安全性和引用逃逸仍属于 P1-07；更丰富的可执行降低仍属于 P1-09。
+
+```text
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- check samples/type-system.rs --profile safe-core-types-v1
+dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore
+dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98 --report artifacts/p1-04/safe-core-types-v1.json
+```
+
+第 2 版验收语料覆盖十六个必需类别中的 96 个用例，每类均包含正向和反向用例。
+验收强制检查类别归属、必需用例 ID 和精确失败代码/范围。
+P1-04 对这一已声明的单态类型契约为 ✅ 已完成。泛型/trait 推理、类型化 MIR、所有权/生命周期及可执行降低
+各自保留独立里程碑，见 [ADR 0008](docs/adr/0008-safe-core-type-checking.md)。
+
+2026-09-17 记录的证据：265/265 项可执行回归、更新后的类型系统示例检查，以及全部
+十六个必需类别中的 96/96 项第 2 版差分用例（60 项编译通过、36 项编译失败）均为
+✅ 已完成；失败和跳过均为零。
+报告为 `artifacts/p1-04/safe-core-types-v1.json`，记录
+`rustc 1.98.0 (88d9e12ae 2026-08-18)`、.NET 运行时 10.0.12、`win-x64`，无清理诊断，
+也未遗留自有测试/运行目录。Release 构建零警告/错误。本地验证显式使用已安装的 .NET SDK
+10.0.401 MSBuild；仓库 SDK 固定版本仍为 10.0.400。准确的有界命令记录于
+[类型系统契约](docs/type-system-profile.md)。
+
 ### P1 首个可执行批次
 
 按需启用的 `safe-core-primitives-v1` 配置遵循
@@ -323,7 +353,7 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 | P1-01 | ✅ 已完成 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 第 2 版清单通过 24/24 个精确词元/trivia/词元树/诊断/范围/源码重建夹具，并强制要求完整的 22 类词法映射。103/103 项回归工具覆盖边界、取消/超时、集合限制、4096 层深度和非法清单拒绝。按需启用的基础类型编译器使用该词法器；见上方记录的证据和词法契约。 |
 | P1-02 | ✅ 已完成 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | 第 3 版清单通过 49/49 个用例、34/34 份精确 AST 快照及 18/18 个必需类别。拒绝用例匹配诊断代码和源码文本；141/141 项回归工具覆盖取消/超时、错误恢复及非法证据。声明的语法配置已完成；尚不支持的语义/HIR 扩展显式返回 RSN1007。详见语法契约及上方本地证据。 |
 | P1-03 | ✅ 已完成 | 将 AST 降低为 HIR，并实现声明的安全核心模块、命名空间、可见性、导入、名称解析和 Cargo 包入口。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | 名称解析清单和可执行测试分别通过 25/25、190/190。HIR 保留 const 函数限定符，并确定性绑定声明和引用。分组/glob/self/匿名导入、受限可见性、源码文档、有界文件模块、原文件诊断和 PDB 映射已接入。`Cargo.toml` 已接入 `check`、`build`/`compile`、`run` 和 `publish`；已实现包元数据、确定性的本地 `path` 依赖、源码发现、循环/限制检查及对注册表依赖的明确诊断。前导 `::`、未求值属性、注册表包、Cargo feature/锁文件和宏展开仍作为后续里程碑的明确配置档边界。 |
-| P1-04 | 🚧 进行中 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 基础类型配置已实现 i32/bool/unit、直接函数签名、局部推断、可变性、条件/返回检查和发散控制流。聚合/引用类型与完整推断/强制转换基准集合仍未完成。 |
+| P1-04 | ✅ 已完成 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98` | 单态的仅检查类型契约覆盖基础数值类型、聚合、引用、函数指针、非泛型 ADT、别名、模式/match、闭包、有界 const 求值、推断和有方向的强制转换。265/265 项回归及十六个必需类别中的 96/96 项第 2 版差分用例全部通过，失败和跳过均为零，无清理诊断。已接入文件/Cargo 检查；可执行命令在输出前以 RSC0009 拒绝。泛型/trait、MIR、所有权及可执行降低仍属于独立门槛。 |
 | P1-05 | ⏳ 计划中 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet test RustSharp.slnx -c Release --filter GenericsAndTraits` | 泛型函数/类型发出封闭且 AOT 可达的主体；重叠、歧义和缺失约束会以可预测方式失败。 |
 | P1-06 | ⏳ 计划中 | 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet test RustSharp.slnx -c Release --filter Mir` | MIR 快照具有确定性；无效边/类型被拒绝；诊断映射回 `.rs` 范围。 |
 | P1-07 | ⏳ 计划中 | 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core-borrow` | 所有已声明的借用编译通过/失败用例都与 rustc 结果匹配，且不会在 CLR 规则下静默接受被拒绝的构造。 |
@@ -482,7 +512,7 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 5. 只有可观察结果和所属阶段门槛都满足后，才将状态标记为 `✅ 已完成`；否则保持 `🚧 进行中` 并记录缺口。
 6. 当范围发生变化时，先更新兼容性配置档和 ADR，再更新实现与本路线图。
 
-P1-01（无损词法分析）和 P1-02（安全核心语法）为 ✅ 已完成。接下来处于 🚧 进行中
-的门槛是 P1-03（HIR 与名称解析）、P1-04（类型）、P1-09（IL 发射）和 P1-10（差分回归）。
+P1-01（无损词法分析）、P1-02（安全核心语法）、P1-03（HIR 与名称解析）和 P1-04（类型）为 ✅ 已完成。
+其余处于 🚧 进行中的门槛是 P1-09（IL 发射）和 P1-10（差分回归）。
 P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为
 ✅ 已完成；后续语言配置档声明仍受完整 HIR/MIR 和差异测试套件的门槛约束。

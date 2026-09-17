@@ -464,7 +464,7 @@ public static class SafeCoreHirLowering
                 LowerGenericParameters(syntax.GenericParameters, node);
                 for (var index = 0; index < syntax.Fields.Count && !_truncated; index++)
                 {
-                    AddChild(node, LowerField(syntax.Fields[index]));
+                    AddChild(node, LowerField(syntax.Fields[index], index));
                 }
 
                 return node.Id;
@@ -510,11 +510,20 @@ public static class SafeCoreHirLowering
 
         private int LowerEnumVariant(SafeCoreEnumVariantSyntax syntax)
         {
+            SafeCoreHirNodeModifiers flags = _options.NameResolution.EnableTypeSystemExtensions
+                ? syntax.Kind switch
+                {
+                    SafeCoreEnumVariantKind.Unit => SafeCoreHirNodeModifiers.UnitStruct,
+                    SafeCoreEnumVariantKind.Tuple => SafeCoreHirNodeModifiers.TupleStruct,
+                    _ => SafeCoreHirNodeModifiers.None,
+                }
+                : SafeCoreHirNodeModifiers.None;
             if (!TryCreateNode(
                     SafeCoreHirNodeKind.EnumVariant,
                     syntax.Span,
                     out NodeBuilder? node,
                     syntax.Name,
+                    flags: flags,
                     declaredSymbol: FindDeclaration(
                         syntax.Span,
                         SafeCoreSymbolKind.EnumVariant,
@@ -528,7 +537,7 @@ public static class SafeCoreHirLowering
                 LowerAttributes(syntax.Attributes, node);
                 for (var index = 0; index < syntax.Fields.Count && !_truncated; index++)
                 {
-                    AddChild(node, LowerField(syntax.Fields[index]));
+                    AddChild(node, LowerField(syntax.Fields[index], index));
                 }
 
                 return node.Id;
@@ -648,11 +657,13 @@ public static class SafeCoreHirLowering
             }
         }
 
-        private int LowerField(SafeCoreFieldSyntax syntax)
+        private int LowerField(SafeCoreFieldSyntax syntax, int fieldIndex)
         {
-            SafeCoreSymbol? declaration = syntax.Name is null
+            string? declarationName = syntax.Name ?? (_options.NameResolution.EnableTypeSystemExtensions
+                ? fieldIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) : null);
+            SafeCoreSymbol? declaration = declarationName is null
                 ? null
-                : FindDeclaration(syntax.Span, SafeCoreSymbolKind.Field, syntax.Name);
+                : FindDeclaration(syntax.Span, SafeCoreSymbolKind.Field, declarationName);
             if (!TryCreateNode(
                     SafeCoreHirNodeKind.Field,
                     syntax.Span,
@@ -714,7 +725,8 @@ public static class SafeCoreHirLowering
 
         private int LowerLet(SafeCoreLetStatementSyntax syntax)
         {
-            if (!TryCreateNode(SafeCoreHirNodeKind.LetStatement, syntax.Span, out NodeBuilder? node))
+            if (!TryCreateNode(SafeCoreHirNodeKind.LetStatement, syntax.Span, out NodeBuilder? node,
+                flags: syntax.ElseBlock is null ? SafeCoreHirNodeModifiers.None : SafeCoreHirNodeModifiers.HasElse))
             {
                 return -1;
             }
@@ -731,6 +743,7 @@ public static class SafeCoreHirLowering
                 {
                     AddChild(node, LowerExpression(syntax.Initializer));
                 }
+                if (syntax.ElseBlock is not null) AddChild(node, LowerBlock(syntax.ElseBlock));
 
                 return node.Id;
             }
@@ -794,9 +807,20 @@ public static class SafeCoreHirLowering
             SafeCoreLiteralPatternSyntax literal => LowerLeaf(
                 SafeCoreHirNodeKind.LiteralPattern,
                 literal.Span,
+                name: _options.NameResolution.EnableTypeSystemExtensions ? literal.LiteralKind.ToString() : null,
                 value: literal.RawText),
             SafeCoreTuplePatternSyntax tuple => LowerTuplePattern(tuple, bindingKind),
             SafeCorePathPatternSyntax path => LowerPathPattern(path, bindingKind),
+            SafeCoreReferencePatternSyntax reference => LowerCompositePattern(SafeCoreHirNodeKind.ReferencePattern,
+                reference.Span, [reference.Pattern], bindingKind,
+                reference.IsMutable ? SafeCoreHirNodeModifiers.MutableReference : SafeCoreHirNodeModifiers.None),
+            SafeCoreSlicePatternSyntax slice => LowerCompositePattern(SafeCoreHirNodeKind.SlicePattern, slice.Span, slice.Elements, bindingKind),
+            SafeCoreRestPatternSyntax rest => LowerLeaf(SafeCoreHirNodeKind.RestPattern, rest.Span),
+            SafeCoreAtPatternSyntax at => LowerCompositePattern(SafeCoreHirNodeKind.AtPattern, at.Span, [at.Binding, at.Pattern], bindingKind),
+            SafeCoreOrPatternSyntax alternatives => LowerCompositePattern(SafeCoreHirNodeKind.OrPattern,
+                alternatives.Span, alternatives.Alternatives, bindingKind),
+            SafeCoreRangePatternSyntax range => LowerRangePattern(range, bindingKind),
+            SafeCoreStructPatternSyntax structure => LowerStructPattern(structure, bindingKind),
             _ => Unsupported(syntax.Span, "pattern"),
         };
 
@@ -807,12 +831,20 @@ public static class SafeCoreHirLowering
             SafeCoreHirNodeModifiers flags = syntax.IsMutable
                 ? SafeCoreHirNodeModifiers.Mutable
                 : SafeCoreHirNodeModifiers.None;
+            if (syntax.IsByReference) flags |= SafeCoreHirNodeModifiers.ByReference;
+            if (_options.NameResolution.EnableTypeSystemExtensions &&
+                _references.ContainsKey(new ReferenceKey(syntax.Span, syntax.Name)))
+                return LowerLeaf(SafeCoreHirNodeKind.PathPattern, syntax.Span, syntax.Name,
+                    referencedSymbol: FindReference(syntax.Name, syntax.Span));
+            SafeCoreSymbol? declaration = _options.NameResolution.EnableTypeSystemExtensions &&
+                _resolution.PatternBindings.TryGetValue(syntax.Span, out SafeCoreSymbol? shared)
+                ? shared : FindDeclaration(syntax.Span, bindingKind, syntax.Name);
             return LowerLeaf(
                 SafeCoreHirNodeKind.IdentifierPattern,
                 syntax.Span,
                 syntax.Name,
                 flags: flags,
-                declaredSymbol: FindDeclaration(syntax.Span, bindingKind, syntax.Name));
+                declaredSymbol: declaration);
         }
 
         private int LowerTuplePattern(
@@ -855,6 +887,8 @@ public static class SafeCoreHirLowering
                     syntax.Span,
                     out NodeBuilder? node,
                     syntax.Path,
+                    flags: _options.NameResolution.EnableTypeSystemExtensions && syntax.HasArguments
+                        ? SafeCoreHirNodeModifiers.TupleStruct : SafeCoreHirNodeModifiers.None,
                     referencedSymbol: FindReference(syntax.Path, syntax.Span)))
             {
                 return -1;
@@ -875,6 +909,124 @@ public static class SafeCoreHirLowering
             }
         }
 
+        private int LowerCompositePattern(SafeCoreHirNodeKind kind, TextSpan span,
+            IReadOnlyList<SafeCorePatternSyntax> patterns, SafeCoreSymbolKind bindingKind,
+            SafeCoreHirNodeModifiers flags = SafeCoreHirNodeModifiers.None)
+        {
+            if (!TryCreateNode(kind, span, out NodeBuilder? node, flags: flags)) return -1;
+            try
+            {
+                for (var index = 0; index < patterns.Count && !_truncated; index++)
+                    AddChild(node, LowerPattern(patterns[index], bindingKind));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerRangePattern(SafeCoreRangePatternSyntax syntax, SafeCoreSymbolKind bindingKind)
+        {
+            SafeCoreHirNodeModifiers flags = syntax.IsInclusive ? SafeCoreHirNodeModifiers.InclusiveRange : SafeCoreHirNodeModifiers.None;
+            if (syntax.Start is not null) flags |= SafeCoreHirNodeModifiers.HasRangeStart;
+            if (syntax.End is not null) flags |= SafeCoreHirNodeModifiers.HasRangeEnd;
+            if (!TryCreateNode(SafeCoreHirNodeKind.RangePattern, syntax.Span, out NodeBuilder? node, flags: flags)) return -1;
+            try
+            {
+                if (syntax.Start is not null) AddChild(node, LowerPattern(syntax.Start, bindingKind));
+                if (syntax.End is not null) AddChild(node, LowerPattern(syntax.End, bindingKind));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerStructPattern(SafeCoreStructPatternSyntax syntax, SafeCoreSymbolKind bindingKind)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.StructPattern, syntax.Span, out NodeBuilder? node, syntax.Path,
+                flags: syntax.HasRest ? SafeCoreHirNodeModifiers.HasRest : SafeCoreHirNodeModifiers.None,
+                referencedSymbol: FindReference(syntax.Path, syntax.Span))) return -1;
+            try
+            {
+                for (var index = 0; index < syntax.Fields.Count && !_truncated; index++)
+                    AddChild(node, LowerStructPatternField(syntax.Fields[index], bindingKind));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerStructPatternField(SafeCoreStructPatternFieldSyntax syntax, SafeCoreSymbolKind bindingKind)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.StructPatternField, syntax.Span, out NodeBuilder? node, syntax.Name)) return -1;
+            try
+            {
+                AddChild(node, LowerPattern(syntax.Pattern, bindingKind));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerClosure(SafeCoreClosureExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.ClosureExpression, syntax.Span, out NodeBuilder? node,
+                flags: syntax.IsMove ? SafeCoreHirNodeModifiers.MoveCapture : SafeCoreHirNodeModifiers.None)) return -1;
+            try
+            {
+                for (var index = 0; index < syntax.Parameters.Count && !_truncated; index++)
+                    AddChild(node, LowerClosureParameter(syntax.Parameters[index]));
+                if (syntax.ReturnType is not null) AddChild(node, LowerType(syntax.ReturnType, requireBinding: true));
+                AddChild(node, LowerExpression(syntax.Body));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerClosureParameter(SafeCoreClosureParameterSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.Parameter, syntax.Span, out NodeBuilder? node)) return -1;
+            try
+            {
+                AddChild(node, LowerPattern(syntax.Pattern, SafeCoreSymbolKind.Parameter));
+                if (syntax.Type is not null) AddChild(node, LowerType(syntax.Type, requireBinding: true));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerMatch(SafeCoreMatchExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.MatchExpression, syntax.Span, out NodeBuilder? node)) return -1;
+            try
+            {
+                AddChild(node, LowerExpression(syntax.Scrutinee));
+                for (var index = 0; index < syntax.Arms.Count && !_truncated; index++) AddChild(node, LowerMatchArm(syntax.Arms[index]));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerMatchArm(SafeCoreMatchArmSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.MatchArm, syntax.Span, out NodeBuilder? node,
+                flags: syntax.Guard is null ? SafeCoreHirNodeModifiers.None : SafeCoreHirNodeModifiers.HasGuard)) return -1;
+            try
+            {
+                AddChild(node, LowerPattern(syntax.Pattern, SafeCoreSymbolKind.Local));
+                if (syntax.Guard is not null) AddChild(node, LowerExpression(syntax.Guard));
+                AddChild(node, LowerExpression(syntax.Body));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerConstBlock(SafeCoreConstBlockExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.ConstBlockExpression, syntax.Span, out NodeBuilder? node)) return -1;
+            try
+            {
+                AddChild(node, LowerBlock(syntax.Block));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
         private int LowerExpression(SafeCoreExpressionSyntax syntax) => syntax switch
         {
             SafeCoreNameExpressionSyntax name => LowerLeaf(
@@ -885,6 +1037,7 @@ public static class SafeCoreHirLowering
             SafeCoreLiteralExpressionSyntax literal => LowerLeaf(
                 SafeCoreHirNodeKind.LiteralExpression,
                 literal.Span,
+                name: _options.NameResolution.EnableTypeSystemExtensions ? literal.LiteralKind.ToString() : null,
                 value: literal.RawText),
             SafeCoreUnaryExpressionSyntax unary => LowerUnary(unary),
             SafeCoreBinaryExpressionSyntax binary => LowerBinary(binary),
@@ -895,8 +1048,111 @@ public static class SafeCoreHirLowering
             SafeCoreBlockExpressionSyntax block => LowerBlockExpression(block),
             SafeCoreIfExpressionSyntax conditional => LowerIf(conditional),
             SafeCoreIndexExpressionSyntax index => LowerIndex(index),
+            SafeCoreStructExpressionSyntax structure => LowerStructExpression(structure),
+            SafeCoreMemberExpressionSyntax member => LowerMember(member),
+            SafeCoreCastExpressionSyntax cast => LowerCast(cast),
+            SafeCoreLoopExpressionSyntax loop => LowerLoop(loop),
+            SafeCoreWhileExpressionSyntax loop => LowerWhile(loop),
+            SafeCoreBreakExpressionSyntax result => LowerControlExpression(
+                SafeCoreHirNodeKind.BreakExpression, result.Span, result.Label, result.Value),
+            SafeCoreContinueExpressionSyntax result => LowerLeaf(
+                SafeCoreHirNodeKind.ContinueExpression, result.Span, result.Label),
+            SafeCoreReturnExpressionSyntax result => LowerControlExpression(
+                SafeCoreHirNodeKind.ReturnExpression, result.Span, null, result.Value),
+            SafeCoreClosureExpressionSyntax closure => LowerClosure(closure),
+            SafeCoreMatchExpressionSyntax match => LowerMatch(match),
+            SafeCoreConstBlockExpressionSyntax block => LowerConstBlock(block),
             _ => Unsupported(syntax.Span, "expression"),
         };
+
+        private int LowerStructExpression(SafeCoreStructExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.StructExpression, syntax.Span, out NodeBuilder? node,
+                syntax.Path.Path,
+                flags: syntax.Base is null ? SafeCoreHirNodeModifiers.None : SafeCoreHirNodeModifiers.StructUpdate,
+                referencedSymbol: FindReference(syntax.Path.Path, syntax.Path.Span))) return -1;
+            try
+            {
+                for (var index = 0; index < syntax.Fields.Count && !_truncated; index++)
+                    AddChild(node, LowerStructExpressionField(syntax.Fields[index]));
+                if (syntax.Base is not null) AddChild(node, LowerExpression(syntax.Base));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerStructExpressionField(SafeCoreStructExpressionFieldSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.StructExpressionField, syntax.Span, out NodeBuilder? node,
+                syntax.Name)) return -1;
+            try
+            {
+                AddChild(node, LowerExpression(syntax.Value));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerMember(SafeCoreMemberExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.MemberExpression, syntax.Span, out NodeBuilder? node,
+                syntax.Member)) return -1;
+            try
+            {
+                AddChild(node, LowerExpression(syntax.Target));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerCast(SafeCoreCastExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.CastExpression, syntax.Span, out NodeBuilder? node)) return -1;
+            try
+            {
+                AddChild(node, LowerExpression(syntax.Expression));
+                AddChild(node, LowerType(syntax.Type, requireBinding: true));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerLoop(SafeCoreLoopExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.LoopExpression, syntax.Span, out NodeBuilder? node,
+                syntax.Label)) return -1;
+            try
+            {
+                AddChild(node, LowerBlock(syntax.Body));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerWhile(SafeCoreWhileExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.WhileExpression, syntax.Span, out NodeBuilder? node,
+                syntax.Label)) return -1;
+            try
+            {
+                AddChild(node, LowerExpression(syntax.Condition));
+                AddChild(node, LowerBlock(syntax.Body));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerControlExpression(SafeCoreHirNodeKind kind, TextSpan span, string? label,
+            SafeCoreExpressionSyntax? value)
+        {
+            if (!TryCreateNode(kind, span, out NodeBuilder? node, label)) return -1;
+            try
+            {
+                if (value is not null) AddChild(node, LowerExpression(value));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
 
         private int LowerUnary(SafeCoreUnaryExpressionSyntax syntax)
         {
@@ -1121,8 +1377,25 @@ public static class SafeCoreHirLowering
             SafeCoreSliceTypeSyntax slice => LowerSliceType(slice, requireBinding),
             SafeCoreUnitTypeSyntax unit => LowerLeaf(SafeCoreHirNodeKind.UnitType, unit.Span),
             SafeCoreNeverTypeSyntax never => LowerLeaf(SafeCoreHirNodeKind.NeverType, never.Span),
+            SafeCoreFunctionTypeSyntax function => LowerFunctionType(function, requireBinding),
+            SafeCoreInferredTypeSyntax inferred => LowerLeaf(SafeCoreHirNodeKind.InferredType, inferred.Span),
             _ => Unsupported(syntax.Span, "type"),
         };
+
+        private int LowerFunctionType(SafeCoreFunctionTypeSyntax syntax, bool requireBinding)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.FunctionType, syntax.Span, out NodeBuilder? node)) return -1;
+            try
+            {
+                for (var index = 0; index < syntax.Parameters.Count && !_truncated; index++)
+                    AddChild(node, LowerType(syntax.Parameters[index].Type, requireBinding));
+                AddChild(node, syntax.ReturnType is null
+                    ? LowerLeaf(SafeCoreHirNodeKind.UnitType, new TextSpan(syntax.Span.End, 0))
+                    : LowerType(syntax.ReturnType, requireBinding));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
 
         private int LowerPathType(SafeCorePathTypeSyntax syntax, bool requireBinding)
         {

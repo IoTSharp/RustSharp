@@ -113,6 +113,7 @@ public static class SafeCoreNameResolution
         options ??= new SafeCoreNameResolutionOptions();
         return new SafeCoreNameResolutionOptions
         {
+            EnableTypeSystemExtensions = options.EnableTypeSystemExtensions,
             Timeout = options.Timeout > TimeSpan.Zero && options.Timeout <= TimeSpan.FromMinutes(1)
                 ? options.Timeout : TimeSpan.FromSeconds(10),
             CancellationToken = options.CancellationToken,
@@ -136,6 +137,12 @@ public static class SafeCoreNameResolution
         private readonly SafeCoreNameResolutionOptions _options;
         private readonly string _sourcePath;
         private readonly List<Diagnostic> _diagnostics = [];
+        private readonly Dictionary<TextSpan, SymbolBuilder> _patternBindings = [];
+        private readonly HashSet<TextSpan> _patternReferenceSpans = [];
+        private readonly Dictionary<SafeCoreExpressionSyntax, ScopeBuilder> _expressionScopes = new(ReferenceComparer<SafeCoreExpressionSyntax>.Instance);
+        private readonly Dictionary<SafeCoreMatchArmSyntax, ScopeBuilder> _armScopes = new(ReferenceComparer<SafeCoreMatchArmSyntax>.Instance);
+        private readonly Dictionary<SymbolBuilder, SafeCoreTypeAliasSyntax> _aliasDefinitions = new(ReferenceComparer<SymbolBuilder>.Instance);
+        private readonly HashSet<SymbolBuilder> _aliasMemberStack = new(ReferenceComparer<SymbolBuilder>.Instance);
         private readonly List<ScopeBuilder> _scopes = [];
         private readonly List<SymbolBuilder> _symbols = [];
         private readonly List<SymbolBuilder> _imports = [];
@@ -270,6 +277,13 @@ public static class SafeCoreNameResolution
                     record.Span));
             }
 
+            var publicPatternBindings = new Dictionary<TextSpan, SafeCoreSymbol>();
+            foreach (var binding in _patternBindings)
+            {
+                if (!Step(binding.Key)) break;
+                if (publicSymbols.TryGetValue(binding.Value, out SafeCoreSymbol? symbol))
+                    publicPatternBindings[binding.Key] = symbol;
+            }
             return new(
                 _sourcePath,
                 publicScopes[0],
@@ -277,7 +291,11 @@ public static class SafeCoreNameResolution
                 publicSymbols.Values.Distinct().ToArray(),
                 publicRecords.AsReadOnly(),
                 _diagnostics.AsReadOnly(),
-                _truncated);
+                _truncated)
+            {
+                PatternBindings = new System.Collections.ObjectModel.ReadOnlyDictionary<TextSpan, SafeCoreSymbol>(
+                    publicPatternBindings),
+            };
         }
 
         private static SafeCoreSymbol ToPublicSymbol(SymbolBuilder symbol) => new(
@@ -411,6 +429,7 @@ public static class SafeCoreNameResolution
                         isImport: false,
                         targetPath: null,
                         visibility: constant.Visibility);
+                    if (_options.EnableTypeSystemExtensions) CollectNestedExpressionScopes(constant.Value, scope, depth + 1);
                     break;
                 default:
                     RejectNewSyntax(item.Span);
@@ -584,7 +603,7 @@ public static class SafeCoreNameResolution
                     return;
                 }
 
-                CollectPatternBindings(
+                if (!_options.EnableTypeSystemExtensions) CollectPatternBindings(
                     function.Parameters[index].Pattern,
                     functionScope,
                     SafeCoreSymbolKind.Parameter);
@@ -599,7 +618,8 @@ public static class SafeCoreNameResolution
                 parent,
                 structure.Name,
                 SafeCoreSymbolKind.Struct,
-                SafeCoreSymbolNamespace.Both,
+                _options.EnableTypeSystemExtensions && !structure.IsTupleStruct && !structure.IsUnitStruct
+                    ? SafeCoreSymbolNamespace.Type : SafeCoreSymbolNamespace.Both,
                 structure.IsPublic,
                 structure.Span,
                 isImport: false,
@@ -627,11 +647,11 @@ public static class SafeCoreNameResolution
                     return;
                 }
 
-                if (field.Name is not null)
+                if (field.Name is not null || _options.EnableTypeSystemExtensions)
                 {
                     _ = AddSymbol(
                         itemScope,
-                        field.Name,
+                        field.Name ?? index.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         SafeCoreSymbolKind.Field,
                         SafeCoreSymbolNamespace.Value,
                         field.IsPublic,
@@ -692,6 +712,21 @@ public static class SafeCoreNameResolution
                     return;
                 }
                 variantSymbol.VisibilityScopePath = symbol.VisibilityScopePath;
+                if (_options.EnableTypeSystemExtensions && variant.Kind != SafeCoreEnumVariantKind.Unit)
+                {
+                    ScopeBuilder? variantScope = CreateScope(itemScope, variantSymbol.QualifiedName, parent.ModulePath);
+                    if (variantScope is null) return;
+                    variantScope.Span = variant.Span;
+                    for (var fieldIndex = 0; fieldIndex < variant.Fields.Count && !_truncated; fieldIndex++)
+                    {
+                        SafeCoreFieldSyntax field = variant.Fields[fieldIndex];
+                        if (!Step(field.Span)) return;
+                        string fieldName = field.Name ?? fieldIndex.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        SymbolBuilder? fieldSymbol = AddSymbol(variantScope, fieldName, SafeCoreSymbolKind.Field,
+                            SafeCoreSymbolNamespace.Value, isPublic: true, field.Span, isImport: false, targetPath: null);
+                        if (fieldSymbol is not null) fieldSymbol.VisibilityScopePath = symbol.VisibilityScopePath;
+                    }
+                }
             }
         }
 
@@ -711,6 +746,7 @@ public static class SafeCoreNameResolution
             {
                 return;
             }
+            if (_options.EnableTypeSystemExtensions) _aliasDefinitions[symbol] = alias;
 
             ScopeBuilder? itemScope = CreateScope(parent, symbol.QualifiedName, parent.ModulePath);
             if (itemScope is null)
@@ -760,8 +796,11 @@ public static class SafeCoreNameResolution
             ScopeBuilder scope,
             SafeCoreSymbolKind kind,
             bool allowShadowing = false,
-            HashSet<string>? namesInPattern = null)
+            HashSet<string>? namesInPattern = null,
+            Dictionary<string, SymbolBuilder>? sharedBindings = null,
+            int depth = 0)
         {
+            if (depth > _options.MaximumNestingDepth) { StopLimit(pattern.Span); return; }
             if (!Step(pattern.Span))
             {
                 return;
@@ -771,6 +810,7 @@ public static class SafeCoreNameResolution
             switch (pattern)
             {
                 case SafeCoreIdentifierPatternSyntax identifier:
+                    if (_patternReferenceSpans.Contains(identifier.Span)) break;
                     string comparisonName = CanonicalizeIdentifier(identifier.Name);
                     if (!namesInPattern.Add(comparisonName))
                     {
@@ -781,7 +821,12 @@ public static class SafeCoreNameResolution
                         break;
                     }
 
-                    _ = AddSymbol(
+                    if (sharedBindings is not null && sharedBindings.TryGetValue(comparisonName, out SymbolBuilder? shared))
+                    {
+                        _patternBindings[identifier.Span] = shared;
+                        break;
+                    }
+                    SymbolBuilder? declared = AddSymbol(
                         scope,
                         identifier.Name,
                         kind,
@@ -791,11 +836,16 @@ public static class SafeCoreNameResolution
                         isImport: false,
                         targetPath: null,
                         allowShadowing);
+                    if (declared is not null && _options.EnableTypeSystemExtensions)
+                    {
+                        _patternBindings[identifier.Span] = declared;
+                        if (sharedBindings is not null) sharedBindings[comparisonName] = declared;
+                    }
                     break;
                 case SafeCoreTuplePatternSyntax tuple:
                     for (var index = 0; index < tuple.Elements.Count; index++)
                     {
-                        CollectPatternBindings(tuple.Elements[index], scope, kind, allowShadowing, namesInPattern);
+                        CollectPatternBindings(tuple.Elements[index], scope, kind, allowShadowing, namesInPattern, sharedBindings, depth + 1);
                         if (_truncated)
                         {
                             return;
@@ -811,13 +861,43 @@ public static class SafeCoreNameResolution
                             scope,
                             kind,
                             allowShadowing,
-                            namesInPattern);
+                            namesInPattern, sharedBindings, depth + 1);
                         if (_truncated)
                         {
                             return;
                         }
                     }
 
+                    break;
+                case SafeCoreReferencePatternSyntax reference when _options.EnableTypeSystemExtensions:
+                    CollectPatternBindings(reference.Pattern, scope, kind, allowShadowing, namesInPattern, sharedBindings, depth + 1);
+                    break;
+                case SafeCoreSlicePatternSyntax slice when _options.EnableTypeSystemExtensions:
+                    for (var index = 0; index < slice.Elements.Count && !_truncated; index++)
+                        CollectPatternBindings(slice.Elements[index], scope, kind, allowShadowing, namesInPattern, sharedBindings, depth + 1);
+                    break;
+                case SafeCoreAtPatternSyntax at when _options.EnableTypeSystemExtensions:
+                    CollectPatternBindings(at.Binding, scope, kind, allowShadowing, namesInPattern, sharedBindings, depth + 1);
+                    CollectPatternBindings(at.Pattern, scope, kind, allowShadowing, namesInPattern, sharedBindings, depth + 1);
+                    break;
+                case SafeCoreStructPatternSyntax structure when _options.EnableTypeSystemExtensions:
+                    for (var index = 0; index < structure.Fields.Count && !_truncated; index++)
+                        CollectPatternBindings(structure.Fields[index].Pattern, scope, kind, allowShadowing, namesInPattern, sharedBindings, depth + 1);
+                    break;
+                case SafeCoreOrPatternSyntax alternatives when _options.EnableTypeSystemExtensions:
+                    sharedBindings ??= new(StringComparer.Ordinal);
+                    string[] inheritedNames = namesInPattern.ToArray();
+                    for (var index = 0; index < alternatives.Alternatives.Count && !_truncated; index++)
+                    {
+                        var alternativeNames = new HashSet<string>(inheritedNames, StringComparer.Ordinal);
+                        CollectPatternBindings(alternatives.Alternatives[index], scope, kind, allowShadowing,
+                            alternativeNames, sharedBindings, depth + 1);
+                        foreach (string name in alternativeNames)
+                        {
+                            if (!Step(pattern.Span)) return;
+                            namesInPattern.Add(name);
+                        }
+                    }
                     break;
             }
         }
@@ -859,6 +939,8 @@ public static class SafeCoreNameResolution
                             {
                                 CollectNestedExpressionScopes(let.Initializer, scope, depth + 1);
                             }
+                            if (_options.EnableTypeSystemExtensions && let.ElseBlock is not null)
+                                CollectBlock(let.ElseBlock, scope, depth + 1, useExistingScope: false);
 
                             break;
                         case SafeCoreReturnStatementSyntax @return when @return.Value is not null:
@@ -961,6 +1043,9 @@ public static class SafeCoreNameResolution
                     case SafeCoreBlockExpressionSyntax blockExpression:
                         CollectBlock(blockExpression.Block, parent, depth + 1, useExistingScope: false);
                         break;
+                    case SafeCoreConstBlockExpressionSyntax blockExpression when _options.EnableTypeSystemExtensions:
+                        CollectBlock(blockExpression.Block, parent, depth + 1, useExistingScope: false);
+                        break;
                     case SafeCoreIfExpressionSyntax conditional:
                         CollectNestedExpressionScopes(conditional.Condition, parent, depth + 1);
                         CollectBlock(conditional.Then, parent, depth + 1, useExistingScope: false);
@@ -973,6 +1058,51 @@ public static class SafeCoreNameResolution
                     case SafeCoreIndexExpressionSyntax indexExpression:
                         CollectNestedExpressionScopes(indexExpression.Target, parent, depth + 1);
                         CollectNestedExpressionScopes(indexExpression.Index, parent, depth + 1);
+                        break;
+                    case SafeCoreStructExpressionSyntax structure when _options.EnableTypeSystemExtensions:
+                        for (var index = 0; index < structure.Fields.Count && !_truncated; index++)
+                            CollectNestedExpressionScopes(structure.Fields[index].Value, parent, depth + 1);
+                        if (structure.Base is not null) CollectNestedExpressionScopes(structure.Base, parent, depth + 1);
+                        break;
+                    case SafeCoreMemberExpressionSyntax member when _options.EnableTypeSystemExtensions:
+                        CollectNestedExpressionScopes(member.Target, parent, depth + 1);
+                        break;
+                    case SafeCoreCastExpressionSyntax cast when _options.EnableTypeSystemExtensions:
+                        CollectNestedExpressionScopes(cast.Expression, parent, depth + 1);
+                        break;
+                    case SafeCoreLoopExpressionSyntax loop when _options.EnableTypeSystemExtensions:
+                        CollectBlock(loop.Body, parent, depth + 1, useExistingScope: false);
+                        break;
+                    case SafeCoreWhileExpressionSyntax loop when _options.EnableTypeSystemExtensions:
+                        CollectNestedExpressionScopes(loop.Condition, parent, depth + 1);
+                        CollectBlock(loop.Body, parent, depth + 1, useExistingScope: false);
+                        break;
+                    case SafeCoreBreakExpressionSyntax { Value: not null } result when _options.EnableTypeSystemExtensions:
+                        CollectNestedExpressionScopes(result.Value, parent, depth + 1);
+                        break;
+                    case SafeCoreReturnExpressionSyntax { Value: not null } result when _options.EnableTypeSystemExtensions:
+                        CollectNestedExpressionScopes(result.Value, parent, depth + 1);
+                        break;
+                    case SafeCoreClosureExpressionSyntax closure when _options.EnableTypeSystemExtensions:
+                        ScopeBuilder? closureScope = CreateScope(parent, parent.Path + "::<closure>", parent.ModulePath);
+                        if (closureScope is null) return;
+                        closureScope.Span = closure.Span;
+                        _expressionScopes[closure] = closureScope;
+                        CollectNestedExpressionScopes(closure.Body, closureScope, depth + 1);
+                        break;
+                    case SafeCoreMatchExpressionSyntax match when _options.EnableTypeSystemExtensions:
+                        CollectNestedExpressionScopes(match.Scrutinee, parent, depth + 1);
+                        for (var index = 0; index < match.Arms.Count && !_truncated; index++)
+                        {
+                            SafeCoreMatchArmSyntax arm = match.Arms[index];
+                            if (!Step(arm.Span)) return;
+                            ScopeBuilder? armScope = CreateScope(parent, parent.Path + "::<match-arm>", parent.ModulePath);
+                            if (armScope is null) return;
+                            armScope.Span = arm.Span;
+                            _armScopes[arm] = armScope;
+                            if (arm.Guard is not null) CollectNestedExpressionScopes(arm.Guard, armScope, depth + 1);
+                            CollectNestedExpressionScopes(arm.Body, armScope, depth + 1);
+                        }
                         break;
                 }
             }
@@ -1420,6 +1550,7 @@ public static class SafeCoreNameResolution
                 SafeCoreParameterSyntax parameter = function.Parameters[index];
                 if (parameter.Attributes.Count > 0 || parameter.Receiver is not null) RejectNewSyntax(parameter.Span);
                 ResolvePattern(parameter.Pattern, scope, depth + 1);
+                if (_options.EnableTypeSystemExtensions) CollectPatternBindings(parameter.Pattern, scope, SafeCoreSymbolKind.Parameter);
                 ResolveType(parameter.Type, scope, depth + 1);
                 if (_truncated)
                 {
@@ -1461,7 +1592,9 @@ public static class SafeCoreNameResolution
             for (var variantIndex = 0; variantIndex < enumeration.Variants.Count; variantIndex++)
             {
                 SafeCoreEnumVariantSyntax variant = enumeration.Variants[variantIndex];
-                if (HasUnsupportedAttributes(variant.Attributes) || variant.Kind == SafeCoreEnumVariantKind.Struct || variant.Discriminant is not null)
+                if (HasUnsupportedAttributes(variant.Attributes) ||
+                    variant.Kind == SafeCoreEnumVariantKind.Struct && !_options.EnableTypeSystemExtensions ||
+                    variant.Discriminant is not null)
                 {
                     RejectNewSyntax(variant.Span);
                 }
@@ -1653,6 +1786,10 @@ public static class SafeCoreNameResolution
 
         private void ResolveBlock(SafeCoreBlockSyntax block, ScopeBuilder fallbackScope, int depth)
         {
+            // Blocks in type-level constant expressions are discovered during type
+            // resolution, after the ordinary function-body scope collection pass.
+            if (_options.EnableTypeSystemExtensions && !_blockScopes.ContainsKey(block))
+                CollectBlock(block, fallbackScope, depth, useExistingScope: false);
             RejectUnsupportedAttributes(block.Attributes, block.Span);
             if (!Enter(depth, block.Span))
             {
@@ -1676,7 +1813,7 @@ public static class SafeCoreNameResolution
                     switch (statement)
                     {
                         case SafeCoreLetStatementSyntax let:
-                            if (let.ElseBlock is not null) RejectNewSyntax(let.ElseBlock.Span);
+                            if (let.ElseBlock is not null && !_options.EnableTypeSystemExtensions) RejectNewSyntax(let.ElseBlock.Span);
                             ResolvePattern(let.Pattern, scope, depth + 1);
                             if (let.Type is not null)
                             {
@@ -1687,6 +1824,8 @@ public static class SafeCoreNameResolution
                             {
                                 ResolveExpression(let.Initializer, scope, depth + 1);
                             }
+                            if (_options.EnableTypeSystemExtensions && let.ElseBlock is not null)
+                                ResolveBlock(let.ElseBlock, scope, depth + 1);
 
                             // A local binding enters scope after its initializer,
                             // which gives Rust-style declaration order and lets a
@@ -1760,9 +1899,55 @@ public static class SafeCoreNameResolution
                         }
 
                         break;
-                    case SafeCoreIdentifierPatternSyntax { IsByReference: false }:
+                    case SafeCoreIdentifierPatternSyntax identifier when !identifier.IsByReference || _options.EnableTypeSystemExtensions:
+                        if (_options.EnableTypeSystemExtensions)
+                        {
+                            PathResult candidate = ResolvePathInternal(identifier.Name, scope, SafeCoreSymbolNamespace.Value, identifier.Span, emitDiagnostic: false);
+                            if (candidate.Status == SafeCoreNameResolutionStatus.Resolved && candidate.Symbol is not null &&
+                                GetResolvedImportTarget(candidate.Symbol).Kind is SafeCoreSymbolKind.Const or SafeCoreSymbolKind.Struct or SafeCoreSymbolKind.EnumVariant)
+                            {
+                                if (identifier.IsMutable || identifier.IsByReference)
+                                    AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.DuplicateSymbol,
+                                        $"Binding pattern '{identifier.Name}' cannot shadow a constant or constructor.", identifier.Span);
+                                else
+                                {
+                                    _patternReferenceSpans.Add(identifier.Span);
+                                    _pathRecords.Add(new(identifier.Name, scope.Path, candidate.Status, candidate.Symbol, candidate.Candidates, identifier.Span));
+                                }
+                            }
+                        }
+                        break;
                     case SafeCoreLiteralPatternSyntax:
                     case SafeCoreWildcardPatternSyntax:
+                        break;
+                    case SafeCoreReferencePatternSyntax reference when _options.EnableTypeSystemExtensions:
+                        ResolvePattern(reference.Pattern, scope, depth + 1);
+                        break;
+                    case SafeCoreSlicePatternSyntax slice when _options.EnableTypeSystemExtensions:
+                        for (var index = 0; index < slice.Elements.Count && !_truncated; index++) ResolvePattern(slice.Elements[index], scope, depth + 1);
+                        break;
+                    case SafeCoreRestPatternSyntax when _options.EnableTypeSystemExtensions:
+                        break;
+                    case SafeCoreAtPatternSyntax at when _options.EnableTypeSystemExtensions:
+                        ResolvePattern(at.Binding, scope, depth + 1);
+                        ResolvePattern(at.Pattern, scope, depth + 1);
+                        break;
+                    case SafeCoreOrPatternSyntax alternatives when _options.EnableTypeSystemExtensions:
+                        for (var index = 0; index < alternatives.Alternatives.Count && !_truncated; index++) ResolvePattern(alternatives.Alternatives[index], scope, depth + 1);
+                        break;
+                    case SafeCoreRangePatternSyntax range when _options.EnableTypeSystemExtensions:
+                        if (range.Start is not null) ResolveRangeBound(range.Start, scope, depth + 1);
+                        if (range.End is not null) ResolveRangeBound(range.End, scope, depth + 1);
+                        break;
+                    case SafeCoreStructPatternSyntax structure when _options.EnableTypeSystemExtensions:
+                        if (structure.Qualifier is not null || structure.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count > 0))
+                            RejectNewSyntax(structure.Span);
+                        ResolveConstructorAndRecord(structure.Path, scope, structure.Span);
+                        for (var index = 0; index < structure.Fields.Count && !_truncated; index++)
+                        {
+                            if (structure.Fields[index].Attributes.Count > 0) RejectNewSyntax(structure.Fields[index].Span);
+                            ResolvePattern(structure.Fields[index].Pattern, scope, depth + 1);
+                        }
                         break;
                     default:
                         RejectNewSyntax(pattern.Span);
@@ -1840,6 +2025,18 @@ public static class SafeCoreNameResolution
                     case SafeCoreUnitTypeSyntax:
                     case SafeCoreNeverTypeSyntax:
                         break;
+                    case SafeCoreFunctionTypeSyntax function when _options.EnableTypeSystemExtensions:
+                        if (function.GenericParameters.Count > 0) RejectNewSyntax(function.Span);
+                        for (var index = 0; index < function.Parameters.Count && !_truncated; index++)
+                        {
+                            SafeCoreFunctionTypeParameterSyntax parameter = function.Parameters[index];
+                            if (parameter.Attributes.Count > 0) RejectNewSyntax(parameter.Span);
+                            ResolveType(parameter.Type, scope, depth + 1);
+                        }
+                        if (function.ReturnType is not null) ResolveType(function.ReturnType, scope, depth + 1);
+                        break;
+                    case SafeCoreInferredTypeSyntax when _options.EnableTypeSystemExtensions:
+                        break;
                     default:
                         RejectNewSyntax(type.Span);
                         break;
@@ -1853,6 +2050,10 @@ public static class SafeCoreNameResolution
 
         private void ResolveExpression(SafeCoreExpressionSyntax expression, ScopeBuilder scope, int depth)
         {
+            if (_options.EnableTypeSystemExtensions &&
+                (expression is SafeCoreClosureExpressionSyntax && !_expressionScopes.ContainsKey(expression) ||
+                 expression is SafeCoreMatchExpressionSyntax matchScope && matchScope.Arms.Count > 0 && !_armScopes.ContainsKey(matchScope.Arms[0])))
+                CollectNestedExpressionScopes(expression, scope, depth);
             if (expression.Attributes.Count > 0) RejectNewSyntax(expression.Span);
             if (!Enter(depth, expression.Span))
             {
@@ -1917,6 +2118,9 @@ public static class SafeCoreNameResolution
                     case SafeCoreBlockExpressionSyntax block:
                         ResolveBlock(block.Block, scope, depth + 1);
                         break;
+                    case SafeCoreConstBlockExpressionSyntax block when _options.EnableTypeSystemExtensions:
+                        ResolveBlock(block.Block, scope, depth + 1);
+                        break;
                     case SafeCoreIfExpressionSyntax conditional:
                         ResolveExpression(conditional.Condition, scope, depth + 1);
                         ResolveBlock(conditional.Then, scope, depth + 1);
@@ -1932,6 +2136,72 @@ public static class SafeCoreNameResolution
                         break;
                     case SafeCoreLiteralExpressionSyntax:
                         break;
+                    case SafeCoreStructExpressionSyntax structure when _options.EnableTypeSystemExtensions:
+                        if (structure.Qualifier is not null) RejectNewSyntax(structure.Span);
+                        if (structure.Path.Path.StartsWith("::", StringComparison.Ordinal) ||
+                            structure.Path.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count != 0)) RejectNewSyntax(structure.Path.Span);
+                        ResolveConstructorAndRecord(structure.Path.Path, scope, structure.Path.Span);
+                        for (var index = 0; index < structure.Fields.Count && !_truncated; index++)
+                        {
+                            SafeCoreStructExpressionFieldSyntax field = structure.Fields[index];
+                            if (field.Attributes.Count > 0) RejectNewSyntax(field.Span);
+                            ResolveExpression(field.Value, scope, depth + 1);
+                        }
+                        if (structure.Base is not null) ResolveExpression(structure.Base, scope, depth + 1);
+                        break;
+                    case SafeCoreMemberExpressionSyntax member when _options.EnableTypeSystemExtensions:
+                        if (member.HasGenericArguments || member.GenericArguments.Count > 0) RejectNewSyntax(member.Span);
+                        ResolveExpression(member.Target, scope, depth + 1);
+                        break;
+                    case SafeCoreCastExpressionSyntax cast when _options.EnableTypeSystemExtensions:
+                        ResolveExpression(cast.Expression, scope, depth + 1);
+                        ResolveType(cast.Type, scope, depth + 1);
+                        break;
+                    case SafeCoreLoopExpressionSyntax loop when _options.EnableTypeSystemExtensions:
+                        if (loop.Label is not null) RejectNewSyntax(loop.Span);
+                        ResolveBlock(loop.Body, scope, depth + 1);
+                        break;
+                    case SafeCoreWhileExpressionSyntax loop when _options.EnableTypeSystemExtensions:
+                        if (loop.Label is not null) RejectNewSyntax(loop.Span);
+                        ResolveExpression(loop.Condition, scope, depth + 1);
+                        ResolveBlock(loop.Body, scope, depth + 1);
+                        break;
+                    case SafeCoreBreakExpressionSyntax result when _options.EnableTypeSystemExtensions:
+                        if (result.Label is not null) RejectNewSyntax(result.Span);
+                        if (result.Value is not null) ResolveExpression(result.Value, scope, depth + 1);
+                        break;
+                    case SafeCoreContinueExpressionSyntax result when _options.EnableTypeSystemExtensions:
+                        if (result.Label is not null) RejectNewSyntax(result.Span);
+                        break;
+                    case SafeCoreReturnExpressionSyntax result when _options.EnableTypeSystemExtensions:
+                        if (result.Value is not null) ResolveExpression(result.Value, scope, depth + 1);
+                        break;
+                    case SafeCoreClosureExpressionSyntax closure when _options.EnableTypeSystemExtensions:
+                        ScopeBuilder closureScope = _expressionScopes.TryGetValue(closure, out ScopeBuilder? collectedClosure) ? collectedClosure : scope;
+                        for (var index = 0; index < closure.Parameters.Count && !_truncated; index++)
+                        {
+                            SafeCoreClosureParameterSyntax parameter = closure.Parameters[index];
+                            if (parameter.Attributes.Count > 0) RejectNewSyntax(parameter.Span);
+                            ResolvePattern(parameter.Pattern, closureScope, depth + 1);
+                            CollectPatternBindings(parameter.Pattern, closureScope, SafeCoreSymbolKind.Parameter);
+                            if (parameter.Type is not null) ResolveType(parameter.Type, closureScope, depth + 1);
+                        }
+                        if (closure.ReturnType is not null) ResolveType(closure.ReturnType, closureScope, depth + 1);
+                        ResolveExpression(closure.Body, closureScope, depth + 1);
+                        break;
+                    case SafeCoreMatchExpressionSyntax match when _options.EnableTypeSystemExtensions:
+                        ResolveExpression(match.Scrutinee, scope, depth + 1);
+                        for (var index = 0; index < match.Arms.Count && !_truncated; index++)
+                        {
+                            SafeCoreMatchArmSyntax arm = match.Arms[index];
+                            if (arm.Attributes.Count > 0) RejectNewSyntax(arm.Span);
+                            ScopeBuilder armScope = _armScopes.TryGetValue(arm, out ScopeBuilder? collectedArm) ? collectedArm : scope;
+                            ResolvePattern(arm.Pattern, armScope, depth + 1);
+                            CollectPatternBindings(arm.Pattern, armScope, SafeCoreSymbolKind.Local);
+                            if (arm.Guard is not null) ResolveExpression(arm.Guard, armScope, depth + 1);
+                            ResolveExpression(arm.Body, armScope, depth + 1);
+                        }
+                        break;
                     default:
                         RejectNewSyntax(expression.Span);
                         break;
@@ -1941,6 +2211,26 @@ public static class SafeCoreNameResolution
             {
                 Exit();
             }
+        }
+
+        private void ResolveRangeBound(SafeCorePatternSyntax pattern, ScopeBuilder scope, int depth)
+        {
+            if (pattern is SafeCoreIdentifierPatternSyntax identifier)
+            {
+                _patternReferenceSpans.Add(identifier.Span);
+                ResolveAndRecord(identifier.Name, scope, SafeCoreSymbolNamespace.Value, identifier.Span);
+            }
+            else ResolvePattern(pattern, scope, depth);
+        }
+
+        private void ResolveConstructorAndRecord(string path, ScopeBuilder scope, TextSpan span)
+        {
+            PathResult result = ResolvePathInternal(path, scope, SafeCoreSymbolNamespace.Type, span, emitDiagnostic: false);
+            if (result.Status != SafeCoreNameResolutionStatus.Resolved || result.Symbol is null ||
+                GetResolvedImportTarget(result.Symbol).Kind is not (SafeCoreSymbolKind.Struct or SafeCoreSymbolKind.TypeAlias))
+                result = ResolvePathInternal(path, scope, SafeCoreSymbolNamespace.Value, span, emitDiagnostic: true);
+            if (!Step(span)) return;
+            _pathRecords.Add(new(path, scope.Path, result.Status, result.Symbol, result.Candidates, span));
         }
 
         private void ResolveAndRecord(
@@ -2459,10 +2749,23 @@ public static class SafeCoreNameResolution
                 ? symbol.ResolvedImportTarget
                 : symbol;
 
-        private static ScopeBuilder? GetMemberScope(SymbolBuilder symbol) =>
-            symbol.Kind is SafeCoreSymbolKind.Module or SafeCoreSymbolKind.Enum
-                ? symbol.MemberScope
-                : null;
+        private ScopeBuilder? GetMemberScope(SymbolBuilder symbol)
+        {
+            if (symbol.Kind is SafeCoreSymbolKind.Module or SafeCoreSymbolKind.Enum) return symbol.MemberScope;
+            if (!_options.EnableTypeSystemExtensions || !_aliasDefinitions.TryGetValue(symbol, out SafeCoreTypeAliasSyntax? alias) ||
+                alias.GenericParameters.Count != 0 || alias.Type is not SafeCorePathTypeSyntax path ||
+                path.Segments.Any(static segment => segment.GenericArguments.Count != 0 || segment.Arguments.Count != 0)) return null;
+            if (!Step(alias.Span) || _aliasMemberStack.Count >= _options.MaximumNestingDepth) { StopLimit(alias.Span); return null; }
+            if (!_aliasMemberStack.Add(symbol)) return null;
+            try
+            {
+                string targetPath = string.Join("::", path.Segments.Select(static segment => segment.Name));
+                PathResult target = ResolvePathInternal(targetPath, symbol.DeclaringScope, SafeCoreSymbolNamespace.Type, alias.Span, emitDiagnostic: false);
+                return target.Status == SafeCoreNameResolutionStatus.Resolved && target.Symbol is not null
+                    ? GetMemberScope(GetResolvedImportTarget(target.Symbol)) : null;
+            }
+            finally { _aliasMemberStack.Remove(symbol); }
+        }
 
         private ScopeBuilder GetItemScope(SafeCoreItemSyntax item, ScopeBuilder fallback) =>
             _itemScopes.TryGetValue(item, out ScopeBuilder? scope) ? scope : fallback;
@@ -2564,7 +2867,14 @@ public static class SafeCoreNameResolution
                 return null;
             }
 
-            if (!IsValidIdentifier(name, span))
+            // Tuple-field declarations use their positional index as their semantic name.
+            // This exception is confined to fields in the opt-in type profile; user
+            // declarations and path segments must still be valid Rust identifiers.
+            bool isTupleFieldIndex = _options.EnableTypeSystemExtensions && kind == SafeCoreSymbolKind.Field &&
+                int.TryParse(name, System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out int fieldIndex) && fieldIndex >= 0 &&
+                fieldIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) == name;
+            if (!isTupleFieldIndex && !IsValidIdentifier(name, span))
             {
                 AddDiagnostic(
                     SafeCoreNameResolutionDiagnosticCodes.InvalidPath,

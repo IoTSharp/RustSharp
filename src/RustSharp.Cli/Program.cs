@@ -210,6 +210,9 @@ internal static class Program
             Profiles (Rust 1.98 / Edition 2024):
               --profile vertical-slice-v1         (default: literal println!)
               --profile safe-core-primitives-v1   (i32/bool functions, locals, branches)
+              --profile safe-core-types-v1        (check only: aggregates, references, inference)
+
+            safe-core-types-v1 accepts check; build, compile, run and publish report RSC0009.
             """);
         return 0;
     }

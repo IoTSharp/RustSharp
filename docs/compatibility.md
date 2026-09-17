@@ -50,6 +50,19 @@ are preserved in HIR and ignored during execution; explicit `#[doc]`, unknown
 root/item attributes and parameter/generic-parameter attributes receive
 `RSN1007`. The module contract records the legacy in-memory `no_std` exception.
 
+## Type-checking profile
+
+P1-04 is ✅ Complete for the declared monomorphic type contract: catalog version
+2 passes all 96 differential cases across sixteen mandatory categories.
+`safe-core-types-v1` is an opt-in, check-only P1-04 profile for primitive numeric,
+tuple, array, slice, reference, function, nongeneric ADT, alias and never types,
+with patterns/match, closures, bounded const evaluation, inference and
+directional coercions. `check` accepts source files and the existing bounded
+Cargo package inputs. Executable commands report `RSC0009`
+before producing artifacts. This profile does not validate lifetimes, borrowing,
+move safety or reference escape and does not emit IL. See the
+[type-system contract](type-system-profile.md) for exact boundaries and diagnostics.
+
 ## Executable primitive profile
 
 `safe-core-primitives-v1` is an opt-in P1 profile, selected by `--profile` on
