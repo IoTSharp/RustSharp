@@ -42,7 +42,7 @@ IL 有效性、AOT 兼容性或语义兼容性。
 | `unsafe` | 在已声明的配置档中支持裸指针、`repr(C)`、C FFI、联合体和固定布局。在另行规定之前，不包括 Rust ABI、任意内部函数、不受限制的 `transmute` 和内联汇编。 |
 | 应用 API | 文件、网络、异步、HTTP、TLS、WebSocket 和数据库访问。 |
 | 兼容性库 | 为 `tokio`、`reqwest`、`axum`、`sqlx`、`tiberius` 和 `sea-orm` 提供精确版本的 API 配置档；`diesel` 属于后续工作。这些是 Rust# 对指定配置档的实现，并不承诺上游源代码无需修改即可编译。 |
-| 开发者工具 | `rsc new/check/build/run/test/fmt/doc/publish`、还原、LSP、VS Code 和 Portable PDB 调试。Visual Studio 和 Rider 集成属于后续工作。 |
+| 开发者工具 | `rsc new/check/build/run/test/fmt/doc/publish`、还原、LSP、VS Code、Portable PDB 调试、可选的 .NET SDK 桥接、项目模板和 REPL/脚本运行器。Visual Studio 集成属于后续门槛阶段；Rider 仍属于后续工作。 |
 
 ### 当前仓库基线
 
@@ -375,6 +375,26 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 推进。P1-09 汇合泛型特化和所有权感知降低，之后由 P1-10 闭合完整差分分母。
 基础 PR 完成不等于整个里程碑完成。
 
+## .NET 生态工具链规划
+
+这项 .NET 集成规划覆盖开发者工作流和互操作能力，不扩大 RustSharp
+语言或兼容性承诺。每项能力都作为版本化、可测试的契约规划；适用时必须
+通过干净机器和原生 RID 门槛。
+
+| 能力范围 | 规划原则 | RustSharp 响应 |
+| --- | --- | --- |
+| SDK 风格项目集成 | MSBuild、还原、引用、分析器、符号、确定性输出和普通 `dotnet` 命令必须形成一个契约。 | **P2-11** 定义可选的 `RustSharp.NET.Sdk` 桥接。`Cargo.toml` 仍是包和依赖模型的规范入口；SDK 项目包装层可以驱动同一编译器，但不得改变包语义。 |
+| 项目和项模板 | 第一次成功构建应当来自生成的、可复现且有文档的项目。 | **P2-12** 增加版本化的 `RustSharp.Templates` 以及面向控制台、库、测试、Web 和 Native AOT 项目的 `dotnet new`/`rsc new` 起始模板。 |
+| 共享语言服务 | IDE 客户端应复用编译器拥有的分析和源码映射。 | **P2-09** 扩展统一的 LSP 契约，覆盖诊断、悬停、导航、补全、格式化、代码操作、语义词元、内联提示、项目状态、取消和 Portable PDB 映射。 |
+| Visual Studio 集成 | 完整 IDE 体验包括项目系统和生命周期操作，而不只是语法着色。 | **P2-14** 在 SDK、模板、LSP 和包契约通过后规划 Visual Studio 扩展。它复用原生构建/调试/测试命令，并清晰报告不支持的配置档。Rider 不在当前承诺内。 |
+| REPL 和脚本运行器 | 交互执行必须使用生产发射器和诊断，避免第二套求值器与构建语义漂移。 | **P2-13** 增加 `rsc repl` 和有界脚本模式，支持持久单元和共享分析。交互模式仅面向 CoreCLR/JIT；AOT 使用常规发射器和 `rsc publish`。 |
+| .NET 生态兼容性 | “支持 .NET 生态”需要针对每个 API、包、分析器、生成器、测试和 RID 边界建立版本化矩阵与证据。 | **P2-06** 与 **P2-15** 定义 BCL/NuGet、分析器/源生成器、测试框架、AOT 可达性和已知缺口配置档。RustSharp 不作无边界的全生态承诺，生产编译器路径也不放入生成 C# 程序逻辑。 |
+
+这些边界固定用于规划：`Cargo.toml` 保持权威；SDK、CLI、LSP、REPL 和 IDE
+能力调用同一编译器/发射器及诊断；模板属于发布制品；.NET 兼容性按具名的
+API/feature/RID 配置档报告；Visual Studio 工作只在共享 LSP 和 SDK 门槛
+具备可观察证据后开始。
+
 ## P2：交付核心库和可用工具链
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
@@ -387,12 +407,18 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 | P2-06 | ⏳ 计划中 | 冻结并实现版本化的 `extern "dotnet"` 风格互操作和普通 .NET 库输出。 | P0-15, P1-09 | `rsc build tests/interop/dotnet/Cargo.toml --target dotnet-library` | C# 消费者调用生成的库；Rust# 调用 AOT 安全的 NuGet API；不支持的反射/动态代码路径产生诊断。 |
 | P2-07 | ⏳ 计划中 | 实现 `rsc new/check/build/run/test/publish` 和依赖还原，并提供稳定的退出码和诊断。 | P2-04, P2-05 | `rsc test tests/cli/Cargo.toml` | 每个命令都有成功/失败黄金测试、取消、有限超时，且不会泄漏自有进程/文件。 |
 | P2-08 | ⏳ 计划中 | 实现格式化程序、文档生成器、增量缓存键和确定性构建。 | P1-02, P1-09 | `rsc fmt --check tests/programs; rsc doc tests/programs/Cargo.toml; rsc build tests/programs --locked` | 格式化具有幂等性，文档链接正确，未更改的构建复用有效制品，干净输出可复现。 |
-| P2-09 | ⏳ 计划中 | 实现 LSP、VS Code 集成和 Portable PDB 单步调试。 | P1-03, P1-06, P2-07 | `dotnet test RustSharp.slnx -c Release --filter LanguageServer` | 打开/更改/诊断/补全/定义/重命名测试通过，调试器从生成代码单步执行到预期 `.rs` 行。 |
+| P2-09 | ⏳ 计划中 | 实现共享 LSP 契约、VS Code 集成和 Portable PDB 单步调试。 | P1-03, P1-06, P2-07 | `dotnet test RustSharp.slnx -c Release --filter LanguageServer` | 打开/更改/诊断/悬停/补全/定义/引用/重命名/格式化/代码操作/语义词元/内联提示测试通过；调试器从生成代码单步执行到预期 `.rs` 行；面向项目的取消和增量状态不会泄漏进程或陈旧诊断。 |
 | P2-10 | ⏳ 计划中 | 为 Windows/Linux x64 发布首个有文档记录的 SDK/包/配置档集合。 | P2-01 至 P2-09 | `rsc publish samples/file-server/Cargo.toml --runtime win-x64 --locked` | 干净机器可以只使用有文档记录的输入来还原、构建、测试、调试和 AOT 发布示例。 |
+| P2-11 | ⏳ 计划中 | 定义并实现可选的 `RustSharp.NET.Sdk` MSBuild 桥接和面向 `Cargo.toml` 包的 SDK 风格项目包装层。 | P2-04, P2-05, P2-06, P2-07 | `dotnet build tests/sdk/console/RustSharp.rsproj -c Release` | `dotnet build/run/test/pack` 将引用、诊断、符号、确定性设置和 profile/RID 属性转发给 `rsc`；SDK 包装层与直接 Cargo 工作流产生等价的编译器输入和可复现输出。实现前通过 ADR 冻结包装层形状和属性契约。 |
+| P2-12 | ⏳ 计划中 | 发布面向控制台、库、测试、Web 和 Native AOT 起始项目的版本化 `RustSharp.Templates`。 | P2-07, P2-10, P2-11 | `dotnet new install artifacts/RustSharp.Templates.nupkg; dotnet new rustsharp-console -n Sample; dotnet build Sample` | 每个模板创建有效的 `Cargo.toml`、`.rs` 源文件、配置档/RID 元数据和后续步骤文档；生成项目无需手工修改即可通过构建/运行/测试及声明的 AOT 冒烟门槛。 |
+| P2-13 | ⏳ 计划中 | 使用生产发射器和共享语言分析增加 `rsc repl` 及有界 `.rs` 脚本模式。 | P1-09, P2-07, P2-09 | `rsc repl --script tests/repl/basic.rs --timeout 30`，并运行伪终端会话夹具 | 脚本模式生成/运行普通程序集并提供稳定诊断和退出码；交互单元保留会话状态、历史、补全、悬停和取消；不接受仅求值器语义路径或自有进程泄漏。交互模式仅面向 CoreCLR/JIT，不构成 AOT 承诺。 |
+| P2-14 | ⏳ 计划中 | 交付由共享 LSP 和 SDK 项目模型支持的 Visual Studio 扩展。 | P2-09, P2-11, P2-12, P2-15 | `pwsh -NoProfile -File eng/Invoke-VisualStudioSmoke.ps1 -RootSuffix RustSharp -SolutionPath tests/ide/console.sln` | 隔离的实验实例可以打开模板生成的项目，提供诊断/补全/导航/格式化，使用原生命令还原/构建，利用 Portable PDB 源码映射启动托管调试，并运行已声明的测试适配器；VSIX 安装/清理有界，不支持的配置档给出清晰诊断。 |
+| P2-15 | ⏳ 计划中 | 定义针对 BCL、NuGet、分析器/源生成器、测试框架和 AOT 可达性的 .NET 生态兼容性矩阵及适配器策略。 | P2-05, P2-06, P2-09 | `rsc conformance --profile dotnet-ecosystem-v1 --locked` | 版本化清单列出已测试的 API/feature/package/RID 组合、普通 .NET 消费者夹具、分析器/生成器边界和排除项；每个声明条目都有 CoreCLR/AOT 证据或明确诊断。 |
 
-当新用户可以创建包、使用已声明的 `core`/`alloc`/`std` API、使用兼容的 NuGet
-依赖项、进行调试，并且无需未记录的步骤即可为 Windows 和 Linux x64 发布同一应用时，
-P2 才能退出。
+当新用户可以从模板创建包、使用已声明的 `core`/`alloc`/`std` API、使用兼容的
+NuGet 依赖项、使用共享 LSP 和 Visual Studio 集成、进行调试，并且无需未记录的
+步骤即可为 Windows 和 Linux x64 发布同一应用时，P2 才能退出。生态矩阵仍将
+每项承诺限制在其具名的 API、feature、配置档和 RID 内。
 
 ## P3：添加宏、异步和有界 unsafe/FFI
 
@@ -482,7 +508,7 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 - 托管存储不会让无效的 Rust 别名或生命周期行为变为有效代码。GC 可以回收存储，而 Rust# 仍会发出活动配置档所要求的确定性 `Drop` 行为。
 - AOT 支持不包括需要不受支持的反射、运行时代码生成或无法验证的原生依赖项的 NuGet 包，除非提供了明确的适配器/配置档。
 - 不能从编译成功推断跨平台支持。每个 RID 都需要原生执行门槛。
-- 内联汇编、不受限制的 `transmute`、全部编译器内部函数、完整的 unsafe Rust 语义、Visual Studio/Rider 集成和 `diesel` 不属于早期核心 MVP。
+- 内联汇编、不受限制的 `transmute`、全部编译器内部函数、完整的 unsafe Rust 语义和 `diesel` 不属于早期核心 MVP。Visual Studio 集成属于后续的 P2-14 门槛；Rider 尚未承诺。
 
 ## 风险与决策触发条件
 
@@ -509,7 +535,7 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 | 语义 | 类型系统、trait 求解器、类型化 MIR、所有权/借用/NLL、Drop 和 panic 行为。 |
 | 后端/运行时 | CLR LIR、元数据/IL/PDB、托管混合运行时、Native AOT、C/.NET 互操作。 |
 | 库/生态系统 | `core`/`alloc`/`std`、异步/网络/TLS、HTTP、数据库、精确兼容性配置档。 |
-| 工具/质量 | `rsc`、Cargo/NuGet 解析、一致性测试基础设施、LSP/VS Code、CI、发布证据。 |
+| 工具/质量 | `rsc`、Cargo/NuGet 解析、SDK/模板/REPL、一致性测试基础设施、LSP/VS Code/Visual Studio、CI 和发布证据。 |
 
 如果团队只有三名工程师，则将前端与工具职责合并，并将库/生态系统与运行时职责合并，
 同时为语义保留明确的负责人。兼容性库工作不应超前于其所依赖的语言/运行时门槛。

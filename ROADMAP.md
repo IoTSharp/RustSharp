@@ -45,7 +45,7 @@ compatibility.
 | `unsafe` | Raw pointers, `repr(C)`, C FFI, unions, and fixed layout in declared profiles. Rust ABI, arbitrary intrinsics, unrestricted `transmute`, and inline assembly are excluded until separately specified. |
 | Application APIs | Files, networking, async, HTTP, TLS, WebSocket, and database access. |
 | Compatibility libraries | Exact-version API profiles for `tokio`, `reqwest`, `axum`, `sqlx`, `tiberius`, and `sea-orm`; `diesel` is later work. These are Rust# implementations of named profiles, not a promise that upstream source compiles unchanged. |
-| Developer tools | `rsc new/check/build/run/test/fmt/doc/publish`, restore, LSP, VS Code, and Portable PDB debugging. Visual Studio and Rider integration are later work. |
+| Developer tools | `rsc new/check/build/run/test/fmt/doc/publish`, restore, LSP, VS Code, Portable PDB debugging, an optional .NET SDK bridge, templates, and a REPL/script runner. Visual Studio integration is a later gated phase; Rider remains later work. |
 
 ### Current repository baseline
 
@@ -454,6 +454,28 @@ generic specialization and ownership-aware lowering before P1-10 closes the
 full differential denominator. Completing a foundation PR does not mark its
 entire milestone complete.
 
+## .NET ecosystem tooling plan
+
+The .NET integration plan covers developer workflow and interoperability. It
+does not widen the Rust# language or compatibility promises. Each capability is
+planned as a versioned, testable contract with a clean-machine and native-RID
+gate where applicable.
+
+| Capability area | Planning principle | Rust# response |
+| --- | --- | --- |
+| SDK-style project integration | MSBuild, restore, references, analyzers, symbols, deterministic output, and ordinary `dotnet` commands must form one contract. | **P2-11** defines an optional `RustSharp.NET.Sdk` bridge. `Cargo.toml` remains the canonical package and dependency model; an SDK project wrapper may drive the same compiler but cannot change package semantics. |
+| Project and item templates | The first successful build should be generated, reproducible, and documented. | **P2-12** adds versioned `RustSharp.Templates` and `dotnet new`/`rsc new` starters for console, library, test, web, and Native AOT projects. |
+| Shared language service | IDE clients should reuse compiler-owned analysis and source mapping. | **P2-09** expands one LSP contract for diagnostics, hover, navigation, completion, formatting, code actions, semantic tokens, inlay hints, project state, cancellation, and Portable PDB mapping. |
+| Visual Studio integration | A full IDE experience includes project system and lifecycle operations, not only syntax coloring. | **P2-14** stages a Visual Studio extension after the SDK, templates, LSP, and package contracts pass. It reuses native build/debug/test commands and reports unsupported profiles clearly. Rider remains outside the current commitment. |
+| REPL and script runner | Interactive execution must use the production emitter and diagnostics so a second evaluator cannot drift from builds. | **P2-13** adds `rsc repl` and bounded script mode with persistent cells and shared analysis. Interactive mode is CoreCLR/JIT-only; AOT uses the normal emitter and `rsc publish`. |
+| .NET ecosystem compatibility | “.NET ecosystem support” requires a versioned matrix and evidence for each API, package, analyzer, generator, test, and RID boundary. | **P2-06** and **P2-15** define BCL/NuGet, analyzer/source-generator, test-framework, AOT-reachability, and known-gap profiles. Rust# makes no unbounded whole-ecosystem claim and keeps generated C# program logic out of the production compiler path. |
+
+These boundaries are fixed for planning: `Cargo.toml` stays authoritative;
+SDK, CLI, LSP, REPL, and IDE features call the same compiler/emitter and
+diagnostics; templates are release artifacts; .NET compatibility is reported
+by named API/feature/RID profiles; and Visual Studio work starts only after the
+shared LSP and SDK gates are observable.
+
 ## P2: Deliver the core library and usable toolchain
 
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
@@ -466,12 +488,19 @@ entire milestone complete.
 | P2-06 | ⏳ Planned | Freeze and implement versioned `extern "dotnet"`-style interop and ordinary .NET library output. | P0-15, P1-09 | `rsc build tests/interop/dotnet/Cargo.toml --target dotnet-library` | A C# consumer calls the generated library; Rust# calls an AOT-safe NuGet API; unsupported reflection/dynamic-code paths produce diagnostics. |
 | P2-07 | ⏳ Planned | Implement `rsc new/check/build/run/test/publish` and dependency restore with stable exit codes and diagnostics. | P2-04, P2-05 | `rsc test tests/cli/Cargo.toml` | Each command has success/failure golden tests, cancellation, finite timeouts, and no leaked owned processes/files. |
 | P2-08 | ⏳ Planned | Implement formatter, documentation generator, incremental cache keys, and deterministic builds. | P1-02, P1-09 | `rsc fmt --check tests/programs; rsc doc tests/programs/Cargo.toml; rsc build tests/programs --locked` | Formatting is idempotent, docs link correctly, unchanged builds reuse valid artifacts, and clean outputs are reproducible. |
-| P2-09 | ⏳ Planned | Implement LSP, VS Code integration, and Portable PDB stepping. | P1-03, P1-06, P2-07 | `dotnet test RustSharp.slnx -c Release --filter LanguageServer` | Open/change/diagnostic/completion/definition/rename tests pass and a debugger steps from generated code to the expected `.rs` line. |
+| P2-09 | ⏳ Planned | Implement the shared LSP contract, VS Code integration, and Portable PDB stepping. | P1-03, P1-06, P2-07 | `dotnet test RustSharp.slnx -c Release --filter LanguageServer` | Open/change/diagnostic/hover/completion/definition/references/rename/formatting/code-action/semantic-token/inlay-hint tests pass; a debugger steps from generated code to the expected `.rs` line; project-aware cancellation and incremental state do not leak processes or stale diagnostics. |
 | P2-10 | ⏳ Planned | Publish the first documented SDK/package/profile set for Windows/Linux x64. | P2-01 through P2-09 | `rsc publish samples/file-server/Cargo.toml --runtime win-x64 --locked` | A clean machine can restore, build, test, debug, and AOT-publish the sample using only documented inputs. |
+| P2-11 | ⏳ Planned | Define and implement an optional `RustSharp.NET.Sdk` MSBuild bridge and SDK-style project wrapper for `Cargo.toml` packages. | P2-04, P2-05, P2-06, P2-07 | `dotnet build tests/sdk/console/RustSharp.rsproj -c Release` | `dotnet build/run/test/pack` forwards references, diagnostics, symbols, deterministic settings, and profile/RID properties to `rsc`; the SDK wrapper and direct Cargo workflow produce equivalent compiler inputs and reproducible outputs. The wrapper shape and property contract are frozen by ADR before implementation. |
+| P2-12 | ⏳ Planned | Ship versioned `RustSharp.Templates` for console, library, test, web, and Native AOT starters. | P2-07, P2-10, P2-11 | `dotnet new install artifacts/RustSharp.Templates.nupkg; dotnet new rustsharp-console -n Sample; dotnet build Sample` | Each template creates a valid `Cargo.toml`, `.rs` sources, profile/RID metadata, and documented next steps; generated projects pass build/run/test and the declared AOT smoke gate without hand edits. |
+| P2-13 | ⏳ Planned | Add `rsc repl` and bounded `.rs` script mode using the production emitter and shared language analysis. | P1-09, P2-07, P2-09 | `rsc repl --script tests/repl/basic.rs --timeout 30` plus a pseudo-terminal session fixture | Script mode emits/runs a normal assembly with stable diagnostics and exit codes; interactive cells preserve session state, history, completion, hover, and cancellation; no evaluator-only semantic path or owned-process leak is accepted. The interactive mode is CoreCLR/JIT-only and is not an AOT claim. |
+| P2-14 | ⏳ Planned | Deliver a Visual Studio extension backed by the shared LSP and SDK project model. | P2-09, P2-11, P2-12, P2-15 | `pwsh -NoProfile -File eng/Invoke-VisualStudioSmoke.ps1 -RootSuffix RustSharp -SolutionPath tests/ide/console.sln` | An isolated experimental instance opens a template-generated project, provides diagnostics/completion/navigation/formatting, restores/builds with native commands, launches managed debugging with Portable PDB source mapping, and runs declared test adapters; VSIX install/cleanup is bounded and unsupported profiles diagnose clearly. |
+| P2-15 | ⏳ Planned | Define the .NET ecosystem compatibility matrix and adapter policy for BCL, NuGet, analyzers/source generators, test frameworks, and AOT reachability. | P2-05, P2-06, P2-09 | `rsc conformance --profile dotnet-ecosystem-v1 --locked` | A versioned manifest lists tested API/feature/package/RID combinations, ordinary .NET consumer fixtures, analyzer/generator boundaries, and exclusions; every claimed entry has CoreCLR/AOT evidence or an explicit diagnostic. |
 
-P2 exits when a new user can create a package, use the declared `core`/`alloc`/
-`std` APIs, consume a compatible NuGet dependency, debug it, and publish the
-same application for Windows and Linux x64 without undocumented steps.
+P2 exits when a new user can create a package from a template, use the declared
+`core`/`alloc`/`std` APIs, consume a compatible NuGet dependency, use the shared
+LSP and Visual Studio integration, debug it, and publish the same application
+for Windows and Linux x64 without undocumented steps. The ecosystem matrix
+still limits every claim to its named API, feature, profile, and RID.
 
 ## P3: Add macros, async, and bounded unsafe/FFI
 
@@ -580,8 +609,8 @@ profile and migration plan; it does not silently change the Rust 1.98 profile.
 - Cross-platform support is not inferred from successful compilation. Each RID
   requires a native execution gate.
 - Inline assembly, unrestricted `transmute`, all compiler intrinsics, full
-  unsafe Rust semantics, Visual Studio/Rider integration, and `diesel` are not
-  part of the early core MVP.
+  unsafe Rust semantics, and `diesel` are not part of the early core MVP.
+  Visual Studio integration is a later P2-14 gate; Rider remains uncommitted.
 
 ## Risks and decision triggers
 
@@ -609,7 +638,7 @@ but should narrow the number of simultaneous profiles.
 | Semantics | Type system, trait solver, typed MIR, ownership/borrow/NLL, Drop and panic behavior. |
 | Backend/runtime | CLR LIR, metadata/IL/PDB, managed-hybrid runtime, Native AOT, C/.NET interop. |
 | Libraries/ecosystem | `core`/`alloc`/`std`, async/network/TLS, HTTP, database, exact compatibility profiles. |
-| Tooling/quality | `rsc`, Cargo/NuGet resolution, conformance infrastructure, LSP/VS Code, CI, release evidence. |
+| Tooling/quality | `rsc`, Cargo/NuGet resolution, SDK/templates/REPL, conformance infrastructure, LSP/VS Code/Visual Studio, CI, and release evidence. |
 
 With three engineers, combine front end with tooling and combine
 libraries/ecosystem with runtime, while retaining an explicit owner for
