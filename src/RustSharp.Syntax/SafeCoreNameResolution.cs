@@ -111,9 +111,23 @@ public static class SafeCoreNameResolution
     private static SafeCoreNameResolutionOptions NormalizeOptions(SafeCoreNameResolutionOptions? options)
     {
         options ??= new SafeCoreNameResolutionOptions();
+        if (options.Crates.IsDefault || options.Crates.Length > 256 ||
+            options.Crates.Any(static crate => crate is null || string.IsNullOrWhiteSpace(crate.ScopePath) ||
+                crate.ScopePath.Length > 1024 || crate.ScopePath != "crate" && !crate.ScopePath.StartsWith("crate::", StringComparison.Ordinal) ||
+                string.IsNullOrWhiteSpace(crate.Identity) || crate.Identity.Length > 1024 ||
+                crate.Dependencies is null || crate.Dependencies.Count > 256 ||
+                crate.Dependencies.Any(static dependency => string.IsNullOrWhiteSpace(dependency.Key) || dependency.Key.Length > 256 ||
+                    string.IsNullOrWhiteSpace(dependency.Value) || dependency.Value.Length > 1024)) ||
+            !options.Crates.IsEmpty && !options.Crates.Any(static crate => crate.ScopePath == "crate") ||
+            options.Crates.Select(static crate => crate.ScopePath).Distinct(StringComparer.Ordinal).Count() != options.Crates.Length ||
+            options.Crates.Select(static crate => crate.Identity).Distinct(StringComparer.Ordinal).Count() != options.Crates.Length ||
+            options.Crates.Any(crate => crate.Dependencies.Values.Any(target => !options.Crates.Any(candidate => candidate.ScopePath == target))))
+            throw new ArgumentException("Crate scopes and direct dependency identities must be bounded and valid.", nameof(options));
         return new SafeCoreNameResolutionOptions
         {
             EnableTypeSystemExtensions = options.EnableTypeSystemExtensions,
+            EnableGenericExtensions = options.EnableGenericExtensions,
+            Crates = options.Crates,
             Timeout = options.Timeout > TimeSpan.Zero && options.Timeout <= TimeSpan.FromMinutes(1)
                 ? options.Timeout : TimeSpan.FromSeconds(10),
             CancellationToken = options.CancellationToken,
@@ -295,6 +309,7 @@ public static class SafeCoreNameResolution
             {
                 PatternBindings = new System.Collections.ObjectModel.ReadOnlyDictionary<TextSpan, SafeCoreSymbol>(
                     publicPatternBindings),
+                Crates = _options.Crates,
             };
         }
 
@@ -360,10 +375,11 @@ public static class SafeCoreNameResolution
                 return;
             }
 
-            if (item is SafeCoreModuleSyntax { IsExternal: true } or
-                    SafeCoreFunctionSyntax { WhereClause: not null } or
+            if (item is SafeCoreModuleSyntax { IsExternal: true } or SafeCoreConstSyntax { Name: "_" } ||
+                !_options.EnableGenericExtensions && item is
+                    (SafeCoreFunctionSyntax { WhereClause: not null } or
                     SafeCoreStructSyntax { WhereClause: not null } or SafeCoreEnumSyntax { WhereClause: not null } or
-                    SafeCoreTypeAliasSyntax { WhereClause: not null } or SafeCoreConstSyntax { Name: "_" })
+                    SafeCoreTypeAliasSyntax { WhereClause: not null }))
             {
                 RejectNewSyntax(item.Span);
                 return;
@@ -408,6 +424,12 @@ public static class SafeCoreNameResolution
                     break;
                 case SafeCoreFunctionSyntax function:
                     CollectFunction(function, scope, depth + 1);
+                    break;
+                case SafeCoreTraitSyntax trait when _options.EnableGenericExtensions:
+                    CollectTrait(trait, scope);
+                    break;
+                case SafeCoreImplSyntax implementation when _options.EnableGenericExtensions:
+                    CollectImplementation(implementation, scope);
                     break;
                 case SafeCoreStructSyntax structure:
                     CollectStruct(structure, scope);
@@ -612,13 +634,43 @@ public static class SafeCoreNameResolution
             CollectBlock(function.Body, functionScope, depth + 1, useExistingScope: true);
         }
 
+        private void CollectTrait(SafeCoreTraitSyntax trait, ScopeBuilder parent)
+        {
+            if (trait.GenericParameters.Count != 0 || trait.Bounds.Count != 0 ||
+                trait.WhereClause is not null || trait.Items.Count != 0)
+            {
+                RejectNewSyntax(trait.Span);
+                return;
+            }
+            RejectUnsupportedAttributes(trait.InnerAttributes, trait.Span);
+            _ = AddSymbol(parent, trait.Name, SafeCoreSymbolKind.Trait,
+                SafeCoreSymbolNamespace.Type, trait.IsPublic, trait.Span,
+                isImport: false, targetPath: null, visibility: trait.Visibility);
+        }
+
+        private void CollectImplementation(SafeCoreImplSyntax implementation, ScopeBuilder parent)
+        {
+            if (implementation.Trait is not SafeCorePathTypeSyntax || implementation.Items.Count != 0)
+            {
+                RejectNewSyntax(implementation.Span);
+                return;
+            }
+            RejectUnsupportedAttributes(implementation.InnerAttributes, implementation.Span);
+            string path = parent.Path + "::impl@" + implementation.Span.Start.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            ScopeBuilder? scope = CreateScope(parent, path, parent.ModulePath);
+            if (scope is null) return;
+            scope.Span = implementation.Span;
+            _itemScopes[implementation] = scope;
+            CollectGenericParameters(implementation.GenericParameters, scope);
+        }
+
         private void CollectStruct(SafeCoreStructSyntax structure, ScopeBuilder parent)
         {
             SymbolBuilder? symbol = AddSymbol(
                 parent,
                 structure.Name,
                 SafeCoreSymbolKind.Struct,
-                _options.EnableTypeSystemExtensions && !structure.IsTupleStruct && !structure.IsUnitStruct
+                (_options.EnableTypeSystemExtensions || _options.EnableGenericExtensions) && !structure.IsTupleStruct && !structure.IsUnitStruct
                     ? SafeCoreSymbolNamespace.Type : SafeCoreSymbolNamespace.Both,
                 structure.IsPublic,
                 structure.Span,
@@ -647,7 +699,7 @@ public static class SafeCoreNameResolution
                     return;
                 }
 
-                if (field.Name is not null || _options.EnableTypeSystemExtensions)
+                if (field.Name is not null || _options.EnableTypeSystemExtensions || _options.EnableGenericExtensions)
                 {
                     _ = AddSymbol(
                         itemScope,
@@ -1059,12 +1111,12 @@ public static class SafeCoreNameResolution
                         CollectNestedExpressionScopes(indexExpression.Target, parent, depth + 1);
                         CollectNestedExpressionScopes(indexExpression.Index, parent, depth + 1);
                         break;
-                    case SafeCoreStructExpressionSyntax structure when _options.EnableTypeSystemExtensions:
+                    case SafeCoreStructExpressionSyntax structure when _options.EnableTypeSystemExtensions || _options.EnableGenericExtensions:
                         for (var index = 0; index < structure.Fields.Count && !_truncated; index++)
                             CollectNestedExpressionScopes(structure.Fields[index].Value, parent, depth + 1);
                         if (structure.Base is not null) CollectNestedExpressionScopes(structure.Base, parent, depth + 1);
                         break;
-                    case SafeCoreMemberExpressionSyntax member when _options.EnableTypeSystemExtensions:
+                    case SafeCoreMemberExpressionSyntax member when _options.EnableTypeSystemExtensions || _options.EnableGenericExtensions:
                         CollectNestedExpressionScopes(member.Target, parent, depth + 1);
                         break;
                     case SafeCoreCastExpressionSyntax cast when _options.EnableTypeSystemExtensions:
@@ -1231,11 +1283,11 @@ public static class SafeCoreNameResolution
                 members = null;
                 if (TrySplitPath(glob.TargetPath, glob.Span, out IReadOnlyList<string> segments))
                 {
-                    members = segments[0] == "crate" ? _root : FindModuleScope(glob.Scope);
+                    members = segments[0] == "crate" ? FindCrateScope(glob.Scope) : FindModuleScope(glob.Scope);
                     for (var index = 0; index < segments.Count; index++)
                     {
                         if (!Step(glob.Span)) return null;
-                        if (segments[index] == "super") members = members?.Parent;
+                        if (segments[index] == "super") members = members == FindCrateScope(glob.Scope) ? null : members?.Parent;
                         else if (index != 0 || segments[index] is not ("crate" or "self")) { members = null; break; }
                     }
                 }
@@ -1514,6 +1566,16 @@ public static class SafeCoreNameResolution
                         case SafeCoreFunctionSyntax function:
                             ResolveFunction(function, GetItemScope(function, scope), depth + 1);
                             break;
+                        case SafeCoreTraitSyntax when _options.EnableGenericExtensions:
+                            break;
+                        case SafeCoreImplSyntax implementation when _options.EnableGenericExtensions:
+                            ScopeBuilder implementationScope = GetItemScope(implementation, scope);
+                            ResolveGenericBounds(implementation.GenericParameters, implementationScope);
+                            if (implementation.Trait is not null)
+                                ResolveTraitPath(implementation.Trait, implementationScope, depth + 1);
+                            ResolveType(implementation.SelfType, implementationScope, depth + 1);
+                            ResolveWhereBounds(implementation.WhereClause, implementationScope, depth + 1);
+                            break;
                         case SafeCoreStructSyntax structure:
                             ResolveStruct(structure, GetItemScope(structure, scope));
                             break;
@@ -1522,6 +1584,7 @@ public static class SafeCoreNameResolution
                             break;
                         case SafeCoreTypeAliasSyntax alias:
                             ResolveGenericBounds(alias.GenericParameters, GetItemScope(alias, scope));
+                            ResolveWhereBounds(alias.WhereClause, GetItemScope(alias, scope), depth + 1);
                             ResolveType(alias.Type, GetItemScope(alias, scope), depth + 1);
                             break;
                         case SafeCoreConstSyntax constant:
@@ -1545,6 +1608,7 @@ public static class SafeCoreNameResolution
         private void ResolveFunction(SafeCoreFunctionSyntax function, ScopeBuilder scope, int depth)
         {
             ResolveGenericBounds(function.GenericParameters, scope);
+            ResolveWhereBounds(function.WhereClause, scope, depth + 1);
             for (var index = 0; index < function.Parameters.Count; index++)
             {
                 SafeCoreParameterSyntax parameter = function.Parameters[index];
@@ -1569,6 +1633,7 @@ public static class SafeCoreNameResolution
         private void ResolveStruct(SafeCoreStructSyntax structure, ScopeBuilder scope)
         {
             ResolveGenericBounds(structure.GenericParameters, scope);
+            ResolveWhereBounds(structure.WhereClause, scope, 0);
             for (var index = 0; index < structure.Fields.Count; index++)
             {
                 if (HasUnsupportedAttributes(structure.Fields[index].Attributes))
@@ -1589,6 +1654,7 @@ public static class SafeCoreNameResolution
         private void ResolveEnum(SafeCoreEnumSyntax enumeration, ScopeBuilder scope)
         {
             ResolveGenericBounds(enumeration.GenericParameters, scope);
+            ResolveWhereBounds(enumeration.WhereClause, scope, 0);
             for (var variantIndex = 0; variantIndex < enumeration.Variants.Count; variantIndex++)
             {
                 SafeCoreEnumVariantSyntax variant = enumeration.Variants[variantIndex];
@@ -1614,6 +1680,35 @@ public static class SafeCoreNameResolution
             IReadOnlyList<SafeCoreGenericParameterSyntax> parameters,
             ScopeBuilder scope)
         {
+            if (_options.EnableGenericExtensions)
+            {
+                foreach (SafeCoreGenericParameterSyntax parameter in parameters)
+                {
+                    if (!Step(parameter.Span)) return;
+                    var seen = new HashSet<(TextSpan Span, string Path)>();
+                    foreach (SafeCoreTypeSyntax bound in parameter.Bounds)
+                    {
+                        if (!Step(bound.Span)) return;
+                        ResolveBound(bound);
+                    }
+                    foreach (SafeCoreTypeBoundSyntax bound in parameter.Constraints)
+                    {
+                        if (!Step(bound.Span)) return;
+                        if (bound is SafeCoreTraitBoundSyntax { IsOptional: false, GenericParameters.Count: 0 } trait)
+                            ResolveBound(trait.Type);
+                        else RejectNewSyntax(bound.Span);
+                    }
+
+                    void ResolveBound(SafeCoreTypeSyntax bound)
+                    {
+                        if (!ValidateMarkerTraitPath(bound)) return;
+                        var path = (SafeCorePathTypeSyntax)bound;
+                        string name = string.Join("::", path.Segments.Select(static segment => segment.Name));
+                        if (seen.Add((bound.Span, name))) ResolveType(bound, scope, 0);
+                    }
+                }
+                return;
+            }
             // Trait resolution is outside the current semantic profile. Keep
             // legacy path bounds in the syntax model and defer binding until that
             // namespace is introduced, avoiding false unresolved diagnostics.
@@ -1640,6 +1735,64 @@ public static class SafeCoreNameResolution
                     if (constraint is SafeCoreTraitBoundSyntax { IsOptional: false, GenericParameters.Count: 0 } trait)
                         ValidateDeferredBoundSyntax(trait.Type);
                     else RejectNewSyntax(constraint.Span);
+                }
+            }
+        }
+
+        private bool ValidateMarkerTraitPath(SafeCoreTypeSyntax syntax)
+        {
+            if (!Step(syntax.Span)) return false;
+            if (syntax is not SafeCorePathTypeSyntax path || path.IsAbsolute || path.Segments.Count == 0)
+            {
+                RejectNewSyntax(syntax.Span);
+                return false;
+            }
+            if (path.Segments.Count > _options.MaximumPathSegments)
+            {
+                StopLimit(path.Span);
+                return false;
+            }
+            foreach (SafeCorePathSegmentSyntax segment in path.Segments)
+            {
+                if (!Step(segment.Span)) return false;
+                if (segment.HasGenericArguments || segment.GenericArguments.Count != 0 || segment.Arguments.Count != 0 ||
+                    segment.HasFunctionArguments || segment.FunctionParameters.Count != 0 || segment.FunctionReturnType is not null)
+                {
+                    RejectNewSyntax(segment.Span);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void ResolveTraitPath(SafeCoreTypeSyntax syntax, ScopeBuilder scope, int depth)
+        {
+            if (ValidateMarkerTraitPath(syntax)) ResolveType(syntax, scope, depth);
+        }
+
+        private void ResolveWhereBounds(SafeCoreWhereClauseSyntax? where, ScopeBuilder scope, int depth)
+        {
+            if (where is null) return;
+            if (!_options.EnableGenericExtensions)
+            {
+                RejectNewSyntax(where.Span);
+                return;
+            }
+            foreach (SafeCoreWherePredicateSyntax predicate in where.Predicates)
+            {
+                if (!Step(predicate.Span)) return;
+                if (predicate is not SafeCoreTypeWherePredicateSyntax { GenericParameters.Count: 0 } type || type.Bounds.Count == 0)
+                {
+                    RejectNewSyntax(predicate.Span);
+                    continue;
+                }
+                ResolveType(type.Type, scope, depth + 1);
+                foreach (SafeCoreTypeBoundSyntax bound in type.Bounds)
+                {
+                    if (!Step(bound.Span)) return;
+                    if (bound is SafeCoreTraitBoundSyntax { IsOptional: false, GenericParameters.Count: 0 } trait)
+                        ResolveTraitPath(trait.Type, scope, depth + 1);
+                    else RejectNewSyntax(bound.Span);
                 }
             }
         }
@@ -1974,6 +2127,11 @@ public static class SafeCoreNameResolution
                     case SafeCorePathTypeSyntax path:
                     {
                         if (path.IsAbsolute) RejectNewSyntax(path.Span);
+                        if (_options.EnableGenericExtensions && path.Segments.Count > _options.MaximumPathSegments)
+                        {
+                            StopLimit(path.Span);
+                            return;
+                        }
                         string pathText = string.Join("::", path.Segments.Select(segment => segment.Name));
                         if (!(path.Segments.Count == 1 && PrimitiveTypeNames.Contains(pathText)))
                         {
@@ -1983,6 +2141,30 @@ public static class SafeCoreNameResolution
                         for (var segmentIndex = 0; segmentIndex < path.Segments.Count; segmentIndex++)
                         {
                             SafeCorePathSegmentSyntax segment = path.Segments[segmentIndex];
+                            if (_options.EnableGenericExtensions)
+                            {
+                                if (!Step(segment.Span)) return;
+                                if (segment.GenericArguments.Count > _options.MaximumPathSegments || segment.Arguments.Count > _options.MaximumPathSegments)
+                                {
+                                    StopLimit(segment.Span);
+                                    return;
+                                }
+                                if (segmentIndex + 1 != path.Segments.Count &&
+                                    (segment.HasGenericArguments || segment.GenericArguments.Count != 0 || segment.Arguments.Count != 0))
+                                    RejectNewSyntax(segment.Span);
+                                if (segment.GenericArguments.Count != 0 && segment.Arguments.Count != 0)
+                                {
+                                    if (segment.GenericArguments.Count != segment.Arguments.Count) RejectNewSyntax(segment.Span);
+                                    else
+                                        for (int argumentIndex = 0; argumentIndex < segment.Arguments.Count; argumentIndex++)
+                                        {
+                                            if (!Step(segment.Span)) return;
+                                            if (segment.Arguments[argumentIndex] is not SafeCoreTypeArgumentSyntax argument ||
+                                                !ReferenceEquals(segment.GenericArguments[argumentIndex], argument.Type))
+                                                RejectNewSyntax(segment.Arguments[argumentIndex].Span);
+                                        }
+                                }
+                            }
                             if (segment.HasFunctionArguments || segment.FunctionParameters.Count > 0 || segment.FunctionReturnType is not null)
                             {
                                 RejectNewSyntax(segment.Span);
@@ -2070,8 +2252,10 @@ public static class SafeCoreNameResolution
                 switch (expression)
                 {
                     case SafeCoreNameExpressionSyntax name:
-                        if (name.Path.StartsWith("::", StringComparison.Ordinal) ||
-                            name.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count != 0)) RejectNewSyntax(name.Span);
+                        if (name.Path.StartsWith("::", StringComparison.Ordinal)) RejectNewSyntax(name.Span);
+                        if (_options.EnableGenericExtensions) ResolveExpressionTypeArguments(name, scope, depth + 1);
+                        else if (name.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count != 0))
+                            RejectNewSyntax(name.Span);
                         ResolveAndRecord(name.Path, scope, SafeCoreSymbolNamespace.Value, name.Span);
                         break;
                     case SafeCoreUnaryExpressionSyntax unary:
@@ -2136,10 +2320,11 @@ public static class SafeCoreNameResolution
                         break;
                     case SafeCoreLiteralExpressionSyntax:
                         break;
-                    case SafeCoreStructExpressionSyntax structure when _options.EnableTypeSystemExtensions:
+                    case SafeCoreStructExpressionSyntax structure when _options.EnableTypeSystemExtensions || _options.EnableGenericExtensions:
                         if (structure.Qualifier is not null) RejectNewSyntax(structure.Span);
-                        if (structure.Path.Path.StartsWith("::", StringComparison.Ordinal) ||
-                            structure.Path.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count != 0)) RejectNewSyntax(structure.Path.Span);
+                        if (structure.Path.Path.StartsWith("::", StringComparison.Ordinal)) RejectNewSyntax(structure.Path.Span);
+                        if (_options.EnableGenericExtensions) ResolveExpressionTypeArguments(structure.Path, scope, depth + 1);
+                        else if (structure.Path.Segments.Any(static segment => segment.HasGenericArguments || segment.GenericArguments.Count != 0)) RejectNewSyntax(structure.Path.Span);
                         ResolveConstructorAndRecord(structure.Path.Path, scope, structure.Path.Span);
                         for (var index = 0; index < structure.Fields.Count && !_truncated; index++)
                         {
@@ -2149,7 +2334,7 @@ public static class SafeCoreNameResolution
                         }
                         if (structure.Base is not null) ResolveExpression(structure.Base, scope, depth + 1);
                         break;
-                    case SafeCoreMemberExpressionSyntax member when _options.EnableTypeSystemExtensions:
+                    case SafeCoreMemberExpressionSyntax member when _options.EnableTypeSystemExtensions || _options.EnableGenericExtensions:
                         if (member.HasGenericArguments || member.GenericArguments.Count > 0) RejectNewSyntax(member.Span);
                         ResolveExpression(member.Target, scope, depth + 1);
                         break;
@@ -2210,6 +2395,36 @@ public static class SafeCoreNameResolution
             finally
             {
                 Exit();
+            }
+        }
+
+        private void ResolveExpressionTypeArguments(SafeCoreNameExpressionSyntax name, ScopeBuilder scope, int depth)
+        {
+            if (name.Segments.Count > _options.MaximumPathSegments)
+            {
+                StopLimit(name.Span);
+                return;
+            }
+            if (name.Segments.Count != 0 &&
+                !string.Equals(name.Path, string.Join("::", name.Segments.Select(static segment => segment.Name)), StringComparison.Ordinal))
+                RejectNewSyntax(name.Span);
+            for (int index = 0; index < name.Segments.Count; index++)
+            {
+                SafeCoreExpressionPathSegmentSyntax segment = name.Segments[index];
+                if (!Step(segment.Span)) return;
+                if (segment.GenericArguments.Count > _options.MaximumPathSegments)
+                {
+                    StopLimit(segment.Span);
+                    return;
+                }
+                if (index + 1 != name.Segments.Count && (segment.HasGenericArguments || segment.GenericArguments.Count != 0))
+                    RejectNewSyntax(segment.Span);
+                foreach (SafeCoreGenericArgumentSyntax argument in segment.GenericArguments)
+                {
+                    if (!Step(argument.Span)) return;
+                    if (argument is SafeCoreTypeArgumentSyntax type) ResolveType(type.Type, scope, depth + 1);
+                    else RejectNewSyntax(argument.Span);
+                }
             }
         }
 
@@ -2277,11 +2492,11 @@ public static class SafeCoreNameResolution
             var position = 0;
             if (absoluteRoot && segments[0] != "crate")
             {
-                start = _root;
+                start = FindCrateScope(context);
             }
             else if (segments[0] == "crate")
             {
-                start = _root;
+                start = FindCrateScope(context);
                 position = 1;
             }
             else if (segments[0] == "self")
@@ -2304,6 +2519,8 @@ public static class SafeCoreNameResolution
                         return new(SafeCoreNameResolutionStatus.LimitExceeded, null, []);
                     }
 
+                    if (start == FindCrateScope(context))
+                        return ReportPathResult(new(SafeCoreNameResolutionStatus.Invalid, null, []), safePath, span, emitDiagnostic);
                     start = start?.Parent;
                     position++;
                 }
@@ -2537,8 +2754,20 @@ public static class SafeCoreNameResolution
                     result = selected;
                     return scope;
                 }
+                if (scope == FindCrateScope(context)) break;
             }
 
+            SafeCoreCrate? crate = CrateFor(context.Path);
+            if ((expectedNamespace is null or SafeCoreSymbolNamespace.Type) &&
+                crate is not null && crate.Dependencies.TryGetValue(segment, out string? target))
+            {
+                SymbolBuilder? dependency = _symbols.FirstOrDefault(symbol => symbol.Kind == SafeCoreSymbolKind.Module && symbol.QualifiedName == target);
+                if (dependency is not null)
+                {
+                    result = new(SafeCoreNameResolutionStatus.Resolved, dependency, [dependency]);
+                    return _root;
+                }
+            }
             result = null;
             return null;
         }
@@ -2573,6 +2802,10 @@ public static class SafeCoreNameResolution
                 }
 
                 if (symbol.IsGlobImport && !symbol.IsActiveGlobImport) continue;
+                if (IsCrateModule(symbol)) continue;
+                // A single-segment import of an extern crate must not resolve itself.
+                if (_activeImports.Contains(symbol) && symbol.TargetPath == canonicalName &&
+                    CrateFor(requester.Path)?.Dependencies.ContainsKey(canonicalName) == true) continue;
 
                 // Resolve only the requested namespace, so a type dependency
                 // does not create a spurious cycle in the value dependency.
@@ -2667,9 +2900,36 @@ public static class SafeCoreNameResolution
             SafeCoreSymbolNamespace requested) =>
             declared == SafeCoreSymbolNamespace.Both || declared == requested;
 
-        private static bool IsAccessible(SymbolBuilder symbol, ScopeBuilder requester)
+        private bool IsAccessible(SymbolBuilder symbol, ScopeBuilder requester)
         {
+            if (IsCrateModule(symbol)) return false;
+            if (symbol.VisibilityScopePath is not null && CrateFor(symbol.DeclaringScope.Path)?.ScopePath != CrateFor(requester.Path)?.ScopePath)
+                return false;
             return VisibilityContains(symbol.VisibilityScopePath, requester.ModulePath);
+        }
+
+        private bool IsCrateModule(SymbolBuilder symbol) => symbol.Kind == SafeCoreSymbolKind.Module &&
+            _options.Crates.Any(crate => crate.ScopePath == symbol.QualifiedName);
+
+        private SafeCoreCrate? CrateFor(string path)
+        {
+            SafeCoreCrate? result = null;
+            foreach (SafeCoreCrate crate in _options.Crates)
+                if ((result is null || result.ScopePath.Length < crate.ScopePath.Length) &&
+                    (path == crate.ScopePath || path.StartsWith(crate.ScopePath + "::", StringComparison.Ordinal))) result = crate;
+            return result;
+        }
+
+        private ScopeBuilder FindCrateScope(ScopeBuilder context)
+        {
+            if (_options.Crates.IsEmpty) return _root!;
+            string path = CrateFor(context.Path)?.ScopePath ?? "crate";
+            for (ScopeBuilder? current = context; current is not null; current = current.Parent)
+            {
+                if (!Step(context.Span)) break;
+                if (current.Path == path) return current;
+            }
+            return _root!;
         }
 
         private static bool VisibilityContains(string? outer, string? inner) =>
@@ -2687,20 +2947,20 @@ public static class SafeCoreNameResolution
                 case SafeCoreVisibilityKind.Public: visibilityScope = null; return true;
                 case SafeCoreVisibilityKind.Private:
                 case SafeCoreVisibilityKind.Self: visibilityScope = module.Path; return true;
-                case SafeCoreVisibilityKind.Crate: visibilityScope = "crate"; return true;
+                case SafeCoreVisibilityKind.Crate: visibilityScope = FindCrateScope(scope).Path; return true;
                 case SafeCoreVisibilityKind.Super:
-                    if (module.Parent is not null) { visibilityScope = FindModuleScope(module.Parent).Path; return true; }
+                    if (module != FindCrateScope(scope) && module.Parent is not null) { visibilityScope = FindModuleScope(module.Parent).Path; return true; }
                     break;
                 case SafeCoreVisibilityKind.Restricted:
                     if (visibility.Path is null) break;
                     if (!TrySplitPath(visibility.Path, span, out IReadOnlyList<string> segments)) return false;
-                    ScopeBuilder? target = segments[0] switch { "crate" => _root, "self" or "super" => module, _ => null };
+                    ScopeBuilder? target = segments[0] switch { "crate" => FindCrateScope(scope), "self" or "super" => module, _ => null };
                     if (target is null) break;
                     var position = segments[0] == "super" ? 0 : 1;
                     for (; position < segments.Count && segments[position] == "super"; position++)
                     {
                         if (!Step(span)) return false;
-                        target = target?.Parent;
+                        target = target == FindCrateScope(scope) ? null : target?.Parent;
                     }
                     if (target is null) break;
                     string path = target.Path;
@@ -2870,7 +3130,7 @@ public static class SafeCoreNameResolution
             // Tuple-field declarations use their positional index as their semantic name.
             // This exception is confined to fields in the opt-in type profile; user
             // declarations and path segments must still be valid Rust identifiers.
-            bool isTupleFieldIndex = _options.EnableTypeSystemExtensions && kind == SafeCoreSymbolKind.Field &&
+            bool isTupleFieldIndex = (_options.EnableTypeSystemExtensions || _options.EnableGenericExtensions) && kind == SafeCoreSymbolKind.Field &&
                 int.TryParse(name, System.Globalization.NumberStyles.None,
                     System.Globalization.CultureInfo.InvariantCulture, out int fieldIndex) && fieldIndex >= 0 &&
                 fieldIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) == name;

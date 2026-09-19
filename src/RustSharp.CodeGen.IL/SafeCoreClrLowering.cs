@@ -10,6 +10,8 @@ public sealed record SafeCoreClrResult(
     IReadOnlyList<TextSpan> MethodSpans,
     IReadOnlyList<Diagnostic> Diagnostics)
 {
+    public System.Collections.Immutable.ImmutableArray<ClrLirValueType> ValueTypes { get; init; } = [];
+    public ReadOnlyMemory<byte> GenericMetadata { get; init; }
     public bool IsSuccessful => Methods.Count != 0 && Diagnostics.Count == 0;
 }
 
@@ -37,7 +39,7 @@ public static class SafeCoreClrLowering
             {
                 var lowerer = new Lowerer(program, function, names, clock, cancellationToken);
                 ClrLirMethod method = lowerer.Run();
-                ClrLirValidationResult validation = method.Validate();
+                ClrLirValidationResult validation = method.Validate(cancellationToken);
                 if (!validation.IsValid)
                     return new([], [], [new("RST2002", "Invalid lowered CLR LIR: " + validation.Diagnostics[0], function.Declaration.Span)]);
                 methods.Add(method);

@@ -293,6 +293,8 @@ public static class SafeCoreHirLowering
             SafeCoreModuleSyntax module => LowerModule(module),
             SafeCoreUseSyntax use => LowerUse(use),
             SafeCoreFunctionSyntax function => LowerFunction(function),
+            SafeCoreTraitSyntax trait => LowerTrait(trait),
+            SafeCoreImplSyntax implementation => LowerImplementation(implementation),
             SafeCoreStructSyntax structure => LowerStruct(structure),
             SafeCoreEnumSyntax enumeration => LowerEnum(enumeration),
             SafeCoreTypeAliasSyntax alias => LowerTypeAlias(alias),
@@ -413,6 +415,7 @@ public static class SafeCoreHirLowering
             {
                 LowerAttributes(syntax.Attributes, node);
                 LowerGenericParameters(syntax.GenericParameters, node);
+                LowerWhereBounds(syntax.WhereClause, node);
                 for (var index = 0; index < syntax.Parameters.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerParameter(syntax.Parameters[index]));
@@ -429,6 +432,68 @@ public static class SafeCoreHirLowering
             finally
             {
                 Exit();
+            }
+        }
+
+        private int LowerTrait(SafeCoreTraitSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.Trait, syntax.Span, out NodeBuilder? node,
+                syntax.Name, flags: VisibilityFlag(syntax.IsPublic),
+                declaredSymbol: FindDeclaration(syntax.Span, SafeCoreSymbolKind.Trait, syntax.Name))) return -1;
+            try
+            {
+                LowerAttributes(syntax.Attributes, node);
+                LowerAttributes(syntax.InnerAttributes, node);
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerImplementation(SafeCoreImplSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.Implementation, syntax.Span, out NodeBuilder? node)) return -1;
+            try
+            {
+                LowerAttributes(syntax.Attributes, node);
+                LowerAttributes(syntax.InnerAttributes, node);
+                LowerGenericParameters(syntax.GenericParameters, node);
+                AddChild(node, LowerTraitBound(null, syntax.Trait!, syntax.Trait!.Span));
+                AddChild(node, LowerType(syntax.SelfType, requireBinding: true));
+                LowerWhereBounds(syntax.WhereClause, node);
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private int LowerTraitBound(SafeCoreTypeSyntax? target, SafeCoreTypeSyntax trait, TextSpan span,
+            SafeCoreSymbol? parameter = null)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.TraitBound, span, out NodeBuilder? node)) return -1;
+            try
+            {
+                if (target is not null) AddChild(node, LowerType(target, requireBinding: true));
+                else if (parameter is not null)
+                    AddChild(node, LowerLeaf(SafeCoreHirNodeKind.PathType, parameter.Span,
+                        parameter.Name, referencedSymbol: parameter));
+                AddChild(node, LowerType(trait, requireBinding: true));
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private void LowerWhereBounds(SafeCoreWhereClauseSyntax? syntax, NodeBuilder parent)
+        {
+            if (!_options.NameResolution.EnableGenericExtensions || syntax is null) return;
+            foreach (SafeCoreWherePredicateSyntax predicate in syntax.Predicates)
+            {
+                if (!Step(predicate.Span)) return;
+                var type = (SafeCoreTypeWherePredicateSyntax)predicate;
+                foreach (SafeCoreTypeBoundSyntax bound in type.Bounds)
+                {
+                    if (!Step(bound.Span)) return;
+                    var trait = (SafeCoreTraitBoundSyntax)bound;
+                    AddChild(parent, LowerTraitBound(type.Type, trait.Type, predicate.Span));
+                }
             }
         }
 
@@ -462,6 +527,7 @@ public static class SafeCoreHirLowering
             {
                 LowerAttributes(syntax.Attributes, node);
                 LowerGenericParameters(syntax.GenericParameters, node);
+                LowerWhereBounds(syntax.WhereClause, node);
                 for (var index = 0; index < syntax.Fields.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerField(syntax.Fields[index], index));
@@ -495,6 +561,7 @@ public static class SafeCoreHirLowering
             {
                 LowerAttributes(syntax.Attributes, node);
                 LowerGenericParameters(syntax.GenericParameters, node);
+                LowerWhereBounds(syntax.WhereClause, node);
                 for (var index = 0; index < syntax.Variants.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerEnumVariant(syntax.Variants[index]));
@@ -568,6 +635,7 @@ public static class SafeCoreHirLowering
             {
                 LowerAttributes(syntax.Attributes, node);
                 LowerGenericParameters(syntax.GenericParameters, node);
+                LowerWhereBounds(syntax.WhereClause, node);
                 AddChild(node, LowerType(syntax.Type, requireBinding: true));
                 return node.Id;
             }
@@ -623,8 +691,32 @@ public static class SafeCoreHirLowering
 
             try
             {
-                // Trait declarations are not in the current AST, so bounds
-                // remain deliberately unbound until that namespace exists.
+                if (_options.NameResolution.EnableGenericExtensions)
+                {
+                    SafeCoreSymbol? parameter = FindDeclaration(syntax.Span, SafeCoreSymbolKind.GenericParameter, syntax.Name);
+                    var seen = new HashSet<(TextSpan Span, string Path)>();
+                    foreach (SafeCoreTypeSyntax bound in syntax.Bounds)
+                    {
+                        if (!Step(bound.Span)) return node.Id;
+                        LowerBound(bound);
+                    }
+                    foreach (SafeCoreTypeBoundSyntax bound in syntax.Constraints)
+                    {
+                        if (!Step(bound.Span)) return node.Id;
+                        LowerBound(((SafeCoreTraitBoundSyntax)bound).Type);
+                    }
+                    return node.Id;
+
+                    void LowerBound(SafeCoreTypeSyntax bound)
+                    {
+                        if (!Step(bound.Span)) return;
+                        var path = (SafeCorePathTypeSyntax)bound;
+                        string name = string.Join("::", path.Segments.Select(static segment => segment.Name));
+                        if (seen.Add((bound.Span, name)))
+                            AddChild(node, LowerTraitBound(null, bound, bound.Span, parameter));
+                    }
+                }
+                // Legacy HIR retains deferred bounds without claiming trait resolution.
                 for (var index = 0; index < syntax.Bounds.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerType(syntax.Bounds[index], requireBinding: false));
@@ -659,7 +751,7 @@ public static class SafeCoreHirLowering
 
         private int LowerField(SafeCoreFieldSyntax syntax, int fieldIndex)
         {
-            string? declarationName = syntax.Name ?? (_options.NameResolution.EnableTypeSystemExtensions
+            string? declarationName = syntax.Name ?? (_options.NameResolution.EnableTypeSystemExtensions || _options.NameResolution.EnableGenericExtensions
                 ? fieldIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) : null);
             SafeCoreSymbol? declaration = declarationName is null
                 ? null
@@ -668,7 +760,7 @@ public static class SafeCoreHirLowering
                     SafeCoreHirNodeKind.Field,
                     syntax.Span,
                     out NodeBuilder? node,
-                    syntax.Name,
+                    _options.NameResolution.EnableGenericExtensions && syntax.Name is not null ? CanonicalGenericField(syntax.Name) : syntax.Name,
                     flags: VisibilityFlag(syntax.IsPublic),
                     declaredSymbol: declaration))
             {
@@ -1029,11 +1121,7 @@ public static class SafeCoreHirLowering
 
         private int LowerExpression(SafeCoreExpressionSyntax syntax) => syntax switch
         {
-            SafeCoreNameExpressionSyntax name => LowerLeaf(
-                SafeCoreHirNodeKind.NameExpression,
-                name.Span,
-                name.Path,
-                referencedSymbol: FindReference(name.Path, name.Span)),
+            SafeCoreNameExpressionSyntax name => LowerNameExpression(name),
             SafeCoreLiteralExpressionSyntax literal => LowerLeaf(
                 SafeCoreHirNodeKind.LiteralExpression,
                 literal.Span,
@@ -1065,6 +1153,40 @@ public static class SafeCoreHirLowering
             _ => Unsupported(syntax.Span, "expression"),
         };
 
+        private int LowerNameExpression(SafeCoreNameExpressionSyntax syntax)
+        {
+            if (!TryCreateNode(SafeCoreHirNodeKind.NameExpression, syntax.Span, out NodeBuilder? node,
+                syntax.Path, referencedSymbol: FindReference(syntax.Path, syntax.Span))) return -1;
+            try
+            {
+                if (_options.NameResolution.EnableGenericExtensions)
+                    LowerExpressionTypeArguments(syntax, node);
+                return node.Id;
+            }
+            finally { Exit(); }
+        }
+
+        private void LowerExpressionTypeArguments(SafeCoreNameExpressionSyntax syntax, NodeBuilder node)
+        {
+            foreach (SafeCoreExpressionPathSegmentSyntax segment in syntax.Segments)
+            {
+                if (!Step(segment.Span)) return;
+                if (!segment.HasGenericArguments && segment.GenericArguments.Count == 0) continue;
+                if (!TryCreateNode(SafeCoreHirNodeKind.PathSegment, segment.Span, out NodeBuilder? part,
+                    segment.Name, flags: SafeCoreHirNodeModifiers.HasGenericArguments)) return;
+                try
+                {
+                    foreach (SafeCoreGenericArgumentSyntax argument in segment.GenericArguments)
+                    {
+                        if (!Step(argument.Span)) break;
+                        AddChild(part, LowerType(((SafeCoreTypeArgumentSyntax)argument).Type, requireBinding: true));
+                    }
+                    AddChild(node, part.Id);
+                }
+                finally { Exit(); }
+            }
+        }
+
         private int LowerStructExpression(SafeCoreStructExpressionSyntax syntax)
         {
             if (!TryCreateNode(SafeCoreHirNodeKind.StructExpression, syntax.Span, out NodeBuilder? node,
@@ -1073,6 +1195,8 @@ public static class SafeCoreHirLowering
                 referencedSymbol: FindReference(syntax.Path.Path, syntax.Path.Span))) return -1;
             try
             {
+                if (_options.NameResolution.EnableGenericExtensions)
+                    LowerExpressionTypeArguments(syntax.Path, node);
                 for (var index = 0; index < syntax.Fields.Count && !_truncated; index++)
                     AddChild(node, LowerStructExpressionField(syntax.Fields[index]));
                 if (syntax.Base is not null) AddChild(node, LowerExpression(syntax.Base));
@@ -1084,7 +1208,7 @@ public static class SafeCoreHirLowering
         private int LowerStructExpressionField(SafeCoreStructExpressionFieldSyntax syntax)
         {
             if (!TryCreateNode(SafeCoreHirNodeKind.StructExpressionField, syntax.Span, out NodeBuilder? node,
-                syntax.Name)) return -1;
+                _options.NameResolution.EnableGenericExtensions ? CanonicalGenericField(syntax.Name) : syntax.Name)) return -1;
             try
             {
                 AddChild(node, LowerExpression(syntax.Value));
@@ -1096,7 +1220,7 @@ public static class SafeCoreHirLowering
         private int LowerMember(SafeCoreMemberExpressionSyntax syntax)
         {
             if (!TryCreateNode(SafeCoreHirNodeKind.MemberExpression, syntax.Span, out NodeBuilder? node,
-                syntax.Member)) return -1;
+                _options.NameResolution.EnableGenericExtensions ? CanonicalGenericField(syntax.Member) : syntax.Member)) return -1;
             try
             {
                 AddChild(node, LowerExpression(syntax.Target));
@@ -1104,6 +1228,9 @@ public static class SafeCoreHirLowering
             }
             finally { Exit(); }
         }
+
+        private static string CanonicalGenericField(string name) =>
+            (name.StartsWith("r#", StringComparison.Ordinal) ? name[2..] : name).Normalize(System.Text.NormalizationForm.FormC);
 
         private int LowerCast(SafeCoreCastExpressionSyntax syntax)
         {
@@ -1435,13 +1562,25 @@ public static class SafeCoreHirLowering
                     SafeCoreHirNodeKind.PathSegment,
                     syntax.Span,
                     out NodeBuilder? node,
-                    syntax.Name))
+                    syntax.Name,
+                    flags: _options.NameResolution.EnableGenericExtensions &&
+                        (syntax.HasGenericArguments || syntax.GenericArguments.Count != 0 || syntax.Arguments.Count != 0)
+                        ? SafeCoreHirNodeModifiers.HasGenericArguments : SafeCoreHirNodeModifiers.None))
             {
                 return -1;
             }
 
             try
             {
+                if (_options.NameResolution.EnableGenericExtensions && syntax.Arguments.Count != 0)
+                {
+                    foreach (SafeCoreGenericArgumentSyntax argument in syntax.Arguments)
+                    {
+                        if (!Step(argument.Span)) return node.Id;
+                        AddChild(node, LowerType(((SafeCoreTypeArgumentSyntax)argument).Type, requireBinding));
+                    }
+                    return node.Id;
+                }
                 for (var index = 0; index < syntax.GenericArguments.Count && !_truncated; index++)
                 {
                     AddChild(node, LowerType(syntax.GenericArguments[index], requireBinding));

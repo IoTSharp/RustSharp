@@ -44,8 +44,7 @@ public static class GenericMonomorphization
         var budget = new GenericBudget(limits, cancellationToken);
         try
         {
-            var planner = new Planner(definitions, traitSolver ?? new GenericTraitSolver([]), budget);
-            return planner.Plan(roots);
+            return Plan(definitions, roots, (traitSolver ?? new GenericTraitSolver([])).CreateSession(budget), budget);
         }
         catch (GenericFailure failure)
         {
@@ -53,6 +52,12 @@ public static class GenericMonomorphization
             return new(failure.Status, [], [], failure.Message);
         }
     }
+
+    internal static GenericMonomorphizationResult Plan(
+        ImmutableArray<GenericFunctionDefinition> definitions,
+        ImmutableArray<GenericFunctionInstance> roots,
+        GenericTraitSession traits,
+        GenericBudget budget) => new Planner(definitions, traits, budget).Plan(roots);
 
     private sealed class Planner
     {
@@ -62,7 +67,7 @@ public static class GenericMonomorphization
         private readonly SortedDictionary<string, GenericFunctionInstance> pending = new(StringComparer.Ordinal);
         private readonly SortedDictionary<string, GenericMonomorphizedFunction> instances = new(StringComparer.Ordinal);
 
-        public Planner(ImmutableArray<GenericFunctionDefinition> definitions, GenericTraitSolver solver, GenericBudget budget)
+        public Planner(ImmutableArray<GenericFunctionDefinition> definitions, GenericTraitSession traits, GenericBudget budget)
         {
             this.budget = budget;
             budget.Count(definitions.IsDefault ? -1 : definitions.Length);
@@ -103,7 +108,7 @@ public static class GenericMonomorphization
                 }
             }
 
-            traits = solver.CreateSession(budget);
+            this.traits = traits;
         }
 
         public GenericMonomorphizationResult Plan(ImmutableArray<GenericFunctionInstance> roots)

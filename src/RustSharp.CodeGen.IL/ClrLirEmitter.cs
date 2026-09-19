@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -29,12 +30,19 @@ public static class ClrLirEmitter
     public static ClrLirMethodBody EmitMethodBody(
         ClrLirMethod method,
         MetadataBuilder metadata,
-        Func<ClrLirCallSite, EntityHandle> callResolver) => Emit(method, metadata, callResolver);
+        Func<ClrLirCallSite, EntityHandle> callResolver,
+        Func<ClrLirValueType, EntityHandle>? constructorResolver = null,
+        Func<ClrLirValueType, int, EntityHandle>? fieldResolver = null,
+        CancellationToken cancellationToken = default) => Emit(method, metadata, callResolver,
+            constructorResolver, fieldResolver, cancellationToken);
 
     public static ClrLirMethodBody Emit(
         ClrLirMethod method,
         MetadataBuilder metadata,
-        Func<ClrLirCallSite, EntityHandle> callResolver)
+        Func<ClrLirCallSite, EntityHandle> callResolver,
+        Func<ClrLirValueType, EntityHandle>? constructorResolver = null,
+        Func<ClrLirValueType, int, EntityHandle>? fieldResolver = null,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(metadata);
@@ -43,9 +51,18 @@ public static class ClrLirEmitter
         var code = new BlobBuilder();
         var controlFlow = new ControlFlowBuilder();
         var encoder = new InstructionEncoder(code, controlFlow);
-        int maxStack = EncodeInstructions(method, metadata, callResolver, encoder);
+        long started = Stopwatch.GetTimestamp();
+        int maxStack = EncodeInstructions(method, metadata, callResolver, encoder,
+            constructorResolver, fieldResolver, CheckBudget, cancellationToken);
 
         return new ClrLirMethodBody(code.ToArray().ToImmutableArray(), maxStack);
+
+        void CheckBudget()
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (Stopwatch.GetElapsedTime(started) > TimeSpan.FromSeconds(10))
+                throw new TimeoutException("CLR LIR emission exceeded its time limit.");
+        }
     }
 
     /// <summary>
@@ -57,13 +74,17 @@ public static class ClrLirEmitter
         ClrLirMethod method,
         MetadataBuilder metadata,
         Func<ClrLirCallSite, EntityHandle> callResolver,
-        InstructionEncoder encoder)
+        InstructionEncoder encoder,
+        Func<ClrLirValueType, EntityHandle>? constructorResolver = null,
+        Func<ClrLirValueType, int, EntityHandle>? fieldResolver = null,
+        Action? checkBudget = null,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(callResolver);
 
-        ClrLirValidationResult validation = method.Validate();
+        ClrLirValidationResult validation = method.Validate(cancellationToken);
         if (!validation.IsValid)
         {
             throw new InvalidOperationException(
@@ -82,6 +103,8 @@ public static class ClrLirEmitter
             encoder.MarkLabel(labels[block.Label]);
             foreach (ClrLirInstruction instruction in block.Instructions)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                checkBudget?.Invoke();
                 switch (instruction)
                 {
                     case ClrLirLoadInt32 loadInt32:
@@ -104,6 +127,18 @@ public static class ClrLirEmitter
                         break;
                     case ClrLirDiscard:
                         encoder.OpCode(ILOpCode.Pop);
+                        break;
+                    case ClrLirConstructValue construct:
+                        EntityHandle constructor = constructorResolver?.Invoke(construct.Definition) ?? default;
+                        if (constructor.IsNil) throw new InvalidOperationException("Value construction requires a resolved constructor.");
+                        encoder.OpCode(ILOpCode.Newobj);
+                        encoder.Token(constructor);
+                        break;
+                    case ClrLirReadField field:
+                        EntityHandle fieldHandle = fieldResolver?.Invoke(field.Definition, field.FieldIndex) ?? default;
+                        if (fieldHandle.IsNil) throw new InvalidOperationException("Field access requires a resolved field.");
+                        encoder.OpCode(ILOpCode.Ldfld);
+                        encoder.Token(fieldHandle);
                         break;
                     case ClrLirFormatInt32:
                         invariantFormat ??= AddInvariantFormatReferences(metadata);

@@ -93,6 +93,9 @@ public enum SafeCoreHirNodeKind
     StructPattern,
     StructPatternField,
     ConstBlockExpression,
+    Trait,
+    Implementation,
+    TraitBound,
 }
 
 /// <summary>Compact properties whose meaning is determined by a HIR node kind.</summary>
@@ -120,6 +123,7 @@ public enum SafeCoreHirNodeModifiers
     HasRangeStart = 1 << 17,
     HasRangeEnd = 1 << 18,
     HasElse = 1 << 19,
+    HasGenericArguments = 1 << 20,
 }
 
 /// <summary>

@@ -131,8 +131,11 @@ public static class CargoWorkspace
                 (File.Exists(Path.Combine(root, "src", "main.rs")) ? Path.Combine("src", "main.rs") : Path.Combine("src", "lib.rs"));
             source = Path.GetFullPath(Path.Combine(root, source));
             if (!File.Exists(source)) Add(ManifestDiagnostic, $"Cargo package source '{source}' does not exist.", path);
+            string defaultLibrary = Path.Combine(root, "src", "lib.rs");
+            string? library = libPath is not null ? Path.GetFullPath(Path.Combine(root, libPath))
+                : File.Exists(defaultLibrary) ? defaultLibrary : null;
             return new CargoPackage(path, name ?? string.Empty, version ?? string.Empty, edition ?? "2015", source,
-                dependencies.AsReadOnly());
+                dependencies.AsReadOnly()) { LibrarySourcePath = library };
         }
 
         private void Step()
@@ -168,6 +171,7 @@ public sealed record CargoDependency(string Name, string? Path);
 public sealed record CargoPackage(string ManifestPath, string Name, string Version, string Edition,
     string SourcePath, IReadOnlyList<CargoDependency> Dependencies)
 {
+    public string? LibrarySourcePath { get; init; }
     internal static CargoPackage Empty(string path) => new(path, string.Empty, string.Empty, "2015", string.Empty, Array.Empty<CargoDependency>());
 }
 

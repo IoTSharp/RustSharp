@@ -288,6 +288,21 @@ jobs:
           & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll', '--profile', 'safe-core-primitives-v1', '--oracle', 'rustc-1.98', '--report', 'artifacts/p1/safe-core-primitives-v1.json') -TimeoutSeconds 200
           & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('src/RustSharp.Cli/bin/Release/net10.0/rsc.dll', 'compile', 'samples/safe-core.rs', '--profile', 'safe-core-primitives-v1', '--output', 'artifacts/p1/safe-core.dll') -TimeoutSeconds 30
           & ./eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1/safe-core.dll -EvidencePath artifacts/p1/safe-core.ilverify.json
+      - name: Verify generic executable profile
+        shell: pwsh
+        timeout-minutes: 5
+        env:
+          DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll', '--profile', 'safe-core-generics-v1', '--oracle', 'rustc-1.98', '--report', 'artifacts/p1-05/safe-core-generics-v1.json') -TimeoutSeconds 200
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('src/RustSharp.Cli/bin/Release/net10.0/rsc.dll', 'compile', 'samples/generics.rs', '--profile', 'safe-core-generics-v1', '--output', 'artifacts/p1-05/generics.dll') -TimeoutSeconds 30
+          & ./eng/Test-GenericEvidence.ps1
+          & ./eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1-05/generics.dll -EvidencePath artifacts/p1-05/generics.ilverify.json
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('src/RustSharp.Cli/bin/Release/net10.0/rsc.dll', 'compile', 'tests/workspaces/generics/Cargo.toml', '--profile', 'safe-core-generics-v1', '--output', 'artifacts/p1-05/generic-packages.dll') -TimeoutSeconds 30
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('artifacts/p1-05/generic-packages.dll') -TimeoutSeconds 10
+          & ./eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1-05/generic-packages.dll -EvidencePath artifacts/p1-05/generic-packages.ilverify.json
       - name: Upload Linux evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -31,9 +31,10 @@ internal static class Program
         {
             Console.WriteLine("""
                 Usage: RustSharp.Conformance --profile <name> [--oracle rustc-1.98] [--report <path.json>] [--timeout <seconds>] [--deadline <seconds>]
-                Profiles: vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1,
+                Profiles: vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1, safe-core-generics-v1,
                           safe-core-lexing, safe-core-syntax, safe-core-name-resolution.
-                safe-core-types-v1 compares type checks with rustc metadata compilation (maximum 30s/case, 180s overall).
+                Type and generic profiles compare checks with rustc; the generic profile also compares executable output.
+                Both use a maximum of 30s/case and 180s overall.
                 Lexing, syntax and name-resolution profiles are in-process acceptance gates without --oracle or --timeout.
                 """);
             return 0;
@@ -52,19 +53,22 @@ internal static class Program
         }
 
         string repositoryRoot = FindRepositoryRoot();
-        if (options.Profile == SafeCoreTypeProfileRunner.ProfileName)
+        if (options.Profile is SafeCoreTypeProfileRunner.ProfileName or SafeCoreGenericProfileRunner.ProfileName)
         {
             try
             {
                 string typeReportPath = options.ReportPath is null
                     ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
                     : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                if (options.Profile == SafeCoreGenericProfileRunner.ProfileName)
+                    return await SafeCoreGenericProfileRunner.RunAsync(repositoryRoot, typeReportPath,
+                        options.Timeout, options.Deadline, startedAtUtc, harnessClock).ConfigureAwait(false);
                 return await SafeCoreTypeProfileRunner.RunAsync(repositoryRoot, typeReportPath,
                     options.Timeout, options.Deadline, startedAtUtc, harnessClock).ConfigureAwait(false);
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or OperationCanceledException or TimeoutException)
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or OperationCanceledException or TimeoutException or JsonException or InvalidOperationException or KeyNotFoundException or FormatException)
             {
-                Console.Error.WriteLine($"conformance: safe-core-types-v1 harness error: {TrimDiagnostic(exception.Message)}");
+                Console.Error.WriteLine($"conformance: {options.Profile} harness error: {TrimDiagnostic(exception.Message)}");
                 return 2;
             }
         }
@@ -543,10 +547,10 @@ internal static class Program
             else throw new ArgumentException($"Unknown option '{value}'.");
         }
         if (profile is not ProfileName and not SafeCoreLexingProfileName and
-            not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName and not SafeCorePrimitivesProfileName and not SafeCoreTypeProfileRunner.ProfileName)
+            not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName and not SafeCorePrimitivesProfileName and not SafeCoreTypeProfileRunner.ProfileName and not SafeCoreGenericProfileRunner.ProfileName)
         {
             throw new ArgumentException(
-                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', '{SafeCoreNameResolutionProfileName}', '{SafeCorePrimitivesProfileName}', and '{SafeCoreTypeProfileRunner.ProfileName}'.");
+                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', '{SafeCoreNameResolutionProfileName}', '{SafeCorePrimitivesProfileName}', '{SafeCoreTypeProfileRunner.ProfileName}', and '{SafeCoreGenericProfileRunner.ProfileName}'.");
         }
 
         bool inProcessAcceptanceProfile = profile is SafeCoreLexingProfileName or
@@ -566,8 +570,8 @@ internal static class Program
             throw new ArgumentException($"Only oracle '{OracleName}' is supported for profile '{ProfileName}'.");
         }
 
-        if (profile == SafeCoreTypeProfileRunner.ProfileName && (timeoutSeconds > 30 || deadlineSeconds > 180))
-            throw new ArgumentException("safe-core-types-v1 requires --timeout <=30 and --deadline <=180 seconds.");
+        if (profile is SafeCoreTypeProfileRunner.ProfileName or SafeCoreGenericProfileRunner.ProfileName && (timeoutSeconds > 30 || deadlineSeconds > 180))
+            throw new ArgumentException("Type and generic profiles require --timeout <=30 and --deadline <=180 seconds.");
 
         return new Options(profile, report, TimeSpan.FromSeconds(timeoutSeconds), TimeSpan.FromSeconds(deadlineSeconds));
     }

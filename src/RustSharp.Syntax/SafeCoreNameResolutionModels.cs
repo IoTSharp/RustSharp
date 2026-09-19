@@ -1,4 +1,9 @@
+using System.Collections.Immutable;
+
 namespace RustSharp.Syntax;
+
+/// <summary>A source-linked Cargo crate and its direct extern-prelude dependencies.</summary>
+public sealed record SafeCoreCrate(string ScopePath, string Identity, ImmutableDictionary<string, string> Dependencies);
 
 /// <summary>
 /// Bounds for the experimental safe-core name-resolution prototype. These
@@ -9,6 +14,9 @@ public sealed record SafeCoreNameResolutionOptions
 {
     /// <summary>Enables the bounded P1-04 type-checking syntax without changing the legacy profile.</summary>
     public bool EnableTypeSystemExtensions { get; init; }
+    /// <summary>Enables type generics, marker traits and positive bounds without changing legacy profiles.</summary>
+    public bool EnableGenericExtensions { get; init; }
+    public ImmutableArray<SafeCoreCrate> Crates { get; init; } = [];
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
     public CancellationToken CancellationToken { get; init; }
     public int MaximumSymbols { get; init; } = 100_000;
@@ -60,6 +68,7 @@ public enum SafeCoreSymbolKind
     Local,
     Field,
     EnumVariant,
+    Trait,
 }
 
 /// <summary>Outcome of resolving one path occurrence.</summary>
@@ -144,6 +153,7 @@ public sealed class SafeCoreNameResolutionResult
     }
 
     public string SourcePath { get; }
+    public ImmutableArray<SafeCoreCrate> Crates { get; internal init; } = [];
     public SafeCoreScope? RootScope { get; }
     public IReadOnlyList<SafeCoreScope> Scopes { get; }
     public IReadOnlyList<SafeCoreSymbol> Symbols { get; }

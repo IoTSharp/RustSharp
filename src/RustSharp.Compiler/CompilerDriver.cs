@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Collections.Immutable;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -32,10 +33,17 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
+        if (profile == CompilationProfile.SafeCoreGenerics && IsCargoManifest(fullSourcePath))
+        {
+            GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
+            if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
+            CompilationResult checkedPackages = CheckSafeCoreGenerics(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates);
+            return checkedPackages with { Diagnostics = MapDiagnostics(checkedPackages.Diagnostics, packages.SourceMap!) };
+        }
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
-        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreTypes)
+        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreTypes or CompilationProfile.SafeCoreGenerics)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -67,6 +75,8 @@ public sealed class CompilerDriver
         cancellationToken.ThrowIfCancellationRequested();
         if (profile == CompilationProfile.SafeCoreTypes)
             return CheckSafeCoreTypes(source, sourcePath, cancellationToken);
+        if (profile == CompilationProfile.SafeCoreGenerics)
+            return CheckSafeCoreGenerics(source, sourcePath, cancellationToken);
         if (profile != CompilationProfile.VerticalSlice)
         {
             SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken);
@@ -90,13 +100,21 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
 
         cancellationToken.ThrowIfCancellationRequested();
-        if (profile == CompilationProfile.SafeCoreTypes) return RejectTypeProfileEmission(sourcePath);
+        if (profile == CompilationProfile.SafeCoreTypes)
+            return RejectTypeProfileEmission(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
+        if (profile == CompilationProfile.SafeCoreGenerics && IsCargoManifest(fullSourcePath))
+        {
+            GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
+            if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
+            return CompileCore(packages.SourceText, packages.RootSourcePath, Path.GetFullPath(outputPath), assemblyName,
+                packages.SourceMap!.Documents[0].Bytes, profile, cancellationToken, packages.SourceMap, packages.Crates);
+        }
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
-        if (profile == CompilationProfile.SafeCorePrimitives)
+        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -133,7 +151,8 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
 
         cancellationToken.ThrowIfCancellationRequested();
-        if (profile == CompilationProfile.SafeCoreTypes) return RejectTypeProfileEmission(sourcePath);
+        if (profile == CompilationProfile.SafeCoreTypes)
+            return RejectTypeProfileEmission(sourcePath);
 
         Diagnostic? sourceDiagnostic = ValidateSourceText(source, sourcePath);
         if (sourceDiagnostic is not null)
@@ -174,7 +193,7 @@ public sealed class CompilerDriver
         ReadOnlyMemory<byte> sourceBytes,
         CompilationProfile profile,
         CancellationToken cancellationToken,
-        SafeCoreSourceMap? sourceMap = null)
+        SafeCoreSourceMap? sourceMap = null, ImmutableArray<SafeCoreCrate> crates = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         SyntaxTree? syntaxTree = null;
@@ -187,7 +206,7 @@ public sealed class CompilerDriver
         }
         else
         {
-            safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken);
+            safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates);
             if (!safeCore.IsSuccessful) return CompilationResult.Failed(MapDiagnostics(safeCore.Diagnostics, sourceMap));
         }
 
@@ -236,16 +255,27 @@ public sealed class CompilerDriver
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var generated = safeCore is not null
-                ? ClrLirAssemblyEmitter.EmitProgram(safeCore, resolvedAssemblyName, source,
-                    fullSourcePath, Path.GetFileName(pdbPath), sourceBytes, sourceMap, cancellationToken)
-                : IlAssemblyEmitter.Emit(
-                syntaxTree!.Root!,
-                source,
-                fullSourcePath,
-                resolvedAssemblyName,
-                Path.GetFileName(pdbPath),
-                sourceBytes);
+            GeneratedAssembly generated;
+            try
+            {
+                generated = safeCore is not null
+                    ? ClrLirAssemblyEmitter.EmitProgram(safeCore, resolvedAssemblyName, source,
+                        fullSourcePath, Path.GetFileName(pdbPath), sourceBytes, sourceMap, cancellationToken)
+                    : IlAssemblyEmitter.Emit(
+                    syntaxTree!.Root!,
+                    source,
+                    fullSourcePath,
+                    resolvedAssemblyName,
+                    Path.GetFileName(pdbPath),
+                    sourceBytes);
+            }
+            catch (Exception exception) when (profile == CompilationProfile.SafeCoreGenerics &&
+                exception is ArgumentException or InvalidOperationException or TimeoutException)
+            {
+                return CompilationResult.Failed([new Diagnostic(SafeCoreGenericDiagnosticCodes.LimitReached,
+                    "Generic CLR emission exceeded its supported layout or validation limits: " + TrimDiagnostic(exception.Message),
+                    new TextSpan(0, 0)) { SourcePath = sourcePath }]);
+            }
 
             WriteArtifactsTransactionally(
                 fullOutputPath,
@@ -273,11 +303,13 @@ public sealed class CompilerDriver
         }
     }
 
-    private static CompilationResult RejectTypeProfileEmission(string sourcePath) =>
-        CompilationResult.Failed([new Diagnostic("RSC0009",
-            "The safe-core-types-v1 profile supports type checking only. Use 'rsc check'; " +
+    private static CompilationResult RejectTypeProfileEmission(string sourcePath)
+    {
+        return CompilationResult.Failed([new Diagnostic("RSC0009",
+            $"The {SafeCoreTypeAnalysis.Profile} profile supports type checking only. Use 'rsc check'; " +
             "build, compile, run and publish require an executable profile.", new TextSpan(0, 0))
             { SourcePath = sourcePath }]);
+    }
 
     private static CompilationResult CheckSafeCoreTypes(string source, string sourcePath,
         CancellationToken cancellationToken)
@@ -305,10 +337,25 @@ public sealed class CompilerDriver
         return result.IsSuccessful ? new(true, [], null) : CompilationResult.Failed(result.Diagnostics);
     }
 
-    private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
-        CompilationProfile profile, CancellationToken cancellationToken)
+    private static CompilationResult CheckSafeCoreGenerics(string source, string sourcePath,
+        CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
     {
-        if (profile != CompilationProfile.SafeCorePrimitives)
+        SafeCoreSyntaxResult syntax;
+        try { syntax = SafeCoreSyntax.Parse(source, sourcePath, null, cancellationToken); }
+        catch (TimeoutException)
+        {
+            return CompilationResult.Failed([new Diagnostic(SafeCoreSyntaxDiagnosticCodes.LimitReached,
+                "Safe-core parsing exceeded its time budget.", new TextSpan(0, 0))]);
+        }
+        if (!syntax.IsSuccessful) return CompilationResult.Failed(syntax.Diagnostics);
+        var result = SafeCoreGenericAnalysis.Check(syntax, new() { Crates = crates.IsDefault ? [] : crates }, cancellationToken);
+        return result.IsSuccessful ? new(true, [], null) : CompilationResult.Failed(result.Diagnostics);
+    }
+
+    private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
+        CompilationProfile profile, CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
+    {
+        if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics))
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
         cancellationToken.ThrowIfCancellationRequested();
         SafeCoreSyntaxResult syntax;
@@ -320,6 +367,13 @@ public sealed class CompilerDriver
         }
         if (!syntax.IsSuccessful) return new([], [], syntax.Diagnostics);
         cancellationToken.ThrowIfCancellationRequested();
+        if (profile == CompilationProfile.SafeCoreGenerics)
+        {
+            SafeCoreGenericAnalysisResult generics = SafeCoreGenericAnalysis.Check(syntax,
+                new() { Crates = crates.IsDefault ? [] : crates }, cancellationToken);
+            return generics.IsSuccessful ? SafeCoreGenericClrLowering.Lower(generics.Program!, cancellationToken)
+                : new([], [], generics.Diagnostics);
+        }
         SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new SafeCoreHirLoweringOptions
         {
             CancellationToken = cancellationToken,
@@ -329,6 +383,8 @@ public sealed class CompilerDriver
         return types.IsSuccessful ? SafeCoreClrLowering.Lower(types.Program!, cancellationToken)
             : new([], [], types.Diagnostics);
     }
+
+    private static bool IsCargoManifest(string path) => string.Equals(Path.GetFileName(path), "Cargo.toml", StringComparison.OrdinalIgnoreCase);
 
     private static string? TryResolveCargo(string path, CancellationToken cancellationToken, out IReadOnlyList<Diagnostic>? diagnostics)
     {
