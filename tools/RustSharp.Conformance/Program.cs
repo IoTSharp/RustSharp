@@ -32,8 +32,10 @@ internal static class Program
             Console.WriteLine("""
                 Usage: RustSharp.Conformance --profile <name> [--oracle rustc-1.98] [--report <path.json>] [--timeout <seconds>] [--deadline <seconds>]
                 Profiles: vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1,
-                          safe-core-lexing, safe-core-syntax, safe-core-name-resolution.
+                          safe-core-regression-v1, safe-core-lexing, safe-core-syntax,
+                          safe-core-name-resolution.
                 safe-core-types-v1 compares type checks with rustc metadata compilation (maximum 30s/case, 180s overall).
+                safe-core-regression-v1 runs bounded compile-pass, compile-fail, run-pass and differential cases.
                 Lexing, syntax and name-resolution profiles are in-process acceptance gates without --oracle or --timeout.
                 """);
             return 0;
@@ -65,6 +67,31 @@ internal static class Program
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or OperationCanceledException or TimeoutException)
             {
                 Console.Error.WriteLine($"conformance: safe-core-types-v1 harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+        if (string.Equals(options.Profile, SafeCoreRegressionProfileRunner.ProfileName, StringComparison.Ordinal))
+        {
+            try
+            {
+                string regressionReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(regressionReportPath)!);
+                return await SafeCoreRegressionProfileRunner.RunAsync(
+                    repositoryRoot,
+                    regressionReportPath,
+                    options.Timeout,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (
+                exception is IOException or UnauthorizedAccessException or ArgumentException or
+                NotSupportedException or OperationCanceledException or TimeoutException)
+            {
+                Console.Error.WriteLine(
+                    $"conformance: {SafeCoreRegressionProfileRunner.ProfileName} harness error: {TrimDiagnostic(exception.Message)}");
                 return 2;
             }
         }
@@ -225,7 +252,7 @@ internal static class Program
                 DateTimeOffset.UtcNow,
                 options.Profile,
                 new OracleReport(OracleName, "rustc", RustcToolchain, rustcVersionText, oracleAvailable, blockedReason, rustcVersion.ToEvidence()),
-                new ToolReport("rustsharp", "dotnet run --project src/RustSharp.Cli -c Release", rustSharpVersion)
+                new ToolReport("rustsharp", "dotnet src/RustSharp.Cli/bin/Release/net10.0/rsc.dll", rustSharpVersion)
                 {
                     Available = rustSharpAvailable,
                     Diagnostic = rustSharpVersionDiagnostic,
@@ -320,7 +347,7 @@ internal static class Program
         ProcessResult rustSharpCheck = await RunAsync(
             runner,
             "dotnet",
-            ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--no-build", "--no-restore", "--", "check", sourcePath, "--profile", fixture.Profile],
+            BuildRustSharpArguments(repositoryRoot, "check", sourcePath, "--profile", fixture.Profile),
             repositoryRoot,
             timeout,
             cancellationToken).ConfigureAwait(false);
@@ -341,7 +368,7 @@ internal static class Program
                 rustSharpCompile = await RunAsync(
                     runner,
                     "dotnet",
-                    ["run", "--project", Path.Combine(repositoryRoot, "src", "RustSharp.Cli"), "-c", "Release", "--no-build", "--no-restore", "--", "compile", sourcePath, "--output", managedOutput, "--profile", fixture.Profile],
+                    BuildRustSharpArguments(repositoryRoot, "compile", sourcePath, "--output", managedOutput, "--profile", fixture.Profile),
                     repositoryRoot,
                     timeout,
                     cancellationToken).ConfigureAwait(false);
@@ -354,9 +381,7 @@ internal static class Program
 
         bool outcomeMatches = fixture.ExpectedSuccess
             ? rustcCompile.Succeeded && rustSharpCheck.Succeeded && rustcRun?.Succeeded == true && rustSharpRun?.Succeeded == true && NormalizeOutput(rustcRun.StandardOutput) == NormalizeOutput(rustSharpRun.StandardOutput) && NormalizeOutput(rustSharpRun.StandardOutput) == NormalizeOutput(fixture.ExpectedOutput)
-            : rustcCompile.Termination == "exited" && rustcCompile.ExitCode == 1 &&
-                rustSharpCheck.Termination == "exited" && rustSharpCheck.ExitCode == 1 &&
-                !rustcCompile.CleanupIncomplete && !rustSharpCheck.CleanupIncomplete;
+            : IsCompileFailure(rustcCompile) && IsCompileFailure(rustSharpCheck);
         string? difference = outcomeMatches ? null : DescribeCaseDifference(
             fixture,
             rustcCompile,
@@ -434,6 +459,15 @@ internal static class Program
     private static string FormatExitCode(ProcessResult result) =>
         result.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "n/a";
 
+    private static bool IsCompileFailure(ProcessResult result) =>
+        result.Termination == "exited" &&
+        result.ExitCode == 1 &&
+        !result.CleanupIncomplete &&
+        !result.OutputTruncated &&
+        !result.OutputReadTimedOut &&
+        !result.OutputDrainTimedOut &&
+        !result.OutputReadLimitReached;
+
     private static async Task<CaseReport> RunCaseSafelyAsync(
         BoundedProcessRunner runner,
         string repositoryRoot,
@@ -499,7 +533,16 @@ internal static class Program
 
     private static async Task<ProcessResult> ReadRustSharpVersionAsync(BoundedProcessRunner runner, string root, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        return await RunAsync(runner, "dotnet", ["run", "--project", Path.Combine(root, "src", "RustSharp.Cli"), "-c", "Release", "--no-build", "--no-restore", "--", "--version"], root, timeout, cancellationToken).ConfigureAwait(false);
+        return await RunAsync(runner, "dotnet", BuildRustSharpArguments(root, "--version"), root, timeout, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string[] BuildRustSharpArguments(string root, params string[] arguments)
+    {
+        string cliAssembly = Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll");
+        var result = new string[arguments.Length + 1];
+        result[0] = cliAssembly;
+        arguments.CopyTo(result, 1);
+        return result;
     }
 
     private static Options ParseOptions(string[] args)
@@ -543,10 +586,12 @@ internal static class Program
             else throw new ArgumentException($"Unknown option '{value}'.");
         }
         if (profile is not ProfileName and not SafeCoreLexingProfileName and
-            not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName and not SafeCorePrimitivesProfileName and not SafeCoreTypeProfileRunner.ProfileName)
+            not SafeCoreSyntaxProfileName and not SafeCoreNameResolutionProfileName and
+            not SafeCorePrimitivesProfileName and not SafeCoreTypeProfileRunner.ProfileName and
+            not SafeCoreRegressionProfileRunner.ProfileName)
         {
             throw new ArgumentException(
-                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', '{SafeCoreNameResolutionProfileName}', '{SafeCorePrimitivesProfileName}', and '{SafeCoreTypeProfileRunner.ProfileName}'.");
+                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', '{SafeCoreNameResolutionProfileName}', '{SafeCorePrimitivesProfileName}', '{SafeCoreTypeProfileRunner.ProfileName}', and '{SafeCoreRegressionProfileRunner.ProfileName}'.");
         }
 
         bool inProcessAcceptanceProfile = profile is SafeCoreLexingProfileName or

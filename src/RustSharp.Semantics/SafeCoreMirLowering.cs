@@ -9,7 +9,7 @@ using N = RustSharp.Semantics.SafeCoreHirNodeKind;
 
 namespace RustSharp.Semantics;
 
-/// <summary>Independent bounds for the opt-in scalar MIR lowering pass.</summary>
+/// <summary>Independent bounds for the opt-in bounded-value MIR lowering pass.</summary>
 public sealed record SafeCoreMirLoweringOptions
 {
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
@@ -32,7 +32,7 @@ public sealed record SafeCoreMirLoweringResult(
 }
 
 /// <summary>
-/// Lowers resolved P1-04 evidence to the experimental scalar MIR profile.
+/// Lowers resolved P1-04 evidence to the experimental bounded-value MIR profile.
 /// This API does not change the existing compiler driver or IL emission path.
 /// </summary>
 public static class SafeCoreMirLowering
@@ -166,11 +166,11 @@ public static class SafeCoreMirLowering
             if (_functionNodes.Count >= options.MaximumFunctions) Limit(node);
             SafeCoreType signature = Type(node);
             if (signature.Kind != K.Function || node.DeclaredSymbol is null) Invalid(node);
-            Scalar(signature.ReturnType, node, allowNever: true);
+            ValueType(signature.ReturnType, node, allowNever: true);
             for (int index = 0; index < signature.ParameterTypes.Count; index++)
             {
                 Step(node, depth);
-                Scalar(signature.ParameterTypes[index], node);
+                ValueType(signature.ParameterTypes[index], node);
             }
             if (!_functions.TryAdd(SymbolKey(node.DeclaredSymbol!), _functionNodes.Count)) Invalid(node);
             _functionNodes.Add(node);
@@ -218,7 +218,7 @@ public static class SafeCoreMirLowering
             if (value is not null && _current is not null && input.Coercions.TryGetValue(node.Id, out SafeCoreType? target) &&
                 !value.Type.Equals(target))
             {
-                Scalar(target, node);
+                ValueType(target, node);
                 value = Emit(SafeCoreMirRvalue.Coerce(value, target, Source(node)), target, node);
             }
             return value;
@@ -239,6 +239,7 @@ public static class SafeCoreMirLowering
                 case N.TupleExpression when node.ChildIds.Count == 1 &&
                     !node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasTrailingComma):
                     return Expr(Child(node, 0), depth + 1);
+                case N.TupleExpression: return Tuple(node, depth);
                 case N.ExpressionStatement:
                     _ = Expr(Child(node, 0), depth + 1);
                     return _current is null ? null : Unit(node);
@@ -317,6 +318,27 @@ public static class SafeCoreMirLowering
             SafeCoreMirOperand? rightValue = Expr(Child(node, 1), depth + 1);
             if (leftValue is null || rightValue is null || _current is null) return null;
             return Emit(SafeCoreMirRvalue.Binary(op, leftValue, rightValue, Type(node), Source(node)), Type(node), node);
+        }
+
+        private SafeCoreMirOperand? Tuple(SafeCoreHirNode node, int depth)
+        {
+            SafeCoreType type = EffectiveType(node);
+            ValueType(type, node);
+            if (type.Kind != K.Tuple || type.Elements.Count != node.ChildIds.Count)
+                Unsupported(node);
+
+            var operands = new List<SafeCoreMirOperand>(node.ChildIds.Count);
+            for (int index = 0; index < node.ChildIds.Count && _current is not null; index++)
+            {
+                Step(node, depth + 1);
+                SafeCoreMirOperand? element = Expr(Child(node, index), depth + 1);
+                if (element is null) return null;
+                operands.Add(element);
+            }
+
+            return _current is null
+                ? null
+                : Emit(SafeCoreMirRvalue.Tuple(operands, type, Source(node), cancellation), type, node);
         }
 
         private SafeCoreMirOperand? Call(SafeCoreHirNode node, int depth)
@@ -542,7 +564,7 @@ public static class SafeCoreMirLowering
         private int Local(string name, SafeCoreType type, SafeCoreMirLocalKind kind, bool mutable, SafeCoreHirNode node)
         {
             Step(node, 0);
-            Scalar(type, node);
+            ValueType(type, node);
             if (_locals.Count >= options.MaximumLocalsPerFunction) Limit(node);
             int id = _locals.Count;
             _locals.Add(new(id, name, type, kind, mutable, Source(node)));
@@ -579,6 +601,23 @@ public static class SafeCoreMirLowering
                 Unsupported(node);
         }
 
+        private static void ValueType(SafeCoreType type, SafeCoreHirNode node, bool allowNever = false, int depth = 0)
+        {
+            if (depth > 128)
+                Unsupported(node);
+
+            if (type.Kind == K.Tuple)
+            {
+                if (type.Elements.Count > 1024)
+                    Unsupported(node);
+                foreach (SafeCoreType element in type.Elements)
+                    ValueType(element, node, allowNever: false, depth + 1);
+                return;
+            }
+
+            Scalar(type, node, allowNever);
+        }
+
         private SafeCoreHirNode Child(SafeCoreHirNode node, int index)
         {
             if ((uint)index >= (uint)node.ChildIds.Count) Invalid(node);
@@ -609,7 +648,7 @@ public static class SafeCoreMirLowering
 
         [DoesNotReturn]
         private static void Unsupported(SafeCoreHirNode node) => throw new LoweringException(new(UnsupportedSyntax,
-            "This construct is outside the scalar MIR profile; aggregate, reference, closure, pattern and const lowering are not yet available.", node.Span));
+            "This construct is outside the bounded-value MIR profile; arrays, references, closures, patterns and const lowering are not yet available.", node.Span));
 
         [DoesNotReturn]
         private static void Limit(SafeCoreHirNode node) => throw new LoweringException(new(LimitReached,

@@ -13,6 +13,7 @@ internal static class SafeCoreMirLoweringTests
         new("MIR lowering preserves scalar literal spelling and original HIR evidence", LiteralsAsync),
         new("MIR lowering preserves branches loops break continue and direct calls", ControlFlowAsync),
         new("MIR lowering snapshots reads before later side effects", EvaluationOrderAsync),
+        new("MIR lowering emits typed tuple aggregates", TupleAsync),
         new("MIR lowering short circuits and drops unreachable tails", DivergenceAsync),
         new("MIR lowering rejects unsupported constructs at their original spans", UnsupportedAsync),
         new("MIR lowering bounds work size nesting time and cancellation", LimitsAsync),
@@ -86,6 +87,22 @@ internal static class SafeCoreMirLoweringTests
         return Task.CompletedTask;
     }
 
+    private static Task TupleAsync()
+    {
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        SafeCoreMirProgram mir = Lower(Check("fn f() -> (i32, bool) { (1, true) }", cancellation.Token), cancellation.Token);
+        SafeCoreMirFunction function = mir.Functions.Single();
+        AssertEx.Equal(SafeCoreSemanticTypeKind.Tuple, function.ReturnType.Kind);
+        AssertEx.Equal(2, function.ReturnType.Elements.Count);
+        SafeCoreMirStatement tuple = function.Blocks[0].Statements.Single();
+        AssertEx.Equal(SafeCoreMirRvalueKind.Tuple, tuple.Value.Kind);
+        AssertEx.Equal(2, tuple.Value.Operands.Count);
+        AssertEx.Equal("1,true", string.Join(',', tuple.Value.Operands.Select(operand => operand.Value)));
+        AssertEx.True(SafeCoreMirValidation.Validate(mir).IsSuccessful,
+            "Tuple lowering must publish a valid typed MIR program.");
+        return Task.CompletedTask;
+    }
+
     private static Task DivergenceAsync()
     {
         Run("fn f() -> i32 { let mut x = 0; false && { x = 1; true }; true || { x = 2; false }; x }", 0L);
@@ -112,7 +129,6 @@ internal static class SafeCoreMirLoweringTests
             ("fn f() { let x = || 1; }", "|| 1"),
             ("fn f() -> i32 { match true { true => 1, false => 2 } }", "match true { true => 1, false => 2 }"),
             ("fn f() { let x = &1; }", "&1"),
-            ("fn f() { let x = (1, 2); }", "(1, 2)"),
             ("const X: i32 = 1; fn f() -> i32 { X }", "const X: i32 = 1;"),
             ("fn id() {} fn f() { let p = id; p(); }", "id"),
         ];

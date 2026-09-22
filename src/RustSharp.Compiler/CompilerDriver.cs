@@ -236,9 +236,16 @@ public sealed class CompilerDriver
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
+            RustSharpMetadataDocument? metadataDocument = safeCore is null
+                ? null
+                : RustSharpMetadataDocument.ForProgram(
+                    "safe-core-primitives-v1",
+                    sourceBytes.Span,
+                    safeCore.Methods);
             var generated = safeCore is not null
                 ? ClrLirAssemblyEmitter.EmitProgram(safeCore, resolvedAssemblyName, source,
-                    fullSourcePath, Path.GetFileName(pdbPath), sourceBytes, sourceMap, cancellationToken)
+                    fullSourcePath, Path.GetFileName(pdbPath), sourceBytes, sourceMap,
+                    metadataDocument, cancellationToken)
                 : IlAssemblyEmitter.Emit(
                 syntaxTree!.Root!,
                 source,

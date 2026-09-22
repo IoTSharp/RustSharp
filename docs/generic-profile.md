@@ -5,8 +5,11 @@ existing `RustType` model. The P0 `TraitSolver`, its public signatures and defau
 behavior, and the `safe-core-types-v1` check-only profile remain unchanged.
 
 The two version identifiers below describe library contracts. They are **not CLI
-profile names**. This PR neither accepts generic Rust source through the compiler
-pipeline nor emits generic executable bodies.
+profile names**. In addition, the opt-in `SafeCoreGenericHirBinding` bridge links
+parsed, name-resolved safe-core source to the generic plan for inferred type
+arguments and canonical imported callees. It is an independent semantic API: it
+does not yet perform generic body checking through the compiler pipeline or emit
+generic executable bodies.
 
 ## Structural substitution and matching
 
@@ -82,6 +85,25 @@ The output contains closed signatures and call edges. It is a reachability plan,
 not a typed generic body or generated IL, and does not itself prove executable
 AOT compatibility or Rust ownership semantics.
 
+## Source/HIR binding bridge
+
+`SafeCoreGenericHirBinding.Bind` consumes successful safe-core syntax and HIR
+evidence, discovers generic function declarations, and links call sites through
+their canonical HIR symbols (including imported aliases). Inferred type
+arguments are closed from literal, local, parameter, tuple, branch and nested
+call evidence before the bridge invokes `generic-plan-v1`. The result retains
+the source HIR, closed instances and HIR node IDs for each binding, and publishes
+no plan when evidence is missing, unsupported or truncated.
+
+This bridge accepts distinct type parameters with simple positive trait bounds.
+Lifetime, const, associated and higher-ranked arguments, turbofish syntax that
+the upstream HIR profile rejects, generic body type checking, and executable
+specialization remain explicit boundaries. Its function, call, depth, work,
+diagnostic, timeout and cancellation limits are independent of the planner's
+limits. `SafeCoreGenericHirBindingTests` covers inferred identity, imported
+aliases, nested substitution, deterministic output, missing evidence, profile
+boundaries and budget failures.
+
 ## Resource and failure contract
 
 `GenericAnalysisLimits` applies to one public operation:
@@ -119,9 +141,9 @@ regression harness:
 dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore
 ```
 
-The next P1-05 PRs must connect generic declarations and body checking to typed
-HIR, resolve trait/impl identities and crate ownership, define source diagnostics
-and a fixed differential corpus, and produce closed executable bodies through
-the later CLR LIR/AOT integration. The full P1-05 acceptance criterion remains
-open until generic functions/types emit closed AOT-reachable bodies and overlap,
-ambiguity and missing bounds fail predictably through that compiler pipeline.
+The next P1-05 PRs must add generic body type checking and specialization, resolve
+trait/impl identities and crate ownership, define source diagnostics and a fixed
+differential corpus, and produce closed executable bodies through the later CLR
+LIR/AOT integration. The full P1-05 acceptance criterion remains open until
+generic functions/types emit closed AOT-reachable bodies and overlap, ambiguity
+and missing bounds fail predictably through that compiler pipeline.

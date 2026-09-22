@@ -293,7 +293,8 @@ P1-03 对声明的配置档已 ✅ 已完成；更广泛的差分覆盖仍在计
 `rsc check` 接受源文件、文件模块及已有的有界 Cargo 包入口；类似库的输入不要求 `main`。
 `build`、`compile`、`run` 和 `publish` 会在创建输出前报告 `RSC0009`。
 [类型系统契约](docs/type-system-profile.md) 记录受支持的类型规则、诊断和限制。
-生命周期、借用/NLL、移动安全性和引用逃逸仍属于 P1-07；更丰富的可执行降低仍属于 P1-09。
+当前已有有界的移动/借用和引用逃逸所有权基础；源码/HIR/MIR 接入及完整 P1-07 门槛仍未完成。
+更丰富的可执行降低仍属于 P1-09。
 
 ```text
 dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- check samples/type-system.rs --profile safe-core-types-v1
@@ -354,12 +355,12 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 | P1-02 | ✅ 已完成 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | 第 3 版清单通过 49/49 个用例、34/34 份精确 AST 快照及 18/18 个必需类别。拒绝用例匹配诊断代码和源码文本；141/141 项回归工具覆盖取消/超时、错误恢复及非法证据。声明的语法配置已完成；尚不支持的语义/HIR 扩展显式返回 RSN1007。详见语法契约及上方本地证据。 |
 | P1-03 | ✅ 已完成 | 将 AST 降低为 HIR，并实现声明的安全核心模块、命名空间、可见性、导入、名称解析和 Cargo 包入口。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | 名称解析清单和可执行测试分别通过 25/25、190/190。HIR 保留 const 函数限定符，并确定性绑定声明和引用。分组/glob/self/匿名导入、受限可见性、源码文档、有界文件模块、原文件诊断和 PDB 映射已接入。`Cargo.toml` 已接入 `check`、`build`/`compile`、`run` 和 `publish`；已实现包元数据、确定性的本地 `path` 依赖、源码发现、循环/限制检查及对注册表依赖的明确诊断。前导 `::`、未求值属性、注册表包、Cargo feature/锁文件和宏展开仍作为后续里程碑的明确配置档边界。 |
 | P1-04 | ✅ 已完成 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98` | 单态的仅检查类型契约覆盖基础数值类型、聚合、引用、函数指针、非泛型 ADT、别名、模式/match、闭包、有界 const 求值、推断和有方向的强制转换。265/265 项回归及十六个必需类别中的 96/96 项第 2 版差分用例全部通过，失败和跳过均为零，无清理诊断。已接入文件/Cargo 检查；可执行命令在输出前以 RSC0009 拒绝。泛型/trait、MIR、所有权及可执行降低仍属于独立门槛。 |
-| P1-05 | 🚧 进行中 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 首个 PR 增加有界结构替换、trait 约束/一致性和确定性的封闭实例规划；见[泛型基础契约](docs/generic-profile.md)。完整门槛仍要求泛型源码/HIR 接入、主体特化以及 AOT 可达的代码生成。 |
-| P1-06 | 🚧 进行中 | 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 首个 PR 增加不可变类型化 MIR、有界 CFG/类型验证、确定性快照以及带源码范围的标量 HIR 降低；见[类型化 MIR 契约](docs/typed-mir-profile.md)。聚合/模式/闭包降低、所有权接入和后端消费保留为后续批次。 |
-| P1-07 | ⏳ 计划中 | 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06 | `dotnet run --project tools/RustSharp.Conformance -- --profile safe-core-borrow` | 所有已声明的借用编译通过/失败用例都与 rustc 结果匹配，且不会在 CLR 规则下静默接受被拒绝的构造。 |
-| P1-08 | ⏳ 计划中 | 实现作用域清理、确定性 `Drop`、展开/中止配置档行为和 panic 边界。 | P1-06, P1-07 | `dotnet test RustSharp.slnx -c Release --filter DropAndPanic` | 正常/提前返回/分支/panic 路径在 CoreCLR 和 AOT 上按指定顺序恰好运行一次析构函数。 |
-| P1-09 | 🚧 进行中 | 通过 CLR LIR 发出带有 Rust# 跨包元数据的安全核心程序。 | P0-07, P1-05, P1-08 | `rsc build tests/programs/safe-core/Cargo.toml`（未来完整门槛；当前基础类型命令见上文） | 基础类型多函数 IL/PDB 发射已接入。泛型/所有权降低、跨包元数据和独立消费者编译仍未完成。 |
-| P1-10 | 🚧 进行中 | 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-09 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-primitives-v1 --oracle rustc-1.98` | 初始 14 用例基准集合包含 5 个运行通过用例和 9 个编译失败用例。完整安全核心和借用/Drop 差分基准集合仍未完成。 |
+| P1-05 | 🚧 进行中 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 首个 PR 增加有界结构替换、trait 约束/一致性、确定性的封闭实例规划，以及支持推导类型参数和规范导入目标的源码/HIR 绑定桥；见[泛型基础契约](docs/generic-profile.md)。完整门槛仍要求泛型主体特化以及 AOT 可达的代码生成。 |
+| P1-06 | 🚧 进行中 | 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 首个 PR 增加不可变类型化 MIR、有界 CFG/类型验证、确定性快照、带界限的嵌套元组聚合 rvalue 以及带源码范围的 HIR 降低；见[类型化 MIR 契约](docs/typed-mir-profile.md)。数组、模式、闭包降低、所有权接入和后端消费保留为后续批次。 |
+| P1-07 | 🚧 进行中 | 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 有界的 `SafeCoreOwnershipAnalysis` 层现已验证 CFG/局部变量/作用域 arena，并覆盖 Move/Copy 局部变量、共享和可变借用、显式 `EndBorrow` NLL、移动后使用、借用冲突、拒绝通过不可变借用写入、引用逃逸、分支、有界循环、源码范围以及工作量/路径/时间/诊断限制。九个所有权测试覆盖该层：五个核心用例加四个针对非法 arena、分支清理、可变借用期间所有者写入以及嵌套再借用/作用域逃逸的加固回归。源码/HIR/MIR 接入、rustc 借用差分用例和完整再借用语义仍未完成。 |
+| P1-08 | 🚧 进行中 | 实现作用域清理、确定性 `Drop`、展开/中止配置档行为和 panic 边界。 | P1-06, P1-07 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 所有权层现已记录作用域退出、返回和展开时按声明逆序确定性清理，并区分 unwind 与 abort panic 结果；九个所有权测试覆盖正常清理、panic 策略、有界循环行为及四条加固路径。运行时 Drop 降低、CoreCLR/Native AOT 执行及完整 panic 边界仍未完成。 |
+| P1-09 | 🚧 进行中 | 通过 CLR LIR 发出带有 Rust# 跨包元数据的安全核心程序。 | P0-07, P1-05, P1-08 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | `CompilerDriver` 现将确定性的 `rustsharp-metadata-v1` JSON 通过 `AssemblyMetadataAttribute` 嵌入，携带配置档、源码 SHA-256 和函数签名；其 schema/发射器也支持泛型实例、trait 名称和可选 MIR 快照。PE 读取器及编译器集成测试验证规范顺序和逐字节往返。泛型主体特化、所有权感知降低、独立跨包消费者编译以及 CoreCLR/Native AOT 端到端门槛仍未完成。 |
+| P1-10 | 🚧 进行中 | 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-09 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-regression-v1 --oracle rustc-1.98 --report artifacts/p1/safe-core-regression-v1.json` | 有界的第 1 版清单和运行器强制八个用例的分母，覆盖四类：1 个编译通过、2 个编译失败、2 个运行通过和 3 个差分。它验证夹具文件名、预期输出契约、每例 300 秒/总计 900 秒限制以及进程/清理证据；两个清单测试覆盖该契约。通过验收的可执行报告以及更完整的安全核心、借用/Drop 和 AOT 差分分母仍未完成。 |
 
 当版本化安全核心配置档在 CoreCLR 以及 Windows/Linux x64 Native AOT 上通过，且该
 配置档内的借用/Drop 行为不存在未解决的语义差异时，P1 才能退出。
@@ -370,10 +371,9 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 评审和合并时先处理泛型基础 PR，再处理类型化 MIR 基础 PR。每个 PR 都列明
 准确的已实现子集、回归证据及里程碑剩余验收条件。
 
-随后 P1-05 继续接入源码/HIR 泛型绑定和主体特化，P1-06 继续实现聚合、模式和
-闭包降低。P1-07 在类型化 MIR 前置条件可用后开始，P1-08 在移动/借用门槛之后
-推进。P1-09 汇合泛型特化和所有权感知降低，之后由 P1-10 闭合完整差分分母。
-基础 PR 完成不等于整个里程碑完成。
+随后 P1-05 继续实现泛型主体特化，P1-06 继续实现数组、模式和闭包降低。P1-07 现已有有界所有权基础，后续应推进类型化 MIR/源码接入和借用差分语料；
+P1-08 使用该基础实现运行时清理和 panic 降低。P1-09 汇合泛型特化和所有权感知降低，
+之后由 P1-10 闭合完整差分分母。基础 PR 完成不等于整个里程碑完成。
 
 ## P2：交付核心库和可用工具链
 
@@ -524,6 +524,8 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 6. 当范围发生变化时，先更新兼容性配置档和 ADR，再更新实现与本路线图。
 
 P1-01（无损词法分析）、P1-02（安全核心语法）、P1-03（HIR 与名称解析）和 P1-04（类型）为 ✅ 已完成。
-其余处于 🚧 进行中的门槛是 P1-09（IL 发射）和 P1-10（差分回归）。
-P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为
+P1-05 和 P1-06 提供 🚧 进行中的泛型/trait 与类型化 MIR 基础。P1-07 和 P1-08
+现已有有界的所有权、清理、Drop 和 panic 分析实现；P1-09 已接入确定性的 Rust# PE
+元数据嵌入，P1-10 已具备版本化回归运行器；这四项仍为 🚧 进行中，因为源码接入、运行时/AOT
+以及完整差分退出门槛尚未满足。P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为
 ✅ 已完成；后续语言配置档声明仍受完整 HIR/MIR 和差异测试套件的门槛约束。

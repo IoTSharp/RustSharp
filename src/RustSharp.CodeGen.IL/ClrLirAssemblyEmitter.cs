@@ -41,10 +41,14 @@ public static class ClrLirAssemblyEmitter
     /// The currently supported call-site names are <c>Console.WriteLine</c>
     /// and <c>System.Console.WriteLine</c>.
     /// </summary>
-    public static GeneratedAssembly Emit(ClrLirMethod method, string assemblyName)
+    public static GeneratedAssembly Emit(
+        ClrLirMethod method,
+        string assemblyName,
+        RustSharpMetadataDocument? metadataDocument = null)
     {
         ArgumentNullException.ThrowIfNull(method);
-        return EmitCore([method], method.Name, assemblyName, null, null, null, default);
+        return EmitCore([method], method.Name, assemblyName, null, null, null, default,
+            metadataDocument: metadataDocument);
     }
 
     public static GeneratedAssembly EmitProgram(
@@ -55,12 +59,25 @@ public static class ClrLirAssemblyEmitter
         string pdbFileName,
         ReadOnlyMemory<byte> sourceBytes = default,
         SafeCoreSourceMap? sourceMap = null,
+        CancellationToken cancellationToken = default) =>
+        EmitProgram(program, assemblyName, sourceText, sourcePath, pdbFileName, sourceBytes, sourceMap,
+            metadataDocument: null, cancellationToken: cancellationToken);
+
+    public static GeneratedAssembly EmitProgram(
+        SafeCoreClrResult program,
+        string assemblyName,
+        string sourceText,
+        string sourcePath,
+        string pdbFileName,
+        ReadOnlyMemory<byte> sourceBytes,
+        SafeCoreSourceMap? sourceMap,
+        RustSharpMetadataDocument? metadataDocument,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(program);
         if (!program.IsSuccessful) throw new ArgumentException("A successful lowered program is required.", nameof(program));
         return EmitCore(program.Methods, "Main", assemblyName, sourceText, sourcePath,
-            pdbFileName, sourceBytes, program.MethodSpans, sourceMap, cancellationToken);
+            pdbFileName, sourceBytes, program.MethodSpans, sourceMap, metadataDocument, cancellationToken);
     }
 
     private static GeneratedAssembly EmitCore(
@@ -73,6 +90,7 @@ public static class ClrLirAssemblyEmitter
         ReadOnlyMemory<byte> sourceBytes,
         IReadOnlyList<TextSpan>? methodSpans = null,
         SafeCoreSourceMap? sourceMap = null,
+        RustSharpMetadataDocument? metadataDocument = null,
         CancellationToken cancellationToken = default)
     {
         var sourceMapClock = Stopwatch.StartNew();
@@ -110,6 +128,14 @@ public static class ClrLirAssemblyEmitter
         foreach (ClrLirMethod method in methods)
             identity.AppendData(CreateModuleVersionId(assemblyName, method).ToByteArray());
         identity.AppendData(sourceBytes.Span);
+        if (metadataDocument is not null)
+        {
+            byte[] metadataBytes = Encoding.UTF8.GetBytes(metadataDocument.Json);
+            Span<byte> encodedLength = stackalloc byte[sizeof(int)];
+            BinaryPrimitives.WriteInt32LittleEndian(encodedLength, metadataBytes.Length);
+            identity.AppendData(encodedLength);
+            identity.AppendData(metadataBytes);
+        }
         if (sourceMap is not null)
         {
             Span<byte> encodedLength = stackalloc byte[sizeof(int)];
@@ -136,7 +162,7 @@ public static class ClrLirAssemblyEmitter
             mvid: metadata.GetOrAddGuid(moduleVersionId),
             encId: default,
             encBaseId: default);
-        metadata.AddAssembly(
+        AssemblyDefinitionHandle assemblyDefinition = metadata.AddAssembly(
             name: metadata.GetOrAddString(assemblyName),
             version: new Version(1, 0, 0, 0),
             culture: default,
@@ -153,6 +179,10 @@ public static class ClrLirAssemblyEmitter
             metadata,
             "System.Console",
             runtimePublicKeyToken);
+        if (metadataDocument is not null)
+        {
+            AddRustSharpMetadataAttribute(metadata, assemblyDefinition, systemRuntime, metadataDocument.Json);
+        }
         TypeReferenceHandle objectType = metadata.AddTypeReference(
             resolutionScope: systemRuntime,
             @namespace: metadata.GetOrAddString("System"),
@@ -267,7 +297,7 @@ public static class ClrLirAssemblyEmitter
         var peImage = new BlobBuilder();
         peBuilder.Serialize(peImage);
 
-        return new GeneratedAssembly(peImage.ToArray(), pdbBytes, RuntimeConfig);
+        return new GeneratedAssembly(peImage.ToArray(), pdbBytes, RuntimeConfig, metadataDocument?.Json);
 
         void CheckSourceMapBudget()
         {
@@ -275,6 +305,38 @@ public static class ClrLirAssemblyEmitter
             if (sourceMapClock.Elapsed > TimeSpan.FromSeconds(10))
                 throw new TimeoutException("CLR source-map emission exceeded its time limit.");
         }
+    }
+
+    private static void AddRustSharpMetadataAttribute(
+        MetadataBuilder metadata,
+        AssemblyDefinitionHandle assembly,
+        AssemblyReferenceHandle runtime,
+        string json)
+    {
+        TypeReferenceHandle attributeType = metadata.AddTypeReference(
+            resolutionScope: runtime,
+            @namespace: metadata.GetOrAddString("System.Reflection"),
+            name: metadata.GetOrAddString("AssemblyMetadataAttribute"));
+        var signature = new BlobBuilder();
+        new BlobEncoder(signature)
+            .MethodSignature(isInstanceMethod: true)
+            .Parameters(
+                parameterCount: 2,
+                returnType => returnType.Void(),
+                parameters =>
+                {
+                    parameters.AddParameter().Type().String();
+                    parameters.AddParameter().Type().String();
+                });
+        MemberReferenceHandle constructor = metadata.AddMemberReference(
+            attributeType,
+            metadata.GetOrAddString(".ctor"),
+            metadata.GetOrAddBlob(signature));
+        var value = new BlobBuilder();
+        value.WriteUInt16(1);
+        value.WriteSerializedString(RustSharpMetadataReader.AttributeKey);
+        value.WriteSerializedString(json);
+        metadata.AddCustomAttribute(assembly, constructor, metadata.GetOrAddBlob(value));
     }
 
     private static EntityHandle ResolveCall(

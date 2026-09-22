@@ -1,0 +1,69 @@
+{
+  "profile": "safe-core-regression-v1",
+  "version": 1,
+  "rustVersion": "1.98.0",
+  "edition": "2024",
+  "compilerProfile": "safe-core-primitives-v1",
+  "denominator": 8,
+  "limits": {
+    "maximumCases": 64,
+    "maximumManifestBytes": 4194304,
+    "maximumFixtureBytes": 1048576,
+    "caseTimeoutSeconds": 300,
+    "deadlineSeconds": 900
+  },
+  "coverage": {
+    "compile-pass": 1,
+    "compile-fail": 2,
+    "run-pass": 2,
+    "differential": 3
+  },
+  "cases": [
+    {
+      "id": "compile-pass-baseline",
+      "file": "regression-compile-pass.rs",
+      "kind": "compile-pass"
+    },
+    {
+      "id": "compile-fail-immutable",
+      "file": "primitives-immutable.rs",
+      "kind": "compile-fail",
+      "diagnosticContains": "immutable"
+    },
+    {
+      "id": "compile-fail-type",
+      "file": "primitives-type-error.rs",
+      "kind": "compile-fail"
+    },
+    {
+      "id": "run-pass-functions",
+      "file": "primitives-functions.rs",
+      "kind": "run-pass",
+      "expectedOutput": "42\ntrue\n"
+    },
+    {
+      "id": "run-pass-returns",
+      "file": "primitives-returns.rs",
+      "kind": "run-pass",
+      "expectedOutput": "left\n11\nleft\n7\n2\n"
+    },
+    {
+      "id": "differential-short-circuit",
+      "file": "primitives-short-circuit.rs",
+      "kind": "differential",
+      "expectedOutput": "false\ntrue\nprobe\ntrue\n"
+    },
+    {
+      "id": "differential-integers",
+      "file": "primitives-integers.rs",
+      "kind": "differential",
+      "expectedOutput": "37\n-2147483648\n-1\ntrue\n"
+    },
+    {
+      "id": "differential-shadowing",
+      "file": "primitives-shadowing.rs",
+      "kind": "differential",
+      "expectedOutput": "true\n8\n21\n"
+    }
+  ]
+}
