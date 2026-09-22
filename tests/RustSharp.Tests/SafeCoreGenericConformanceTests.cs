@@ -56,8 +56,10 @@ internal static class SafeCoreGenericConformanceTests
         foreach (SafeCoreGenericProfileRunner.Fixture invalid in new[]
         {
             first with { Id = "../escaped" },
+            first with { Id = null! },
             first with { Id = catalog[1].Id },
             first with { Category = "unknown" },
+            first with { Category = null! },
             first with { Category = "bounds" },
             first with { Source = new string(' ', 65_537) },
             first with { ExpectedDiagnosticCode = "RSG1004" },
@@ -72,6 +74,7 @@ internal static class SafeCoreGenericConformanceTests
         SafeCoreGenericProfileRunner.Fixture expectedFailure = catalog[failure];
         foreach (SafeCoreGenericProfileRunner.Fixture invalid in new[]
         {
+            expectedFailure with { ExpectedDiagnosticText = null },
             expectedFailure with { ExpectedDiagnosticCode = "RSG0002" },
             expectedFailure with { ExpectedDiagnosticText = "not in source" },
             expectedFailure with { ExpectedDiagnosticStart = int.MaxValue },

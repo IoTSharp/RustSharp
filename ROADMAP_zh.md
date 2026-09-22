@@ -337,12 +337,16 @@ dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-rest
 dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run tests/workspaces/generics/Cargo.toml --profile safe-core-generics-v1
 ```
 
-2026-09-19 的本地可执行验证为 ✅ 已完成：Release 构建零警告/错误，350 项回归和
-32 项固定用例全部通过（九项编译通过、十项编译失败、五项配置档边界拒绝和八项运行
+2026-09-19 的本地可执行验证为 ✅ 已完成：Release 构建零警告/错误，记录的配置档门槛
+覆盖 350 项回归和 32 项固定用例（九项编译通过、十项编译失败、五项配置档边界拒绝和八项运行
 通过），失败和跳过均为零，无超时或清理诊断。独立源码及本地 Cargo 示例均通过
 CoreCLR、ILVerify 和实际 Windows x64 Native AOT 发布/运行，输出 `42` 和 `true`，
 退出码为零。环境为 Windows x64、.NET SDK 10.0.400/runtime 10.0.11 和
 `rustc 1.98.0 (88d9e12ae 2026-08-18)`。
+
+P1-05 合并后，可执行测试工具当前注册并通过 377/377 项测试。2026-09-22 的补充运行
+使用本机已安装的 .NET SDK 10.0.401，通过显式 MSBuild 完成（本机没有 10.0.400）；
+该结果是补充验证，不替代上面记录的 10.0.400 Native AOT 证据。
 
 证据为 `artifacts/p1-05/tests-release.log`、
 `artifacts/p1-05/safe-core-generics-v1.json`、
@@ -393,7 +397,7 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 | P1-02 | ✅ 已完成 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | 第 3 版清单通过 49/49 个用例、34/34 份精确 AST 快照及 18/18 个必需类别。拒绝用例匹配诊断代码和源码文本；141/141 项回归工具覆盖取消/超时、错误恢复及非法证据。声明的语法配置已完成；尚不支持的语义/HIR 扩展显式返回 RSN1007。详见语法契约及上方本地证据。 |
 | P1-03 | ✅ 已完成 | 将 AST 降低为 HIR，并实现声明的安全核心模块、命名空间、可见性、导入、名称解析和 Cargo 包入口。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | 名称解析清单和可执行测试分别通过 25/25、190/190。HIR 保留 const 函数限定符，并确定性绑定声明和引用。分组/glob/self/匿名导入、受限可见性、源码文档、有界文件模块、原文件诊断和 PDB 映射已接入。`Cargo.toml` 已接入 `check`、`build`/`compile`、`run` 和 `publish`；已实现包元数据、确定性的本地 `path` 依赖、源码发现、循环/限制检查及对注册表依赖的明确诊断。前导 `::`、未求值属性、注册表包、Cargo feature/锁文件和宏展开仍作为后续里程碑的明确配置档边界。 |
 | P1-04 | ✅ 已完成 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98` | 单态的仅检查类型契约覆盖基础数值类型、聚合、引用、函数指针、非泛型 ADT、别名、模式/match、闭包、有界 const 求值、推断和有方向的强制转换。265/265 项回归及十六个必需类别中的 96/96 项第 2 版差分用例全部通过，失败和跳过均为零，无清理诊断。已接入文件/Cargo 检查；可执行命令在输出前以 RSC0009 拒绝。泛型/trait、MIR、所有权及可执行降低仍属于独立门槛。 |
-| P1-05 | ✅ 已完成 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-generics-v1 --oracle rustc-1.98` | 可执行泛型配置档检查刚性 HIR 主体、正向标记 trait 约束和一致性，特化可达主体及聚合布局，并经 CLR LIR 发射。有界包图保留泛型标识/定义并实施孤儿规则子集。350 项回归和 32 项固定用例全部通过，其中包括八项运行比较；独立源码与本地 Cargo 示例均通过 ILVerify 和 Windows Native AOT。见[泛型契约](docs/generic-profile.md)。 |
+| P1-05 | ✅ 已完成 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-generics-v1 --oracle rustc-1.98` | 可执行泛型配置档检查刚性 HIR 主体、正向标记 trait 约束和一致性，特化可达主体及聚合布局，并经 CLR LIR 发射。有界包图保留泛型标识/定义并实施孤儿规则子集。记录的配置档门槛通过 350 项回归和 32 项固定用例，其中包括八项运行比较；合并后的可执行测试工具当前通过 377/377 项测试。独立源码与本地 Cargo 示例均通过 ILVerify 和 Windows Native AOT。见[泛型契约](docs/generic-profile.md)。 |
 | P1-06 | 🚧 进行中 | 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 首个 PR 增加不可变类型化 MIR、有界 CFG/类型验证、确定性快照、带界限的嵌套元组聚合 rvalue 以及带源码范围的 HIR 降低；见[类型化 MIR 契约](docs/typed-mir-profile.md)。数组、模式、闭包降低、所有权接入和后端消费保留为后续批次。 |
 | P1-07 | 🚧 进行中 | 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 有界的 `SafeCoreOwnershipAnalysis` 层现已验证 CFG/局部变量/作用域 arena，并覆盖 Move/Copy 局部变量、共享和可变借用、显式 `EndBorrow` NLL、移动后使用、借用冲突、拒绝通过不可变借用写入、引用逃逸、分支、有界循环、源码范围以及工作量/路径/时间/诊断限制。九个所有权测试覆盖该层：五个核心用例加四个针对非法 arena、分支清理、可变借用期间所有者写入以及嵌套再借用/作用域逃逸的加固回归。源码/HIR/MIR 接入、rustc 借用差分用例和完整再借用语义仍未完成。 |
 | P1-08 | 🚧 进行中 | 实现作用域清理、确定性 `Drop`、展开/中止配置档行为和 panic 边界。 | P1-06, P1-07 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 所有权层现已记录作用域退出、返回和展开时按声明逆序确定性清理，并区分 unwind 与 abort panic 结果；九个所有权测试覆盖正常清理、panic 策略、有界循环行为及四条加固路径。运行时 Drop 降低、CoreCLR/Native AOT 执行及完整 panic 边界仍未完成。 |

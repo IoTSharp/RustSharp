@@ -67,46 +67,57 @@ internal static class SafeCoreGenericProfileRunner
         var clock = Stopwatch.StartNew();
         string manifestPath = Path.Combine(repositoryRoot, "tools", "RustSharp.Conformance", "manifests", ProfileName + ".json");
         byte[] bytes = ReadBounded(manifestPath, 262_144, cancellationToken);
-        using JsonDocument document = JsonDocument.Parse(bytes, new() { MaxDepth = 16 });
-        JsonElement root = document.RootElement;
-        Properties(root, ["schemaVersion", "profile", "catalogVersion", "rustVersion", "edition", "denominator", "cases"]);
-        if (root.GetProperty("schemaVersion").GetInt32() != 2 || root.GetProperty("profile").GetString() != ProfileName ||
-            root.GetProperty("catalogVersion").GetInt32() != CatalogVersion || root.GetProperty("rustVersion").GetString() != "1.98.0" ||
-            root.GetProperty("edition").GetString() != "2024" || root.GetProperty("denominator").GetInt32() != MaximumCases)
-            throw new ArgumentException("The generic manifest version, baseline or denominator is invalid.");
-        JsonElement entries = root.GetProperty("cases");
-        if (entries.ValueKind != JsonValueKind.Array || entries.GetArrayLength() != MaximumCases)
-            throw new ArgumentException("The generic manifest must contain all 32 fixed fixtures.");
-        var fixtures = new List<Fixture>(MaximumCases);
-        string fixtureRoot = Path.Combine(repositoryRoot, "tools", "RustSharp.Conformance", "fixtures", "generics");
-        foreach (JsonElement entry in entries.EnumerateArray())
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            using JsonDocument document = JsonDocument.Parse(bytes, new() { MaxDepth = 16 });
+            JsonElement root = document.RootElement;
+            Properties(root,
+                ["schemaVersion", "profile", "catalogVersion", "rustVersion", "edition", "denominator", "cases"],
+                ["schemaVersion", "profile", "catalogVersion", "rustVersion", "edition", "denominator", "cases"]);
+            if (root.GetProperty("schemaVersion").GetInt32() != 2 || root.GetProperty("profile").GetString() != ProfileName ||
+                root.GetProperty("catalogVersion").GetInt32() != CatalogVersion || root.GetProperty("rustVersion").GetString() != "1.98.0" ||
+                root.GetProperty("edition").GetString() != "2024" || root.GetProperty("denominator").GetInt32() != MaximumCases)
+                throw new ArgumentException("The generic manifest version, baseline or denominator is invalid.");
+            JsonElement entries = root.GetProperty("cases");
+            if (entries.ValueKind != JsonValueKind.Array || entries.GetArrayLength() != MaximumCases)
+                throw new ArgumentException("The generic manifest must contain all 32 fixed fixtures.");
+            var fixtures = new List<Fixture>(MaximumCases);
+            string fixtureRoot = Path.Combine(repositoryRoot, "tools", "RustSharp.Conformance", "fixtures", "generics");
+            foreach (JsonElement entry in entries.EnumerateArray())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                    throw new TimeoutException("Generic catalog loading exceeded five seconds.");
+                Properties(entry,
+                    ["id", "category", "path", "expectedSuccess", "expectedRustcSuccess",
+                        "expectedDiagnosticCode", "expectedDiagnosticText", "expectedDiagnosticStart", "expectedStandardOutput"],
+                    ["id", "category", "path", "expectedSuccess", "expectedRustcSuccess"]);
+                string id = entry.GetProperty("id").GetString() ?? string.Empty;
+                if (id.Length is < 1 or > 96 || !id.All(static c => c is >= 'a' and <= 'z' || char.IsAsciiDigit(c) || c == '-'))
+                    throw new ArgumentException("Generic fixture IDs must be bounded safe file names.");
+                if (entry.GetProperty("path").GetString() != id + ".rs")
+                    throw new ArgumentException("Generic fixture paths must equal their fixed ID plus .rs.");
+                string source = StrictUtf8.GetString(ReadBounded(Path.Combine(fixtureRoot, id + ".rs"),
+                    MaximumFixtureSourceLength, cancellationToken));
+                fixtures.Add(new(id, source, entry.GetProperty("expectedSuccess").GetBoolean(),
+                    entry.TryGetProperty("expectedDiagnosticCode", out var code) ? code.GetString() : null,
+                    entry.TryGetProperty("expectedDiagnosticText", out var text) ? text.GetString() : null)
+                {
+                    Category = entry.GetProperty("category").GetString() ?? string.Empty,
+                    ExpectedRustcSuccess = entry.GetProperty("expectedRustcSuccess").GetBoolean(),
+                    ExpectedDiagnosticStart = entry.TryGetProperty("expectedDiagnosticStart", out var start) ? start.GetInt32() : null,
+                    ExpectedStandardOutput = entry.TryGetProperty("expectedStandardOutput", out var stdout) ? stdout.GetString() : null,
+                });
+            }
             if (clock.Elapsed > TimeSpan.FromSeconds(5))
                 throw new TimeoutException("Generic catalog loading exceeded five seconds.");
-            Properties(entry, ["id", "category", "path", "expectedSuccess", "expectedRustcSuccess",
-                "expectedDiagnosticCode", "expectedDiagnosticText", "expectedDiagnosticStart", "expectedStandardOutput"]);
-            string id = entry.GetProperty("id").GetString() ?? string.Empty;
-            if (id.Length is < 1 or > 96 || !id.All(static c => c is >= 'a' and <= 'z' || char.IsAsciiDigit(c) || c == '-'))
-                throw new ArgumentException("Generic fixture IDs must be bounded safe file names.");
-            if (entry.GetProperty("path").GetString() != id + ".rs")
-                throw new ArgumentException("Generic fixture paths must equal their fixed ID plus .rs.");
-            string source = StrictUtf8.GetString(ReadBounded(Path.Combine(fixtureRoot, id + ".rs"),
-                MaximumFixtureSourceLength, cancellationToken));
-            fixtures.Add(new(id, source, entry.GetProperty("expectedSuccess").GetBoolean(),
-                entry.TryGetProperty("expectedDiagnosticCode", out var code) ? code.GetString() : null,
-                entry.TryGetProperty("expectedDiagnosticText", out var text) ? text.GetString() : null)
-            {
-                Category = entry.GetProperty("category").GetString() ?? string.Empty,
-                ExpectedRustcSuccess = entry.GetProperty("expectedRustcSuccess").GetBoolean(),
-                ExpectedDiagnosticStart = entry.TryGetProperty("expectedDiagnosticStart", out var start) ? start.GetInt32() : null,
-                ExpectedStandardOutput = entry.TryGetProperty("expectedStandardOutput", out var stdout) ? stdout.GetString() : null,
-            });
+            ValidateCatalog(fixtures, cancellationToken);
+            return new(fixtures.AsReadOnly(), Convert.ToHexString(SHA256.HashData(bytes)));
         }
-        if (clock.Elapsed > TimeSpan.FromSeconds(5))
-            throw new TimeoutException("Generic catalog loading exceeded five seconds.");
-        ValidateCatalog(fixtures, cancellationToken);
-        return new(fixtures.AsReadOnly(), Convert.ToHexString(SHA256.HashData(bytes)));
+        catch (Exception exception) when (exception is JsonException or InvalidOperationException or KeyNotFoundException or FormatException or OverflowException)
+        {
+            throw new ArgumentException("The generic manifest contains invalid JSON or property types.", exception);
+        }
     }
 
     private static byte[] ReadBounded(string path, int maximumBytes, CancellationToken cancellationToken)
@@ -130,13 +141,16 @@ internal static class SafeCoreGenericProfileRunner
         return bytes;
     }
 
-    private static void Properties(JsonElement value, string[] allowed)
+    private static void Properties(JsonElement value, string[] allowed, string[] required)
     {
         if (value.ValueKind != JsonValueKind.Object) throw new ArgumentException("Generic evidence requires JSON objects.");
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (JsonProperty property in value.EnumerateObject())
             if (!allowed.Contains(property.Name, StringComparer.Ordinal) || !seen.Add(property.Name))
                 throw new ArgumentException("Generic evidence contains an unknown or duplicate JSON property.");
+        foreach (string property in required)
+            if (!seen.Contains(property))
+                throw new ArgumentException($"Generic evidence is missing required property '{property}'.");
     }
 
     internal static void ValidateCatalog(IReadOnlyList<Fixture> catalog, CancellationToken cancellationToken = default)
@@ -148,7 +162,8 @@ internal static class SafeCoreGenericProfileRunner
         foreach (Fixture fixture in catalog)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (fixture is null || !ids.Add(fixture.Id) ||
+            if (fixture is null || fixture.Id is null || fixture.Category is null ||
+                !ids.Add(fixture.Id) ||
                 !RequiredCategoryCases.TryGetValue(fixture.Category, out string[]? required) ||
                 !required.Contains(fixture.Id, StringComparer.Ordinal))
                 throw new ArgumentException("A generic fixture is duplicated or has an invalid ID/category.", nameof(catalog));
@@ -168,10 +183,14 @@ internal static class SafeCoreGenericProfileRunner
                 throw new ArgumentException("Only execution fixtures require bounded LF-normalized stdout.", nameof(catalog));
             if ((fixture.Category == "boundaries") != (!fixture.ExpectedSuccess && fixture.ExpectedRustcSuccess))
                 throw new ArgumentException("Only declared boundary cases may intentionally differ from rustc acceptance.", nameof(catalog));
-            if (fixture.ExpectedDiagnosticStart is int start && (fixture.ExpectedDiagnosticText!.Length == 0 ||
-                start < 0 || start > fixture.Source.Length - fixture.ExpectedDiagnosticText.Length ||
-                fixture.Source.Substring(start, fixture.ExpectedDiagnosticText.Length) != fixture.ExpectedDiagnosticText))
-                throw new ArgumentException("A generic diagnostic expectation must identify exact source text.", nameof(catalog));
+            if (fixture.ExpectedDiagnosticStart is int start)
+            {
+                string? expectedText = fixture.ExpectedDiagnosticText;
+                if (expectedText is null || expectedText.Length == 0 || start < 0 ||
+                    start > fixture.Source.Length - expectedText.Length ||
+                    fixture.Source.Substring(start, expectedText.Length) != expectedText)
+                    throw new ArgumentException("A generic diagnostic expectation must identify exact source text.", nameof(catalog));
+            }
         }
         foreach ((string category, string[] required) in RequiredCategoryCases)
             foreach (string id in required)
@@ -424,7 +443,10 @@ internal static class SafeCoreGenericProfileRunner
     private static async Task<string?> CleanupAsync(string directory, string parent)
     {
         string resolved = Path.GetFullPath(directory);
-        if (!string.Equals(Path.GetDirectoryName(resolved), Path.GetFullPath(parent), StringComparison.Ordinal) ||
+        StringComparison pathComparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        if (!string.Equals(Path.GetDirectoryName(resolved), Path.GetFullPath(parent), pathComparison) ||
             !Path.GetFileName(resolved).StartsWith($".run-generics-{Environment.ProcessId}-", StringComparison.Ordinal))
             return "Cleanup ownership verification failed.";
         var clock = Stopwatch.StartNew();

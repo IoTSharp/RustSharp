@@ -77,8 +77,10 @@ P1-05 对已声明的有界契约为 ✅ 已完成。`safe-core-generics-v1` 通
 特化可达主体和聚合布局，并支持 `check`、`build`、`compile`、`run` 和 `publish`。
 [泛型契约](docs/generic-profile.md) 定义了有界标记 trait 子集和固定的 32 用例 rustc
 语料，其中包括八项执行比较和五项明确的配置档边界拒绝。
-本地门槛通过 350/350 项回归、32/32 项固定用例，以及独立源码和本地 Cargo 包示例
-各自的 ILVerify 与 Windows x64 Native AOT。
+2026-09-19 记录的配置档门槛通过 350/350 项回归和 32/32 项固定用例，独立源码和本地
+Cargo 包示例也分别通过 ILVerify 与 Windows x64 Native AOT。P1-05 合并后，可执行
+测试工具当前注册并通过 377/377 项测试；这次补充运行使用已安装的 10.0.401 SDK
+通过显式 MSBuild 完成，不替代已记录的 10.0.400 Native AOT 证据。
 
 使用以下命令运行泛型示例，输出 `42` 和 `true`：
 

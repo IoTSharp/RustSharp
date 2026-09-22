@@ -81,8 +81,12 @@ name-bound HIR, specializes reachable bodies and aggregate layouts, and supports
 [generic contract](docs/generic-profile.md) defines the bounded marker-trait
 subset and fixed 32-case rustc corpus, including eight execution comparisons
 and five explicit profile-boundary rejections.
-The local gate passes 350/350 regressions, 32/32 fixed cases and ILVerify plus
-Windows x64 Native AOT for both standalone and local Cargo package samples.
+The recorded 2026-09-19 profile gate passes 350/350 regressions and 32/32 fixed
+cases, with ILVerify plus Windows x64 Native AOT for both standalone and local
+Cargo package samples. After the P1-05 merge, the executable harness registers
+and passes 377/377 tests; this supplemental run used the installed 10.0.401 SDK
+through explicit MSBuild and does not replace the recorded 10.0.400 AOT
+evidence.
 
 Run the generic sample, which prints `42` and `true`, with:
 

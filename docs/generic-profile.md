@@ -247,7 +247,7 @@ resolution itself remains in the compiler's bounded manifest loader.
 Local executable validation on 2026-09-19 is ✅ Complete on Windows x64,
 .NET SDK 10.0.400/runtime 10.0.11 and
 `rustc 1.98.0 (88d9e12ae 2026-08-18)`. The Release build has zero warnings/errors;
-all 350 regressions and 32 fixed cases pass: nine compile-pass, ten compile-fail,
+the recorded profile gate covers 350 regressions and 32 fixed cases: nine compile-pass, ten compile-fail,
 five profile-reject and eight run-pass. The report records zero failures/skips,
 no deadline/cancellation and no cleanup diagnostic. Its manifest SHA-256 is
 `234D87F9660F96FBD5DED1F8AA9607734D22101567459802879E261858D08220`.
@@ -265,6 +265,11 @@ The evidence paths are:
 | Package ILVerify | `artifacts/p1-05/generic-packages.ilverify.json` |
 | Standalone Native AOT | `artifacts/p1-05/windows-x64-aot.json` |
 | Package Native AOT | `artifacts/p1-05/windows-x64-packages-aot.json` |
+
+After the P1-05 merge, the executable test harness registers and passes 377/377
+tests. A supplemental 2026-09-22 run used the installed .NET SDK 10.0.401 via
+explicit MSBuild because 10.0.400 was unavailable on that host; it supplements,
+but does not replace, the recorded 10.0.400 Native AOT evidence.
 
 Windows/Linux workflows run the fixed corpus and both ILVerify gates, verify
 current manifest/source hashes, and archive evidence; Windows also publishes
