@@ -211,6 +211,7 @@ internal static class Program
               --profile vertical-slice-v1         (default: literal println!)
               --profile safe-core-primitives-v1   (i32/bool functions, locals, branches)
               --profile safe-core-types-v1        (check only: aggregates, references, inference)
+              --profile safe-core-generics-v1     (closed generic functions, value types and marker traits)
 
             safe-core-types-v1 accepts check; build, compile, run and publish report RSC0009.
             """);

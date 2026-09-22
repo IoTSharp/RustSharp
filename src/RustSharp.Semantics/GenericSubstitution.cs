@@ -129,6 +129,18 @@ internal sealed class GenericBudget
 
     public GenericAnalysisLimits Limits { get; }
 
+    internal TimeSpan RemainingTime
+    {
+        get
+        {
+            Step();
+            TimeSpan remaining = Limits.Timeout - Stopwatch.GetElapsedTime(started);
+            if (remaining <= TimeSpan.Zero)
+                throw new GenericFailure(GenericAnalysisStatus.LimitExceeded, "Generic analysis exceeded its elapsed-time budget.");
+            return remaining;
+        }
+    }
+
     public void Step(int depth = 0)
     {
         cancellationToken.ThrowIfCancellationRequested();

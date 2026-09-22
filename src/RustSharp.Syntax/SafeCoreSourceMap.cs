@@ -74,6 +74,8 @@ public sealed class SafeCoreSourceMap
     }
 
     public IReadOnlyList<SafeCoreSourceDocument> Documents { get; }
+    /// <summary>Immutable regions for composing module and package source maps.</summary>
+    public IReadOnlyList<SafeCoreSourceMapSegment> Segments => Array.AsReadOnly(_segments);
 
     private static void CheckConstructionBudget(long startedAt, CancellationToken cancellationToken)
     {

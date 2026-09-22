@@ -27,6 +27,7 @@ RustSharp is implemented in C# on .NET 10 and targets a deliberately scoped Rust
 | `vertical-slice-v1` | The default profile: `fn main()` with literal `println!` statements. |
 | `safe-core-primitives-v1` | An opt-in profile with bounded file modules and local `path` packages, nongeneric functions, `i32` / `bool`, initialized mutable locals, `if` / `else`, returns, checked arithmetic, comparisons, boolean operators, and `println!`. |
 | `safe-core-types-v1` | An opt-in, check-only type profile: primitive numeric types, tuples, arrays, slices, references, function pointers, nongeneric ADTs, aliases, patterns/match, closures, bounded const evaluation, inference and directional coercions. It does not check borrowing or emit executable output. |
+| `safe-core-generics-v1` | An opt-in executable generic profile: rigid type-parameter body checking, explicit/inferred calls, marker-trait bounds and impl coherence, tuples and generic structs, and closed body specialization through CLR LIR to IL and Native AOT. |
 | Output | Direct ECMA-335 and Portable PDB emission, CoreCLR execution, and Native AOT publishing for covered profiles. |
 
 RustSharp is not a drop-in replacement for `rustc`. Full Rust compatibility, standard-library parity, general Cargo registry resolution, macro expansion, ownership and borrow checking, Rust ABI compatibility, and arbitrary `unsafe` code are not current commitments. See the [compatibility contract](docs/compatibility.md) for exact boundaries.
@@ -73,6 +74,27 @@ for its scope and the separate lifetime/borrow-checking boundary.
 P1-04 is ✅ Complete for this declared monomorphic type contract. The recorded
 Windows x64 gate passes 265/265 regressions and 96/96 rustc differential cases
 across sixteen required categories, with zero failures or skips.
+
+P1-05 is ✅ Complete for its declared bounded contract. `safe-core-generics-v1` checks generic bodies through
+name-bound HIR, specializes reachable bodies and aggregate layouts, and supports
+`check`, `build`, `compile`, `run` and `publish`. The
+[generic contract](docs/generic-profile.md) defines the bounded marker-trait
+subset and fixed 32-case rustc corpus, including eight execution comparisons
+and five explicit profile-boundary rejections.
+The local gate passes 350/350 regressions, 32/32 fixed cases and ILVerify plus
+Windows x64 Native AOT for both standalone and local Cargo package samples.
+
+Run the generic sample, which prints `42` and `true`, with:
+
+```text
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run samples/generics.rs --profile safe-core-generics-v1
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run tests/workspaces/generics/Cargo.toml --profile safe-core-generics-v1
+```
+
+The Cargo sample produces the same output using a local dependency's generic
+`Container<T>` and function body, plus a foreign marker trait implemented for a
+local struct. Its source-linked generic definitions are persisted in the output
+assembly's `RustSharp.Generics.v1.json` resource.
 
 ## Repository guide
 

@@ -18,12 +18,18 @@ param(
     [int] $RunTimeoutSeconds = 30,
 
     [Parameter()]
-    [ValidateSet('vertical-slice-v1', 'safe-core-primitives-v1')]
+    [ValidateSet('vertical-slice-v1', 'safe-core-primitives-v1', 'safe-core-generics-v1')]
     [string] $Profile = 'vertical-slice-v1',
 
     [Parameter()]
     [ValidateLength(0, 4096)]
-    [string] $ExpectedStandardOutput = ('Hello from Rust#' + [char] 10)
+    [string] $ExpectedStandardOutput = ('Hello from Rust#' + [char] 10),
+
+    # Cargo inputs use the package name, which the CLI resolves with its bounded
+    # manifest loader. Require that known name instead of parsing TOML twice.
+    [Parameter()]
+    [ValidatePattern('^$|^[A-Za-z0-9_.-]{1,128}$')]
+    [string] $ExpectedAssemblyName = ''
 )
 
 Set-StrictMode -Version 3.0
@@ -709,7 +715,11 @@ try {
     $sourceFullPath = Resolve-FullPath $SourcePath $repoRoot 'SourcePath'
     $outputFullPath = Resolve-FullPath $OutputDirectory $repoRoot 'OutputDirectory'
     $evidenceFullPath = Resolve-FullPath $EvidencePath $repoRoot 'EvidencePath'
-    $assemblyName = Get-AssemblyName $sourceFullPath
+    if ([string]::Equals([IO.Path]::GetFileName($sourceFullPath), 'Cargo.toml', [StringComparison]::OrdinalIgnoreCase) -and
+        [string]::IsNullOrEmpty($ExpectedAssemblyName)) {
+        throw 'Cargo.toml probes require -ExpectedAssemblyName with the sanitized package name.'
+    }
+    $assemblyName = if ([string]::IsNullOrEmpty($ExpectedAssemblyName)) { Get-AssemblyName $sourceFullPath } else { $ExpectedAssemblyName }
     $expectedExecutablePath = Join-Path $outputFullPath "$assemblyName.NativeAotHost.exe"
     $publishLogPath = Join-Path $outputFullPath 'windows-aot-publish.log'
     $runLogPath = Join-Path $outputFullPath 'windows-aot-run.log'

@@ -5,4 +5,5 @@ public enum CompilationProfile
     VerticalSlice,
     SafeCorePrimitives,
     SafeCoreTypes,
+    SafeCoreGenerics,
 }

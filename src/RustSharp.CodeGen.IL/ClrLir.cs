@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace RustSharp.CodeGen.IL;
 
@@ -9,6 +10,8 @@ internal static class ClrLirLimits
     public const int MaximumBlocks = 4096;
     public const int MaximumInstructionsPerBlock = 65536;
     public const int MaximumInstructions = 1_000_000;
+    public const int MaximumValueTypes = 4096;
+    public const int MaximumFields = 256;
 
     public static ImmutableArray<T> CopyBounded<T>(
         IEnumerable<T> values,
@@ -42,7 +45,7 @@ internal static class ClrLirLimits
     }
 }
 
-/// <summary>Primitive types understood by the CLR LIR validation spike.</summary>
+/// <summary>Closed types understood by CLR LIR validation and emission.</summary>
 public enum ClrLirTypeKind
 {
     Void,
@@ -50,16 +53,23 @@ public enum ClrLirTypeKind
     Bool,
     Text,
     Any,
+    Value,
 }
 
 /// <summary>A small, value-typed CLR type descriptor used by LIR instructions.</summary>
 public readonly record struct ClrLirType(ClrLirTypeKind Kind)
 {
+    public string? Name { get; init; }
     public static ClrLirType Void => new(ClrLirTypeKind.Void);
     public static ClrLirType I32 => new(ClrLirTypeKind.I32);
     public static ClrLirType Bool => new(ClrLirTypeKind.Bool);
     public static ClrLirType Text => new(ClrLirTypeKind.Text);
     public static ClrLirType Any => new(ClrLirTypeKind.Any);
+    public static ClrLirType Value(string name)
+    {
+        ValidateName(name);
+        return new(ClrLirTypeKind.Value) { Name = name };
+    }
 
 #pragma warning disable CA1720 // These aliases intentionally mirror CLR type names.
     public static ClrLirType Int32 => I32;
@@ -68,14 +78,51 @@ public readonly record struct ClrLirType(ClrLirTypeKind Kind)
     public static ClrLirType Object => Any;
 #pragma warning restore CA1720
 
-    public override string ToString() => Kind.ToString();
+    public override string ToString() => Kind == ClrLirTypeKind.Value ? "Value(" + Name + ")" : Kind.ToString();
 
-    internal bool IsKnown => Kind is
+    internal bool IsKnown => Kind == ClrLirTypeKind.Value ? IsValidName(Name) : Name is null && Kind is (
         ClrLirTypeKind.Void or
         ClrLirTypeKind.I32 or
         ClrLirTypeKind.Bool or
         ClrLirTypeKind.Text or
-        ClrLirTypeKind.Any;
+        ClrLirTypeKind.Any);
+
+    internal static bool IsValidName(string? name) => !string.IsNullOrWhiteSpace(name) && name.Length <= 1024 && !name.Contains('\0');
+
+    internal static void ValidateName(string name)
+    {
+        if (!IsValidName(name)) throw new ArgumentException("A CLR value identity must contain 1 to 1024 nonblank characters without NUL.", nameof(name));
+    }
+}
+
+/// <summary>A field in declaration order in a closed, sequential-layout CLR value type.</summary>
+public sealed record ClrLirField
+{
+    public ClrLirField(string name, ClrLirType type)
+    {
+        ClrLirType.ValidateName(name);
+        Name = name;
+        Type = type;
+    }
+
+    public string Name { get; }
+    public ClrLirType Type { get; }
+}
+
+/// <summary>A fully closed value layout. Field order is part of its identity contract.</summary>
+public sealed record ClrLirValueType
+{
+    public ClrLirValueType(string name, IEnumerable<ClrLirField> fields)
+    {
+        ClrLirType.ValidateName(name);
+        Name = name;
+        Fields = ClrLirLimits.CopyBounded(fields, ClrLirLimits.MaximumFields, nameof(fields));
+        if (Fields.Any(static field => field is null)) throw new ArgumentException("Value fields cannot be null.", nameof(fields));
+    }
+
+    public string Name { get; }
+    public ImmutableArray<ClrLirField> Fields { get; }
+    public ClrLirType Type => ClrLirType.Value(Name);
 }
 
 public sealed record ClrLirLocal
@@ -138,6 +185,31 @@ public sealed record ClrLirLoadLocal(int Index) : ClrLirInstruction;
 public sealed record ClrLirStoreLocal(int Index) : ClrLirInstruction;
 public sealed record ClrLirLoadArgument(int Index) : ClrLirInstruction;
 public sealed record ClrLirDiscard(ClrLirType Type) : ClrLirInstruction;
+/// <summary>Consumes field values in declaration order and produces one value copy.</summary>
+public sealed record ClrLirConstructValue : ClrLirInstruction
+{
+    public ClrLirConstructValue(ClrLirValueType definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        Definition = definition;
+    }
+
+    public ClrLirValueType Definition { get; }
+}
+
+/// <summary>Consumes a value copy and produces the selected field value.</summary>
+public sealed record ClrLirReadField : ClrLirInstruction
+{
+    public ClrLirReadField(ClrLirValueType definition, int fieldIndex)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        Definition = definition;
+        FieldIndex = fieldIndex;
+    }
+
+    public ClrLirValueType Definition { get; }
+    public int FieldIndex { get; }
+}
 /// <summary>Formats i32 using the invariant .NET format provider, independent of host culture.</summary>
 public sealed record ClrLirFormatInt32 : ClrLirInstruction;
 
@@ -290,8 +362,10 @@ public sealed class ClrLirMethod
     public ImmutableArray<ClrLirLocal> Locals { get; }
     public ImmutableArray<ClrLirBlock> Blocks { get; }
 
-    public ClrLirValidationResult Validate()
+    public ClrLirValidationResult Validate(CancellationToken cancellationToken = default)
     {
+        long started = Stopwatch.GetTimestamp();
+        cancellationToken.ThrowIfCancellationRequested();
         var diagnostics = ImmutableArray.CreateBuilder<ClrLirDiagnostic>();
         ValidateType(ReturnType, "return", null, -1, diagnostics, allowVoid: true);
         for (var index = 0; index < Parameters.Length; index++)
@@ -313,6 +387,7 @@ public sealed class ClrLirMethod
         var byLabel = new Dictionary<string, ClrLirBlock>(StringComparer.Ordinal);
         foreach (ClrLirBlock block in Blocks)
         {
+            CheckBudget();
             if (!byLabel.TryAdd(block.Label, block))
             {
                 diagnostics.Add(new("LIR001", $"Duplicate block label '{block.Label}'.", block.Label, -1));
@@ -342,6 +417,7 @@ public sealed class ClrLirMethod
             bool terminated = false;
             for (int index = 0; index < block.Instructions.Length; index++)
             {
+                CheckBudget();
                 ClrLirInstruction instruction = block.Instructions[index];
                 if (terminated)
                 {
@@ -407,6 +483,13 @@ public sealed class ClrLirMethod
         }
 
         return new(diagnostics.ToImmutable()) { MaximumStackDepth = maximumStackDepth };
+
+        void CheckBudget()
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (Stopwatch.GetElapsedTime(started) > TimeSpan.FromSeconds(10))
+                throw new TimeoutException("CLR LIR validation exceeded its time limit.");
+        }
     }
 
     private bool Apply(
@@ -438,6 +521,22 @@ public sealed class ClrLirMethod
                 return true;
             case ClrLirDiscard discard:
                 return TryPop(discard.Type, ref stack, blockLabel, instructionIndex, diagnostics);
+            case ClrLirConstructValue construct:
+                if (!ValidateValueDefinition(construct.Definition, blockLabel, instructionIndex, diagnostics)) return false;
+                for (int index = construct.Definition.Fields.Length - 1; index >= 0; index--)
+                    if (!TryPop(construct.Definition.Fields[index].Type, ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(construct.Definition.Type);
+                return true;
+            case ClrLirReadField field:
+                if (!ValidateValueDefinition(field.Definition, blockLabel, instructionIndex, diagnostics)) return false;
+                if ((uint)field.FieldIndex >= (uint)field.Definition.Fields.Length)
+                {
+                    diagnostics.Add(new("LIR018", "Value field index is out of range.", blockLabel, instructionIndex));
+                    return false;
+                }
+                if (!TryPop(field.Definition.Type, ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(field.Definition.Fields[field.FieldIndex].Type);
+                return true;
             case ClrLirFormatInt32:
                 if (!TryPop(ClrLirType.I32, ref stack, blockLabel, instructionIndex, diagnostics)) return false;
                 stack = stack.Add(ClrLirType.Text);
@@ -604,5 +703,121 @@ public sealed class ClrLirMethod
         }
 
         return diagnostics.Count == diagnosticCount;
+    }
+
+    private static bool ValidateValueDefinition(ClrLirValueType definition, string blockLabel,
+        int instructionIndex, ImmutableArray<ClrLirDiagnostic>.Builder diagnostics)
+    {
+        int count = diagnostics.Count;
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (ClrLirField field in definition.Fields)
+        {
+            ValidateType(field.Type, "field", blockLabel, instructionIndex, diagnostics, allowVoid: false);
+            if (!names.Add(field.Name))
+                diagnostics.Add(new("LIR019", "Value field names must be unique.", blockLabel, instructionIndex));
+        }
+        return count == diagnostics.Count;
+    }
+}
+
+/// <summary>Validates a finite, closed set of aggregate layouts before metadata is emitted.</summary>
+internal sealed class ClrLirValueTypeSet
+{
+    private readonly Dictionary<string, ClrLirValueType> byName = new(StringComparer.Ordinal);
+    private readonly Action checkBudget;
+
+    internal ClrLirValueTypeSet(IEnumerable<ClrLirValueType> definitions, Action checkBudget)
+    {
+        this.checkBudget = checkBudget;
+        Definitions = [.. ClrLirLimits.CopyBounded(definitions, ClrLirLimits.MaximumValueTypes, nameof(definitions))
+            .OrderBy(static definition => definition?.Name, StringComparer.Ordinal)];
+        int fieldCount = 0;
+        foreach (ClrLirValueType definition in Definitions)
+        {
+            checkBudget();
+            ArgumentNullException.ThrowIfNull(definition);
+            if (!byName.TryAdd(definition.Name, definition))
+                throw new InvalidOperationException($"Duplicate CLR value type '{definition.Name}'.");
+            fieldCount += definition.Fields.Length;
+            if (fieldCount > 65536) throw new InvalidOperationException("CLR value layouts exceed the field budget.");
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ClrLirField field in definition.Fields)
+                if (!names.Add(field.Name)) throw new InvalidOperationException($"Duplicate field '{field.Name}' in '{definition.Name}'.");
+        }
+
+        var active = new HashSet<string>(StringComparer.Ordinal);
+        var sizes = new Dictionary<string, long>(StringComparer.Ordinal);
+        var heights = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (ClrLirValueType definition in Definitions) Visit(definition, 0);
+
+        long Visit(ClrLirValueType definition, int depth)
+        {
+            checkBudget();
+            if (depth > 128) throw new InvalidOperationException("CLR value layouts exceed the nesting budget.");
+            if (sizes.TryGetValue(definition.Name, out long known))
+            {
+                if (depth + heights[definition.Name] > 128)
+                    throw new InvalidOperationException("CLR value layouts exceed the nesting budget.");
+                return known;
+            }
+            if (!active.Add(definition.Name)) throw new InvalidOperationException($"Recursive CLR value layout '{definition.Name}'.");
+            long size = 0;
+            int height = 0;
+            foreach (ClrLirField field in definition.Fields)
+            {
+                checkBudget();
+                ValidateType(field.Type, allowVoid: false);
+                long fieldSize = field.Type.Kind == ClrLirTypeKind.Value ? Visit(byName[field.Type.Name!], depth + 1) : 8;
+                if (field.Type.Kind == ClrLirTypeKind.Value) height = Math.Max(height, heights[field.Type.Name!] + 1);
+                size += (fieldSize + 7) / 8 * 8;
+                if (size > 1_048_576) throw new InvalidOperationException("A CLR value layout exceeds the size budget.");
+            }
+            active.Remove(definition.Name);
+            sizes.Add(definition.Name, Math.Max(1, size));
+            heights.Add(definition.Name, height);
+            return Math.Max(1, size);
+        }
+    }
+
+    internal ImmutableArray<ClrLirValueType> Definitions { get; }
+
+    internal void ValidateMethod(ClrLirMethod method)
+    {
+        checkBudget();
+        ValidateType(method.ReturnType, allowVoid: true);
+        foreach (ClrLirType type in method.Parameters) ValidateType(type, allowVoid: false);
+        foreach (ClrLirLocal local in method.Locals) ValidateType(local.Type, allowVoid: false);
+        foreach (ClrLirBlock block in method.Blocks)
+        {
+            foreach (ClrLirInstruction instruction in block.Instructions)
+            {
+                checkBudget();
+                switch (instruction)
+                {
+                    case ClrLirConstructValue construct: ValidateDefinition(construct.Definition); break;
+                    case ClrLirReadField field: ValidateDefinition(field.Definition); break;
+                    case ClrLirDiscard discard: ValidateType(discard.Type, allowVoid: false); break;
+                    case ClrLirCall call:
+                        ValidateType(call.Site.ReturnType, allowVoid: true);
+                        foreach (ClrLirType type in call.Site.ParameterTypes) ValidateType(type, allowVoid: false);
+                        break;
+                }
+            }
+        }
+    }
+
+    private void ValidateType(ClrLirType type, bool allowVoid)
+    {
+        if (!type.IsKnown || !allowVoid && type == ClrLirType.Void)
+            throw new InvalidOperationException($"Invalid closed CLR type '{type}'.");
+        if (type.Kind == ClrLirTypeKind.Value && !byName.ContainsKey(type.Name!))
+            throw new InvalidOperationException($"Unknown closed CLR value type '{type.Name}'.");
+    }
+
+    private void ValidateDefinition(ClrLirValueType definition)
+    {
+        if (!byName.TryGetValue(definition.Name, out ClrLirValueType? known) ||
+            !definition.Fields.SequenceEqual(known.Fields))
+            throw new InvalidOperationException($"Instruction layout does not match closed CLR value type '{definition.Name}'.");
     }
 }

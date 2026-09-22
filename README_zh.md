@@ -27,6 +27,7 @@ RustSharp 使用 C# 和 .NET 10 实现，目标是一个刻意限定范围的 Ru
 | `vertical-slice-v1` | 默认配置档：`fn main()` 加字面量 `println!` 语句。 |
 | `safe-core-primitives-v1` | 可选配置档：有界文件模块和本地 `path` 包、非泛型函数、`i32` / `bool`、已初始化的可变局部变量、`if` / `else`、返回、受检查算术、比较、布尔运算符和 `println!`。 |
 | `safe-core-types-v1` | 可选的仅检查类型配置档：基础数值类型、元组、数组、切片、引用、函数指针、非泛型 ADT、别名、模式/match、闭包、有界 const 求值、推断和有方向的强制转换。不检查借用，也不生成可执行输出。 |
+| `safe-core-generics-v1` | 可选的可执行泛型配置档：刚性类型参数主体检查、显式/推断调用、标记 trait 约束和 impl 一致性、元组及泛型结构体，以及经 CLR LIR 输出 IL 和 Native AOT 的闭合主体特化。 |
 | 输出 | 对已覆盖的配置档，直接生成 ECMA-335 和 Portable PDB，支持 CoreCLR 运行与 Native AOT 发布。 |
 
 RustSharp 不是 `rustc` 的直接替代品。完整 Rust 兼容性、标准库对等、通用 Cargo 注册表解析、宏展开、所有权与借用检查、Rust ABI 兼容性以及任意 `unsafe` 代码，当前都不是承诺范围。精确边界见[兼容性契约](docs/compatibility.md)。
@@ -71,6 +72,24 @@ rsc publish <source.rs|Cargo.toml> [--runtime <rid>] [--output <directory>] [--t
 
 P1-04 对这一已声明的单态类型契约为 ✅ 已完成。已记录的 Windows x64 门槛通过
 265/265 项回归与十六个必需类别中的 96/96 项 rustc 差分用例，失败和跳过均为零。
+
+P1-05 对已声明的有界契约为 ✅ 已完成。`safe-core-generics-v1` 通过名称绑定 HIR 检查泛型主体，
+特化可达主体和聚合布局，并支持 `check`、`build`、`compile`、`run` 和 `publish`。
+[泛型契约](docs/generic-profile.md) 定义了有界标记 trait 子集和固定的 32 用例 rustc
+语料，其中包括八项执行比较和五项明确的配置档边界拒绝。
+本地门槛通过 350/350 项回归、32/32 项固定用例，以及独立源码和本地 Cargo 包示例
+各自的 ILVerify 与 Windows x64 Native AOT。
+
+使用以下命令运行泛型示例，输出 `42` 和 `true`：
+
+```text
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run samples/generics.rs --profile safe-core-generics-v1
+dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- run tests/workspaces/generics/Cargo.toml --profile safe-core-generics-v1
+```
+
+Cargo 示例通过本地依赖的泛型 `Container<T>` 和函数主体，以及为本地结构体实现的
+外部标记 trait，产生相同输出。源码链接的泛型定义持久化至输出程序集的
+`RustSharp.Generics.v1.json` 资源。
 
 ## 仓库导览
 

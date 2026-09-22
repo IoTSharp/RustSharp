@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 2,
+  "profile": "safe-core-generics-v1",
+  "catalogVersion": 2,
+  "rustVersion": "1.98.0",
+  "edition": "2024",
+  "denominator": 32,
+  "cases": [
+    {
+      "id": "explicit-identity",
+      "category": "calls",
+      "path": "explicit-identity.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "inferred-identity",
+      "category": "calls",
+      "path": "inferred-identity.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "call-value-arity",
+      "category": "calls",
+      "path": "call-value-arity.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1004",
+      "expectedDiagnosticText": "identity::<i32>()",
+      "expectedDiagnosticStart": 52
+    },
+    {
+      "id": "call-type-arity",
+      "category": "calls",
+      "path": "call-type-arity.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1004",
+      "expectedDiagnosticText": "identity::<i32, bool>",
+      "expectedDiagnosticStart": 52
+    },
+    {
+      "id": "generic-forward",
+      "category": "bodies",
+      "path": "generic-forward.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "generic-branches",
+      "category": "bodies",
+      "path": "generic-branches.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "unused-body-mismatch",
+      "category": "bodies",
+      "path": "unused-body-mismatch.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1005",
+      "expectedDiagnosticText": "value",
+      "expectedDiagnosticStart": 29
+    },
+    {
+      "id": "branch-mismatch",
+      "category": "bodies",
+      "path": "branch-mismatch.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1005",
+      "expectedDiagnosticText": "1",
+      "expectedDiagnosticStart": 64
+    },
+    {
+      "id": "parameter-operator",
+      "category": "bodies",
+      "path": "parameter-operator.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1005",
+      "expectedDiagnosticText": "value",
+      "expectedDiagnosticStart": 27
+    },
+    {
+      "id": "inline-bound",
+      "category": "bounds",
+      "path": "inline-bound.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "where-bound",
+      "category": "bounds",
+      "path": "where-bound.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "missing-closed-bound",
+      "category": "bounds",
+      "path": "missing-closed-bound.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1006",
+      "expectedDiagnosticText": "keep(1)",
+      "expectedDiagnosticStart": 68
+    },
+    {
+      "id": "missing-caller-bound",
+      "category": "bounds",
+      "path": "missing-caller-bound.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1006",
+      "expectedDiagnosticText": "keep(value)",
+      "expectedDiagnosticStart": 85
+    },
+    {
+      "id": "disjoint-impls",
+      "category": "coherence",
+      "path": "disjoint-impls.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "nominal-impl-head",
+      "category": "coherence",
+      "path": "nominal-impl-head.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "duplicate-impl",
+      "category": "coherence",
+      "path": "duplicate-impl.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1006",
+      "expectedDiagnosticText": "impl Mark for i32 {}",
+      "expectedDiagnosticStart": 14
+    },
+    {
+      "id": "blanket-overlap",
+      "category": "coherence",
+      "path": "blanket-overlap.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSG1006",
+      "expectedDiagnosticText": "impl<T> Mark for T {}",
+      "expectedDiagnosticStart": 14
+    },
+    {
+      "id": "module-call",
+      "category": "names",
+      "path": "module-call.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true
+    },
+    {
+      "id": "unresolved-type",
+      "category": "names",
+      "path": "unresolved-type.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": false,
+      "expectedDiagnosticCode": "RSN1003",
+      "expectedDiagnosticText": "Missing",
+      "expectedDiagnosticStart": 22
+    },
+    {
+      "id": "default-parameter",
+      "category": "boundaries",
+      "path": "default-parameter.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": true,
+      "expectedDiagnosticCode": "RSN1007",
+      "expectedDiagnosticText": "T = i32",
+      "expectedDiagnosticStart": 17
+    },
+    {
+      "id": "lifetime-parameter",
+      "category": "boundaries",
+      "path": "lifetime-parameter.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": true,
+      "expectedDiagnosticCode": "RSN1007",
+      "expectedDiagnosticText": "'a",
+      "expectedDiagnosticStart": 12
+    },
+    {
+      "id": "const-parameter",
+      "category": "boundaries",
+      "path": "const-parameter.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": true,
+      "expectedDiagnosticCode": "RSN1007",
+      "expectedDiagnosticText": "const N: usize",
+      "expectedDiagnosticStart": 10
+    },
+    {
+      "id": "associated-item",
+      "category": "boundaries",
+      "path": "associated-item.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": true,
+      "expectedDiagnosticCode": "RSN1007",
+      "expectedDiagnosticText": "trait Mark { fn mark(); }",
+      "expectedDiagnosticStart": 0
+    },
+    {
+      "id": "enum-item",
+      "category": "boundaries",
+      "path": "enum-item.rs",
+      "expectedSuccess": false,
+      "expectedRustcSuccess": true,
+      "expectedDiagnosticCode": "RSG1002",
+      "expectedDiagnosticText": "enum Choice { Empty }",
+      "expectedDiagnosticStart": 0
+    },
+    {
+      "id": "run-scalars",
+      "category": "execution",
+      "path": "run-scalars.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "42\ntrue\n"
+    },
+    {
+      "id": "run-bound-chain",
+      "category": "execution",
+      "path": "run-bound-chain.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "42\ntrue\n"
+    },
+    {
+      "id": "run-tuple-return",
+      "category": "execution",
+      "path": "run-tuple-return.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "42\ntrue\n"
+    },
+    {
+      "id": "run-record",
+      "category": "execution",
+      "path": "run-record.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "42\ntrue\n"
+    },
+    {
+      "id": "run-tuple-struct",
+      "category": "execution",
+      "path": "run-tuple-struct.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "42\ntrue\n"
+    },
+    {
+      "id": "run-nested-copy",
+      "category": "execution",
+      "path": "run-nested-copy.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "42\ntrue\n7\n"
+    },
+    {
+      "id": "run-record-order",
+      "category": "execution",
+      "path": "run-record-order.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "2\n1\n1\n2\n"
+    },
+    {
+      "id": "run-unit-struct",
+      "category": "execution",
+      "path": "run-unit-struct.rs",
+      "expectedSuccess": true,
+      "expectedRustcSuccess": true,
+      "expectedStandardOutput": "42\n"
+    }
+  ]
+}

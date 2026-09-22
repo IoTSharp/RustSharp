@@ -63,6 +63,25 @@ before producing artifacts. This profile does not validate lifetimes, borrowing,
 move safety or reference escape and does not emit IL. See the
 [type-system contract](type-system-profile.md) for exact boundaries and diagnostics.
 
+## Executable generic profile
+
+P1-05 is ✅ Complete for its bounded contract. `safe-core-generics-v1` checks generic bodies through
+name-bound HIR with rigid type parameters, explicit/inferred calls, positive
+marker-trait bounds and impl coherence. Reachable bodies, tuples and generic
+named/tuple/unit structs are specialized to closed CLR LIR and IL. The profile
+accepts bounded file/module and local Cargo path-package inputs for `check`,
+`build`, `compile`, `run` and `publish`, including Native AOT publishing.
+
+The [generic contract](generic-profile.md) specifies the source subset, limits
+and fixed 32-case corpus, including eight execution comparisons and five deliberate profile-boundary rejections
+of valid Rust. Lifetime/const parameters, associated items, generic traits,
+supertraits, auto traits, higher-ranked bounds, enums and aliases are excluded.
+The bounded package graph retains declaration/trait identities and enforces its
+declared orphan subset. Ownership and borrowing, persisted cross-assembly
+generic metadata import, and independent consumer compilation remain separate
+gates. Emitted assemblies already contain the versioned
+`RustSharp.Generics.v1.json` source-linked generic contract.
+
 ## Executable primitive profile
 
 `safe-core-primitives-v1` is an opt-in P1 profile, selected by `--profile` on

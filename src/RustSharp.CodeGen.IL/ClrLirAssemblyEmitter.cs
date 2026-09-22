@@ -51,6 +51,15 @@ public static class ClrLirAssemblyEmitter
             metadataDocument: metadataDocument);
     }
 
+    public static GeneratedAssembly Emit(ClrLirMethod method, string assemblyName,
+        IEnumerable<ClrLirValueType> valueTypes, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(method);
+        ArgumentNullException.ThrowIfNull(valueTypes);
+        return EmitCore([method], method.Name, assemblyName, null, null, null, default,
+            cancellationToken: cancellationToken, valueTypes: valueTypes);
+    }
+
     public static GeneratedAssembly EmitProgram(
         SafeCoreClrResult program,
         string assemblyName,
@@ -77,7 +86,8 @@ public static class ClrLirAssemblyEmitter
         ArgumentNullException.ThrowIfNull(program);
         if (!program.IsSuccessful) throw new ArgumentException("A successful lowered program is required.", nameof(program));
         return EmitCore(program.Methods, "Main", assemblyName, sourceText, sourcePath,
-            pdbFileName, sourceBytes, program.MethodSpans, sourceMap, metadataDocument, cancellationToken);
+            pdbFileName, sourceBytes, program.MethodSpans, sourceMap, metadataDocument,
+            program.ValueTypes, program.GenericMetadata, cancellationToken);
     }
 
     private static GeneratedAssembly EmitCore(
@@ -91,22 +101,30 @@ public static class ClrLirAssemblyEmitter
         IReadOnlyList<TextSpan>? methodSpans = null,
         SafeCoreSourceMap? sourceMap = null,
         RustSharpMetadataDocument? metadataDocument = null,
+        IEnumerable<ClrLirValueType>? valueTypes = null,
+        ReadOnlyMemory<byte> genericMetadata = default,
         CancellationToken cancellationToken = default)
     {
         var sourceMapClock = Stopwatch.StartNew();
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
+        if (genericMetadata.Length > 8 * 1024 * 1024)
+            throw new ArgumentException("Generic metadata exceeds the 8 MiB resource limit.", nameof(genericMetadata));
+        byte[] genericResource = genericMetadata.ToArray();
         if (methods.Count is < 1 or > 128) throw new ArgumentException("Expected 1 to 128 methods.", nameof(methods));
         if (sourceMap is not null && sourceMap.Documents.Count is (< 1 or > 1024))
             throw new ArgumentException("Expected 1 to 1024 source documents.", nameof(sourceMap));
+        var layouts = new ClrLirValueTypeSet(valueTypes ?? [], CheckSourceMapBudget);
         var definitions = new Dictionary<string, (ClrLirMethod Method, MethodDefinitionHandle Handle)>(StringComparer.Ordinal);
         for (int index = 0; index < methods.Count; index++)
         {
             ClrLirMethod method = methods[index];
             ArgumentNullException.ThrowIfNull(method);
-            ClrLirValidationResult validation = method.Validate();
+            CheckSourceMapBudget();
+            ClrLirValidationResult validation = method.Validate(cancellationToken);
             if (!validation.IsValid)
                 throw new InvalidOperationException($"Cannot emit invalid CLR LIR: {string.Join("; ", validation.Diagnostics)}");
+            layouts.ValidateMethod(method);
             if (!definitions.TryAdd(method.Name, (method, MetadataTokens.MethodDefinitionHandle(index + 1))))
                 throw new ArgumentException("Duplicate method name.", nameof(methods));
         }
@@ -126,7 +144,19 @@ public static class ClrLirAssemblyEmitter
         var methodBodyStream = new MethodBodyStreamEncoder(ilStream);
         using var identity = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         foreach (ClrLirMethod method in methods)
-            identity.AppendData(CreateModuleVersionId(assemblyName, method).ToByteArray());
+            identity.AppendData(CreateModuleVersionId(assemblyName, method, CheckSourceMapBudget).ToByteArray());
+        foreach (ClrLirValueType layout in layouts.Definitions)
+        {
+            CheckSourceMapBudget();
+            identity.AppendData(Encoding.UTF8.GetBytes("\0value\0" + layout.Name));
+            foreach (ClrLirField field in layout.Fields)
+                identity.AppendData(Encoding.UTF8.GetBytes("\0" + field.Name + ":" + field.Type));
+        }
+        if (genericResource.Length != 0)
+        {
+            identity.AppendData("\0RustSharp.Generics.v1.json\0"u8);
+            identity.AppendData(genericResource);
+        }
         identity.AppendData(sourceBytes.Span);
         if (metadataDocument is not null)
         {
@@ -192,6 +222,22 @@ public static class ClrLirAssemblyEmitter
             @namespace: metadata.GetOrAddString("System"),
             name: metadata.GetOrAddString("Console"));
 
+        var valueHandles = new Dictionary<string, TypeDefinitionHandle>(StringComparer.Ordinal);
+        var constructorHandles = new Dictionary<string, MethodDefinitionHandle>(StringComparer.Ordinal);
+        var fieldHandles = new Dictionary<string, ImmutableArray<FieldDefinitionHandle>>(StringComparer.Ordinal);
+        int fieldRow = 1;
+        for (int index = 0; index < layouts.Definitions.Length; index++)
+        {
+            CheckSourceMapBudget();
+            ClrLirValueType layout = layouts.Definitions[index];
+            valueHandles.Add(layout.Name, MetadataTokens.TypeDefinitionHandle(index + 3));
+            constructorHandles.Add(layout.Name, MetadataTokens.MethodDefinitionHandle(methods.Count + index + 1));
+            var fields = ImmutableArray.CreateBuilder<FieldDefinitionHandle>(layout.Fields.Length);
+            for (int fieldIndex = 0; fieldIndex < layout.Fields.Length; fieldIndex++)
+                fields.Add(MetadataTokens.FieldDefinitionHandle(fieldRow++));
+            fieldHandles.Add(layout.Name, fields.ToImmutable());
+        }
+
         var localSignatures = new List<StandaloneSignatureHandle>();
         foreach (ClrLirMethod method in methods)
         {
@@ -199,15 +245,17 @@ public static class ClrLirAssemblyEmitter
             var controlFlow = new ControlFlowBuilder();
             var instructionEncoder = new InstructionEncoder(methodCode, controlFlow);
             int maxStack = ClrLirEmitter.EncodeInstructions(
-                method, metadata, site => ResolveCall(metadata, consoleType, definitions, site), instructionEncoder);
-            StandaloneSignatureHandle localSignature = AddLocalSignature(metadata, method.Locals);
+                method, metadata, site => ResolveCall(metadata, consoleType, definitions, site), instructionEncoder,
+                layout => constructorHandles[layout.Name], (layout, index) => fieldHandles[layout.Name][index],
+                CheckSourceMapBudget, cancellationToken);
+            StandaloneSignatureHandle localSignature = AddLocalSignature(metadata, method.Locals, valueHandles);
             localSignatures.Add(localSignature);
             int methodBodyOffset = methodBodyStream.AddMethodBody(instructionEncoder, maxStack, localSignature);
             metadata.AddMethodDefinition(
                 attributes: MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig,
                 implAttributes: MethodImplAttributes.IL | MethodImplAttributes.Managed,
                 name: metadata.GetOrAddString(method.Name),
-                signature: CreateMethodSignature(metadata, method.ReturnType, method.Parameters),
+                signature: CreateMethodSignature(metadata, method.ReturnType, method.Parameters, valueHandles),
                 bodyOffset: methodBodyOffset,
                 parameterList: MetadataTokens.ParameterHandle(1));
         }
@@ -223,6 +271,7 @@ public static class ClrLirAssemblyEmitter
             baseType: default,
             fieldList: firstField,
             methodList: firstMethod);
+
         metadata.AddTypeDefinition(
             attributes: TypeAttributes.Public | TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.BeforeFieldInit,
             @namespace: metadata.GetOrAddString("RustSharp.Generated"),
@@ -230,6 +279,60 @@ public static class ClrLirAssemblyEmitter
             baseType: objectType,
             fieldList: firstField,
             methodList: firstMethod);
+
+        if (!layouts.Definitions.IsEmpty)
+        {
+            TypeReferenceHandle valueTypeBase = metadata.AddTypeReference(systemRuntime,
+                metadata.GetOrAddString("System"), metadata.GetOrAddString("ValueType"));
+            int nextFieldRow = 1;
+            foreach (ClrLirValueType layout in layouts.Definitions)
+            {
+                CheckSourceMapBudget();
+                FieldDefinitionHandle firstValueField = MetadataTokens.FieldDefinitionHandle(nextFieldRow);
+                var constructorCode = new BlobBuilder();
+                var constructorEncoder = new InstructionEncoder(constructorCode);
+                for (int index = 0; index < layout.Fields.Length; index++)
+                {
+                    CheckSourceMapBudget();
+                    ClrLirField field = layout.Fields[index];
+                    var signature = new BlobBuilder();
+                    EncodeSignatureType(new BlobEncoder(signature).FieldSignature(), field.Type, valueHandles);
+                    FieldDefinitionHandle handle = metadata.AddFieldDefinition(FieldAttributes.Public | FieldAttributes.InitOnly,
+                        metadata.GetOrAddString(field.Name), metadata.GetOrAddBlob(signature));
+                    if (handle != fieldHandles[layout.Name][index]) throw new InvalidOperationException("Unstable CLR field order.");
+                    nextFieldRow++;
+                    constructorEncoder.LoadArgument(0);
+                    constructorEncoder.LoadArgument(index + 1);
+                    constructorEncoder.OpCode(ILOpCode.Stfld);
+                    constructorEncoder.Token(handle);
+                }
+                constructorEncoder.OpCode(ILOpCode.Ret);
+                int bodyOffset = methodBodyStream.AddMethodBody(constructorEncoder, 2);
+                MethodDefinitionHandle constructor = metadata.AddMethodDefinition(
+                    MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
+                    MethodImplAttributes.IL | MethodImplAttributes.Managed,
+                    metadata.GetOrAddString(".ctor"),
+                    CreateMethodSignature(metadata, ClrLirType.Void, [.. layout.Fields.Select(static field => field.Type)],
+                        valueHandles, isInstanceMethod: true), bodyOffset, MetadataTokens.ParameterHandle(1));
+                if (constructor != constructorHandles[layout.Name]) throw new InvalidOperationException("Unstable CLR constructor order.");
+                TypeDefinitionHandle handleType = metadata.AddTypeDefinition(
+                    TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.SequentialLayout | TypeAttributes.BeforeFieldInit,
+                    metadata.GetOrAddString("RustSharp.Generated.Values"), metadata.GetOrAddString(layout.Name),
+                    valueTypeBase, firstValueField, constructor);
+                if (handleType != valueHandles[layout.Name]) throw new InvalidOperationException("Unstable CLR value type order.");
+            }
+        }
+        BlobBuilder? managedResources = null;
+        if (genericResource.Length != 0)
+        {
+            CheckSourceMapBudget();
+            managedResources = new BlobBuilder();
+            managedResources.WriteInt32(genericResource.Length);
+            managedResources.WriteBytes(genericResource);
+            managedResources.Align(8);
+            metadata.AddManifestResource(ManifestResourceAttributes.Public,
+                metadata.GetOrAddString("RustSharp.Generics.v1.json"), default, 0);
+        }
 
         byte[]? pdbBytes = null;
         DebugDirectoryBuilder? debugDirectory = null;
@@ -270,6 +373,8 @@ public static class ClrLirAssemblyEmitter
                     MetadataTokens.GetRowNumber(localSignatures[index]));
                 pdbMetadata.AddMethodDebugInformation(points.IsNil ? default : methodDocument, points);
             }
+            foreach (ClrLirValueType _ in layouts.Definitions)
+                pdbMetadata.AddMethodDebugInformation(default, default);
 
             var pdbImage = new BlobBuilder();
             BlobContentId pdbId = new PortablePdbBuilder(pdbMetadata, metadata.GetRowCounts(), entryPoint, ComputeContentId).Serialize(pdbImage);
@@ -290,6 +395,7 @@ public static class ClrLirAssemblyEmitter
             peHeader,
             new MetadataRootBuilder(metadata),
             ilStream,
+            managedResources: managedResources,
             debugDirectoryBuilder: debugDirectory,
             entryPoint: entryPoint,
             flags: CorFlags.ILOnly,
@@ -303,7 +409,7 @@ public static class ClrLirAssemblyEmitter
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (sourceMapClock.Elapsed > TimeSpan.FromSeconds(10))
-                throw new TimeoutException("CLR source-map emission exceeded its time limit.");
+                throw new TimeoutException("CLR assembly emission exceeded its time limit.");
         }
     }
 
@@ -380,7 +486,7 @@ public static class ClrLirAssemblyEmitter
         }
 
         if (site.ReturnType != ClrLirType.Void || site.ParameterTypes.Length != 1 ||
-            site.ParameterTypes[0] == ClrLirType.Void)
+            site.ParameterTypes[0].Kind is not (ClrLirTypeKind.I32 or ClrLirTypeKind.Bool or ClrLirTypeKind.Text or ClrLirTypeKind.Any))
         {
             throw new NotSupportedException(
                 "The CLR LIR PE spike supports only one-argument void Console.WriteLine overloads.");
@@ -395,19 +501,21 @@ public static class ClrLirAssemblyEmitter
     private static BlobHandle CreateMethodSignature(
         MetadataBuilder metadata,
         ClrLirType methodReturnType,
-        IReadOnlyList<ClrLirType> parameterTypes)
+        IReadOnlyList<ClrLirType> parameterTypes,
+        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles = null,
+        bool isInstanceMethod = false)
     {
         var signature = new BlobBuilder();
         new BlobEncoder(signature)
-            .MethodSignature(isInstanceMethod: false)
+            .MethodSignature(isInstanceMethod: isInstanceMethod)
             .Parameters(
                 parameterCount: parameterTypes.Count,
-                returnTypeEncoder => EncodeReturnType(returnTypeEncoder, methodReturnType),
+                returnTypeEncoder => EncodeReturnType(returnTypeEncoder, methodReturnType, valueHandles),
                 parameters =>
                 {
                     foreach (ClrLirType parameterType in parameterTypes)
                     {
-                        EncodeParameterType(parameters.AddParameter().Type(isByRef: false), parameterType);
+                        EncodeParameterType(parameters.AddParameter().Type(isByRef: false), parameterType, valueHandles);
                     }
                 });
 
@@ -416,7 +524,8 @@ public static class ClrLirAssemblyEmitter
 
     private static void EncodeReturnType(
         System.Reflection.Metadata.Ecma335.ReturnTypeEncoder encoder,
-        ClrLirType type)
+        ClrLirType type,
+        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles)
     {
         if (type == ClrLirType.Void)
         {
@@ -424,24 +533,26 @@ public static class ClrLirAssemblyEmitter
             return;
         }
 
-        EncodeSignatureType(encoder.Type(isByRef: false), type);
+        EncodeSignatureType(encoder.Type(isByRef: false), type, valueHandles);
     }
 
     private static void EncodeParameterType(
         System.Reflection.Metadata.Ecma335.SignatureTypeEncoder encoder,
-        ClrLirType type)
+        ClrLirType type,
+        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles)
     {
         if (type == ClrLirType.Void)
         {
             throw new ArgumentException("Void is not a valid parameter type.", nameof(type));
         }
 
-        EncodeSignatureType(encoder, type);
+        EncodeSignatureType(encoder, type, valueHandles);
     }
 
     private static void EncodeSignatureType(
         System.Reflection.Metadata.Ecma335.SignatureTypeEncoder encoder,
-        ClrLirType type)
+        ClrLirType type,
+        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles)
     {
         switch (type.Kind)
         {
@@ -457,6 +568,9 @@ public static class ClrLirAssemblyEmitter
             case ClrLirTypeKind.Any:
                 encoder.Object();
                 break;
+            case ClrLirTypeKind.Value when type.Name is not null && valueHandles is not null && valueHandles.TryGetValue(type.Name, out TypeDefinitionHandle handle):
+                encoder.Type(handle, isValueType: true);
+                break;
             default:
                 throw new ArgumentException($"Unsupported CLR LIR signature type '{type}'.", nameof(type));
         }
@@ -464,7 +578,8 @@ public static class ClrLirAssemblyEmitter
 
     private static StandaloneSignatureHandle AddLocalSignature(
         MetadataBuilder metadata,
-        ImmutableArray<ClrLirLocal> locals)
+        ImmutableArray<ClrLirLocal> locals,
+        IReadOnlyDictionary<string, TypeDefinitionHandle> valueHandles)
     {
         if (locals.IsEmpty)
         {
@@ -480,13 +595,13 @@ public static class ClrLirAssemblyEmitter
                 throw new ArgumentException("Void is not a valid local type.", nameof(locals));
             }
 
-            EncodeSignatureType(variables.AddVariable().Type(isByRef: false, isPinned: false), local.Type);
+            EncodeSignatureType(variables.AddVariable().Type(isByRef: false, isPinned: false), local.Type, valueHandles);
         }
 
         return metadata.AddStandaloneSignature(metadata.GetOrAddBlob(signature));
     }
 
-    private static Guid CreateModuleVersionId(string assemblyName, ClrLirMethod method)
+    private static Guid CreateModuleVersionId(string assemblyName, ClrLirMethod method, Action checkBudget)
     {
         var descriptor = new StringBuilder(EmitterIdentity)
             .Append('\0')
@@ -494,17 +609,17 @@ public static class ClrLirAssemblyEmitter
             .Append('\0')
             .Append(method.Name)
             .Append('\0')
-            .Append(method.ReturnType.Kind);
+            .Append(method.ReturnType);
         _ = descriptor.Append('\0').Append("params");
         foreach (ClrLirType parameter in method.Parameters)
         {
-            _ = descriptor.Append('\0').Append(parameter.Kind);
+            _ = descriptor.Append('\0').Append(parameter);
         }
 
         _ = descriptor.Append('\0').Append("locals");
         foreach (ClrLirLocal local in method.Locals)
         {
-            _ = descriptor.Append('\0').Append(local.Name).Append(':').Append(local.Type.Kind);
+            _ = descriptor.Append('\0').Append(local.Name).Append(':').Append(local.Type);
         }
 
         foreach (ClrLirBlock block in method.Blocks)
@@ -512,6 +627,7 @@ public static class ClrLirAssemblyEmitter
             _ = descriptor.Append('\0').Append(block.Label);
             foreach (ClrLirInstruction instruction in block.Instructions)
             {
+                checkBudget();
                 _ = descriptor.Append('\0').Append(instruction.GetType().Name);
                 switch (instruction)
                 {
@@ -534,16 +650,22 @@ public static class ClrLirAssemblyEmitter
                         _ = descriptor.Append(':').Append(argument.Index);
                         break;
                     case ClrLirDiscard discard:
-                        _ = descriptor.Append(':').Append(discard.Type.Kind);
+                        _ = descriptor.Append(':').Append(discard.Type);
+                        break;
+                    case ClrLirConstructValue construct:
+                        _ = descriptor.Append(':').Append(construct.Definition.Name);
+                        break;
+                    case ClrLirReadField field:
+                        _ = descriptor.Append(':').Append(field.Definition.Name).Append(':').Append(field.FieldIndex);
                         break;
                     case ClrLirBinary binary:
                         _ = descriptor.Append(':').Append(binary.Operator).Append(':').Append(binary.OperandType.Kind);
                         break;
                     case ClrLirCall call:
-                        _ = descriptor.Append(':').Append(call.Site.Name).Append(':').Append(call.Site.ReturnType.Kind);
+                        _ = descriptor.Append(':').Append(call.Site.Name).Append(':').Append(call.Site.ReturnType);
                         foreach (ClrLirType parameterType in call.Site.ParameterTypes)
                         {
-                            _ = descriptor.Append(':').Append(parameterType.Kind);
+                            _ = descriptor.Append(':').Append(parameterType);
                         }
 
                         break;

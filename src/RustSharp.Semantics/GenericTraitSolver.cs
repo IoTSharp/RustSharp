@@ -133,6 +133,51 @@ internal sealed class GenericTraitSession
 
     public ImmutableArray<string> Selected => [.. selected];
 
+    // Source bodies are checked with rigid parameters. Only implementation-head
+    // parameters can match a goal; caller parameters never become inference variables.
+    internal void Prove(GenericTraitObligation obligation,
+        ImmutableArray<GenericTraitObligation> assumptions)
+    {
+        var assumed = new HashSet<string>(StringComparer.Ordinal);
+        foreach (GenericTraitObligation assumption in assumptions)
+        {
+            budget.Step();
+            assumed.Add(GoalKey(assumption));
+        }
+        var proving = new HashSet<string>(StringComparer.Ordinal);
+        ProveCore(obligation, 0);
+
+        string GoalKey(GenericTraitObligation goal) => goal.Trait.Length + ":" + goal.Trait +
+            GenericTypes.Key(goal.Target, budget);
+
+        void ProveCore(GenericTraitObligation goal, int depth)
+        {
+            budget.Step(depth);
+            string key = GoalKey(goal);
+            if (assumed.Contains(key)) return;
+            budget.Count(proving.Count + 1);
+            if (!proving.Add(key))
+                throw new GenericFailure(GenericAnalysisStatus.CyclicObligation,
+                    "A generic body obligation requires a finite proof.");
+            try
+            {
+                foreach (GenericTraitImplementation implementation in implementations)
+                {
+                    budget.Step(depth);
+                    if (!string.Equals(goal.Trait, implementation.Trait, StringComparison.Ordinal)) continue;
+                    var bindings = new Dictionary<string, RustType>(StringComparer.Ordinal);
+                    if (!GenericTypes.Match(implementation.Target, goal.Target, bindings, budget, depth)) continue;
+                    foreach (GenericTraitObligation bound in implementation.Bounds)
+                        ProveCore(new(bound.Trait, GenericTypes.Substitute(bound.Target, bindings, budget, depth + 1)), depth + 1);
+                    return;
+                }
+                throw new GenericFailure(GenericAnalysisStatus.MissingImplementation,
+                    $"The generic body cannot prove trait '{goal.Trait}'; add the required bound.");
+            }
+            finally { proving.Remove(key); }
+        }
+    }
+
     public string Resolve(GenericTraitObligation obligation, int depth)
     {
         budget.Step(depth);
