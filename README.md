@@ -119,7 +119,9 @@ rustc 1.98.0 with zero failures, blocked cases or skips. The new
 `p1-platform.yml` workflow fixes 12 run-pass cases per native Windows/Linux x64
 runner, runs the 24-case v2 regression suite on each platform, and aggregates
 six reports covering CoreCLR, ILVerify, Native AOT, differential and regression
-evidence; those final-SHA CI reports are still required for P1 completion.
+evidence. [Run 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833)
+passes all six gates at commit `23279d93267a814c643baddc29c72918ff0fda0b`;
+the P1 milestone remains open for the semantic gaps listed above.
 
 Local hello probes provide ILVerify, CoreCLR and Windows x64 Native AOT
 evidence. Linux x64 Native AOT hello also runs under Ubuntu WSL2 with SDK

@@ -104,7 +104,9 @@ AssemblyRef/TypeRef/MemberRef，并严格核对 MethodDef 的签名、static 属
 执行 16/16 项（10 借用、6 Drop），失败、阻塞和跳过均为零。新的
 `p1-platform.yml` 工作流在原生 Windows/Linux x64 runner 上固定 12 个运行通过用例，
 并在每个平台运行 24 用例的 v2 回归套件，聚合覆盖 CoreCLR、ILVerify、Native AOT、差分和
-回归证据的 6 份报告；这些最终 SHA 的 CI 报告仍是 P1 完成的必要条件。
+回归证据的 6 份报告。[运行 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833)
+已在提交 `23279d93267a814c643baddc29c72918ff0fda0b` 上通过全部 6 个门禁；P1 阶段仍因上述
+语义缺口保持开放。
 
 本地 hello 探测提供 ILVerify、CoreCLR 和 Windows x64 Native AOT 证据。
 Linux x64 Native AOT hello 也在 Ubuntu WSL2 与 SDK 10.0.112 下运行；原生 Linux
