@@ -96,11 +96,16 @@ public sealed class NativeAotPublisher
         }
 
         var outputDirectory = Path.GetFullPath(request.OutputDirectory);
+        // Keep the disposable host project in the OS temp directory. Native
+        // AOT's linker emits a relative `bin\Release\...\native` path; when
+        // the evidence output is deeply nested, placing the host below that
+        // output can exceed Windows MAX_PATH before the linker opens its
+        // response-file output. The unique directory is still task-owned and
+        // is removed in the finally block after the bounded publish process
+        // has been drained.
         var hostDirectory = Path.Combine(
-            outputDirectory,
-            ".rsc",
-            "nativeaot-host",
-            $"{request.AssemblyName}-{Environment.ProcessId}-{Guid.NewGuid():N}");
+            Path.GetTempPath(),
+            $"rustsharp-nativeaot-{request.AssemblyName}-{Environment.ProcessId}-{Guid.NewGuid():N}");
         var hostSourcePath = Path.Combine(hostDirectory, HostSourceFileName);
         var hostProjectPath = Path.Combine(hostDirectory, HostProjectFileName);
         var hostAssemblyFileName = request.AssemblyName + ".dll";
