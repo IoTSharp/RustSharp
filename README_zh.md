@@ -149,7 +149,7 @@ Cargo 示例通过本地依赖的泛型 `Container<T>` 和函数主体，以及�
 
 - [兼容性契约](docs/compatibility.md)：已声明的语言和运行时边界。
 - [语言契约](docs/lexical-profile.md)：词法、[语法](docs/syntax-profile.md)、[模块](docs/module-profile.md)和[类型系统](docs/type-system-profile.md)配置档细节。
-- [路线图](ROADMAP_zh.md)：里程碑、验收条件和已记录证据。
+- [路线图](ROADMAP_zh.md)：父里程碑与已记录证据；[颗粒化执行计划](docs/roadmap/README_zh.md) 覆盖全部 P0～P6，包含 365 个实施叶子和 32 个独立门禁叶子。每个叶子单独声明交付、依赖、验收和证据，完成的子集可以独立结项，而不冒称整个阶段完成。
 - [架构决策](docs/adr)：约束实现的决策，包括[安全核心基础类型配置档](docs/adr/0007-safe-core-primitives.md)。
 
 ## 开发

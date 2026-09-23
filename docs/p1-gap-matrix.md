@@ -2,17 +2,63 @@
 
 Status / 状态: 🚧 In progress / 🚧 进行中.
 
-Baseline: `b621c4ad7e4528074a555592d99f1d09aa4ed1b2` (`origin/master` at the start
+Initial audit baseline: `b621c4ad7e4528074a555592d99f1d09aa4ed1b2` (`origin/master` at the start
 of the 2026-09-23 audit). This matrix describes implementation and evidence
 separately. An implemented helper, a passing small corpus, or an AOT hello
 program does not satisfy a larger P1 acceptance criterion. Missing compiler
 semantics and missing test denominators are implementation work, not external
 infrastructure blockers.
 
-基线是 2026-09-23 审计开始时的 `origin/master`：
+初次审计的历史基线是 2026-09-23 审计开始时的 `origin/master`：
 `b621c4ad7e4528074a555592d99f1d09aa4ed1b2`。本矩阵分别记录实现与证据。
 库内辅助函数、小语料通过或 AOT hello 程序通过，都不能替代完整 P1 验收；
 编译器语义和固定测试分母缺失属于实现工作，不属于外部基础设施阻塞。
+
+## Granular task ownership / 颗粒化任务归属
+
+The [English P1 breakdown](roadmap/P1.md) and [Chinese P1 breakdown](roadmap/P1_zh.md)
+own the leaf statuses, prerequisites and closure contracts. This matrix records
+requirement coverage and evidence limits; it is not a second independently
+maintained task queue. The following mapping preserves every open requirement.
+Newly named suites and reports in the breakdown are planned deliverables until
+their manifests, fixed denominators and actual evidence exist.
+
+[英文 P1 详情](roadmap/P1.md) 和 [中文 P1 详情](roadmap/P1_zh.md) 统一维护叶子状态、
+前置依赖和关闭契约。本矩阵记录需求覆盖与证据限制，不再独立维护第二份任务队列。
+以下映射保留全部开放要求。详情中的新套件与报告在清单、固定分母和真实证据形成前，
+均为计划交付物。
+
+| Requirement / 需求 | Owning leaves / 负责叶子 |
+| --- | --- |
+| Executable scope and requirement ledger / 可执行范围与需求账本 | P1-06.01, P1-10.01, P1-10.02 |
+| References, provenance and typed places / 引用、来源及 place 类型 | P1-06.04, P1-06.05, P1-06.19, P1-07.01, P1-07.09 |
+| Repeats, slices and unsizing / 重复数组、切片及 unsizing | P1-06.06–P1-06.09 |
+| Patterns, match and closures / 模式、match 与闭包 | P1-06.10, P1-06.11 |
+| HIR→MIR→LIR, scalar/aggregate execution, maps, snapshots and limits / 完整降低、标量/聚合执行、映射、快照及限制 | P1-06.12–P1-06.19 |
+| Copy/Move, partial moves and reinitialization / 复制、移动、部分移动及重新初始化 | P1-07.01–P1-07.03 |
+| NLL, conflicts, reborrows, escapes and joins / NLL、冲突、再借用、逃逸及合流 | P1-07.04–P1-07.08 |
+| Ownership evidence, diagnostics, differential and limits / 所有权证据、诊断、差分及限制 | P1-07.09–P1-07.12 |
+| Source destructors, flags, recursive drop glue and temporaries / 源码析构、标志、递归析构及临时值 | P1-08.01–P1-08.03, P1-08.13, P1-08.14 |
+| Normal/return/unwind/abort and destructor failure / 正常退出、返回、展开、中止及析构失败 | P1-08.04–P1-08.10 |
+| Generated panic boundary and Drop differential / 生成的 panic 边界及 Drop 差分 | P1-08.11, P1-08.12 |
+| Unified emission, source imports, metadata and cross-package execution / 统一发射、源码导入、元数据及跨包执行 | P1-09.01–P1-09.10 |
+| Immutable suites, provenance, CI and full exit evidence / 不可变套件、来源证明、CI 及完整退出证据 | P1-10.01–P1-10.10, P1-GATE.01–P1-GATE.06 |
+
+The latest implementation baseline is `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`:
+[Windows CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341932),
+[Linux CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341925) and
+[P1 platform CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341877)
+passed the existing suites. The local harness was 464/464; the platform workflow
+recorded 12/12 platform, 24/24 regression and 16/16 rustc 1.98 differential cases
+per native x64 platform, with 6/6 aggregate inputs. These are evidence for that
+SHA and those manifests, not completion of the expanded P1 contract. This
+roadmap-only change does not claim a new compiler build or runtime result.
+
+最新实现基线是 `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`：上述 Windows、Linux
+及 P1 平台 CI 已通过既有套件。本地完整工具为 464/464；平台工作流在每个原生 x64
+平台记录 12/12 平台、24/24 回归和 16/16 rustc 1.98 差分用例，聚合输入为 6/6。
+这些只证明对应 SHA 和清单的范围，不代表扩展后的 P1 契约完成。本次仅路线图变更
+不声称产生新的编译器构建或运行时结果。
 
 ## Evidence boundaries / 证据边界
 
@@ -60,17 +106,22 @@ report; they must not be silently promoted to a later commit.
 
 ## Completion rule / 完成规则
 
-P1-06 through P1-10 and the P1 stage may change to ✅ Complete / ✅ 已完成 only
-after all matrix requirements have implementation, fixed tests, current local
-evidence and final-SHA CI evidence. This includes a Release build with zero
+Each leaf may change to ✅ Complete when its own fixed contract and required
+evidence pass; each parent closes when all its required implementation leaves
+close. Other parents and the stage can remain open. The P1 stage may change to
+✅ Complete only after P1-GATE.01–P1-GATE.06 pass and all matrix requirements have
+implementation, fixed tests, current local evidence and final-SHA CI evidence.
+This includes a Release build with zero
 errors/warnings, no failed or skipped tests, full versioned regression and exit
 denominators, both native x64 AOT platforms, CoreCLR, ILVerify, rustc 1.98
 borrow/Drop comparison, `git diff --check`, bilingual document parity and
 confirmed task-process/run-directory cleanup. The 8/8, 5/5 and initial 4-case
 denominators are independent subsets of that gate.
 
-只有矩阵全部要求都具有实现、固定测试、当前本地证据和最终 SHA 的 CI 证据后，才能将
-P1-06～P1-10 及 P1 阶段改为 ✅ Complete / ✅ 已完成。必须同时满足 Release 零错误/
+每个叶子在自身固定契约与必需证据通过后即可改为 ✅ 已完成；父任务在其全部必需实施
+叶子关闭后即可关闭，其他父任务及阶段可以继续开放。只有 P1-GATE.01～P1-GATE.06
+全部通过，且矩阵全部要求具有实现、固定测试、当前本地证据和最终 SHA 的 CI 证据后，
+才能将 P1 阶段改为 ✅ 已完成。必须同时满足 Release 零错误/
 零警告、测试零失败/零跳过、完整版本化回归与退出分母、两个原生 x64 AOT 平台、
 CoreCLR、ILVerify、rustc 1.98 借用/Drop 对照、`git diff --check`、双语文档一致及
 任务进程/运行目录清理。8/8、5/5 和初始四用例分母都只是该门槛的独立子集。

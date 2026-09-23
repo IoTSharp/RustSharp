@@ -1,0 +1,48 @@
+name: Roadmap consistency
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'README*.md'
+      - 'ROADMAP*.md'
+      - 'docs/roadmap/**'
+      - 'docs/p1-gap-matrix.md'
+      - 'eng/Test-Roadmap.ps1'
+      - '.github/workflows/roadmap-consistency.yml'
+  pull_request:
+    paths:
+      - 'README*.md'
+      - 'ROADMAP*.md'
+      - 'docs/roadmap/**'
+      - 'docs/p1-gap-matrix.md'
+      - 'eng/Test-Roadmap.ps1'
+      - '.github/workflows/roadmap-consistency.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate bilingual work breakdown and dependency graph
+        shell: pwsh
+        timeout-minutes: 1
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          & ./eng/Test-Roadmap.ps1 -TimeoutSeconds 30 |
+            Tee-Object -FilePath artifacts/roadmap-validation.json
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload documentation validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadmap-validation
+          path: artifacts/roadmap-validation.json
+          if-no-files-found: error

@@ -170,7 +170,7 @@ assembly's `RustSharp.Generics.v1.json` resource.
 
 - [Compatibility contract](docs/compatibility.md): declared language and runtime boundaries.
 - [Language contracts](docs/lexical-profile.md): lexical, [syntax](docs/syntax-profile.md), [module](docs/module-profile.md), and [type-system](docs/type-system-profile.md) profile details.
-- [Roadmap](ROADMAP.md): milestones, acceptance criteria, and recorded evidence.
+- [Roadmap](ROADMAP.md): parent milestones and recorded evidence; the [granular execution plan](docs/roadmap/README.md) covers all P0–P6 phases with 365 implementation leaves and 32 explicit gate leaves. Each leaf has its own deliverable, dependencies, acceptance and evidence, so completed subsets can close without claiming that a whole phase is complete.
 - [Architecture decisions](docs/adr): decisions that constrain the implementation, including the [safe-core primitive profile](docs/adr/0007-safe-core-primitives.md).
 
 ## Development

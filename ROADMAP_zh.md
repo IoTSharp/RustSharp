@@ -11,6 +11,29 @@
 里程碑才会推进；阶段名称和 90 天规划窗口表示依赖顺序与团队容量，而不是对发布
 日期的承诺。
 
+## 颗粒化交付索引
+
+下方 68 个父任务 ID 保留为汇总。[颗粒化路线图](docs/roadmap/README_zh.md)
+是任务状态和依赖的唯一来源：365 个实施叶子及 32 个独立门禁叶子，共 397 个。
+每个叶子明确交付物、文件所有权、前置项、可观察验收及证据。叶子按自身契约独立关闭；
+父任务在全部必需子项关闭后完成；阶段仅在独立门禁关闭后完成。下方历史证据段保留
+原始范围与日期，不为后续每次提交重新定义工作。
+
+| 阶段 | 状态 | 父任务 | 实施叶子 | 门禁叶子 | 详细验收 |
+| --- | --- | --- | --- | --- | --- |
+| P0 | ✅ 已完成 | 17 | 34 | 3 | [纵向架构](docs/roadmap/P0_zh.md) |
+| P1 | 🚧 进行中 | 10 | 85 | 6 | [安全核心实现与闭环](docs/roadmap/P1_zh.md) |
+| P2 | ⏳ 计划中 | 15 | 94 | 7 | [库、包与工具链](docs/roadmap/P2_zh.md) |
+| P3 | ⏳ 计划中 | 6 | 38 | 4 | [宏、async、unsafe/FFI 与 TLS](docs/roadmap/P3_zh.md) |
+| P4 | ⏳ 计划中 | 5 | 29 | 4 | [HTTP 与 WebSocket](docs/roadmap/P4_zh.md) |
+| P5 | ⏳ 计划中 | 7 | 39 | 4 | [数据库与 ORM](docs/roadmap/P5_zh.md) |
+| P6 | ⏳ 计划中 | 8 | 46 | 4 | [平台与发布](docs/roadmap/P6_zh.md) |
+
+P5-07 保持为 P5 退出后的 diesel 评估，不属于 P5 退出阻塞集合；P5-GATE 要求
+P5-01～P5-06。这消除自依赖，不减少数据库交付。未来阶段示例的计划命令、路径、清单
+和用例数量是待实现目标，不是通过证据。声明一致性前先固定必需用例；范围扩大时新增
+版本，不缩小旧套件，也不在结项时追加隐藏验收条件。
+
 ## 状态与范围
 
 ### 状态图例
@@ -106,23 +129,23 @@ P0 在扩展语言表面之前，证明所选架构能够端到端工作。这�
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P0-01 | ✅ 已完成 | 创建 .NET 10 解决方案和项目边界。 | 无 | `dotnet sln RustSharp.slnx list` | 列出语法、IL 代码生成、编译器、CLI 和测试项目。 |
-| P0-02 | ✅ 已完成 | 记录语言、编译器/输出和首个切片的决策。 | 无 | `Get-ChildItem docs/adr/*.md` | ADR 0001-0006 均存在，并且每个都注明 `Status: Accepted`。 |
-| P0-03 | ✅ 已完成 | 定义首个版本化兼容性配置档。 | P0-02 | `Get-Content docs/compatibility.md` | 明确说明 `vertical-slice-v1`、Rust 1.98.0、Edition 2024 以及不作出的承诺。 |
-| P0-04 | ✅ 已完成 | 完成并测试有界进程执行和自有资源清理。 | P0-01 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 有界可执行用例通过，包括退出、超时、取消、输出限制、并发输出排空和自有子进程清理；进程记录包含 PID、启动时间、命令、父进程和已用时间。 |
-| P0-05 | ✅ 已完成 | 稳定适用于 `fn main()` 加字面量 `println!` 的有限词法分析器/解析器及诊断。 | P0-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 有效示例可成功解析；格式错误的分隔符、嵌套注释、转义、行尾和尾随词元均以稳定的代码和范围报告失败。 |
-| P0-06 | ✅ 已完成 | 直接从 C# 发出可执行 PE 和 Portable PDB。 | P0-05 | `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs --output artifacts/p0/hello.dll` | 在不生成 C# 程序逻辑的情况下产生 `hello.dll`、运行时配置和非空 PDB；发射器测试还证明，同一输入重复发出的字节完全相同。 |
-| P0-07 | ✅ 已完成 | 验证元数据、IL 栈正确性和确定性输出。 | P0-06 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` 加 `pwsh -NoProfile -File eng/Invoke-ILVerify.ps1` | PE/元数据/PDB 读取器、`ilspycmd` 和磁盘确定性输出测试解析出预期入口点、序列点、IL 栈/词元，以及字节完全相同的 PE/PDB/runtimeconfig 文件。固定版本的独立 `dotnet-ilverify` 10.0.11 运行使用显式 `System.Private.CoreLib`/运行时引用，以退出码 0 结束，并归档 JSON 证据。 |
-| P0-08 | ✅ 已完成 | 在 CoreCLR 上运行生成的程序集。 | P0-06 | `dotnet artifacts/p0/hello.dll` | 退出码为 0，stdout 恰好为 `Hello from Rust#` 加平台换行符。此运行时冒烟测试门槛独立于 P0-07 中可选的独立 IL 验证器。 |
-| P0-09 | ✅ 已完成 | 完成有界 Native AOT 发布适配器，并在 Windows x64 上运行原生可执行文件。 | P0-04, P0-08 | `dotnet run --project src/RustSharp.Cli -- publish samples/hello.rs --runtime win-x64 --output artifacts/p0/aot` | 发布以退出码 0 结束，未观察到 AOT/裁剪警告（警告视为错误）；原生可执行文件打印预期文本；发布器在报告成功前移除其自有宿主目录。 |
-| P0-10 | ✅ 已完成 | 在 Linux x64 原生运行器上重复可执行切片。 | P0-09 | `bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300` | [Linux 运行 `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620) 生成并运行了 x86-64 ELF，退出码为 0，文本与 CoreCLR 完全相同；其有界证据记录了完整的自有资源清理。 |
-| P0-11 | ✅ 已完成 | 构建 rustc 1.98 差异/一致性测试工具。 | P0-03, P0-04 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98` | 该工具调用 `rustc +1.98.0`，发出包含通过/失败/运行输出、诊断、工具版本、超时和配置档基准集合的机器可读报告，本地 4 用例基准集合通过。 |
-| P0-12 | ✅ 已完成 | 验证局部变量、调用、分支和返回的类型化 IR 可行性。 | P0-07 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 八个 CLR LIR 用例在可执行测试工具中通过；栈/类型验证在发出 PE 前拒绝无效 IR，有效的分支/控制流 PE 以预期结果运行。 |
-| P0-13 | ✅ 已完成 | 在小型 MIR 上验证移动、共享/可变借用、非词法生命周期和确定性 `Drop`。 | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 八个有界所有权用例通过；验证了移动后使用、重叠可变借用、引用逃逸、显式 NLL 结束和声明逆序 Drop。 |
-| P0-14 | ✅ 已完成 | 验证泛型以及有界 trait 解析子集。 | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | `Option<i32>` 以确定性方式单态化；精确、缺失和歧义的有界 trait 用例在深度/工作量限制下通过。 |
-| P0-15 | ✅ 已完成 | 验证托管混合运行时映射和明确的 .NET 互操作边界。 | P0-13 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 共享/独占托管借用、所有者/drop 作用域以及显式静态泛型互操作调用在不使用反射或动态代码的情况下通过。 |
-| P0-16 | ✅ 已完成 | 在不使用基于反射的代码生成的情况下，验证文件、TCP、异步和 SQLite 纵向示例。 | P0-13, P0-15 | `dotnet run --project tools/RustSharp.Smoke -- --profile p0-io` | 已记录的 Windows 和 Linux 运行均通过全部 4/4 个有界探测，包括参数化 SQLite；失败/跳过项均为零，且无清理诊断。 |
-| P0-17 | ✅ 已完成 | 添加 Windows/Linux x64 CI 并归档门槛证据。 | P0-07, P0-10, P0-11 | CI 工作流加有界测试工具 | 提交 `286f139` 通过了 [Windows 运行 `33857817622`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817622) 和 [Linux 运行 `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620)；两者各自上传了含 14 个文件的平台归档，覆盖可执行测试、IL/一致性测试、冒烟测试和 Native AOT 证据。 |
+| P0-01 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-01). 创建 .NET 10 解决方案和项目边界。 | 无 | `dotnet sln RustSharp.slnx list` | 列出语法、IL 代码生成、编译器、CLI 和测试项目。 |
+| P0-02 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-02). 记录语言、编译器/输出和首个切片的决策。 | 无 | `Get-ChildItem docs/adr/*.md` | ADR 0001-0006 均存在，并且每个都注明 `Status: Accepted`。 |
+| P0-03 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-03). 定义首个版本化兼容性配置档。 | P0-02 | `Get-Content docs/compatibility.md` | 明确说明 `vertical-slice-v1`、Rust 1.98.0、Edition 2024 以及不作出的承诺。 |
+| P0-04 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-04). 完成并测试有界进程执行和自有资源清理。 | P0-01 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 有界可执行用例通过，包括退出、超时、取消、输出限制、并发输出排空和自有子进程清理；进程记录包含 PID、启动时间、命令、父进程和已用时间。 |
+| P0-05 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-05). 稳定适用于 `fn main()` 加字面量 `println!` 的有限词法分析器/解析器及诊断。 | P0-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 有效示例可成功解析；格式错误的分隔符、嵌套注释、转义、行尾和尾随词元均以稳定的代码和范围报告失败。 |
+| P0-06 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-06). 直接从 C# 发出可执行 PE 和 Portable PDB。 | P0-05 | `dotnet run --project src/RustSharp.Cli -- compile samples/hello.rs --output artifacts/p0/hello.dll` | 在不生成 C# 程序逻辑的情况下产生 `hello.dll`、运行时配置和非空 PDB；发射器测试还证明，同一输入重复发出的字节完全相同。 |
+| P0-07 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-07). 验证元数据、IL 栈正确性和确定性输出。 | P0-06 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` 加 `pwsh -NoProfile -File eng/Invoke-ILVerify.ps1` | PE/元数据/PDB 读取器、`ilspycmd` 和磁盘确定性输出测试解析出预期入口点、序列点、IL 栈/词元，以及字节完全相同的 PE/PDB/runtimeconfig 文件。固定版本的独立 `dotnet-ilverify` 10.0.11 运行使用显式 `System.Private.CoreLib`/运行时引用，以退出码 0 结束，并归档 JSON 证据。 |
+| P0-08 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-08). 在 CoreCLR 上运行生成的程序集。 | P0-06 | `dotnet artifacts/p0/hello.dll` | 退出码为 0，stdout 恰好为 `Hello from Rust#` 加平台换行符。此运行时冒烟测试门槛独立于 P0-07 中可选的独立 IL 验证器。 |
+| P0-09 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-09). 完成有界 Native AOT 发布适配器，并在 Windows x64 上运行原生可执行文件。 | P0-04, P0-08 | `dotnet run --project src/RustSharp.Cli -- publish samples/hello.rs --runtime win-x64 --output artifacts/p0/aot` | 发布以退出码 0 结束，未观察到 AOT/裁剪警告（警告视为错误）；原生可执行文件打印预期文本；发布器在报告成功前移除其自有宿主目录。 |
+| P0-10 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-10). 在 Linux x64 原生运行器上重复可执行切片。 | P0-09 | `bash eng/Invoke-LinuxNativeAotProbe.sh samples/hello.rs artifacts/p0/linux-x64 300` | [Linux 运行 `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620) 生成并运行了 x86-64 ELF，退出码为 0，文本与 CoreCLR 完全相同；其有界证据记录了完整的自有资源清理。 |
+| P0-11 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-11). 构建 rustc 1.98 差异/一致性测试工具。 | P0-03, P0-04 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile vertical-slice-v1 --oracle rustc-1.98` | 该工具调用 `rustc +1.98.0`，发出包含通过/失败/运行输出、诊断、工具版本、超时和配置档基准集合的机器可读报告，本地 4 用例基准集合通过。 |
+| P0-12 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-12). 验证局部变量、调用、分支和返回的类型化 IR 可行性。 | P0-07 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 八个 CLR LIR 用例在可执行测试工具中通过；栈/类型验证在发出 PE 前拒绝无效 IR，有效的分支/控制流 PE 以预期结果运行。 |
+| P0-13 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-13). 在小型 MIR 上验证移动、共享/可变借用、非词法生命周期和确定性 `Drop`。 | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 八个有界所有权用例通过；验证了移动后使用、重叠可变借用、引用逃逸、显式 NLL 结束和声明逆序 Drop。 |
+| P0-14 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-14). 验证泛型以及有界 trait 解析子集。 | P0-12 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | `Option<i32>` 以确定性方式单态化；精确、缺失和歧义的有界 trait 用例在深度/工作量限制下通过。 |
+| P0-15 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-15). 验证托管混合运行时映射和明确的 .NET 互操作边界。 | P0-13 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore` | 共享/独占托管借用、所有者/drop 作用域以及显式静态泛型互操作调用在不使用反射或动态代码的情况下通过。 |
+| P0-16 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-16). 在不使用基于反射的代码生成的情况下，验证文件、TCP、异步和 SQLite 纵向示例。 | P0-13, P0-15 | `dotnet run --project tools/RustSharp.Smoke -- --profile p0-io` | 已记录的 Windows 和 Linux 运行均通过全部 4/4 个有界探测，包括参数化 SQLite；失败/跳过项均为零，且无清理诊断。 |
+| P0-17 | ✅ 已完成 | [叶子详情](docs/roadmap/P0_zh.md#p0-17). 添加 Windows/Linux x64 CI 并归档门槛证据。 | P0-07, P0-10, P0-11 | CI 工作流加有界测试工具 | 提交 `286f139` 通过了 [Windows 运行 `33857817622`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817622) 和 [Linux 运行 `33857817620`](https://github.com/IoTSharp/RustSharp/actions/runs/33857817620)；两者各自上传了含 14 个文件的平台归档，覆盖可执行测试、IL/一致性测试、冒烟测试和 Native AOT 证据。 |
 
 ### 已记录的纵向切片证据
 
@@ -394,16 +417,16 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P1-01 | ✅ 已完成 | 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 第 2 版清单通过 24/24 个精确词元/trivia/词元树/诊断/范围/源码重建夹具，并强制要求完整的 22 类词法映射。103/103 项回归工具覆盖边界、取消/超时、集合限制、4096 层深度和非法清单拒绝。按需启用的基础类型编译器使用该词法器；见上方记录的证据和词法契约。 |
-| P1-02 | ✅ 已完成 | 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | 第 3 版清单通过 49/49 个用例、34/34 份精确 AST 快照及 18/18 个必需类别。拒绝用例匹配诊断代码和源码文本；141/141 项回归工具覆盖取消/超时、错误恢复及非法证据。声明的语法配置已完成；尚不支持的语义/HIR 扩展显式返回 RSN1007。详见语法契约及上方本地证据。 |
-| P1-03 | ✅ 已完成 | 将 AST 降低为 HIR，并实现声明的安全核心模块、命名空间、可见性、导入、名称解析和 Cargo 包入口。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | 名称解析清单和可执行测试分别通过 25/25、190/190。HIR 保留 const 函数限定符，并确定性绑定声明和引用。分组/glob/self/匿名导入、受限可见性、源码文档、有界文件模块、原文件诊断和 PDB 映射已接入。`Cargo.toml` 已接入 `check`、`build`/`compile`、`run` 和 `publish`；已实现包元数据、确定性的本地 `path` 依赖、源码发现、循环/限制检查及对注册表依赖的明确诊断。前导 `::`、未求值属性、注册表包、Cargo feature/锁文件和宏展开仍作为后续里程碑的明确配置档边界。 |
-| P1-04 | ✅ 已完成 | 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98` | 单态的仅检查类型契约覆盖基础数值类型、聚合、引用、函数指针、非泛型 ADT、别名、模式/match、闭包、有界 const 求值、推断和有方向的强制转换。265/265 项回归及十六个必需类别中的 96/96 项第 2 版差分用例全部通过，失败和跳过均为零，无清理诊断。已接入文件/Cargo 检查；可执行命令在输出前以 RSC0009 拒绝。泛型/trait、MIR、所有权及可执行降低仍属于独立门槛。 |
-| P1-05 | ✅ 已完成 | 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-generics-v1 --oracle rustc-1.98` | 可执行泛型配置档检查刚性 HIR 主体、正向标记 trait 约束和一致性，特化可达主体及聚合布局，并经 CLR LIR 发射。有界包图保留泛型标识/定义并实施孤儿规则子集。记录的配置档门槛通过 350 项回归和 32 项固定用例，其中包括八项运行比较；合并后的可执行测试工具当前通过 377/377 项测试。独立源码与本地 Cargo 示例均通过 ILVerify 和 Windows Native AOT。见[泛型契约](docs/generic-profile.md)。 |
-| P1-06 | 🚧 进行中 | 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 当前有界实现提供不可变类型化 MIR arena；严格的 CFG/类型/常量/运算符/调用验证；有界且确定性的格式化与快照；嵌套元组和固定数组聚合 rvalue 及静态边界检查索引；结构化 `Copy` 重复数组降低；v2 配置档中的元组/标量模式、guard、or-pattern CFG 和静态展开闭包；带源码范围的 HIR 降低；面向受支持值子集的源码到 MIR 所有权/清理证据和直接 MIR 到 CLR-LIR 降低；以及取消、工作量、深度、集合和诊断限制。完整数组的局部切片引用现通过已证明的所有者存储支持 unsizing、长度和常量索引，并有确定性 MIR 与 CoreCLR 回归。动态索引、子切片、切片写入/参数/返回值、完整 place provenance、更广泛运行时/AOT 覆盖和完整 P1 退出门槛仍未完成；详见[类型化 MIR 契约](docs/typed-mir-profile.md)。 |
-| P1-07 | 🚧 进行中 | 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet D:/GitHub/RustSharp/tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --profile p1-differential-v2 --oracle rustc-1.98 --report artifacts/p1-10/p1-differential-v2-current4.json --timeout 30 --deadline 300` | 有界的 `SafeCoreOwnershipAnalysis` 在时间、操作量、路径、块访问和诊断限制下验证稠密的局部变量/作用域/块 arena 及源码范围。它覆盖 Move/Copy、显式和推断 NLL、共享/可变借用及再借用、部分投影路径、移动/部分移动后使用、逃逸分析、分支清理和确定性证据；所有权适配器要求局部变量/块事实双向精确匹配，对源码关联的 `RSM3004`/`RSM3005` 失败给出诊断，并将验证/关联工作计入共享操作预算。固定的 rustc 1.98 借用/Drop 16 用例语料零跳过并通过 16/16；适配器现将非 `Copy` MIR 使用映射为移动并有投影路径回归，但完整源码 aggregate place 类型/provenance、跨函数契约和更广泛源码借用降低仍未完成。 |
-| P1-08 | 🚧 进行中 | 实现作用域清理、确定性 `Drop`、展开/中止配置档行为和 panic 边界。 | P1-06, P1-07 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 有界运行时在作用域退出、返回和展开时按 ID 逆序记录清理；即使析构器失败也继续清理，并为主机终止策略保留 abort 作用域。`RustPanicBoundary` 暴露 `Returned`、`Unwound` 和 `Aborted` 结果；当前测试工具覆盖这些路径。编译器现在发现受支持的 unit `impl Drop`、发出显式析构调用终结符并生成所有权 Drop 事实，16 用例差分中的 6 个 Drop 用例通过。unit 子集生成的 fault 清理现有 CoreCLR 回归。完整 panic/unwind/abort、生成析构器失败后继续清理策略、非 unit/含字段聚合仍未完成；新增构造仍需原生平台证据。 |
-| P1-09 | 🚧 进行中 | 通过 CLR LIR 发出带有 Rust# 跨包元数据的安全核心程序。 | P0-07, P1-05, P1-08 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | `CompilerDriver` 通过 `AssemblyMetadataAttribute` 发出确定性的 `rustsharp-metadata-v1` JSON，携带配置档、源码 SHA-256、签名、泛型实例（零参数规范为 `()`）、trait 选择、可选 MIR 快照及附加的所有权/清理证据。`RustSharpMetadataReader`/`RustSharpMetadataConsumer` 验证有界 PE/schema/配置档/必需导出，将每个函数与生成的 `Program` MethodDef（名称、CLR 签名、可见性和 static 属性）对账，并读取 `RustSharp.Generics.v1.json`；解析、往返和独立 consumer 测试已注册到可执行测试工具。导入声明已合成到有界外部 crate 作用域并接入 HIR/名称解析；CLR LIR 为有界标量调用发出 `AssemblyRef`/`TypeRef`/`MemberRef`，且 producer 到 consumer 的 CoreCLR 运行时调用已验证。聚合/byref 导入签名和调用契约现有元数据测试及手工构建的 CLR LIR producer/consumer CoreCLR 测试。完整源码级导入所有权契约及这些新增能力的 ILVerify/Native AOT 证据仍未完成。 |
-| P1-10 | 🚧 进行中 | 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-09 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-regression-v1 --oracle rustc-1.98 --report artifacts/p1-10/safe-core-regression-v1.json`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-regression-v2 --oracle rustc-1.98 --report artifacts/p1-10/safe-core-regression-v2.json --timeout 30 --deadline 300`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile p1-differential-v2 --oracle rustc-1.98 --report artifacts/p1-10/p1-differential-v2-current4.json --timeout 30 --deadline 300` | 不可变的第 1 版清单仍强制八个用例分母，覆盖四类：1 个编译通过、2 个编译失败、2 个运行通过和 3 个差分，结果为 8/8 且失败/跳过均为零。第 2 版增加固定 24 个类型化 MIR 用例（1 个编译通过、6 个编译失败、13 个运行通过和 4 个差分），记录 rustc 1.98.0 进程 provenance，本地结果为 24/24。独立的第 2 版借用/Drop 分母仍为 16 个用例（10 借用、6 Drop），结果为 16/16 且失败/阻塞/跳过均为零。平台运行器和聚合工作流在每个原生 x64 平台固定 12 个 CoreCLR/ILVerify/Native AOT 运行通过用例，在每个平台运行 24 用例回归套件，并校验 6 份报告。[CI 运行 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833) 已在历史提交 `23279d93267a814c643baddc29c72918ff0fda0b` 上通过全部 6 份输入；该运行不验证后续新增能力。语义及最终提交证据缺口仍使 P1 保持开放。 |
+| P1-01 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-01). 为 Rust 1.98 词法形式实现无损词元化和词元树。 | P0 门槛 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-lexing`<br>`dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 第 2 版清单通过 24/24 个精确词元/trivia/词元树/诊断/范围/源码重建夹具，并强制要求完整的 22 类词法映射。103/103 项回归工具覆盖边界、取消/超时、集合限制、4096 层深度和非法清单拒绝。按需启用的基础类型编译器使用该词法器；见上方记录的证据和词法契约。 |
+| P1-02 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-02). 解析安全核心配置档中的模块、项、语句、表达式、模式、类型、泛型和属性。 | P1-01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-syntax`<br>`pwsh -NoProfile -File eng/Test-SyntaxEvidence.ps1` | 第 3 版清单通过 49/49 个用例、34/34 份精确 AST 快照及 18/18 个必需类别。拒绝用例匹配诊断代码和源码文本；141/141 项回归工具覆盖取消/超时、错误恢复及非法证据。声明的语法配置已完成；尚不支持的语义/HIR 扩展显式返回 RSN1007。详见语法契约及上方本地证据。 |
+| P1-03 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-03). 将 AST 降低为 HIR，并实现声明的安全核心模块、命名空间、可见性、导入、名称解析和 Cargo 包入口。 | P1-02 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-restore -- --profile safe-core-name-resolution`<br>`dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`rsc check tests/workspaces/basic/Cargo.toml --profile safe-core-primitives-v1` | 名称解析清单和可执行测试分别通过 25/25、190/190。HIR 保留 const 函数限定符，并确定性绑定声明和引用。分组/glob/self/匿名导入、受限可见性、源码文档、有界文件模块、原文件诊断和 PDB 映射已接入。`Cargo.toml` 已接入 `check`、`build`/`compile`、`run` 和 `publish`；已实现包元数据、确定性的本地 `path` 依赖、源码发现、循环/限制检查及对注册表依赖的明确诊断。前导 `::`、未求值属性、注册表包、Cargo feature/锁文件和宏展开仍作为后续里程碑的明确配置档边界。 |
+| P1-04 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-04). 实现原始类型、元组、数组、切片、引用、函数、ADT 和 never 类型，以及推断/强制转换规则。 | P1-03 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-types-v1 --oracle rustc-1.98` | 单态的仅检查类型契约覆盖基础数值类型、聚合、引用、函数指针、非泛型 ADT、别名、模式/match、闭包、有界 const 求值、推断和有方向的强制转换。265/265 项回归及十六个必需类别中的 96/96 项第 2 版差分用例全部通过，失败和跳过均为零，无清理诊断。已接入文件/Cargo 检查；可执行命令在输出前以 RSC0009 拒绝。泛型/trait、MIR、所有权及可执行降低仍属于独立门槛。 |
+| P1-05 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-05). 实现泛型替换、单态化、impl 一致性和版本化 trait 求解器子集。 | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-generics-v1 --oracle rustc-1.98` | 可执行泛型配置档检查刚性 HIR 主体、正向标记 trait 约束和一致性，特化可达主体及聚合布局，并经 CLR LIR 发射。有界包图保留泛型标识/定义并实施孤儿规则子集。记录的配置档门槛通过 350 项回归和 32 项固定用例，其中包括八项运行比较；合并后的可执行测试工具当前通过 377/377 项测试。独立源码与本地 Cargo 示例均通过 ILVerify 和 Windows Native AOT。见[泛型契约](docs/generic-profile.md)。 |
+| P1-06 | 🚧 进行中 | [叶子详情](docs/roadmap/P1_zh.md#p1-06). 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 当前有界实现提供不可变类型化 MIR arena；严格的 CFG/类型/常量/运算符/调用验证；有界且确定性的格式化与快照；嵌套元组和固定数组聚合 rvalue 及静态边界检查索引；结构化 `Copy` 重复数组降低；v2 配置档中的元组/标量模式、guard、or-pattern CFG 和静态展开闭包；带源码范围的 HIR 降低；面向受支持值子集的源码到 MIR 所有权/清理证据和直接 MIR 到 CLR-LIR 降低；以及取消、工作量、深度、集合和诊断限制。完整数组的局部切片引用现通过已证明的所有者存储支持 unsizing、长度和常量索引，并有确定性 MIR 与 CoreCLR 回归。动态索引、子切片、切片写入/参数/返回值、完整 place provenance、更广泛运行时/AOT 覆盖和完整 P1 退出门槛仍未完成；详见[类型化 MIR 契约](docs/typed-mir-profile.md)。 |
+| P1-07 | 🚧 进行中 | [叶子详情](docs/roadmap/P1_zh.md#p1-07). 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06.04, P1-06.05 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet D:/GitHub/RustSharp/tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --profile p1-differential-v2 --oracle rustc-1.98 --report artifacts/p1-10/p1-differential-v2-current4.json --timeout 30 --deadline 300` | 有界的 `SafeCoreOwnershipAnalysis` 在时间、操作量、路径、块访问和诊断限制下验证稠密的局部变量/作用域/块 arena 及源码范围。它覆盖 Move/Copy、显式和推断 NLL、共享/可变借用及再借用、部分投影路径、移动/部分移动后使用、逃逸分析、分支清理和确定性证据；所有权适配器要求局部变量/块事实双向精确匹配，对源码关联的 `RSM3004`/`RSM3005` 失败给出诊断，并将验证/关联工作计入共享操作预算。固定的 rustc 1.98 借用/Drop 16 用例语料零跳过并通过 16/16；适配器现将非 `Copy` MIR 使用映射为移动并有投影路径回归，但完整源码 aggregate place 类型/provenance、跨函数契约和更广泛源码借用降低仍未完成。 |
+| P1-08 | 🚧 进行中 | [叶子详情](docs/roadmap/P1_zh.md#p1-08). 实现作用域清理、确定性 `Drop`、展开/中止配置档行为和 panic 边界。 | P1-06.01, P1-07.01 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 有界运行时在作用域退出、返回和展开时按 ID 逆序记录清理；即使析构器失败也继续清理，并为主机终止策略保留 abort 作用域。`RustPanicBoundary` 暴露 `Returned`、`Unwound` 和 `Aborted` 结果；当前测试工具覆盖这些路径。编译器现在发现受支持的 unit `impl Drop`、发出显式析构调用终结符并生成所有权 Drop 事实，16 用例差分中的 6 个 Drop 用例通过。unit 子集生成的 fault 清理现有 CoreCLR 回归。完整 panic/unwind/abort、生成析构器失败后继续清理策略、非 unit/含字段聚合仍未完成；新增构造仍需原生平台证据。 |
+| P1-09 | 🚧 进行中 | [叶子详情](docs/roadmap/P1_zh.md#p1-09). 通过 CLR LIR 发出带有 Rust# 跨包元数据的安全核心程序。 | P0-07, P1-05, P1-08.11 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | `CompilerDriver` 通过 `AssemblyMetadataAttribute` 发出确定性的 `rustsharp-metadata-v1` JSON，携带配置档、源码 SHA-256、签名、泛型实例（零参数规范为 `()`）、trait 选择、可选 MIR 快照及附加的所有权/清理证据。`RustSharpMetadataReader`/`RustSharpMetadataConsumer` 验证有界 PE/schema/配置档/必需导出，将每个函数与生成的 `Program` MethodDef（名称、CLR 签名、可见性和 static 属性）对账，并读取 `RustSharp.Generics.v1.json`；解析、往返和独立 consumer 测试已注册到可执行测试工具。导入声明已合成到有界外部 crate 作用域并接入 HIR/名称解析；CLR LIR 为有界标量调用发出 `AssemblyRef`/`TypeRef`/`MemberRef`，且 producer 到 consumer 的 CoreCLR 运行时调用已验证。聚合/byref 导入签名和调用契约现有元数据测试及手工构建的 CLR LIR producer/consumer CoreCLR 测试。完整源码级导入所有权契约及这些新增能力的 ILVerify/Native AOT 证据仍未完成。 |
+| P1-10 | 🚧 进行中 | [叶子详情](docs/roadmap/P1_zh.md#p1-10). 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-06.01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-regression-v1 --oracle rustc-1.98 --report artifacts/p1-10/safe-core-regression-v1.json`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-regression-v2 --oracle rustc-1.98 --report artifacts/p1-10/safe-core-regression-v2.json --timeout 30 --deadline 300`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile p1-differential-v2 --oracle rustc-1.98 --report artifacts/p1-10/p1-differential-v2-current4.json --timeout 30 --deadline 300` | 不可变的第 1 版清单仍强制八个用例分母，覆盖四类：1 个编译通过、2 个编译失败、2 个运行通过和 3 个差分，结果为 8/8 且失败/跳过均为零。第 2 版增加固定 24 个类型化 MIR 用例（1 个编译通过、6 个编译失败、13 个运行通过和 4 个差分），记录 rustc 1.98.0 进程 provenance，本地结果为 24/24。独立的第 2 版借用/Drop 分母仍为 16 个用例（10 借用、6 Drop），结果为 16/16 且失败/阻塞/跳过均为零。平台运行器和聚合工作流在每个原生 x64 平台固定 12 个 CoreCLR/ILVerify/Native AOT 运行通过用例，在每个平台运行 24 用例回归套件，并校验 6 份报告。[CI 运行 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833) 已在历史提交 `23279d93267a814c643baddc29c72918ff0fda0b` 上通过全部 6 份输入；该运行不验证后续新增能力。语义及最终提交证据缺口仍使 P1 保持开放。 |
 
 已记录的 `p1-exit-gate-v1` 报告位于 `artifacts/p1-10/p1-exit-gate-v1.json`，
 5/5 个进程内库契约探针均通过：`typed-mir-validation`、`ownership-bridge`、
@@ -424,10 +447,11 @@ P1-05 的有界可执行泛型契约基于已记录的回归、差分、ILVerify
 ✅ 已完成。接下来从 P1-04 继续推进 P1-06 类型化 MIR。每个 PR 都列明准确的
 已实现子集、回归证据及里程碑剩余验收条件。
 
-继续实现 P1-06 的聚合（包括固定数组）、模式和闭包降低。P1-07 现已有有界所有权基础，后续应推进
-类型化 MIR/源码接入和借用差分语料；P1-08 使用该基础实现运行时清理和 panic 降低。
-P1-09 汇合泛型特化、有界跨包标量调用和所有权感知降低，之后由 P1-10 闭合完整差分分母。
-基础 PR 完成不等于整个里程碑完成。
+先以 P1-06.01 和 P1-10.01/.02 固定需求/用例清单，再按 [P1 执行顺序](docs/roadmap/P1_zh.md)
+中的精确叶子依赖推进：类型化 place/provenance 解锁源码所有权，drop flag 解锁清理，
+元数据契约和测试运行器可在独立所属文件中并行。P1-06.13 只对账具名降低类别，不再成为
+开放式实现大桶。源码导入 panic 集成属于 P1-09.06，依赖 P1-08.11 的可复用本地边界。
+固定实现和证据叶子完成后，逐项关闭 P1-GATE.01～.06，并保留全部旧套件。
 
 ## .NET 生态工具链规划
 
@@ -453,21 +477,21 @@ API/feature/RID 配置档报告；Visual Studio 工作只在共享 LSP 和 SDK �
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P2-01 | ⏳ 计划中 | 实现以 Rust 命名的 `core` 原语、`Option`、`Result`、格式化、比较、哈希和迭代器基础。 | P1 门槛 | `rsc test library/core/Cargo.toml` | 配置档清单中的公共名称/签名存在，且行为测试在 CoreCLR/AOT 上通过。 |
-| P2-02 | ⏳ 计划中 | 使用托管混合模型为 `Box`、`Vec`、`String`、`Rc`、`Arc` 和集合实现 `alloc` 配置档。 | P2-01 | `rsc test library/alloc/Cargo.toml` | 所有权、容量、索引、迭代、Drop、线程安全和分配限制测试通过。 |
-| P2-03 | ⏳ 计划中 | 实现 `std::io`、`std::fs`、`std::path`、环境、时间、进程、线程、同步和 `std::net` 配置档。 | P2-02 | `rsc test library/std/Cargo.toml` | 文件/目录操作、流、路径、进程取消、同步、TCP/UDP 和 DNS 示例在受支持的 x64 平台上通过。 |
-| P2-04 | ⏳ 计划中 | 解析兼容 Cargo 的包/工作区清单、feature、目标 `cfg`、锁定数据和依赖图。 | P1-03 | `rsc check tests/workspaces/basic/Cargo.toml --locked` | 解析具有确定性；feature 合并和受支持的 `cfg` 用例与已记录的 Cargo 子集匹配；对不支持的键给出清晰诊断。 |
-| P2-05 | ⏳ 计划中 | 从受控 NuGet 源还原带有完整性、目标/配置档和 AOT 元数据的 Rust# 包。 | P2-04 | `rsc restore tests/workspaces/packages/Cargo.toml --locked` | 精确的包可以可复现地还原；不兼容的配置档/RID/AOT 包在编译前失败。 |
-| P2-06 | ⏳ 计划中 | 冻结并实现版本化的 `extern "dotnet"` 风格互操作和普通 .NET 库输出。 | P0-15, P1-09 | `rsc build tests/interop/dotnet/Cargo.toml --target dotnet-library` | C# 消费者调用生成的库；Rust# 调用 AOT 安全的 NuGet API；不支持的反射/动态代码路径产生诊断。 |
-| P2-07 | ⏳ 计划中 | 实现 `rsc new/check/build/run/test/publish` 和依赖还原，并提供稳定的退出码和诊断。 | P2-04, P2-05 | `rsc test tests/cli/Cargo.toml` | 每个命令都有成功/失败黄金测试、取消、有限超时，且不会泄漏自有进程/文件。 |
-| P2-08 | ⏳ 计划中 | 实现格式化程序、文档生成器、增量缓存键和确定性构建。 | P1-02, P1-09 | `rsc fmt --check tests/programs; rsc doc tests/programs/Cargo.toml; rsc build tests/programs --locked` | 格式化具有幂等性，文档链接正确，未更改的构建复用有效制品，干净输出可复现。 |
-| P2-09 | ⏳ 计划中 | 实现共享 LSP 契约、VS Code 集成和 Portable PDB 单步调试。 | P1-03, P1-06, P2-07 | `dotnet test RustSharp.slnx -c Release --filter LanguageServer` | 打开/更改/诊断/悬停/补全/定义/引用/重命名/格式化/代码操作/语义词元/内联提示测试通过；调试器从生成代码单步执行到预期 `.rs` 行；面向项目的取消和增量状态不会泄漏进程或陈旧诊断。 |
-| P2-10 | ⏳ 计划中 | 为 Windows/Linux x64 发布首个有文档记录的 SDK/包/配置档集合。 | P2-01 至 P2-09 | `rsc publish samples/file-server/Cargo.toml --runtime win-x64 --locked` | 干净机器可以只使用有文档记录的输入来还原、构建、测试、调试和 AOT 发布示例。 |
-| P2-11 | ⏳ 计划中 | 定义并实现可选的 `RustSharp.NET.Sdk` MSBuild 桥接和面向 `Cargo.toml` 包的 SDK 风格项目包装层。 | P2-04, P2-05, P2-06, P2-07 | `dotnet build tests/sdk/console/RustSharp.rsproj -c Release` | `dotnet build/run/test/pack` 将引用、诊断、符号、确定性设置和 profile/RID 属性转发给 `rsc`；SDK 包装层与直接 Cargo 工作流产生等价的编译器输入和可复现输出。实现前通过 ADR 冻结包装层形状和属性契约。 |
-| P2-12 | ⏳ 计划中 | 发布面向控制台、库、测试、Web 和 Native AOT 起始项目的版本化 `RustSharp.Templates`。 | P2-07, P2-10, P2-11 | `dotnet new install artifacts/RustSharp.Templates.nupkg; dotnet new rustsharp-console -n Sample; dotnet build Sample` | 每个模板创建有效的 `Cargo.toml`、`.rs` 源文件、配置档/RID 元数据和后续步骤文档；生成项目无需手工修改即可通过构建/运行/测试及声明的 AOT 冒烟门槛。 |
-| P2-13 | ⏳ 计划中 | 使用生产发射器和共享语言分析增加 `rsc repl` 及有界 `.rs` 脚本模式。 | P1-09, P2-07, P2-09 | `rsc repl --script tests/repl/basic.rs --timeout 30`，并运行伪终端会话夹具 | 脚本模式生成/运行普通程序集并提供稳定诊断和退出码；交互单元保留会话状态、历史、补全、悬停和取消；不接受仅求值器语义路径或自有进程泄漏。交互模式仅面向 CoreCLR/JIT，不构成 AOT 承诺。 |
-| P2-14 | ⏳ 计划中 | 交付由共享 LSP 和 SDK 项目模型支持的 Visual Studio 扩展。 | P2-09, P2-11, P2-12, P2-15 | `pwsh -NoProfile -File eng/Invoke-VisualStudioSmoke.ps1 -RootSuffix RustSharp -SolutionPath tests/ide/console.sln` | 隔离的实验实例可以打开模板生成的项目，提供诊断/补全/导航/格式化，使用原生命令还原/构建，利用 Portable PDB 源码映射启动托管调试，并运行已声明的测试适配器；VSIX 安装/清理有界，不支持的配置档给出清晰诊断。 |
-| P2-15 | ⏳ 计划中 | 定义针对 BCL、NuGet、分析器/源生成器、测试框架和 AOT 可达性的 .NET 生态兼容性矩阵及适配器策略。 | P2-05, P2-06, P2-09 | `rsc conformance --profile dotnet-ecosystem-v1 --locked` | 版本化清单列出已测试的 API/feature/package/RID 组合、普通 .NET 消费者夹具、分析器/生成器边界和排除项；每个声明条目都有 CoreCLR/AOT 证据或明确诊断。 |
+| P2-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-01). 实现以 Rust 命名的 `core` 原语、`Option`、`Result`、格式化、比较、哈希和迭代器基础。 | P1 门槛 | `rsc test library/core/Cargo.toml` | 配置档清单中的公共名称/签名存在，且行为测试在 CoreCLR/AOT 上通过。 |
+| P2-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-02). 使用托管混合模型为 `Box`、`Vec`、`String`、`Rc`、`Arc` 和集合实现 `alloc` 配置档。 | P2-01 | `rsc test library/alloc/Cargo.toml` | 所有权、容量、索引、迭代、Drop、线程安全和分配限制测试通过。 |
+| P2-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-03). 实现 `std::io`、`std::fs`、`std::path`、环境、时间、进程、线程、同步和 `std::net` 配置档。 | P2-02 | `rsc test library/std/Cargo.toml` | 文件/目录操作、流、路径、进程取消、同步、TCP/UDP 和 DNS 示例在受支持的 x64 平台上通过。 |
+| P2-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-04). 解析兼容 Cargo 的包/工作区清单、feature、目标 `cfg`、锁定数据和依赖图。 | P1-03 | `rsc check tests/workspaces/basic/Cargo.toml --locked` | 解析具有确定性；feature 合并和受支持的 `cfg` 用例与已记录的 Cargo 子集匹配；对不支持的键给出清晰诊断。 |
+| P2-05 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-05). 从受控 NuGet 源还原带有完整性、目标/配置档和 AOT 元数据的 Rust# 包。 | P2-04 | `rsc restore tests/workspaces/packages/Cargo.toml --locked` | 精确的包可以可复现地还原；不兼容的配置档/RID/AOT 包在编译前失败。 |
+| P2-06 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-06). 冻结并实现版本化的 `extern "dotnet"` 风格互操作和普通 .NET 库输出。 | P0-15, P1-09 | `rsc build tests/interop/dotnet/Cargo.toml --target dotnet-library` | C# 消费者调用生成的库；Rust# 调用 AOT 安全的 NuGet API；不支持的反射/动态代码路径产生诊断。 |
+| P2-07 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-07). 实现 `rsc new/check/build/run/test/publish` 和依赖还原，并提供稳定的退出码和诊断。 | P2-04, P2-05 | `rsc test tests/cli/Cargo.toml` | 每个命令都有成功/失败黄金测试、取消、有限超时，且不会泄漏自有进程/文件。 |
+| P2-08 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-08). 实现格式化程序、文档生成器、增量缓存键和确定性构建。 | P1-02, P1-09 | `rsc fmt --check tests/programs; rsc doc tests/programs/Cargo.toml; rsc build tests/programs --locked` | 格式化具有幂等性，文档链接正确，未更改的构建复用有效制品，干净输出可复现。 |
+| P2-09 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-09). 实现共享 LSP 契约、VS Code 集成和 Portable PDB 单步调试。 | P1-03, P1-06, P2-07 | `dotnet test RustSharp.slnx -c Release --filter LanguageServer` | 打开/更改/诊断/悬停/补全/定义/引用/重命名/格式化/代码操作/语义词元/内联提示测试通过；调试器从生成代码单步执行到预期 `.rs` 行；面向项目的取消和增量状态不会泄漏进程或陈旧诊断。 |
+| P2-10 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-10). 为 Windows/Linux x64 发布首个有文档记录的 SDK/包/配置档集合。 | P2-01 至 P2-09 | `rsc publish samples/file-server/Cargo.toml --runtime win-x64 --locked` | 干净机器可以只使用有文档记录的输入来还原、构建、测试、调试和 AOT 发布示例。 |
+| P2-11 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-11). 定义并实现可选的 `RustSharp.NET.Sdk` MSBuild 桥接和面向 `Cargo.toml` 包的 SDK 风格项目包装层。 | P2-04, P2-05, P2-06, P2-07 | `dotnet build tests/sdk/console/RustSharp.rsproj -c Release` | `dotnet build/run/test/pack` 将引用、诊断、符号、确定性设置和 profile/RID 属性转发给 `rsc`；SDK 包装层与直接 Cargo 工作流产生等价的编译器输入和可复现输出。实现前通过 ADR 冻结包装层形状和属性契约。 |
+| P2-12 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-12). 发布面向控制台、库、测试、Web 和 Native AOT 起始项目的版本化 `RustSharp.Templates`。 | P2-07, P2-10, P2-11 | `dotnet new install artifacts/RustSharp.Templates.nupkg; dotnet new rustsharp-console -n Sample; dotnet build Sample` | 每个模板创建有效的 `Cargo.toml`、`.rs` 源文件、配置档/RID 元数据和后续步骤文档；生成项目无需手工修改即可通过构建/运行/测试及声明的 AOT 冒烟门槛。 |
+| P2-13 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-13). 使用生产发射器和共享语言分析增加 `rsc repl` 及有界 `.rs` 脚本模式。 | P1-09, P2-07, P2-09 | `rsc repl --script tests/repl/basic.rs --timeout 30`，并运行伪终端会话夹具 | 脚本模式生成/运行普通程序集并提供稳定诊断和退出码；交互单元保留会话状态、历史、补全、悬停和取消；不接受仅求值器语义路径或自有进程泄漏。交互模式仅面向 CoreCLR/JIT，不构成 AOT 承诺。 |
+| P2-14 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-14). 交付由共享 LSP 和 SDK 项目模型支持的 Visual Studio 扩展。 | P2-09, P2-11, P2-12, P2-15 | `pwsh -NoProfile -File eng/Invoke-VisualStudioSmoke.ps1 -RootSuffix RustSharp -SolutionPath tests/ide/console.sln` | 隔离的实验实例可以打开模板生成的项目，提供诊断/补全/导航/格式化，使用原生命令还原/构建，利用 Portable PDB 源码映射启动托管调试，并运行已声明的测试适配器；VSIX 安装/清理有界，不支持的配置档给出清晰诊断。 |
+| P2-15 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-15). 定义针对 BCL、NuGet、分析器/源生成器、测试框架和 AOT 可达性的 .NET 生态兼容性矩阵及适配器策略。 | P2-05, P2-06, P2-09 | `rsc conformance --profile dotnet-ecosystem-v1 --locked` | 版本化清单列出已测试的 API/feature/package/RID 组合、普通 .NET 消费者夹具、分析器/生成器边界和排除项；每个声明条目都有 CoreCLR/AOT 证据或明确诊断。 |
 
 当新用户可以从模板创建包、使用已声明的 `core`/`alloc`/`std` API、使用兼容的
 NuGet 依赖项、使用共享 LSP 和 Visual Studio 集成、进行调试，并且无需未记录的
@@ -478,12 +502,12 @@ NuGet 依赖项、使用共享 LSP 和 Visual Studio 集成、进行调试，并
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P3-01 | ⏳ 计划中 | 实现内置宏以及 `macro_rules!` 词元树匹配、卫生性、展开限制和诊断。 | P1-01, P2 门槛 | `rsc test tests/macros/macro-rules/Cargo.toml` | 已声明的展开/卫生性用例通过；递归/词元限制会终止并给出带源码信息的诊断。 |
-| P3-02 | ⏳ 计划中 | 定义并实现进程外过程宏协议和 SDK。 | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | 派生/属性/函数式示例正常工作；崩溃、超时、过量输出和取消均得到隔离与清理。 |
-| P3-03 | ⏳ 计划中 | 将 `async`/`.await` 降低为显式状态机，并在不生成运行时代码的情况下桥接 `Future`、`Waker`、取消和 .NET `Task`。 | P1-06, P2-02 | `rsc test tests/async/core/Cargo.toml` | 完成、挂起、取消、错误、Drop 和并发用例在 CoreCLR/AOT 上与异步配置档匹配。 |
-| P3-04 | ⏳ 计划中 | 实现应用程序库所需的精确版本 `tokio` 兼容性配置档。 | P3-03, P2-03 | `rsc test compat/tokio/Cargo.toml --features declared-profile` | 配置档清单中列出的运行时、任务、计时器、同步、IO 和网络成员通过；报告省略的 feature。 |
-| P3-05 | ⏳ 计划中 | 实现有界的 `unsafe`、布局、裸指针、联合体、固定和 C FFI 配置档。 | P1-08, P2-06 | `rsc test tests/unsafe-ffi/Cargo.toml` | 受支持的 `repr(C)` 布局和 C 调用与原生测试夹具匹配；明确拒绝被排除的内部函数/汇编/Rust ABI。 |
-| P3-06 | ⏳ 计划中 | 实现 AOT 安全的 TLS 原语和证书/平台抽象。 | P3-03, P2-03 | `rsc test tests/tls/Cargo.toml` | 本地受信任/不受信任、主机名、协议、取消和释放用例通过，且不使用基于反射的序列化或动态代码。 |
+| P3-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-01). 实现内置宏以及 `macro_rules!` 词元树匹配、卫生性、展开限制和诊断。 | P1-01, P2 门槛 | `rsc test tests/macros/macro-rules/Cargo.toml` | 已声明的展开/卫生性用例通过；递归/词元限制会终止并给出带源码信息的诊断。 |
+| P3-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-02). 定义并实现进程外过程宏协议和 SDK。 | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | 派生/属性/函数式示例正常工作；崩溃、超时、过量输出和取消均得到隔离与清理。 |
+| P3-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-03). 将 `async`/`.await` 降低为显式状态机，并在不生成运行时代码的情况下桥接 `Future`、`Waker`、取消和 .NET `Task`。 | P1-06, P2-02 | `rsc test tests/async/core/Cargo.toml` | 完成、挂起、取消、错误、Drop 和并发用例在 CoreCLR/AOT 上与异步配置档匹配。 |
+| P3-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-04). 实现应用程序库所需的精确版本 `tokio` 兼容性配置档。 | P3-03, P2-03 | `rsc test compat/tokio/Cargo.toml --features declared-profile` | 配置档清单中列出的运行时、任务、计时器、同步、IO 和网络成员通过；报告省略的 feature。 |
+| P3-05 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-05). 实现有界的 `unsafe`、布局、裸指针、联合体、固定和 C FFI 配置档。 | P1-08, P2-06 | `rsc test tests/unsafe-ffi/Cargo.toml` | 受支持的 `repr(C)` 布局和 C 调用与原生测试夹具匹配；明确拒绝被排除的内部函数/汇编/Rust ABI。 |
+| P3-06 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-06). 实现 AOT 安全的 TLS 原语和证书/平台抽象。 | P3-03, P2-03 | `rsc test tests/tls/Cargo.toml` | 本地受信任/不受信任、主机名、协议、取消和释放用例通过，且不使用基于反射的序列化或动态代码。 |
 
 当异步 IO、已声明的 `tokio` 配置档、宏隔离、TLS 和有界 unsafe/C ABI 配置档，
 在两个受支持的 x64 平台上的 CoreCLR 和 Native AOT 下都通过时，P3 才能退出。
@@ -492,11 +516,11 @@ NuGet 依赖项、使用共享 LSP 和 Visual Studio 集成、进行调试，并
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P4-01 | ⏳ 计划中 | 实现公共配置档所需的内部精确版本 `http`/`hyper`/`tower` 表面。 | P3 门槛 | `rsc test compat/http-stack/Cargo.toml` | 请求/响应、消息体、中间件、背压、取消、HTTP/1.1 和已声明的 HTTP/2 用例通过。 |
-| P4-02 | ⏳ 计划中 | 实现选定的 `reqwest` 客户端 API/feature 配置档。 | P4-01, P3-06 | `rsc test compat/reqwest/Cargo.toml --features declared-profile` | 清单中列出的 HTTP、TLS、重定向、流式传输、超时、代理和序列化适配器通过。 |
-| P4-03 | ⏳ 计划中 | 实现选定的 `axum` 服务器 API/feature 配置档。 | P4-01, P3-04 | `rsc test compat/axum/Cargo.toml --features declared-profile` | 路由、提取器、响应、中间件、状态、错误、优雅关闭和并发示例通过。 |
-| P4-04 | ⏳ 计划中 | 实现客户端/服务器 WebSocket 配置档。 | P4-01, P3-06 | `rsc test tests/websocket/Cargo.toml` | 升级、文本/二进制、分片、ping/pong、关闭、TLS、取消和大小限制测试通过。 |
-| P4-05 | ⏳ 计划中 | 发布具有代表性的 AOT Web 应用和兼容性报告。 | P4-02 至 P4-04 | `rsc publish samples/web-api/Cargo.toml --runtime linux-x64 --locked` | HTTP API 和 WebSocket 示例通过负载/取消冒烟测试；报告列出测试的精确 API/feature 和已知缺口。 |
+| P4-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P4_zh.md#p4-01). 实现公共配置档所需的内部精确版本 `http`/`hyper`/`tower` 表面。 | P3 门槛 | `rsc test compat/http-stack/Cargo.toml` | 请求/响应、消息体、中间件、背压、取消、HTTP/1.1 和已声明的 HTTP/2 用例通过。 |
+| P4-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P4_zh.md#p4-02). 实现选定的 `reqwest` 客户端 API/feature 配置档。 | P4-01, P3-06 | `rsc test compat/reqwest/Cargo.toml --features declared-profile` | 清单中列出的 HTTP、TLS、重定向、流式传输、超时、代理和序列化适配器通过。 |
+| P4-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P4_zh.md#p4-03). 实现选定的 `axum` 服务器 API/feature 配置档。 | P4-01, P3-04 | `rsc test compat/axum/Cargo.toml --features declared-profile` | 路由、提取器、响应、中间件、状态、错误、优雅关闭和并发示例通过。 |
+| P4-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P4_zh.md#p4-04). 实现客户端/服务器 WebSocket 配置档。 | P4-01, P3-06 | `rsc test tests/websocket/Cargo.toml` | 升级、文本/二进制、分片、ping/pong、关闭、TLS、取消和大小限制测试通过。 |
+| P4-05 | ⏳ 计划中 | [叶子详情](docs/roadmap/P4_zh.md#p4-05). 发布具有代表性的 AOT Web 应用和兼容性报告。 | P4-02 至 P4-04 | `rsc publish samples/web-api/Cargo.toml --runtime linux-x64 --locked` | HTTP API 和 WebSocket 示例通过负载/取消冒烟测试；报告列出测试的精确 API/feature 和已知缺口。 |
 
 当已发布的 Web 兼容性配置档（而非整个上游 crate 生态系统）通过其 API 清单以及具有
 代表性的 Windows/Linux x64 Native AOT 应用时，P4 才能退出。
@@ -505,13 +529,13 @@ NuGet 依赖项、使用共享 LSP 和 Visual Studio 集成、进行调试，并
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P5-01 | ⏳ 计划中 | 在受支持的 .NET 数据库提供程序之上定义 AOT 安全的提供程序边界，不生成运行时模型。 | P3 门槛, P2-06 | `rsc test tests/database/provider-contract/Cargo.toml` | 连接、命令、类型化值、取消、释放、错误映射和事务契约测试通过。 |
-| P5-02 | ⏳ 计划中 | 为 SQLite、PostgreSQL 和 MySQL 实现选定的 `sqlx` 配置档。 | P5-01, P3-04 | `rsc test compat/sqlx/Cargo.toml --features sqlite,postgres,mysql` | 参数化 CRUD、连接池、事务、流式传输、迁移、类型映射、超时和回滚用例针对固定的服务器版本通过。 |
-| P5-03 | ⏳ 计划中 | 使用有界数据库模式元数据/快照添加 `sqlx` 编译时查询验证。 | P5-02, P3-02 | `rsc check tests/database/sqlx-checked/Cargo.toml --locked` | 有效查询可从固定快照离线编译；无效 SQL/类型/列用例以稳定的源码诊断失败。 |
-| P5-04 | ⏳ 计划中 | 为 SQL Server 实现选定的 `tiberius` 配置档。 | P5-01, P3-04 | `rsc test compat/tiberius/Cargo.toml --features declared-profile` | 参数化 CRUD、连接池集成、事务、流式传输、取消和 SQL Server 类型用例通过。 |
-| P5-05 | ⏳ 计划中 | 在受支持的驱动程序之上实现选定的 `sea-orm` 配置档。 | P5-02, P5-04, P3-02 | `rsc test compat/sea-orm/Cargo.toml --features declared-profile` | 生成的/静态实体、关系、CRUD、事务、迁移和 AOT 可达性在已声明的提供程序中通过。 |
-| P5-06 | ⏳ 计划中 | 为每个受支持的提供程序发布数据库示例和兼容性矩阵。 | P5-02 至 P5-05 | `rsc publish samples/database-api/Cargo.toml --runtime win-x64 --locked` | SQLite/PostgreSQL/MySQL/SQL Server 示例在已声明的 CI 服务下运行；报告公开驱动程序/服务器/API/feature 版本和已知缺口。 |
-| P5-07 | ⏳ 计划中 | 在 `sea-orm` 稳定后评估 `diesel` 并为其制定配置档。 | P5 门槛 | `rsc check probes/diesel/Cargo.toml` | 书面的可行性/配置档决策记录所需的类型系统、宏、后端和 AOT 工作；不会仅凭探测就作出支持声明。 |
+| P5-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P5_zh.md#p5-01). 在受支持的 .NET 数据库提供程序之上定义 AOT 安全的提供程序边界，不生成运行时模型。 | P3 门槛, P2-06 | `rsc test tests/database/provider-contract/Cargo.toml` | 连接、命令、类型化值、取消、释放、错误映射和事务契约测试通过。 |
+| P5-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P5_zh.md#p5-02). 为 SQLite、PostgreSQL 和 MySQL 实现选定的 `sqlx` 配置档。 | P5-01, P3-04 | `rsc test compat/sqlx/Cargo.toml --features sqlite,postgres,mysql` | 参数化 CRUD、连接池、事务、流式传输、迁移、类型映射、超时和回滚用例针对固定的服务器版本通过。 |
+| P5-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P5_zh.md#p5-03). 使用有界数据库模式元数据/快照添加 `sqlx` 编译时查询验证。 | P5-02, P3-02 | `rsc check tests/database/sqlx-checked/Cargo.toml --locked` | 有效查询可从固定快照离线编译；无效 SQL/类型/列用例以稳定的源码诊断失败。 |
+| P5-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P5_zh.md#p5-04). 为 SQL Server 实现选定的 `tiberius` 配置档。 | P5-01, P3-04 | `rsc test compat/tiberius/Cargo.toml --features declared-profile` | 参数化 CRUD、连接池集成、事务、流式传输、取消和 SQL Server 类型用例通过。 |
+| P5-05 | ⏳ 计划中 | [叶子详情](docs/roadmap/P5_zh.md#p5-05). 在受支持的驱动程序之上实现选定的 `sea-orm` 配置档。 | P5-02, P5-04, P3-02 | `rsc test compat/sea-orm/Cargo.toml --features declared-profile` | 生成的/静态实体、关系、CRUD、事务、迁移和 AOT 可达性在已声明的提供程序中通过。 |
+| P5-06 | ⏳ 计划中 | [叶子详情](docs/roadmap/P5_zh.md#p5-06). 为每个受支持的提供程序发布数据库示例和兼容性矩阵。 | P5-02 至 P5-05 | `rsc publish samples/database-api/Cargo.toml --runtime win-x64 --locked` | SQLite/PostgreSQL/MySQL/SQL Server 示例在已声明的 CI 服务下运行；报告公开驱动程序/服务器/API/feature 版本和已知缺口。 |
+| P5-07 | ⏳ 计划中 | [叶子详情](docs/roadmap/P5_zh.md#p5-07). 在 `sea-orm` 稳定后评估 `diesel` 并为其制定配置档。 | P5 门槛 | `rsc check probes/diesel/Cargo.toml` | 书面的可行性/配置档决策记录所需的类型系统、宏、后端和 AOT 工作；不会仅凭探测就作出支持声明。 |
 
 当全部四种数据库引擎针对各自已发布配置档通过参数化查询、连接池、事务、取消、迁移和
 Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 才能退出。
@@ -520,14 +544,14 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P6-01 | ⏳ 计划中 | 分别冻结 Rust# 内部元数据、公共 .NET 和 C ABI 的版本控制策略。 | P2 门槛, P3-05 | `dotnet test RustSharp.slnx -c Release --filter ApiCompatibility` | 基线为每项契约独立检测不兼容更改，并允许有文档记录的仅扩展更改。 |
-| P6-02 | ⏳ 计划中 | 发出具有显式 C ABI 导出、所有权、错误、回调和线程契约的 Native AOT 库。 | P6-01 | `rsc publish samples/c-abi/Cargo.toml --kind native-library --runtime win-x64` | C 和 C# 原生消费者调用导出，安全交换缓冲区/错误，并通过泄漏/生命周期测试。 |
-| P6-03 | ⏳ 计划中 | 添加 Windows/Linux ARM64 原生构建和测试运行器。 | P0-17, P6-01 | `rsc publish samples/hello/Cargo.toml --runtime linux-arm64 --locked` | ARM64 制品以原生方式构建和运行；CoreCLR/AOT 一致性报告与已声明的平台配置档匹配。 |
-| P6-04 | ⏳ 计划中 | 添加 macOS x64 和 ARM64 原生构建和测试运行器。 | P6-01 | `rsc publish samples/hello/Cargo.toml --runtime osx-arm64 --locked` | 不依赖签名/公证的测试制品以原生方式运行，并发布平台一致性证据。 |
-| P6-05 | ⏳ 计划中 | 强制执行裁剪/AOT 分析、依赖项允许列表、确定性打包、签名和来源证明。 | P2-05, P6-01 | `dotnet build RustSharp.slnx -c Release /warnaserror; rsc verify-package artifacts/packages/*` | 不经抑制即可实现零分析器警告；包验证标识、哈希、来源、目标配置档和可复现性。 |
-| P6-06 | ⏳ 计划中 | 为每个工作负载建立性能、内存、启动、代码大小和编译器资源预算。 | P2 门槛 | `dotnet run --project benchmarks/RustSharp.Benchmarks -- --profile release-gates` | 结果与签入的预算和历史基线比较；回归会明确失败，但不声称与 rustc 性能对等。 |
-| P6-07 | ⏳ 计划中 | 验证升级、回滚、缓存失效、诊断稳定性和发布操作。 | P6-01, P6-05 | `dotnet test RustSharp.slnx -c Release --filter ReleaseEngineering` | 受支持的升级路径正常工作，不兼容的配置档更改明确失败，回滚已有文档记录，陈旧制品无法复用。 |
-| P6-08 | ⏳ 计划中 | 针对所有已声明的语言、库、生态系统、输出和平台配置档，运行端到端 1.0 候选门槛。 | 适用的 P4/P5 门槛, P6-02 至 P6-07 | `rsc conformance --release-profile 1.0 --fail-on-difference` | 签名报告标识每个基准集合/版本/RID，没有无法解释的配置档内失败，并列出所有排除项。 |
+| P6-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-01). 分别冻结 Rust# 内部元数据、公共 .NET 和 C ABI 的版本控制策略。 | P2 门槛, P3-05 | `dotnet test RustSharp.slnx -c Release --filter ApiCompatibility` | 基线为每项契约独立检测不兼容更改，并允许有文档记录的仅扩展更改。 |
+| P6-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-02). 发出具有显式 C ABI 导出、所有权、错误、回调和线程契约的 Native AOT 库。 | P6-01 | `rsc publish samples/c-abi/Cargo.toml --kind native-library --runtime win-x64` | C 和 C# 原生消费者调用导出，安全交换缓冲区/错误，并通过泄漏/生命周期测试。 |
+| P6-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-03). 添加 Windows/Linux ARM64 原生构建和测试运行器。 | P0-17, P6-01 | `rsc publish samples/hello/Cargo.toml --runtime linux-arm64 --locked` | ARM64 制品以原生方式构建和运行；CoreCLR/AOT 一致性报告与已声明的平台配置档匹配。 |
+| P6-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-04). 添加 macOS x64 和 ARM64 原生构建和测试运行器。 | P6-01 | `rsc publish samples/hello/Cargo.toml --runtime osx-arm64 --locked` | 不依赖签名/公证的测试制品以原生方式运行，并发布平台一致性证据。 |
+| P6-05 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-05). 强制执行裁剪/AOT 分析、依赖项允许列表、确定性打包、签名和来源证明。 | P2-05, P6-01 | `dotnet build RustSharp.slnx -c Release /warnaserror; rsc verify-package artifacts/packages/*` | 不经抑制即可实现零分析器警告；包验证标识、哈希、来源、目标配置档和可复现性。 |
+| P6-06 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-06). 为每个工作负载建立性能、内存、启动、代码大小和编译器资源预算。 | P2 门槛 | `dotnet run --project benchmarks/RustSharp.Benchmarks -- --profile release-gates` | 结果与签入的预算和历史基线比较；回归会明确失败，但不声称与 rustc 性能对等。 |
+| P6-07 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-07). 验证升级、回滚、缓存失效、诊断稳定性和发布操作。 | P6-01, P6-05 | `dotnet test RustSharp.slnx -c Release --filter ReleaseEngineering` | 受支持的升级路径正常工作，不兼容的配置档更改明确失败，回滚已有文档记录，陈旧制品无法复用。 |
+| P6-08 | ⏳ 计划中 | [叶子详情](docs/roadmap/P6_zh.md#p6-08). 针对所有已声明的语言、库、生态系统、输出和平台配置档，运行端到端 1.0 候选门槛。 | 适用的 P4/P5 门槛, P6-02 至 P6-07 | `rsc conformance --release-profile 1.0 --fail-on-difference` | 签名报告标识每个基准集合/版本/RID，没有无法解释的配置档内失败，并列出所有排除项。 |
 
 只有发布证据可以在原生运行器上复现，P6 和适用的应用配置档门槛才能退出。一台宿主为
 另一个 RID 生成文件，不足以证明目标受支持。
@@ -596,12 +620,12 @@ Native AOT 门槛，且 ORM 报告声明精确的受支持 API/feature 时，P5 
 
 ## 如何推进路线图
 
-1. 选择所有硬依赖状态均为 `✅ 已完成` 的第一个 `⏳ 计划中` 工作项。
-2. 在扩展其表面之前，添加测试和机器可读证据。
-3. 在干净工作树上以有界执行方式运行准确的验收命令。
-4. 记录工具/配置档版本，并且只保留有意生成的制品。
-5. 只有可观察结果和所属阶段门槛都满足后，才将状态标记为 `✅ 已完成`；否则保持 `🚧 进行中` 并记录缺口。
-6. 当范围发生变化时，先更新兼容性配置档和 ADR，再更新实现与本路线图。
+1. 从[阶段详情](docs/roadmap/README_zh.md)选择就绪叶子，使用精确前置 ID，而不是仅按粗粒度父任务顺序。
+2. 固定该项范围/case ID、分母、预期结果及资源边界；并行开始前分配不冲突文件。
+3. 实现并有界运行该项准确检查，记录源码 SHA、工具/平台版本、进程归属、清理和本地/CI 证据。
+4. 声明条件通过后，只将该叶子标记为 `✅ 已完成`，无需等待整个阶段；缺失实现/证据留在独立叶子，保留原已验收范围。
+5. 全部必需子项通过后才汇总父任务；全部 `Pn-GATE.nn` 对固定候选通过后才汇总阶段。门禁只聚合既有要求，不创造新范围。
+6. 范围扩展新增版本/ID；范围内缺陷仍归原需求。双语同步后运行 `pwsh -NoLogo -NoProfile -File eng/Test-Roadmap.ps1` 及 `git diff --check`。
 
 P1-01（无损词法分析）、P1-02（安全核心语法）、P1-03（HIR 与名称解析）和 P1-04（类型）为 ✅ 已完成。
 P1-05（有界可执行泛型/trait）也基于已记录的回归、差分、ILVerify 和 Native AOT
