@@ -478,7 +478,7 @@ try {
         throw 'EvidencePath must not overwrite the input assembly.'
     }
 
-    $manifestFullPath = Resolve-FullPath (Join-Path $PSScriptRoot '..\.config\dotnet-tools.json') 'Tool manifest'
+    $manifestFullPath = Resolve-FullPath (Join-Path $PSScriptRoot '..' '.config' 'dotnet-tools.json') 'Tool manifest'
     if (-not (Test-Path -LiteralPath $manifestFullPath -PathType Leaf)) {
         throw "Tool manifest does not exist: '$manifestFullPath'."
     }
