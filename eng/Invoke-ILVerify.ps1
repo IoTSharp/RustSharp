@@ -524,7 +524,9 @@ try {
         }
     }
     if ([string]::IsNullOrWhiteSpace($ReferenceDirectory) -and @($ReferencePath).Count -eq 0) {
-        $ReferenceDirectory = Join-Path $dotnetRoot "shared\Microsoft.NETCore.App\$RuntimeVersion"
+        # Join each path component independently so the same verifier script
+        # resolves the runtime pack on Windows and Unix runners.
+        $ReferenceDirectory = Join-Path $dotnetRoot 'shared' 'Microsoft.NETCore.App' $RuntimeVersion
     }
     if (-not [string]::IsNullOrWhiteSpace($ReferenceDirectory)) {
         $referenceDirectoryFullPath = Resolve-FullPath $ReferenceDirectory 'ReferenceDirectory'
