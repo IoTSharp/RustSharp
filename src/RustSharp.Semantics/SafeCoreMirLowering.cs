@@ -591,12 +591,14 @@ public static partial class SafeCoreMirLowering
             SafeCoreMirOperand? index = Expr(Child(node, 1), depth + 1);
             if (_current is null || array is null || index is null) return null;
             SafeCoreType resultType = EffectiveType(node);
-            if (array.Type.Kind != K.Array || index.Type.Kind != K.Usize ||
-                resultType != array.Type.ElementType)
+            SafeCoreType indexed = array.Type.Kind == K.Reference ? array.Type.ElementType! : array.Type;
+            if (indexed is null || indexed.Kind is not (K.Array or K.Slice) || index.Type.Kind != K.Usize ||
+                resultType != indexed.ElementType)
                 Unsupported(node);
             if (index.Kind == SafeCoreMirOperandKind.Constant &&
                 (!BigInteger.TryParse(index.Value, NumberStyles.None, CultureInfo.InvariantCulture, out BigInteger constant) ||
-                 array.Type.Length is not long length || constant < 0 || constant >= length))
+                 indexed.Kind == K.Array && (indexed.Length is not long length || constant < 0 || constant >= length) ||
+                 constant < 0))
                 Invalid(node);
             return Emit(SafeCoreMirRvalue.Index(array, index, resultType, Source(node)), resultType, node);
         }
@@ -604,6 +606,20 @@ public static partial class SafeCoreMirLowering
         private SafeCoreMirOperand? Call(SafeCoreHirNode node, int depth)
         {
             SafeCoreHirNode calleeNode = UnwrapExpression(Child(node, 0), depth + 1);
+            // A full array-to-slice view has a stable owner length. Keep
+            // `.len()` explicit in MIR so the backend cannot silently treat a
+            // slice as a fixed array value or drop its provenance.
+            if (calleeNode.Kind == N.MemberExpression &&
+                string.Equals(calleeNode.Name, "len", StringComparison.Ordinal))
+            {
+                if (node.ChildIds.Count != 1) Unsupported(node);
+                SafeCoreMirOperand? target = Expr(Child(calleeNode, 0), depth + 1);
+                if (_current is null || target is null) return null;
+                SafeCoreType targetType = target.Type.Kind == K.Reference ? target.Type.ElementType! : target.Type;
+                if (targetType.Kind is not (K.Array or K.Slice)) Unsupported(calleeNode);
+                SafeCoreType resultType = SafeCoreType.Primitive(K.Usize);
+                return Emit(SafeCoreMirRvalue.SliceLength(target, Source(node)), resultType, node);
+            }
             if (options.EnableP1Extensions && Type(calleeNode).Kind == K.Closure)
                 return ClosureCall(node, calleeNode, depth);
             int function = -1;
@@ -972,6 +988,7 @@ public static partial class SafeCoreMirLowering
             K.U8 or K.U16 or K.U32 or K.U64 or K.U128 or K.Usize or
             K.F32 or K.F64 => true,
             K.Tuple or K.Array => type.Elements.All(IsStructuralCopy),
+            K.Slice => IsStructuralCopy(type.ElementType!),
             _ => false,
         };
 
@@ -991,8 +1008,20 @@ public static partial class SafeCoreMirLowering
             // layout contract so no opaque or unsized value can cross MIR.
             if (type.Kind == K.Reference)
             {
-                if (!options.EnableP1Extensions || !IsStructuralCopy(type.ElementType)) Unsupported(node);
-                ValueType(type.ElementType, node, allowNever: false, depth + 1);
+                if (!options.EnableP1Extensions) Unsupported(node);
+                SafeCoreType element = type.ElementType!;
+                if (element.Kind == K.Slice)
+                {
+                    // Slices are unsized and cannot occupy a standalone MIR
+                    // slot. A reference to a slice is admitted only when the
+                    // element has a bounded structural Copy representation;
+                    // the executable backend retains the full-array owner.
+                    if (!IsStructuralCopy(element.ElementType!)) Unsupported(node);
+                    ValueType(element.ElementType!, node, allowNever: false, depth + 1);
+                    return;
+                }
+                if (!IsStructuralCopy(element)) Unsupported(node);
+                ValueType(element, node, allowNever: false, depth + 1);
                 return;
             }
 

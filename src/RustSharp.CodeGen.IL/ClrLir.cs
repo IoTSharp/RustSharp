@@ -54,12 +54,16 @@ public enum ClrLirTypeKind
     Text,
     Any,
     Value,
+    /// <summary>A managed by-reference signature type (&amp;T).</summary>
+    ByReference,
 }
 
 /// <summary>A small, value-typed CLR type descriptor used by LIR instructions.</summary>
 public readonly record struct ClrLirType(ClrLirTypeKind Kind)
 {
     public string? Name { get; init; }
+    /// <summary>Tracks Rust mutability for ownership contracts; CLR byrefs do not encode it.</summary>
+    public bool IsMutable { get; init; }
     public static ClrLirType Void => new(ClrLirTypeKind.Void);
     public static ClrLirType I32 => new(ClrLirTypeKind.I32);
     public static ClrLirType Bool => new(ClrLirTypeKind.Bool);
@@ -71,6 +75,20 @@ public readonly record struct ClrLirType(ClrLirTypeKind Kind)
         return new(ClrLirTypeKind.Value) { Name = name };
     }
 
+    /// <summary>Creates a managed by-reference signature over a closed CLR type.</summary>
+    public static ClrLirType ByReference(ClrLirType element, bool mutable = false)
+    {
+        if (!element.IsKnown || element == Void || element.Kind == ClrLirTypeKind.ByReference)
+            throw new ArgumentException("A by-reference type must refer to one closed non-void value.", nameof(element));
+        return new(ClrLirTypeKind.ByReference)
+        {
+            // The referent is stored in the bounded textual identity because
+            // this descriptor is a recursive readonly record struct.
+            Name = element.ToString(),
+            IsMutable = mutable,
+        };
+    }
+
 #pragma warning disable CA1720 // These aliases intentionally mirror CLR type names.
     public static ClrLirType Int32 => I32;
     public static ClrLirType Boolean => Bool;
@@ -78,14 +96,47 @@ public readonly record struct ClrLirType(ClrLirTypeKind Kind)
     public static ClrLirType Object => Any;
 #pragma warning restore CA1720
 
-    public override string ToString() => Kind == ClrLirTypeKind.Value ? "Value(" + Name + ")" : Kind.ToString();
+    public override string ToString() => Kind switch
+    {
+        ClrLirTypeKind.Value => "Value(" + Name + ")",
+        ClrLirTypeKind.ByReference => "&" + Name,
+        _ => Kind.ToString(),
+    };
 
-    internal bool IsKnown => Kind == ClrLirTypeKind.Value ? IsValidName(Name) : Name is null && Kind is (
-        ClrLirTypeKind.Void or
-        ClrLirTypeKind.I32 or
-        ClrLirTypeKind.Bool or
-        ClrLirTypeKind.Text or
-        ClrLirTypeKind.Any);
+    internal bool IsKnown => Kind == ClrLirTypeKind.Value
+        ? IsValidName(Name)
+        : Kind == ClrLirTypeKind.ByReference
+            ? TryGetByReferenceElement(out _)
+            : Name is null && Kind is (
+                ClrLirTypeKind.Void or
+                ClrLirTypeKind.I32 or
+                ClrLirTypeKind.Bool or
+                ClrLirTypeKind.Text or
+                ClrLirTypeKind.Any);
+
+    internal bool TryGetByReferenceElement(out ClrLirType element)
+    {
+        element = default;
+        if (Kind != ClrLirTypeKind.ByReference || string.IsNullOrWhiteSpace(Name) || Name.Length > 1024)
+            return false;
+        string token = Name;
+        if (token is "I32") { element = I32; return true; }
+        if (token is "Bool") { element = Bool; return true; }
+        if (token is "Text") { element = Text; return true; }
+        if (token is "Any") { element = Any; return true; }
+        if (token.StartsWith("Value(", StringComparison.Ordinal) && token.EndsWith(')') &&
+            token.Length > "Value()".Length)
+        {
+            try
+            {
+                element = Value(token["Value(".Length..^1]);
+                return true;
+            }
+            catch (ArgumentException) { return false; }
+        }
+
+        return false;
+    }
 
     internal static bool IsValidName(string? name) => !string.IsNullOrWhiteSpace(name) && name.Length <= 1024 && !name.Contains('\0');
 
@@ -145,7 +196,10 @@ public sealed record ClrLirExternalCall
         string assemblyName,
         string typeNamespace,
         string typeName,
-        string methodName)
+        string methodName,
+        string? panicStrategy = null,
+        IEnumerable<string>? parameterContracts = null,
+        string? returnContract = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
         ArgumentException.ThrowIfNullOrWhiteSpace(typeNamespace);
@@ -158,12 +212,26 @@ public sealed record ClrLirExternalCall
         TypeNamespace = typeNamespace;
         TypeName = typeName;
         MethodName = methodName;
+        PanicStrategy = panicStrategy;
+        ParameterContracts = ClrLirLimits.CopyBounded(
+            parameterContracts ?? [], ClrLirLimits.MaximumParameters, nameof(parameterContracts));
+        ReturnContract = returnContract;
+        if (PanicStrategy is not null && PanicStrategy is not ("unwind" or "abort"))
+            throw new ArgumentException("External ownership panic strategy must be 'unwind' or 'abort'.", nameof(panicStrategy));
+        if (ParameterContracts.Any(static value => string.IsNullOrWhiteSpace(value) || value.Length > 128))
+            throw new ArgumentException("External ownership parameter contracts are invalid.", nameof(parameterContracts));
+        if (ReturnContract is not null &&
+            (string.IsNullOrWhiteSpace(ReturnContract) || ReturnContract.Length > 128))
+            throw new ArgumentException("External ownership return contract is invalid.", nameof(returnContract));
     }
 
     public string AssemblyName { get; }
     public string TypeNamespace { get; }
     public string TypeName { get; }
     public string MethodName { get; }
+    public string? PanicStrategy { get; }
+    public ImmutableArray<string> ParameterContracts { get; }
+    public string? ReturnContract { get; }
 }
 
 public sealed record ClrLirCallSite
@@ -279,6 +347,18 @@ public sealed record ClrLirBranch : ClrLirInstruction
     public string Target { get; }
 }
 
+/// <summary>Leaves a protected CLR region and transfers to a continuation.</summary>
+public sealed record ClrLirLeave : ClrLirInstruction
+{
+    public ClrLirLeave(string target)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(target);
+        Target = target;
+    }
+
+    public string Target { get; }
+}
+
 public sealed record ClrLirBranchTrue : ClrLirInstruction
 {
     public ClrLirBranchTrue(string target)
@@ -345,7 +425,9 @@ public sealed class ClrLirMethod
         ClrLirType returnType,
         IEnumerable<ClrLirType> parameters,
         IEnumerable<ClrLirLocal> locals,
-        IEnumerable<ClrLirBlock> blocks)
+        IEnumerable<ClrLirBlock> blocks,
+        IEnumerable<ClrLirCallSite>? exceptionCleanup = null,
+        int? faultTryBlockCount = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(parameters);
@@ -365,6 +447,13 @@ public sealed class ClrLirMethod
             blocks,
             ClrLirLimits.MaximumBlocks,
             nameof(blocks));
+        ExceptionCleanup = ClrLirLimits.CopyBounded(
+            exceptionCleanup ?? [],
+            ClrLirLimits.MaximumBlocks,
+            nameof(exceptionCleanup));
+        FaultTryBlockCount = faultTryBlockCount ?? Blocks.Length;
+        if (FaultTryBlockCount is < 1 or >  ClrLirLimits.MaximumBlocks || FaultTryBlockCount > Blocks.Length)
+            throw new ArgumentOutOfRangeException(nameof(faultTryBlockCount));
         for (var index = 0; index < Blocks.Length; index++)
         {
             if (Blocks[index] is null)
@@ -397,6 +486,15 @@ public sealed class ClrLirMethod
     public ImmutableArray<ClrLirType> Parameters { get; }
     public ImmutableArray<ClrLirLocal> Locals { get; }
     public ImmutableArray<ClrLirBlock> Blocks { get; }
+    /// <summary>
+    /// Calls emitted in a CLR fault handler when the method has source-level
+    /// Drop obligations.  Normal return paths already contain explicit MIR
+    /// drop calls; the fault list runs only when an exception crosses the
+    /// method, preserving cleanup for CoreCLR and Native AOT generated code.
+    /// </summary>
+    public ImmutableArray<ClrLirCallSite> ExceptionCleanup { get; }
+    /// <summary>Number of leading blocks covered by the generated fault region.</summary>
+    public int FaultTryBlockCount { get; }
 
     public ClrLirValidationResult Validate(CancellationToken cancellationToken = default)
     {
@@ -478,6 +576,10 @@ public sealed class ClrLirMethod
                     case ClrLirBranch branch:
                         terminated = true;
                         Propagate(branch.Target, stack, block.Label, index, byLabel, incoming, work, diagnostics);
+                        break;
+                    case ClrLirLeave leave:
+                        terminated = true;
+                        Propagate(leave.Target, stack, block.Label, index, byLabel, incoming, work, diagnostics);
                         break;
                     case ClrLirBranchTrue branchTrue:
                         Propagate(branchTrue.Target, stack, block.Label, index, byLabel, incoming, work, diagnostics);
@@ -615,6 +717,8 @@ public sealed class ClrLirMethod
             case ClrLirBranchTrue:
                 return TryPop(ClrLirType.Bool, ref stack, blockLabel, instructionIndex, diagnostics);
             case ClrLirBranch:
+                return true;
+            case ClrLirLeave:
                 return true;
             case ClrLirReturn:
                 if (ReturnType == ClrLirType.Void)

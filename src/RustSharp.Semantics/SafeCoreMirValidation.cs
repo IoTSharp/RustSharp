@@ -337,7 +337,7 @@ public static class SafeCoreMirValidation
             if (!validOperands) return;
             int expectedCount = value.Kind switch
             {
-                SafeCoreMirRvalueKind.Use or SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Coerce or SafeCoreMirRvalueKind.Cast or SafeCoreMirRvalueKind.Field => 1,
+                SafeCoreMirRvalueKind.Use or SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Coerce or SafeCoreMirRvalueKind.Cast or SafeCoreMirRvalueKind.Field or SafeCoreMirRvalueKind.SliceLength => 1,
                 SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Index => 2,
                 SafeCoreMirRvalueKind.Write => 2,
                 SafeCoreMirRvalueKind.Tuple => value.Type.Kind == SafeCoreSemanticTypeKind.Unit ? 0 : value.Type.Elements.Count,
@@ -367,6 +367,7 @@ public static class SafeCoreMirValidation
                 SafeCoreMirRvalueKind.Index => Index(value),
                 SafeCoreMirRvalueKind.Field => Field(value),
                 SafeCoreMirRvalueKind.Write => Write(value),
+                SafeCoreMirRvalueKind.SliceLength => SliceLength(value),
                 SafeCoreMirRvalueKind.Print => Print(value),
                 _ => false,
             };
@@ -384,7 +385,11 @@ public static class SafeCoreMirValidation
         {
             "-" => result == operand && (operand.IsFloat || operand.Kind is >= SafeCoreSemanticTypeKind.I8 and <= SafeCoreSemanticTypeKind.Isize),
             "!" => result == operand && (operand.IsInteger || operand.Kind == SafeCoreSemanticTypeKind.Bool),
-            "&" or "&mut" => result.Kind == SafeCoreSemanticTypeKind.Reference && result.ElementType == operand &&
+            "&" or "&mut" => result.Kind == SafeCoreSemanticTypeKind.Reference &&
+                (result.ElementType == operand ||
+                 result.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice &&
+                 operand.Kind == SafeCoreSemanticTypeKind.Array &&
+                 result.ElementType.ElementType == operand.ElementType) &&
                 result.IsMutable == (op == "&mut"),
             "reborrow" or "reborrow_mut" => result.Kind == SafeCoreSemanticTypeKind.Reference &&
                 operand.Kind == SafeCoreSemanticTypeKind.Reference && result.ElementType == operand.ElementType &&
@@ -488,14 +493,25 @@ public static class SafeCoreMirValidation
                 return false;
             SafeCoreType array = value.Operands[0].Type;
             SafeCoreType index = value.Operands[1].Type;
-            if (array.Kind != SafeCoreSemanticTypeKind.Array || index.Kind != SafeCoreSemanticTypeKind.Usize ||
-                array.Length is not long length || value.Type != array.ElementType)
+            SafeCoreType indexed = array.Kind == SafeCoreSemanticTypeKind.Reference ? array.ElementType! : array;
+            if (indexed.Kind is not (SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Slice) ||
+                index.Kind != SafeCoreSemanticTypeKind.Usize || value.Type != indexed.ElementType)
                 return false;
             if (value.Operands[1].Kind == SafeCoreMirOperandKind.Constant &&
                 (!BigInteger.TryParse(value.Operands[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out BigInteger constant) ||
-                 constant < 0 || constant >= length))
+                 constant < 0 || indexed.Kind == SafeCoreSemanticTypeKind.Array &&
+                 (indexed.Length is not long length || constant >= length)))
                 return false;
             return true;
+        }
+
+        private static bool SliceLength(SafeCoreMirRvalue value)
+        {
+            if (value.Type.Kind != SafeCoreSemanticTypeKind.Usize || value.Operands.Count != 1)
+                return false;
+            SafeCoreType target = value.Operands[0].Type;
+            target = target.Kind == SafeCoreSemanticTypeKind.Reference ? target.ElementType! : target;
+            return target.Kind is SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Slice;
         }
 
         private static bool Print(SafeCoreMirRvalue value)

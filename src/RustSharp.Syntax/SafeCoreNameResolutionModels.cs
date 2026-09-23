@@ -31,6 +31,16 @@ public sealed record SafeCoreExternalFunction(
             return separator < 0 ? SourceQualifiedName : SourceQualifiedName[(separator + 2)..];
         }
     }
+
+    /// <summary>
+    /// Optional producer-declared ownership and panic terms. The compiler must
+    /// validate these terms before emitting an imported MemberRef; they are
+    /// never inferred from the CLR signature. These fields stay in the syntax
+    /// assembly to avoid a dependency cycle on the CLR emitter.
+    /// </summary>
+    public string? CallPanicStrategy { get; init; }
+    public ImmutableArray<string> CallParameterContracts { get; init; } = [];
+    public string? CallReturnContract { get; init; }
 }
 
 /// <summary>A source-linked Cargo crate and its direct extern-prelude dependencies.</summary>

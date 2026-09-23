@@ -63,7 +63,13 @@ public static partial class SafeCoreMirLowering
             if (initializer.Kind == N.UnaryExpression && initializer.Value is ("&" or "&mut") &&
                 pattern.Kind == N.IdentifierPattern && pattern.DeclaredSymbol is not null)
             {
-                SafeCoreType referenceType = Type(initializer);
+                // Preserve a declaration's unsizing target. For
+                // `let view: &[T] = &array`, the initializer itself is
+                // `&[T; N]`; the checker records the array-to-slice target on
+                // the declaration and MIR must retain that type/provenance.
+                SafeCoreType referenceType = Type(pattern);
+                if (referenceType.Kind != K.Reference)
+                    referenceType = Type(initializer);
                 int borrowLocal = Local(pattern.Name ?? string.Empty, referenceType, SafeCoreMirLocalKind.User,
                     pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
                 if (!_bindings.TryAdd(pattern.DeclaredSymbol, borrowLocal)) Invalid(pattern);
@@ -136,7 +142,10 @@ public static partial class SafeCoreMirLowering
             else
             {
                 if (ownerType.Kind == K.Reference || !IsStructuralCopy(ownerType)) Unsupported(node);
-                if (ownerType != referenceType.ElementType) Invalid(node);
+                bool arrayToSlice = referenceType.ElementType?.Kind == K.Slice &&
+                    ownerType.Kind == K.Array &&
+                    ownerType.ElementType == referenceType.ElementType.ElementType;
+                if (!arrayToSlice && ownerType != referenceType.ElementType) Invalid(node);
                 if (mutable && !_locals[owner].IsMutable)
                     throw new LoweringException(new(SafeCoreOwnershipDiagnosticCodes.ImmutableBorrow,
                         "A mutable borrow requires a mutable owner binding.", node.Span));

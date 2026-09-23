@@ -73,7 +73,7 @@ public sealed class SafeCoreMirPlace
         return builder.ToString();
     }
 }
-public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple, Print, Array, Index, Field, Write }
+public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple, Print, Array, Index, Field, Write, SliceLength }
 public enum SafeCoreMirTerminatorKind { Return, Goto, Branch, Call, Unreachable }
 
 /// <summary>A local slot. ID is its index in the owning function. Parameters precede other slots.</summary>
@@ -145,6 +145,11 @@ public sealed class SafeCoreMirRvalue
     public static SafeCoreMirRvalue Index(SafeCoreMirOperand array, SafeCoreMirOperand index,
         SafeCoreType resultType, SafeCoreMirSource source) =>
         new(SafeCoreMirRvalueKind.Index, resultType, [array, index], null, source);
+    /// <summary>Returns the bounded length of an array or a full array-to-slice view.</summary>
+    public static SafeCoreMirRvalue SliceLength(SafeCoreMirOperand slice,
+        SafeCoreMirSource source) =>
+        new(SafeCoreMirRvalueKind.SliceLength,
+            SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Usize), [slice], null, source);
     public static SafeCoreMirRvalue Field(SafeCoreMirOperand aggregate, int fieldIndex,
         SafeCoreType resultType, SafeCoreMirSource source) =>
         new(SafeCoreMirRvalueKind.Field, resultType, [aggregate],

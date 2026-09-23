@@ -148,7 +148,14 @@ public static class SafeCoreMirClrLowering
                 // ownership evidence preserves the provenance; executable LIR
                 // keeps the representation scalar and performs dereference
                 // reads/writes against the owner destination.
-                SafeCoreSemanticTypeKind.Reference => StorageType(type.ElementType, source, depth + 1),
+                SafeCoreSemanticTypeKind.Reference when type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice =>
+                    // Slice references are represented by their full-array
+                    // owner slot in this bounded profile. BodyLowerer maps
+                    // each proven reference local to that owner storage type;
+                    // this token is used only while validating closed local
+                    // descriptors before provenance is collected.
+                    ClrLirType.Any,
+                SafeCoreSemanticTypeKind.Reference => StorageType(type.ElementType!, source, depth + 1),
                 // A unit ADT has no fields and is represented by the same
                 // zero-field CLR value as `()`. Non-unit ADTs remain outside
                 // this bounded executable representation until their layout
@@ -277,7 +284,10 @@ public static class SafeCoreMirClrLowering
             foreach (SafeCoreMirLocal local in function.Locals)
             {
                 owner.Step();
-                ClrLirType type = owner.StorageType(local.Type, local.Source);
+                ClrLirType type = local.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                    local.Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice
+                    ? owner.StorageType(function.Locals[RootOwner(local.Id, local.Source)].Type, local.Source)
+                    : owner.StorageType(local.Type, local.Source);
                 _localTypes.Add(local.Id, type);
                 _locals.Add(new("local_" + local.Id.ToString(CultureInfo.InvariantCulture), type));
             }
@@ -312,14 +322,83 @@ public static class SafeCoreMirClrLowering
             }
 
             ClrLirType returnType = owner.ReturnType(function.ReturnType, function.Source);
+            ClrLirCallSite[] exceptionCleanup = BuildExceptionCleanup();
+            int faultTryBlockCount = _blocks.Count;
+            if (exceptionCleanup.Length != 0)
+                RewriteReturnsForFault(returnType, out faultTryBlockCount);
             return new(owner.MethodName(function.Id, function.Source), returnType, parameters, _locals,
-                _blocks.Select(static block => new ClrLirBlock(block.Label, block.Instructions)))
+                _blocks.Select(static block => new ClrLirBlock(block.Label, block.Instructions)),
+                exceptionCleanup, faultTryBlockCount)
             {
                 SourceQualifiedName = function.Name,
                 // The CLR entry point must remain externally discoverable even
                 // when Rust's source declaration uses its default private visibility.
                 IsPublic = function.IsPublic || IsEntryName(function.Name),
             };
+        }
+
+        private void RewriteReturnsForFault(ClrLirType returnType, out int protectedBlockCount)
+        {
+            protectedBlockCount = _blocks.Count;
+            int returnLocal = -1;
+            if (returnType != ClrLirType.Void)
+            {
+                returnLocal = _locals.Count;
+                _locals.Add(new ClrLirLocal("__rustsharp_return", returnType));
+            }
+
+            string epilogueLabel = "fault_epilogue";
+            foreach (Block block in _blocks)
+            {
+                for (int index = 0; index < block.Instructions.Count; index++)
+                {
+                    if (block.Instructions[index] is not ClrLirReturn)
+                        continue;
+                    if (returnLocal >= 0)
+                    {
+                        block.Instructions.Insert(index, new ClrLirStoreLocal(returnLocal));
+                        index++;
+                    }
+
+                    block.Instructions[index] = new ClrLirLeave(epilogueLabel);
+                }
+            }
+
+            var epilogue = new Block(epilogueLabel);
+            if (returnLocal >= 0)
+            {
+                epilogue.Instructions.Add(new ClrLirLoadLocal(returnLocal));
+            }
+
+            epilogue.Instructions.Add(new ClrLirReturn());
+            _blocks.Add(epilogue);
+        }
+
+        private ClrLirCallSite[] BuildExceptionCleanup()
+        {
+            // The MIR cleanup calls are emitted in lexical reverse-drop order.
+            // Keep one call per local and order by local ID so a fault raised
+            // before the normal return observes the same deterministic reverse
+            // declaration order.  The generated fault handler is deliberately
+            // bounded and only exists for functions that own a Drop value.
+            var calls = new List<(int LocalId, ClrLirCallSite Site)>();
+            foreach (SafeCoreMirBlock block in function.Blocks)
+            {
+                owner.Step();
+                SafeCoreMirTerminator terminator = block.Terminator;
+                if (terminator.DropLocalId is not int localId ||
+                    terminator.Operand is null || terminator.Operand.Kind != SafeCoreMirOperandKind.Function)
+                    continue;
+                ClrLirType returnType = owner.ReturnType(terminator.Operand.Type.ReturnType, terminator.Source);
+                ClrLirType[] parameters = terminator.Operand.Type.ParameterTypes
+                    .Select(type => owner.StorageType(type, terminator.Source)).ToArray();
+                string name = owner.MethodName(terminator.Operand.Id, terminator.Source);
+                if (calls.Any(item => item.LocalId == localId)) continue;
+                calls.Add((localId, new ClrLirCallSite(name, returnType, parameters)));
+            }
+
+            calls.Sort(static (left, right) => right.LocalId.CompareTo(left.LocalId));
+            return calls.Select(static item => item.Site).ToArray();
         }
 
         private void CollectReferenceProvenance()
@@ -339,10 +418,17 @@ public static class SafeCoreMirClrLowering
                 bool directBorrow = value.Kind == SafeCoreMirRvalueKind.Unary &&
                     value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut") &&
                     value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local;
+                bool arraySliceCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
+                    value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                    value.Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice &&
+                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local &&
+                    (value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Array ||
+                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                     value.Operands[0].Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Array);
                 bool referenceCopy = value.Kind == SafeCoreMirRvalueKind.Use &&
                     value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local &&
                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
-                if ((!directBorrow && !referenceCopy) ||
+                if ((!directBorrow && !referenceCopy && !arraySliceCoercion) ||
                     !_referenceOwners.TryAdd(statement.DestinationLocalId, value.Operands[0].Id))
                     Lowerer.FailUnsupported(value.Source, "Reference locals require one explicit, immutable MIR borrow origin.");
             }
@@ -422,7 +508,10 @@ public static class SafeCoreMirClrLowering
                     // (for example bool -> i32).
                     ClrLirType sourceType = owner.StorageType(value.Operands[0].Type, value.Source);
                     ClrLirType targetType = owner.StorageType(value.Type, value.Source);
-                    if (sourceType != targetType)
+                    bool sliceCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
+                        value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                        value.Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice;
+                    if (!sliceCoercion && sourceType != targetType)
                         Lowerer.FailUnsupported(value.Source,
                             "MIR CLR lowering supports casts and coercions only when source and target share a CLR representation.");
                     EmitOperand(value.Operands[0]);
@@ -434,6 +523,9 @@ public static class SafeCoreMirClrLowering
                     return;
                 case SafeCoreMirRvalueKind.Index:
                     EmitIndex(value);
+                    return;
+                case SafeCoreMirRvalueKind.SliceLength:
+                    EmitSliceLength(value);
                     return;
                 case SafeCoreMirRvalueKind.Field:
                     EmitField(value);
@@ -592,18 +684,49 @@ public static class SafeCoreMirClrLowering
             SafeCoreMirOperand array = value.Operands[0];
             SafeCoreMirOperand index = value.Operands[1];
             BigInteger constant = BigInteger.Zero;
-            if (array.Type.Kind != SafeCoreSemanticTypeKind.Array || index.Kind != SafeCoreMirOperandKind.Constant ||
+            if (index.Kind != SafeCoreMirOperandKind.Constant ||
                 !BigInteger.TryParse(index.Value, NumberStyles.None, CultureInfo.InvariantCulture, out constant) ||
                 constant < 0 || constant > int.MaxValue)
-                Lowerer.FailUnsupported(value.Source, "MIR CLR lowering requires a statically known fixed-array index.");
-            long? declaredLength = array.Type.Length;
+                Lowerer.FailUnsupported(value.Source, "MIR CLR lowering requires a statically known array or slice index.");
+            SafeCoreType indexed = array.Type;
+            if (indexed.Kind == SafeCoreSemanticTypeKind.Reference)
+            {
+                if (indexed.ElementType?.Kind is not (SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Slice))
+                    Lowerer.Fail(value.Source, "MIR slice index requires an array/slice reference provenance.");
+                int ownerId = RootOwner(array.Id, value.Source);
+                indexed = function.Locals[ownerId].Type;
+                if (indexed.Kind != SafeCoreSemanticTypeKind.Array)
+                    Lowerer.Fail(value.Source, "MIR slice index owner must retain a fixed-array layout.");
+            }
+            if (indexed.Kind != SafeCoreSemanticTypeKind.Array)
+                Lowerer.FailUnsupported(value.Source, "MIR CLR lowering requires a fixed-array or full-array slice index.");
+            long? declaredLength = indexed.Length;
             if (declaredLength is null)
                 Lowerer.Fail(value.Source, "MIR fixed-array length evidence is missing.");
             long length = declaredLength.Value;
             if (constant >= length)
-                Lowerer.Fail(value.Source, "MIR fixed-array index is outside its validated bounds.");
+                Lowerer.Fail(value.Source, "MIR array/slice index is outside its validated bounds.");
             EmitOperand(array);
-            Emit(new ClrLirReadField(owner.Layout(array.Type, array.Source), (int)constant));
+            Emit(new ClrLirReadField(owner.Layout(indexed, array.Source), (int)constant));
+        }
+
+        private void EmitSliceLength(SafeCoreMirRvalue value)
+        {
+            if (value.Operands.Count != 1 || value.Type.Kind != SafeCoreSemanticTypeKind.Usize)
+                Lowerer.Fail(value.Source, "MIR slice length rvalue has an invalid signature.");
+            SafeCoreType target = value.Operands[0].Type;
+            if (target.Kind == SafeCoreSemanticTypeKind.Reference)
+            {
+                if (target.ElementType?.Kind is not (SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Slice))
+                    Lowerer.Fail(value.Source, "MIR slice length requires array/slice reference provenance.");
+                target = function.Locals[RootOwner(value.Operands[0].Id, value.Source)].Type;
+            }
+            if (target.Kind != SafeCoreSemanticTypeKind.Array || target.Length is null)
+                Lowerer.FailUnsupported(value.Source, "MIR slice length requires a bounded full-array owner.");
+            long length = target.Length.Value;
+            if (length < 0 || length > int.MaxValue)
+                Lowerer.FailUnsupported(value.Source, "MIR slice length requires a bounded full-array owner.");
+            Emit(new ClrLirLoadInt32((int)length));
         }
 
         private void EmitPrint(SafeCoreMirRvalue value)

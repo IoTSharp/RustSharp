@@ -363,7 +363,13 @@ public sealed class CompilerDriver
                     safeCore.TraitImplementations,
                     safeCore.MirSnapshot,
                     safeCore.Ownership,
-                    safeCore.CleanupSnapshot);
+                    safeCore.CleanupSnapshot,
+                    safeCore.Ownership.Select(static function =>
+                        new RustSharpMetadataCallContract(
+                            function.FunctionId.EndsWith("#value", StringComparison.Ordinal)
+                                ? function.FunctionId[..^6]
+                                : function.FunctionId,
+                            function.PanicStrategy)));
             GeneratedAssembly generated;
             try
             {
@@ -1279,7 +1285,22 @@ public sealed class CompilerDriver
                     function.Signature,
                     assemblyName,
                     fullPath,
-                    function.IsPublic));
+                    function.IsPublic)
+                {
+                    CallPanicStrategy = imported.Document.CallContracts
+                        .FirstOrDefault(contract =>
+                            string.Equals(contract.FunctionId, function.Name, StringComparison.Ordinal) ||
+                            string.Equals(contract.FunctionId, sourceName, StringComparison.Ordinal))?.PanicStrategy,
+                    CallParameterContracts = (imported.Document.CallContracts
+                        .FirstOrDefault(contract =>
+                            string.Equals(contract.FunctionId, function.Name, StringComparison.Ordinal) ||
+                            string.Equals(contract.FunctionId, sourceName, StringComparison.Ordinal))?.ParameterContracts
+                        ?? []).ToImmutableArray(),
+                    CallReturnContract = imported.Document.CallContracts
+                        .FirstOrDefault(contract =>
+                            string.Equals(contract.FunctionId, function.Name, StringComparison.Ordinal) ||
+                            string.Equals(contract.FunctionId, sourceName, StringComparison.Ordinal))?.ReturnContract,
+                });
             }
 
             crates.Add(new SafeCoreCrate(scopePath, identity,

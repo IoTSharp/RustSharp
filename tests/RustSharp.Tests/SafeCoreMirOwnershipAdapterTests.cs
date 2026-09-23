@@ -13,6 +13,7 @@ internal static class SafeCoreMirOwnershipAdapterTests
         new("typed MIR ownership adapter reports use before initialization", UseBeforeInitializationAsync),
         new("typed MIR ownership adapter rejects reference evidence it cannot prove", UnsupportedReferenceAsync),
         new("typed MIR ownership adapter accepts finite Copy tuple aggregates", CopyTupleAsync),
+        new("typed MIR ownership adapter lowers non-Copy place reads as moves", NonCopyMoveAsync),
         new("typed MIR ownership adapter preserves projected MIR places", ProjectedPlaceAsync),
         new("typed MIR ownership adapter preserves projected borrow provenance", ProjectedBorrowAsync),
         new("typed MIR ownership evidence rejects projected source drift", ProjectedEvidenceSourceDriftAsync),
@@ -189,6 +190,47 @@ internal static class SafeCoreMirOwnershipAdapterTests
         AssertEx.Equal(SafeCoreOwnershipOutcome.Returned, result.Ownership!.Paths.Single().Outcome);
         AssertEx.True(result.Program!.Functions[0].Locals.All(local => local.Kind == SafeCoreOwnershipKind.Copy),
             "A tuple composed only of scalar Copy values must remain Copy in the ownership bridge.");
+        return Task.CompletedTask;
+    }
+
+    private static Task NonCopyMoveAsync()
+    {
+        SafeCoreType marker = SafeCoreType.Adt("crate::Marker");
+        SafeCoreMirFunction function = new(
+            0,
+            "crate::move_value",
+            marker,
+            [
+                new SafeCoreMirLocal(0, "source", marker, SafeCoreMirLocalKind.Parameter, false, Source)
+                {
+                    IsUnitAdt = true,
+                    DestructorFunctionId = 7,
+                },
+                new SafeCoreMirLocal(1, "destination", marker, SafeCoreMirLocalKind.Temporary, false, Source)
+                {
+                    IsUnitAdt = true,
+                    DestructorFunctionId = 7,
+                },
+            ],
+            [new SafeCoreMirBlock(
+                0,
+                [new SafeCoreMirStatement(
+                    1,
+                    SafeCoreMirRvalue.Use(SafeCoreMirOperand.Local(0, marker, Source), Source),
+                    Source)],
+                SafeCoreMirTerminator.Return(SafeCoreMirOperand.Local(1, marker, Source), Source),
+                Source)],
+            0,
+            Source);
+
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(new([function]));
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        SafeCoreOwnershipBlock block = result.Program!.Functions[0].Blocks[0];
+        AssertEx.Equal(SafeCoreOwnershipInstructionKind.Move, block.Instructions[0].Kind);
+        AssertEx.True(result.Ownership!.Paths.Single().Trace.Any(trace => trace.StartsWith("move source -> destination", StringComparison.Ordinal)),
+            "A non-Copy MIR Use must become an ownership move with source and destination evidence.");
+        AssertEx.False(result.Ownership.Paths.Single().Trace.Any(trace => trace == "assign destination"),
+            "A move must not be represented as a copy assignment.");
         return Task.CompletedTask;
     }
 

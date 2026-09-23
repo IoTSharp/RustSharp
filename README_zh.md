@@ -88,13 +88,22 @@ P1-06～P1-10 及 P1 阶段仍为 🚧 进行中。可选的 `safe-core-mir-p1-v
 重复数组的拒绝契约保持不变。流水线具有确定性快照与 PE/PDB 检查、显式未支持诊断，
 以及工作量、大小、深度、时间和取消边界。
 
+完整数组的局部切片引用现支持数组到切片的 unsizing、`.len()` 和常量索引，
+通过已证明的所有者存储执行，并有 CoreCLR 回归。动态索引、子切片、切片写入和
+通用切片参数/返回值仍不支持。
+
 有界的直接局部变量借用/再借用来源、place/projection 模型及所有权证据现在贯穿类型化
 MIR 与 CLR LIR 后端。共享引用复制会克隆借用，`&mut` 引用移动会转移借用，源码逃逸
-会得到稳定的所有权诊断；聚合投影移动、跨函数契约和完整的 NLL 合流空间仍待完成。
-受支持的 unit `impl Drop` 路径现在发出显式 MIR 析构调用和所有权 Drop 事实；生成析构器
-失败的 panic/unwind/abort 行为及含字段聚合仍待完成。跨包标量调用已使用
-AssemblyRef/TypeRef/MemberRef，并严格核对 MethodDef 的签名、static 属性和可见性；导入
-引用、聚合及所有权契约仍待实现。
+会得到稳定的所有权诊断。适配器将非 `Copy` MIR 使用映射为移动并检查投影移动路径；
+完整源码 place 降低、跨函数契约和完整的 NLL 合流空间仍待完成。
+受支持的 unit `impl Drop` 路径现在发出显式 MIR 析构调用和所有权 Drop 事实，生成的
+fault 清理已有 CoreCLR 回归。完整 panic/unwind/abort 行为、析构失败后继续清理策略及
+含字段聚合仍待完成。跨包标量调用已使用 AssemblyRef/TypeRef/MemberRef，并严格核对
+MethodDef 的签名、static 属性和可见性。导入聚合/byref 签名及调用契约已有元数据测试和
+手工构建的 CLR LIR producer/consumer CoreCLR 测试；完整源码级跨包所有权契约及这些
+新增能力的 ILVerify 和双平台 Native AOT 证据仍待补齐。
+
+当前本地 Release 构建零错误/零警告，可执行测试工具通过 464/464，失败/跳过均为零。这是当前变更的本地证据，不能关闭完整 P1 退出门槛。
 
 已记录的 `safe-core-regression-v1` 报告通过 8/8，失败和跳过均为零。
 版本化的 `safe-core-regression-v2` 报告通过 24/24，包含 1 个编译通过、6 个编译失败、
@@ -105,8 +114,8 @@ AssemblyRef/TypeRef/MemberRef，并严格核对 MethodDef 的签名、static 属
 `p1-platform.yml` 工作流在原生 Windows/Linux x64 runner 上固定 12 个运行通过用例，
 并在每个平台运行 24 用例的 v2 回归套件，聚合覆盖 CoreCLR、ILVerify、Native AOT、差分和
 回归证据的 6 份报告。[运行 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833)
-已在提交 `23279d93267a814c643baddc29c72918ff0fda0b` 上通过全部 6 个门禁；P1 阶段仍因上述
-语义缺口保持开放。
+已在历史提交 `23279d93267a814c643baddc29c72918ff0fda0b` 上通过全部 6 个门禁。
+该运行不验证上述后续新增能力；P1 阶段仍因语义及最终提交证据缺口保持开放。
 
 本地 hello 探测提供 ILVerify、CoreCLR 和 Windows x64 Native AOT 证据。
 Linux x64 Native AOT hello 也在 Ubuntu WSL2 与 SDK 10.0.112 下运行；原生 Linux

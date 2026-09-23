@@ -3,8 +3,9 @@
 Status: 🚧 In progress. The opt-in `safe-core-mir-p1-v1` API establishes a bounded
 value HIR-to-MIR boundary, including nested tuple and fixed-array rvalues. The
 compiler now wires supported source through ownership/cleanup evidence and a
-direct MIR-to-CLR-LIR backend; P1-06 remains open for references, slices/unsizing,
-const, move, destructor/Drop lowering, and broader AOT integration. The v2
+direct MIR-to-CLR-LIR backend. Local reference/slice provenance, non-`Copy` move
+adaptation and unit destructor calls now have bounded implementations; P1-06
+remains open for complete place/reference semantics and broader AOT integration. The v2
 profile adds the bounded pattern, match and closure subset described below.
 
 The versioned `safe-core-mir-p1-v2` compiler profile extends this boundary with
@@ -28,8 +29,9 @@ executable CLR value subset. MIR may preserve the P1-04 scalar descriptors
 and operators needed for typed analysis, snapshots, ownership evidence, and
 later backends. The direct MIR-to-CLR-LIR path currently accepts only `unit`,
 `bool`, `i32`, and the bounded `usize` representation, plus tuples and fixed
-arrays made from those values. Floating-point and wider integer values,
-`char` ABI values, non-identity casts/coercions, division/remainder and
+arrays made from those values, plus the local full-array slice subset below.
+Floating-point and wider integer values,
+`char` ABI values, non-identity casts/coercions other than that slice unsizing, division/remainder and
 bitwise/shift operators are rejected with `RSM2101` at the executable
 capability boundary. Malformed MIR/LIR or an inconsistent typed contract is
 reported as `RSM2102`; `CompilerDriver.Check` runs this same capability gate
@@ -72,6 +74,15 @@ into a dummy value. In v2, structural-`Copy` repeated arrays are enabled: the
 repeat operand is evaluated once and copied into each fixed slot within the
 same array and work limits. Non-`Copy` repeats remain rejected with the stable
 type diagnostic.
+
+The v2 local slice subset lowers `&[T]` and `&mut [T]` from a complete local
+array or sized-array reference, retaining the proven array owner identity.
+`.len()` is represented by a typed `SliceLength` rvalue; constant indices read
+the owner's fixed storage. This is bounded owner specialization, not a general
+fat-pointer ABI. Dynamic indexing, subslices, slice writes and general slice
+parameters/returns remain unsupported. Dynamic indexing receives `RSM2101`;
+an invalid static executable index receives `RSM2102`. Slice provenance and
+unsizing flow through ownership validation before CLR LIR emission.
 
 Loop/control-flow labels remain outside the upstream P1-04 HIR gate and receive
 `RSN1007` before MIR lowering. Internal loop contexts retain label information,
@@ -159,7 +170,10 @@ ownership/cleanup metadata, and a real fixed-array compile/run path. The new
 MIR representation still provides no broad runtime, Native AOT, or rustc
 differential conformance claim. The v2 profile has deterministic repeated-array,
 pattern and closure pipeline regressions; platform and differential claims remain
-separate gates. The retained `p1-differential-v1` corpus records four historical
+separate gates. [Slice regressions](../tests/RustSharp.Tests/SafeCoreMirSliceTests.cs)
+cover generated CoreCLR execution, deterministic MIR, unsupported dynamic
+indexing and an empty-array bounds failure. They do not establish ILVerify or
+Native AOT evidence for these new slice constructs. The retained `p1-differential-v1` corpus records four historical
 RustSharp source-level unsupported diagnostics against four passing rustc 1.98
 oracle executions, with zero skips. The expanded immutable `p1-differential-v2`
 corpus now executes 16/16 cases (10 borrow, 6 Drop) with rustc 1.98.0 and zero

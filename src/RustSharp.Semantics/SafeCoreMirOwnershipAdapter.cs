@@ -201,11 +201,19 @@ public static partial class SafeCoreMirOwnershipAdapter
                     value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut") &&
                     value.Operands.Count == 1 &&
                     value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place;
+                bool arraySliceCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
+                    value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                    value.Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice &&
+                    value.Operands.Count == 1 &&
+                    value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place &&
+                    (value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Array ||
+                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                     value.Operands[0].Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Array);
                 bool referenceCopy = value.Kind == SafeCoreMirRvalueKind.Use &&
                     value.Operands.Count == 1 &&
                     (value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place) &&
                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
-                if (!directBorrow && !referenceCopy)
+                if (!directBorrow && !referenceCopy && !arraySliceCoercion)
                 {
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                         "Reference locals require one explicit MIR borrow origin; unproven reference copies are unsupported.", value.Source), options);
@@ -213,7 +221,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
 
                 SafeCoreOwnershipPlace origin;
-                if (directBorrow)
+                if (directBorrow || arraySliceCoercion)
                 {
                     if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
                         diagnostics, out origin)) return null;
@@ -342,7 +350,15 @@ public static partial class SafeCoreMirOwnershipAdapter
                     value.Operands.Count == 1 &&
                     value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
                     function.Locals[statement.DestinationLocalId].Type.Kind == SafeCoreSemanticTypeKind.Reference;
-                if (!IsStructuralCopy(value.Type) && value.Kind != SafeCoreMirRvalueKind.Unary &&
+                bool nonCopyMove = !IsStructuralCopy(value.Type) &&
+                    value.Kind == SafeCoreMirRvalueKind.Use && value.Operands.Count == 1 &&
+                    value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place &&
+                    function.Locals[statement.DestinationLocalId].Type == value.Type &&
+                    !referenceAssignment;
+                bool unsizingCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
+                    value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                    value.Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice;
+                if (!IsStructuralCopy(value.Type) && !unsizingCoercion && !nonCopyMove && value.Kind != SafeCoreMirRvalueKind.Unary &&
                     value.Kind != SafeCoreMirRvalueKind.Write && !referenceAssignment &&
                     !(function.Locals[statement.DestinationLocalId].IsUnitAdt && value.Kind == SafeCoreMirRvalueKind.Use &&
                         value.Operands[0].Kind == SafeCoreMirOperandKind.Constant && value.Operands[0].Value == "()"))
@@ -350,6 +366,29 @@ public static partial class SafeCoreMirOwnershipAdapter
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                         "Only structural Copy rvalues are supported by the typed-MIR ownership bridge.", value.Source), options);
                     valid = false;
+                    continue;
+                }
+
+                // A non-Copy value read from a place is a Rust move.  Keep it
+                // explicit in the ownership MIR so the source becomes
+                // unavailable, the destination is initialized exactly once,
+                // and partial aggregate moves retain their projection path.
+                // Treating this as a generic Use followed by Assign would
+                // silently turn ownership-bearing values into copies.
+                if (nonCopyMove)
+                {
+                    if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
+                        diagnostics, out SafeCoreOwnershipPlace sourcePlace))
+                    {
+                        valid = false;
+                    }
+                    else
+                    {
+                        AddInstruction(instructions,
+                            SafeCoreOwnershipInstruction.Move(sourcePlace,
+                                SafeCoreOwnershipPlace.Root(statement.DestinationLocalId), value.Source),
+                            options, diagnostics, value.Source, ref valid);
+                    }
                     continue;
                 }
 
@@ -369,6 +408,23 @@ public static partial class SafeCoreMirOwnershipAdapter
                         SafeCoreOwnershipInstruction.Borrow(ownerPlace,
                             SafeCoreOwnershipPlace.Root(statement.DestinationLocalId),
                             value.Operator is "&mut" or "reborrow_mut", value.Source), options, diagnostics, value.Source, ref valid);
+                    continue;
+                }
+                if (unsizingCoercion)
+                {
+                    if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
+                        diagnostics, out SafeCoreOwnershipPlace ownerPlace))
+                    {
+                        valid = false;
+                    }
+                    else
+                    {
+                        AddInstruction(instructions,
+                            SafeCoreOwnershipInstruction.Borrow(ownerPlace,
+                                SafeCoreOwnershipPlace.Root(statement.DestinationLocalId),
+                                value.Type.IsMutable, value.Source),
+                            options, diagnostics, value.Source, ref valid);
+                    }
                     continue;
                 }
                 if (value.Kind == SafeCoreMirRvalueKind.Write)

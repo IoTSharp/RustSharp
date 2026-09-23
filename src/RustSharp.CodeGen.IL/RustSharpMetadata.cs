@@ -39,6 +39,17 @@ public sealed record RustSharpMetadataOwnershipFunction(
     IEnumerable<string>? Outcomes = null,
     IEnumerable<string>? BorrowFacts = null);
 
+/// <summary>
+/// Explicit ownership and panic terms for one imported call. CLR signatures
+/// cannot carry these language-level terms, so consumers validate this record
+/// before emitting a cross-package MemberRef.
+/// </summary>
+public sealed record RustSharpMetadataCallContract(
+    string FunctionId,
+    string PanicStrategy,
+    IEnumerable<string>? ParameterContracts = null,
+    string? ReturnContract = null);
+
 /// <summary>A bounded result returned when an independent assembly is imported.</summary>
 public sealed record RustSharpMetadataImportResult(
     string AssemblyPath,
@@ -66,6 +77,8 @@ public sealed partial record RustSharpMetadataDocument
     public const int MaximumTraits = 4096;
     public const int MaximumOwnershipFunctions = 4096;
     public const int MaximumOwnershipFactsPerFunction = 4096;
+    public const int MaximumCallContracts = 4096;
+    public const int MaximumCallTermsPerFunction = 256;
     public const int MaximumJsonCharacters = 1_000_000;
 
     public RustSharpMetadataDocument(
@@ -76,7 +89,8 @@ public sealed partial record RustSharpMetadataDocument
         IEnumerable<string>? traitImplementations = null,
         string? mirSnapshot = null,
         IEnumerable<RustSharpMetadataOwnershipFunction>? ownership = null,
-        string? cleanupSnapshot = null)
+        string? cleanupSnapshot = null,
+        IEnumerable<RustSharpMetadataCallContract>? callContracts = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(profile);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceSha256);
@@ -93,6 +107,7 @@ public sealed partial record RustSharpMetadataDocument
         MirSnapshot = mirSnapshot is null ? null : LimitText(mirSnapshot, MaximumJsonCharacters);
         Ownership = NormalizeOwnership(ownership);
         CleanupSnapshot = cleanupSnapshot is null ? null : LimitText(cleanupSnapshot, MaximumJsonCharacters);
+        CallContracts = NormalizeCallContracts(callContracts);
         Json = Serialize(this);
         if (Json.Length > MaximumJsonCharacters)
             throw new ArgumentException("Rust# metadata JSON exceeds its size limit.");
@@ -108,6 +123,8 @@ public sealed partial record RustSharpMetadataDocument
     public ImmutableArray<RustSharpMetadataOwnershipFunction> Ownership { get; }
     /// <summary>Optional deterministic P1-08 cleanup projection snapshot.</summary>
     public string? CleanupSnapshot { get; }
+    /// <summary>Explicit imported-call ownership and panic terms.</summary>
+    public ImmutableArray<RustSharpMetadataCallContract> CallContracts { get; }
     [JsonIgnore]
     public string Json { get; }
 
@@ -119,7 +136,8 @@ public sealed partial record RustSharpMetadataDocument
         IEnumerable<string>? traitImplementations = null,
         string? mirSnapshot = null,
         IEnumerable<RustSharpMetadataOwnershipFunction>? ownership = null,
-        string? cleanupSnapshot = null)
+        string? cleanupSnapshot = null,
+        IEnumerable<RustSharpMetadataCallContract>? callContracts = null)
     {
         ArgumentNullException.ThrowIfNull(methods);
         if (methods.Count > MaximumFunctions) throw new ArgumentException("Too many methods.", nameof(methods));
@@ -136,8 +154,23 @@ public sealed partial record RustSharpMetadataDocument
                 method.IsPublic);
         }
 
+        IEnumerable<RustSharpMetadataCallContract>? linkedContracts = callContracts?.Select(contract =>
+        {
+            // Ownership evidence may use the internal `#value` body identity,
+            // while the emitted method carries the source identity. Resolve
+            // the contract against the actual function table so a producer
+            // never publishes a self-referential but unimportable term.
+            RustSharpMetadataFunction? target = functions.FirstOrDefault(function =>
+                string.Equals(function.Name, contract.FunctionId, StringComparison.Ordinal) ||
+                string.Equals(function.SourceQualifiedName, contract.FunctionId, StringComparison.Ordinal) ||
+                string.Equals(function.SourceQualifiedName, contract.FunctionId + "#value", StringComparison.Ordinal));
+            return target is null
+                ? contract
+                : contract with { FunctionId = target.SourceQualifiedName ?? target.Name };
+        });
+
         return new(profile, Convert.ToHexString(SHA256.HashData(sourceBytes)), functions,
-            genericInstances, traitImplementations, mirSnapshot, ownership, cleanupSnapshot);
+            genericInstances, traitImplementations, mirSnapshot, ownership, cleanupSnapshot, linkedContracts);
     }
 
     private static ImmutableArray<RustSharpMetadataFunction> NormalizeFunctions(IEnumerable<RustSharpMetadataFunction>? values)
@@ -236,6 +269,57 @@ public sealed partial record RustSharpMetadataDocument
         }
     }
 
+    private static ImmutableArray<RustSharpMetadataCallContract> NormalizeCallContracts(
+        IEnumerable<RustSharpMetadataCallContract>? values)
+    {
+        if (values is null) return [];
+        RustSharpMetadataCallContract[] result = Materialize(values, MaximumCallContracts, nameof(values));
+        if (result.Any(static value => value is null))
+            throw new ArgumentException("Rust# call contract count is out of bounds.", nameof(values));
+
+        var normalized = new List<RustSharpMetadataCallContract>(result.Length);
+        var identities = new HashSet<string>(StringComparer.Ordinal);
+        foreach (RustSharpMetadataCallContract value in result)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value.FunctionId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(value.PanicStrategy);
+            if (value.FunctionId.Length > 4096 || value.PanicStrategy.Length > 64 ||
+                (!string.Equals(value.PanicStrategy, "unwind", StringComparison.Ordinal) &&
+                 !string.Equals(value.PanicStrategy, "abort", StringComparison.Ordinal)))
+            {
+                throw new ArgumentException("Rust# call contract identity or panic strategy is invalid.", nameof(values));
+            }
+
+            if (!identities.Add(value.FunctionId))
+                throw new ArgumentException("Rust# call contract function IDs must be unique.", nameof(values));
+
+            string[] parameters = NormalizeTerms(value.ParameterContracts, "parameter contracts");
+            string? returnContract = value.ReturnContract;
+            if (returnContract is not null)
+            {
+                if (string.IsNullOrWhiteSpace(returnContract) || returnContract.Length > 128 ||
+                    returnContract.Contains('\0'))
+                    throw new ArgumentException("Rust# call contract return term is invalid.", nameof(values));
+                returnContract = returnContract.Trim();
+            }
+
+            normalized.Add(new(value.FunctionId, value.PanicStrategy, parameters, returnContract));
+        }
+
+        return [.. normalized.OrderBy(static value => value.FunctionId, StringComparer.Ordinal)];
+
+        static string[] NormalizeTerms(IEnumerable<string>? terms, string label)
+        {
+            if (terms is null) return [];
+            string[] result = Materialize(terms, MaximumCallTermsPerFunction, label);
+            if (result.Any(static term => string.IsNullOrWhiteSpace(term) || term.Length > 128 || term.Contains('\0')))
+                throw new ArgumentException($"Rust# call contract {label} are invalid.", nameof(values));
+            // Parameter contracts are positional: equal terms at different
+            // argument indices must remain separate and in declaration order.
+            return [.. result.Select(static term => term.Trim())];
+        }
+    }
+
     private static T[] Materialize<T>(IEnumerable<T> values, int maximum, string parameterName)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -300,7 +384,8 @@ public sealed partial record RustSharpMetadataDocument
             parsed.TraitImplementations,
             parsed.MirSnapshot,
             parsed.Ownership,
-            parsed.CleanupSnapshot);
+            parsed.CleanupSnapshot,
+            parsed.CallContracts);
         // Older v1 producers predate the ownership extension and therefore do
         // not contain an `ownership` property. Return the canonical document
         // while accepting that additive shape for cross-package compatibility.
@@ -318,6 +403,7 @@ public sealed partial record RustSharpMetadataDocument
         public string? MirSnapshot { get; set; }
         public RustSharpMetadataOwnershipFunction[]? Ownership { get; set; }
         public string? CleanupSnapshot { get; set; }
+        public RustSharpMetadataCallContract[]? CallContracts { get; set; }
     }
 }
 
@@ -478,6 +564,7 @@ public static class RustSharpMetadataConsumer
                 if (expectedProfile is not null && !string.Equals(document.Profile, expectedProfile, StringComparison.Ordinal))
                     diagnostics.Add(ProfileMismatch + ": producer profile does not match the consumer profile.");
                 ValidateGeneratedFunctions(metadata, document, diagnostics);
+                ValidateCallContracts(document, diagnostics);
                 ValidateRequiredFunctions(document, requiredFunctions, diagnostics);
             }
 
@@ -506,6 +593,55 @@ public static class RustSharpMetadataConsumer
         return document.Functions.FirstOrDefault(function =>
             string.Equals(function.Name, functionId, StringComparison.Ordinal) ||
             string.Equals(function.SourceQualifiedName, functionId, StringComparison.Ordinal));
+    }
+
+    private static void ValidateCallContracts(
+        RustSharpMetadataDocument document,
+        List<string> diagnostics)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (RustSharpMetadataCallContract contract in document.CallContracts)
+        {
+            if (!seen.Add(contract.FunctionId))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "call contract function ID '" + Trim(contract.FunctionId) + "' is duplicated.");
+                continue;
+            }
+
+            RustSharpMetadataFunction? function = FindFunction(document, contract.FunctionId);
+            if (function is null)
+            {
+                AddContractDiagnostic(diagnostics,
+                    "call contract references unknown function '" + Trim(contract.FunctionId) + "'.");
+                continue;
+            }
+
+            if (!string.Equals(contract.PanicStrategy, "unwind", StringComparison.Ordinal) &&
+                !string.Equals(contract.PanicStrategy, "abort", StringComparison.Ordinal))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "call contract for '" + Trim(contract.FunctionId) + "' has an unsupported panic strategy.");
+            }
+
+            int arrow = function.Signature.IndexOf("->", StringComparison.Ordinal);
+            if (arrow < 0 || function.Signature.IndexOf("->", arrow + 2, StringComparison.Ordinal) >= 0)
+            {
+                AddContractDiagnostic(diagnostics,
+                    "call contract target '" + Trim(contract.FunctionId) + "' has an invalid function signature.");
+                continue;
+            }
+
+            int parameterCount = string.IsNullOrWhiteSpace(function.Signature[..arrow])
+                ? 0
+                : function.Signature[..arrow].Split(',', StringSplitOptions.None).Length;
+            int contractParameterCount = contract.ParameterContracts?.Count() ?? 0;
+            if (contractParameterCount != 0 && contractParameterCount != parameterCount)
+            {
+                AddContractDiagnostic(diagnostics,
+                    "call contract for '" + Trim(contract.FunctionId) + "' does not cover every parameter.");
+            }
+        }
     }
 
     /// <summary>
@@ -748,7 +884,12 @@ public static class RustSharpMetadataConsumer
 
         public string GetArrayType(string elementType, ArrayShape shape) => throw Unsupported("an array");
 
-        public string GetByReferenceType(string elementType) => throw Unsupported("a by-reference type");
+        public string GetByReferenceType(string elementType)
+        {
+            if (string.IsNullOrWhiteSpace(elementType) || elementType.Length > 1024)
+                throw Unsupported("an invalid by-reference element");
+            return "&" + elementType;
+        }
 
         public string GetFunctionPointerType(MethodSignature<string> signature) =>
             throw Unsupported("a function pointer");

@@ -509,6 +509,22 @@ public static partial class SafeCoreTypeAnalysis
                 case N.UnaryExpression: type = Unary(node, expected, depth + 1); break;
                 case N.BinaryExpression: type = Binary(node, depth + 1); break;
                 case N.CallExpression:
+                    // `array.len()` and `slice.len()` are bounded intrinsic
+                    // calls in the P1 profile. They return usize and retain
+                    // the array/slice target as a typed place; no method item
+                    // or dynamic dispatch is introduced.
+                    if (Child(node, 0).Kind == N.MemberExpression &&
+                        string.Equals(Child(node, 0).Name, "len", StringComparison.Ordinal))
+                    {
+                        SafeCoreHirNode member = Child(node, 0);
+                        if (node.ChildIds.Count != 1)
+                            Fail(node, "RST2004", "The len intrinsic does not take arguments.");
+                        SafeCoreType lengthTarget = AutoDeref(Expr(Child(member, 0), null, depth + 1), member, depth + 1);
+                        if (lengthTarget.Kind is not (K.Array or K.Slice))
+                            Fail(member, "RST2002", "The len intrinsic requires an array or slice target.");
+                        type = Primitive(K.Usize);
+                        break;
+                    }
                     SafeCoreType callee = AutoDeref(Expr(Child(node, 0), null, depth + 1), node, depth + 1);
                     if (callee.Kind is not (K.Function or K.Closure)) Fail(node, "RST2002", "The call target is not callable.");
                     if (callee.Kind == K.Closure) ValidateClosureCall(callee, Child(node, 0), depth + 1);

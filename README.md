@@ -96,17 +96,28 @@ repeated-array rejection remains unchanged. The pipeline has deterministic
 snapshots and PE/PDB checks, explicit unsupported diagnostics, and bounded
 work, size, depth, time and cancellation behavior.
 
+Full-array local slice references now support array-to-slice unsizing, `.len()`
+and constant indexing through proven owner storage, with CoreCLR regressions.
+Dynamic indexing, subslices, slice writes and general slice parameters/returns
+remain unsupported.
+
 Bounded direct-local borrow/reborrow origins, place/projection models and
 ownership evidence now flow through typed MIR and the CLR LIR backend. Shared
 reference copies clone their loan, mutable reference moves transfer it, and
-source escapes receive stable ownership diagnostics; projected aggregate moves,
+source escapes receive stable ownership diagnostics. The adapter maps non-`Copy`
+MIR uses to moves and checks projected move paths; complete source place lowering,
 interprocedural contracts and the complete NLL join space remain open. The
 supported unit `impl Drop` path now emits explicit MIR destructor calls and
-ownership Drop facts, while panic/unwind/abort behavior for generated
-destructor failures and field-owning aggregates remains open. Cross-package
+ownership Drop facts, with generated fault cleanup exercised on CoreCLR. Complete
+panic/unwind/abort behavior, destructor-failure continuation and field-owning
+aggregates remain open. Cross-package
 scalar calls already use AssemblyRef/TypeRef/MemberRef and strict MethodDef
-signature/static/visibility checks; imported reference, aggregate and ownership
-contracts remain open.
+signature/static/visibility checks. Imported aggregate/byref signatures and call
+contracts now have metadata and manually constructed CLR LIR producer/consumer
+CoreCLR tests; full source-level cross-package ownership contracts and evidence
+for these additions on ILVerify and both Native AOT platforms remain open.
+
+The current local Release build has zero errors/warnings, and the executable harness passes 464/464 with zero failures/skips. This is local evidence for the current changes, not the complete P1 exit gate.
 
 The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
 skips. The versioned `safe-core-regression-v2` report passes 24/24 with one
@@ -120,8 +131,9 @@ rustc 1.98.0 with zero failures, blocked cases or skips. The new
 runner, runs the 24-case v2 regression suite on each platform, and aggregates
 six reports covering CoreCLR, ILVerify, Native AOT, differential and regression
 evidence. [Run 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833)
-passes all six gates at commit `23279d93267a814c643baddc29c72918ff0fda0b`;
-the P1 milestone remains open for the semantic gaps listed above.
+passed all six gates at historical commit `23279d93267a814c643baddc29c72918ff0fda0b`.
+That run does not validate the subsequent additions described above; the P1
+milestone remains open for the semantic and final-commit evidence gaps.
 
 Local hello probes provide ILVerify, CoreCLR and Windows x64 Native AOT
 evidence. Linux x64 Native AOT hello also runs under Ubuntu WSL2 with SDK

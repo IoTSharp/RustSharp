@@ -287,13 +287,17 @@ public static class SafeCoreClrLowering
                 (ClrLirType[] parameters, ClrLirType returnType) = ParseExternalSignature(external);
                 if (returnType != callSite.ReturnType || !parameters.SequenceEqual(callSite.ParameterTypes))
                     throw new InvalidOperationException("Imported function signature does not match semantic evidence.");
+                ValidateExternalCallContract(external, parameters, returnType);
                 callSite = callSite with
                 {
                     ExternalCall = new ClrLirExternalCall(
                         external.AssemblyName,
                         external.ClrNamespace,
                         external.ClrTypeName,
-                        external.ClrName),
+                        external.ClrName,
+                        external.CallPanicStrategy,
+                        external.CallParameterContracts,
+                        external.CallReturnContract),
                 };
             }
 
@@ -371,14 +375,83 @@ public static class SafeCoreClrLowering
 
             static bool TryParseExternalType(string text, bool allowVoid, out ClrLirType type)
             {
-                type = text.Trim() switch
+                string token = text.Trim();
+                if (token.Length > 0 && token[0] == '&')
+                {
+                    bool mutable = token.StartsWith("&mut ", StringComparison.Ordinal);
+                    string inner = mutable ? token[5..].Trim() : token[1..].Trim();
+                    if (TryParseExternalType(inner, allowVoid: false, out ClrLirType referent) &&
+                        referent.Kind != ClrLirTypeKind.ByReference)
+                    {
+                        type = ClrLirType.ByReference(referent, mutable);
+                        return true;
+                    }
+
+                    type = default;
+                    return false;
+                }
+
+                type = token switch
                 {
                     "Void" or "Unit" when allowVoid => ClrLirType.Void,
                     "I32" => ClrLirType.I32,
                     "Bool" => ClrLirType.Bool,
+                    "Text" => ClrLirType.Text,
+                    "Any" => ClrLirType.Any,
+                    _ when token.StartsWith("Value(", StringComparison.Ordinal) &&
+                        token.EndsWith(')') && token.Length > "Value()".Length =>
+                        ClrLirType.Value(token["Value(".Length..^1]),
                     _ => default,
                 };
                 return type.IsKnown && (allowVoid || type != ClrLirType.Void);
+            }
+        }
+
+        private static void ValidateExternalCallContract(
+            SafeCoreExternalFunction function,
+            ClrLirType[] parameters,
+            ClrLirType returnType)
+        {
+            if (function.CallPanicStrategy is not null &&
+                function.CallPanicStrategy is not ("unwind" or "abort"))
+            {
+                throw new InvalidOperationException(
+                    "Imported function has an unsupported ownership panic strategy.");
+            }
+
+            if (function.CallParameterContracts.Length != 0 &&
+                function.CallParameterContracts.Length != parameters.Length)
+            {
+                throw new InvalidOperationException(
+                    "Imported function ownership contracts do not cover its parameters.");
+            }
+
+            for (int index = 0; index < function.CallParameterContracts.Length; index++)
+            {
+                string contract = function.CallParameterContracts[index];
+                if (string.IsNullOrWhiteSpace(contract))
+                    throw new InvalidOperationException("Imported function has an empty ownership parameter contract.");
+                bool byReference = parameters[index].Kind == ClrLirTypeKind.ByReference;
+                if (contract is "borrow:shared" or "borrow:mut" && !byReference)
+                {
+                    throw new InvalidOperationException(
+                        "Imported function ownership contract requires a by-reference parameter.");
+                }
+            }
+
+            if (function.CallReturnContract is { Length: > 0 } result)
+            {
+                if (result is "borrow:shared" or "borrow:mut" &&
+                    returnType.Kind != ClrLirTypeKind.ByReference)
+                {
+                    throw new InvalidOperationException(
+                        "Imported function ownership contract requires a by-reference return.");
+                }
+                if (result == "unit" && returnType != ClrLirType.Void)
+                {
+                    throw new InvalidOperationException(
+                        "Imported function ownership contract declares a unit return for a non-unit signature.");
+                }
             }
         }
 

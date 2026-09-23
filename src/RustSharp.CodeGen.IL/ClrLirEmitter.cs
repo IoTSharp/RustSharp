@@ -98,8 +98,34 @@ public static class ClrLirEmitter
             labels.Add(block.Label, encoder.DefineLabel());
         }
 
+        // A source-level Drop obligation is also materialized as a CLR fault
+        // handler.  Normal MIR return paths contain explicit destructor calls;
+        // this handler covers exceptions raised by the function body before a
+        // normal return.  ControlFlowBuilder carries the labels into the
+        // MethodBodyStreamEncoder without changing the ordinary LIR CFG.
+        LabelHandle tryStart = default;
+        LabelHandle tryEnd = default;
+        LabelHandle handlerStart = default;
+        LabelHandle handlerEnd = default;
+        if (!method.ExceptionCleanup.IsEmpty)
+        {
+            tryStart = encoder.DefineLabel();
+            tryEnd = encoder.DefineLabel();
+            handlerStart = encoder.DefineLabel();
+            handlerEnd = encoder.DefineLabel();
+            encoder.MarkLabel(tryStart);
+        }
+
+        bool tryEndMarked = false;
+        int blockOrdinal = 0;
         foreach (ClrLirBlock block in method.Blocks)
         {
+            if (!method.ExceptionCleanup.IsEmpty && !tryEndMarked &&
+                blockOrdinal == method.FaultTryBlockCount)
+            {
+                encoder.MarkLabel(tryEnd);
+                tryEndMarked = true;
+            }
             encoder.MarkLabel(labels[block.Label]);
             foreach (ClrLirInstruction instruction in block.Instructions)
             {
@@ -109,6 +135,9 @@ public static class ClrLirEmitter
                 {
                     case ClrLirLoadInt32 loadInt32:
                         encoder.LoadConstantI4(loadInt32.Value);
+                        break;
+                    case ClrLirLeave leave:
+                        encoder.Branch(ILOpCode.Leave, labels[leave.Target]);
                         break;
                     case ClrLirLoadBoolean loadBoolean:
                         encoder.LoadConstantI4(loadBoolean.Value ? 1 : 0);
@@ -182,6 +211,25 @@ public static class ClrLirEmitter
                         throw new InvalidOperationException($"Unsupported CLR LIR instruction '{instruction.GetType().Name}'.");
                 }
             }
+            blockOrdinal++;
+        }
+
+        if (!method.ExceptionCleanup.IsEmpty)
+        {
+            if (!tryEndMarked)
+                encoder.MarkLabel(tryEnd);
+            encoder.MarkLabel(handlerStart);
+            foreach (ClrLirCallSite cleanup in method.ExceptionCleanup)
+            {
+                EntityHandle target = callResolver(cleanup);
+                if (target.IsNil)
+                    throw new InvalidOperationException($"Call resolver returned a nil cleanup target for '{cleanup.Name}'.");
+                encoder.Call(target);
+            }
+
+            encoder.OpCode(ILOpCode.Endfinally);
+            encoder.MarkLabel(handlerEnd);
+            encoder.ControlFlowBuilder!.AddFaultRegion(tryStart, tryEnd, handlerStart, handlerEnd);
         }
 
         return Math.Max(1, validation.MaximumStackDepth);

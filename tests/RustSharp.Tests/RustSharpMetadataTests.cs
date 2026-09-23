@@ -1,8 +1,11 @@
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Reflection;
+using System.Runtime.Loader;
 using RustSharp.CodeGen.IL;
 using RustSharp.Compiler;
 
@@ -18,6 +21,10 @@ internal static class RustSharpMetadataTests
         new("CompilerDriver embeds safe-core metadata", CompilerDriverAsync),
         new("RustSharp metadata consumer validates independent assemblies", ConsumerAsync),
         new("RustSharp metadata consumer executes a real external scalar call", CrossAssemblyCallAsync),
+        new("RustSharp metadata consumer executes an external aggregate MemberRef", CrossAssemblyAggregateCallAsync),
+        new("RustSharp metadata consumer executes an external by-reference MemberRef", CrossAssemblyReferenceCallAsync),
+        new("RustSharp metadata preserves repeated positional parameter contracts", RepeatedParameterContractsAsync),
+        new("RustSharp metadata consumer rejects an unlinked ownership contract", RejectsUnlinkedCallContractAsync),
         new("RustSharp metadata consumer rejects MethodDef signature drift", ConsumerMethodContractAsync),
     ];
 
@@ -108,12 +115,16 @@ internal static class RustSharpMetadataTests
             ["Copy"],
             "{\"mir\":1}",
             [new("crate::main", "unwind", ["drop:1"], ["returned"], ["shared:1"]) ],
-            "safe-core-mir-cleanup-p1-v1\n");
+            "safe-core-mir-cleanup-p1-v1\n",
+            [new("crate::main", "unwind", ["borrow:shared"], "unit")]);
         RustSharpMetadataDocument parsed = RustSharpMetadataDocument.Parse(original.Json);
         AssertEx.Equal(original.Json, parsed.Json, "Metadata parse must re-canonicalize to the producer bytes.");
         AssertEx.Equal("()", parsed.GenericInstances.Single(instance => instance.FunctionId == "crate::main").Arguments);
         AssertEx.Equal(1, parsed.Ownership.Length);
         AssertEx.Equal("safe-core-mir-cleanup-p1-v1\n", parsed.CleanupSnapshot!);
+        AssertEx.Equal(1, parsed.CallContracts.Length);
+        AssertEx.Equal("borrow:shared", parsed.CallContracts[0].ParameterContracts!.Single());
+        AssertEx.Equal("unit", parsed.CallContracts[0].ReturnContract!);
         IEnumerable<string> dropOrder = AssertEx.NotNull(parsed.Ownership[0].DropOrder, "Drop-order evidence must be materialized.");
         AssertEx.Equal("drop:1", dropOrder.Single());
         return Task.CompletedTask;
@@ -324,6 +335,291 @@ internal static class RustSharpMetadataTests
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
         }
+    }
+
+    private static async Task CrossAssemblyAggregateCallAsync()
+    {
+        string directory = Path.Combine(Path.GetTempPath(),
+            "rustsharp-metadata-aggregate-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        string producerPath = Path.Combine(directory, "Producer.dll");
+        string consumerPath = Path.Combine(directory, "Consumer.dll");
+        string sourcePath = Path.Combine(directory, "aggregate.rs");
+        var pair = new ClrLirValueType("Pair", [
+            new ClrLirField("left", ClrLirType.I32),
+            new ClrLirField("right", ClrLirType.Bool),
+        ]);
+        var makePair = new ClrLirMethod(
+            "MakePair",
+            pair.Type,
+            [],
+            [],
+            [new ClrLirBlock("entry", [
+                new ClrLirLoadInt32(7),
+                new ClrLirLoadBoolean(true),
+                new ClrLirConstructValue(pair),
+                new ClrLirReturn(),
+            ])]);
+        var producerMain = new ClrLirMethod(
+            "Main",
+            ClrLirType.Void,
+            [],
+            [],
+            [new ClrLirBlock("entry", [
+                new ClrLirCall(new ClrLirCallSite("MakePair", pair.Type, [])),
+                new ClrLirDiscard(pair.Type),
+                new ClrLirReturn(),
+            ])]);
+        var consumerMain = new ClrLirMethod(
+            "Main",
+            ClrLirType.Void,
+            [],
+            [],
+            [new ClrLirBlock("entry", [
+                new ClrLirCall(new ClrLirCallSite("MakePair", pair.Type, [])
+                {
+                    ExternalCall = new ClrLirExternalCall(
+                        "Producer", "RustSharp.Generated", "Program", "MakePair"),
+                }),
+                new ClrLirDiscard(pair.Type),
+                new ClrLirReturn(),
+            ])]);
+        try
+        {
+            const string source = "pub fn make_pair() -> (i32, bool) { (7, true) } fn main() {}";
+            File.WriteAllText(sourcePath, source);
+            SafeCoreClrResult producerProgram = new(
+                [producerMain, makePair],
+                [new(0, source.Length), new(0, source.Length)],
+                []) { ValueTypes = [pair] };
+            RustSharpMetadataDocument producerMetadata = RustSharpMetadataDocument.ForProgram(
+                "safe-core-mir-v1", Encoding.UTF8.GetBytes(source), producerProgram.Methods);
+            GeneratedAssembly producer = ClrLirAssemblyEmitter.EmitProgram(
+                producerProgram, "Producer", source, sourcePath, "Producer.pdb",
+                Encoding.UTF8.GetBytes(source), null, producerMetadata);
+            File.WriteAllBytes(producerPath, producer.PeImage);
+            File.WriteAllText(Path.ChangeExtension(producerPath, ".runtimeconfig.json"), producer.RuntimeConfigJson);
+
+            const string consumerSource = "fn main() {}";
+            SafeCoreClrResult consumerProgram = new(
+                [consumerMain], [new(0, consumerSource.Length)], []) { ValueTypes = [pair] };
+            RustSharpMetadataDocument consumerMetadata = RustSharpMetadataDocument.ForProgram(
+                "safe-core-mir-v1", Encoding.UTF8.GetBytes(consumerSource), consumerProgram.Methods);
+            GeneratedAssembly consumer = ClrLirAssemblyEmitter.EmitProgram(
+                consumerProgram, "Consumer", consumerSource,
+                Path.Combine(directory, "consumer.rs"), "Consumer.pdb",
+                Encoding.UTF8.GetBytes(consumerSource), null, consumerMetadata);
+            File.WriteAllBytes(consumerPath, consumer.PeImage);
+            File.WriteAllText(Path.ChangeExtension(consumerPath, ".runtimeconfig.json"), consumer.RuntimeConfigJson);
+
+            RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
+                producerPath, "safe-core-mir-v1", ["MakePair"]);
+            AssertEx.True(imported.IsSuccessful,
+                "The aggregate producer MethodDef must be importable: " +
+                string.Join("; ", imported.Diagnostics));
+            AssertEx.True(imported.Document!.Functions.Any(function =>
+                function.Name == "MakePair" && function.Signature == "->Value(Pair)"),
+                "The producer metadata must retain the aggregate CLR signature.");
+
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            BoundedProcessResult run = await new BoundedProcessRunner().RunAsync(
+                new("dotnet", [consumerPath], directory, TimeSpan.FromSeconds(5)),
+                deadline.Token).ConfigureAwait(false);
+            AssertEx.True(run.Succeeded,
+                "The aggregate MemberRef must execute under CoreCLR: " + run.StandardError);
+            AssertEx.Equal(string.Empty, run.StandardOutput.Replace("\r\n", "\n", StringComparison.Ordinal));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The test host intentionally loads the generated producer and consumer assemblies dynamically; Native AOT validation runs through the platform harness.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "The test host intentionally reflects the generated public forwarding method.")]
+    private static Task CrossAssemblyReferenceCallAsync()
+    {
+        string directory = Path.Combine(Path.GetTempPath(),
+            "rustsharp-metadata-reference-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        string producerPath = Path.Combine(directory, "RefProducer.dll");
+        string consumerPath = Path.Combine(directory, "RefConsumer.dll");
+        string sourcePath = Path.Combine(directory, "reference.rs");
+        ClrLirType reference = ClrLirType.ByReference(ClrLirType.I32);
+        var producerIdentity = new ClrLirMethod(
+            "RefIdentity", reference, [reference], [],
+            [new ClrLirBlock("entry", [
+                new ClrLirLoadArgument(0),
+                new ClrLirReturn(),
+            ])]);
+        var producerMain = new ClrLirMethod(
+            "Main", ClrLirType.Void, [], [],
+            [new ClrLirBlock("entry", [new ClrLirReturn()])]);
+        var consumerForward = new ClrLirMethod(
+            "Forward", reference, [reference], [],
+            [new ClrLirBlock("entry", [
+                new ClrLirLoadArgument(0),
+                new ClrLirCall(new ClrLirCallSite("RefIdentity", reference, [reference])
+                {
+                    ExternalCall = new ClrLirExternalCall(
+                        "RefProducer", "RustSharp.Generated", "Program", "RefIdentity"),
+                }),
+                new ClrLirReturn(),
+            ])]);
+        var consumerMain = new ClrLirMethod(
+            "Main", ClrLirType.Void, [], [],
+            [new ClrLirBlock("entry", [new ClrLirReturn()])]);
+        try
+        {
+            const string source = "pub fn ref_identity(value: &i32) -> &i32 { value } fn main() {}";
+            File.WriteAllText(sourcePath, source);
+            SafeCoreClrResult producerProgram = new(
+                [producerMain, producerIdentity],
+                [new(0, source.Length), new(0, source.Length)],
+                []);
+            RustSharpMetadataDocument producerMetadata = RustSharpMetadataDocument.ForProgram(
+                "safe-core-mir-v1", Encoding.UTF8.GetBytes(source), producerProgram.Methods,
+                callContracts: [new RustSharpMetadataCallContract(
+                    "RefIdentity", "unwind", ["borrow:shared"], "borrow:shared")]);
+            GeneratedAssembly producer = ClrLirAssemblyEmitter.EmitProgram(
+                producerProgram, "RefProducer", source, sourcePath, "RefProducer.pdb",
+                Encoding.UTF8.GetBytes(source), null, producerMetadata);
+            File.WriteAllBytes(producerPath, producer.PeImage);
+            File.WriteAllText(Path.ChangeExtension(producerPath, ".runtimeconfig.json"), producer.RuntimeConfigJson);
+
+            const string consumerSource = "fn main() {}";
+            SafeCoreClrResult consumerProgram = new(
+                [consumerMain, consumerForward],
+                [new(0, consumerSource.Length), new(0, consumerSource.Length)],
+                []);
+            RustSharpMetadataDocument consumerMetadata = RustSharpMetadataDocument.ForProgram(
+                "safe-core-mir-v1", Encoding.UTF8.GetBytes(consumerSource), consumerProgram.Methods);
+            GeneratedAssembly consumer = ClrLirAssemblyEmitter.EmitProgram(
+                consumerProgram, "RefConsumer", consumerSource,
+                Path.Combine(directory, "consumer.rs"), "RefConsumer.pdb",
+                Encoding.UTF8.GetBytes(consumerSource), null, consumerMetadata);
+            File.WriteAllBytes(consumerPath, consumer.PeImage);
+            File.WriteAllText(Path.ChangeExtension(consumerPath, ".runtimeconfig.json"), consumer.RuntimeConfigJson);
+
+            RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
+                producerPath, "safe-core-mir-v1", ["RefIdentity"]);
+            AssertEx.True(imported.IsSuccessful,
+                "The by-reference producer MethodDef must be importable: " +
+                string.Join("; ", imported.Diagnostics));
+            AssertEx.True(imported.Document!.Functions.Any(function =>
+                function.Name == "RefIdentity" && function.Signature == "&I32->&I32"),
+                "The producer metadata must retain the managed by-reference signature.");
+            AssertEx.Equal(1, imported.Document.CallContracts.Length);
+
+            // Load both images in the default CoreCLR context so the consumer's
+            // AssemblyRef can resolve to the producer, then invoke the public
+            // forwarding method with a ref argument. This exercises the emitted
+            // MemberRef and its stack signature, rather than only parsing PE.
+            using var producerImage = new MemoryStream(producer.PeImage, writable: false);
+            using var consumerImage = new MemoryStream(consumer.PeImage, writable: false);
+            _ = AssemblyLoadContext.Default.LoadFromStream(producerImage);
+            Assembly consumerAssembly = AssemblyLoadContext.Default.LoadFromStream(consumerImage);
+            Type programType = AssertEx.NotNull(consumerAssembly.GetType(
+                "RustSharp.Generated.Program"), "The generated consumer type must load.");
+            MethodInfo forward = AssertEx.NotNull(programType.GetMethod(
+                "Forward", BindingFlags.Public | BindingFlags.Static),
+                "The generated forwarding method must be public.");
+            object?[] arguments = [41];
+            object? result = forward.Invoke(null, arguments);
+            AssertEx.Equal(41, AssertEx.NotNull(result,
+                "A by-reference return must survive the producer/consumer call."));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static Task RepeatedParameterContractsAsync()
+    {
+        string directory = Path.Combine(Path.GetTempPath(),
+            "rustsharp-metadata-positional-contract-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        string assemblyPath = Path.Combine(directory, "PositionalContract.dll");
+        try
+        {
+            ClrLirType reference = ClrLirType.ByReference(ClrLirType.I32);
+            var main = new ClrLirMethod("Main", ClrLirType.Void, [], [],
+                [new ClrLirBlock("entry", [new ClrLirReturn()])]);
+            var consume = new ClrLirMethod("Consume", ClrLirType.Void,
+                [reference, ClrLirType.ByReference(ClrLirType.I32, mutable: true), reference], [],
+                [new ClrLirBlock("entry", [new ClrLirReturn()])]);
+            string[] expected = ["borrow:shared", "borrow:mutable", "borrow:shared"];
+            const string source = "fn main() {}";
+            RustSharpMetadataDocument document = RustSharpMetadataDocument.ForProgram(
+                "safe-core-mir-v1", Encoding.UTF8.GetBytes(source), [main, consume],
+                callContracts: [new RustSharpMetadataCallContract(
+                    "Consume", "unwind", expected, "unit")]);
+            AssertEx.True(expected.SequenceEqual(document.CallContracts.Single().ParameterContracts!),
+                "Equal parameter contracts must preserve their count and declaration order.");
+            RustSharpMetadataDocument parsed = RustSharpMetadataDocument.Parse(document.Json);
+            AssertEx.Equal(document.Json, parsed.Json,
+                "Repeated parameter contracts must round-trip to identical JSON.");
+            AssertEx.True(expected.SequenceEqual(parsed.CallContracts.Single().ParameterContracts!),
+                "JSON parsing must retain every positional parameter contract.");
+
+            SafeCoreClrResult program = new([main, consume],
+                [new(0, source.Length), new(0, source.Length)], []);
+            GeneratedAssembly generated = ClrLirAssemblyEmitter.EmitProgram(program,
+                "PositionalContract", source, Path.Combine(directory, "contracts.rs"),
+                "PositionalContract.pdb", Encoding.UTF8.GetBytes(source), null, document);
+            File.WriteAllBytes(assemblyPath, generated.PeImage);
+            RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
+                assemblyPath, "safe-core-mir-v1", ["Consume"]);
+            AssertEx.True(imported.IsSuccessful,
+                "The PE consumer must accept repeated positional contracts: " +
+                string.Join("; ", imported.Diagnostics));
+            AssertEx.True(expected.SequenceEqual(
+                imported.Document!.CallContracts.Single().ParameterContracts!),
+                "The PE consumer must retain all three parameter positions.");
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static Task RejectsUnlinkedCallContractAsync()
+    {
+        string directory = Path.Combine(Path.GetTempPath(),
+            "rustsharp-metadata-call-contract-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        string assemblyPath = Path.Combine(directory, "Contract.dll");
+        try
+        {
+            var method = new ClrLirMethod(
+                "Main", ClrLirType.Void, [], [],
+                [new ClrLirBlock("entry", [new ClrLirReturn()])]);
+            RustSharpMetadataDocument forged = RustSharpMetadataDocument.ForProgram(
+                "safe-core-mir-v1", [1, 2, 3], [method],
+                callContracts: [new RustSharpMetadataCallContract(
+                    "crate::missing", "unwind", ["borrow:shared"], "unit")]);
+            GeneratedAssembly generated = ClrLirAssemblyEmitter.Emit(method, "Contract", forged);
+            File.WriteAllBytes(assemblyPath, generated.PeImage);
+            RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
+                assemblyPath, "safe-core-mir-v1");
+            AssertEx.False(imported.IsSuccessful,
+                "An ownership contract must resolve to a declared producer function.");
+            AssertEx.True(imported.Diagnostics.Any(diagnostic =>
+                diagnostic.StartsWith(RustSharpMetadataConsumer.InvalidMetadata, StringComparison.Ordinal) &&
+                diagnostic.Contains("call contract", StringComparison.OrdinalIgnoreCase)),
+                "Unlinked ownership contracts must produce a stable metadata diagnostic.");
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+
+        return Task.CompletedTask;
     }
 
     private static Task ConsumerMethodContractAsync()

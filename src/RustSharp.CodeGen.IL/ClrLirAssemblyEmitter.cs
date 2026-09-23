@@ -508,7 +508,46 @@ public static class ClrLirAssemblyEmitter
         return metadata.AddMemberReference(
             parent: type,
             name: metadata.GetOrAddString(external.MethodName),
-            signature: CreateMethodSignature(metadata, site.ReturnType, site.ParameterTypes));
+            // A value in an imported signature belongs to the producer
+            // assembly.  Encoding it with the consumer's local value handles
+            // would create a same-named but different CLR type and makes the
+            // MemberRef unverifiable at runtime.  Resolve every aggregate in
+            // this signature through a TypeRef scoped to the producer.
+            signature: CreateMethodSignature(metadata, site.ReturnType, site.ParameterTypes,
+                externalValueResolver: name => AddExternalValueTypeReference(
+                    metadata, externalAssemblies, externalTypes, external, name)));
+    }
+
+    private static TypeReferenceHandle AddExternalValueTypeReference(
+        MetadataBuilder metadata,
+        Dictionary<string, AssemblyReferenceHandle> externalAssemblies,
+        Dictionary<(string Assembly, string Namespace, string Name), TypeReferenceHandle> externalTypes,
+        ClrLirExternalCall external,
+        string name)
+    {
+        if (!externalAssemblies.TryGetValue(external.AssemblyName, out AssemblyReferenceHandle assembly))
+        {
+            assembly = metadata.AddAssemblyReference(
+                name: metadata.GetOrAddString(external.AssemblyName),
+                version: new Version(1, 0, 0, 0),
+                culture: default,
+                publicKeyOrToken: default,
+                flags: default,
+                hashValue: default);
+            externalAssemblies.Add(external.AssemblyName, assembly);
+        }
+
+        var key = (external.AssemblyName, "RustSharp.Generated.Values", name);
+        if (!externalTypes.TryGetValue(key, out TypeReferenceHandle type))
+        {
+            type = metadata.AddTypeReference(
+                resolutionScope: assembly,
+                @namespace: metadata.GetOrAddString(key.Item2),
+                name: metadata.GetOrAddString(name));
+            externalTypes.Add(key, type);
+        }
+
+        return type;
     }
 
     private static AssemblyReferenceHandle AddFrameworkReference(
@@ -553,19 +592,22 @@ public static class ClrLirAssemblyEmitter
         ClrLirType methodReturnType,
         IReadOnlyList<ClrLirType> parameterTypes,
         IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles = null,
-        bool isInstanceMethod = false)
+        bool isInstanceMethod = false,
+        Func<string, EntityHandle>? externalValueResolver = null)
     {
         var signature = new BlobBuilder();
         new BlobEncoder(signature)
             .MethodSignature(isInstanceMethod: isInstanceMethod)
             .Parameters(
                 parameterCount: parameterTypes.Count,
-                returnTypeEncoder => EncodeReturnType(returnTypeEncoder, methodReturnType, valueHandles),
+                returnTypeEncoder => EncodeReturnType(returnTypeEncoder, methodReturnType, valueHandles, externalValueResolver),
                 parameters =>
                 {
                     foreach (ClrLirType parameterType in parameterTypes)
                     {
-                        EncodeParameterType(parameters.AddParameter().Type(isByRef: false), parameterType, valueHandles);
+                        EncodeParameterType(parameters.AddParameter().Type(
+                                isByRef: parameterType.Kind == ClrLirTypeKind.ByReference), parameterType,
+                            valueHandles, externalValueResolver);
                     }
                 });
 
@@ -575,7 +617,8 @@ public static class ClrLirAssemblyEmitter
     private static void EncodeReturnType(
         System.Reflection.Metadata.Ecma335.ReturnTypeEncoder encoder,
         ClrLirType type,
-        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles)
+        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles,
+        Func<string, EntityHandle>? externalValueResolver = null)
     {
         if (type == ClrLirType.Void)
         {
@@ -583,26 +626,44 @@ public static class ClrLirAssemblyEmitter
             return;
         }
 
-        EncodeSignatureType(encoder.Type(isByRef: false), type, valueHandles);
+        if (type.Kind == ClrLirTypeKind.ByReference)
+        {
+            if (!type.TryGetByReferenceElement(out ClrLirType element))
+                throw new ArgumentException("Invalid by-reference return type.", nameof(type));
+            EncodeSignatureType(encoder.Type(isByRef: true), element, valueHandles, externalValueResolver);
+            return;
+        }
+
+        EncodeSignatureType(encoder.Type(isByRef: false), type, valueHandles, externalValueResolver);
     }
 
     private static void EncodeParameterType(
         System.Reflection.Metadata.Ecma335.SignatureTypeEncoder encoder,
         ClrLirType type,
-        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles)
+        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles,
+        Func<string, EntityHandle>? externalValueResolver = null)
     {
         if (type == ClrLirType.Void)
         {
             throw new ArgumentException("Void is not a valid parameter type.", nameof(type));
         }
 
-        EncodeSignatureType(encoder, type, valueHandles);
+        if (type.Kind == ClrLirTypeKind.ByReference)
+        {
+            if (!type.TryGetByReferenceElement(out ClrLirType element))
+                throw new ArgumentException("Invalid by-reference parameter type.", nameof(type));
+            EncodeSignatureType(encoder, element, valueHandles, externalValueResolver);
+            return;
+        }
+
+        EncodeSignatureType(encoder, type, valueHandles, externalValueResolver);
     }
 
     private static void EncodeSignatureType(
         System.Reflection.Metadata.Ecma335.SignatureTypeEncoder encoder,
         ClrLirType type,
-        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles)
+        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles,
+        Func<string, EntityHandle>? externalValueResolver = null)
     {
         switch (type.Kind)
         {
@@ -621,6 +682,11 @@ public static class ClrLirAssemblyEmitter
             case ClrLirTypeKind.Value when type.Name is not null && valueHandles is not null && valueHandles.TryGetValue(type.Name, out TypeDefinitionHandle handle):
                 encoder.Type(handle, isValueType: true);
                 break;
+            case ClrLirTypeKind.Value when type.Name is not null && externalValueResolver is not null:
+                encoder.Type(externalValueResolver(type.Name), isValueType: true);
+                break;
+            case ClrLirTypeKind.ByReference:
+                throw new ArgumentException("By-reference encoding requires a parameter or return signature encoder.", nameof(type));
             default:
                 throw new ArgumentException($"Unsupported CLR LIR signature type '{type}'.", nameof(type));
         }
@@ -643,6 +709,10 @@ public static class ClrLirAssemblyEmitter
             if (local.Type == ClrLirType.Void)
             {
                 throw new ArgumentException("Void is not a valid local type.", nameof(locals));
+            }
+            if (local.Type.Kind == ClrLirTypeKind.ByReference)
+            {
+                throw new ArgumentException("Managed by-reference locals are not supported by this CLR LIR.", nameof(locals));
             }
 
             EncodeSignatureType(variables.AddVariable().Type(isByRef: false, isPinned: false), local.Type, valueHandles);
@@ -719,6 +789,12 @@ public static class ClrLirAssemblyEmitter
                                 .Append(':').Append(external.TypeNamespace)
                                 .Append(':').Append(external.TypeName)
                                 .Append(':').Append(external.MethodName);
+                            if (external.PanicStrategy is { } panic)
+                                _ = descriptor.Append(":panic:").Append(panic);
+                            if (external.ReturnContract is { } resultContract)
+                                _ = descriptor.Append(":return:").Append(resultContract);
+                            foreach (string parameterContract in external.ParameterContracts)
+                                _ = descriptor.Append(":param:").Append(parameterContract);
                         }
                         foreach (ClrLirType parameterType in call.Site.ParameterTypes)
                         {
@@ -729,10 +805,24 @@ public static class ClrLirAssemblyEmitter
                     case ClrLirBranch branch:
                         _ = descriptor.Append(':').Append(branch.Target);
                         break;
+                    case ClrLirLeave leave:
+                        _ = descriptor.Append(':').Append(leave.Target);
+                        break;
                     case ClrLirBranchTrue branchTrue:
                         _ = descriptor.Append(':').Append(branchTrue.Target);
                         break;
                 }
+            }
+        }
+
+        if (!method.ExceptionCleanup.IsEmpty)
+        {
+            _ = descriptor.Append('\0').Append("fault-cleanup");
+            foreach (ClrLirCallSite cleanup in method.ExceptionCleanup)
+            {
+                _ = descriptor.Append('\0').Append(cleanup.Name).Append(':').Append(cleanup.ReturnType);
+                foreach (ClrLirType parameter in cleanup.ParameterTypes)
+                    _ = descriptor.Append(':').Append(parameter);
             }
         }
 
