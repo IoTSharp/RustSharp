@@ -13,6 +13,9 @@ internal static class SafeCoreMirOwnershipAdapterTests
         new("typed MIR ownership adapter reports use before initialization", UseBeforeInitializationAsync),
         new("typed MIR ownership adapter rejects reference evidence it cannot prove", UnsupportedReferenceAsync),
         new("typed MIR ownership adapter accepts finite Copy tuple aggregates", CopyTupleAsync),
+        new("typed MIR ownership adapter preserves projected MIR places", ProjectedPlaceAsync),
+        new("typed MIR ownership adapter preserves projected borrow provenance", ProjectedBorrowAsync),
+        new("typed MIR ownership evidence rejects projected source drift", ProjectedEvidenceSourceDriftAsync),
         new("typed MIR ownership evidence correlates non-copy source facts", ExplicitEvidenceAsync),
         new("typed MIR ownership evidence rejects source drift", EvidenceMismatchAsync),
         new("typed MIR ownership evidence rejects extra local facts", ExtraLocalEvidenceAsync),
@@ -186,6 +189,120 @@ internal static class SafeCoreMirOwnershipAdapterTests
         AssertEx.Equal(SafeCoreOwnershipOutcome.Returned, result.Ownership!.Paths.Single().Outcome);
         AssertEx.True(result.Program!.Functions[0].Locals.All(local => local.Kind == SafeCoreOwnershipKind.Copy),
             "A tuple composed only of scalar Copy values must remain Copy in the ownership bridge.");
+        return Task.CompletedTask;
+    }
+
+    private static Task ProjectedPlaceAsync()
+    {
+        SafeCoreType tuple = SafeCoreType.Tuple([Integer, Integer]);
+        SafeCoreMirPlace first = SafeCoreMirPlace.Root(0).Append(SafeCoreMirProjection.TupleIndex(0));
+        SafeCoreMirProgram program = new([
+            new SafeCoreMirFunction(
+                0,
+                "crate::projected-use",
+                Integer,
+                [
+                    new SafeCoreMirLocal(0, "pair", tuple, SafeCoreMirLocalKind.Parameter, false, Source),
+                    new SafeCoreMirLocal(1, "value", Integer, SafeCoreMirLocalKind.Temporary, false, Source),
+                ],
+                [new SafeCoreMirBlock(
+                    0,
+                    [new SafeCoreMirStatement(1,
+                        SafeCoreMirRvalue.Use(SafeCoreMirOperand.PlaceValue(first, Integer, Source), Source), Source)],
+                    SafeCoreMirTerminator.Return(SafeCoreMirOperand.Local(1, Integer, Source), Source), Source)],
+                0,
+                Source),
+        ]);
+
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(program);
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        SafeCoreOwnershipInstruction use = result.Program!.Functions[0].Blocks[0].Instructions[0];
+        AssertEx.Equal(SafeCoreOwnershipInstructionKind.Use, use.Kind);
+        AssertEx.True(use.Place is not null && use.Place.LocalId == 0 &&
+            use.Place.Projections.Single().Kind == SafeCoreOwnershipProjectionKind.TupleIndex &&
+            use.Place.Projections.Single().Index == 0,
+            "A projected MIR use must retain its root local and structural projection.");
+        return Task.CompletedTask;
+    }
+
+    private static Task ProjectedBorrowAsync()
+    {
+        SafeCoreType tuple = SafeCoreType.Tuple([Integer, Integer]);
+        SafeCoreType mutableReference = SafeCoreType.Reference(Integer, mutable: true);
+        SafeCoreMirPlace second = SafeCoreMirPlace.Root(0).Append(SafeCoreMirProjection.TupleIndex(1));
+        SafeCoreMirProgram program = new([
+            new SafeCoreMirFunction(
+                0,
+                "crate::projected-borrow",
+                SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Unit),
+                [
+                    new SafeCoreMirLocal(0, "pair", tuple, SafeCoreMirLocalKind.Parameter, false, Source),
+                    new SafeCoreMirLocal(1, "view", mutableReference, SafeCoreMirLocalKind.Temporary, false, Source),
+                ],
+                [new SafeCoreMirBlock(
+                    0,
+                    [new SafeCoreMirStatement(1,
+                        SafeCoreMirRvalue.Unary("&mut",
+                            SafeCoreMirOperand.PlaceValue(second, Integer, Source), mutableReference, Source), Source)],
+                    SafeCoreMirTerminator.Return(null, Source), Source)],
+                0,
+                Source),
+        ]);
+
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(program);
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        SafeCoreOwnershipInstruction borrow = result.Program!.Functions[0].Blocks[0].Instructions.Single();
+        AssertEx.Equal(SafeCoreOwnershipInstructionKind.Borrow, borrow.Kind);
+        AssertEx.True(borrow.Place is not null && borrow.Place.Projections.Single().Index == 1 &&
+            borrow.RelatedPlace is not null && borrow.RelatedPlace.IsRoot && borrow.RelatedPlace.LocalId == 1,
+            "A projected borrow must retain the owner place and reference destination separately.");
+        return Task.CompletedTask;
+    }
+
+    private static Task ProjectedEvidenceSourceDriftAsync()
+    {
+        SafeCoreType tuple = SafeCoreType.Tuple([Integer, Integer]);
+        SafeCoreMirSource drifted = new("other.rs", new TextSpan(0, 16), 0, 16);
+        SafeCoreMirPlace first = SafeCoreMirPlace.Root(0).Append(SafeCoreMirProjection.TupleIndex(0));
+        SafeCoreMirProgram mir = new([
+            new SafeCoreMirFunction(
+                0,
+                "crate::projected-evidence",
+                Integer,
+                [
+                    new SafeCoreMirLocal(0, "pair", tuple, SafeCoreMirLocalKind.Parameter, false, Source),
+                    new SafeCoreMirLocal(1, "value", Integer, SafeCoreMirLocalKind.Temporary, false, Source),
+                ],
+                [new SafeCoreMirBlock(
+                    0,
+                    [new SafeCoreMirStatement(1,
+                        SafeCoreMirRvalue.Use(SafeCoreMirOperand.PlaceValue(first, Integer, Source), Source), Source)],
+                    SafeCoreMirTerminator.Return(SafeCoreMirOperand.Local(1, Integer, Source), Source), Source)],
+                0,
+                Source),
+        ]);
+        SafeCoreOwnershipPlace ownershipPlace = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(0));
+        SafeCoreOwnershipFunction ownershipFunction = new(
+            "crate::projected-evidence",
+            [
+                new SafeCoreOwnershipLocal(0, "pair", tuple, SafeCoreOwnershipKind.Copy, false, 0, false, true, Source),
+                new SafeCoreOwnershipLocal(1, "value", Integer, SafeCoreOwnershipKind.Copy, false, 0, false, false, Source),
+            ],
+            [new SafeCoreOwnershipScope(0, -1, Source)],
+            [new SafeCoreOwnershipBlock(0, 0,
+                [SafeCoreOwnershipInstruction.Use(ownershipPlace, drifted)],
+                SafeCoreOwnershipTerminator.Return(1, Source), Source)],
+            0,
+            SafeCorePanicStrategy.Unwind,
+            Source);
+
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(
+            mir, new SafeCoreOwnershipProgram([ownershipFunction]));
+        AssertEx.False(result.IsSuccessful, "Projected ownership source drift must not reach analysis.");
+        AssertEx.True(result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreMirOwnershipAdapter.EvidenceMismatch),
+            "Projected instruction source drift must retain the stable RSM3004 diagnostic.");
         return Task.CompletedTask;
     }
 

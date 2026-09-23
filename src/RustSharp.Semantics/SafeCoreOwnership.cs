@@ -1289,7 +1289,7 @@ public static class SafeCoreOwnershipAnalysis
                 return false;
             }
 
-            if (HasActiveBorrow(place.LocalId, mutableOnly: true))
+            if (HasActiveBorrow(place, mutableOnly: true))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict,
                     "Cannot read a place while a mutable borrow is active.", function.Name, block.Id, index, source);
@@ -1326,7 +1326,7 @@ public static class SafeCoreOwnershipAnalysis
                     function.Name, block.Id, index, source);
                 return false;
             }
-            if (HasActiveBorrow(place.LocalId, mutableOnly: false))
+            if (HasActiveBorrow(place, mutableOnly: false))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict,
                     "Cannot assign to a place while its owner is borrowed.", function.Name, block.Id, index, source);
@@ -1397,7 +1397,7 @@ public static class SafeCoreOwnershipAnalysis
                     function.Name, block.Id, index, source);
                 return false;
             }
-            if (HasActiveBorrow(sourcePlace.LocalId, mutableOnly: false))
+            if (HasActiveBorrow(sourcePlace, mutableOnly: false))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.MoveWhileBorrowed,
                     "A projected value cannot move while its owner is borrowed.", function.Name, block.Id, index, source);
@@ -1434,22 +1434,78 @@ public static class SafeCoreOwnershipAnalysis
             SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
             SafeCoreMirSource source)
         {
-            // Borrow state is still tracked at reference-local granularity. A
-            // projected owner is checked against its root and a projected
-            // reference is represented by the reference local, preserving the
-            // conservative aliasing rule without inventing field layouts.
-            if (!ownerPlace.IsRoot || !referencePlace.IsRoot)
+            if (!referencePlace.IsRoot)
             {
-                if (!UsePlace(ownerPlace, locals, add, function, block, index, source)) return false;
-                if (!locals.TryGetValue(referencePlace.LocalId, out SafeCoreOwnershipLocal? reference) || !reference.IsReference)
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow,
+                    "A borrow destination must be a reference local root.", function.Name, block.Id, index, source);
+                return false;
+            }
+
+            if (!EnsureLocalScope(ownerPlace.LocalId, locals, add, function, block, index, source) ||
+                !EnsureLocalScope(referencePlace.LocalId, locals, add, function, block, index, source) ||
+                !values.TryGetValue(referencePlace.LocalId, out ValueState? referenceValue) ||
+                !locals.TryGetValue(ownerPlace.LocalId, out SafeCoreOwnershipLocal? owner) ||
+                !locals.TryGetValue(referencePlace.LocalId, out SafeCoreOwnershipLocal? reference))
+                return false;
+            if (ownerPlace.LocalId == referencePlace.LocalId)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination must differ from its owner.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (!UsePlace(ownerPlace, locals, add, function, block, index, source)) return false;
+            if (!reference.IsReference)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination must be a reference local.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (referenceValue.Initialized && !referenceValue.Moved && !referenceValue.Dropped)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination is already initialized.", function.Name, block.Id, index, source);
+                return false;
+            }
+
+            int? parentReferenceId = null;
+            if (ownerPlace.IsRoot && owner.IsReference && borrows.TryGetValue(ownerPlace.LocalId, out BorrowState? parentBorrow) && parentBorrow.Active)
+            {
+                parentReferenceId = ownerPlace.LocalId;
+                if (mutable && !parentBorrow.Mutable)
                 {
-                    add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow,
-                        "A projected borrow destination must be a reference local.", function.Name, block.Id, index, source);
+                    add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A mutable reborrow requires a mutable parent reference.", function.Name, block.Id, index, source);
+                    return false;
+                }
+                if (parentBorrow.Suspended || (mutable && HasActiveChild(ownerPlace.LocalId)))
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A reference cannot be reborrowed while another reborrow is active.", function.Name, block.Id, index, source);
+                    return false;
+                }
+            }
+            else if (owner.IsReference && mutable && owner.Type.Kind == SafeCoreSemanticTypeKind.Reference && !owner.Type.IsMutable)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A shared reference cannot be mutably reborrowed.", function.Name, block.Id, index, source);
+                return false;
+            }
+
+            foreach (BorrowState active in borrows.Values.Where(borrow => borrow.Active &&
+                         PlacesOverlap(borrow.OwnerPlace, ownerPlace)))
+            {
+                if (mutable || active.Mutable)
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict,
+                        mutable ? "A mutable borrow requires exclusive access." : "A shared borrow conflicts with a mutable borrow.",
+                        function.Name, block.Id, index, source);
                     return false;
                 }
             }
 
-            return Borrow(ownerPlace.LocalId, referencePlace.LocalId, mutable, locals, add, function, block, index, source);
+            borrows[referencePlace.LocalId] = new(ownerPlace.LocalId, ownerPlace, mutable, true, parentReferenceId, false, false);
+            if (parentReferenceId is int parentId && borrows.TryGetValue(parentId, out BorrowState? parent))
+            {
+                bool suspendParent = mutable || parent.Mutable;
+                borrows[parentId] = parent with { Suspended = suspendParent };
+            }
+            values[referencePlace.LocalId] = referenceValue with { Initialized = true, Moved = false, Dropped = false, DropOwned = false };
+            Trace.Add(mutable ? $"borrow_mut {owner.Name} as {reference.Name}" : $"borrow {owner.Name} as {reference.Name}");
+            return true;
         }
 
         public bool EndBorrowPlace(SafeCoreOwnershipPlace place,
@@ -1493,7 +1549,7 @@ public static class SafeCoreOwnershipAnalysis
                     function.Name, block.Id, index, source);
                 return false;
             }
-            if (HasActiveBorrow(place.LocalId, mutableOnly: false))
+            if (HasActiveBorrow(place, mutableOnly: false))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.MoveWhileBorrowed,
                     "Cannot drop a projected value while its owner is borrowed.", function.Name, block.Id, index, source);
@@ -1797,77 +1853,8 @@ public static class SafeCoreOwnershipAnalysis
             Action<string, string, string, int, int, SafeCoreMirSource> add, SafeCoreOwnershipFunction function,
             SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source)
         {
-            if (!EnsureLocalScope(ownerId, locals, add, function, block, index, source) ||
-                !EnsureLocalScope(referenceId, locals, add, function, block, index, source) ||
-                !values.TryGetValue(referenceId, out ValueState? referenceValue) ||
-                !locals.TryGetValue(ownerId, out SafeCoreOwnershipLocal? owner) ||
-                !locals.TryGetValue(referenceId, out SafeCoreOwnershipLocal? reference))
-                return false;
-            if (ownerId == referenceId)
-            {
-                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination must differ from its owner.", function.Name, block.Id, index, source);
-                return false;
-            }
-            if (!Use(ownerId, locals, add, function, block, index, source)) return false;
-            if (!reference.IsReference)
-            {
-                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination must be a reference local.", function.Name, block.Id, index, source);
-                return false;
-            }
-
-            if (referenceValue.Initialized && !referenceValue.Moved && !referenceValue.Dropped)
-            {
-                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination is already initialized.", function.Name, block.Id, index, source);
-                return false;
-            }
-
-            int? parentReferenceId = null;
-            if (owner.IsReference && borrows.TryGetValue(ownerId, out BorrowState? parentBorrow) && parentBorrow.Active)
-            {
-                parentReferenceId = ownerId;
-                if (mutable && !parentBorrow.Mutable)
-                {
-                    add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A mutable reborrow requires a mutable parent reference.", function.Name, block.Id, index, source);
-                    return false;
-                }
-                // A shared reference may be reborrowed by other shared
-                // references at the same time.  Only a mutable reborrow (or
-                // a reborrow from an already mutable parent) suspends the
-                // parent and requires exclusive child access.
-                if (parentBorrow.Suspended || (mutable && HasActiveChild(ownerId)))
-                {
-                    add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A reference cannot be reborrowed while another reborrow is active.", function.Name, block.Id, index, source);
-                    return false;
-                }
-            }
-            else if (owner.IsReference && mutable && owner.Type.Kind == SafeCoreSemanticTypeKind.Reference && !owner.Type.IsMutable)
-            {
-                add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A shared reference cannot be mutably reborrowed.", function.Name, block.Id, index, source);
-                return false;
-            }
-
-            foreach (BorrowState active in borrows.Values.Where(borrow => borrow.Active && borrow.OwnerId == ownerId))
-            {
-                if (mutable || active.Mutable)
-                {
-                    add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict,
-                        mutable ? "A mutable borrow requires exclusive access." : "A shared borrow conflicts with a mutable borrow.",
-                        function.Name, block.Id, index, source);
-                    return false;
-                }
-            }
-
-            borrows[referenceId] = new(ownerId, mutable, true, parentReferenceId, false, false);
-            if (parentReferenceId is int parentId && borrows.TryGetValue(parentId, out BorrowState? parent))
-            {
-                // Shared-to-shared reborrows do not invalidate the parent.
-                // A mutable child, or any child of a mutable parent, does.
-                bool suspendParent = mutable || parent.Mutable;
-                borrows[parentId] = parent with { Suspended = suspendParent };
-            }
-            values[referenceId] = referenceValue with { Initialized = true, Moved = false, Dropped = false, DropOwned = false };
-            Trace.Add(mutable ? $"borrow_mut {owner.Name} as {reference.Name}" : $"borrow {owner.Name} as {reference.Name}");
-            return true;
+            return BorrowPlace(SafeCoreOwnershipPlace.Root(ownerId), SafeCoreOwnershipPlace.Root(referenceId),
+                mutable, locals, add, function, block, index, source);
         }
 
         public bool EndBorrow(int id, IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
@@ -2021,11 +2008,14 @@ public static class SafeCoreOwnershipAnalysis
             }
         }
 
-        private bool HasActiveBorrow(int ownerId, bool mutableOnly)
+        private bool HasActiveBorrow(int ownerId, bool mutableOnly) =>
+            HasActiveBorrow(SafeCoreOwnershipPlace.Root(ownerId), mutableOnly);
+
+        private bool HasActiveBorrow(SafeCoreOwnershipPlace ownerPlace, bool mutableOnly)
         {
             foreach (BorrowState borrow in borrows.Values)
             {
-                if (borrow.Active && borrow.OwnerId == ownerId && (!mutableOnly || borrow.Mutable))
+                if (borrow.Active && PlacesOverlap(borrow.OwnerPlace, ownerPlace) && (!mutableOnly || borrow.Mutable))
                     return true;
             }
 
@@ -2081,6 +2071,7 @@ public static class SafeCoreOwnershipAnalysis
 
         private sealed record BorrowState(
             int OwnerId,
+            SafeCoreOwnershipPlace OwnerPlace,
             bool Mutable,
             bool Active,
             int? ParentReferenceId,

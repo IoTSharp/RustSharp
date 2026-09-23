@@ -109,13 +109,17 @@ signature/static/visibility checks; imported reference, aggregate and ownership
 contracts remain open.
 
 The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
-skips. `p1-exit-gate-v1` passes 5/5 in-process library probes and explicitly
+skips. The versioned `safe-core-regression-v2` report passes 24/24 with one
+compile-pass, six compile-fail, thirteen run-pass and four differential cases;
+its rustc 1.98.0 process records have zero failures, blocked cases or skips.
+`p1-exit-gate-v1` passes 5/5 in-process library probes and explicitly
 records `"nativeAot": false` and `"crossPlatform": false`. The immutable
 `p1-differential-v2` manifest executes 16/16 cases (10 borrow, 6 Drop) against
 rustc 1.98.0 with zero failures, blocked cases or skips. The new
 `p1-platform.yml` workflow fixes 12 run-pass cases per native Windows/Linux x64
-runner and aggregates CoreCLR, ILVerify, Native AOT and differential reports;
-those final CI reports are still required for P1 completion.
+runner, runs the 24-case v2 regression suite on each platform, and aggregates
+six reports covering CoreCLR, ILVerify, Native AOT, differential and regression
+evidence; those final-SHA CI reports are still required for P1 completion.
 
 Local hello probes provide ILVerify, CoreCLR and Windows x64 Native AOT
 evidence. Linux x64 Native AOT hello also runs under Ubuntu WSL2 with SDK

@@ -188,7 +188,7 @@ public static partial class SafeCoreMirOwnershipAdapter
         }
 
         var locals = new List<SafeCoreOwnershipLocal>(function.Locals.Count);
-        var referenceOrigins = new Dictionary<int, int>();
+        var referenceOrigins = new Dictionary<int, SafeCoreOwnershipPlace>();
         for (int blockIndex = 0; blockIndex < function.Blocks.Count; blockIndex++)
         {
             Step(options, clock, ref operations);
@@ -199,15 +199,43 @@ public static partial class SafeCoreMirOwnershipAdapter
                 SafeCoreMirRvalue value = statement.Value;
                 bool directBorrow = value.Kind == SafeCoreMirRvalueKind.Unary &&
                     value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut") &&
-                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local;
+                    value.Operands.Count == 1 &&
+                    value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place;
                 bool referenceCopy = value.Kind == SafeCoreMirRvalueKind.Use &&
-                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local &&
+                    value.Operands.Count == 1 &&
+                    (value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place) &&
                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
-                if ((!directBorrow && !referenceCopy) ||
-                    !referenceOrigins.TryAdd(statement.DestinationLocalId, value.Operands[0].Id))
+                if (!directBorrow && !referenceCopy)
                 {
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                         "Reference locals require one explicit MIR borrow origin; unproven reference copies are unsupported.", value.Source), options);
+                    return null;
+                }
+
+                SafeCoreOwnershipPlace origin;
+                if (directBorrow)
+                {
+                    if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
+                        diagnostics, out origin)) return null;
+                }
+                else if (value.Operands[0].Kind == SafeCoreMirOperandKind.Place)
+                {
+                    if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
+                        diagnostics, out origin)) return null;
+                }
+                else if (!referenceOrigins.TryGetValue(value.Operands[0].Id, out SafeCoreOwnershipPlace? copiedOrigin) ||
+                         copiedOrigin is null)
+                {
+                    AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                        "A reference copy must name a reference local with established place provenance.", value.Source), options);
+                    return null;
+                }
+                else origin = copiedOrigin;
+
+                if (!referenceOrigins.TryAdd(statement.DestinationLocalId, origin))
+                {
+                    AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
+                        "A reference local may have only one explicit MIR provenance fact.", value.Source), options);
                     return null;
                 }
             }
@@ -251,21 +279,25 @@ public static partial class SafeCoreMirOwnershipAdapter
 
         if (!valid) return null;
 
-        var referenceRoots = new Dictionary<int, int>();
+        var referenceRoots = new Dictionary<int, SafeCoreOwnershipPlace>();
         foreach (int reference in referenceOrigins.Keys)
         {
             Step(options, clock, ref operations);
-            int root = reference;
+            SafeCoreOwnershipPlace current = referenceOrigins[reference];
             for (int depth = 0; depth <= function.Locals.Count; depth++)
             {
                 Step(options, clock, ref operations);
-                if (root < 0 || root >= function.Locals.Count) break;
-                if (function.Locals[root].Type.Kind != SafeCoreSemanticTypeKind.Reference)
+                if (current.LocalId < 0 || current.LocalId >= function.Locals.Count) break;
+                if (function.Locals[current.LocalId].Type.Kind != SafeCoreSemanticTypeKind.Reference)
                 {
-                    referenceRoots.Add(reference, root);
+                    referenceRoots.Add(reference, current);
                     break;
                 }
-                if (!referenceOrigins.TryGetValue(root, out root)) break;
+                if (!referenceOrigins.TryGetValue(current.LocalId, out SafeCoreOwnershipPlace? next) || next is null) break;
+                if (current.Projections.Count != 0)
+                    foreach (SafeCoreOwnershipProjection projection in current.Projections)
+                        next = next.Append(projection);
+                current = next;
             }
             if (!referenceRoots.ContainsKey(reference))
             {
@@ -328,22 +360,25 @@ public static partial class SafeCoreMirOwnershipAdapter
                 if (value.Kind == SafeCoreMirRvalueKind.Unary && value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut"))
                 {
                     SafeCoreMirOperand owner = value.Operands[0];
-                    if (owner.Kind != SafeCoreMirOperandKind.Local || owner.Id < 0 || owner.Id >= function.Locals.Count)
+                    if (!TryOwnershipPlace(owner, function, options, clock, ref operations, diagnostics,
+                        out SafeCoreOwnershipPlace ownerPlace))
                     {
-                        AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
-                            "A borrow owner must be a local place in the typed MIR.", value.Source), options);
                         valid = false;
                     }
                     else AddInstruction(instructions,
-                        SafeCoreOwnershipInstruction.Borrow(owner.Id, statement.DestinationLocalId,
+                        SafeCoreOwnershipInstruction.Borrow(ownerPlace,
+                            SafeCoreOwnershipPlace.Root(statement.DestinationLocalId),
                             value.Operator is "&mut" or "reborrow_mut", value.Source), options, diagnostics, value.Source, ref valid);
                     continue;
                 }
                 if (value.Kind == SafeCoreMirRvalueKind.Write)
                 {
                     SafeCoreMirOperand reference = value.Operands[0];
-                    if (reference.Kind != SafeCoreMirOperandKind.Local ||
-                        !referenceRoots.TryGetValue(reference.Id, out int root) || root != statement.DestinationLocalId)
+                    if (!TryOwnershipPlace(reference, function, options, clock, ref operations, diagnostics,
+                            out SafeCoreOwnershipPlace referencePlace) ||
+                        !referenceRoots.TryGetValue(reference.Id, out SafeCoreOwnershipPlace? rootPlace) ||
+                        rootPlace is null ||
+                        rootPlace.LocalId != statement.DestinationLocalId)
                     {
                         AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
                             "A dereference write requires a reference local.", value.Source), options);
@@ -352,11 +387,38 @@ public static partial class SafeCoreMirOwnershipAdapter
                     else
                     {
                         AddInstruction(instructions,
-                            SafeCoreOwnershipInstruction.Write(reference.Id, value.Source), options, diagnostics, value.Source, ref valid);
+                            SafeCoreOwnershipInstruction.Write(referencePlace, value.Source), options, diagnostics, value.Source, ref valid);
                         SafeCoreMirOperand written = value.Operands[1];
                         if (written.Kind == SafeCoreMirOperandKind.Local)
-                            AddInstruction(instructions,
-                                SafeCoreOwnershipInstruction.Use(written.Id, written.Source), options, diagnostics, written.Source, ref valid);
+                        {
+                            if (written.Id < 0 || written.Id >= function.Locals.Count)
+                            {
+                                AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                                    "A dereference write value local is outside the function arena.", written.Source), options);
+                                valid = false;
+                            }
+                            else
+                            {
+                                AddInstruction(instructions,
+                                    SafeCoreOwnershipInstruction.Use(written.Id, written.Source), options, diagnostics, written.Source, ref valid);
+                            }
+                        }
+                        else if (written.Kind == SafeCoreMirOperandKind.Place)
+                        {
+                            if (TryOwnershipPlace(written, function, options, clock, ref operations, diagnostics,
+                                out SafeCoreOwnershipPlace writtenPlace))
+                                AddInstruction(instructions,
+                                    SafeCoreOwnershipInstruction.Use(writtenPlace, written.Source),
+                                    options, diagnostics, written.Source, ref valid);
+                            else valid = false;
+                        }
+                        else if (written.Kind != SafeCoreMirOperandKind.Constant ||
+                                 (!IsStructuralCopy(written.Type) && written.Value != "()"))
+                        {
+                            AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
+                                "A dereference write value requires a Copy local, place, or constant.", written.Source), options);
+                            valid = false;
+                        }
                     }
                     continue;
                 }
@@ -367,21 +429,21 @@ public static partial class SafeCoreMirOwnershipAdapter
                 // local. Keep this distinction explicit in the ownership MIR
                 // so a later use of a moved `&mut` reports RSO1001.
                 if (value.Kind == SafeCoreMirRvalueKind.Use && value.Operands.Count == 1 &&
-                    value.Operands[0].Kind == SafeCoreMirOperandKind.Local &&
+                    (value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place) &&
                     function.Locals[statement.DestinationLocalId].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference)
                 {
                     SafeCoreMirOperand source = value.Operands[0];
-                    if (source.Id < 0 || source.Id >= function.Locals.Count)
+                    if (!TryOwnershipPlace(source, function, options, clock, ref operations, diagnostics,
+                        out SafeCoreOwnershipPlace sourcePlace))
                     {
-                        AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
-                            "A reference assignment source is outside the MIR local arena.", source.Source), options);
                         valid = false;
                     }
                     else if (source.Type.IsMutable)
                     {
                         AddInstruction(instructions,
-                            SafeCoreOwnershipInstruction.Move(source.Id, statement.DestinationLocalId, value.Source),
+                            SafeCoreOwnershipInstruction.Move(sourcePlace,
+                                SafeCoreOwnershipPlace.Root(statement.DestinationLocalId), value.Source),
                             options, diagnostics, value.Source, ref valid);
                     }
                     else
@@ -409,6 +471,14 @@ public static partial class SafeCoreMirOwnershipAdapter
                             else AddInstruction(instructions,
                                 SafeCoreOwnershipInstruction.Use(operand.Id, operand.Source),
                                 options, diagnostics, operand.Source, ref valid);
+                            break;
+                        case SafeCoreMirOperandKind.Place:
+                            if (TryOwnershipPlace(operand, function, options, clock, ref operations, diagnostics,
+                                out SafeCoreOwnershipPlace place))
+                                AddInstruction(instructions,
+                                    SafeCoreOwnershipInstruction.Use(place, operand.Source),
+                                    options, diagnostics, operand.Source, ref valid);
+                            else valid = false;
                             break;
                         case SafeCoreMirOperandKind.Constant:
                             if (!IsStructuralCopy(operand.Type) &&
@@ -740,6 +810,76 @@ public static partial class SafeCoreMirOwnershipAdapter
             // make a successful adapter result claim more than MIR proves.
             _ => false,
         };
+    }
+
+    private static bool TryOwnershipPlace(
+        SafeCoreMirOperand operand,
+        SafeCoreMirFunction function,
+        SafeCoreMirOwnershipOptions options,
+        Stopwatch clock,
+        ref int operations,
+        List<Diagnostic> diagnostics,
+        out SafeCoreOwnershipPlace place)
+    {
+        place = null!;
+        Step(options, clock, ref operations);
+        if (operand.Kind == SafeCoreMirOperandKind.Local)
+        {
+            if (operand.Id < 0 || operand.Id >= function.Locals.Count)
+            {
+                AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                    "A MIR local place is outside the function arena.", operand.Source), options);
+                return false;
+            }
+
+            place = SafeCoreOwnershipPlace.Root(operand.Id);
+            return true;
+        }
+
+        if (operand.Kind != SafeCoreMirOperandKind.Place || operand.Place is null ||
+            operand.Place.LocalId != operand.Id || operand.Id < 0 || operand.Id >= function.Locals.Count ||
+            operand.Place.Projections.Count > 128)
+        {
+            AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                "A MIR place operand must identify an in-range local and a bounded projection chain.", operand.Source), options);
+            return false;
+        }
+
+        SafeCoreOwnershipPlace converted = SafeCoreOwnershipPlace.Root(operand.Place.LocalId);
+        for (int index = 0; index < operand.Place.Projections.Count; index++)
+        {
+            Step(options, clock, ref operations);
+            SafeCoreMirProjection projection = operand.Place.Projections[index];
+            SafeCoreOwnershipProjection ownershipProjection;
+            switch (projection.Kind)
+            {
+                case SafeCoreMirProjectionKind.Field when
+                    !string.IsNullOrWhiteSpace(projection.Name) && projection.Name.Length <= 4_096 && projection.Index == -1:
+                    ownershipProjection = SafeCoreOwnershipProjection.Field(projection.Name);
+                    break;
+                case SafeCoreMirProjectionKind.TupleIndex when
+                    projection.Name is null && projection.Index >= 0:
+                    ownershipProjection = SafeCoreOwnershipProjection.TupleIndex(projection.Index);
+                    break;
+                case SafeCoreMirProjectionKind.ArrayIndex when
+                    projection.Name is null && projection.Index >= 0:
+                    ownershipProjection = SafeCoreOwnershipProjection.ArrayIndex(projection.Index);
+                    break;
+                case SafeCoreMirProjectionKind.Dereference when
+                    projection.Name is null && projection.Index == -1:
+                    ownershipProjection = SafeCoreOwnershipProjection.Dereference();
+                    break;
+                default:
+                    AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                        "A MIR place contains invalid projection metadata.", operand.Source), options);
+                    return false;
+            }
+
+            converted = converted.Append(ownershipProjection);
+        }
+
+        place = converted;
+        return true;
     }
 
     private static bool ValidTarget(int target, int count) => target >= 0 && target < count;

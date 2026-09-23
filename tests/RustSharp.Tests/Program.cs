@@ -24,6 +24,7 @@ internal static class Program
         tests = [.. tests, .. SafeCoreGenericPackageTests.All];
         tests = [.. tests, .. SafeCoreGenericHirBindingTests.All];
         tests = [.. tests, .. SafeCoreMirValidationTests.All, .. SafeCoreMirLoweringTests.All, .. SafeCoreMirCleanupTests.All, .. SafeCoreMirV2ProfileTests.All];
+        tests = [.. tests, .. SafeCoreRegressionV2Tests.All];
         tests = [.. tests, .. SafeCoreMirReferenceExecutionTests.All];
         tests = [.. tests, .. P1DifferentialProfileTests.All];
         if (tests.Count > MaximumTestCount)

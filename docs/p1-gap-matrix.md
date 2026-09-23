@@ -2,7 +2,7 @@
 
 Status / 状态: 🚧 In progress / 🚧 进行中.
 
-Baseline: `884f483a743ee48b0c72c7fcca49f9f013f043f0` (`origin/master` at the start
+Baseline: `b621c4ad7e4528074a555592d99f1d09aa4ed1b2` (`origin/master` at the start
 of the 2026-09-23 audit). This matrix describes implementation and evidence
 separately. An implemented helper, a passing small corpus, or an AOT hello
 program does not satisfy a larger P1 acceptance criterion. Missing compiler
@@ -10,7 +10,7 @@ semantics and missing test denominators are implementation work, not external
 infrastructure blockers.
 
 基线是 2026-09-23 审计开始时的 `origin/master`：
-`884f483a743ee48b0c72c7fcca49f9f013f043f0`。本矩阵分别记录实现与证据。
+`b621c4ad7e4528074a555592d99f1d09aa4ed1b2`。本矩阵分别记录实现与证据。
 库内辅助函数、小语料通过或 AOT hello 程序通过，都不能替代完整 P1 验收；
 编译器语义和固定测试分母缺失属于实现工作，不属于外部基础设施阻塞。
 
@@ -19,10 +19,11 @@ infrastructure blockers.
 | Evidence | Recorded result | What it proves; remaining boundary |
 | --- | --- | --- |
 | `safe-core-regression-v1` | 8/8; zero failures/skips in `artifacts/p1-10/safe-core-regression-v1.json` | Version 1 has one compile-pass, two compile-fail, two run-pass and three differential cases. It does not cover the full P1-06–P1-10 requirements. |
-| Fresh shared-tree Release test harness | 442/442; zero failures in `artifacts/p1-10/tests-current4.stdout.log` | Built with the explicit .NET SDK 10.0.401 MSBuild path on Windows x64. This is a current regression result, not the complete P1 exit gate. |
+| Fresh shared-tree Release test harness | 452/452; zero failures in the bounded test output | Built with the explicit .NET SDK 10.0.401 MSBuild path on Windows x64. The separate `safe-core-regression-v2` report is 24/24; neither result is the complete P1 exit gate. |
 | `p1-exit-gate-v1` | 5/5; `nativeAot: false`, `crossPlatform: false` | In-process typed-MIR, ownership, Drop, panic and metadata probes only. The name does not make this the complete P1 exit gate. |
 | `p1-differential-v1` | Fixed 4 cases: 2 borrow, 2 Drop | This first denominator lacks negative borrow cases, projected moves, join/escape cases, multiple destructors, unwind, abort and destructor failure. Even a 4/4 result cannot close P1. The retained initial reports record 0/4 RustSharp passes and zero skips; subsequent reports must identify their own source/build provenance. |
 | Fresh `p1-differential-v2` | 16/16 passed; zero failures/blocked/skipped in `artifacts/p1-10/p1-differential-v2-current4.json` | The fixed 10-borrow/6-Drop denominator executes all cases against rustc 1.98.0, including the original uninitialized escape fixture; the report records process provenance and cleanup. |
+| Fresh `safe-core-regression-v2` | 24/24 passed; zero failures/blocked/skipped in `artifacts/p1-10/safe-core-regression-v2.json` | Version 2 preserves the eight v1 IDs/files/outputs and adds a fixed typed-MIR denominator of 1 compile-pass, 6 compile-fail, 13 run-pass and 4 differential cases. The report records rustc 1.98.0, bounded timeout/deadline, process IDs and cleanup. |
 | Syntax byte-preservation diagnosis | Normalized input: 45/49; preserved Git blobs: 49/49 | `artifacts/p1-10/syntax-byte-preservation.json` isolates four CRLF/mixed-source span mismatches. It uses an existing compiled runner and is not a fresh full-build claim. The original fixtures and snapshots are preserved by explicit Git attributes. |
 | Fresh syntax profile | 49/49; zero failures/errors/skips | `artifacts/p1-10/safe-core-syntax-current.json` was produced after the explicit Release build; `eng/Test-SyntaxEvidence.ps1` verifies 49/49 cases and 18/18 categories. This is syntax acceptance evidence only. |
 | Local Windows AOT hello | `artifacts/p1-10/windows-x64-aot2.json`: `passed` | Verifies publishing/executing hello on Windows x64. It does not exercise the remaining MIR/borrow/Drop/imported-signature requirements. |
@@ -54,8 +55,8 @@ report; they must not be silently promoted to a later commit.
 | P1-08: destructor failure and panic boundary | `RustPanicBoundary` and runtime cleanup helpers expose deterministic outcomes. | Runtime/library failure-path tests | Connect emitted destructors and exceptions to the declared continuation policy. Do not infer emitted behavior from library simulation. | Real generated panic/destructor-failure fixtures and process cleanup evidence. |
 | P1-09: all supported constructs through CLR LIR | [CompilerDriver](../src/RustSharp.Compiler/CompilerDriver.cs) and MIR CLR lowering share the production emitter for supported values. | Compiler, MIR runtime and deterministic PE/PDB tests | Complete the lowering families above without silent fallbacks. Primitive AOT success covers only the sample's constructs. | Every supported lowering family needs CoreCLR, ILVerify and AOT coverage. |
 | P1-09: imported signatures and ownership contracts | [Metadata consumer](../src/RustSharp.CodeGen.IL/RustSharpMetadata.cs) reconciles MethodDef signatures/static/visibility; imported executable calls remain bounded scalar calls. | [Metadata tests](../tests/RustSharp.Tests/RustSharpMetadataTests.cs), generic package tests | By-reference signature decoding is explicitly unsupported. Add imported aggregate layout identity, reference/lifetime/ownership contracts, consumer synthesis and MemberRef reconciliation. | Real separately compiled producer/consumer cases through CoreCLR, ILVerify and both x64 AOT backends. |
-| P1-10: immutable versioned fixed denominators | Regression v1 remains 8 cases; differential v1 adds 4; library gate v1 remains 5. | Manifest validation tests retain rejected/invalid-contract coverage. | Add a new version for expanded compile-pass/fail/run/borrow/Drop/AOT coverage. Do not shrink or relax existing suites. | Upload every report, including failures, with stable run/artifact provenance. |
-| P1-10: complete P1 exit aggregator | [Test-P1ExitGate.ps1](../eng/Test-P1ExitGate.ps1) validates paired Windows/Linux platform reports and paired p1-differential-v2 reports. | [P1 differential tests](../tests/RustSharp.Tests/P1DifferentialProfileTests.cs), [platform runner](../eng/Invoke-P1PlatformEvidence.ps1) | The aggregator enforces fixed 12-case platform and 16-case differential denominators, platform/RID identity, rustc 1.98, zero failures/blocked/skipped and bounded report reads. Local aggregation remains blocked because this host lacks SDK 10.0.400; CI must produce the four passed inputs. | `.github/workflows/p1-platform.yml` runs both native x64 jobs, uploads each report and validates the aggregate gate. |
+| P1-10: immutable versioned fixed denominators | Regression v1 remains 8 cases; regression v2 fixes 24 typed-MIR cases; differential v2 fixes 16 borrow/Drop cases; library gate v1 remains 5. | Manifest validation tests retain rejected/invalid-contract coverage and v2 preserves v1 IDs/files/outputs. | The local v2 report passes 24/24; platform execution and final-SHA aggregation remain required. Do not shrink or relax existing suites. | Upload every report, including failures, with stable run/artifact provenance. |
+| P1-10: complete P1 exit aggregator | [Test-P1ExitGate.ps1](../eng/Test-P1ExitGate.ps1) validates paired Windows/Linux platform reports, paired p1-differential-v2 reports and paired safe-core-regression-v2 reports. | [P1 differential tests](../tests/RustSharp.Tests/P1DifferentialProfileTests.cs), [v2 regression tests](../tests/RustSharp.Tests/SafeCoreRegressionV2Tests.cs), [platform runner](../eng/Invoke-P1PlatformEvidence.ps1) | The aggregator enforces fixed 12-case platform, 16-case differential and 24-case regression denominators, platform/RID identity, rustc 1.98, zero failures/blocked/skipped and bounded report reads. The local script parser and regression validation pass; final aggregation still requires the six matching CI inputs. | `.github/workflows/p1-platform.yml` runs both native x64 jobs, uploads each report and validates the six-input aggregate gate. |
 
 ## Completion rule / 完成规则
 

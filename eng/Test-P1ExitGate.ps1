@@ -12,6 +12,12 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $LinuxDifferentialReport,
 
+    [Parameter(Mandatory = $true)]
+    [string] $WindowsRegressionReport,
+
+    [Parameter(Mandatory = $true)]
+    [string] $LinuxRegressionReport,
+
     [Parameter()]
     [string] $EvidencePath = 'artifacts/p1-exit-gate/p1-exit-gate.json',
 
@@ -232,13 +238,62 @@ function Validate-DifferentialReport {
     }
 }
 
+function Validate-RegressionReport {
+    param(
+        [Parameter(Mandatory = $true)][string] $InputName,
+        [Parameter(Mandatory = $true)][object] $Loaded
+    )
+
+    $document = $Loaded.Document
+    if ($document.evidenceKind -ne 'safe-core-typed-mir-regression') {
+        Add-Failure $InputName 'failed' "Unexpected evidence kind '$($document.evidenceKind)'."
+    }
+    if ($document.profile -ne 'safe-core-regression-v2') {
+        Add-Failure $InputName 'failed' "Unexpected profile '$($document.profile)'."
+    }
+    if ([int]$document.schemaVersion -ne 2) {
+        Add-Failure $InputName 'failed' "Unexpected regression schema '$($document.schemaVersion)'."
+    }
+    $summary = $document.summary
+    if ($null -eq $summary) {
+        Add-Failure $InputName 'failed' 'Regression summary is missing.'
+        return
+    }
+    Validate-CountSummary $InputName $summary 24 'passed'
+    $coverage = $summary.coverage
+    if ($null -eq $coverage) {
+        Add-Failure $InputName 'failed' 'Regression coverage is missing.'
+    }
+    else {
+        foreach ($expected in @{
+            'compile-pass' = 1; 'compile-fail' = 6; 'run-pass' = 13; 'differential' = 4;
+            legacy = 8; 'typed-mir' = 12; borrow = 2; drop = 2
+        }.GetEnumerator()) {
+            if ($null -eq $coverage.PSObject.Properties[$expected.Key] -or [int]$coverage.($expected.Key) -ne $expected.Value) {
+                Add-Failure $InputName 'failed' "Regression coverage '$($expected.Key)' did not equal $($expected.Value)."
+            }
+        }
+    }
+    if ($null -eq $document.cases -or @($document.cases).Count -ne 24) {
+        Add-Failure $InputName 'failed' "Regression case count was $(@($document.cases).Count), expected 24."
+    }
+    foreach ($case in @($document.cases)) {
+        if ($case.status -ne 'passed') {
+            $caseState = if ($case.status -eq 'blocked') { 'blocked' } else { 'failed' }
+            Add-Failure $InputName $caseState "Regression case '$($case.id)' status was '$($case.status)'."
+        }
+    }
+}
+
 try {
     $reportFullPath = Resolve-RepositoryPath $EvidencePath
     $specifications = @(
         [pscustomobject]@{ Name = 'windows-platform'; Path = $WindowsPlatformReport; Kind = 'platform' },
         [pscustomobject]@{ Name = 'linux-platform'; Path = $LinuxPlatformReport; Kind = 'platform' },
         [pscustomobject]@{ Name = 'windows-differential-v2'; Path = $WindowsDifferentialReport; Kind = 'differential' },
-        [pscustomobject]@{ Name = 'linux-differential-v2'; Path = $LinuxDifferentialReport; Kind = 'differential' }
+        [pscustomobject]@{ Name = 'linux-differential-v2'; Path = $LinuxDifferentialReport; Kind = 'differential' },
+        [pscustomobject]@{ Name = 'windows-safe-core-regression-v2'; Path = $WindowsRegressionReport; Kind = 'regression' },
+        [pscustomobject]@{ Name = 'linux-safe-core-regression-v2'; Path = $LinuxRegressionReport; Kind = 'regression' }
     )
 
     foreach ($specification in $specifications) {
@@ -247,8 +302,11 @@ try {
         if ($specification.Kind -eq 'platform') {
             Validate-PlatformReport $specification.Name $loaded
         }
-        else {
+        elseif ($specification.Kind -eq 'differential') {
             Validate-DifferentialReport $specification.Name $loaded
+        }
+        else {
+            Validate-RegressionReport $specification.Name $loaded
         }
     }
 }
@@ -295,7 +353,7 @@ finally {
             Summary = [ordered]@{
                 Status = $status
                 ExitCode = if ($status -eq 'passed') { 0 } elseif ($status -eq 'failed') { 1 } else { 2 }
-                Denominator = 4
+                Denominator = 6
                 Executed = $gates.Count
                 Passed = $passed
                 Failed = $failed

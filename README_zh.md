@@ -97,11 +97,14 @@ AssemblyRef/TypeRef/MemberRef，并严格核对 MethodDef 的签名、static 属
 引用、聚合及所有权契约仍待实现。
 
 已记录的 `safe-core-regression-v1` 报告通过 8/8，失败和跳过均为零。
+版本化的 `safe-core-regression-v2` 报告通过 24/24，包含 1 个编译通过、6 个编译失败、
+13 个运行通过和 4 个差分用例；其中 rustc 1.98.0 进程记录的失败、阻塞和跳过均为零。
 `p1-exit-gate-v1` 通过 5/5 个进程内库探针，并明确记录 `"nativeAot": false` 和
 `"crossPlatform": false`。不可变的 `p1-differential-v2` 清单针对 rustc 1.98.0
 执行 16/16 项（10 借用、6 Drop），失败、阻塞和跳过均为零。新的
 `p1-platform.yml` 工作流在原生 Windows/Linux x64 runner 上固定 12 个运行通过用例，
-并聚合 CoreCLR、ILVerify、Native AOT 与差分报告；这些最终 CI 报告仍是 P1 完成的必要条件。
+并在每个平台运行 24 用例的 v2 回归套件，聚合覆盖 CoreCLR、ILVerify、Native AOT、差分和
+回归证据的 6 份报告；这些最终 SHA 的 CI 报告仍是 P1 完成的必要条件。
 
 本地 hello 探测提供 ILVerify、CoreCLR 和 Windows x64 Native AOT 证据。
 Linux x64 Native AOT hello 也在 Ubuntu WSL2 与 SDK 10.0.112 下运行；原生 Linux

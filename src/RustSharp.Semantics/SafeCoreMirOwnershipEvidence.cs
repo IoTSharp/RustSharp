@@ -239,6 +239,49 @@ public static partial class SafeCoreMirOwnershipAdapter
 
                 RequireSameSource(mirBlock.Source, ownershipBlock.Source, diagnostics, options,
                     $"Ownership block {ownershipBlock.Id} has different source evidence.");
+
+                // Every ownership effect must be anchored to an actual MIR
+                // statement or terminator source in this block. This keeps
+                // independently produced ownership facts auditable and
+                // prevents fabricated projected places at unrelated spans.
+                var allowedSources = new List<SafeCoreMirSource> { mirBlock.Source, mirBlock.Terminator.Source };
+                var allowedPlaces = new List<SafeCoreMirPlace>();
+                foreach (SafeCoreMirStatement statement in mirBlock.Statements)
+                {
+                    StepEvidence(options, clock, ref operations);
+                    allowedSources.Add(statement.Source);
+                    foreach (SafeCoreMirOperand operand in statement.Value.Operands)
+                    {
+                        StepEvidence(options, clock, ref operations);
+                        if (operand.Kind == SafeCoreMirOperandKind.Place && operand.Place is not null)
+                            allowedPlaces.Add(operand.Place);
+                    }
+                }
+                if (mirBlock.Terminator.Operand is SafeCoreMirOperand terminatorOperand)
+                {
+                    if (terminatorOperand.Kind == SafeCoreMirOperandKind.Place && terminatorOperand.Place is not null)
+                        allowedPlaces.Add(terminatorOperand.Place);
+                }
+                foreach (SafeCoreMirOperand argument in mirBlock.Terminator.Arguments)
+                {
+                    StepEvidence(options, clock, ref operations);
+                    if (argument.Kind == SafeCoreMirOperandKind.Place && argument.Place is not null)
+                        allowedPlaces.Add(argument.Place);
+                }
+
+                foreach (SafeCoreOwnershipInstruction instruction in ownershipBlock.Instructions)
+                {
+                    StepEvidence(options, clock, ref operations);
+                    if (!allowedSources.Any(source => SameSource(source, instruction.Source)))
+                    {
+                        AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                            $"Ownership instruction in block {ownershipBlock.Id} has source evidence absent from typed MIR.", instruction.Source), options);
+                    }
+                    ValidateEvidencePlace(instruction.Place, instruction.LocalId, allowedPlaces,
+                        instruction.Source, diagnostics, options);
+                    ValidateEvidencePlace(instruction.RelatedPlace, instruction.RelatedLocalId, allowedPlaces,
+                        instruction.Source, diagnostics, options);
+                }
             }
 
             foreach (SafeCoreMirBlock mirBlock in mirFunction.Blocks)
@@ -252,6 +295,47 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
             }
         }
+    }
+
+    private static void ValidateEvidencePlace(
+        SafeCoreOwnershipPlace? place,
+        int localId,
+        IReadOnlyList<SafeCoreMirPlace> allowedPlaces,
+        SafeCoreMirSource source,
+        List<Diagnostic> diagnostics,
+        SafeCoreMirOwnershipOptions options)
+    {
+        if (place is null) return;
+        if (place.LocalId != localId || place.Projections.Count > 128)
+        {
+            AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                "Ownership projected place metadata does not match its instruction local.", source), options);
+            return;
+        }
+        if (place.Projections.Count == 0) return;
+        if (!allowedPlaces.Any(candidate => SamePlace(candidate, place)))
+        {
+            AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                "Ownership projected place has no corresponding typed-MIR place evidence.", source), options);
+        }
+    }
+
+    private static bool SameSource(SafeCoreMirSource left, SafeCoreMirSource right) =>
+        string.Equals(left.SourcePath, right.SourcePath, StringComparison.Ordinal) &&
+        left.Span == right.Span && left.HirNodeId == right.HirNodeId && left.SourceLength == right.SourceLength;
+
+    private static bool SamePlace(SafeCoreMirPlace mirPlace, SafeCoreOwnershipPlace ownershipPlace)
+    {
+        if (mirPlace.LocalId != ownershipPlace.LocalId || mirPlace.Projections.Count != ownershipPlace.Projections.Count)
+            return false;
+        for (int index = 0; index < mirPlace.Projections.Count; index++)
+        {
+            SafeCoreMirProjection left = mirPlace.Projections[index];
+            SafeCoreOwnershipProjection right = ownershipPlace.Projections[index];
+            if ((int)left.Kind != (int)right.Kind || !string.Equals(left.Name, right.Name, StringComparison.Ordinal) || left.Index != right.Index)
+                return false;
+        }
+        return true;
     }
 
     private static void RequireSameSource(

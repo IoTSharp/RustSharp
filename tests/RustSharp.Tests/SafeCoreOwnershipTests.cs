@@ -17,6 +17,8 @@ internal static class SafeCoreOwnershipTests
         new("ownership CFG rejects owner assignment during mutable borrow", MutableOwnerWriteAsync),
         new("ownership CFG validates nested reborrows and scope escapes", ReborrowAndScopeEscapeAsync),
         new("ownership CFG tracks partial move paths", PartialMovePathAsync),
+        new("ownership CFG keeps disjoint projected borrows independent", DisjointProjectedBorrowAsync),
+        new("ownership CFG rejects overlapping projected borrows", OverlappingProjectedBorrowAsync),
         new("ownership CFG rejects overlapping projected moves", OverlappingMovePathAsync),
         new("ownership CFG rejects projected moves out of Drop values", PartialMoveDropBoundaryAsync),
         new("ownership CFG isolates projection keys by local ID", ProjectionKeyIsolationAsync),
@@ -347,6 +349,55 @@ internal static class SafeCoreOwnershipTests
         SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
         AssertEx.False(result.IsSuccessful, "Using an aggregate after a projected move must be rejected.");
         AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.UseAfterMove, result.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static Task DisjointProjectedBorrowAsync()
+    {
+        SafeCoreType pair = SafeCoreType.Tuple([Type(SafeCoreSemanticTypeKind.I32), Type(SafeCoreSemanticTypeKind.I32)]);
+        SafeCoreType reference = SafeCoreType.Reference(Type(SafeCoreSemanticTypeKind.I32), mutable: true);
+        SafeCoreOwnershipPlace first = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(0));
+        SafeCoreOwnershipPlace second = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(1));
+        SafeCoreOwnershipFunction function = Function(
+            [
+                Local(0, "pair", pair, SafeCoreOwnershipKind.Move, initiallyInitialized: true),
+                Local(1, "left", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+                Local(2, "right", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+            ],
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Borrow(first, SafeCoreOwnershipPlace.Root(1), mutable: true, Source(1)),
+                SafeCoreOwnershipInstruction.Borrow(second, SafeCoreOwnershipPlace.Root(2), mutable: true, Source(2)),
+                SafeCoreOwnershipInstruction.EndBorrow(1, Source(3)),
+                SafeCoreOwnershipInstruction.EndBorrow(2, Source(4)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(5)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        return Task.CompletedTask;
+    }
+
+    private static Task OverlappingProjectedBorrowAsync()
+    {
+        SafeCoreType pair = SafeCoreType.Tuple([Type(SafeCoreSemanticTypeKind.I32), Type(SafeCoreSemanticTypeKind.I32)]);
+        SafeCoreType reference = SafeCoreType.Reference(Type(SafeCoreSemanticTypeKind.I32), mutable: true);
+        SafeCoreOwnershipPlace first = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(0));
+        SafeCoreOwnershipFunction function = Function(
+            [
+                Local(0, "pair", pair, SafeCoreOwnershipKind.Move, initiallyInitialized: true),
+                Local(1, "field", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+                Local(2, "whole", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+            ],
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Borrow(first, SafeCoreOwnershipPlace.Root(1), mutable: true, Source(1)),
+                SafeCoreOwnershipInstruction.Borrow(SafeCoreOwnershipPlace.Root(0), SafeCoreOwnershipPlace.Root(2), mutable: true, Source(2)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(3)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "An overlapping projected borrow must preserve exclusive access.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, result.Diagnostics.Single().Code);
         return Task.CompletedTask;
     }
 
