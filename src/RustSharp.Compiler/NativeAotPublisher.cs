@@ -105,7 +105,7 @@ public sealed class NativeAotPublisher
         // has been drained.
         var hostDirectory = Path.Combine(
             Path.GetTempPath(),
-            $"rustsharp-nativeaot-{request.AssemblyName}-{Environment.ProcessId}-{Guid.NewGuid():N}");
+            $"rsc-aot-{Environment.ProcessId}-{Guid.NewGuid():N}");
         var hostSourcePath = Path.Combine(hostDirectory, HostSourceFileName);
         var hostProjectPath = Path.Combine(hostDirectory, HostProjectFileName);
         var hostAssemblyFileName = request.AssemblyName + ".dll";
