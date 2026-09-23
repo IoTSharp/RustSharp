@@ -299,7 +299,8 @@ ILVerify 验证通过。报告位于 `artifacts/p1-03/`：`safe-core-syntax.json
 集成回归。语法通过 49/49 个用例（34/34 份 AST 快照、18/18 类映射）及 PowerShell
 证据检查器；名称解析通过 6/6 个用例；基础类型差分对照 rustc 1.98.0 通过 14/14 个
 用例。CLI 检查/编译、生成模块示例的 `42`/`true` 输出及独立 ILVerify 均通过。
-[验证摘要](artifacts/p1-03/glob-documentation-validation.json) 记录本批结果。
+本地忽略目录中的验证摘要 `artifacts/p1-03/glob-documentation-validation.json`
+记录该历史批次结果；该路径不是全新检出中可用的链接。
 新增 12 项 glob 的 rustc 元数据编译抽查中，10 项接受、2 项拒绝；它是可执行测试的
 补充。当时名称解析清单的基准用例数仍为六项，完整模块差分基准集合仍待实现。
 P1-03 对声明的配置档已 ✅ 已完成；更广泛的差分覆盖仍在计划中。

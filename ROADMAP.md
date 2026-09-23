@@ -362,9 +362,9 @@ boundary regression and two HIR/execution integration regressions. Syntax
 passes 49/49 cases (34/34 AST snapshots, 18/18 categories) and the PowerShell
 evidence checker; name resolution passes 6/6; the primitive differential suite
 passes 14/14 against rustc 1.98.0. CLI check/compile, the generated module
-sample's `42`/`true` output and independent ILVerify pass. The
-[validation summary](artifacts/p1-03/glob-documentation-validation.json)
-records this batch. A new 12-case glob metadata check against rustc accepts
+sample's `42`/`true` output and independent ILVerify pass. The local, ignored
+validation summary at `artifacts/p1-03/glob-documentation-validation.json`
+records this historical batch; it is not a checkout-available link. A new 12-case glob metadata check against rustc accepts
 10 cases and rejects 2; it supplements the executable tests. The
 name-resolution manifest denominator was still six, and a complete module
 differential denominator remains open. P1-03 is ✅ Complete for the declared profile; broader differential coverage remains planned.
