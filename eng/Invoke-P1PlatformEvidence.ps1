@@ -222,7 +222,14 @@ function Invoke-TrackedProcess {
 function Get-ToolSource {
     param([Parameter(Mandatory = $true)][string] $Name)
     $command = Get-Command -Name $Name -CommandType Application -ErrorAction Stop
-    return $command.Source
+    $path = [string]$command.Path
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        $path = [string]$command.Source
+    }
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        throw "Resolved application '$Name' did not expose a usable path."
+    }
+    return $path
 }
 
 function Add-ProcessToCase {
