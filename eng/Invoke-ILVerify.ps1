@@ -496,7 +496,10 @@ try {
     if ($dotnetCommand.Count -ne 1) {
         throw 'The dotnet executable was not found on PATH.'
     }
-    $dotnetPath = [string] $dotnetCommand[0].Source
+    $dotnetPath = [string] $dotnetCommand[0].Path
+    if ([string]::IsNullOrWhiteSpace($dotnetPath)) {
+        $dotnetPath = [string] $dotnetCommand[0].Source
+    }
     if ([string]::IsNullOrWhiteSpace($dotnetPath)) {
         throw 'The dotnet command has no executable source path.'
     }

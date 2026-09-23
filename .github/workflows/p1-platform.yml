@@ -43,7 +43,7 @@ jobs:
             -RuntimeIdentifier win-x64 `
             -OutputDirectory artifacts/p1-platform/windows-x64 `
             -EvidencePath artifacts/p1-platform/windows-x64.json `
-            -SdkVersion 10.0.401
+            -SdkVersion 10.0.400
           $code = $LASTEXITCODE
           if (-not (Test-Path -LiteralPath artifacts/p1-platform/windows-x64.json -PathType Leaf)) {
             throw 'P1 Windows platform evidence report was not produced.'
@@ -135,7 +135,7 @@ jobs:
             -RuntimeIdentifier linux-x64 `
             -OutputDirectory artifacts/p1-platform/linux-x64 `
             -EvidencePath artifacts/p1-platform/linux-x64.json `
-            -SdkVersion 10.0.401
+            -SdkVersion 10.0.400
           $code = $LASTEXITCODE
           if (-not (Test-Path -LiteralPath artifacts/p1-platform/linux-x64.json -PathType Leaf)) {
             throw 'P1 Linux platform evidence report was not produced.'
