@@ -138,6 +138,34 @@ public sealed record ClrLirLocal
     public ClrLirType Type { get; }
 }
 
+/// <summary>Metadata needed to encode a static call into another Rust# assembly.</summary>
+public sealed record ClrLirExternalCall
+{
+    public ClrLirExternalCall(
+        string assemblyName,
+        string typeNamespace,
+        string typeName,
+        string methodName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(typeNamespace);
+        ArgumentException.ThrowIfNullOrWhiteSpace(typeName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(methodName);
+        if (assemblyName.Length > 256 || typeNamespace.Length > 256 ||
+            typeName.Length > 256 || methodName.Length > 4096)
+            throw new ArgumentException("External CLR call identity exceeds its bound.");
+        AssemblyName = assemblyName;
+        TypeNamespace = typeNamespace;
+        TypeName = typeName;
+        MethodName = methodName;
+    }
+
+    public string AssemblyName { get; }
+    public string TypeNamespace { get; }
+    public string TypeName { get; }
+    public string MethodName { get; }
+}
+
 public sealed record ClrLirCallSite
 {
     public ClrLirCallSite(string name, ClrLirType returnType, IEnumerable<ClrLirType> parameterTypes)
@@ -155,6 +183,8 @@ public sealed record ClrLirCallSite
     public string Name { get; }
     public ClrLirType ReturnType { get; }
     public ImmutableArray<ClrLirType> ParameterTypes { get; }
+    /// <summary>When set, the call resolves to a static method in another assembly.</summary>
+    public ClrLirExternalCall? ExternalCall { get; init; }
 }
 
 public abstract record ClrLirInstruction;
@@ -357,6 +387,10 @@ public sealed class ClrLirMethod
     }
 
     public string Name { get; }
+    /// <summary>Stable source-level qualified identity, when lowered from HIR.</summary>
+    public string? SourceQualifiedName { get; init; }
+    /// <summary>Whether a source declaration may be imported by another package.</summary>
+    public bool IsPublic { get; init; } = true;
     public ClrLirType ReturnType { get; }
     public ImmutableArray<ClrLirType> Parameters { get; }
     public ImmutableArray<ClrLirLocal> Locals { get; }

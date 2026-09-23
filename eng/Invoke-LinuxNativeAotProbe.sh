@@ -2,10 +2,14 @@
 set -euo pipefail
 
 # Run the smallest Native AOT slice on a native Linux x64 host. The caller may
-# provide a source path, output directory, and publish timeout in seconds.
+# provide a source path, output directory, publish timeout, profile, and exact
+# expected stdout. Existing three-argument invocations retain the defaults.
 source_path="${1:-samples/hello.rs}"
 output_dir="${2:-artifacts/p0/linux-x64}"
 timeout_seconds="${3:-300}"
+profile="${4:-vertical-slice-v1}"
+expected_stdout="${5:-Hello from Rust#
+}"
 timeout_seconds_json="null"
 
 status="started"
@@ -59,6 +63,24 @@ run_log_capture_cleanup_incomplete=false
 run_log_capture_diagnostic=""
 publish_output_truncated=false
 run_output_truncated=false
+
+case "$profile" in
+    vertical-slice-v1|safe-core-primitives-v1|safe-core-generics-v1|safe-core-mir-p1-v1)
+        ;;
+    *)
+        status="failed"
+        reason="invalid-profile"
+        printf 'unsupported profile: %s\n' "$profile" >&2
+        exit 64
+        ;;
+esac
+
+if (( ${#expected_stdout} > 4096 )); then
+    status="failed"
+    reason="expected-output-too-large"
+    printf 'expected stdout exceeds the 4096-byte bound\n' >&2
+    exit 64
+fi
 
 # Keep captured diagnostics bounded even when a compiler process is noisy. The
 # logger drains the pipe after retaining the first bytes, so the child cannot
@@ -238,7 +260,7 @@ verify_exact_runtime_output() {
     local comparison_exit
 
     EXACT_OUTPUT_DIAGNOSTIC=""
-    if ! printf 'Hello from Rust#\n' >"$expected_path"; then
+    if ! printf '%s' "$expected_stdout" >"$expected_path"; then
         EXACT_OUTPUT_DIAGNOSTIC="could not write the task-owned expected output bytes"
         return 2
     fi
@@ -1272,7 +1294,8 @@ write_evidence() {
   "schemaVersion": 1,
   "platform": "linux-x64",
   "expectedExitCode": 0,
-  "expectedStdout": "Hello from Rust#\n",
+  "profile": "$(json_escape "$profile")",
+  "expectedStdout": "$(json_escape "$expected_stdout")",
   "timeoutSeconds": ${timeout_seconds_json},
   "maximumLogBytes": ${maximum_log_bytes},
   "publishOutputTruncated": $publish_output_truncated,
@@ -1590,7 +1613,7 @@ run_log="$probe_temp/linux-aot-run.log"
 publish_started="$(date --iso-8601=seconds)"
 run_bounded_capture "$timeout_seconds" "$publish_log" \
     dotnet run --project src/RustSharp.Cli --configuration Release --no-restore -- \
-    publish "$source_path" --runtime linux-x64 --output "$output_dir" --timeout "$timeout_seconds"
+    publish "$source_path" --runtime linux-x64 --output "$output_dir" --timeout "$timeout_seconds" --profile "$profile"
 publish_exit="$LAST_EXIT_CODE"
 publish_pid="$LAST_PID"
 publish_parent_pid="$LAST_PARENT_PID"

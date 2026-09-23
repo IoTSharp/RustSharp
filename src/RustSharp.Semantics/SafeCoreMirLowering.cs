@@ -33,7 +33,9 @@ public sealed record SafeCoreMirLoweringResult(
 
 /// <summary>
 /// Lowers resolved P1-04 evidence to the experimental bounded-value MIR profile.
-/// This API does not change the existing compiler driver or IL emission path.
+/// The compiler's opt-in safe-core MIR profile consumes the resulting program
+/// through the dedicated MIR-to-CLR-LIR backend; existing primitive and generic
+/// profiles retain their own lowering paths.
 /// </summary>
 public static class SafeCoreMirLowering
 {
@@ -58,7 +60,7 @@ public static class SafeCoreMirLowering
             options.MaximumBlocksPerFunction is < 1 or > 65_536 ||
             options.MaximumLocalsPerFunction is < 1 or > 262_144)
             throw new ArgumentOutOfRangeException(nameof(options));
-        if (!program.Hir.IsSuccessful)
+        if (!program.Hir.IsSuccessful || program.Hir.Root is null)
             return new(null, [new Diagnostic(InvalidEvidence, "MIR requires successful, resolved HIR type evidence.",
                 program.Hir.Root?.Span ?? new TextSpan(0, 0)) { SourcePath = program.Hir.SourcePath }], null, false);
         try
@@ -67,7 +69,8 @@ public static class SafeCoreMirLowering
             SafeCoreMirProgram mir = lowerer.Run();
             SafeCoreMirValidationResult validation = SafeCoreMirValidation.Validate(mir,
                 new() { CancellationToken = cancellationToken, Timeout = lowerer.Remaining,
-                    MaximumOperations = lowerer.RemainingOperations });
+                    MaximumOperations = lowerer.RemainingOperations,
+                    MaximumTypeDepth = options.MaximumNestingDepth });
             return validation.IsSuccessful
                 ? new(mir, [], validation, false)
                 : new(null, validation.Diagnostics.Select(d => new Diagnostic(d.Code, d.Message,
@@ -165,13 +168,35 @@ public static class SafeCoreMirLowering
             if (node.Kind != N.Function) Unsupported(node);
             if (_functionNodes.Count >= options.MaximumFunctions) Limit(node);
             SafeCoreType signature = Type(node);
-            if (signature.Kind != K.Function || node.DeclaredSymbol is null) Invalid(node);
-            ValueType(signature.ReturnType, node, allowNever: true);
-            for (int index = 0; index < signature.ParameterTypes.Count; index++)
+            // Function-item evidence must carry a named signature that the call
+            // resolver can use. An anonymous function type here is incomplete
+            // evidence, rather than an unsupported source construct.
+            if (signature.Kind != K.Function || string.IsNullOrEmpty(signature.Name) || node.DeclaredSymbol is null)
+                Invalid(node);
+            SafeCoreHirNode returnTypeNode = node;
+            int parameterIndex = 0;
+            for (int childIndex = 0; childIndex < node.ChildIds.Count; childIndex++)
             {
                 Step(node, depth);
-                ValueType(signature.ParameterTypes[index], node);
+                SafeCoreHirNode child = Child(node, childIndex);
+                if (child.Kind == N.Parameter)
+                {
+                    if (parameterIndex >= signature.ParameterTypes.Count)
+                        Invalid(child);
+                    // The second parameter child is the type syntax node. Keeping it
+                    // as the evidence anchor gives unsupported signature types their
+                    // exact source span instead of the enclosing function span.
+                    SafeCoreHirNode typeNode = Child(child, 1);
+                    ValueType(signature.ParameterTypes[parameterIndex++], typeNode);
+                }
+                else if (IsTypeNode(child.Kind))
+                {
+                    returnTypeNode = child;
+                }
             }
+            if (parameterIndex != signature.ParameterTypes.Count)
+                Invalid(node);
+            ValueType(signature.ReturnType, returnTypeNode, allowNever: true);
             if (!_functions.TryAdd(SymbolKey(node.DeclaredSymbol!), _functionNodes.Count)) Invalid(node);
             _functionNodes.Add(node);
         }
@@ -192,7 +217,8 @@ public static class SafeCoreMirLowering
                 int local = Local(pattern.Name ?? $"arg{parameterIndex.ToString(CultureInfo.InvariantCulture)}",
                     signature.ParameterTypes[parameterIndex++], SafeCoreMirLocalKind.Parameter,
                     pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
-                if (pattern.DeclaredSymbol is not null) _bindings.Add(pattern.DeclaredSymbol, local);
+                if (pattern.DeclaredSymbol is not null && !_bindings.TryAdd(pattern.DeclaredSymbol, local))
+                    Invalid(pattern);
             }
             if (parameterIndex != signature.ParameterTypes.Count) Invalid(node);
             _current = Block(node);
@@ -207,7 +233,8 @@ public static class SafeCoreMirLowering
                 blocks.Add(new(block.Id, block.Statements,
                     block.Terminator ?? SafeCoreMirTerminator.Unreachable(block.Source), block.Source, cancellation));
             }
-            return new(id, signature.Name!, signature.ReturnType, _locals.ToArray(), blocks, 0, Source(node), cancellation);
+            return new(id, signature.Name!, signature.ReturnType, _locals.ToArray(), blocks, 0, Source(node),
+                node.DeclaredSymbol!.IsPublic, cancellation);
         }
 
         private SafeCoreMirOperand? Expr(SafeCoreHirNode node, int depth)
@@ -240,6 +267,7 @@ public static class SafeCoreMirLowering
                     !node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasTrailingComma):
                     return Expr(Child(node, 0), depth + 1);
                 case N.TupleExpression: return Tuple(node, depth);
+                case N.ArrayExpression: return Array(node, depth);
                 case N.ExpressionStatement:
                     _ = Expr(Child(node, 0), depth + 1);
                     return _current is null ? null : Unit(node);
@@ -264,7 +292,9 @@ public static class SafeCoreMirLowering
                     Scalar(Type(node), node);
                     return cast is null ? null : Emit(SafeCoreMirRvalue.Cast(cast, Type(node), Source(node)), Type(node), node);
                 case N.CallExpression: return Call(node, depth);
+                case N.PrintExpression: return Print(node, depth);
                 case N.IfExpression: return If(node, depth);
+                case N.IndexExpression: return Index(node, depth);
                 case N.LoopExpression:
                 case N.WhileExpression: return Loop(node, depth);
                 case N.BreakExpression:
@@ -290,7 +320,8 @@ public static class SafeCoreMirLowering
             if (pattern.DeclaredSymbol is null) Invalid(pattern);
             int local = Local(pattern.Name!, Type(pattern), SafeCoreMirLocalKind.User,
                 pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
-            _bindings.Add(pattern.DeclaredSymbol!, local);
+            if (!_bindings.TryAdd(pattern.DeclaredSymbol!, local))
+                Invalid(pattern);
             Assign(local, value, node);
             return Unit(node);
         }
@@ -341,6 +372,52 @@ public static class SafeCoreMirLowering
                 : Emit(SafeCoreMirRvalue.Tuple(operands, type, Source(node), cancellation), type, node);
         }
 
+        private SafeCoreMirOperand? Array(SafeCoreHirNode node, int depth)
+        {
+            // Repetition would require an explicit Copy/move proof for every
+            // duplicated element. Keep that ownership-sensitive desugaring out
+            // of this bounded MIR profile until the ownership adapter can carry
+            // aggregate effects.
+            if (node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.RepeatedArray))
+                Unsupported(node);
+
+            SafeCoreType type = EffectiveType(node);
+            ValueType(type, node);
+            if (type.Kind != K.Array || type.Length is not long length || length < 0 ||
+                length > options.MaximumOperations || length != node.ChildIds.Count)
+                Unsupported(node);
+
+            var operands = new List<SafeCoreMirOperand>(node.ChildIds.Count);
+            for (int index = 0; index < node.ChildIds.Count && _current is not null; index++)
+            {
+                Step(node, depth + 1);
+                SafeCoreMirOperand? element = Expr(Child(node, index), depth + 1);
+                if (element is null) return null;
+                if (element.Type != type.ElementType) Invalid(Child(node, index));
+                operands.Add(element);
+            }
+
+            return _current is null
+                ? null
+                : Emit(SafeCoreMirRvalue.Array(operands, type, Source(node), cancellation), type, node);
+        }
+
+        private SafeCoreMirOperand? Index(SafeCoreHirNode node, int depth)
+        {
+            SafeCoreMirOperand? array = Expr(Child(node, 0), depth + 1);
+            SafeCoreMirOperand? index = Expr(Child(node, 1), depth + 1);
+            if (_current is null || array is null || index is null) return null;
+            SafeCoreType resultType = EffectiveType(node);
+            if (array.Type.Kind != K.Array || index.Type.Kind != K.Usize ||
+                resultType != array.Type.ElementType)
+                Unsupported(node);
+            if (index.Kind == SafeCoreMirOperandKind.Constant &&
+                (!BigInteger.TryParse(index.Value, NumberStyles.None, CultureInfo.InvariantCulture, out BigInteger constant) ||
+                 array.Type.Length is not long length || constant < 0 || constant >= length))
+                Invalid(node);
+            return Emit(SafeCoreMirRvalue.Index(array, index, resultType, Source(node)), resultType, node);
+        }
+
         private SafeCoreMirOperand? Call(SafeCoreHirNode node, int depth)
         {
             SafeCoreHirNode calleeNode = UnwrapExpression(Child(node, 0), depth + 1);
@@ -366,6 +443,33 @@ public static class SafeCoreMirLowering
                 return null;
             }
             return destination is int local ? SafeCoreMirOperand.Local(local, signature.ReturnType, Source(node)) : Unit(node);
+        }
+
+        private SafeCoreMirOperand Print(SafeCoreHirNode node, int depth)
+        {
+            if (node.ChildIds.Count is < 1 or > 2)
+                Unsupported(node);
+            SafeCoreHirNode format = Child(node, 0);
+            string text = string.Empty;
+            if (format.Kind != N.LiteralExpression || format.Value is null ||
+                !SyntaxTree.TryDecodeStringLiteral(format.Value, out text))
+                Invalid(format);
+            SafeCoreMirOperand? value = null;
+            if (node.ChildIds.Count == 2)
+            {
+                if (!string.Equals(text, "{}", StringComparison.Ordinal))
+                    Unsupported(format);
+                value = Expr(Child(node, 1), depth + 1);
+            }
+            else if (text.Contains('{', StringComparison.Ordinal) || text.Contains('}', StringComparison.Ordinal))
+            {
+                Unsupported(format);
+            }
+
+            if (_current is null)
+                return Unit(node);
+            return Emit(SafeCoreMirRvalue.Print(text, value, Source(node), cancellation),
+                SafeCoreType.Primitive(K.Unit), node);
         }
 
         private SafeCoreMirOperand? If(SafeCoreHirNode node, int depth)
@@ -476,52 +580,60 @@ public static class SafeCoreMirLowering
             Scalar(type, node);
             string text = node.Value ?? string.Empty;
             if (text.Length is 0 or > 4_096) Unsupported(node);
-            string value;
-            if (type.Kind == K.Bool) value = text;
-            else if (type.Kind == K.Char || text.StartsWith("b'", StringComparison.Ordinal))
+            try
             {
-                string character = text[(type.Kind == K.Char ? 1 : 2)..^1];
-                int scalar = character.StartsWith("\\u{", StringComparison.Ordinal)
-                    ? int.Parse(character[3..^1].Replace("_", string.Empty, StringComparison.Ordinal), NumberStyles.HexNumber, CultureInfo.InvariantCulture)
-                    : character.StartsWith("\\x", StringComparison.Ordinal)
-                        ? int.Parse(character[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture)
-                        : character switch
-                        {
-                            "\\n" => '\n', "\\r" => '\r', "\\t" => '\t', "\\0" => 0,
-                            "\\\\" => '\\', "\\'" => '\'', "\\\"" => '"',
-                            _ => Rune.GetRuneAt(character, 0).Value,
-                        };
-                value = scalar.ToString(CultureInfo.InvariantCulture);
-            }
-            else
-            {
-                string suffix = type.ToString();
-                text = text.Replace("_", string.Empty, StringComparison.Ordinal);
-                if (text.EndsWith(suffix, StringComparison.Ordinal)) text = text[..^suffix.Length];
-                if (type.IsFloat)
+                string value;
+                if (type.Kind == K.Bool) value = text;
+                else if (type.Kind == K.Char || text.StartsWith("b'", StringComparison.Ordinal))
                 {
-                    double number = double.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
-                    value = type.Kind == K.F32 ? ((float)number).ToString("R", CultureInfo.InvariantCulture)
-                        : number.ToString("R", CultureInfo.InvariantCulture);
+                    string character = text[(type.Kind == K.Char ? 1 : 2)..^1];
+                    int scalar = character.StartsWith("\\u{", StringComparison.Ordinal)
+                        ? int.Parse(character[3..^1].Replace("_", string.Empty, StringComparison.Ordinal), NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                        : character.StartsWith("\\x", StringComparison.Ordinal)
+                            ? int.Parse(character[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                            : character switch
+                            {
+                                "\\n" => '\n', "\\r" => '\r', "\\t" => '\t', "\\0" => 0,
+                                "\\\\" => '\\', "\\'" => '\'', "\\\"" => '"',
+                                _ => Rune.GetRuneAt(character, 0).Value,
+                            };
+                    value = scalar.ToString(CultureInfo.InvariantCulture);
                 }
                 else
                 {
-                    int radix = text.StartsWith("0x", StringComparison.Ordinal) ? 16 :
-                        text.StartsWith("0o", StringComparison.Ordinal) ? 8 : text.StartsWith("0b", StringComparison.Ordinal) ? 2 : 10;
-                    int start = radix == 10 ? 0 : 2;
-                    BigInteger number = BigInteger.Zero;
-                    for (int index = start; index < text.Length; index++)
+                    string suffix = type.ToString();
+                    text = text.Replace("_", string.Empty, StringComparison.Ordinal);
+                    if (text.EndsWith(suffix, StringComparison.Ordinal)) text = text[..^suffix.Length];
+                    if (type.IsFloat)
                     {
-                        Step(node, 0);
-                        char c = char.ToLowerInvariant(text[index]);
-                        int digit = c is >= 'a' and <= 'f' ? c - 'a' + 10 : c - '0';
-                        if (digit < 0 || digit >= radix) Invalid(node);
-                        number = number * radix + digit;
+                        double number = double.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
+                        value = type.Kind == K.F32 ? ((float)number).ToString("R", CultureInfo.InvariantCulture)
+                            : number.ToString("R", CultureInfo.InvariantCulture);
                     }
-                    value = (negate ? -number : number).ToString(CultureInfo.InvariantCulture);
+                    else
+                    {
+                        int radix = text.StartsWith("0x", StringComparison.Ordinal) ? 16 :
+                            text.StartsWith("0o", StringComparison.Ordinal) ? 8 : text.StartsWith("0b", StringComparison.Ordinal) ? 2 : 10;
+                        int start = radix == 10 ? 0 : 2;
+                        BigInteger number = BigInteger.Zero;
+                        for (int index = start; index < text.Length; index++)
+                        {
+                            Step(node, 0);
+                            char c = char.ToLowerInvariant(text[index]);
+                            int digit = c is >= 'a' and <= 'f' ? c - 'a' + 10 : c - '0';
+                            if (digit < 0 || digit >= radix) Invalid(node);
+                            number = number * radix + digit;
+                        }
+                        value = (negate ? -number : number).ToString(CultureInfo.InvariantCulture);
+                    }
                 }
+                return SafeCoreMirOperand.Constant(type, value, Source(origin ?? node));
             }
-            return SafeCoreMirOperand.Constant(type, value, Source(origin ?? node));
+            catch (FormatException) { Invalid(node); }
+            catch (OverflowException) { Invalid(node); }
+            catch (ArgumentException) { Invalid(node); }
+            catch (IndexOutOfRangeException) { Invalid(node); }
+            return null!;
         }
 
         private SafeCoreHirNode UnwrapExpression(SafeCoreHirNode node, int depth)
@@ -591,7 +703,9 @@ public static class SafeCoreMirLowering
 
         private SafeCoreType Type(SafeCoreHirNode node)
         {
-            if (!input.Types.TryGetValue(node.Id, out SafeCoreType? type) || type is null) Invalid(node);
+            if (!input.Types.TryGetValue(node.Id, out SafeCoreType? type) || type is null
+                || type.Kind is K.Inference or K.Error)
+                Invalid(node);
             return type!;
         }
 
@@ -601,17 +715,26 @@ public static class SafeCoreMirLowering
                 Unsupported(node);
         }
 
-        private static void ValueType(SafeCoreType type, SafeCoreHirNode node, bool allowNever = false, int depth = 0)
-        {
-            if (depth > 128)
-                Unsupported(node);
+        private static bool IsTypeNode(N node) => node is N.PathType or N.ReferenceType or N.TupleType
+            or N.ArrayType or N.SliceType or N.UnitType or N.NeverType or N.FunctionType or N.InferredType;
 
-            if (type.Kind == K.Tuple)
+        private void ValueType(SafeCoreType type, SafeCoreHirNode node, bool allowNever = false, int depth = 0)
+        {
+            Step(node, depth);
+            if (type is null || type.Kind is K.Inference or K.Error)
+                Invalid(node);
+            if (depth > options.MaximumNestingDepth)
+                Limit(node);
+
+            if (type.Kind is K.Tuple or K.Array)
             {
-                if (type.Elements.Count > 1024)
+                if (type.Elements.Count > 1024 || type.Kind == K.Array &&
+                    (type.Length is not long length || length < 0 || length > options.MaximumOperations))
                     Unsupported(node);
-                foreach (SafeCoreType element in type.Elements)
-                    ValueType(element, node, allowNever: false, depth + 1);
+                ValueType(type.ElementType, node, allowNever: false, depth + 1);
+                if (type.Kind == K.Tuple)
+                    for (int index = 1; index < type.Elements.Count; index++)
+                        ValueType(type.Elements[index], node, allowNever: false, depth + 1);
                 return;
             }
 
@@ -648,7 +771,7 @@ public static class SafeCoreMirLowering
 
         [DoesNotReturn]
         private static void Unsupported(SafeCoreHirNode node) => throw new LoweringException(new(UnsupportedSyntax,
-            "This construct is outside the bounded-value MIR profile; arrays, references, closures, patterns and const lowering are not yet available.", node.Span));
+            "This construct is outside the bounded-value MIR profile; references, closures, patterns, repeated arrays and const lowering are not yet available.", node.Span));
 
         [DoesNotReturn]
         private static void Limit(SafeCoreHirNode node) => throw new LoweringException(new(LimitReached,

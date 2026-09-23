@@ -21,9 +21,10 @@ public static class SafeCoreMirFormatting
     {
         ArgumentNullException.ThrowIfNull(program);
         options ??= new();
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(options.Timeout, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumOperations);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumCharacters);
+        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1) ||
+            options.MaximumOperations is < 1 or > 1_000_000 ||
+            options.MaximumCharacters is < 1 or > 4_000_000)
+            throw new ArgumentOutOfRangeException(nameof(options));
         return new Formatter(options).Format(program);
     }
 
@@ -138,7 +139,7 @@ public static class SafeCoreMirFormatting
         private void Add(string value)
         {
             Step();
-            if ((long)_text.Length + value.Length > Math.Clamp(options.MaximumCharacters, 1, 4_000_000))
+            if ((long)_text.Length + value.Length > options.MaximumCharacters)
                 throw new SafeCoreMirLimitException("MIR formatting character limit reached.");
             _text.Append(value);
         }
@@ -146,9 +147,7 @@ public static class SafeCoreMirFormatting
         private void Step()
         {
             options.CancellationToken.ThrowIfCancellationRequested();
-            if (++_operations > Math.Clamp(options.MaximumOperations, 1, 1_000_000)
-                || _clock.Elapsed >= (options.Timeout > TimeSpan.Zero && options.Timeout <= TimeSpan.FromMinutes(1)
-                    ? options.Timeout : TimeSpan.FromSeconds(10)))
+            if (++_operations > options.MaximumOperations || _clock.Elapsed >= options.Timeout)
                 throw new SafeCoreMirLimitException("MIR formatting work or time limit reached.");
         }
     }

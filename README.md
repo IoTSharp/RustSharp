@@ -88,6 +88,39 @@ and passes 377/377 tests; this supplemental run used the installed 10.0.401 SDK
 through explicit MSBuild and does not replace the recorded 10.0.400 AOT
 evidence.
 
+P1-06 is 🚧 In progress for its bounded typed-MIR contract. The implementation
+provides immutable typed MIR arenas, strict CFG/type/constant/operator/call
+validation, deterministic bounded formatting and snapshots, nested tuple and
+fixed-array aggregate rvalues with statically checked indexing, HIR lowering
+with source spans, bounded source-to-MIR ownership/cleanup evidence, direct
+MIR-to-CLR-LIR lowering for the supported value subset, and
+cancellation/work/depth/collection/diagnostic limits. Fixed-array construction
+and indexing are covered by a real compile/run regression.
+P1-07 and P1-08 are 🚧 In progress with bounded ownership, NLL, reborrow,
+deterministic cleanup, and `RustPanicBoundary` outcomes; the compiler persists
+ownership and cleanup evidence for supported MIR values. P1-09 is 🚧 In progress
+with deterministic PE metadata, canonical zero-arity `()` generic instances,
+bounded metadata consumption that reconciles each function with its generated
+MethodDef signature, visibility, and static flag, ownership/MIR evidence,
+imported declarations resolved through HIR, and bounded scalar external calls
+emitted through AssemblyRef/TypeRef/MemberRef. P1-10 is 🚧 In progress with an eight-case
+versioned regression report. The current Windows/.NET 10.0.401 Release harness
+passes 412/412 tests; the recorded
+`artifacts/p1-10/safe-core-regression-v1.json` report passes 8/8 cases with no
+failures or skips, and both run-pass cases compare bounded rustc 1.98
+compile/run output. A producer-to-consumer scalar external call also executes
+through the emitted metadata references. Repeated arrays, slices/unsizing,
+patterns, closures, reference semantics, compiler-integrated destructor/Drop
+lowering, broader declaration synthesis, runtime/AOT gates, and the full
+differential denominators remain open; this evidence does not claim Linux
+Native AOT or cross-platform execution.
+
+The recorded `p1-exit-gate-v1` report at `artifacts/p1-10/p1-exit-gate-v1.json`
+passes 5/5 in-process library-contract probes: `typed-mir-validation`,
+`ownership-bridge`, `drop-order`, `panic-unwind`, and `metadata-consumer`. It
+records `"nativeAot": false` and `"crossPlatform": false`; this is
+library-contract evidence only and does not close the full P1 exit gate.
+
 Run the generic sample, which prints `42` and `true`, with:
 
 ```text

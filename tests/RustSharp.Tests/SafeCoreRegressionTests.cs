@@ -11,8 +11,57 @@ internal static class SafeCoreRegressionTests
     public static IReadOnlyList<TestCase> All { get; } =
     [
         new("safe-core regression manifest covers all four outcome kinds", VerifiesManifestAsync),
+        new("safe-core run-pass cases require an exact rustc oracle comparison", VerifiesRunPassOracleContractAsync),
         new("safe-core regression manifest rejects unbounded or incomplete contracts", RejectsMalformedManifestAsync),
     ];
+
+    private static Task VerifiesRunPassOracleContractAsync()
+    {
+        AssertEx.True(
+            SafeCoreRegressionProfileRunner.RequiresOracle("run-pass"),
+            "run-pass cases must be skipped when the pinned rustc oracle is unavailable.");
+        AssertEx.True(
+            SafeCoreRegressionProfileRunner.RunPassOutputsMatch(
+                "42\r\n",
+                "",
+                "42\n",
+                "",
+                "42\r\n"),
+            "Run-pass output comparison must normalize line endings while preserving exact output.");
+        AssertEx.False(
+            SafeCoreRegressionProfileRunner.RunPassOutputsMatch(
+                "42\n",
+                "",
+                "41\n",
+                "",
+                "42\n"),
+            "RustSharp output must match the rustc oracle output.");
+        AssertEx.False(
+            SafeCoreRegressionProfileRunner.RunPassOutputsMatch(
+                "42\n",
+                "warning\n",
+                "42\n",
+                "",
+                "42\n"),
+            "Run-pass stderr must remain empty on the RustSharp side.");
+        AssertEx.False(
+            SafeCoreRegressionProfileRunner.RunPassOutputsMatch(
+                "42\n",
+                "",
+                "42\n",
+                "warning\n",
+                "42\n"),
+            "Run-pass stderr must remain empty on the rustc side.");
+        AssertEx.False(
+            SafeCoreRegressionProfileRunner.RunPassOutputsMatch(
+                "",
+                "",
+                "",
+                "",
+                null),
+            "A run-pass comparison requires the manifest expected output contract.");
+        return Task.CompletedTask;
+    }
 
     private static Task VerifiesManifestAsync()
     {

@@ -50,13 +50,14 @@ internal static class CommandLineParser
             {
                 case "--profile":
                     if (!TryTakeValue(arguments, ref index, out var profileName) ||
-                        profileName is not ("vertical-slice-v1" or "safe-core-primitives-v1" or "safe-core-types-v1" or "safe-core-generics-v1"))
-                        return Failure("Option '--profile' requires vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1 or safe-core-generics-v1.");
+                        profileName is not ("vertical-slice-v1" or "safe-core-primitives-v1" or "safe-core-types-v1" or "safe-core-generics-v1" or "safe-core-mir-p1-v1"))
+                        return Failure("Option '--profile' requires vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1, safe-core-generics-v1 or safe-core-mir-p1-v1.");
                     profile = profileName switch
                     {
                         "safe-core-primitives-v1" => RustSharp.Compiler.CompilationProfile.SafeCorePrimitives,
                         "safe-core-types-v1" => RustSharp.Compiler.CompilationProfile.SafeCoreTypes,
                         "safe-core-generics-v1" => RustSharp.Compiler.CompilationProfile.SafeCoreGenerics,
+                        "safe-core-mir-p1-v1" => RustSharp.Compiler.CompilationProfile.SafeCoreMir,
                         _ => RustSharp.Compiler.CompilationProfile.VerticalSlice,
                     };
                     break;

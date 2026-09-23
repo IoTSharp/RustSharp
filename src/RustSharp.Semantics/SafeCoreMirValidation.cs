@@ -35,15 +35,25 @@ public sealed record SafeCoreMirDiagnostic(string Code, string Message, SafeCore
 public sealed class SafeCoreMirValidationResult
 {
     internal SafeCoreMirValidationResult(List<SafeCoreMirDiagnostic> diagnostics,
-        Dictionary<int, IReadOnlyList<int>> reachableBlocks, bool isTruncated)
+        Dictionary<int, IReadOnlyList<int>> reachableBlocks, bool isTruncated, int operations = 0)
     {
         Diagnostics = diagnostics.AsReadOnly();
         ReachableBlocks = new ReadOnlyDictionary<int, IReadOnlyList<int>>(reachableBlocks);
         IsTruncated = isTruncated;
+        Operations = Math.Max(0, operations);
     }
     public IReadOnlyList<SafeCoreMirDiagnostic> Diagnostics { get; }
     public IReadOnlyDictionary<int, IReadOnlyList<int>> ReachableBlocks { get; }
     public bool IsTruncated { get; }
+    /// <summary>
+    /// Number of bounded validator steps consumed before this result was
+    /// published.  Callers that compose validation with another bounded pass
+    /// can subtract this value from their shared operation budget.
+    /// </summary>
+    public int Operations { get; }
+
+    /// <summary>Compatibility alias for callers that use an explicit name.</summary>
+    public int OperationsUsed => Operations;
     public bool IsSuccessful => !IsTruncated && Diagnostics.Count == 0;
 }
 
@@ -51,19 +61,22 @@ public sealed class SafeCoreMirValidationResult
 /// CFG cycles are legal. This is not ownership or definite-initialization analysis.</summary>
 public static class SafeCoreMirValidation
 {
+    private const long MaximumArrayElements = 100_000;
+
     public static SafeCoreMirValidationResult Validate(SafeCoreMirProgram program,
         SafeCoreMirValidationOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(program);
         options ??= new();
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(options.Timeout, TimeSpan.Zero);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumOperations);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumFunctions);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumLocals);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumBlocks);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumStatements);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumDiagnostics);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(options.MaximumTypeDepth);
+        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1) ||
+            options.MaximumOperations is < 1 or > 4_000_000 ||
+            options.MaximumFunctions is < 1 or > 4_096 ||
+            options.MaximumLocals is < 1 or > 100_000 ||
+            options.MaximumBlocks is < 1 or > 100_000 ||
+            options.MaximumStatements is < 1 or > 100_000 ||
+            options.MaximumDiagnostics is < 1 or > 4_096 ||
+            options.MaximumTypeDepth is < 1 or > 128)
+            throw new ArgumentOutOfRangeException(nameof(options));
         return new Validator(program, options).Run();
     }
 
@@ -97,22 +110,30 @@ public static class SafeCoreMirValidation
                         Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Function IDs must index the arena and names must be unique and bounded.", _function.Source);
                     if (Type(_function.ReturnType)) Function();
                 }
-                return new(_diagnostics, _reachable, false);
+                return new(_diagnostics, _reachable, false, _operations);
             }
             catch (SafeCoreMirLimitException exception)
             {
-                _diagnostics.Add(new(SafeCoreMirDiagnosticCodes.LimitReached, exception.Message,
-                    _block?.Source ?? _function?.Source, _function?.Id ?? -1, _block?.Id ?? -1));
-                return new(_diagnostics, _reachable, true);
+                // Keep the published diagnostic list inside the caller's bound even when
+                // the bound is reached while reporting another diagnostic. Replacing the
+                // final slot preserves a deterministic limit marker without leaking one
+                // extra item past MaximumDiagnostics.
+                int maximumDiagnostics = options.MaximumDiagnostics;
+                var limit = new SafeCoreMirDiagnostic(SafeCoreMirDiagnosticCodes.LimitReached,
+                    exception.Message, _block?.Source ?? _function?.Source,
+                    _function?.Id ?? -1, _block?.Id ?? -1);
+                if (_diagnostics.Count >= maximumDiagnostics)
+                    _diagnostics[maximumDiagnostics - 1] = limit;
+                else
+                    _diagnostics.Add(limit);
+                return new(_diagnostics, _reachable, true, _operations);
             }
         }
 
         private void Step()
         {
             options.CancellationToken.ThrowIfCancellationRequested();
-            if (++_operations > Math.Clamp(options.MaximumOperations, 1, 1_000_000)
-                || _clock.Elapsed >= (options.Timeout > TimeSpan.Zero && options.Timeout <= TimeSpan.FromMinutes(1)
-                    ? options.Timeout : TimeSpan.FromSeconds(10)))
+            if (++_operations > options.MaximumOperations || _clock.Elapsed >= options.Timeout)
                 throw new SafeCoreMirLimitException("MIR validation work or time limit reached.");
         }
 
@@ -124,7 +145,7 @@ public static class SafeCoreMirValidation
         private void Error(string code, string message, SafeCoreMirSource? source)
         {
             Step();
-            if (_diagnostics.Count >= Math.Clamp(options.MaximumDiagnostics, 1, 1_024))
+            if (_diagnostics.Count >= options.MaximumDiagnostics)
                 throw new SafeCoreMirLimitException("MIR diagnostic limit reached.");
             _diagnostics.Add(new(code, message, source, _function?.Id ?? -1, _block?.Id ?? -1));
         }
@@ -141,13 +162,18 @@ public static class SafeCoreMirValidation
         private bool Type(SafeCoreType? type, int depth = 0)
         {
             Step();
-            if (depth >= Math.Clamp(options.MaximumTypeDepth, 1, 128)) throw new SafeCoreMirLimitException("MIR type nesting limit reached.");
+            if (depth > Math.Clamp(options.MaximumTypeDepth, 1, 128)) throw new SafeCoreMirLimitException("MIR type nesting limit reached.");
             if (type is null || type.Kind is SafeCoreSemanticTypeKind.Inference or SafeCoreSemanticTypeKind.Error)
             {
                 Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "MIR requires a fully resolved non-error type.", _block?.Source ?? _function?.Source);
                 return false;
             }
-            bool valid = true;
+            bool valid = type.Kind != SafeCoreSemanticTypeKind.Array ||
+                type.Length is long length && length >= 0 && length <= MaximumArrayElements;
+            if (!valid)
+                Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                    "MIR fixed-array lengths must be nonnegative and bounded by the aggregate arena limit.",
+                    _block?.Source ?? _function?.Source);
             for (int index = 0; index < type.Elements.Count; index++) valid &= Type(type.Elements[index], depth + 1);
             return valid;
         }
@@ -271,7 +297,7 @@ public static class SafeCoreMirValidation
             if (type.Kind == SafeCoreSemanticTypeKind.Unit) return text == "()";
             if (type.Kind == SafeCoreSemanticTypeKind.Bool) return text is "true" or "false";
             if (type.IsFloat)
-                return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
+                return text == text.Trim() && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
                     && double.IsFinite(value) && (type.Kind != SafeCoreSemanticTypeKind.F32 || float.IsFinite((float)value));
             if ((!type.IsInteger && type.Kind != SafeCoreSemanticTypeKind.Char)
                 || !BigInteger.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out BigInteger number)) return false;
@@ -300,8 +326,10 @@ public static class SafeCoreMirValidation
             int expectedCount = value.Kind switch
             {
                 SafeCoreMirRvalueKind.Use or SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Coerce or SafeCoreMirRvalueKind.Cast => 1,
-                SafeCoreMirRvalueKind.Binary => 2,
+                SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Index => 2,
                 SafeCoreMirRvalueKind.Tuple => value.Type.Kind == SafeCoreSemanticTypeKind.Unit ? 0 : value.Type.Elements.Count,
+                SafeCoreMirRvalueKind.Array => ArrayOperandCount(value.Type),
+                SafeCoreMirRvalueKind.Print => value.Operator == "{}" ? 1 : 0,
                 _ => -1,
             };
             if (expectedCount < 0 || value.Operands.Count != expectedCount)
@@ -309,8 +337,10 @@ public static class SafeCoreMirValidation
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Rvalue operand count or kind is invalid.", value.Source);
                 return;
             }
-            if (value.Kind is not (SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Binary) && value.Operator is not null)
+            if (value.Kind is not (SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Print) && value.Operator is not null)
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Only unary and binary computations carry an operator.", value.Source);
+            if (value.Operator is { Length: > 128 })
+                Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "MIR operators must be bounded.", value.Source);
             SafeCoreType? first = value.Operands.Count > 0 ? value.Operands[0].Type : null;
             bool valid = value.Kind switch
             {
@@ -320,6 +350,9 @@ public static class SafeCoreMirValidation
                 SafeCoreMirRvalueKind.Coerce => Coercion(first!, value.Type),
                 SafeCoreMirRvalueKind.Cast => Cast(first!, value.Type),
                 SafeCoreMirRvalueKind.Tuple => Tuple(value),
+                SafeCoreMirRvalueKind.Array => Array(value),
+                SafeCoreMirRvalueKind.Index => Index(value),
+                SafeCoreMirRvalueKind.Print => Print(value),
                 _ => false,
             };
             if (!valid) Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Rvalue operator and operand/result types are incompatible.", value.Source);
@@ -345,15 +378,38 @@ public static class SafeCoreMirValidation
         private bool Coercion(SafeCoreType from, SafeCoreType to)
         {
             Step();
+            TimeSpan remaining = options.Timeout - _clock.Elapsed;
+            if (remaining <= TimeSpan.Zero)
+                throw new SafeCoreMirLimitException("MIR validation work or time limit reached.");
             var inference = new SafeCoreTypeInference(new()
             {
-                MaximumOperations = Math.Max(1, Math.Clamp(options.MaximumOperations, 1, 1_000_000) - _operations),
+                MaximumOperations = Math.Max(1, Math.Clamp(options.MaximumOperations, 1, 4_000_000) - _operations),
                 MaximumNestingDepth = Math.Clamp(options.MaximumTypeDepth, 1, 128),
-                Timeout = options.Timeout > TimeSpan.Zero ? options.Timeout : TimeSpan.FromSeconds(10),
+                // Coercion is a nested analysis. Give it only the time left in this
+                // validation pass so a large aggregate cannot reset the wall-clock
+                // budget for every element.
+                Timeout = remaining,
                 CancellationToken = options.CancellationToken,
             });
-            try { return inference.Coerce(from, to); }
-            catch (SafeCoreTypeInferenceLimitException) { throw new SafeCoreMirLimitException("MIR coercion work limit reached."); }
+            bool result;
+            try
+            {
+                result = inference.Coerce(from, to);
+            }
+            catch (SafeCoreTypeInferenceLimitException)
+            {
+                throw new SafeCoreMirLimitException("MIR coercion work limit reached.");
+            }
+            finally
+            {
+                // Nested inference has its own counter.  Charge the consumed
+                // steps back to this validator before the next outer Step so
+                // composed MIR/ownership budgets remain global.
+                _operations = (int)Math.Min(int.MaxValue,
+                    (long)_operations + inference.OperationsUsed);
+            }
+
+            return result;
         }
 
         private static bool Cast(SafeCoreType from, SafeCoreType to) =>
@@ -371,6 +427,62 @@ public static class SafeCoreMirValidation
                 if (value.Operands[index].Type != value.Type.Elements[index]) return false;
             }
             return true;
+        }
+
+        private static int ArrayOperandCount(SafeCoreType type) =>
+            type.Kind == SafeCoreSemanticTypeKind.Array && type.Length is long length &&
+            length is >= 0 and <= int.MaxValue ? (int)length : -1;
+
+        private bool Array(SafeCoreMirRvalue value)
+        {
+            if (value.Type.Kind != SafeCoreSemanticTypeKind.Array || value.Type.Length is not long length ||
+                length < 0 || length > MaximumArrayElements || value.Operands.Count != length)
+                return false;
+            for (int index = 0; index < value.Operands.Count; index++)
+            {
+                Step();
+                if (value.Operands[index].Type != value.Type.ElementType) return false;
+            }
+            return true;
+        }
+
+        private static bool Index(SafeCoreMirRvalue value)
+        {
+            if (value.Type.Kind is SafeCoreSemanticTypeKind.Inference or SafeCoreSemanticTypeKind.Error ||
+                value.Operands.Count != 2)
+                return false;
+            SafeCoreType array = value.Operands[0].Type;
+            SafeCoreType index = value.Operands[1].Type;
+            if (array.Kind != SafeCoreSemanticTypeKind.Array || index.Kind != SafeCoreSemanticTypeKind.Usize ||
+                array.Length is not long length || value.Type != array.ElementType)
+                return false;
+            if (value.Operands[1].Kind == SafeCoreMirOperandKind.Constant &&
+                (!BigInteger.TryParse(value.Operands[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out BigInteger constant) ||
+                 constant < 0 || constant >= length))
+                return false;
+            return true;
+        }
+
+        private static bool Print(SafeCoreMirRvalue value)
+        {
+            if (value.Type.Kind != SafeCoreSemanticTypeKind.Unit || value.Operator is null)
+                return false;
+            if (value.Operator == "{}")
+                return value.Operands.Count == 1 && IsDisplayable(value.Operands[0].Type);
+            return value.Operands.Count == 0 &&
+                !value.Operator.Contains('{', StringComparison.Ordinal) &&
+                !value.Operator.Contains('}', StringComparison.Ordinal);
+
+            static bool IsDisplayable(SafeCoreType type) => type.Kind is
+                SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Bool or
+                SafeCoreSemanticTypeKind.Char or SafeCoreSemanticTypeKind.I8 or
+                SafeCoreSemanticTypeKind.I16 or SafeCoreSemanticTypeKind.I32 or
+                SafeCoreSemanticTypeKind.I64 or SafeCoreSemanticTypeKind.I128 or
+                SafeCoreSemanticTypeKind.Isize or SafeCoreSemanticTypeKind.U8 or
+                SafeCoreSemanticTypeKind.U16 or SafeCoreSemanticTypeKind.U32 or
+                SafeCoreSemanticTypeKind.U64 or SafeCoreSemanticTypeKind.U128 or
+                SafeCoreSemanticTypeKind.Usize or SafeCoreSemanticTypeKind.F32 or
+                SafeCoreSemanticTypeKind.F64;
         }
 
         private bool Target(int id, SafeCoreMirSource source)
@@ -434,6 +546,13 @@ public static class SafeCoreMirValidation
 
         private void Call(SafeCoreMirTerminator terminator)
         {
+            if (terminator.Operand?.Kind != SafeCoreMirOperandKind.Function)
+            {
+                Error(SafeCoreMirDiagnosticCodes.UnsupportedNode,
+                    "The safe-core MIR profile supports direct calls only; indirect calls are outside this boundary.",
+                    terminator.Source);
+                return;
+            }
             SafeCoreType? callee = terminator.Operand?.Type;
             if (callee?.Kind != SafeCoreSemanticTypeKind.Function)
             {
@@ -451,6 +570,8 @@ public static class SafeCoreMirValidation
                 Equal(LocalType(destination, terminator.Source), callee.ReturnType, terminator.Source, "Call destination type differs from the function result.");
                 if (callee.ReturnType.Kind == SafeCoreSemanticTypeKind.Never)
                     Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "A diverging call cannot initialize a destination.", terminator.Source);
+                else if (callee.ReturnType.Kind == SafeCoreSemanticTypeKind.Unit)
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "A unit call cannot initialize a MIR destination.", terminator.Source);
             }
             else if (callee.ReturnType.Kind is not (SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Never))
                 Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "A value-returning call requires a destination, including discarded results.", terminator.Source);
@@ -467,9 +588,12 @@ public static class SafeCoreMirValidation
         {
             SafeCoreMirFunction function = _function!;
             var visited = new bool[function.Blocks.Count];
+            var queued = new bool[function.Blocks.Count];
             var pending = new Queue<int>();
-            if (function.EntryBlockId >= 0 && function.EntryBlockId < visited.Length) pending.Enqueue(function.EntryBlockId);
-            for (int iterations = 0; pending.Count > 0 && iterations <= function.Blocks.Count * 2; iterations++)
+            Enqueue(function.EntryBlockId);
+            // Each block is enqueued at most once. The queue therefore remains bounded
+            // by the validated block arena; Step() supplies the shared work/time bound.
+            while (pending.Count > 0)
             {
                 Step();
                 int id = pending.Dequeue();
@@ -493,7 +617,11 @@ public static class SafeCoreMirValidation
             _reachable[function.Id] = reachable.AsReadOnly();
             void Enqueue(int id)
             {
-                if (id >= 0 && id < visited.Length && !visited[id]) pending.Enqueue(id);
+                if (id >= 0 && id < visited.Length && !visited[id] && !queued[id])
+                {
+                    queued[id] = true;
+                    pending.Enqueue(id);
+                }
             }
         }
     }

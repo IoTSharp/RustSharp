@@ -283,18 +283,37 @@ public static class SafeCoreTypeChecking
                     break;
                 case SafeCoreHirNodeKind.CallExpression:
                     SafeCoreHirNode callee = Child(node, 0);
-                    if (callee.Kind != SafeCoreHirNodeKind.NameExpression || callee.ReferencedSymbol is null ||
-                        !_signatures.ContainsKey(callee.ReferencedSymbol.ResolvedImportTargetQualifiedName ?? callee.ReferencedSymbol.QualifiedName))
+                    if (callee.Kind != SafeCoreHirNodeKind.NameExpression || callee.ReferencedSymbol is null)
                         Fail(callee, "RST1001", "Only direct calls to declared functions are supported.");
-                    SafeCoreTypedFunction target = _signatures[callee.ReferencedSymbol!.ResolvedImportTargetQualifiedName ?? callee.ReferencedSymbol.QualifiedName];
-                    if (node.ChildIds.Count - 1 != target.Parameters.Count)
-                        Fail(node, "RST1004", "The argument count does not match the function signature.");
-                    type = target.ReturnType;
-                    for (int index = 0; index < target.Parameters.Count; index++)
+                    if (callee.ReferencedSymbol!.ExternalFunction is { } external)
                     {
-                        SafeCorePrimitiveType argument = Expression(Child(node, index + 1), depth + 1);
-                        Require(target.Parameters[index].Type, argument, Child(node, index + 1));
-                        if (argument == SafeCorePrimitiveType.Never) type = argument;
+                        (SafeCorePrimitiveType[] parameters, SafeCorePrimitiveType returnType) =
+                            ParseExternalSignature(external, callee);
+                        if (node.ChildIds.Count - 1 != parameters.Length)
+                            Fail(node, "RST1004", "The argument count does not match the function signature.");
+                        type = returnType;
+                        for (int index = 0; index < parameters.Length; index++)
+                        {
+                            SafeCorePrimitiveType argument = Expression(Child(node, index + 1), depth + 1);
+                            Require(parameters[index], argument, Child(node, index + 1));
+                            if (argument == SafeCorePrimitiveType.Never) type = argument;
+                        }
+                    }
+                    else
+                    {
+                        string targetName = callee.ReferencedSymbol.ResolvedImportTargetQualifiedName ??
+                            callee.ReferencedSymbol.QualifiedName;
+                        if (!_signatures.TryGetValue(targetName, out SafeCoreTypedFunction? target))
+                            Fail(callee, "RST1001", "Only direct calls to declared functions are supported.");
+                        if (node.ChildIds.Count - 1 != target.Parameters.Count)
+                            Fail(node, "RST1004", "The argument count does not match the function signature.");
+                        type = target.ReturnType;
+                        for (int index = 0; index < target.Parameters.Count; index++)
+                        {
+                            SafeCorePrimitiveType argument = Expression(Child(node, index + 1), depth + 1);
+                            Require(target.Parameters[index].Type, argument, Child(node, index + 1));
+                            if (argument == SafeCorePrimitiveType.Never) type = argument;
+                        }
                     }
 
                     break;
@@ -402,6 +421,44 @@ public static class SafeCoreTypeChecking
                 Fail(format, "RST1001", "Literal-only println! does not support braces in this profile.");
             _printFormats[node.Id] = text;
             return SafeCorePrimitiveType.Unit;
+        }
+
+        private static (SafeCorePrimitiveType[] Parameters, SafeCorePrimitiveType ReturnType)
+            ParseExternalSignature(SafeCoreExternalFunction function, SafeCoreHirNode node)
+        {
+            int arrow = function.Signature.IndexOf("->", StringComparison.Ordinal);
+            if (arrow < 0 || function.Signature.IndexOf("->", arrow + 2, StringComparison.Ordinal) >= 0)
+                Fail(node, "RST1001", "The imported function has an invalid scalar signature.");
+
+            string parameterText = function.Signature[..arrow];
+            string returnText = function.Signature[(arrow + 2)..];
+            var parameters = new List<SafeCorePrimitiveType>();
+            if (!string.IsNullOrWhiteSpace(parameterText))
+            {
+                foreach (string token in parameterText.Split(',', StringSplitOptions.None))
+                {
+                    SafeCorePrimitiveType type = default;
+                    if (parameters.Count >= 128 || !TryParseExternalType(token, out type))
+                        Fail(node, "RST1001", "The imported function uses an unsupported scalar signature.");
+                    parameters.Add(type);
+                }
+            }
+
+            if (!TryParseExternalType(returnText, out SafeCorePrimitiveType result))
+                Fail(node, "RST1001", "The imported function uses an unsupported scalar signature.");
+            return ([.. parameters], result);
+
+            static bool TryParseExternalType(string text, out SafeCorePrimitiveType type)
+            {
+                type = text.Trim() switch
+                {
+                    "Void" or "Unit" => SafeCorePrimitiveType.Unit,
+                    "I32" => SafeCorePrimitiveType.I32,
+                    "Bool" => SafeCorePrimitiveType.Bool,
+                    _ => default,
+                };
+                return text.Trim() is "Void" or "Unit" or "I32" or "Bool";
+            }
         }
 
         private SafeCorePrimitiveType Type(SafeCoreHirNode node)

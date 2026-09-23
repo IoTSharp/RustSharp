@@ -2,8 +2,43 @@ using System.Collections.Immutable;
 
 namespace RustSharp.Syntax;
 
+/// <summary>
+/// A bounded exported function supplied by an independently compiled Rust#
+/// assembly. The signature uses the CLR-LIR spelling (for example
+/// <c>I32,I32-&gt;I32</c>) so the syntax layer stays independent of the backend
+/// type model; profile-specific semantic passes validate the supported subset.
+/// </summary>
+public sealed record SafeCoreExternalFunction(
+    string SourceQualifiedName,
+    string ClrName,
+    string Signature,
+    string AssemblyName,
+    string AssemblyPath,
+    bool IsPublic = true)
+{
+    /// <summary>CLR namespace containing generated Rust# program types.</summary>
+    public string ClrNamespace { get; init; } = "RustSharp.Generated";
+
+    /// <summary>CLR type containing the exported static method.</summary>
+    public string ClrTypeName { get; init; } = "Program";
+
+    /// <summary>Short source name used under the dependency module.</summary>
+    public string SourceName
+    {
+        get
+        {
+            int separator = SourceQualifiedName.LastIndexOf("::", StringComparison.Ordinal);
+            return separator < 0 ? SourceQualifiedName : SourceQualifiedName[(separator + 2)..];
+        }
+    }
+}
+
 /// <summary>A source-linked Cargo crate and its direct extern-prelude dependencies.</summary>
-public sealed record SafeCoreCrate(string ScopePath, string Identity, ImmutableDictionary<string, string> Dependencies);
+public sealed record SafeCoreCrate(string ScopePath, string Identity, ImmutableDictionary<string, string> Dependencies)
+{
+    /// <summary>Exports supplied by an independently compiled dependency.</summary>
+    public ImmutableArray<SafeCoreExternalFunction> Exports { get; init; } = [];
+}
 
 /// <summary>
 /// Bounds for the experimental safe-core name-resolution prototype. These
@@ -102,6 +137,9 @@ public sealed record SafeCoreSymbol(
 
     /// <summary>An underscore import validates its target without introducing a lookup name.</summary>
     public bool IsAnonymousImport { get; init; }
+
+    /// <summary>Non-null when this symbol is backed by an independently compiled crate.</summary>
+    public SafeCoreExternalFunction? ExternalFunction { get; init; }
 }
 
 /// <summary>A lexical/module scope and its directly declared symbols.</summary>

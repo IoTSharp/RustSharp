@@ -16,6 +16,14 @@ internal static class SafeCoreOwnershipTests
         new("ownership CFG cleans only entered branch scopes", BranchScopeCleanupAsync),
         new("ownership CFG rejects owner assignment during mutable borrow", MutableOwnerWriteAsync),
         new("ownership CFG validates nested reborrows and scope escapes", ReborrowAndScopeEscapeAsync),
+        new("ownership CFG tracks partial move paths", PartialMovePathAsync),
+        new("ownership CFG rejects overlapping projected moves", OverlappingMovePathAsync),
+        new("ownership CFG rejects projected moves out of Drop values", PartialMoveDropBoundaryAsync),
+        new("ownership CFG isolates projection keys by local ID", ProjectionKeyIsolationAsync),
+        new("ownership CFG isolates structural field projection keys", StructuralProjectionKeyIsolationAsync),
+        new("ownership CFG rejects projected Drop boundaries and repeats", ProjectedDropValidationAsync),
+        new("ownership CFG permits concurrent shared reborrows", SharedReborrowAsync),
+        new("ownership CFG can infer non-lexical borrow ends", InferredNllAsync),
     ];
 
     private static Task NormalDropAsync()
@@ -318,6 +326,206 @@ internal static class SafeCoreOwnershipTests
         AssertEx.False(escapedResult.IsSuccessful, "A reference in an outer scope must not outlive an inner owner.");
         AssertEx.True(escapedResult.Diagnostics.Any(diagnostic => diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.Escape),
             "Scope transition must preserve owner-to-reference escape evidence.");
+        return Task.CompletedTask;
+    }
+
+    private static Task PartialMovePathAsync()
+    {
+        SafeCoreType pair = SafeCoreType.Tuple([Type(SafeCoreSemanticTypeKind.I32), Type(SafeCoreSemanticTypeKind.I32)]);
+        SafeCoreOwnershipPlace first = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(0));
+        SafeCoreOwnershipFunction function = Function(
+            [
+                Local(0, "pair", pair, SafeCoreOwnershipKind.Move, initiallyInitialized: true),
+                Local(1, "slot", Type(SafeCoreSemanticTypeKind.I32), SafeCoreOwnershipKind.Move, initiallyInitialized: false),
+            ],
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Move(first, SafeCoreOwnershipPlace.Root(1), Source(1)),
+                SafeCoreOwnershipInstruction.Use(0, Source(2)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(3)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "Using an aggregate after a projected move must be rejected.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.UseAfterMove, result.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static Task SharedReborrowAsync()
+    {
+        SafeCoreType reference = SafeCoreType.Reference(Type(SafeCoreSemanticTypeKind.I32), mutable: false);
+        SafeCoreOwnershipFunction function = Function(
+            [
+                Local(0, "owner"),
+                Local(1, "parent", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+                Local(2, "left", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+                Local(3, "right", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+            ],
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Borrow(0, 1, mutable: false, Source(1)),
+                SafeCoreOwnershipInstruction.Borrow(1, 2, mutable: false, Source(2)),
+                SafeCoreOwnershipInstruction.Borrow(1, 3, mutable: false, Source(3)),
+                SafeCoreOwnershipInstruction.Use(1, Source(4)),
+                SafeCoreOwnershipInstruction.EndBorrow(3, Source(5)),
+                SafeCoreOwnershipInstruction.Use(1, Source(6)),
+                SafeCoreOwnershipInstruction.EndBorrow(2, Source(7)),
+                SafeCoreOwnershipInstruction.Use(1, Source(8)),
+                SafeCoreOwnershipInstruction.EndBorrow(1, Source(9)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(10)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        return Task.CompletedTask;
+    }
+
+    private static Task OverlappingMovePathAsync()
+    {
+        SafeCoreType pair = SafeCoreType.Tuple([Type(SafeCoreSemanticTypeKind.I32), Type(SafeCoreSemanticTypeKind.I32)]);
+        SafeCoreOwnershipPlace whole = SafeCoreOwnershipPlace.Root(0);
+        SafeCoreOwnershipPlace first = whole.Append(SafeCoreOwnershipProjection.TupleIndex(0));
+        SafeCoreOwnershipFunction function = Function(
+            [Local(0, "pair", pair, SafeCoreOwnershipKind.Move, initiallyInitialized: true)],
+            [Block(0, [SafeCoreOwnershipInstruction.Move(whole, first, Source(1))],
+                SafeCoreOwnershipTerminator.ReturnUnit(Source(2)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "A move must not use an ancestor and descendant of the same place.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath, result.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static Task ProjectionKeyIsolationAsync()
+    {
+        SafeCoreType pair = SafeCoreType.Tuple([Type(SafeCoreSemanticTypeKind.I32), Type(SafeCoreSemanticTypeKind.I32)]);
+        var locals = new List<SafeCoreOwnershipLocal>
+        {
+            Local(0, "slot", Type(SafeCoreSemanticTypeKind.I32), SafeCoreOwnershipKind.Move, initiallyInitialized: false),
+            Local(1, "replacement", Type(SafeCoreSemanticTypeKind.I32), SafeCoreOwnershipKind.Move, initiallyInitialized: true),
+        };
+        for (int id = 2; id < 10; id++)
+            locals.Add(Local(id, $"value{id}",
+                Type(SafeCoreSemanticTypeKind.I32), SafeCoreOwnershipKind.Move, initiallyInitialized: true));
+        locals.Add(Local(10, "pair", pair, SafeCoreOwnershipKind.Move, initiallyInitialized: true));
+
+        SafeCoreOwnershipPlace first = SafeCoreOwnershipPlace.Root(10)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(0));
+        SafeCoreOwnershipFunction function = Function(
+            locals,
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Move(first, SafeCoreOwnershipPlace.Root(0), Source(1)),
+                SafeCoreOwnershipInstruction.Assign(1, Source(2)),
+                SafeCoreOwnershipInstruction.Use(10, Source(3)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(4)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "A partial move must remain visible after another local is assigned.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.UseAfterMove, result.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static Task PartialMoveDropBoundaryAsync()
+    {
+        SafeCoreType pair = SafeCoreType.Tuple([Type(SafeCoreSemanticTypeKind.I32), Type(SafeCoreSemanticTypeKind.I32)]);
+        SafeCoreOwnershipPlace first = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(0));
+        SafeCoreOwnershipFunction function = Function(
+            [
+                Local(0, "pair", pair, SafeCoreOwnershipKind.Move, hasDrop: true, initiallyInitialized: true),
+                Local(1, "slot", Type(SafeCoreSemanticTypeKind.I32), SafeCoreOwnershipKind.Move, initiallyInitialized: false),
+            ],
+            [Block(0, [SafeCoreOwnershipInstruction.Move(first, SafeCoreOwnershipPlace.Root(1), Source(1))],
+                SafeCoreOwnershipTerminator.ReturnUnit(Source(2)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "A Drop value must not permit an untracked partial move.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath, result.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static Task StructuralProjectionKeyIsolationAsync()
+    {
+        SafeCoreType aggregate = Type(SafeCoreSemanticTypeKind.Adt);
+        SafeCoreOwnershipPlace dottedField = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.Field("a.b"));
+        SafeCoreOwnershipPlace nestedField = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.Field("a"))
+            .Append(SafeCoreOwnershipProjection.Field("b"));
+        SafeCoreOwnershipFunction function = Function(
+            [
+                Local(0, "aggregate", aggregate, SafeCoreOwnershipKind.Move, initiallyInitialized: true),
+                Local(1, "first", Type(SafeCoreSemanticTypeKind.I32), SafeCoreOwnershipKind.Move, initiallyInitialized: false),
+            ],
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Move(dottedField, SafeCoreOwnershipPlace.Root(1), Source(1)),
+                SafeCoreOwnershipInstruction.Use(nestedField, Source(2)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(3)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.True(result.IsSuccessful,
+            "A field named 'a.b' must not collide with the structural path a -> b: " +
+            string.Join(Environment.NewLine, result.Diagnostics));
+        return Task.CompletedTask;
+    }
+
+    private static Task ProjectedDropValidationAsync()
+    {
+        SafeCoreType pair = SafeCoreType.Tuple([Type(SafeCoreSemanticTypeKind.I32), Type(SafeCoreSemanticTypeKind.I32)]);
+        SafeCoreOwnershipPlace first = SafeCoreOwnershipPlace.Root(0)
+            .Append(SafeCoreOwnershipProjection.TupleIndex(0));
+
+        SafeCoreOwnershipFunction dropBoundary = Function(
+            [Local(0, "pair", pair, SafeCoreOwnershipKind.Move, hasDrop: true, initiallyInitialized: true)],
+            [Block(0, [SafeCoreOwnershipInstruction.Drop(first, Source(1))],
+                SafeCoreOwnershipTerminator.ReturnUnit(Source(2)))]);
+        SafeCoreOwnershipAnalysisResult boundaryResult = SafeCoreOwnershipAnalysis.Analyze(new([dropBoundary]));
+        AssertEx.False(boundaryResult.IsSuccessful,
+            "A projected Drop must be rejected when the aggregate owns an unmodeled destructor.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.InvalidDrop, boundaryResult.Diagnostics.Single().Code);
+
+        SafeCoreOwnershipFunction repeated = Function(
+            [Local(0, "pair", pair, SafeCoreOwnershipKind.Move, initiallyInitialized: true)],
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Drop(first, Source(3)),
+                SafeCoreOwnershipInstruction.Drop(first, Source(4)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(5)))]);
+        SafeCoreOwnershipAnalysisResult repeatedResult = SafeCoreOwnershipAnalysis.Analyze(new([repeated]));
+        AssertEx.False(repeatedResult.IsSuccessful, "Dropping the same projected place twice must be rejected.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.UseAfterMove, repeatedResult.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static Task InferredNllAsync()
+    {
+        SafeCoreOwnershipFunction function = Function(
+            [
+                Local(0, "owner"),
+                Local(1, "view", Type(SafeCoreSemanticTypeKind.Reference), SafeCoreOwnershipKind.Move,
+                    reference: true, initiallyInitialized: false),
+            ],
+            [Block(0, [
+                SafeCoreOwnershipInstruction.Borrow(0, 1, mutable: false, Source(1)),
+                SafeCoreOwnershipInstruction.Use(1, Source(2)),
+                SafeCoreOwnershipInstruction.Use(0, Source(3)),
+            ], SafeCoreOwnershipTerminator.ReturnUnit(Source(4))) ]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]),
+            new SafeCoreOwnershipOptions { InferNonLexicalLifetimes = true });
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        AssertEx.True(result.Paths.Single().Trace.Any(trace => trace.StartsWith("nll_end", StringComparison.Ordinal)),
+            "The inferred NLL boundary must be visible in the deterministic trace.");
+
+        SafeCoreOwnershipFunction escaped = Function(
+            [
+                Local(0, "owner"),
+                Local(1, "returned_view", Type(SafeCoreSemanticTypeKind.Reference), SafeCoreOwnershipKind.Move,
+                    reference: true, initiallyInitialized: false),
+            ],
+            [Block(0, [SafeCoreOwnershipInstruction.Borrow(0, 1, mutable: false, Source(5))],
+                SafeCoreOwnershipTerminator.Return(1, Source(6)))]);
+        SafeCoreOwnershipAnalysisResult escapedResult = SafeCoreOwnershipAnalysis.Analyze(
+            new([escaped]), new SafeCoreOwnershipOptions { InferNll = true });
+        AssertEx.False(escapedResult.IsSuccessful, "Returning a borrowed reference must remain an escape error under inferred NLL.");
+        AssertEx.True(escapedResult.Diagnostics.Any(diagnostic => diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.Escape),
+            "The return operand must keep the borrow live until the terminator is checked.");
         return Task.CompletedTask;
     }
 

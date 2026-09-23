@@ -490,6 +490,7 @@ public static partial class SafeCoreTypeAnalysis
                         }
                     for (int i = 1; i < node.ChildIds.Count; i++) Expr(Child(node, i), callee.ParameterTypes[i - 1], depth + 1);
                     type = callee.ReturnType!; break;
+                case N.PrintExpression: type = Print(node, depth + 1); break;
                 case N.IfExpression:
                     Expr(Child(node, 0), Primitive(K.Bool), depth + 1);
                     SafeCoreType then = Expr(Child(node, 1), node.ChildIds.Count == 2 ? Primitive(K.Unit) : expected, depth + 1);

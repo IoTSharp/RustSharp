@@ -14,6 +14,9 @@ internal static class VerticalProofTests
         new("managed owner preserves deterministic drop scope", DropScopeAsync),
         new("managed hybrid pins and releases an array", PinnedArrayAsync),
         new("managed interop uses explicit AOT-safe boundary", ManagedInteropAsync),
+        new("panic boundary unwinds DropScope deterministically", PanicUnwindAsync),
+        new("panic boundary abort leaves DropScope untouched", PanicAbortAsync),
+        new("DropScope continues after a destructor failure", DropFailureAsync),
     ];
 
     private static Task GenericOptionAsync()
@@ -114,6 +117,49 @@ internal static class VerticalProofTests
         AssertEx.True(pinned.Address != 0, "A pinned array must expose a non-zero address.");
         pinned.Dispose();
         AssertEx.Throws<ObjectDisposedException>(() => _ = pinned.Address);
+        return Task.CompletedTask;
+    }
+
+    private static Task PanicUnwindAsync()
+    {
+        var order = new List<int>();
+        using var scope = new DropScope();
+        scope.Track(new RecordingDisposable(() => order.Add(1)));
+        scope.Track(new RecordingDisposable(() => order.Add(2)));
+        RustPanicReport report = RustPanicBoundary.Run(() => RustPanicBoundary.Panic("boom"), scope);
+        AssertEx.Equal(RustPanicOutcome.Unwound, report.Outcome);
+        AssertEx.True(report.CleanupAttempted && report.CleanupCompleted, "Unwind must clean the owned scope.");
+        AssertEx.Equal("2,1", string.Join(',', order));
+        AssertEx.True(scope.IsDisposed && scope.TrackedCount == 0, "Unwind must consume the scope exactly once.");
+        return Task.CompletedTask;
+    }
+
+    private static Task PanicAbortAsync()
+    {
+        var order = new List<int>();
+        var scope = new DropScope();
+        scope.Track(new RecordingDisposable(() => order.Add(1)));
+        RustPanicReport report = RustPanicBoundary.Run(() => RustPanicBoundary.Panic("abort"), scope,
+            RustPanicStrategy.Abort);
+        AssertEx.Equal(RustPanicOutcome.Aborted, report.Outcome);
+        AssertEx.False(report.CleanupAttempted, "Abort must not run scope cleanup.");
+        AssertEx.Equal(string.Empty, string.Join(',', order));
+        AssertEx.False(scope.IsDisposed, "Abort leaves the scope for the host termination policy.");
+        scope.Dispose();
+        return Task.CompletedTask;
+    }
+
+    private static Task DropFailureAsync()
+    {
+        var order = new List<int>();
+        using var scope = new DropScope();
+        scope.Track(new RecordingDisposable(() => order.Add(1)));
+        scope.Track(new RecordingDisposable(() => throw new InvalidOperationException("first failure")));
+        scope.Track(new RecordingDisposable(() => order.Add(3)));
+        InvalidOperationException failure = AssertEx.Throws<InvalidOperationException>(() => scope.Dispose());
+        AssertEx.Equal("3,1", string.Join(',', order));
+        AssertEx.Equal("first failure", failure.Message);
+        AssertEx.True(scope.IsDisposed && scope.TrackedCount == 0, "A failed cleanup still consumes the scope.");
         return Task.CompletedTask;
     }
 

@@ -1,5 +1,10 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using System.Text;
+using RustSharp.CodeGen.IL;
 using RustSharp.Semantics;
 using RustSharp.Syntax;
 
@@ -14,6 +19,7 @@ internal static class SafeCoreMirLoweringTests
         new("MIR lowering preserves branches loops break continue and direct calls", ControlFlowAsync),
         new("MIR lowering snapshots reads before later side effects", EvaluationOrderAsync),
         new("MIR lowering emits typed tuple aggregates", TupleAsync),
+        new("MIR lowering emits bounded array aggregates and fixed indexing", ArrayAsync),
         new("MIR lowering short circuits and drops unreachable tails", DivergenceAsync),
         new("MIR lowering rejects unsupported constructs at their original spans", UnsupportedAsync),
         new("MIR lowering bounds work size nesting time and cancellation", LimitsAsync),
@@ -38,6 +44,7 @@ internal static class SafeCoreMirLoweringTests
         AssertEx.Equal("1,2", string.Join(',', statement.Value.Operands.Select(o => o.Value)));
         AssertEx.Equal(SafeCoreMirTerminatorKind.Return, function.Blocks[0].Terminator.Kind);
         AssertEx.Equal(statement.DestinationLocalId, function.Blocks[0].Terminator.Operand!.Id);
+        PrivateVisibilityAssertions();
         return Task.CompletedTask;
     }
 
@@ -100,7 +107,106 @@ internal static class SafeCoreMirLoweringTests
         AssertEx.Equal("1,true", string.Join(',', tuple.Value.Operands.Select(operand => operand.Value)));
         AssertEx.True(SafeCoreMirValidation.Validate(mir).IsSuccessful,
             "Tuple lowering must publish a valid typed MIR program.");
+
+        // Aggregate rvalues retain their recursive shape and each leaf keeps the
+        // originating HIR span; this is the source/MIR contract used by later
+        // ownership and backend passes.
+        SafeCoreTypeAnalysisProgram nestedTypes = Check(
+            "fn nested() -> ((i32, bool), (i32, (bool, i32))) { ((1, true), (2, (false, 3))) }",
+            cancellation.Token);
+        SafeCoreMirProgram nested = Lower(nestedTypes, cancellation.Token);
+        SafeCoreMirFunction nestedFunction = nested.Functions.Single();
+        SafeCoreMirStatement nestedStatement = nestedFunction.Blocks[0].Statements
+            .Last(statement => statement.Value.Kind == SafeCoreMirRvalueKind.Tuple && statement.Value.Type == nestedFunction.ReturnType);
+        AssertEx.Equal(SafeCoreMirRvalueKind.Tuple, nestedStatement.Value.Kind);
+        AssertEx.Equal(2, nestedStatement.Value.Operands.Count);
+        AssertEx.True(nestedStatement.Value.Operands.All(operand => operand.Type.Kind == SafeCoreSemanticTypeKind.Tuple),
+            "Nested tuple operands must remain typed aggregate values.");
+        SafeCoreMirRvalue firstAggregate = nestedStatement.Value;
+        AssertEx.Equal(2, firstAggregate.Operands[0].Type.Elements.Count);
+        AssertEx.Equal(2, firstAggregate.Operands[1].Type.Elements.Count);
+        SafeCoreMirOperand nestedReturn = nestedFunction.Blocks[^1].Terminator.Operand!;
+        SafeCoreMirSource nestedSource = nestedReturn.Source;
+        AssertEx.Equal("mir-lowering.rs", nestedSource.SourcePath);
+        AssertEx.Equal(nestedTypes.Hir.GetNode(nestedSource.HirNodeId).Span, nestedSource.Span);
+        AssertEx.True(nestedSource.Span.End <= nestedSource.SourceLength,
+            "Nested aggregate source evidence must remain inside the HIR extent.");
+        AssertEx.True(SafeCoreMirValidation.Validate(nested).IsSuccessful,
+            "Nested tuple lowering must publish a structurally valid MIR graph.");
         return Task.CompletedTask;
+    }
+
+    private static Task ArrayAsync()
+    {
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        const string source = "fn values() -> [i32; 3] { [1, 2, 3] } " +
+            "fn pick() -> i32 { let values: [i32; 3] = [4, 5, 6]; values[1] }";
+        SafeCoreTypeAnalysisProgram typed = Check(source, cancellation.Token);
+        SafeCoreMirProgram mir = Lower(typed, cancellation.Token);
+
+        SafeCoreMirFunction values = mir.Functions.Single(function => function.Name == "crate::values#value");
+        SafeCoreMirStatement array = values.Blocks.SelectMany(block => block.Statements)
+            .Single(statement => statement.Value.Kind == SafeCoreMirRvalueKind.Array);
+        AssertEx.Equal(SafeCoreSemanticTypeKind.Array, array.Value.Type.Kind);
+        AssertEx.Equal(3L, array.Value.Type.Length!.Value);
+        AssertEx.Equal(3, array.Value.Operands.Count);
+        AssertEx.True(array.Value.Operands.All(operand => operand.Type == array.Value.Type.ElementType),
+            "Every fixed-array element must retain the declared element type.");
+
+        SafeCoreMirFunction pick = mir.Functions.Single(function => function.Name == "crate::pick#value");
+        SafeCoreMirStatement index = pick.Blocks.SelectMany(block => block.Statements)
+            .Single(statement => statement.Value.Kind == SafeCoreMirRvalueKind.Index);
+        AssertEx.Equal(SafeCoreSemanticTypeKind.I32, index.Value.Type.Kind);
+        AssertEx.Equal(SafeCoreSemanticTypeKind.Array, index.Value.Operands[0].Type.Kind);
+        AssertEx.Equal(SafeCoreSemanticTypeKind.Usize, index.Value.Operands[1].Type.Kind);
+        AssertEx.Equal("1", index.Value.Operands[1].Value!);
+        AssertEx.True(SafeCoreMirValidation.Validate(mir).IsSuccessful,
+            "Array construction and fixed indexing must publish valid typed MIR.");
+
+        string snapshot = SafeCoreMirFormatting.Format(mir);
+        AssertEx.True(snapshot.Contains("array(const 1:i32, const 2:i32, const 3:i32)", StringComparison.Ordinal),
+            "Array construction must be represented explicitly in deterministic MIR text.");
+        AssertEx.True(snapshot.Contains("index(%", StringComparison.Ordinal),
+            "Indexing must be represented as an explicit MIR rvalue.");
+
+        SafeCoreMirLoweringResult outOfBounds = SafeCoreMirLowering.Lower(
+            Check("fn bad() -> i32 { [1, 2][2] }", cancellation.Token),
+            new() { Timeout = TimeSpan.FromSeconds(5) }, cancellation.Token);
+        AssertEx.False(outOfBounds.IsSuccessful, "A statically out-of-bounds fixed-array index must be rejected.");
+        AssertEx.Equal(SafeCoreMirLowering.InvalidEvidence, outOfBounds.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static void PrivateVisibilityAssertions()
+    {
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        const string source = "fn helper() -> i32 { 7 } fn main() { helper(); }";
+        SafeCoreMirProgram mir = Lower(Check(source, cancellation.Token), cancellation.Token);
+        SafeCoreMirFunction helper = mir.Functions.Single(function => function.Name == "crate::helper#value");
+        AssertEx.False(helper.IsPublic, "A private source function must retain private MIR visibility evidence.");
+
+        SafeCoreClrResult lowered = SafeCoreMirClrLowering.Lower(mir, cancellation.Token);
+        AssertEx.True(lowered.IsSuccessful, string.Join("; ", lowered.Diagnostics));
+        ClrLirMethod helperMethod = lowered.Methods.Single(method => method.SourceQualifiedName == helper.Name);
+        AssertEx.False(helperMethod.IsPublic, "MIR-to-LIR lowering must preserve private visibility.");
+
+        GeneratedAssembly generated = ClrLirAssemblyEmitter.EmitProgram(
+            lowered, "MirVisibility", source, "mir-visibility.rs", "MirVisibility.pdb",
+            Encoding.UTF8.GetBytes(source), cancellationToken: cancellation.Token);
+        using var pe = new PEReader(new MemoryStream(generated.PeImage, writable: false));
+        MetadataReader metadata = pe.GetMetadataReader();
+        TypeDefinition program = metadata.TypeDefinitions
+            .Select(metadata.GetTypeDefinition)
+            .Single(type => metadata.GetString(type.Namespace) == "RustSharp.Generated" &&
+                metadata.GetString(type.Name) == "Program");
+        MethodDefinition method = program.GetMethods()
+            .Select(metadata.GetMethodDefinition)
+            .Single(candidate => metadata.GetString(candidate.Name) == "fn_0");
+        MethodAttributes access = method.Attributes & MethodAttributes.MemberAccessMask;
+        AssertEx.Equal(MethodAttributes.Assembly, access,
+            "A private MIR function must be emitted as an assembly-visible MethodDef, not public.");
+        AssertEx.True((method.Attributes & MethodAttributes.Static) != 0,
+            "Generated MIR functions remain static MethodDefs.");
     }
 
     private static Task DivergenceAsync()
@@ -125,10 +231,11 @@ internal static class SafeCoreMirLoweringTests
     {
         (string Source, string Span)[] cases =
         [
-            ("fn f() { let x = [1, 2]; }", "[1, 2]"),
+            ("fn f() { let x = [1; 2]; }", "[1; 2]"),
             ("fn f() { let x = || 1; }", "|| 1"),
             ("fn f() -> i32 { match true { true => 1, false => 2 } }", "match true { true => 1, false => 2 }"),
             ("fn f() { let x = &1; }", "&1"),
+            ("fn f(value: &i32) { let _ = value; }", "&i32"),
             ("const X: i32 = 1; fn f() -> i32 { X }", "const X: i32 = 1;"),
             ("fn id() {} fn f() { let p = id; p(); }", "id"),
         ];
@@ -164,6 +271,13 @@ internal static class SafeCoreMirLoweringTests
             AssertEx.True(result.IsTruncated && result.Program is null, "Each configured bound must reject without a partial program.");
             AssertEx.Equal(SafeCoreMirLowering.LimitReached, result.Diagnostics.Single().Code);
         }
+        SafeCoreTypeAnalysisProgram nested = Check(
+            "fn nested() -> ((i32, bool), i32) { ((1, true), 2) }", cancellation.Token);
+        SafeCoreMirLoweringResult nestedLimited = SafeCoreMirLowering.Lower(nested,
+            new() { MaximumNestingDepth = 1 }, cancellation.Token);
+        AssertEx.True(nestedLimited.IsTruncated && nestedLimited.Program is null,
+            "Configured nesting limits must apply to recursive aggregate types.");
+        AssertEx.Equal(SafeCoreMirLowering.LimitReached, nestedLimited.Diagnostics.Single().Code);
         var missing = typed with { Types = new Dictionary<int, SafeCoreType>() };
         AssertEx.Equal(SafeCoreMirLowering.InvalidEvidence,
             SafeCoreMirLowering.Lower(missing, cancellationToken: cancellation.Token).Diagnostics.Single().Code);
@@ -171,6 +285,25 @@ internal static class SafeCoreMirLoweringTests
         cancelled.Cancel();
         AssertEx.Throws<OperationCanceledException>(() => SafeCoreMirLowering.Lower(typed, cancellationToken: cancelled.Token));
         AssertEx.Throws<ArgumentOutOfRangeException>(() => SafeCoreMirLowering.Lower(typed, new() { Timeout = TimeSpan.Zero }));
+
+        // Snapshot formatting is part of the source-to-MIR pipeline contract.
+        // A formatter limit must become bounded evidence, while retaining the
+        // already validated MIR, rather than escaping as an exception.
+        SafeCoreMirPipelineResult snapshotLimited = SafeCoreMirPipeline.Analyze(
+            "fn helper() -> i32 { 1 } fn main() { helper(); }",
+            "pipeline-format-limit.rs",
+            new SafeCoreMirPipelineOptions
+            {
+                Timeout = TimeSpan.FromSeconds(5),
+                MaximumSnapshotCharacters = 1,
+            });
+        AssertEx.True(snapshotLimited.IsTruncated, "A snapshot character limit must truncate the pipeline.");
+        AssertEx.False(snapshotLimited.IsSuccessful, "A truncated snapshot cannot publish a successful pipeline.");
+        AssertEx.True(snapshotLimited.Mir is { IsSuccessful: true },
+            "Snapshot failure must retain the already validated MIR evidence.");
+        AssertEx.Equal(SafeCoreMirDiagnosticCodes.LimitReached, snapshotLimited.Diagnostics.Single().Code);
+        AssertEx.Equal("pipeline-format-limit.rs", snapshotLimited.Diagnostics.Single().SourcePath!);
+        AssertEx.True(snapshotLimited.MirSnapshot is null, "A rejected snapshot must not publish partial text.");
         return Task.CompletedTask;
     }
 

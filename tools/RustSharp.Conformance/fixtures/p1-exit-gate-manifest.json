@@ -1,0 +1,33 @@
+{
+  "profile": "p1-exit-gate-v1",
+  "version": 1,
+  "scope": "in-process-library-contracts",
+  "denominator": 5,
+  "limits": {
+    "maximumCases": 8,
+    "caseTimeoutMilliseconds": 5000,
+    "deadlineSeconds": 60
+  },
+  "cases": [
+    {
+      "id": "typed-mir-validation",
+      "probe": "typed-mir-validation"
+    },
+    {
+      "id": "ownership-bridge",
+      "probe": "ownership-bridge"
+    },
+    {
+      "id": "drop-order",
+      "probe": "drop-order"
+    },
+    {
+      "id": "panic-unwind",
+      "probe": "panic-unwind"
+    },
+    {
+      "id": "metadata-consumer",
+      "probe": "metadata-consumer"
+    }
+  ]
+}

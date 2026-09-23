@@ -6,4 +6,6 @@ public enum CompilationProfile
     SafeCorePrimitives,
     SafeCoreTypes,
     SafeCoreGenerics,
+    /// <summary>Bounded typed-MIR and ownership evidence profile.</summary>
+    SafeCoreMir,
 }

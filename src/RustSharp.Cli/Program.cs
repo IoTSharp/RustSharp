@@ -212,6 +212,7 @@ internal static class Program
               --profile safe-core-primitives-v1   (i32/bool functions, locals, branches)
               --profile safe-core-types-v1        (check only: aggregates, references, inference)
               --profile safe-core-generics-v1     (closed generic functions, value types and marker traits)
+              --profile safe-core-mir-p1-v1       (bounded typed MIR, source mapping and ownership evidence)
 
             safe-core-types-v1 accepts check; build, compile, run and publish report RSC0009.
             """);

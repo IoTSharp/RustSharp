@@ -172,6 +172,11 @@ internal static partial class SafeCoreRegressionProfileRunner
                 {
                     throw new ArgumentException("Fixture '" + fixture.Id + "' must declare bounded expected output.", nameof(manifest));
                 }
+                if (fixture.ExpectedOutput is not null &&
+                    Encoding.UTF8.GetByteCount(fixture.ExpectedOutput) > MaximumFixtureBytes)
+                {
+                    throw new ArgumentException("Fixture '" + fixture.Id + "' expected output exceeds its UTF-8 byte bound.", nameof(manifest));
+                }
             }
             else if (fixture.ExpectedOutput is not null)
             {
@@ -424,7 +429,7 @@ internal static partial class SafeCoreRegressionProfileRunner
                             fixture,
                             rustSharp.Diagnostic ?? "RustSharp CLI is unavailable."));
                     }
-                    else if (fixture.Kind == "differential" && !oracleAvailable)
+                    else if (RequiresOracle(fixture.Kind) && !oracleAvailable)
                     {
                         cases.Add(RegressionCaseReport.Skipped(
                             fixture,
@@ -897,8 +902,7 @@ internal static partial class SafeCoreRegressionProfileRunner
         ProcessResult? rustSharpCompile = null;
         ProcessResult? rustSharpRun = null;
         bool oracleCompared = false;
-        if ((fixture.Kind is "compile-pass" or "compile-fail" or "differential") &&
-            (fixture.Kind != "compile-pass" || oracleAvailable))
+        if (RequiresOracle(fixture.Kind) && oracleAvailable)
         {
             string oracleOutput = Path.Combine(caseDirectory, "oracle.exe");
             rustcCompile = await RunProcessAsync(
@@ -917,8 +921,8 @@ internal static partial class SafeCoreRegressionProfileRunner
                 repositoryRoot,
                 timeout,
                 cancellationToken).ConfigureAwait(false);
-            oracleCompared = oracleAvailable;
-            if (fixture.Kind == "differential" && rustcCompile.Succeeded)
+            oracleCompared = true;
+            if ((fixture.Kind is "run-pass" or "differential") && rustcCompile.Succeeded)
             {
                 rustcRun = await RunProcessAsync(
                     runner,
@@ -930,7 +934,7 @@ internal static partial class SafeCoreRegressionProfileRunner
             }
         }
 
-        if (fixture.Kind is "compile-pass" or "run-pass" or "differential" &&
+        if ((fixture.Kind is "compile-pass" or "run-pass" or "differential") &&
             rustSharpCheck.Succeeded)
         {
             string managedOutput = Path.Combine(caseDirectory, "rustsharp.dll");
@@ -972,23 +976,32 @@ internal static partial class SafeCoreRegressionProfileRunner
                 (!oracleCompared ||
                  rustcCompile is not null && IsCompileFailure(rustcCompile) &&
                  DiagnosticMatches(rustcCompile.StandardOutput, rustcCompile.StandardError, fixture.DiagnosticContains)),
-            "run-pass" => rustSharpCheck.Succeeded &&
+            "run-pass" => oracleCompared &&
+                rustSharpCheck.Succeeded &&
                 rustSharpCompile?.Succeeded == true &&
                 rustSharpRun?.Succeeded == true &&
-                NormalizeOutput(rustSharpRun.StandardOutput) ==
-                NormalizeOutput(fixture.ExpectedOutput),
+                rustcCompile?.Succeeded == true &&
+                rustcRun?.Succeeded == true &&
+                RunPassOutputsMatch(
+                    rustSharpRun.StandardOutput,
+                    rustSharpRun.StandardError,
+                    rustcRun.StandardOutput,
+                    rustcRun.StandardError,
+                    fixture.ExpectedOutput),
             "differential" => rustSharpCheck.Succeeded &&
                 rustSharpCompile?.Succeeded == true &&
                 rustSharpRun?.Succeeded == true &&
                 rustcCompile?.Succeeded == true &&
                 rustcRun?.Succeeded == true &&
+                string.IsNullOrEmpty(NormalizeOutput(rustSharpRun.StandardError)) &&
+                string.IsNullOrEmpty(NormalizeOutput(rustcRun.StandardError)) &&
                 NormalizeOutput(rustSharpRun.StandardOutput) ==
                 NormalizeOutput(rustcRun.StandardOutput) &&
                 NormalizeOutput(rustSharpRun.StandardOutput) ==
                 NormalizeOutput(fixture.ExpectedOutput),
             _ => false,
         };
-        if (fixture.Kind == "differential" && !oracleCompared)
+        if (RequiresOracle(fixture.Kind) && !oracleCompared)
         {
             expectedSuccess = false;
         }
@@ -1028,6 +1041,29 @@ internal static partial class SafeCoreRegressionProfileRunner
         !result.OutputReadTimedOut &&
         !result.OutputDrainTimedOut &&
         !result.OutputReadLimitReached;
+
+    internal static bool RequiresOracle(string kind) =>
+        kind is "compile-pass" or "compile-fail" or "run-pass" or "differential";
+
+    internal static bool RunPassOutputsMatch(
+        string? rustSharpOutput,
+        string? rustSharpError,
+        string? rustcOutput,
+        string? rustcError,
+        string? expectedOutput)
+    {
+        if (expectedOutput is null ||
+            !string.IsNullOrEmpty(NormalizeOutput(rustSharpError)) ||
+            !string.IsNullOrEmpty(NormalizeOutput(rustcError)))
+        {
+            return false;
+        }
+
+        string normalizedExpected = NormalizeOutput(expectedOutput);
+        string normalizedOracle = NormalizeOutput(rustcOutput);
+        return normalizedOracle == normalizedExpected &&
+            NormalizeOutput(rustSharpOutput) == normalizedOracle;
+    }
 
     internal static bool DiagnosticMatches(
         string standardOutput,
@@ -1159,6 +1195,23 @@ internal static partial class SafeCoreRegressionProfileRunner
                 ", exitCode=" +
                 FormatExitCode(rustSharpRun) +
                 ").";
+        }
+
+        if (fixture.Kind == "run-pass")
+        {
+            if (rustcRun is not null &&
+                !string.IsNullOrEmpty(NormalizeOutput(rustcRun.StandardError)))
+            {
+                return "rustc run emitted stderr for a run-pass fixture.";
+            }
+
+            if (rustSharpRun is not null &&
+                !string.IsNullOrEmpty(NormalizeOutput(rustSharpRun.StandardError)))
+            {
+                return "RustSharp run emitted stderr for a run-pass fixture.";
+            }
+
+            return "Run-pass output differed from the expected rustc oracle output.";
         }
 
         return "Runtime output differed from the expected or differential oracle output.";

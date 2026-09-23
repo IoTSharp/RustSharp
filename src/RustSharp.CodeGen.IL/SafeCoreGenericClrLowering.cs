@@ -102,6 +102,15 @@ public static class SafeCoreGenericClrLowering
             {
                 ValueTypes = [.. layouts.Values.OrderBy(static value => value.Name, StringComparer.Ordinal)],
                 GenericMetadata = genericMetadata,
+                GenericInstances = [.. ordered.Select(static item => new RustSharpMetadataGenericInstance(
+                    item.Value.Instance.FunctionId,
+                    item.Value.Instance.Arguments.Length == 0
+                        ? "()"
+                        : string.Join(",", item.Value.Instance.Arguments.Select(static argument => argument.ToString()))))
+                    .OrderBy(static value => value.FunctionId, StringComparer.Ordinal)
+                    .ThenBy(static value => value.Arguments, StringComparer.Ordinal)],
+                TraitImplementations = [.. program.Plan.SelectedImplementations
+                    .Order(StringComparer.Ordinal)],
             };
         }
 
@@ -230,7 +239,11 @@ public static class SafeCoreGenericClrLowering
                 if (current is not null) Return();
                 return new(method.Name, ReturnType(method),
                     method.Specialization.PlannedSignature.ParameterTypes.Select(type => owner.Map(type, Declaration)), locals,
-                    blocks.Select(static block => new ClrLirBlock(block.Label, block.Instructions)));
+                    blocks.Select(static block => new ClrLirBlock(block.Label, block.Instructions)))
+                {
+                    SourceQualifiedName = Declaration.DeclaredSymbol?.QualifiedName,
+                    IsPublic = method.IsEntry || Declaration.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Public),
+                };
             }
 
             private ClrLirType ReturnType(Method target) => target.IsEntry ? ClrLirType.Void :

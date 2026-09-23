@@ -18,7 +18,7 @@ param(
     [int] $RunTimeoutSeconds = 30,
 
     [Parameter()]
-    [ValidateSet('vertical-slice-v1', 'safe-core-primitives-v1', 'safe-core-generics-v1')]
+    [ValidateSet('vertical-slice-v1', 'safe-core-primitives-v1', 'safe-core-generics-v1', 'safe-core-mir-p1-v1')]
     [string] $Profile = 'vertical-slice-v1',
 
     [Parameter()]

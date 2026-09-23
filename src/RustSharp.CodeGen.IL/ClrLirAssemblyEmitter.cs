@@ -221,6 +221,8 @@ public static class ClrLirAssemblyEmitter
             resolutionScope: systemConsole,
             @namespace: metadata.GetOrAddString("System"),
             name: metadata.GetOrAddString("Console"));
+        var externalAssemblies = new Dictionary<string, AssemblyReferenceHandle>(StringComparer.Ordinal);
+        var externalTypes = new Dictionary<(string Assembly, string Namespace, string Name), TypeReferenceHandle>();
 
         var valueHandles = new Dictionary<string, TypeDefinitionHandle>(StringComparer.Ordinal);
         var constructorHandles = new Dictionary<string, MethodDefinitionHandle>(StringComparer.Ordinal);
@@ -245,14 +247,20 @@ public static class ClrLirAssemblyEmitter
             var controlFlow = new ControlFlowBuilder();
             var instructionEncoder = new InstructionEncoder(methodCode, controlFlow);
             int maxStack = ClrLirEmitter.EncodeInstructions(
-                method, metadata, site => ResolveCall(metadata, consoleType, definitions, site), instructionEncoder,
+                method,
+                metadata,
+                site => ResolveCall(metadata, consoleType, definitions, externalAssemblies, externalTypes, site),
+                instructionEncoder,
                 layout => constructorHandles[layout.Name], (layout, index) => fieldHandles[layout.Name][index],
                 CheckSourceMapBudget, cancellationToken);
             StandaloneSignatureHandle localSignature = AddLocalSignature(metadata, method.Locals, valueHandles);
             localSignatures.Add(localSignature);
             int methodBodyOffset = methodBodyStream.AddMethodBody(instructionEncoder, maxStack, localSignature);
+            MethodAttributes visibility = method.IsPublic
+                ? MethodAttributes.Public
+                : MethodAttributes.Assembly;
             metadata.AddMethodDefinition(
-                attributes: MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig,
+                attributes: visibility | MethodAttributes.Static | MethodAttributes.HideBySig,
                 implAttributes: MethodImplAttributes.IL | MethodImplAttributes.Managed,
                 name: metadata.GetOrAddString(method.Name),
                 signature: CreateMethodSignature(metadata, method.ReturnType, method.Parameters, valueHandles),
@@ -449,8 +457,15 @@ public static class ClrLirAssemblyEmitter
         MetadataBuilder metadata,
         TypeReferenceHandle consoleType,
         Dictionary<string, (ClrLirMethod Method, MethodDefinitionHandle Handle)> definitions,
+        Dictionary<string, AssemblyReferenceHandle> externalAssemblies,
+        Dictionary<(string Assembly, string Namespace, string Name), TypeReferenceHandle> externalTypes,
         ClrLirCallSite site)
     {
+        if (site.ExternalCall is { } external)
+        {
+            return AddExternalCallReference(metadata, externalAssemblies, externalTypes, external, site);
+        }
+
         if (definitions.TryGetValue(site.Name, out var definition))
         {
             if (site.ReturnType != definition.Method.ReturnType || !site.ParameterTypes.SequenceEqual(definition.Method.Parameters))
@@ -459,6 +474,41 @@ public static class ClrLirAssemblyEmitter
         }
 
         return AddCallReference(metadata, consoleType, site);
+    }
+
+    private static MemberReferenceHandle AddExternalCallReference(
+        MetadataBuilder metadata,
+        Dictionary<string, AssemblyReferenceHandle> externalAssemblies,
+        Dictionary<(string Assembly, string Namespace, string Name), TypeReferenceHandle> externalTypes,
+        ClrLirExternalCall external,
+        ClrLirCallSite site)
+    {
+        if (!externalAssemblies.TryGetValue(external.AssemblyName, out AssemblyReferenceHandle assembly))
+        {
+            assembly = metadata.AddAssemblyReference(
+                name: metadata.GetOrAddString(external.AssemblyName),
+                version: new Version(1, 0, 0, 0),
+                culture: default,
+                publicKeyOrToken: default,
+                flags: default,
+                hashValue: default);
+            externalAssemblies.Add(external.AssemblyName, assembly);
+        }
+
+        var typeKey = (external.AssemblyName, external.TypeNamespace, external.TypeName);
+        if (!externalTypes.TryGetValue(typeKey, out TypeReferenceHandle type))
+        {
+            type = metadata.AddTypeReference(
+                resolutionScope: assembly,
+                @namespace: metadata.GetOrAddString(external.TypeNamespace),
+                name: metadata.GetOrAddString(external.TypeName));
+            externalTypes.Add(typeKey, type);
+        }
+
+        return metadata.AddMemberReference(
+            parent: type,
+            name: metadata.GetOrAddString(external.MethodName),
+            signature: CreateMethodSignature(metadata, site.ReturnType, site.ParameterTypes));
     }
 
     private static AssemblyReferenceHandle AddFrameworkReference(
@@ -663,6 +713,13 @@ public static class ClrLirAssemblyEmitter
                         break;
                     case ClrLirCall call:
                         _ = descriptor.Append(':').Append(call.Site.Name).Append(':').Append(call.Site.ReturnType);
+                        if (call.Site.ExternalCall is { } external)
+                        {
+                            _ = descriptor.Append(":external:").Append(external.AssemblyName)
+                                .Append(':').Append(external.TypeNamespace)
+                                .Append(':').Append(external.TypeName)
+                                .Append(':').Append(external.MethodName);
+                        }
                         foreach (ClrLirType parameterType in call.Site.ParameterTypes)
                         {
                             _ = descriptor.Append(':').Append(parameterType);

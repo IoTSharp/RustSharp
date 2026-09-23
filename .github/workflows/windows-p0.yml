@@ -323,6 +323,16 @@ jobs:
         run: |
           & ./eng/Invoke-WindowsNativeAotProbe.ps1 -SourcePath samples/safe-core.rs -OutputDirectory artifacts/p1/windows-x64-aot -EvidencePath artifacts/p1/windows-x64-aot.json -Profile safe-core-primitives-v1 -ExpectedStandardOutput "Safe core on .NET`n42`ntrue`n"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify typed MIR Windows x64 Native AOT
+        shell: pwsh
+        timeout-minutes: 6
+        env:
+          DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./eng/Invoke-WindowsNativeAotProbe.ps1 -SourcePath samples/safe-core.rs -OutputDirectory artifacts/p1-06/windows-x64-aot -EvidencePath artifacts/p1-06/windows-x64-aot.json -Profile safe-core-mir-p1-v1 -ExpectedStandardOutput "Safe core on .NET`n42`ntrue`n"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload P0 evidence
         if: always()
         uses: actions/upload-artifact@v4

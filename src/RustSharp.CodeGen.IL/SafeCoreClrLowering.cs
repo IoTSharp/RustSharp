@@ -12,6 +12,16 @@ public sealed record SafeCoreClrResult(
 {
     public System.Collections.Immutable.ImmutableArray<ClrLirValueType> ValueTypes { get; init; } = [];
     public ReadOnlyMemory<byte> GenericMetadata { get; init; }
+    /// <summary>Closed generic instances selected by semantic analysis.</summary>
+    public IReadOnlyList<RustSharpMetadataGenericInstance> GenericInstances { get; init; } = [];
+    /// <summary>Trait implementations selected by the bounded solver.</summary>
+    public IReadOnlyList<string> TraitImplementations { get; init; } = [];
+    /// <summary>Optional ownership/drop evidence attached by an upstream pass.</summary>
+    public IReadOnlyList<RustSharpMetadataOwnershipFunction> Ownership { get; init; } = [];
+    /// <summary>Optional deterministic typed-MIR snapshot for debugger/consumer tooling.</summary>
+    public string? MirSnapshot { get; init; }
+    /// <summary>Optional deterministic P1-08 cleanup projection for consumer tooling.</summary>
+    public string? CleanupSnapshot { get; init; }
     public bool IsSuccessful => Methods.Count != 0 && Diagnostics.Count == 0;
 }
 
@@ -84,9 +94,17 @@ public static class SafeCoreClrLowering
 
             Expression(function.Body, 0);
             if (_current is not null) Terminate(new ClrLirReturn());
-            return new(names[function.Declaration.DeclaredSymbol!.QualifiedName], Map(function.ReturnType),
+            SafeCoreSymbol declaredSymbol = function.Declaration.DeclaredSymbol ??
+                throw new InvalidOperationException("A typed function must retain its declaration symbol.");
+            bool isEntry = declaredSymbol.Name == "main" &&
+                declaredSymbol.ScopePath == program.Hir.NameResolution!.RootScope!.Path;
+            return new(names[declaredSymbol.QualifiedName], Map(function.ReturnType),
                 function.Parameters.Select(parameter => Map(parameter.Type)), _locals,
-                _blocks.Select(block => new ClrLirBlock(block.Label, block.Instructions)));
+                _blocks.Select(block => new ClrLirBlock(block.Label, block.Instructions)))
+            {
+                SourceQualifiedName = declaredSymbol.QualifiedName,
+                IsPublic = isEntry || function.Declaration.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Public),
+            };
         }
 
         private void Expression(SafeCoreHirNode node, int depth)
@@ -259,7 +277,27 @@ public static class SafeCoreClrLowering
 
             if (_current is null) return;
             foreach (int argument in arguments) Emit(new ClrLirLoadLocal(argument));
-            Emit(new ClrLirCall(new(names[target.ResolvedImportTargetQualifiedName ?? target.QualifiedName], Type(node), types)));
+            string targetName = target.ResolvedImportTargetQualifiedName ?? target.QualifiedName;
+            string emittedName = target.ExternalFunction is null
+                ? names[targetName]
+                : targetName;
+            ClrLirCallSite callSite = new(emittedName, Type(node), types);
+            if (target.ExternalFunction is { } external)
+            {
+                (ClrLirType[] parameters, ClrLirType returnType) = ParseExternalSignature(external);
+                if (returnType != callSite.ReturnType || !parameters.SequenceEqual(callSite.ParameterTypes))
+                    throw new InvalidOperationException("Imported function signature does not match semantic evidence.");
+                callSite = callSite with
+                {
+                    ExternalCall = new ClrLirExternalCall(
+                        external.AssemblyName,
+                        external.ClrNamespace,
+                        external.ClrTypeName,
+                        external.ClrName),
+                };
+            }
+
+            Emit(new ClrLirCall(callSite));
         }
 
         private void Print(SafeCoreHirNode node, int depth)
@@ -305,6 +343,43 @@ public static class SafeCoreClrLowering
             int local = Local(Type(node));
             Emit(new ClrLirStoreLocal(local));
             return local;
+        }
+
+        private static (ClrLirType[] Parameters, ClrLirType ReturnType) ParseExternalSignature(
+            SafeCoreExternalFunction function)
+        {
+            int arrow = function.Signature.IndexOf("->", StringComparison.Ordinal);
+            if (arrow < 0 || function.Signature.IndexOf("->", arrow + 2, StringComparison.Ordinal) >= 0)
+                throw new InvalidOperationException("Imported function has an invalid CLR signature.");
+
+            var parameters = new List<ClrLirType>();
+            string parameterText = function.Signature[..arrow];
+            if (!string.IsNullOrWhiteSpace(parameterText))
+            {
+                foreach (string token in parameterText.Split(',', StringSplitOptions.None))
+                {
+                    if (parameters.Count >= ClrLirLimits.MaximumParameters ||
+                        !TryParseExternalType(token, allowVoid: false, out ClrLirType type))
+                        throw new InvalidOperationException("Imported function uses an unsupported CLR signature.");
+                    parameters.Add(type);
+                }
+            }
+
+            if (!TryParseExternalType(function.Signature[(arrow + 2)..], allowVoid: true, out ClrLirType result))
+                throw new InvalidOperationException("Imported function uses an unsupported CLR signature.");
+            return ([.. parameters], result);
+
+            static bool TryParseExternalType(string text, bool allowVoid, out ClrLirType type)
+            {
+                type = text.Trim() switch
+                {
+                    "Void" or "Unit" when allowVoid => ClrLirType.Void,
+                    "I32" => ClrLirType.I32,
+                    "Bool" => ClrLirType.Bool,
+                    _ => default,
+                };
+                return type.IsKnown && (allowVoid || type != ClrLirType.Void);
+            }
         }
 
         private void Step(int depth)

@@ -263,6 +263,13 @@ public sealed class SafeCoreTypeInference
     private readonly List<(int Id, Variable Previous)> _trail = [];
     private int _operations;
 
+    /// <summary>
+    /// Bounded work consumed by this inference context.  The property is
+    /// internal so composite validators can account for nested inference
+    /// without exposing another mutable budget surface to callers.
+    /// </summary>
+    internal int OperationsUsed => _operations;
+
     public SafeCoreTypeInference(SafeCoreTypeInferenceOptions? options = null)
     {
         _options = options ?? new();

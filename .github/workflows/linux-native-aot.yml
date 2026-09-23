@@ -245,6 +245,38 @@ jobs:
             echo "Linux Native AOT probe returned success without passed evidence (status=$evidence_status)" >&2
             exit 1
           fi
+      - name: Run typed MIR Linux x64 Native AOT probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          bash eng/Invoke-LinuxNativeAotProbe.sh samples/safe-core.rs artifacts/p1-06/linux-x64 300 safe-core-mir-p1-v1 $'Safe core on .NET\n42\ntrue\n'
+          probe_exit=$?
+          set -e
+          evidence="artifacts/p1-06/linux-x64/linux-aot-evidence.json"
+          if [[ ! -f "$evidence" ]]; then
+            echo "Typed MIR Linux Native AOT probe did not write $evidence" >&2
+            exit 1
+          fi
+          read_json_status() {
+            local report_path="$1"
+            REPORT_PATH="$report_path" pwsh -NoLogo -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $report = Get-Content -Raw -LiteralPath $env:REPORT_PATH | ConvertFrom-Json; $value = $report.status; if ([string]::IsNullOrWhiteSpace([string]$value)) { throw "Report status is missing." }; [Console]::Write([string]$value)'
+          }
+          if ! evidence_status="$(read_json_status "$evidence")"; then
+            echo "Could not parse typed MIR Linux Native AOT evidence status from $evidence" >&2
+            exit 1
+          fi
+          if (( probe_exit == 77 )) && [[ "$evidence_status" == "skipped" ]]; then
+            echo "::warning::Typed MIR Linux Native AOT probe is explicitly blocked; see $evidence"
+            exit "$probe_exit"
+          fi
+          if (( probe_exit != 0 )); then
+            exit "$probe_exit"
+          fi
+          if [[ "$evidence_status" != "passed" ]]; then
+            echo "Typed MIR Linux Native AOT probe returned success without passed evidence (status=$evidence_status)" >&2
+            exit 1
+          fi
       - name: Run P0 I/O smoke probes
         shell: bash
         run: |

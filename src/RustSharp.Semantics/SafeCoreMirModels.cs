@@ -8,7 +8,7 @@ public sealed record SafeCoreMirSource(string SourcePath, TextSpan Span, int Hir
 
 public enum SafeCoreMirLocalKind { Parameter, User, Temporary }
 public enum SafeCoreMirOperandKind { Local, Constant, Function }
-public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple }
+public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple, Print, Array, Index }
 public enum SafeCoreMirTerminatorKind { Return, Goto, Branch, Call, Unreachable }
 
 /// <summary>A local slot. ID is its index in the owning function. Parameters precede other slots.</summary>
@@ -61,6 +61,22 @@ public sealed class SafeCoreMirRvalue
     public static SafeCoreMirRvalue Tuple(IReadOnlyList<SafeCoreMirOperand> operands, SafeCoreType resultType,
         SafeCoreMirSource source, CancellationToken cancellationToken = default) =>
         new(SafeCoreMirRvalueKind.Tuple, resultType, operands, null, source, cancellationToken);
+    public static SafeCoreMirRvalue Array(IReadOnlyList<SafeCoreMirOperand> operands, SafeCoreType resultType,
+        SafeCoreMirSource source, CancellationToken cancellationToken = default) =>
+        new(SafeCoreMirRvalueKind.Array, resultType, operands, null, source, cancellationToken);
+    public static SafeCoreMirRvalue Index(SafeCoreMirOperand array, SafeCoreMirOperand index,
+        SafeCoreType resultType, SafeCoreMirSource source) =>
+        new(SafeCoreMirRvalueKind.Index, resultType, [array, index], null, source);
+    public static SafeCoreMirRvalue Print(string format, SafeCoreMirOperand? value, SafeCoreMirSource source,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(format);
+        cancellationToken.ThrowIfCancellationRequested();
+#pragma warning disable CA2016 // SafeCoreType is an immutable descriptor and has no collection to freeze.
+        return new(SafeCoreMirRvalueKind.Print, SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Unit),
+            value is null ? [] : [value], format, source, cancellationToken);
+#pragma warning restore CA2016
+    }
 }
 
 /// <summary>Assign a value to a local slot. Source binding mutability is checked by HIR;
@@ -125,6 +141,14 @@ public sealed class SafeCoreMirFunction
     public SafeCoreMirFunction(int id, string name, SafeCoreType returnType,
         IReadOnlyList<SafeCoreMirLocal> locals, IReadOnlyList<SafeCoreMirBlock> blocks, int entryBlockId,
         SafeCoreMirSource source, CancellationToken cancellationToken = default)
+        : this(id, name, returnType, locals, blocks, entryBlockId, source,
+            isPublic: true, cancellationToken: cancellationToken)
+    {
+    }
+
+    public SafeCoreMirFunction(int id, string name, SafeCoreType returnType,
+        IReadOnlyList<SafeCoreMirLocal> locals, IReadOnlyList<SafeCoreMirBlock> blocks, int entryBlockId,
+        SafeCoreMirSource source, bool isPublic, CancellationToken cancellationToken = default)
     {
         Id = id;
         Name = name;
@@ -133,6 +157,7 @@ public sealed class SafeCoreMirFunction
         Blocks = SafeCoreMirCollections.Freeze(blocks, cancellationToken);
         EntryBlockId = entryBlockId;
         Source = source;
+        IsPublic = isPublic;
     }
     public int Id { get; }
     public string Name { get; }
@@ -141,6 +166,8 @@ public sealed class SafeCoreMirFunction
     public IReadOnlyList<SafeCoreMirBlock> Blocks { get; }
     public int EntryBlockId { get; }
     public SafeCoreMirSource Source { get; }
+    /// <summary>Whether the source declaration is visible to external crates.</summary>
+    public bool IsPublic { get; }
 }
 
 /// <summary>Backend-independent typed MIR. IDs index immutable owning collections.</summary>

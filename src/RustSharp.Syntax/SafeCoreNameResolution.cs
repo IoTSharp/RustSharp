@@ -118,6 +118,15 @@ public static class SafeCoreNameResolution
                 crate.Dependencies is null || crate.Dependencies.Count > 256 ||
                 crate.Dependencies.Any(static dependency => string.IsNullOrWhiteSpace(dependency.Key) || dependency.Key.Length > 256 ||
                     string.IsNullOrWhiteSpace(dependency.Value) || dependency.Value.Length > 1024)) ||
+            options.Crates.Any(static crate => crate.Exports.IsDefault || crate.Exports.Length > 4096 ||
+                crate.Exports.Any(static export => export is null ||
+                    string.IsNullOrWhiteSpace(export.SourceQualifiedName) || export.SourceQualifiedName.Length > 4096 ||
+                    string.IsNullOrWhiteSpace(export.ClrName) || export.ClrName.Length > 4096 ||
+                    string.IsNullOrWhiteSpace(export.Signature) || export.Signature.Length > 4096 ||
+                    string.IsNullOrWhiteSpace(export.AssemblyName) || export.AssemblyName.Length > 256 ||
+                    string.IsNullOrWhiteSpace(export.AssemblyPath) || export.AssemblyPath.Length > 4096 ||
+                    string.IsNullOrWhiteSpace(export.ClrNamespace) || export.ClrNamespace.Length > 256 ||
+                    string.IsNullOrWhiteSpace(export.ClrTypeName) || export.ClrTypeName.Length > 256)) ||
             !options.Crates.IsEmpty && !options.Crates.Any(static crate => crate.ScopePath == "crate") ||
             options.Crates.Select(static crate => crate.ScopePath).Distinct(StringComparer.Ordinal).Count() != options.Crates.Length ||
             options.Crates.Select(static crate => crate.Identity).Distinct(StringComparer.Ordinal).Count() != options.Crates.Length ||
@@ -192,6 +201,12 @@ public static class SafeCoreNameResolution
             }
 
             _root.Span = rootSyntax.Span;
+
+            // Metadata-backed crates do not have source items in this HIR. Add
+            // bounded synthetic module scopes before collecting the consumer's
+            // own declarations so `use dependency::function` follows the same
+            // import and visibility rules as an in-source module.
+            AddExternalCrates();
 
             // Documentation comments are retained as inert `doc` attributes in
             // the HIR. Every other attribute would require evaluation (for
@@ -327,7 +342,93 @@ public static class SafeCoreNameResolution
             ResolvedImportTargetQualifiedName = symbol.ResolvedImportTarget?.QualifiedName,
             VisibilityScopePath = symbol.VisibilityScopePath,
             IsAnonymousImport = symbol.IsAnonymousImport,
+            ExternalFunction = symbol.ExternalFunction ?? symbol.ResolvedImportTarget?.ExternalFunction,
         };
+
+        private void AddExternalCrates()
+        {
+            // Source-linked Cargo crates already contribute real module scopes
+            // through the HIR. Only metadata-backed crates carry synthetic
+            // exports; leaving the former untouched preserves package imports
+            // and avoids duplicate crate symbols.
+            SafeCoreCrate[] externalCrates = _options.Crates
+                .Where(static crate => !crate.Exports.IsDefault && !crate.Exports.IsEmpty)
+                .ToArray();
+            if (externalCrates.Length == 0) return;
+
+            var scopes = new Dictionary<string, ScopeBuilder>(StringComparer.Ordinal)
+            {
+                ["crate"] = _root!,
+            };
+            // The root crate owns the dependency aliases; metadata crates may
+            // also carry transitive aliases, so walk all configured crates but
+            // only when a corresponding synthetic/real owner scope exists.
+            foreach (SafeCoreCrate crate in _options.Crates)
+            {
+                if (crate.ScopePath == "crate") continue;
+                ScopeBuilder? scope = FindScope(crate.ScopePath);
+                if (scope is null)
+                {
+                    scope = CreateScope(_root, crate.ScopePath, crate.ScopePath);
+                }
+
+                if (scope is not null) scopes[crate.ScopePath] = scope;
+            }
+
+            foreach (SafeCoreCrate crate in _options.Crates)
+            {
+                if (!scopes.TryGetValue(crate.ScopePath, out ScopeBuilder? owner)) continue;
+                foreach ((string alias, string targetPath) in crate.Dependencies)
+                {
+                    if (!scopes.TryGetValue(targetPath, out ScopeBuilder? target)) continue;
+                    if (owner.ByName.ContainsKey(CanonicalizeIdentifier(alias))) continue;
+                    SymbolBuilder? module = AddSymbol(
+                        owner,
+                        alias,
+                        SafeCoreSymbolKind.Module,
+                        SafeCoreSymbolNamespace.Both,
+                        isPublic: true,
+                        new TextSpan(0, 0),
+                        isImport: false,
+                        targetPath: null,
+                        allowShadowing: true);
+                    if (module is not null)
+                    {
+                        module.ExternalCrateScopePath = targetPath;
+                        module.MemberScope = target;
+                    }
+                }
+            }
+
+            foreach (SafeCoreCrate crate in externalCrates)
+            {
+                if (!scopes.TryGetValue(crate.ScopePath, out ScopeBuilder? scope) ||
+                    crate.Exports.IsDefault || crate.Exports.IsEmpty) continue;
+                foreach (SafeCoreExternalFunction export in crate.Exports)
+                {
+                    if (!export.IsPublic && export.SourceName.Length == 0) continue;
+                    if (scope.ByName.ContainsKey(CanonicalizeIdentifier(export.SourceName))) continue;
+                    SymbolBuilder? function = AddSymbol(
+                        scope,
+                        export.SourceName,
+                        SafeCoreSymbolKind.Function,
+                        SafeCoreSymbolNamespace.Value,
+                        export.IsPublic,
+                        new TextSpan(0, 0),
+                        isImport: false,
+                        targetPath: null,
+                        allowShadowing: true);
+                    if (function is not null) function.ExternalFunction = export;
+                }
+            }
+        }
+
+        private ScopeBuilder? FindScope(string path)
+        {
+            foreach (ScopeBuilder scope in _scopes)
+                if (string.Equals(scope.Path, path, StringComparison.Ordinal)) return scope;
+            return null;
+        }
 
         private void CollectItems(
             IReadOnlyList<SafeCoreItemSyntax> items,
@@ -2761,7 +2862,9 @@ public static class SafeCoreNameResolution
             if ((expectedNamespace is null or SafeCoreSymbolNamespace.Type) &&
                 crate is not null && crate.Dependencies.TryGetValue(segment, out string? target))
             {
-                SymbolBuilder? dependency = _symbols.FirstOrDefault(symbol => symbol.Kind == SafeCoreSymbolKind.Module && symbol.QualifiedName == target);
+                SymbolBuilder? dependency = _symbols.FirstOrDefault(symbol =>
+                    symbol.Kind == SafeCoreSymbolKind.Module &&
+                    (symbol.QualifiedName == target || symbol.ExternalCrateScopePath == target));
                 if (dependency is not null)
                 {
                     result = new(SafeCoreNameResolutionStatus.Resolved, dependency, [dependency]);
@@ -2909,7 +3012,8 @@ public static class SafeCoreNameResolution
         }
 
         private bool IsCrateModule(SymbolBuilder symbol) => symbol.Kind == SafeCoreSymbolKind.Module &&
-            _options.Crates.Any(crate => crate.ScopePath == symbol.QualifiedName);
+            (symbol.ExternalCrateScopePath is not null ||
+             _options.Crates.Any(crate => crate.ScopePath == symbol.QualifiedName));
 
         private SafeCoreCrate? CrateFor(string path)
         {
@@ -3546,6 +3650,8 @@ public static class SafeCoreNameResolution
             public bool ImportVisibilityError { get; set; }
             public bool IsGlobImport { get; set; }
             public bool IsActiveGlobImport { get; set; }
+            public string? ExternalCrateScopePath { get; set; }
+            public SafeCoreExternalFunction? ExternalFunction { get; set; }
             public bool IsImport { get; }
             public string? TargetPath { get; }
             public TextSpan Span { get; }

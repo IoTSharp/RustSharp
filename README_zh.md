@@ -82,6 +82,32 @@ Cargo 包示例也分别通过 ILVerify 与 Windows x64 Native AOT。P1-05 合�
 测试工具当前注册并通过 377/377 项测试；这次补充运行使用已安装的 10.0.401 SDK
 通过显式 MSBuild 完成，不替代已记录的 10.0.400 Native AOT 证据。
 
+P1-06 对有界类型化 MIR 契约仍为 🚧 进行中。当前实现提供不可变类型化 MIR
+arena、严格的 CFG/类型/常量/运算符/调用验证、有界且确定性的格式化与快照、
+嵌套元组和固定数组聚合 rvalue 及静态边界检查索引、带源码范围的 HIR 降低，
+以及有界的源码到 MIR 所有权/清理证据、面向受支持值子集的直接 MIR 到 CLR-LIR
+降低和取消/工作量/深度/集合/诊断限制。固定数组构造与索引已有真实编译/运行
+回归覆盖。P1-07 和 P1-08 以 🚧 进行中状态提供有界所有权、NLL、再借用、
+确定性清理和 `RustPanicBoundary` 结果；编译器会为受支持的 MIR 值持久化所有权和
+清理证据。P1-09 以 🚧
+进行中状态提供确定性 PE 元数据、规范的零参数 `()` 泛型实例、有界元数据 consumer、
+并逐项将函数与真实 MethodDef 的签名、可见性和 static 属性对账，所有权/MIR 证据、经 HIR
+解析的导入声明，以及通过 AssemblyRef/TypeRef/MemberRef
+发出的有界标量外部调用。P1-10 以 🚧 进行中状态提供版本化的八用例回归报告。当前
+Windows/.NET 10.0.401 Release 测试工具通过 412/412 项测试；已记录的
+`artifacts/p1-10/safe-core-regression-v1.json` 报告通过 8/8 项，失败和跳过均为零，
+且两个 run-pass 用例均对照有界的 rustc 1.98 编译/运行输出。模式、闭包、引用语义、
+编译器集成的析构/Drop 降低、较完整的声明合成、运行时/AOT
+门槛以及完整差分分母仍未完成；另有
+producer 到 consumer 的标量外部调用已通过发射元数据引用并实际运行验证。这些证据不
+声称 Linux Native AOT 或跨平台执行。重复数组和切片/unsizing 仍是有界拒绝。
+
+已记录的 `p1-exit-gate-v1` 报告位于 `artifacts/p1-10/p1-exit-gate-v1.json`，
+5/5 个进程内库契约探针均通过：`typed-mir-validation`、`ownership-bridge`、
+`drop-order`、`panic-unwind` 和 `metadata-consumer`。报告记录
+`"nativeAot": false` 和 `"crossPlatform": false`；这只是库契约证据，不能关闭完整
+P1 退出门槛。
+
 使用以下命令运行泛型示例，输出 `42` 和 `true`：
 
 ```text

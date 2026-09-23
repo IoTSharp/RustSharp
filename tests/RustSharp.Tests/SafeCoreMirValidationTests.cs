@@ -19,6 +19,7 @@ internal static class SafeCoreMirValidationTests
         new("typed MIR checks nominal call signatures arguments and results", CallsAsync),
         new("typed MIR keeps diverging calls terminal", DivergingCallsAsync),
         new("typed MIR validates explicit coercions casts and tuple construction", ComputationsAsync),
+        new("typed MIR validates fixed-array construction and indexing", ArraysAsync),
         new("typed MIR validation obeys cancellation work size diagnostic depth and time budgets", ValidationBudgetsAsync),
         new("typed MIR formatter is invariant deterministic and bounded", FormattingAsync),
     ];
@@ -152,6 +153,17 @@ internal static class SafeCoreMirValidationTests
         Invalid(new([Function([new(0, [], SafeCoreMirTerminator.Call(wrongNominal, [Number()], 0, 0, Source), Source)], locals), callee]), SafeCoreMirDiagnosticCodes.TypeMismatch);
         SafeCoreMirOperand negative = target with { Id = -1 };
         Invalid(new([Function([new(0, [], SafeCoreMirTerminator.Call(negative, [Number()], 0, 0, Source), Source)], locals), callee]), SafeCoreMirDiagnosticCodes.InvalidOperand);
+        SafeCoreType functionType = target.Type;
+        SafeCoreMirLocal[] indirectLocals =
+        [
+            new(0, "callee", functionType, SafeCoreMirLocalKind.Temporary, false, Source),
+            new(1, "result", Integer, SafeCoreMirLocalKind.Temporary, false, Source),
+        ];
+        SafeCoreMirOperand indirect = SafeCoreMirOperand.Local(0, functionType, Source);
+        Invalid(new([Function([
+            new(0, [], SafeCoreMirTerminator.Call(indirect, [Number()], 1, 1, Source), Source),
+            new(1, [], SafeCoreMirTerminator.Return(SafeCoreMirOperand.Local(1, Integer, Source), Source), Source)],
+            indirectLocals), callee]), SafeCoreMirDiagnosticCodes.UnsupportedNode);
         return Task.CompletedTask;
     }
 
@@ -181,6 +193,41 @@ internal static class SafeCoreMirValidationTests
         return Task.CompletedTask;
     }
 
+    private static Task ArraysAsync()
+    {
+        SafeCoreType array = SafeCoreType.Array(Integer, 2);
+        SafeCoreType index = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Usize);
+        SafeCoreMirRvalue construction = SafeCoreMirRvalue.Array(
+            [Number("1"), Number("2")], array, Source);
+        AssertEx.True(SafeCoreMirValidation.Validate(Computation(construction)).IsSuccessful,
+            "Fixed-array construction must preserve element types and length.");
+
+        SafeCoreMirLocal[] locals =
+        [
+            new(0, "values", array, SafeCoreMirLocalKind.Parameter, false, Source),
+            new(1, "result", Integer, SafeCoreMirLocalKind.Temporary, false, Source),
+        ];
+        SafeCoreMirOperand values = SafeCoreMirOperand.Local(0, array, Source);
+        SafeCoreMirOperand constantIndex = SafeCoreMirOperand.Constant(index, "1", Source);
+        SafeCoreMirRvalue read = SafeCoreMirRvalue.Index(values, constantIndex, Integer, Source);
+        SafeCoreMirFunction function = Function(
+            [new(0, [new(1, read, Source)], SafeCoreMirTerminator.Return(
+                SafeCoreMirOperand.Local(1, Integer, Source), Source), Source)], locals);
+        AssertEx.True(SafeCoreMirValidation.Validate(new([function])).IsSuccessful,
+            "Fixed-array indexing must accept an array local and a usize operand.");
+
+        SafeCoreMirRvalue wrongElement = SafeCoreMirRvalue.Array(
+            [Number("1"), SafeCoreMirOperand.Constant(Boolean, "true", Source)], array, Source);
+        Invalid(Computation(wrongElement), SafeCoreMirDiagnosticCodes.TypeMismatch);
+        SafeCoreMirRvalue outOfBounds = SafeCoreMirRvalue.Index(values,
+            SafeCoreMirOperand.Constant(index, "2", Source), Integer, Source);
+        SafeCoreMirFunction invalid = Function(
+            [new(0, [new(1, outOfBounds, Source)], SafeCoreMirTerminator.Return(
+                SafeCoreMirOperand.Local(1, Integer, Source), Source), Source)], locals);
+        Invalid(new([invalid]), SafeCoreMirDiagnosticCodes.TypeMismatch);
+        return Task.CompletedTask;
+    }
+
     private static SafeCoreMirProgram Computation(SafeCoreMirRvalue value) => new([Function([
         new(0, [new(0, value, Source)], SafeCoreMirTerminator.Return(SafeCoreMirOperand.Local(0, value.Type, Source), Source), Source)],
         [new(0, "result", value.Type, SafeCoreMirLocalKind.Temporary, false, Source)], value.Type)]);
@@ -196,9 +243,19 @@ internal static class SafeCoreMirValidationTests
         AssertEx.True(SafeCoreMirValidation.Validate(Program(ReturnBlock(), ReturnBlock(1)), new() { MaximumBlocks = 1 }).IsTruncated, "Block limits are enforced.");
         SafeCoreMirProgram malformed = Program(new SafeCoreMirBlock(1, [], SafeCoreMirTerminator.Goto(-1, Source), Source));
         AssertEx.True(SafeCoreMirValidation.Validate(malformed, new() { MaximumDiagnostics = 1 }).IsTruncated, "Diagnostic overflow cannot report successful validation.");
+        SafeCoreMirValidationResult boundedDiagnostics = SafeCoreMirValidation.Validate(
+            Program(new SafeCoreMirBlock(1, [], SafeCoreMirTerminator.Goto(-1, Source), Source)),
+            new() { MaximumDiagnostics = 1, MaximumOperations = 10_000 });
+        AssertEx.True(boundedDiagnostics.Diagnostics.Count <= 1,
+            "Validation must never publish more diagnostics than its configured arena.");
+        AssertEx.Equal(SafeCoreMirDiagnosticCodes.LimitReached, boundedDiagnostics.Diagnostics.Single().Code);
         SafeCoreType nested = SafeCoreType.Tuple([SafeCoreType.Tuple([Integer])]);
         SafeCoreMirProgram deep = new([Function([ReturnBlock()], [new(0, "arg", nested, SafeCoreMirLocalKind.Parameter, false, Source)])]);
         AssertEx.True(SafeCoreMirValidation.Validate(deep, new() { MaximumTypeDepth = 1 }).IsTruncated, "Nested types consume depth budget.");
+        SafeCoreType oneLevel = SafeCoreType.Tuple([Integer]);
+        SafeCoreMirProgram shallow = new([Function([ReturnBlock()], [new(0, "arg", oneLevel, SafeCoreMirLocalKind.Parameter, false, Source)])]);
+        AssertEx.True(SafeCoreMirValidation.Validate(shallow, new() { MaximumTypeDepth = 1 }).IsSuccessful,
+            "The configured type depth includes the root level and one permitted child.");
         AssertEx.Throws<ArgumentOutOfRangeException>(() => SafeCoreMirValidation.Validate(program, new() { MaximumOperations = 0 }));
         return Task.CompletedTask;
     }

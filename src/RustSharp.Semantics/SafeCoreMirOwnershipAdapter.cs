@@ -15,6 +15,10 @@ public sealed record SafeCoreMirOwnershipOptions
     public int MaximumBlocksPerFunction { get; init; } = 16_384;
     public int MaximumStatementsPerFunction { get; init; } = 65_536;
     public int MaximumInstructionsPerBlock { get; init; } = 65_536;
+    public int MaximumPaths { get; init; } = 4_096;
+    public int MaximumBlockVisits { get; init; } = 128;
+    public bool InferNonLexicalLifetimes { get; init; }
+    public bool InferNll { get; init; }
     public CancellationToken CancellationToken { get; init; }
 }
 
@@ -46,14 +50,15 @@ public sealed record SafeCoreMirOwnershipResult(
 }
 
 /// <summary>
-/// Converts the scalar typed-MIR profile into the bounded ownership IR. The
+/// Converts the typed-MIR profile into the bounded ownership IR. The
 /// typed-MIR model has no lifetime, borrow, Drop, or scope metadata, so this
-/// bridge intentionally accepts only values whose Copy evidence is structural
-/// (Rust scalar primitives) and places every accepted local in root scope 0.
-/// It never invents move or borrow facts for references, ADTs, or function
-/// values; those inputs receive a stable adapter diagnostic instead.
+/// bridge accepts only values whose Copy evidence is structural: primitive
+/// scalars and finite tuples/arrays made entirely from those scalars. It places
+/// every accepted local in root scope 0. It never invents move or borrow facts
+/// for references, ADTs, closures, or function values; those inputs receive a
+/// stable adapter diagnostic instead.
 /// </summary>
-public static class SafeCoreMirOwnershipAdapter
+public static partial class SafeCoreMirOwnershipAdapter
 {
     public const string Profile = "safe-core-mir-ownership-v1";
     public const string InvalidEvidence = SafeCoreMirOwnershipDiagnosticCodes.InvalidEvidence;
@@ -105,6 +110,11 @@ public static class SafeCoreMirOwnershipAdapter
                 return new(null, null, validation, diagnostics.AsReadOnly(), validation.IsTruncated);
             }
 
+            // Validation is part of the adapter's shared bounded work budget.
+            // Carry its actual step count forward so adaptation and the
+            // ownership analysis cannot reset the caller's operation limit.
+            operations = validation.OperationsUsed;
+
             if (program.Functions.Count == 0)
             {
                 AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
@@ -130,15 +140,19 @@ public static class SafeCoreMirOwnershipAdapter
             var ownershipProgram = new SafeCoreOwnershipProgram(ownershipFunctions);
             TimeSpan remaining = options.Timeout - clock.Elapsed;
             if (remaining <= TimeSpan.Zero) throw new AdapterLimitException();
+            int remainingOperations = options.MaximumOperations - operations;
+            if (remainingOperations < 1) throw new AdapterLimitException();
             SafeCoreOwnershipAnalysisResult ownershipResult = SafeCoreOwnershipAnalysis.Analyze(
                 ownershipProgram,
                 new SafeCoreOwnershipOptions
                 {
                     Timeout = remaining > TimeSpan.FromMinutes(1) ? TimeSpan.FromMinutes(1) : remaining,
-                    MaximumOperations = Math.Max(1, options.MaximumOperations - operations),
-                    MaximumPaths = 4_096,
-                    MaximumBlockVisits = 128,
+                    MaximumOperations = remainingOperations,
+                    MaximumPaths = options.MaximumPaths,
+                    MaximumBlockVisits = options.MaximumBlockVisits,
                     MaximumDiagnostics = options.MaximumDiagnostics,
+                    InferNonLexicalLifetimes = options.InferNonLexicalLifetimes,
+                    InferNll = options.InferNll,
                     CancellationToken = options.CancellationToken,
                 });
             return new(ownershipProgram, ownershipResult, validation, diagnostics.AsReadOnly(), ownershipResult.IsTruncated);
@@ -176,10 +190,10 @@ public static class SafeCoreMirOwnershipAdapter
         {
             Step(options, clock, ref operations);
             SafeCoreMirLocal local = function.Locals[index];
-            if (!IsScalarCopy(local.Type))
+            if (!IsStructuralCopy(local.Type))
             {
                 AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                    "The typed-MIR ownership bridge requires structural Copy scalar locals; references, ADTs, aggregates, and function values need explicit ownership evidence.",
+                    "The typed-MIR ownership bridge requires structural Copy locals; references, ADTs, closures, and function values need explicit ownership evidence.",
                     local.Source), options);
                 valid = false;
                 continue;
@@ -230,10 +244,10 @@ public static class SafeCoreMirOwnershipAdapter
                 }
 
                 SafeCoreMirRvalue value = statement.Value;
-                if (!IsScalarCopy(value.Type))
+                if (!IsStructuralCopy(value.Type))
                 {
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                        "Only scalar Copy rvalues are supported by the typed-MIR ownership bridge.", value.Source), options);
+                        "Only structural Copy rvalues are supported by the typed-MIR ownership bridge.", value.Source), options);
                     valid = false;
                     continue;
                 }
@@ -256,10 +270,10 @@ public static class SafeCoreMirOwnershipAdapter
                                 options, diagnostics, operand.Source, ref valid);
                             break;
                         case SafeCoreMirOperandKind.Constant:
-                            if (!IsScalarCopy(operand.Type))
+                            if (!IsStructuralCopy(operand.Type))
                             {
                                 AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                                    "A non-scalar constant has no ownership bridge representation.", operand.Source), options);
+                                    "A non-Copy constant has no ownership bridge representation.", operand.Source), options);
                                 valid = false;
                             }
                             break;
@@ -362,11 +376,11 @@ public static class SafeCoreMirOwnershipAdapter
                     return null;
                 }
                 SafeCoreType callType = terminator.Operand.Type;
-                if (callType.ParameterTypes.Any(parameterType => !IsScalarCopy(parameterType)) ||
-                    (!IsScalarCopy(callType.ReturnType) && callType.ReturnType.Kind != SafeCoreSemanticTypeKind.Never))
+                if (callType.ParameterTypes.Any(parameterType => !IsStructuralCopy(parameterType)) ||
+                    (!IsStructuralCopy(callType.ReturnType) && callType.ReturnType.Kind != SafeCoreSemanticTypeKind.Never))
                 {
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                        "The typed-MIR ownership bridge only accepts direct calls with scalar parameters and scalar or diverging results.",
+                        "The typed-MIR ownership bridge only accepts direct calls with structural Copy parameters and structural Copy or diverging results.",
                         terminator.Operand.Source), options);
                     valid = false;
                     return null;
@@ -383,17 +397,17 @@ public static class SafeCoreMirOwnershipAdapter
                                 "A typed MIR call local argument is outside the function arena.", argument.Source), options);
                             valid = false;
                         }
-                        else if (!IsScalarCopy(argument.Type))
+                        else if (!IsStructuralCopy(argument.Type))
                         {
                             AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                                "A non-scalar call local argument has no ownership bridge representation.", argument.Source), options);
+                                "A non-Copy call local argument has no ownership bridge representation.", argument.Source), options);
                             valid = false;
                         }
                         else AddInstruction(instructions,
                             SafeCoreOwnershipInstruction.Use(argument.Id, argument.Source),
                             options, diagnostics, argument.Source, ref valid);
                     }
-                    else if (argument.Kind == SafeCoreMirOperandKind.Constant && IsScalarCopy(argument.Type))
+                    else if (argument.Kind == SafeCoreMirOperandKind.Constant && IsStructuralCopy(argument.Type))
                     {
                         // Constants do not consume or move an ownership local.
                     }
@@ -475,10 +489,10 @@ public static class SafeCoreMirOwnershipAdapter
             return operand.Id;
         }
 
-        if (operand.Kind != SafeCoreMirOperandKind.Constant || !IsScalarCopy(operand.Type))
+        if (operand.Kind != SafeCoreMirOperandKind.Constant || !IsStructuralCopy(operand.Type))
         {
             AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                "Only scalar locals and constants can be represented by an ownership terminator.", operand.Source), options);
+                "Only structural Copy locals and constants can be represented by an ownership terminator.", operand.Source), options);
             return null;
         }
 
@@ -537,17 +551,31 @@ public static class SafeCoreMirOwnershipAdapter
         return true;
     }
 
-    private static bool IsScalarCopy(SafeCoreType? type) => type?.Kind is
-        SafeCoreSemanticTypeKind.Unit or
-        SafeCoreSemanticTypeKind.Bool or
-        SafeCoreSemanticTypeKind.Char or
-        SafeCoreSemanticTypeKind.I8 or SafeCoreSemanticTypeKind.I16 or
-        SafeCoreSemanticTypeKind.I32 or SafeCoreSemanticTypeKind.I64 or
-        SafeCoreSemanticTypeKind.I128 or SafeCoreSemanticTypeKind.Isize or
-        SafeCoreSemanticTypeKind.U8 or SafeCoreSemanticTypeKind.U16 or
-        SafeCoreSemanticTypeKind.U32 or SafeCoreSemanticTypeKind.U64 or
-        SafeCoreSemanticTypeKind.U128 or SafeCoreSemanticTypeKind.Usize or
-        SafeCoreSemanticTypeKind.F32 or SafeCoreSemanticTypeKind.F64;
+    private static bool IsStructuralCopy(SafeCoreType? type)
+    {
+        if (type is null) return false;
+        return type.Kind switch
+        {
+            SafeCoreSemanticTypeKind.Unit or
+            SafeCoreSemanticTypeKind.Bool or
+            SafeCoreSemanticTypeKind.Char or
+            SafeCoreSemanticTypeKind.I8 or SafeCoreSemanticTypeKind.I16 or
+            SafeCoreSemanticTypeKind.I32 or SafeCoreSemanticTypeKind.I64 or
+            SafeCoreSemanticTypeKind.I128 or SafeCoreSemanticTypeKind.Isize or
+            SafeCoreSemanticTypeKind.U8 or SafeCoreSemanticTypeKind.U16 or
+            SafeCoreSemanticTypeKind.U32 or SafeCoreSemanticTypeKind.U64 or
+            SafeCoreSemanticTypeKind.U128 or SafeCoreSemanticTypeKind.Usize or
+            SafeCoreSemanticTypeKind.F32 or SafeCoreSemanticTypeKind.F64 => true,
+            SafeCoreSemanticTypeKind.Tuple => type.Elements.Count <= 4_096 &&
+                type.Elements.All(IsStructuralCopy),
+            SafeCoreSemanticTypeKind.Array => type.Length is >= 0 and <= 65_536 &&
+                IsStructuralCopy(type.ElementType),
+            // References, closures, function items and ADTs require provenance
+            // or explicit borrow/Drop facts. Treating them as Copy here would
+            // make a successful adapter result claim more than MIR proves.
+            _ => false,
+        };
+    }
 
     private static bool ValidTarget(int target, int count) => target >= 0 && target < count;
 
@@ -566,7 +594,9 @@ public static class SafeCoreMirOwnershipAdapter
             options.MaximumLocalsPerFunction is < 1 or > 4_096 ||
             options.MaximumBlocksPerFunction is < 1 or > 16_384 ||
             options.MaximumStatementsPerFunction is < 1 or > 65_536 ||
-            options.MaximumInstructionsPerBlock is < 1 or > 65_536)
+            options.MaximumInstructionsPerBlock is < 1 or > 65_536 ||
+            options.MaximumPaths is < 1 or > 65_536 ||
+            options.MaximumBlockVisits is < 1 or > 4_096)
             throw new ArgumentOutOfRangeException(nameof(options));
     }
 

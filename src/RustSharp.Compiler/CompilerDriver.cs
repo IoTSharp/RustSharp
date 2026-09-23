@@ -33,17 +33,20 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
-        if (profile == CompilationProfile.SafeCoreGenerics && IsCargoManifest(fullSourcePath))
+        if ((profile == CompilationProfile.SafeCoreGenerics || profile == CompilationProfile.SafeCoreMir) && IsCargoManifest(fullSourcePath))
         {
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
-            CompilationResult checkedPackages = CheckSafeCoreGenerics(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates);
+            CompilationResult checkedPackages = profile == CompilationProfile.SafeCoreMir
+                ? CheckSafeCoreMir(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates)
+                : CheckSafeCoreGenerics(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates);
             return checkedPackages with { Diagnostics = MapDiagnostics(checkedPackages.Diagnostics, packages.SourceMap!) };
         }
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
-        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreTypes or CompilationProfile.SafeCoreGenerics)
+        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreTypes or
+            CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -62,6 +65,14 @@ public sealed class CompilerDriver
 
     public static CompilationResult Check(string source, string sourcePath = "<memory>",
         CompilationProfile profile = CompilationProfile.VerticalSlice, CancellationToken cancellationToken = default)
+        => CheckCore(source, sourcePath, profile, default, cancellationToken);
+
+    private static CompilationResult CheckCore(
+        string source,
+        string sourcePath,
+        CompilationProfile profile,
+        ImmutableArray<SafeCoreCrate> crates,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
@@ -76,10 +87,12 @@ public sealed class CompilerDriver
         if (profile == CompilationProfile.SafeCoreTypes)
             return CheckSafeCoreTypes(source, sourcePath, cancellationToken);
         if (profile == CompilationProfile.SafeCoreGenerics)
-            return CheckSafeCoreGenerics(source, sourcePath, cancellationToken);
+            return CheckSafeCoreGenerics(source, sourcePath, cancellationToken, crates);
+        if (profile == CompilationProfile.SafeCoreMir)
+            return CheckSafeCoreMir(source, sourcePath, cancellationToken, crates);
         if (profile != CompilationProfile.VerticalSlice)
         {
-            SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken);
+            SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates);
             return result.IsSuccessful ? new(true, [], null) : CompilationResult.Failed(result.Diagnostics);
         }
 
@@ -87,6 +100,26 @@ public sealed class CompilerDriver
         return syntaxTree.Diagnostics.Count == 0
             ? new CompilationResult(true, [], null)
             : CompilationResult.Failed(syntaxTree.Diagnostics);
+    }
+
+    /// <summary>
+    /// Checks a consumer source after importing one or more independently
+    /// emitted Rust# assemblies.  Import validation is deliberately explicit;
+    /// the source checker never loads producer code or uses reflection.
+    /// </summary>
+    public static CompilationResult CheckWithMetadataReferences(
+        string source,
+        string sourcePath,
+        CompilationProfile profile,
+        IEnumerable<string> metadataReferences,
+        IEnumerable<string>? requiredFunctions = null,
+        CancellationToken cancellationToken = default)
+    {
+        MetadataCrateLoadResult references = LoadMetadataCrates(
+            metadataReferences, profile, requiredFunctions, cancellationToken);
+        if (references.Diagnostics.Count != 0)
+            return CompilationResult.Failed(references.Diagnostics);
+        return CheckCore(source, sourcePath, profile, references.Crates, cancellationToken);
     }
 
     public static CompilationResult CompileFile(
@@ -104,7 +137,7 @@ public sealed class CompilerDriver
             return RejectTypeProfileEmission(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
-        if (profile == CompilationProfile.SafeCoreGenerics && IsCargoManifest(fullSourcePath))
+        if ((profile == CompilationProfile.SafeCoreGenerics || profile == CompilationProfile.SafeCoreMir) && IsCargoManifest(fullSourcePath))
         {
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
@@ -114,7 +147,8 @@ public sealed class CompilerDriver
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
-        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics)
+        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or
+            CompilationProfile.SafeCoreMir)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -183,6 +217,62 @@ public sealed class CompilerDriver
             sourceBytes,
             profile,
             cancellationToken);
+    }
+
+    private static CompilationResult CompileCoreWithCrates(
+        string source,
+        string sourcePath,
+        string outputPath,
+        string? assemblyName,
+        CompilationProfile profile,
+        ImmutableArray<SafeCoreCrate> crates,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (profile == CompilationProfile.SafeCoreTypes)
+            return RejectTypeProfileEmission(sourcePath);
+
+        Diagnostic? sourceDiagnostic = ValidateSourceText(source, sourcePath);
+        if (sourceDiagnostic is not null)
+            return CompilationResult.Failed([sourceDiagnostic]);
+
+        byte[] sourceBytes;
+        try
+        {
+            sourceBytes = StrictUtf8.GetBytes(source);
+        }
+        catch (EncoderFallbackException exception)
+        {
+            return CompilationResult.Failed([new Diagnostic(
+                "RSC0005",
+                $"Source text '{sourcePath}' is not valid UTF-8: {exception.Message}",
+                new TextSpan(0, 0))]);
+        }
+
+        return CompileCore(source, sourcePath, Path.GetFullPath(outputPath), assemblyName,
+            sourceBytes, profile, cancellationToken, crates: crates);
+    }
+
+    /// <summary>Compiles a consumer after validating independent Rust# metadata references.</summary>
+    public static CompilationResult CompileWithMetadataReferences(
+        string source,
+        string sourcePath,
+        string outputPath,
+        string? assemblyName,
+        CompilationProfile profile,
+        IEnumerable<string> metadataReferences,
+        IEnumerable<string>? requiredFunctions = null,
+        CancellationToken cancellationToken = default)
+    {
+        MetadataCrateLoadResult references = LoadMetadataCrates(
+            metadataReferences, profile, requiredFunctions, cancellationToken);
+        if (references.Diagnostics.Count != 0)
+            return CompilationResult.Failed(references.Diagnostics);
+        return CompileCoreWithCrates(source, sourcePath, outputPath, assemblyName, profile,
+            references.Crates, cancellationToken);
     }
 
     private static CompilationResult CompileCore(
@@ -258,11 +348,19 @@ public sealed class CompilerDriver
             RustSharpMetadataDocument? metadataDocument = safeCore is null
                 ? null
                 : RustSharpMetadataDocument.ForProgram(
-                    profile == CompilationProfile.SafeCoreGenerics
-                        ? "safe-core-generics-v1"
-                        : "safe-core-primitives-v1",
+                    profile switch
+                    {
+                        CompilationProfile.SafeCoreGenerics => "safe-core-generics-v1",
+                        CompilationProfile.SafeCoreMir => SafeCoreMirPipeline.Profile,
+                        _ => "safe-core-primitives-v1",
+                    },
                     sourceBytes.Span,
-                    safeCore.Methods);
+                    safeCore.Methods,
+                    safeCore.GenericInstances,
+                    safeCore.TraitImplementations,
+                    safeCore.MirSnapshot,
+                    safeCore.Ownership,
+                    safeCore.CleanupSnapshot);
             GeneratedAssembly generated;
             try
             {
@@ -278,7 +376,7 @@ public sealed class CompilerDriver
                     Path.GetFileName(pdbPath),
                     sourceBytes);
             }
-            catch (Exception exception) when (profile == CompilationProfile.SafeCoreGenerics &&
+            catch (Exception exception) when ((profile == CompilationProfile.SafeCoreGenerics || profile == CompilationProfile.SafeCoreMir) &&
                 exception is ArgumentException or InvalidOperationException or TimeoutException)
             {
                 return CompilationResult.Failed([new Diagnostic(SafeCoreGenericDiagnosticCodes.LimitReached,
@@ -361,10 +459,42 @@ public sealed class CompilerDriver
         return result.IsSuccessful ? new(true, [], null) : CompilationResult.Failed(result.Diagnostics);
     }
 
+    private static CompilationResult CheckSafeCoreMir(string source, string sourcePath,
+        CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
+    {
+        SafeCoreMirPipelineResult result = SafeCoreMirPipeline.Analyze(source, sourcePath,
+            new SafeCoreMirPipelineOptions
+            {
+                CancellationToken = cancellationToken,
+                RequireOwnershipEvidence = true,
+                RequireCleanupEvidence = true,
+                Crates = crates.IsDefault ? [] : crates,
+            });
+        if (!result.IsSuccessful)
+        {
+            return CompilationResult.Failed(result.Diagnostics.Count == 0
+                ? result.Ownership?.Diagnostics ?? [new Diagnostic("RSC0007", "Typed MIR analysis failed.", new TextSpan(0, 0))]
+                : result.Diagnostics);
+        }
+
+        // The MIR validator deliberately checks the language IR contract, while
+        // the CLR backend has a smaller, representation-specific capability
+        // boundary.  Run that same backend during `check` so a source cannot be
+        // accepted here and then rejected by `compile` for an LIR-only reason.
+        SafeCoreClrResult backend = SafeCoreMirClrLowering.Lower(
+            result.Mir!.Program!, cancellationToken);
+        backend = AttachMirEvidence(backend, result, requireOwnershipMetadata: true);
+        return backend.IsSuccessful
+            ? new(true, [], null)
+            : CompilationResult.Failed(backend.Diagnostics.Count == 0
+                ? [new Diagnostic("RSM2102", "Typed MIR CLR lowering failed.", new TextSpan(0, 0))]
+                : backend.Diagnostics);
+    }
+
     private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
         CompilationProfile profile, CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
     {
-        if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics))
+        if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir))
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
         cancellationToken.ThrowIfCancellationRequested();
         SafeCoreSyntaxResult syntax;
@@ -383,14 +513,104 @@ public sealed class CompilerDriver
             return generics.IsSuccessful ? SafeCoreGenericClrLowering.Lower(generics.Program!, cancellationToken)
                 : new([], [], generics.Diagnostics);
         }
+        if (profile == CompilationProfile.SafeCoreMir)
+        {
+            SafeCoreMirPipelineResult evidence = SafeCoreMirPipeline.Analyze(syntax,
+                new SafeCoreMirPipelineOptions
+                {
+                    CancellationToken = cancellationToken,
+                    RequireOwnershipEvidence = true,
+                    RequireCleanupEvidence = true,
+                    Crates = crates.IsDefault ? [] : crates,
+                });
+            if (!evidence.IsSuccessful)
+            {
+                IReadOnlyList<Diagnostic> diagnostics = evidence.Diagnostics.Count != 0
+                    ? evidence.Diagnostics
+                    : evidence.Ownership?.Diagnostics ??
+                        [new Diagnostic("RSC0007", "Typed MIR analysis failed.", syntax.Root!.Span)
+                            { SourcePath = sourcePath }];
+                return new([], [], diagnostics);
+            }
+
+            // Consume the already validated MIR directly.  Re-running the
+            // primitive HIR checker here used to make aggregate MIR evidence
+            // observational only and could let backend behavior drift from the
+            // source-to-MIR contract.
+            SafeCoreClrResult emitted = SafeCoreMirClrLowering.Lower(
+                evidence.Mir!.Program!, cancellationToken);
+            return AttachMirEvidence(emitted, evidence, requireOwnershipMetadata: true);
+        }
         SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new SafeCoreHirLoweringOptions
         {
             CancellationToken = cancellationToken,
-            NameResolution = new SafeCoreNameResolutionOptions { CancellationToken = cancellationToken },
+            NameResolution = new SafeCoreNameResolutionOptions
+            {
+                CancellationToken = cancellationToken,
+                EnableTypeSystemExtensions = false,
+                Crates = crates.IsDefault ? [] : crates,
+            },
         });
         SafeCoreTypeCheckResult types = SafeCoreTypeChecking.Check(hir, cancellationToken);
-        return types.IsSuccessful ? SafeCoreClrLowering.Lower(types.Program!, cancellationToken)
-            : new([], [], types.Diagnostics);
+        if (!types.IsSuccessful) return new([], [], types.Diagnostics);
+        SafeCoreClrResult lowered = SafeCoreClrLowering.Lower(types.Program!, cancellationToken);
+
+        // Primitive programs remain source-compatible with the existing
+        // profile.  When the richer evidence pipeline accepts the same source,
+        // attach its deterministic MIR/ownership facts without making the
+        // legacy executable gate depend on optional constructs.
+        try
+        {
+            SafeCoreMirPipelineResult evidence = SafeCoreMirPipeline.Analyze(syntax,
+                new SafeCoreMirPipelineOptions
+                {
+                    CancellationToken = cancellationToken,
+                    RequireOwnershipEvidence = true,
+                    Crates = crates.IsDefault ? [] : crates,
+                });
+            if (evidence.Mir is { IsSuccessful: true })
+                lowered = AttachMirEvidence(lowered, evidence);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (TimeoutException) { }
+        return lowered;
+    }
+
+    private static SafeCoreClrResult AttachMirEvidence(
+        SafeCoreClrResult emitted,
+        SafeCoreMirPipelineResult evidence,
+        bool requireOwnershipMetadata = false)
+    {
+        if (!emitted.IsSuccessful)
+            return emitted;
+        if (evidence.Mir is not { IsSuccessful: true } mir || mir.Program is null)
+            return emitted;
+
+        string snapshot = evidence.MirSnapshot ?? SafeCoreMirFormatting.Format(mir.Program);
+        SafeCoreClrResult result = emitted with
+        {
+            MirSnapshot = snapshot,
+            CleanupSnapshot = evidence.Cleanup?.Snapshot,
+        };
+        if (evidence.Ownership is { IsSuccessful: true } ownership)
+        {
+            try { result = SafeCoreOwnershipMetadata.Attach(result, ownership); }
+            catch (ArgumentException exception) when (requireOwnershipMetadata)
+            {
+                // SafeCoreMir is an evidence-carrying executable profile. A
+                // metadata-shape failure must remain a compilation diagnostic;
+                // silently emitting a MIR-only assembly would make ownership
+                // claims depend on whether the caller used check or compile.
+                result = result with
+                {
+                    Diagnostics = [new Diagnostic("RSM2104",
+                        "Safe-core ownership metadata could not be attached: " +
+                        TrimDiagnostic(exception.Message), mir.Program.Functions[0].Source.Span)
+                    { SourcePath = mir.Program.Functions[0].Source.SourcePath }],
+                };
+            }
+        }
+        return result;
     }
 
     private static bool IsCargoManifest(string path) => string.Equals(Path.GetFileName(path), "Cargo.toml", StringComparison.OrdinalIgnoreCase);
@@ -954,6 +1174,151 @@ public sealed class CompilerDriver
 
         return null;
     }
+
+    private static MetadataCrateLoadResult LoadMetadataCrates(
+        IEnumerable<string> metadataReferences,
+        CompilationProfile profile,
+        IEnumerable<string>? requiredFunctions,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(metadataReferences);
+        const int maximumReferences = 256;
+        var diagnostics = new List<Diagnostic>();
+        var crates = new List<SafeCoreCrate>();
+        var dependencies = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
+        var seen = new HashSet<string>(OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal);
+        string? expectedProfile = profile switch
+        {
+            CompilationProfile.SafeCorePrimitives => "safe-core-primitives-v1",
+            CompilationProfile.SafeCoreGenerics => "safe-core-generics-v1",
+            CompilationProfile.SafeCoreMir => SafeCoreMirPipeline.Profile,
+            _ => null,
+        };
+
+        int count = 0;
+        foreach (string reference in metadataReferences)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (++count > maximumReferences)
+            {
+                diagnostics.Add(new Diagnostic("RSC0011",
+                    "A consumer compilation accepts at most " + maximumReferences + " metadata references.",
+                    new TextSpan(0, 0)));
+                break;
+            }
+
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                diagnostics.Add(new Diagnostic("RSC0011",
+                    "A Rust# metadata reference path cannot be empty.", new TextSpan(0, 0)));
+                continue;
+            }
+
+            string fullPath;
+            try { fullPath = Path.GetFullPath(reference); }
+            catch (Exception exception) when (exception is ArgumentException or PathTooLongException)
+            {
+                diagnostics.Add(new Diagnostic("RSC0011", "Invalid metadata reference path: " + exception.Message,
+                    new TextSpan(0, 0)) { SourcePath = reference });
+                continue;
+            }
+
+            if (!seen.Add(fullPath))
+            {
+                diagnostics.Add(new Diagnostic("RSC0011",
+                    "Duplicate Rust# metadata reference: " + fullPath, new TextSpan(0, 0))
+                    { SourcePath = fullPath });
+                continue;
+            }
+
+            RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
+                fullPath, expectedProfile, requiredFunctions);
+            foreach (string message in imported.Diagnostics)
+            {
+                int separator = message.IndexOf(':');
+                string code = separator > 0 ? message[..separator] : RustSharpMetadataConsumer.InvalidMetadata;
+                string text = separator > 0 ? message[(separator + 1)..].TrimStart() : message;
+                diagnostics.Add(new Diagnostic(code, text, new TextSpan(0, 0)) { SourcePath = fullPath });
+            }
+
+            if (!imported.IsSuccessful || imported.Document is null) continue;
+            string assemblyName = imported.AssemblyName ?? Path.GetFileNameWithoutExtension(fullPath);
+            if (string.IsNullOrWhiteSpace(assemblyName) || assemblyName.Length > 256)
+            {
+                diagnostics.Add(new Diagnostic(RustSharpMetadataConsumer.InvalidMetadata,
+                    "Producer assembly has an invalid CLR assembly name.", new TextSpan(0, 0))
+                    { SourcePath = fullPath });
+                continue;
+            }
+
+            string alias = MetadataAlias(assemblyName);
+            string fileAlias = MetadataAlias(Path.GetFileNameWithoutExtension(fullPath));
+            Guid moduleVersionId = imported.ModuleVersionId ?? Guid.Empty;
+            string scopePath = "crate::__rsc_ext_" + Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(fullPath + "\0" + moduleVersionId.ToString("D"))))[..32];
+            string identity = "metadata:" + assemblyName + "@" + moduleVersionId.ToString("D");
+            var exports = ImmutableArray.CreateBuilder<SafeCoreExternalFunction>(imported.Document.Functions.Length);
+            foreach (RustSharpMetadataFunction function in imported.Document.Functions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                string sourceName = function.SourceQualifiedName ?? function.Name;
+                exports.Add(new SafeCoreExternalFunction(
+                    sourceName,
+                    function.Name,
+                    function.Signature,
+                    assemblyName,
+                    fullPath,
+                    function.IsPublic));
+            }
+
+            crates.Add(new SafeCoreCrate(scopePath, identity,
+                ImmutableDictionary<string, string>.Empty)
+            {
+                Exports = exports.ToImmutable(),
+            });
+            AddAlias(alias, scopePath);
+            if (!string.Equals(fileAlias, alias, StringComparison.Ordinal)) AddAlias(fileAlias, scopePath);
+            string lowerAlias = alias.ToLowerInvariant();
+            if (!string.Equals(lowerAlias, alias, StringComparison.Ordinal)) AddAlias(lowerAlias, scopePath);
+        }
+
+        if (diagnostics.Count == 0 || crates.Count != 0)
+        {
+            crates.Insert(0, new SafeCoreCrate("crate", "consumer", dependencies.ToImmutable()));
+        }
+
+        return new(crates.ToImmutableArray(), diagnostics.AsReadOnly());
+
+        void AddAlias(string alias, string target)
+        {
+            if (dependencies.TryGetValue(alias, out string? existing))
+            {
+                if (!string.Equals(existing, target, StringComparison.Ordinal))
+                    diagnostics.Add(new Diagnostic("RSC0011",
+                        "Metadata reference aliases collide: '" + alias + "'.", new TextSpan(0, 0)));
+                return;
+            }
+
+            dependencies.Add(alias, target);
+        }
+
+        static string MetadataAlias(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "dependency";
+            var builder = new StringBuilder(name.Length);
+            foreach (char character in name)
+                builder.Append(char.IsAsciiLetterOrDigit(character) || character == '_' ? character : '_');
+            if (builder.Length == 0) builder.Append("dependency");
+            if (char.IsAsciiDigit(builder[0])) builder.Insert(0, '_');
+            return builder.ToString();
+        }
+    }
+
+    private sealed record MetadataCrateLoadResult(
+        ImmutableArray<SafeCoreCrate> Crates,
+        IReadOnlyList<Diagnostic> Diagnostics);
 
     private static bool PathsCollide(string first, string second) =>
         string.Equals(

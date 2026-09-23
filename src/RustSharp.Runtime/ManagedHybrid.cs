@@ -268,6 +268,9 @@ public sealed class DropScope : IDisposable
     private readonly List<IDisposable> values = [];
     private bool disposed;
 
+    public bool IsDisposed => disposed;
+    public int TrackedCount => values.Count;
+
     public void Track(IDisposable value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -282,6 +285,13 @@ public sealed class DropScope : IDisposable
         }
 
         values.Add(value);
+    }
+
+    /// <summary>Registers a Rust-style destructor that is not also IDisposable.</summary>
+    public void TrackDrop(IRustDrop value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        Track(new DropAdapter(value));
     }
 
     public void Dispose()
@@ -299,7 +309,7 @@ public sealed class DropScope : IDisposable
             {
                 values[index].Dispose();
             }
-            catch (Exception exception) when (exception is InvalidOperationException or ObjectDisposedException)
+            catch (Exception exception)
             {
                 first ??= exception;
             }
@@ -310,5 +320,10 @@ public sealed class DropScope : IDisposable
         {
             throw first;
         }
+    }
+
+    private sealed class DropAdapter(IRustDrop value) : IDisposable
+    {
+        public void Dispose() => value.Drop();
     }
 }
