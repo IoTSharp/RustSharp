@@ -252,6 +252,8 @@ public enum ClrLirBinaryOperator
     LessThan,
     GreaterThan,
     ExclusiveOr,
+    And,
+    Or,
 }
 
 public sealed record ClrLirBinary(ClrLirBinaryOperator Operator, ClrLirType OperandType) : ClrLirInstruction;
@@ -578,7 +580,7 @@ public sealed class ClrLirMethod
             case ClrLirBinary binary:
                 bool comparison = binary.Operator is ClrLirBinaryOperator.Equal or ClrLirBinaryOperator.LessThan or ClrLirBinaryOperator.GreaterThan;
                 bool validOperand = binary.OperandType == ClrLirType.I32 ||
-                    (binary.OperandType == ClrLirType.Bool && binary.Operator is ClrLirBinaryOperator.Equal or ClrLirBinaryOperator.ExclusiveOr);
+                    (binary.OperandType == ClrLirType.Bool && binary.Operator is ClrLirBinaryOperator.Equal or ClrLirBinaryOperator.ExclusiveOr or ClrLirBinaryOperator.And or ClrLirBinaryOperator.Or);
                 if (!Enum.IsDefined(binary.Operator) || !validOperand)
                 {
                     diagnostics.Add(new("LIR016", "Invalid binary operator or operand type.", blockLabel, instructionIndex));

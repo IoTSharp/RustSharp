@@ -51,6 +51,8 @@ public sealed record SafeCoreNameResolutionOptions
     public bool EnableTypeSystemExtensions { get; init; }
     /// <summary>Enables type generics, marker traits and positive bounds without changing legacy profiles.</summary>
     public bool EnableGenericExtensions { get; init; }
+    /// <summary>Enables the versioned MIR profile's built-in Drop implementation syntax.</summary>
+    public bool EnableDropImplementations { get; init; }
     public ImmutableArray<SafeCoreCrate> Crates { get; init; } = [];
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
     public CancellationToken CancellationToken { get; init; }

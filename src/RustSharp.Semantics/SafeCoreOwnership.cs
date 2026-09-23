@@ -187,6 +187,11 @@ public sealed record SafeCoreOwnershipInstruction(
     public static SafeCoreOwnershipInstruction Assign(int localId, SafeCoreMirSource source) =>
         new(SafeCoreOwnershipInstructionKind.Assign, localId, -1, false, -1, source);
 
+    /// <summary>Assign a copied shared reference while retaining its active loan.</summary>
+    public static SafeCoreOwnershipInstruction AssignReference(int sourceLocalId, int destinationLocalId,
+        SafeCoreMirSource source) =>
+        new(SafeCoreOwnershipInstructionKind.Assign, destinationLocalId, sourceLocalId, false, -1, source);
+
     public static SafeCoreOwnershipInstruction Assign(SafeCoreOwnershipPlace place, SafeCoreMirSource source) =>
         new(SafeCoreOwnershipInstructionKind.Assign, place.LocalId, -1, false, -1, source) { Place = place };
 
@@ -991,6 +996,8 @@ public static class SafeCoreOwnershipAnalysis
                     ? state.Use(instruction.LocalId, locals, add, function, block, index, instruction.Source)
                     : state.UsePlace(instruction.Place, locals, add, function, block, index, instruction.Source);
             case SafeCoreOwnershipInstructionKind.Assign:
+                if (instruction.RelatedLocalId >= 0 && instruction.Place is null)
+                    return state.CopyReference(instruction.RelatedLocalId, instruction.LocalId, locals, add, function, block, index, instruction.Source);
                 return instruction.Place is null || instruction.Place.IsRoot
                     ? state.Assign(instruction.LocalId, locals, add, function, block, index, instruction.Source)
                     : state.AssignPlace(instruction.Place, locals, add, function, block, index, instruction.Source);
@@ -1658,8 +1665,14 @@ public static class SafeCoreOwnershipAnalysis
                 return false;
             if (borrows.TryGetValue(id, out BorrowState? ownBorrow) && ownBorrow.Active)
             {
-                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "Assignment cannot overwrite an active reference.", function.Name, block.Id, index, source);
-                return false;
+                // Replacing a reference ends its previous loan first. A
+                // live child reborrow still makes the assignment invalid.
+                if (!local.IsReference || HasActiveChild(id))
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "Assignment cannot overwrite an active reference.", function.Name, block.Id, index, source);
+                    return false;
+                }
+                EndBorrowInternal(id);
             }
             if (HasActiveBorrow(id, mutableOnly: false))
             {
@@ -1682,6 +1695,52 @@ public static class SafeCoreOwnershipAnalysis
             return true;
         }
 
+        public bool CopyReference(int sourceId, int destinationId,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
+            SafeCoreMirSource source)
+        {
+            if (!EnsureLocalScope(sourceId, locals, add, function, block, index, source) ||
+                !EnsureLocalScope(destinationId, locals, add, function, block, index, source) ||
+                !locals.TryGetValue(sourceId, out SafeCoreOwnershipLocal? sourceLocal) ||
+                !locals.TryGetValue(destinationId, out SafeCoreOwnershipLocal? destinationLocal) ||
+                !sourceLocal.IsReference || !destinationLocal.IsReference ||
+                !values.TryGetValue(sourceId, out ValueState? sourceValue) ||
+                !values.TryGetValue(destinationId, out ValueState? destinationValue))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A shared reference copy requires reference locals.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (!Use(sourceId, locals, add, function, block, index, source)) return false;
+            if (borrows.TryGetValue(destinationId, out BorrowState? destinationBorrow) && destinationBorrow.Active)
+            {
+                if (HasActiveChild(destinationId))
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A reference destination cannot be replaced while a reborrow is active.", function.Name, block.Id, index, source);
+                    return false;
+                }
+                EndBorrowInternal(destinationId);
+            }
+            if (destinationValue.Initialized && !destinationValue.Moved && !destinationValue.Dropped && destinationValue.DropOwned)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop, "A shared reference copy would overwrite a live Drop value.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (!borrows.TryGetValue(sourceId, out BorrowState? borrow) || !borrow.Active || borrow.Mutable)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A shared reference copy requires an active shared loan.", function.Name, block.Id, index, source);
+                return false;
+            }
+            values[destinationId] = destinationValue with
+            {
+                Initialized = true, Moved = false, Dropped = false, DropOwned = false, MovedTo = null,
+            };
+            borrows[destinationId] = borrow with { Suspended = false, EscapeReported = false };
+            Trace.Add($"copy_ref {sourceLocal.Name} -> {destinationLocal.Name}");
+            return true;
+        }
+
         public bool Move(int sourceId, int destinationId, IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
             Action<string, string, string, int, int, SafeCoreMirSource> add, SafeCoreOwnershipFunction function,
             SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source)
@@ -1692,15 +1751,22 @@ public static class SafeCoreOwnershipAnalysis
                 !locals.TryGetValue(sourceId, out SafeCoreOwnershipLocal? sourceLocal) ||
                 !locals.TryGetValue(destinationId, out SafeCoreOwnershipLocal? destinationLocal))
                 return false;
-            if (borrows.TryGetValue(sourceId, out BorrowState? sourceBorrow) && sourceBorrow.Active)
+            BorrowState? sourceBorrow = null;
+            bool transferBorrow = sourceLocal.IsReference &&
+                borrows.TryGetValue(sourceId, out sourceBorrow) && sourceBorrow.Active;
+            if (transferBorrow && HasActiveChild(sourceId))
             {
-                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrowed reference cannot be moved while active.", function.Name, block.Id, index, source);
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrowed reference cannot be moved while a reborrow is active.", function.Name, block.Id, index, source);
                 return false;
             }
             if (borrows.TryGetValue(destinationId, out BorrowState? destinationBorrow) && destinationBorrow.Active)
             {
-                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A move destination cannot overwrite an active reference.", function.Name, block.Id, index, source);
-                return false;
+                if (!destinationLocal.IsReference || HasActiveChild(destinationId))
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A move destination cannot overwrite an active reference.", function.Name, block.Id, index, source);
+                    return false;
+                }
+                EndBorrowInternal(destinationId);
             }
             if (borrows.Values.Any(borrow => borrow.Active && borrow.OwnerId == sourceId))
             {
@@ -1708,15 +1774,21 @@ public static class SafeCoreOwnershipAnalysis
                 return false;
             }
 
-            if (destination.Initialized && !destination.Moved && !destination.Dropped)
+            if (destination.Initialized && !destination.Moved && !destination.Dropped && !destinationLocal.IsReference)
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop, "A move destination is already initialized.", function.Name, block.Id, index, source);
                 return false;
             }
 
-            if (sourceLocal.Kind == SafeCoreOwnershipKind.Move)
+            if (sourceLocal.Kind == SafeCoreOwnershipKind.Move ||
+                sourceLocal.IsReference && sourceLocal.Type.IsMutable)
                 values[sourceId] = values[sourceId] with { Initialized = false, Moved = true, MovedTo = destinationId };
             values[destinationId] = destination with { Initialized = true, Moved = false, Dropped = false, DropOwned = values[sourceId].DropOwned || sourceLocal.HasDrop, MovedTo = null };
+            if (transferBorrow)
+            {
+                if (sourceLocal.Type.IsMutable) borrows.Remove(sourceId);
+                borrows[destinationId] = sourceBorrow!;
+            }
             Trace.Add($"move {sourceLocal.Name} -> {destinationLocal.Name}");
             return true;
         }

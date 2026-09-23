@@ -155,6 +155,9 @@ public static partial class SafeCoreMirOwnershipAdapter
                     InferNll = options.InferNll,
                     CancellationToken = options.CancellationToken,
                 });
+            foreach (SafeCoreOwnershipDiagnostic diagnostic in ownershipResult.Diagnostics)
+                AddDiagnostic(diagnostics, new Diagnostic(diagnostic.Code, diagnostic.Message, diagnostic.Source.Span)
+                { SourcePath = diagnostic.Source.SourcePath }, options);
             return new(ownershipProgram, ownershipResult, validation, diagnostics.AsReadOnly(), ownershipResult.IsTruncated);
         }
         catch (AdapterLimitException)
@@ -185,12 +188,45 @@ public static partial class SafeCoreMirOwnershipAdapter
         }
 
         var locals = new List<SafeCoreOwnershipLocal>(function.Locals.Count);
+        var referenceOrigins = new Dictionary<int, int>();
+        for (int blockIndex = 0; blockIndex < function.Blocks.Count; blockIndex++)
+        {
+            Step(options, clock, ref operations);
+            foreach (SafeCoreMirStatement statement in function.Blocks[blockIndex].Statements)
+            {
+                Step(options, clock, ref operations);
+                if (statement.Value.Type.Kind != SafeCoreSemanticTypeKind.Reference) continue;
+                SafeCoreMirRvalue value = statement.Value;
+                bool directBorrow = value.Kind == SafeCoreMirRvalueKind.Unary &&
+                    value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut") &&
+                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local;
+                bool referenceCopy = value.Kind == SafeCoreMirRvalueKind.Use &&
+                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local &&
+                    value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
+                if ((!directBorrow && !referenceCopy) ||
+                    !referenceOrigins.TryAdd(statement.DestinationLocalId, value.Operands[0].Id))
+                {
+                    AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
+                        "Reference locals require one explicit MIR borrow origin; unproven reference copies are unsupported.", value.Source), options);
+                    return null;
+                }
+            }
+        }
         bool valid = true;
         for (int index = 0; index < function.Locals.Count; index++)
         {
             Step(options, clock, ref operations);
             SafeCoreMirLocal local = function.Locals[index];
-            if (!IsStructuralCopy(local.Type))
+            if (local.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                (local.Kind == SafeCoreMirLocalKind.Parameter || !referenceOrigins.ContainsKey(local.Id)))
+            {
+                AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
+                    "A reference requires local MIR provenance; imported reference contracts are not available.", local.Source), options);
+                valid = false;
+                continue;
+            }
+            if (!IsStructuralCopy(local.Type) && local.Type.Kind != SafeCoreSemanticTypeKind.Reference &&
+                !local.IsUnitAdt && !local.DestructorFunctionId.HasValue)
             {
                 AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                     "The typed-MIR ownership bridge requires structural Copy locals; references, ADTs, closures, and function values need explicit ownership evidence.",
@@ -203,15 +239,41 @@ public static partial class SafeCoreMirOwnershipAdapter
                 local.Id,
                 local.Name,
                 local.Type,
-                SafeCoreOwnershipKind.Copy,
-                HasDrop: false,
+                local.Type.Kind == SafeCoreSemanticTypeKind.Reference && local.Type.IsMutable ||
+                local.DestructorFunctionId.HasValue
+                    ? SafeCoreOwnershipKind.Move : SafeCoreOwnershipKind.Copy,
+                HasDrop: local.DestructorFunctionId.HasValue,
                 ScopeId: 0,
-                IsReference: false,
+                IsReference: local.Type.Kind == SafeCoreSemanticTypeKind.Reference,
                 InitiallyInitialized: local.Kind == SafeCoreMirLocalKind.Parameter,
                 local.Source));
         }
 
         if (!valid) return null;
+
+        var referenceRoots = new Dictionary<int, int>();
+        foreach (int reference in referenceOrigins.Keys)
+        {
+            Step(options, clock, ref operations);
+            int root = reference;
+            for (int depth = 0; depth <= function.Locals.Count; depth++)
+            {
+                Step(options, clock, ref operations);
+                if (root < 0 || root >= function.Locals.Count) break;
+                if (function.Locals[root].Type.Kind != SafeCoreSemanticTypeKind.Reference)
+                {
+                    referenceRoots.Add(reference, root);
+                    break;
+                }
+                if (!referenceOrigins.TryGetValue(root, out root)) break;
+            }
+            if (!referenceRoots.ContainsKey(reference))
+            {
+                AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                    "MIR reference provenance must terminate at an in-scope owner local.", function.Locals[reference].Source), options);
+                return null;
+            }
+        }
 
         var blocks = new List<SafeCoreOwnershipBlock>(function.Blocks.Count);
         int statements = 0;
@@ -244,11 +306,90 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
 
                 SafeCoreMirRvalue value = statement.Value;
-                if (!IsStructuralCopy(value.Type))
+                bool referenceAssignment = value.Kind == SafeCoreMirRvalueKind.Use &&
+                    value.Operands.Count == 1 &&
+                    value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                    function.Locals[statement.DestinationLocalId].Type.Kind == SafeCoreSemanticTypeKind.Reference;
+                if (!IsStructuralCopy(value.Type) && value.Kind != SafeCoreMirRvalueKind.Unary &&
+                    value.Kind != SafeCoreMirRvalueKind.Write && !referenceAssignment &&
+                    !(function.Locals[statement.DestinationLocalId].IsUnitAdt && value.Kind == SafeCoreMirRvalueKind.Use &&
+                        value.Operands[0].Kind == SafeCoreMirOperandKind.Constant && value.Operands[0].Value == "()"))
                 {
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                         "Only structural Copy rvalues are supported by the typed-MIR ownership bridge.", value.Source), options);
                     valid = false;
+                    continue;
+                }
+
+                // Borrow creation and dereference writes are explicit ownership
+                // effects. They are handled before the generic Copy bridge so
+                // reference values never get silently treated as structural
+                // copies.
+                if (value.Kind == SafeCoreMirRvalueKind.Unary && value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut"))
+                {
+                    SafeCoreMirOperand owner = value.Operands[0];
+                    if (owner.Kind != SafeCoreMirOperandKind.Local || owner.Id < 0 || owner.Id >= function.Locals.Count)
+                    {
+                        AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                            "A borrow owner must be a local place in the typed MIR.", value.Source), options);
+                        valid = false;
+                    }
+                    else AddInstruction(instructions,
+                        SafeCoreOwnershipInstruction.Borrow(owner.Id, statement.DestinationLocalId,
+                            value.Operator is "&mut" or "reborrow_mut", value.Source), options, diagnostics, value.Source, ref valid);
+                    continue;
+                }
+                if (value.Kind == SafeCoreMirRvalueKind.Write)
+                {
+                    SafeCoreMirOperand reference = value.Operands[0];
+                    if (reference.Kind != SafeCoreMirOperandKind.Local ||
+                        !referenceRoots.TryGetValue(reference.Id, out int root) || root != statement.DestinationLocalId)
+                    {
+                        AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                            "A dereference write requires a reference local.", value.Source), options);
+                        valid = false;
+                    }
+                    else
+                    {
+                        AddInstruction(instructions,
+                            SafeCoreOwnershipInstruction.Write(reference.Id, value.Source), options, diagnostics, value.Source, ref valid);
+                        SafeCoreMirOperand written = value.Operands[1];
+                        if (written.Kind == SafeCoreMirOperandKind.Local)
+                            AddInstruction(instructions,
+                                SafeCoreOwnershipInstruction.Use(written.Id, written.Source), options, diagnostics, written.Source, ref valid);
+                    }
+                    continue;
+                }
+
+                // Assigning a reference has two distinct contracts. Shared
+                // references are Copy and retain the source loan; mutable
+                // references are Move and transfer their loan to the new
+                // local. Keep this distinction explicit in the ownership MIR
+                // so a later use of a moved `&mut` reports RSO1001.
+                if (value.Kind == SafeCoreMirRvalueKind.Use && value.Operands.Count == 1 &&
+                    value.Operands[0].Kind == SafeCoreMirOperandKind.Local &&
+                    function.Locals[statement.DestinationLocalId].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                    value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference)
+                {
+                    SafeCoreMirOperand source = value.Operands[0];
+                    if (source.Id < 0 || source.Id >= function.Locals.Count)
+                    {
+                        AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                            "A reference assignment source is outside the MIR local arena.", source.Source), options);
+                        valid = false;
+                    }
+                    else if (source.Type.IsMutable)
+                    {
+                        AddInstruction(instructions,
+                            SafeCoreOwnershipInstruction.Move(source.Id, statement.DestinationLocalId, value.Source),
+                            options, diagnostics, value.Source, ref valid);
+                    }
+                    else
+                    {
+                        AddInstruction(instructions,
+                            SafeCoreOwnershipInstruction.AssignReference(source.Id, statement.DestinationLocalId, value.Source),
+                            options, diagnostics, value.Source, ref valid);
+                    }
                     continue;
                 }
 
@@ -270,7 +411,8 @@ public static partial class SafeCoreMirOwnershipAdapter
                                 options, diagnostics, operand.Source, ref valid);
                             break;
                         case SafeCoreMirOperandKind.Constant:
-                            if (!IsStructuralCopy(operand.Type))
+                            if (!IsStructuralCopy(operand.Type) &&
+                                !(function.Locals[statement.DestinationLocalId].IsUnitAdt && operand.Value == "()"))
                             {
                                 AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                                     "A non-Copy constant has no ownership bridge representation.", operand.Source), options);
@@ -374,6 +516,29 @@ public static partial class SafeCoreMirOwnershipAdapter
                         "Only direct typed-MIR scalar calls have a bounded ownership bridge.", terminator.Source), options);
                     valid = false;
                     return null;
+                }
+                if (terminator.DropLocalId is int droppedLocal)
+                {
+                    if (terminator.Arguments.Count != 0 || terminator.DestinationLocalId is not null ||
+                        droppedLocal < 0 || droppedLocal >= function.Locals.Count ||
+                        !function.Locals[droppedLocal].DestructorFunctionId.HasValue)
+                    {
+                        AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
+                            "A MIR destructor call must identify a Drop local with no arguments or destination.", terminator.Source), options);
+                        valid = false;
+                    }
+                    else
+                    {
+                        AddInstruction(instructions,
+                            SafeCoreOwnershipInstruction.Drop(droppedLocal, terminator.Source),
+                            options, diagnostics, terminator.Source, ref valid);
+                    }
+                    if (!valid) return null;
+                    return terminator.Operand.Type.ReturnType.Kind == SafeCoreSemanticTypeKind.Never
+                        ? SafeCoreOwnershipTerminator.Unreachable(terminator.Source)
+                        : ValidTarget(terminator.TargetBlockId, function.Blocks.Count)
+                            ? SafeCoreOwnershipTerminator.Goto(terminator.TargetBlockId, terminator.Source)
+                            : InvalidCallTarget(terminator.Source, diagnostics, options, ref valid);
                 }
                 SafeCoreType callType = terminator.Operand.Type;
                 if (callType.ParameterTypes.Any(parameterType => !IsStructuralCopy(parameterType)) ||

@@ -15,6 +15,8 @@ public sealed record SafeCoreTypeAnalysisOptions
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
     public int MaximumOperations { get; init; } = 1_000_000;
     public int MaximumNestingDepth { get; init; } = 128;
+    /// <summary>Enables the P1 source profile's one-time uninitialized binding form.</summary>
+    public bool EnableUninitializedBindings { get; init; }
 }
 
 /// <summary>Resolved type evidence, indexed by stable HIR node identity.</summary>
@@ -79,6 +81,12 @@ public static partial class SafeCoreTypeAnalysis
         private readonly HashSet<string> _definingAdts = new(StringComparer.Ordinal);
         private readonly Dictionary<string, List<AdtShape>> _adts = new(StringComparer.Ordinal);
         private readonly Dictionary<SafeCoreSymbol, Binding> _bindings = [];
+        // Rust permits a local declaration without an initializer when the
+        // first assignment appears later in the same scope. Keep this fact
+        // separate from mutability: the one initialization is legal even for
+        // an otherwise immutable binding, while every later assignment still
+        // requires the normal mutable-place check.
+        private readonly HashSet<SafeCoreSymbol> _uninitialized = [];
         private readonly HashSet<string> _resolving = new(StringComparer.Ordinal);
         private readonly List<(SafeCoreHirNode Node, SafeCoreType Type, BigInteger Value)> _integers = [];
         private readonly List<(SafeCoreHirNode Node, SafeCoreType Type, double Value)> _floats = [];
@@ -150,6 +158,7 @@ public static partial class SafeCoreTypeAnalysis
                 }
                 if (node.Kind != N.Function) continue;
                 _bindings.Clear();
+                _uninitialized.Clear();
                 SafeCoreType signature = _values[Key(node.DeclaredSymbol!)];
                 _returnType = signature.ReturnType!;
                 int index = 0;
@@ -229,6 +238,15 @@ public static partial class SafeCoreTypeAnalysis
             if (node.Kind is N.CompilationUnit or N.Module or N.ImportGroup)
             {
                 foreach (SafeCoreHirNode child in Parts(node)) Collect(child, depth + 1);
+                return;
+            }
+            if (node.Kind == N.Implementation)
+            {
+                // The P1 Drop bridge lowers the supported associated method to
+                // an ordinary function child. Keep implementation metadata
+                // itself out of the value declaration table.
+                foreach (SafeCoreHirNode child in Parts(node))
+                    if (child.Kind == N.Function) Collect(child, depth + 1);
                 return;
             }
             if (node.Kind is N.Import or N.Attribute) return;
@@ -429,8 +447,21 @@ public static partial class SafeCoreTypeAnalysis
                     type = LetElse(node, depth + 1); break;
                 case N.LetStatement:
                     int valueIndex = node.ChildIds.Count > 1 && IsType(Child(node, 1)) ? 2 : 1;
-                    if (valueIndex >= node.ChildIds.Count) Unsupported(node);
                     SafeCoreType? annotation = valueIndex == 2 ? Type(Child(node, 1), true, depth + 1) : null;
+                    if (valueIndex >= node.ChildIds.Count)
+                    {
+                        SafeCoreHirNode declarationPattern = Child(node, 0);
+                        if (!_options.EnableUninitializedBindings || node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasElse) ||
+                            declarationPattern.Kind is not (N.IdentifierPattern or N.WildcardPattern))
+                            Unsupported(node);
+                        SafeCoreType declarationType = annotation ?? _inference.Fresh();
+                        if (annotation is not null) Sized(declarationType, node, depth + 1);
+                        Bind(declarationPattern, declarationType, depth + 1);
+                        if (declarationPattern.Kind == N.IdentifierPattern && declarationPattern.DeclaredSymbol is not null)
+                            _uninitialized.Add(declarationPattern.DeclaredSymbol);
+                        type = Primitive(K.Unit);
+                        break;
+                    }
                     SafeCoreType valueType = Expr(Child(node, valueIndex), annotation, depth + 1);
                     SafeCoreType bindingType = annotation ?? valueType;
                     Sized(bindingType, node, depth + 1);
@@ -635,7 +666,9 @@ public static partial class SafeCoreTypeAnalysis
             SafeCoreType left = Expr(leftNode, op is "&&" or "||" ? Primitive(K.Bool) : null, depth + 1);
             if (op == "=")
             {
-                RequireMutable(leftNode, false, depth + 1);
+                bool firstInitialization = leftNode.Kind == N.NameExpression && leftNode.ReferencedSymbol is not null &&
+                    _uninitialized.Remove(leftNode.ReferencedSymbol);
+                if (!firstInitialization) RequireMutable(leftNode, false, depth + 1);
                 Expr(rightNode, left, depth + 1);
                 return Primitive(K.Unit);
             }

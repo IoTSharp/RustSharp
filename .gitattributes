@@ -7,3 +7,11 @@ tools/RustSharp.Conformance/fixtures/safe-core-lexing-comment-boundaries.rs -tex
 tools/RustSharp.Conformance/fixtures/safe-core-lexing-invalid-doc-carriage-returns.rs -text
 tools/RustSharp.Conformance/fixtures/safe-core-lexing-input-line-endings.rs -text
 tools/RustSharp.Conformance/fixtures/safe-core-lexing-trivia-only.rs -text
+# These syntax fixtures intentionally retain CRLF/mixed bytes because their
+# reviewed AST snapshots include the original source spans.  Keep their input
+# bytes stable across clean checkouts instead of normalizing them through the
+# repository-wide `*.rs text eol=lf` rule.
+tools/RustSharp.Conformance/fixtures/syntax-expanded-closures.rs -text whitespace=cr-at-eol
+tools/RustSharp.Conformance/fixtures/syntax-expanded-expressions.rs -text whitespace=cr-at-eol
+tools/RustSharp.Conformance/fixtures/syntax-expanded-modules.rs -text whitespace=cr-at-eol
+tools/RustSharp.Conformance/fixtures/syntax-expanded-qualified.rs -text whitespace=cr-at-eol

@@ -65,7 +65,7 @@ publish_output_truncated=false
 run_output_truncated=false
 
 case "$profile" in
-    vertical-slice-v1|safe-core-primitives-v1|safe-core-generics-v1|safe-core-mir-p1-v1)
+    vertical-slice-v1|safe-core-primitives-v1|safe-core-generics-v1|safe-core-mir-p1-v1|safe-core-mir-p1-v2)
         ;;
     *)
         status="failed"

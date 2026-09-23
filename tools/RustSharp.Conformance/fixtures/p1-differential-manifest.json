@@ -1,0 +1,45 @@
+{
+  "profile": "p1-differential-v1",
+  "version": 1,
+  "rustVersion": "1.98.0",
+  "edition": "2024",
+  "compilerProfile": "safe-core-mir-p1-v2",
+  "denominator": 4,
+  "limits": {
+    "maximumCases": 16,
+    "maximumManifestBytes": 262144,
+    "maximumFixtureBytes": 1048576,
+    "caseTimeoutSeconds": 300,
+    "deadlineSeconds": 900
+  },
+  "coverage": {
+    "borrow": 2,
+    "drop": 2
+  },
+  "cases": [
+    {
+      "id": "borrow-shared",
+      "file": "p1-borrow-shared.rs",
+      "kind": "borrow",
+      "expectedOutput": "7\n"
+    },
+    {
+      "id": "borrow-mutable-reborrow",
+      "file": "p1-borrow-mutable-reborrow.rs",
+      "kind": "borrow",
+      "expectedOutput": "9\n"
+    },
+    {
+      "id": "drop-return-order",
+      "file": "p1-drop-return-order.rs",
+      "kind": "drop",
+      "expectedOutput": "body\ndrop\n"
+    },
+    {
+      "id": "drop-early-return",
+      "file": "p1-drop-early-return.rs",
+      "kind": "drop",
+      "expectedOutput": "drop\n"
+    }
+  ]
+}

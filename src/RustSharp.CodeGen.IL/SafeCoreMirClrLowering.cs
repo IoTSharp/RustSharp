@@ -113,6 +113,8 @@ public static class SafeCoreMirClrLowering
                 {
                     parametersEnded = true;
                 }
+                if (local.Type.Kind == SafeCoreSemanticTypeKind.Adt && !local.IsUnitAdt)
+                    FailUnsupported(local.Source, "ADT locals require explicit zero-field declaration evidence.");
                 StorageType(local.Type, local.Source);
             }
             if (parameters > ClrLirLimits.MaximumParameters)
@@ -141,6 +143,17 @@ public static class SafeCoreMirClrLowering
                 // boundary instead of silently changing its meaning.
                 SafeCoreSemanticTypeKind.Char => FailType(type, source),
                 SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array => Layout(type, source, depth).Type,
+                // The bounded reference profile represents a direct local
+                // borrow as an alias to the owner's CLR value slot. MIR
+                // ownership evidence preserves the provenance; executable LIR
+                // keeps the representation scalar and performs dereference
+                // reads/writes against the owner destination.
+                SafeCoreSemanticTypeKind.Reference => StorageType(type.ElementType, source, depth + 1),
+                // A unit ADT has no fields and is represented by the same
+                // zero-field CLR value as `()`. Non-unit ADTs remain outside
+                // this bounded executable representation until their layout
+                // metadata is available.
+                SafeCoreSemanticTypeKind.Adt => Layout(type, source, depth).Type,
                 _ => FailType(type, source),
             };
         }
@@ -179,7 +192,7 @@ public static class SafeCoreMirClrLowering
                         fields.Add(new(index.ToString(CultureInfo.InvariantCulture),
                             StorageType(type.ElementType, source, depth + 1)));
                 }
-                else if (type.Kind != SafeCoreSemanticTypeKind.Unit)
+                else if (type.Kind is not (SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Adt))
                 {
                     Fail(source, "Only tuple, array and unit layouts are supported by MIR CLR lowering.");
                 }
@@ -242,6 +255,7 @@ public static class SafeCoreMirClrLowering
         private readonly List<Block> _blocks = [];
         private readonly Dictionary<int, string> _labels = [];
         private readonly Dictionary<int, ClrLirType> _localTypes = [];
+        private readonly Dictionary<int, int> _referenceOwners = [];
         private Block? _current;
         private int _extraLabel;
 
@@ -253,6 +267,7 @@ public static class SafeCoreMirClrLowering
 
         public ClrLirMethod Run()
         {
+            CollectReferenceProvenance();
             foreach (SafeCoreMirBlock block in ReachableBlocks())
             {
                 owner.Step();
@@ -287,6 +302,9 @@ public static class SafeCoreMirClrLowering
                 foreach (SafeCoreMirStatement statement in mirBlock.Statements)
                 {
                     owner.Step();
+                    if (statement.Value.Kind == SafeCoreMirRvalueKind.Write &&
+                        RootOwner(statement.Value.Operands[0].Id, statement.Source) != statement.DestinationLocalId)
+                        Lowerer.Fail(statement.Source, "A MIR write destination differs from its reference provenance.");
                     EmitRvalue(statement.Value);
                     Store(statement.DestinationLocalId, statement.Source);
                 }
@@ -302,6 +320,51 @@ public static class SafeCoreMirClrLowering
                 // when Rust's source declaration uses its default private visibility.
                 IsPublic = function.IsPublic || IsEntryName(function.Name),
             };
+        }
+
+        private void CollectReferenceProvenance()
+        {
+            foreach (SafeCoreMirLocal local in function.Locals)
+            {
+                owner.Step();
+                if (local.Type.Kind == SafeCoreSemanticTypeKind.Reference && local.Kind == SafeCoreMirLocalKind.Parameter)
+                    Lowerer.FailUnsupported(local.Source, "Reference parameters require an explicit interprocedural ownership contract.");
+            }
+            foreach (SafeCoreMirBlock block in function.Blocks)
+            foreach (SafeCoreMirStatement statement in block.Statements)
+            {
+                owner.Step();
+                if (statement.Value.Type.Kind != SafeCoreSemanticTypeKind.Reference) continue;
+                SafeCoreMirRvalue value = statement.Value;
+                bool directBorrow = value.Kind == SafeCoreMirRvalueKind.Unary &&
+                    value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut") &&
+                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local;
+                bool referenceCopy = value.Kind == SafeCoreMirRvalueKind.Use &&
+                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Local &&
+                    value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
+                if ((!directBorrow && !referenceCopy) ||
+                    !_referenceOwners.TryAdd(statement.DestinationLocalId, value.Operands[0].Id))
+                    Lowerer.FailUnsupported(value.Source, "Reference locals require one explicit, immutable MIR borrow origin.");
+            }
+            foreach (SafeCoreMirLocal local in function.Locals)
+            {
+                owner.Step();
+                if (local.Type.Kind == SafeCoreSemanticTypeKind.Reference) _ = RootOwner(local.Id, local.Source);
+            }
+        }
+
+        private int RootOwner(int reference, SafeCoreMirSource source)
+        {
+            for (int depth = 0; depth <= function.Locals.Count; depth++)
+            {
+                owner.Step();
+                if (reference < 0 || reference >= function.Locals.Count) Lowerer.Fail(source, "Reference origin is outside its local arena.");
+                if (function.Locals[reference].Type.Kind != SafeCoreSemanticTypeKind.Reference) return reference;
+                if (!_referenceOwners.TryGetValue(reference, out reference))
+                    Lowerer.FailUnsupported(source, "Reference provenance is missing from MIR.");
+            }
+            Lowerer.Fail(source, "Reference provenance contains a cycle.");
+            return -1;
         }
 
         private static bool IsEntryName(string name) =>
@@ -372,6 +435,14 @@ public static class SafeCoreMirClrLowering
                 case SafeCoreMirRvalueKind.Index:
                     EmitIndex(value);
                     return;
+                case SafeCoreMirRvalueKind.Field:
+                    EmitField(value);
+                    return;
+                case SafeCoreMirRvalueKind.Write:
+                    // The enclosing MIR statement stores the computed value
+                    // into the owner local identified during lowering.
+                    EmitOperand(value.Operands[1]);
+                    return;
                 case SafeCoreMirRvalueKind.Print:
                     EmitPrint(value);
                     return;
@@ -405,6 +476,12 @@ public static class SafeCoreMirClrLowering
             if (kind == SafeCoreSemanticTypeKind.Unit)
             {
                 if (operand.Value != "()") Lowerer.Fail(operand.Source, "Invalid unit MIR constant.");
+                Emit(new ClrLirConstructValue(owner.Layout(operand.Type, operand.Source)));
+                return;
+            }
+            if (kind == SafeCoreSemanticTypeKind.Adt)
+            {
+                if (operand.Value != "()") Lowerer.Fail(operand.Source, "Invalid unit ADT MIR constant.");
                 Emit(new ClrLirConstructValue(owner.Layout(operand.Type, operand.Source)));
                 return;
             }
@@ -448,12 +525,28 @@ public static class SafeCoreMirClrLowering
                 }
                 return;
             }
+            if (value.Operator == "*")
+            {
+                SafeCoreMirOperand reference = value.Operands[0];
+                if (reference.Kind != SafeCoreMirOperandKind.Local)
+                    Lowerer.FailUnsupported(value.Source, "Dereference requires an explicit MIR reference local.");
+                Emit(new ClrLirLoadLocal(RootOwner(reference.Id, value.Source)));
+                return;
+            }
+            if (value.Operator is "&" or "&mut" or "reborrow" or "reborrow_mut")
+            {
+                // The reference slot itself is an inert bounded token. Reads
+                // dereference the proven owner slot above, preserving alias
+                // identity after writes rather than loading this snapshot.
+                EmitOperand(value.Operands[0]);
+                return;
+            }
             Lowerer.Fail(value.Source, "Unsupported MIR unary operator.");
         }
 
         private void EmitBinary(SafeCoreMirRvalue value)
         {
-            if (value.Operator is not ("+" or "-" or "*" or "==" or "!=" or "<" or ">" or "<=" or ">="))
+            if (value.Operator is not ("+" or "-" or "*" or "==" or "!=" or "<" or ">" or "<=" or ">=" or "&&" or "||"))
                 Lowerer.FailUnsupported(value.Source, "The CLR MIR profile supports only bounded scalar binary operators.");
             EmitOperand(value.Operands[0]);
             EmitOperand(value.Operands[1]);
@@ -471,6 +564,8 @@ public static class SafeCoreMirClrLowering
                 // silently swap the two inclusive relations.
                 "<" or ">=" => ClrLirBinaryOperator.LessThan,
                 ">" or "<=" => ClrLirBinaryOperator.GreaterThan,
+                "&&" => ClrLirBinaryOperator.And,
+                "||" => ClrLirBinaryOperator.Or,
                 _ => throw new InvalidOperationException("Unsupported MIR binary operator."),
             }, operandType));
             if (value.Operator is "!=" or "<=" or ">=")
@@ -478,6 +573,18 @@ public static class SafeCoreMirClrLowering
                 Emit(new ClrLirLoadBoolean(false));
                 Emit(new ClrLirBinary(ClrLirBinaryOperator.Equal, ClrLirType.Bool));
             }
+        }
+
+        private void EmitField(SafeCoreMirRvalue value)
+        {
+            if (value.Operands.Count != 1 || value.Operands[0].Type.Kind != SafeCoreSemanticTypeKind.Tuple ||
+                !int.TryParse(value.Operator, NumberStyles.None, CultureInfo.InvariantCulture, out int index) ||
+                index < 0 || index >= value.Operands[0].Type.Elements.Count ||
+                value.Type != value.Operands[0].Type.Elements[index])
+                Lowerer.Fail(value.Source, "MIR tuple projection does not match its aggregate layout.");
+            EmitOperand(value.Operands[0]);
+            Emit(new ClrLirReadField(owner.Layout(value.Operands[0].Type, value.Source),
+                int.Parse(value.Operator!, CultureInfo.InvariantCulture)));
         }
 
         private void EmitIndex(SafeCoreMirRvalue value)

@@ -210,7 +210,7 @@ internal static class SafeCoreMirOwnershipAdapterTests
         SafeCoreOwnershipProgram ownership = new([
             new SafeCoreOwnershipFunction(
                 "crate::reference",
-                [new SafeCoreOwnershipLocal(0, "view", reference, SafeCoreOwnershipKind.Move,
+                [new SafeCoreOwnershipLocal(0, "view", reference, SafeCoreOwnershipKind.Copy,
                     HasDrop: false, ScopeId: 0, IsReference: true, InitiallyInitialized: true, Source: source)],
                 [new SafeCoreOwnershipScope(0, -1, source)],
                 [new SafeCoreOwnershipBlock(0, 0, [], SafeCoreOwnershipTerminator.Return(0, source), source)],

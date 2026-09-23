@@ -1,0 +1,135 @@
+{
+  "profile": "p1-differential-v2",
+  "version": 2,
+  "rustVersion": "1.98.0",
+  "edition": "2024",
+  "compilerProfile": "safe-core-mir-p1-v2",
+  "denominator": 16,
+  "limits": {
+    "maximumCases": 16,
+    "maximumManifestBytes": 262144,
+    "maximumFixtureBytes": 1048576,
+    "caseTimeoutSeconds": 30,
+    "deadlineSeconds": 180
+  },
+  "coverage": {
+    "borrow": 10,
+    "drop": 6,
+    "run-pass": 12,
+    "compile-fail": 4
+  },
+  "cases": [
+    {
+      "id": "borrow-shared",
+      "file": "p1-borrow-shared.rs",
+      "kind": "borrow",
+      "expectedOutput": "7\n"
+    },
+    {
+      "id": "borrow-mutable-reborrow",
+      "file": "p1-borrow-mutable-reborrow.rs",
+      "kind": "borrow",
+      "expectedOutput": "9\n"
+    },
+    {
+      "id": "drop-return-order",
+      "file": "p1-drop-return-order.rs",
+      "kind": "drop",
+      "expectedOutput": "body\ndrop\n"
+    },
+    {
+      "id": "drop-early-return",
+      "file": "p1-drop-early-return.rs",
+      "kind": "drop",
+      "expectedOutput": "drop\n"
+    },
+    {
+      "id": "borrow-write-read",
+      "file": "p1-v2-borrow-write-read.rs",
+      "kind": "borrow",
+      "expectation": "run-pass",
+      "expectedOutput": "9\n9\n"
+    },
+    {
+      "id": "borrow-shared-after-update",
+      "file": "p1-v2-borrow-shared-after-update.rs",
+      "kind": "borrow",
+      "expectation": "run-pass",
+      "expectedOutput": "1\n9\n"
+    },
+    {
+      "id": "borrow-mutable-reborrow-chain",
+      "file": "p1-v2-borrow-mutable-reborrow-chain.rs",
+      "kind": "borrow",
+      "expectation": "run-pass",
+      "expectedOutput": "9\n9\n9\n"
+    },
+    {
+      "id": "borrow-shared-reborrow",
+      "file": "p1-v2-borrow-shared-reborrow.rs",
+      "kind": "borrow",
+      "expectation": "run-pass",
+      "expectedOutput": "7\n9\n"
+    },
+    {
+      "id": "borrow-fail-mut-alias",
+      "file": "p1-v2-borrow-fail-mut-alias.rs",
+      "kind": "borrow",
+      "expectation": "compile-fail",
+      "rustcDiagnostic": "E0499",
+      "rustSharpDiagnostic": "RSO1002"
+    },
+    {
+      "id": "borrow-fail-shared-write",
+      "file": "p1-v2-borrow-fail-shared-write.rs",
+      "kind": "borrow",
+      "expectation": "compile-fail",
+      "rustcDiagnostic": "E0506",
+      "rustSharpDiagnostic": "RSO1002"
+    },
+    {
+      "id": "borrow-fail-moved-mut-ref",
+      "file": "p1-v2-borrow-fail-moved-mut-ref.rs",
+      "kind": "borrow",
+      "expectation": "compile-fail",
+      "rustcDiagnostic": "E0382",
+      "rustSharpDiagnostic": "RSO1001"
+    },
+    {
+      "id": "borrow-fail-escape",
+      "file": "p1-v2-borrow-fail-escape.rs",
+      "kind": "borrow",
+      "expectation": "compile-fail",
+      "rustcDiagnostic": "E0597",
+      "rustSharpDiagnostic": "RSO1005"
+    },
+    {
+      "id": "drop-reverse-locals",
+      "file": "p1-v2-drop-reverse-locals.rs",
+      "kind": "drop",
+      "expectation": "run-pass",
+      "expectedOutput": "body\nsecond\nfirst\n"
+    },
+    {
+      "id": "drop-nested-scopes",
+      "file": "p1-v2-drop-nested-scopes.rs",
+      "kind": "drop",
+      "expectation": "run-pass",
+      "expectedOutput": "nested\ninner\nafter\nouter\n"
+    },
+    {
+      "id": "drop-return-reverse",
+      "file": "p1-v2-drop-return-reverse.rs",
+      "kind": "drop",
+      "expectation": "run-pass",
+      "expectedOutput": "return\nsecond\nfirst\ncaller\n"
+    },
+    {
+      "id": "drop-branch-return",
+      "file": "p1-v2-drop-branch-return.rs",
+      "kind": "drop",
+      "expectation": "run-pass",
+      "expectedOutput": "early\nsecond\nfirst\nlate\nfirst\n"
+    }
+  ]
+}

@@ -82,31 +82,34 @@ Cargo 包示例也分别通过 ILVerify 与 Windows x64 Native AOT。P1-05 合�
 测试工具当前注册并通过 377/377 项测试；这次补充运行使用已安装的 10.0.401 SDK
 通过显式 MSBuild 完成，不替代已记录的 10.0.400 Native AOT 证据。
 
-P1-06 对有界类型化 MIR 契约仍为 🚧 进行中。当前实现提供不可变类型化 MIR
-arena、严格的 CFG/类型/常量/运算符/调用验证、有界且确定性的格式化与快照、
-嵌套元组和固定数组聚合 rvalue 及静态边界检查索引、带源码范围的 HIR 降低，
-以及有界的源码到 MIR 所有权/清理证据、面向受支持值子集的直接 MIR 到 CLR-LIR
-降低和取消/工作量/深度/集合/诊断限制。固定数组构造与索引已有真实编译/运行
-回归覆盖。P1-07 和 P1-08 以 🚧 进行中状态提供有界所有权、NLL、再借用、
-确定性清理和 `RustPanicBoundary` 结果；编译器会为受支持的 MIR 值持久化所有权和
-清理证据。P1-09 以 🚧
-进行中状态提供确定性 PE 元数据、规范的零参数 `()` 泛型实例、有界元数据 consumer、
-并逐项将函数与真实 MethodDef 的签名、可见性和 static 属性对账，所有权/MIR 证据、经 HIR
-解析的导入声明，以及通过 AssemblyRef/TypeRef/MemberRef
-发出的有界标量外部调用。P1-10 以 🚧 进行中状态提供版本化的八用例回归报告。当前
-Windows/.NET 10.0.401 Release 测试工具通过 412/412 项测试；已记录的
-`artifacts/p1-10/safe-core-regression-v1.json` 报告通过 8/8 项，失败和跳过均为零，
-且两个 run-pass 用例均对照有界的 rustc 1.98 编译/运行输出。模式、闭包、引用语义、
-编译器集成的析构/Drop 降低、较完整的声明合成、运行时/AOT
-门槛以及完整差分分母仍未完成；另有
-producer 到 consumer 的标量外部调用已通过发射元数据引用并实际运行验证。这些证据不
-声称 Linux Native AOT 或跨平台执行。重复数组和切片/unsizing 仍是有界拒绝。
+P1-06～P1-10 及 P1 阶段仍为 🚧 进行中。可选的 `safe-core-mir-p1-v2` 配置档在
+带源码映射的 HIR → 类型化 MIR → CLR LIR 发射链路上增加结构化 `Copy` 重复数组、
+有界元组/标量模式、带 guard/or-pattern 的 `match` 及静态展开的捕获闭包。v1 对
+重复数组的拒绝契约保持不变。流水线具有确定性快照与 PE/PDB 检查、显式未支持诊断，
+以及工作量、大小、深度、时间和取消边界。
 
-已记录的 `p1-exit-gate-v1` 报告位于 `artifacts/p1-10/p1-exit-gate-v1.json`，
-5/5 个进程内库契约探针均通过：`typed-mir-validation`、`ownership-bridge`、
-`drop-order`、`panic-unwind` 和 `metadata-consumer`。报告记录
-`"nativeAot": false` 和 `"crossPlatform": false`；这只是库契约证据，不能关闭完整
-P1 退出门槛。
+有界的直接局部变量借用/再借用来源、place/projection 模型及所有权证据现在贯穿类型化
+MIR 与 CLR LIR 后端。共享引用复制会克隆借用，`&mut` 引用移动会转移借用，源码逃逸
+会得到稳定的所有权诊断；聚合投影移动、跨函数契约和完整的 NLL 合流空间仍待完成。
+受支持的 unit `impl Drop` 路径现在发出显式 MIR 析构调用和所有权 Drop 事实；生成析构器
+失败的 panic/unwind/abort 行为及含字段聚合仍待完成。跨包标量调用已使用
+AssemblyRef/TypeRef/MemberRef，并严格核对 MethodDef 的签名、static 属性和可见性；导入
+引用、聚合及所有权契约仍待实现。
+
+已记录的 `safe-core-regression-v1` 报告通过 8/8，失败和跳过均为零。
+`p1-exit-gate-v1` 通过 5/5 个进程内库探针，并明确记录 `"nativeAot": false` 和
+`"crossPlatform": false`。不可变的 `p1-differential-v2` 清单针对 rustc 1.98.0
+执行 16/16 项（10 借用、6 Drop），失败、阻塞和跳过均为零。新的
+`p1-platform.yml` 工作流在原生 Windows/Linux x64 runner 上固定 12 个运行通过用例，
+并聚合 CoreCLR、ILVerify、Native AOT 与差分报告；这些最终 CI 报告仍是 P1 完成的必要条件。
+
+本地 hello 探测提供 ILVerify、CoreCLR 和 Windows x64 Native AOT 证据。
+Linux x64 Native AOT hello 也在 Ubuntu WSL2 与 SDK 10.0.112 下运行；原生 Linux
+探测器明确排除 WSL2 的原生主机声明。两者都不能证明完整 P1 语言范围。完成要求扩展后
+的固定分母通过 CoreCLR、ILVerify、原生 Windows/Linux x64 AOT 和 rustc 1.98，
+失败/跳过均为零，且 CI 对应最终推送的 SHA。[P1 缺口矩阵](docs/p1-gap-matrix.md)
+将每项剩余要求关联到实现、测试、本地证据和 CI 证据；[类型化 MIR 契约](docs/typed-mir-profile.md)
+定义当前实现边界。
 
 使用以下命令运行泛型示例，输出 `42` 和 `true`：
 

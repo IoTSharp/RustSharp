@@ -10,9 +10,12 @@ internal static class SyntaxManifestTests
 
     public static IReadOnlyList<TestCase> All { get; } =
     [
+        new("Syntax corpus preserves original source bytes and reviewed spans", PreservesSourceBytesAsync),
         new("Syntax corpus rejects missing categories and invalid contracts", RejectsInvalidContractAsync),
         new("Syntax corpus fails incorrect diagnostic text and item expectations", RejectsIncorrectExpectationAsync),
     ];
+
+    private static Task PreservesSourceBytesAsync() => RunMutationsAsync([static _ => { }], 0);
 
     private static Task RejectsInvalidContractAsync() => RunMutationsAsync(
     [
@@ -76,11 +79,14 @@ internal static class SyntaxManifestTests
                 AssertEx.Equal(expectedExitCode, exitCode);
                 JsonNode report = JsonNode.Parse(await File.ReadAllTextAsync(reportPath, deadline.Token).ConfigureAwait(false))!;
                 AssertEx.Equal(expectedExitCode, report["summary"]!["exitCode"]!.GetValue<int>());
-                AssertEx.Equal(expectedExitCode == 1, report["manifest"]!["validated"]!.GetValue<bool>());
-                AssertEx.Equal(expectedExitCode == 1 ? cases.Count : 0, report["summary"]!["executed"]!.GetValue<int>());
-                if (expectedExitCode == 1)
+                AssertEx.Equal(expectedExitCode != 2, report["manifest"]!["validated"]!.GetValue<bool>());
+                AssertEx.Equal(expectedExitCode != 2 ? cases.Count : 0, report["summary"]!["executed"]!.GetValue<int>());
+                if (expectedExitCode != 2)
                 {
-                    AssertEx.Equal(1, report["summary"]!["failed"]!.GetValue<int>());
+                    AssertEx.Equal(expectedExitCode, report["summary"]!["failed"]!.GetValue<int>());
+                    AssertEx.Equal(cases.Count - expectedExitCode, report["summary"]!["passed"]!.GetValue<int>());
+                    AssertEx.Equal(0, report["summary"]!["errors"]!.GetValue<int>());
+                    AssertEx.Equal(0, report["summary"]!["skipped"]!.GetValue<int>());
                 }
             }
         }

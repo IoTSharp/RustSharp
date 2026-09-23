@@ -138,6 +138,33 @@ public sealed class NativeAotPublisher
                 Utf8WithoutByteOrderMark,
                 cancellationToken).ConfigureAwait(false);
 
+            // The repository pins the release SDK in the root global.json. A
+            // Native AOT probe may intentionally run with a newer installed
+            // patch SDK when the pinned SDK is unavailable; keep that choice
+            // local to the disposable host directory so the repository
+            // contract is never modified. The host directory is deleted in
+            // the finally block together with this file.
+            string? sdkVersion = Environment.GetEnvironmentVariable("RUSTSHARP_NATIVE_AOT_SDK_VERSION");
+            if (!string.IsNullOrWhiteSpace(sdkVersion))
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    sdkVersion,
+                    "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                    System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+                {
+                    throw new InvalidOperationException(
+                        "RUSTSHARP_NATIVE_AOT_SDK_VERSION must be a numeric SDK version such as 10.0.401.");
+                }
+
+                string localGlobalJson = "{\n  \"sdk\": {\n    \"version\": \"" +
+                    sdkVersion + "\",\n    \"rollForward\": \"disable\",\n    \"allowPrerelease\": false\n  }\n}\n";
+                await File.WriteAllTextAsync(
+                    Path.Combine(hostDirectory, "global.json"),
+                    localGlobalJson,
+                    Utf8WithoutByteOrderMark,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
             var processRequest = new BoundedProcessRequest(
                 "dotnet",
                 new[]

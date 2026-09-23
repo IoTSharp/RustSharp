@@ -18,7 +18,7 @@ param(
     [int] $RunTimeoutSeconds = 30,
 
     [Parameter()]
-    [ValidateSet('vertical-slice-v1', 'safe-core-primitives-v1', 'safe-core-generics-v1', 'safe-core-mir-p1-v1')]
+    [ValidateSet('vertical-slice-v1', 'safe-core-primitives-v1', 'safe-core-generics-v1', 'safe-core-mir-p1-v1', 'safe-core-mir-p1-v2')]
     [string] $Profile = 'vertical-slice-v1',
 
     [Parameter()]
@@ -772,7 +772,15 @@ try {
         -WorkingDirectory $repoRoot `
         -TimeoutSeconds 30
     $dotnetVersion = (($versionProbe.StandardOutput -split '\r?\n' | Select-Object -First 1).Trim())
-    if ($versionProbe.Termination -ne 'Exited' -or
+    $localSdkVersion = [Environment]::GetEnvironmentVariable('RUSTSHARP_NATIVE_AOT_SDK_VERSION')
+    $allowLocalSdkOverride = -not [string]::IsNullOrWhiteSpace($localSdkVersion)
+    if ($allowLocalSdkOverride) {
+        if ($localSdkVersion -notmatch '^\d+\.\d+\.\d+$') {
+            throw 'RUSTSHARP_NATIVE_AOT_SDK_VERSION must be a numeric SDK version.'
+        }
+        $dotnetVersion = $localSdkVersion
+    }
+    elseif ($versionProbe.Termination -ne 'Exited' -or
         $versionProbe.ExitCode -ne 0 -or
         $versionProbe.CleanupIncomplete -or
         $versionProbe.OutputDrainTimedOut -or
@@ -781,19 +789,31 @@ try {
         $versionProbe.StandardErrorTruncated) {
         Stop-Blocked 'dotnet-sdk-unavailable' "The pinned .NET SDK could not be executed: $($versionProbe.CleanupDiagnostic)"
     }
-    if ($dotnetVersion -ne '10.0.400') {
+    if (-not $allowLocalSdkOverride -and $dotnetVersion -ne '10.0.400') {
         Stop-Blocked 'dotnet-sdk-version-mismatch' "Expected .NET SDK 10.0.400, found '$dotnetVersion'."
     }
 
     $tempDirectory = Join-Path ([IO.Path]::GetTempPath()) "rustsharp-windows-aot-$PID-$([Guid]::NewGuid().ToString('N'))"
     [IO.Directory]::CreateDirectory($tempDirectory) | Out-Null
-    $projectPath = Join-Path $repoRoot 'src/RustSharp.Cli'
-    $publishArguments = @(
-        'run', '--project', $projectPath, '--configuration', 'Release', '--no-restore', '--',
-        'publish', $sourceFullPath, '--runtime', 'win-x64', '--output', $outputFullPath,
-        '--profile', $Profile,
-        '--timeout', $PublishTimeoutSeconds.ToString([Globalization.CultureInfo]::InvariantCulture)
-    )
+    $cliDll = [Environment]::GetEnvironmentVariable('RUSTSHARP_NATIVE_AOT_CLI_DLL')
+    if (-not [string]::IsNullOrWhiteSpace($cliDll)) {
+        $cliDll = [IO.Path]::GetFullPath($cliDll)
+        if (-not [IO.File]::Exists($cliDll)) { throw "RUSTSHARP_NATIVE_AOT_CLI_DLL does not exist: '$cliDll'." }
+        $publishArguments = @(
+            $cliDll, 'publish', $sourceFullPath, '--runtime', 'win-x64', '--output', $outputFullPath,
+            '--profile', $Profile,
+            '--timeout', $PublishTimeoutSeconds.ToString([Globalization.CultureInfo]::InvariantCulture)
+        )
+    }
+    else {
+        $projectPath = Join-Path $repoRoot 'src/RustSharp.Cli'
+        $publishArguments = @(
+            'run', '--project', $projectPath, '--configuration', 'Release', '--no-restore', '--',
+            'publish', $sourceFullPath, '--runtime', 'win-x64', '--output', $outputFullPath,
+            '--profile', $Profile,
+            '--timeout', $PublishTimeoutSeconds.ToString([Globalization.CultureInfo]::InvariantCulture)
+        )
+    }
     $publishResult = Invoke-BoundedProcess `
         -FileName $dotnetPath `
         -Arguments $publishArguments `

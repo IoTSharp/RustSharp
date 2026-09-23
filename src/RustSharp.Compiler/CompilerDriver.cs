@@ -33,12 +33,13 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
-        if ((profile == CompilationProfile.SafeCoreGenerics || profile == CompilationProfile.SafeCoreMir) && IsCargoManifest(fullSourcePath))
+        if ((profile == CompilationProfile.SafeCoreGenerics || profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) && IsCargoManifest(fullSourcePath))
         {
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
-            CompilationResult checkedPackages = profile == CompilationProfile.SafeCoreMir
-                ? CheckSafeCoreMir(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates)
+            CompilationResult checkedPackages = profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2
+                ? CheckSafeCoreMir(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates,
+                    profile == CompilationProfile.SafeCoreMirV2)
                 : CheckSafeCoreGenerics(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates);
             return checkedPackages with { Diagnostics = MapDiagnostics(checkedPackages.Diagnostics, packages.SourceMap!) };
         }
@@ -46,7 +47,7 @@ public sealed class CompilerDriver
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
         if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreTypes or
-            CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir)
+            CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -88,8 +89,9 @@ public sealed class CompilerDriver
             return CheckSafeCoreTypes(source, sourcePath, cancellationToken);
         if (profile == CompilationProfile.SafeCoreGenerics)
             return CheckSafeCoreGenerics(source, sourcePath, cancellationToken, crates);
-        if (profile == CompilationProfile.SafeCoreMir)
-            return CheckSafeCoreMir(source, sourcePath, cancellationToken, crates);
+        if (profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
+            return CheckSafeCoreMir(source, sourcePath, cancellationToken, crates,
+                profile == CompilationProfile.SafeCoreMirV2);
         if (profile != CompilationProfile.VerticalSlice)
         {
             SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates);
@@ -137,7 +139,7 @@ public sealed class CompilerDriver
             return RejectTypeProfileEmission(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
-        if ((profile == CompilationProfile.SafeCoreGenerics || profile == CompilationProfile.SafeCoreMir) && IsCargoManifest(fullSourcePath))
+        if ((profile == CompilationProfile.SafeCoreGenerics || profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) && IsCargoManifest(fullSourcePath))
         {
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
@@ -148,7 +150,7 @@ public sealed class CompilerDriver
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
         if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or
-            CompilationProfile.SafeCoreMir)
+            CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -352,6 +354,7 @@ public sealed class CompilerDriver
                     {
                         CompilationProfile.SafeCoreGenerics => "safe-core-generics-v1",
                         CompilationProfile.SafeCoreMir => SafeCoreMirPipeline.Profile,
+                        CompilationProfile.SafeCoreMirV2 => SafeCoreMirPipeline.ProfileV2,
                         _ => "safe-core-primitives-v1",
                     },
                     sourceBytes.Span,
@@ -376,7 +379,7 @@ public sealed class CompilerDriver
                     Path.GetFileName(pdbPath),
                     sourceBytes);
             }
-            catch (Exception exception) when ((profile == CompilationProfile.SafeCoreGenerics || profile == CompilationProfile.SafeCoreMir) &&
+            catch (Exception exception) when ((profile == CompilationProfile.SafeCoreGenerics || profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) &&
                 exception is ArgumentException or InvalidOperationException or TimeoutException)
             {
                 return CompilationResult.Failed([new Diagnostic(SafeCoreGenericDiagnosticCodes.LimitReached,
@@ -460,7 +463,8 @@ public sealed class CompilerDriver
     }
 
     private static CompilationResult CheckSafeCoreMir(string source, string sourcePath,
-        CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
+        CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default,
+        bool enableRepeatedArrays = false)
     {
         SafeCoreMirPipelineResult result = SafeCoreMirPipeline.Analyze(source, sourcePath,
             new SafeCoreMirPipelineOptions
@@ -468,6 +472,8 @@ public sealed class CompilerDriver
                 CancellationToken = cancellationToken,
                 RequireOwnershipEvidence = true,
                 RequireCleanupEvidence = true,
+                EnableRepeatedArrays = enableRepeatedArrays,
+                EnableP1Extensions = enableRepeatedArrays,
                 Crates = crates.IsDefault ? [] : crates,
             });
         if (!result.IsSuccessful)
@@ -494,7 +500,7 @@ public sealed class CompilerDriver
     private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
         CompilationProfile profile, CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
     {
-        if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir))
+        if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
         cancellationToken.ThrowIfCancellationRequested();
         SafeCoreSyntaxResult syntax;
@@ -513,7 +519,7 @@ public sealed class CompilerDriver
             return generics.IsSuccessful ? SafeCoreGenericClrLowering.Lower(generics.Program!, cancellationToken)
                 : new([], [], generics.Diagnostics);
         }
-        if (profile == CompilationProfile.SafeCoreMir)
+        if (profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
         {
             SafeCoreMirPipelineResult evidence = SafeCoreMirPipeline.Analyze(syntax,
                 new SafeCoreMirPipelineOptions
@@ -521,6 +527,8 @@ public sealed class CompilerDriver
                     CancellationToken = cancellationToken,
                     RequireOwnershipEvidence = true,
                     RequireCleanupEvidence = true,
+                    EnableRepeatedArrays = profile == CompilationProfile.SafeCoreMirV2,
+                    EnableP1Extensions = profile == CompilationProfile.SafeCoreMirV2,
                     Crates = crates.IsDefault ? [] : crates,
                 });
             if (!evidence.IsSuccessful)
@@ -1194,6 +1202,7 @@ public sealed class CompilerDriver
             CompilationProfile.SafeCorePrimitives => "safe-core-primitives-v1",
             CompilationProfile.SafeCoreGenerics => "safe-core-generics-v1",
             CompilationProfile.SafeCoreMir => SafeCoreMirPipeline.Profile,
+            CompilationProfile.SafeCoreMirV2 => SafeCoreMirPipeline.ProfileV2,
             _ => null,
         };
 

@@ -27,6 +27,11 @@ public sealed record SafeCoreMirPipelineOptions
     /// can turn it into a hard gate.
     /// </summary>
     public bool RequireCleanupEvidence { get; init; }
+    /// <summary>Enables the v2 structural-Copy repeated-array lowering contract.</summary>
+    public bool EnableRepeatedArrays { get; init; }
+    /// <summary>Enables the versioned P1 source extensions (patterns, match and closures).</summary>
+    public bool EnableP1Extensions { get; init; }
+    public int MaximumPatternAlternatives { get; init; } = 256;
     public bool InferNonLexicalLifetimes { get; init; } = true;
     /// <summary>
     /// Independently validated metadata-backed crates available to name
@@ -73,6 +78,7 @@ public sealed record SafeCoreMirPipelineResult(
 public static class SafeCoreMirPipeline
 {
     public const string Profile = "safe-core-mir-p1-v1";
+    public const string ProfileV2 = "safe-core-mir-p1-v2";
 
     public static SafeCoreMirPipelineResult Analyze(
         string source,
@@ -146,6 +152,8 @@ public static class SafeCoreMirPipeline
                     MaximumOperations = options.MaximumOperations,
                     MaximumNestingDepth = options.MaximumNestingDepth,
                     EnableTypeSystemExtensions = true,
+                    EnableGenericExtensions = options.EnableP1Extensions,
+                    EnableDropImplementations = options.EnableP1Extensions,
                     Crates = options.Crates.IsDefault ? [] : options.Crates,
                 },
             });
@@ -157,6 +165,7 @@ public static class SafeCoreMirPipeline
                 Timeout = Remaining(options.Timeout, clock),
                 MaximumOperations = options.MaximumOperations,
                 MaximumNestingDepth = options.MaximumNestingDepth,
+                EnableUninitializedBindings = options.EnableP1Extensions,
             }, options.CancellationToken);
             if (!typed.IsSuccessful)
                 return Failure(hir, null, null, null, typed.Diagnostics, false, options);
@@ -169,6 +178,9 @@ public static class SafeCoreMirPipeline
                 MaximumFunctions = options.MaximumFunctions,
                 MaximumBlocksPerFunction = options.MaximumBlocksPerFunction,
                 MaximumLocalsPerFunction = options.MaximumLocalsPerFunction,
+                EnableRepeatedArrays = options.EnableRepeatedArrays,
+                EnableP1Extensions = options.EnableP1Extensions,
+                MaximumPatternAlternatives = options.MaximumPatternAlternatives,
             }, options.CancellationToken);
             if (!mir.IsSuccessful)
                 return Failure(hir, typed.Program, mir, null, mir.Diagnostics, mir.IsTruncated, options);
@@ -288,7 +300,8 @@ public static class SafeCoreMirPipeline
             options.MaximumNestingDepth is < 1 or > 128 ||
             options.MaximumFunctions is < 1 or > 4_096 ||
             options.MaximumBlocksPerFunction is < 1 or > 65_536 ||
-            options.MaximumLocalsPerFunction is < 1 or > 262_144)
+            options.MaximumLocalsPerFunction is < 1 or > 262_144 ||
+            options.MaximumPatternAlternatives is < 1 or > 4_096)
             throw new ArgumentOutOfRangeException(nameof(options));
     }
 }

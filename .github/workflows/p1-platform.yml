@@ -1,0 +1,250 @@
+name: P1 platform evidence
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.400
+            10.0.401
+      - name: Install rustc 1.98 oracle
+        shell: pwsh
+        run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore RustSharp.slnx
+      - name: Build Release
+        shell: pwsh
+        run: dotnet build RustSharp.slnx -c Release --no-restore -m:1
+      - name: Restore ILVerify
+        shell: pwsh
+        run: dotnet tool restore --tool-manifest .config/dotnet-tools.json
+      - name: Run fixed P1 Windows platform evidence
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & pwsh -NoLogo -NoProfile -File eng/Invoke-P1PlatformEvidence.ps1 `
+            -PlatformName windows-x64 `
+            -RuntimeIdentifier win-x64 `
+            -OutputDirectory artifacts/p1-platform/windows-x64 `
+            -EvidencePath artifacts/p1-platform/windows-x64.json `
+            -SdkVersion 10.0.401
+          $code = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath artifacts/p1-platform/windows-x64.json -PathType Leaf)) {
+            throw 'P1 Windows platform evidence report was not produced.'
+          }
+          exit $code
+      - name: Upload Windows platform evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-platform-windows-x64
+          path: artifacts/p1-platform/windows-x64.json
+          if-no-files-found: error
+
+      - name: Run fixed P1 Windows differential v2
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $report = 'artifacts/p1-platform/windows-x64-differential-v2.json'
+          $reportDirectory = Split-Path -Parent $report
+          New-Item -ItemType Directory -Force -Path $reportDirectory | Out-Null
+          if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report -Force }
+          $arguments = @(
+            'tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll',
+            '--profile', 'p1-differential-v2', '--oracle', 'rustc-1.98',
+            '--report', $report, '--timeout', '30', '--deadline', '180')
+          $code = 1
+          try {
+            & dotnet @arguments
+            $code = $LASTEXITCODE
+          }
+          catch {
+            Write-Warning $_.Exception.Message
+          }
+          if (-not (Test-Path -LiteralPath $report -PathType Leaf)) {
+            [ordered]@{
+              schemaVersion = 2; evidenceKind = 'p1-differential'; profile = 'p1-differential-v2'
+              oracle = [ordered]@{ available = $false; requestedVersion = '1.98.0'; diagnostic = 'Differential process did not produce a report.' }
+              summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 16; executed = 0; passed = 0; failed = 0; blocked = 16; skipped = 0; borrowDenominator = 10; dropDenominator = 6 }
+              harnessError = "Differential process exited with code $code without producing evidence."
+            } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $report -Encoding utf8
+          }
+          exit $code
+
+      - name: Upload Windows differential evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-platform-windows-x64-differential-v2
+          path: artifacts/p1-platform/windows-x64-differential-v2.json
+          if-no-files-found: error
+
+  linux-x64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.400
+            10.0.401
+      - name: Install Native AOT toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y clang zlib1g-dev
+      - name: Install rustc 1.98 oracle
+        shell: bash
+        run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Restore
+        shell: bash
+        run: dotnet restore RustSharp.slnx
+      - name: Build Release
+        shell: bash
+        run: dotnet build RustSharp.slnx -c Release --no-restore -m:1
+      - name: Restore ILVerify
+        shell: bash
+        run: dotnet tool restore --tool-manifest .config/dotnet-tools.json
+      - name: Run fixed P1 Linux platform evidence
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & pwsh -NoLogo -NoProfile -File eng/Invoke-P1PlatformEvidence.ps1 `
+            -PlatformName linux-x64 `
+            -RuntimeIdentifier linux-x64 `
+            -OutputDirectory artifacts/p1-platform/linux-x64 `
+            -EvidencePath artifacts/p1-platform/linux-x64.json `
+            -SdkVersion 10.0.401
+          $code = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath artifacts/p1-platform/linux-x64.json -PathType Leaf)) {
+            throw 'P1 Linux platform evidence report was not produced.'
+          }
+          exit $code
+      - name: Upload Linux platform evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-platform-linux-x64
+          path: artifacts/p1-platform/linux-x64.json
+          if-no-files-found: error
+
+      - name: Run fixed P1 Linux differential v2
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $report = 'artifacts/p1-platform/linux-x64-differential-v2.json'
+          $reportDirectory = Split-Path -Parent $report
+          New-Item -ItemType Directory -Force -Path $reportDirectory | Out-Null
+          if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report -Force }
+          $arguments = @(
+            'tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll',
+            '--profile', 'p1-differential-v2', '--oracle', 'rustc-1.98',
+            '--report', $report, '--timeout', '30', '--deadline', '180')
+          $code = 1
+          try {
+            & dotnet @arguments
+            $code = $LASTEXITCODE
+          }
+          catch {
+            Write-Warning $_.Exception.Message
+          }
+          if (-not (Test-Path -LiteralPath $report -PathType Leaf)) {
+            [ordered]@{
+              schemaVersion = 2; evidenceKind = 'p1-differential'; profile = 'p1-differential-v2'
+              oracle = [ordered]@{ available = $false; requestedVersion = '1.98.0'; diagnostic = 'Differential process did not produce a report.' }
+              summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 16; executed = 0; passed = 0; failed = 0; blocked = 16; skipped = 0; borrowDenominator = 10; dropDenominator = 6 }
+              harnessError = "Differential process exited with code $code without producing evidence."
+            } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $report -Encoding utf8
+          }
+          exit $code
+
+      - name: Upload Linux differential evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-platform-linux-x64-differential-v2
+          path: artifacts/p1-platform/linux-x64-differential-v2.json
+          if-no-files-found: error
+
+  p1-exit-gate:
+    needs:
+      - windows-x64
+      - linux-x64
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Windows P1 evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-platform-windows-x64
+          path: artifacts/p1-platform/windows
+      - name: Download Linux P1 evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-platform-linux-x64
+          path: artifacts/p1-platform/linux
+      - name: Download Windows P1 differential evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-platform-windows-x64-differential-v2
+          path: artifacts/p1-platform/windows
+      - name: Download Linux P1 differential evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-platform-linux-x64-differential-v2
+          path: artifacts/p1-platform/linux
+      - name: Validate complete P1 exit gate
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & pwsh -NoLogo -NoProfile -File eng/Test-P1ExitGate.ps1 `
+            -WindowsPlatformReport artifacts/p1-platform/windows/windows-x64.json `
+            -LinuxPlatformReport artifacts/p1-platform/linux/linux-x64.json `
+            -WindowsDifferentialReport artifacts/p1-platform/windows/windows-x64-differential-v2.json `
+            -LinuxDifferentialReport artifacts/p1-platform/linux/linux-x64-differential-v2.json `
+            -EvidencePath artifacts/p1-platform/p1-exit-gate.json
+          $code = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath artifacts/p1-platform/p1-exit-gate.json -PathType Leaf)) {
+            throw 'P1 exit-gate report was not produced.'
+          }
+          exit $code
+      - name: Upload complete P1 exit-gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-exit-gate
+          path: artifacts/p1-platform/p1-exit-gate.json
+          if-no-files-found: error

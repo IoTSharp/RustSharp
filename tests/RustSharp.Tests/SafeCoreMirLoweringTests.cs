@@ -20,6 +20,7 @@ internal static class SafeCoreMirLoweringTests
         new("MIR lowering snapshots reads before later side effects", EvaluationOrderAsync),
         new("MIR lowering emits typed tuple aggregates", TupleAsync),
         new("MIR lowering emits bounded array aggregates and fixed indexing", ArrayAsync),
+        new("MIR lowering repeats structural Copy array elements", RepeatedArrayAsync),
         new("MIR lowering short circuits and drops unreachable tails", DivergenceAsync),
         new("MIR lowering rejects unsupported constructs at their original spans", UnsupportedAsync),
         new("MIR lowering bounds work size nesting time and cancellation", LimitsAsync),
@@ -177,6 +178,51 @@ internal static class SafeCoreMirLoweringTests
         return Task.CompletedTask;
     }
 
+    private static Task RepeatedArrayAsync()
+    {
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        const string source = "fn repeat() -> [i32; 3] { [7; 3] }";
+        SafeCoreMirProgram mir = Lower(Check(source, cancellation.Token), cancellation.Token,
+            new() { EnableRepeatedArrays = true });
+        SafeCoreMirFunction function = mir.Functions.Single(function => function.Name == "crate::repeat#value");
+        SafeCoreMirStatement array = function.Blocks.SelectMany(block => block.Statements)
+            .Single(statement => statement.Value.Kind == SafeCoreMirRvalueKind.Array);
+
+        AssertEx.Equal(3L, array.Value.Type.Length!.Value);
+        AssertEx.Equal(3, array.Value.Operands.Count);
+        AssertEx.True(array.Value.Operands.All(operand => operand.Type == array.Value.Type.ElementType),
+            "Repeated array operands must retain the declared Copy element type.");
+        AssertEx.Equal("7,7,7", string.Join(',', array.Value.Operands.Select(operand => operand.Value)));
+        AssertEx.True(SafeCoreMirValidation.Validate(mir).IsSuccessful,
+            "Repeated structural Copy arrays must publish valid typed MIR.");
+
+        string snapshot = SafeCoreMirFormatting.Format(mir);
+        AssertEx.True(snapshot.Contains("array(const 7:i32, const 7:i32, const 7:i32)", StringComparison.Ordinal),
+            "Repeated array lowering must be deterministic and explicit in the MIR snapshot.");
+
+        // A non-Copy, ownership-bearing repeat remains rejected by the earlier
+        // type contract; MIR lowering must never manufacture a duplicated value.
+        SafeCoreSyntaxResult syntax = SafeCoreSyntax.Parse(
+            "struct Item(i32); fn bad() { let items = [Item(1); 2]; }",
+            "mir-repeat-negative.rs",
+            new() { Timeout = TimeSpan.FromSeconds(5) }, cancellation.Token);
+        AssertEx.True(syntax.IsSuccessful, "Negative repeat source must parse.");
+        SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new()
+        {
+            Timeout = TimeSpan.FromSeconds(5),
+            CancellationToken = cancellation.Token,
+            NameResolution = new() { EnableTypeSystemExtensions = true, Timeout = TimeSpan.FromSeconds(5) },
+        });
+        AssertEx.True(hir.IsSuccessful, "Negative repeat source must lower to HIR.");
+        SafeCoreTypeAnalysisResult typed = SafeCoreTypeAnalysis.Check(
+            hir, new() { Timeout = TimeSpan.FromSeconds(5) }, cancellation.Token);
+        AssertEx.False(typed.IsSuccessful,
+            "Repeated arrays of non-Copy ADTs must remain outside the type contract.");
+        AssertEx.True(typed.Diagnostics.Any(diagnostic => diagnostic.Code == "RST2001"),
+            "Non-Copy repetition must retain a stable unsupported diagnostic.");
+        return Task.CompletedTask;
+    }
+
     private static void PrivateVisibilityAssertions()
     {
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
@@ -322,9 +368,14 @@ internal static class SafeCoreMirLoweringTests
         return typed.Program!;
     }
 
-    private static SafeCoreMirProgram Lower(SafeCoreTypeAnalysisProgram typed, CancellationToken cancellation)
+    private static SafeCoreMirProgram Lower(
+        SafeCoreTypeAnalysisProgram typed,
+        CancellationToken cancellation,
+        SafeCoreMirLoweringOptions? options = null)
     {
-        SafeCoreMirLoweringResult result = SafeCoreMirLowering.Lower(typed, new() { Timeout = TimeSpan.FromSeconds(5) }, cancellation);
+        options ??= new SafeCoreMirLoweringOptions();
+        options = options with { Timeout = TimeSpan.FromSeconds(5) };
+        SafeCoreMirLoweringResult result = SafeCoreMirLowering.Lower(typed, options, cancellation);
         AssertEx.True(result.IsSuccessful, Format(result.Diagnostics));
         AssertEx.True(result.Validation is { IsSuccessful: true }, "Every successful lowering must contain explicit validator evidence.");
         return result.Program!;

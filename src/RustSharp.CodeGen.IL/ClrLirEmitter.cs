@@ -155,6 +155,8 @@ public static class ClrLirEmitter
                             ClrLirBinaryOperator.LessThan => ILOpCode.Clt,
                             ClrLirBinaryOperator.GreaterThan => ILOpCode.Cgt,
                             ClrLirBinaryOperator.ExclusiveOr => ILOpCode.Xor,
+                            ClrLirBinaryOperator.And => ILOpCode.And,
+                            ClrLirBinaryOperator.Or => ILOpCode.Or,
                             _ => throw new InvalidOperationException("Invalid binary operator."),
                         });
                         break;

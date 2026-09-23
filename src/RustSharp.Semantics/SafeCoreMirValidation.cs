@@ -197,6 +197,8 @@ public static class SafeCoreMirValidation
                     Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Local IDs must index the arena and local metadata must be valid.", local.Source);
                 if (local.Type?.Kind == SafeCoreSemanticTypeKind.Never)
                     Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "The never type cannot occupy a local slot.", local.Source);
+                if (local.IsUnitAdt && local.Type?.Kind != SafeCoreSemanticTypeKind.Adt)
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Unit ADT evidence requires a nominal ADT type.", local.Source);
                 if (local.Kind == SafeCoreMirLocalKind.Parameter && pastParameters)
                     Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Parameter slots must precede other locals.", local.Source);
                 pastParameters |= local.Kind != SafeCoreMirLocalKind.Parameter;
@@ -280,6 +282,13 @@ public static class SafeCoreMirValidation
                     }
                     if (operand.Value is not null) Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "A function operand cannot carry a constant payload.", operand.Source);
                     break;
+                case SafeCoreMirOperandKind.Place:
+                    if (operand.Value is not null || operand.Place is null || operand.Place.LocalId != operand.Id ||
+                        operand.Place.LocalId < 0 || operand.Place.LocalId >= _function!.Locals.Count)
+                        Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "A MIR place operand must reference a local and a valid projection chain.", operand.Source);
+                    else if (operand.Place.Projections.Count > 128)
+                        Error(SafeCoreMirDiagnosticCodes.InvalidInput, "MIR place projection depth exceeds its bound.", operand.Source);
+                    break;
                 case SafeCoreMirOperandKind.Constant:
                     if (operand.Id != -1 || !Constant(operand.Type, operand.Value))
                         Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Constant payload is invalid or out of range for its type.", operand.Source);
@@ -295,6 +304,9 @@ public static class SafeCoreMirValidation
         {
             if (text is null || text.Length > 4_096) return false;
             if (type.Kind == SafeCoreSemanticTypeKind.Unit) return text == "()";
+            // Unit structs retain their nominal ADT identity in MIR while
+            // carrying the same zero-field runtime representation as `()`.
+            if (type.Kind == SafeCoreSemanticTypeKind.Adt) return text == "()";
             if (type.Kind == SafeCoreSemanticTypeKind.Bool) return text is "true" or "false";
             if (type.IsFloat)
                 return text == text.Trim() && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
@@ -325,8 +337,9 @@ public static class SafeCoreMirValidation
             if (!validOperands) return;
             int expectedCount = value.Kind switch
             {
-                SafeCoreMirRvalueKind.Use or SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Coerce or SafeCoreMirRvalueKind.Cast => 1,
+                SafeCoreMirRvalueKind.Use or SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Coerce or SafeCoreMirRvalueKind.Cast or SafeCoreMirRvalueKind.Field => 1,
                 SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Index => 2,
+                SafeCoreMirRvalueKind.Write => 2,
                 SafeCoreMirRvalueKind.Tuple => value.Type.Kind == SafeCoreSemanticTypeKind.Unit ? 0 : value.Type.Elements.Count,
                 SafeCoreMirRvalueKind.Array => ArrayOperandCount(value.Type),
                 SafeCoreMirRvalueKind.Print => value.Operator == "{}" ? 1 : 0,
@@ -337,7 +350,7 @@ public static class SafeCoreMirValidation
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Rvalue operand count or kind is invalid.", value.Source);
                 return;
             }
-            if (value.Kind is not (SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Print) && value.Operator is not null)
+            if (value.Kind is not (SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Print or SafeCoreMirRvalueKind.Field) && value.Operator is not null)
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Only unary and binary computations carry an operator.", value.Source);
             if (value.Operator is { Length: > 128 })
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "MIR operators must be bounded.", value.Source);
@@ -352,24 +365,46 @@ public static class SafeCoreMirValidation
                 SafeCoreMirRvalueKind.Tuple => Tuple(value),
                 SafeCoreMirRvalueKind.Array => Array(value),
                 SafeCoreMirRvalueKind.Index => Index(value),
+                SafeCoreMirRvalueKind.Field => Field(value),
+                SafeCoreMirRvalueKind.Write => Write(value),
                 SafeCoreMirRvalueKind.Print => Print(value),
                 _ => false,
             };
             if (!valid) Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Rvalue operator and operand/result types are incompatible.", value.Source);
         }
 
-        private static bool Unary(string? op, SafeCoreType operand, SafeCoreType result) => result == operand && op switch
+        private static bool Field(SafeCoreMirRvalue value) =>
+            value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Tuple &&
+            int.TryParse(value.Operator, NumberStyles.None, CultureInfo.InvariantCulture, out int index) &&
+            value.Operator == index.ToString(CultureInfo.InvariantCulture) &&
+            index >= 0 && index < value.Operands[0].Type.Elements.Count &&
+            value.Type == value.Operands[0].Type.Elements[index];
+
+        private static bool Unary(string? op, SafeCoreType operand, SafeCoreType result) => op switch
         {
-            "-" => operand.IsFloat || operand.Kind is >= SafeCoreSemanticTypeKind.I8 and <= SafeCoreSemanticTypeKind.Isize,
-            "!" => operand.IsInteger || operand.Kind == SafeCoreSemanticTypeKind.Bool,
+            "-" => result == operand && (operand.IsFloat || operand.Kind is >= SafeCoreSemanticTypeKind.I8 and <= SafeCoreSemanticTypeKind.Isize),
+            "!" => result == operand && (operand.IsInteger || operand.Kind == SafeCoreSemanticTypeKind.Bool),
+            "&" or "&mut" => result.Kind == SafeCoreSemanticTypeKind.Reference && result.ElementType == operand &&
+                result.IsMutable == (op == "&mut"),
+            "reborrow" or "reborrow_mut" => result.Kind == SafeCoreSemanticTypeKind.Reference &&
+                operand.Kind == SafeCoreSemanticTypeKind.Reference && result.ElementType == operand.ElementType &&
+                result.IsMutable == (op == "reborrow_mut"),
+            "*" => operand.Kind == SafeCoreSemanticTypeKind.Reference && result == operand.ElementType,
             _ => false,
         };
+
+        private static bool Write(SafeCoreMirRvalue value) =>
+            value.Operands.Count == 2 && value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+            value.Operands[1].Type == value.Type && value.Operands[0].Type.ElementType == value.Type;
 
         private static bool Binary(string? op, SafeCoreType left, SafeCoreType right, SafeCoreType result) => op switch
         {
             "+" or "-" or "*" or "/" or "%" => left == right && result == left && (left.IsInteger || left.IsFloat),
             "&" or "|" or "^" => left == right && result == left && (left.IsInteger || left.Kind == SafeCoreSemanticTypeKind.Bool),
             "<<" or ">>" => left.IsInteger && right.IsInteger && result == left,
+            // Logical operators remain outside the v1 typed-MIR rvalue contract;
+            // short-circuit lowering uses explicit CFG branches. Versioned
+            // extensions must preserve that rejection boundary.
             "==" or "!=" or "<" or "<=" or ">" or ">=" => left == right && result.Kind == SafeCoreSemanticTypeKind.Bool
                 && (left.IsInteger || left.IsFloat || left.Kind is SafeCoreSemanticTypeKind.Bool or SafeCoreSemanticTypeKind.Char),
             _ => false,
@@ -506,6 +541,8 @@ public static class SafeCoreMirValidation
             for (int index = 0; index < terminator.Arguments.Count; index++) Operand(terminator.Arguments[index]);
             if (terminator.Kind != SafeCoreMirTerminatorKind.Call && (terminator.Arguments.Count != 0 || terminator.DestinationLocalId is not null))
                 Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow, "Only call terminators may carry arguments or a destination.", terminator.Source);
+            if (terminator.Kind != SafeCoreMirTerminatorKind.Call && terminator.DropLocalId is not null)
+                Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow, "Only call terminators may carry a Drop local.", terminator.Source);
             if (terminator.Kind != SafeCoreMirTerminatorKind.Branch && terminator.FalseTargetBlockId != -1)
                 Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow, "Only branch terminators may carry a false target.", terminator.Source);
             switch (terminator.Kind)
@@ -558,6 +595,17 @@ public static class SafeCoreMirValidation
             {
                 Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "A call requires a typed function operand.", terminator.Source);
                 return;
+            }
+            if (terminator.DropLocalId is int droppedLocal)
+            {
+                SafeCoreMirLocal? dropped = droppedLocal >= 0 && droppedLocal < _function!.Locals.Count
+                    ? _function.Locals[droppedLocal] : null;
+                if (terminator.Arguments.Count != 0 || terminator.DestinationLocalId is not null ||
+                    dropped is null || !dropped.DestructorFunctionId.HasValue ||
+                    terminator.Operand is null || terminator.Operand.Id != dropped.DestructorFunctionId.Value ||
+                    callee.ReturnType.Kind != SafeCoreSemanticTypeKind.Unit)
+                    Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow,
+                        "A destructor call must target the local's zero-argument unit Drop function.", terminator.Source);
             }
             if (callee.ParameterTypes.Count != terminator.Arguments.Count)
                 Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Call argument count differs from the function signature.", terminator.Source);

@@ -184,11 +184,16 @@ public static partial class SafeCoreMirOwnershipAdapter
 
                 SafeCoreMirLocal mirLocal = mirFunction.Locals[ownershipLocal.Id];
 
+                SafeCoreOwnershipKind expectedKind = mirLocal.DestructorFunctionId.HasValue ||
+                    mirLocal.Type.Kind == SafeCoreSemanticTypeKind.Reference && mirLocal.Type.IsMutable
+                    ? SafeCoreOwnershipKind.Move : SafeCoreOwnershipKind.Copy;
+                bool expectedDrop = mirLocal.DestructorFunctionId.HasValue;
                 if (!string.Equals(mirLocal.Name, ownershipLocal.Name, StringComparison.Ordinal) ||
-                    mirLocal.Type != ownershipLocal.Type)
+                    mirLocal.Type != ownershipLocal.Type || ownershipLocal.Kind != expectedKind ||
+                    ownershipLocal.HasDrop != expectedDrop)
                 {
                     AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
-                        $"Ownership fact for local {mirLocal.Id} does not match its typed-MIR name or type.",
+                        $"Ownership fact for local {mirLocal.Id} does not match its typed-MIR name, type, move kind, or Drop contract.",
                         ownershipLocal.Source), options);
                 }
                 RequireSameSource(mirLocal.Source, ownershipLocal.Source, diagnostics, options,

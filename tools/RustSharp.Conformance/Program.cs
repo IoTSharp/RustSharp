@@ -32,12 +32,15 @@ internal static class Program
             Console.WriteLine("""
                 Usage: RustSharp.Conformance --profile <name> [--oracle rustc-1.98] [--report <path.json>] [--timeout <seconds>] [--deadline <seconds>]
                 Profiles: vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1, safe-core-generics-v1,
-                          safe-core-regression-v1, p1-exit-gate-v1, safe-core-lexing, safe-core-syntax, safe-core-name-resolution.
+                          safe-core-regression-v1, p1-exit-gate-v1, p1-differential-v1, p1-differential-v2,
+                          safe-core-lexing, safe-core-syntax, safe-core-name-resolution.
                 Type and generic profiles compare checks with rustc; the generic profile also compares executable output.
                 Both use a maximum of 30s/case and 180s overall.
                 safe-core-regression-v1 runs bounded compile-pass, compile-fail, run-pass and differential cases.
                 p1-exit-gate-v1 runs fixed in-process typed-MIR, ownership, Drop, panic and metadata-consumer probes.
                 The P1 gate reports no Native AOT, cross-platform or rustc-oracle evidence.
+                p1-differential-v1 runs the fixed source-level borrow/Drop corpus against rustc 1.98.0 and RustSharp.
+                p1-differential-v2 expands it to 16 fixed borrow/Drop cases, including four ownership compile-fail cases.
                 Lexing, syntax and name-resolution profiles are in-process acceptance gates without --oracle or --timeout.
                 """);
             return 0;
@@ -121,6 +124,31 @@ internal static class Program
             {
                 Console.Error.WriteLine(
                     $"conformance: {P1ExitGateProfileRunner.ProfileName} harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+        if (options.Profile is P1DifferentialProfileRunner.ProfileName or P1DifferentialProfileRunner.ProfileV2Name)
+        {
+            try
+            {
+                string differentialReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(differentialReportPath)!);
+                return await P1DifferentialProfileRunner.RunAsync(
+                    repositoryRoot,
+                    differentialReportPath,
+                    options.Timeout,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock,
+                    options.Profile).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (
+                exception is IOException or UnauthorizedAccessException or ArgumentException or
+                NotSupportedException or OperationCanceledException or TimeoutException or JsonException)
+            {
+                Console.Error.WriteLine($"conformance: {options.Profile} harness error: {TrimDiagnostic(exception.Message)}");
                 return 2;
             }
         }
@@ -619,10 +647,12 @@ internal static class Program
             not SafeCorePrimitivesProfileName and not SafeCoreTypeProfileRunner.ProfileName and
             not SafeCoreRegressionProfileRunner.ProfileName and
             not P1ExitGateProfileRunner.ProfileName and
+            not P1DifferentialProfileRunner.ProfileName and
+            not P1DifferentialProfileRunner.ProfileV2Name and
             not SafeCoreGenericProfileRunner.ProfileName)
         {
             throw new ArgumentException(
-                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', '{SafeCoreNameResolutionProfileName}', '{SafeCorePrimitivesProfileName}', '{SafeCoreTypeProfileRunner.ProfileName}', '{SafeCoreRegressionProfileRunner.ProfileName}', '{P1ExitGateProfileRunner.ProfileName}', and '{SafeCoreGenericProfileRunner.ProfileName}'.");
+                $"Supported profiles are '{ProfileName}', '{SafeCoreLexingProfileName}', '{SafeCoreSyntaxProfileName}', '{SafeCoreNameResolutionProfileName}', '{SafeCorePrimitivesProfileName}', '{SafeCoreTypeProfileRunner.ProfileName}', '{SafeCoreRegressionProfileRunner.ProfileName}', '{P1ExitGateProfileRunner.ProfileName}', '{P1DifferentialProfileRunner.ProfileName}', and '{SafeCoreGenericProfileRunner.ProfileName}'.");
         }
 
         bool inProcessAcceptanceProfile = profile is SafeCoreLexingProfileName or

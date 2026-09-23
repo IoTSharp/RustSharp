@@ -49,6 +49,9 @@ public static class SafeCoreMirFormatting
                     Step();
                     SafeCoreMirLocal local = function.Locals[localIndex];
                     Add(FormattableString.Invariant($"  let %{local.Id} {local.Kind.ToString().ToLowerInvariant()}{(local.IsMutable ? " mut" : "")} {Escape(local.Name)}: {local.Type} "));
+                    if (local.IsUnitAdt) Add("unit_adt ");
+                    if (local.DestructorFunctionId is int destructor)
+                        Add(FormattableString.Invariant($"drop=@{destructor} "));
                     Source(local.Source);
                     Add("\n");
                 }
@@ -95,6 +98,8 @@ public static class SafeCoreMirFormatting
                 Add(")");
                 if (terminator.DestinationLocalId is int destination) Add(FormattableString.Invariant($" -> %{destination}"));
             }
+            if (terminator.DropLocalId is int dropped)
+                Add(FormattableString.Invariant($" drop=%{dropped}"));
             if (terminator.TargetBlockId >= 0) Add(FormattableString.Invariant($" bb{terminator.TargetBlockId}"));
             if (terminator.FalseTargetBlockId >= 0) Add(FormattableString.Invariant($" else bb{terminator.FalseTargetBlockId}"));
             Add(" ");
@@ -119,6 +124,7 @@ public static class SafeCoreMirFormatting
             {
                 SafeCoreMirOperandKind.Local => "%" + operand.Id.ToString(CultureInfo.InvariantCulture),
                 SafeCoreMirOperandKind.Function => "@" + operand.Id.ToString(CultureInfo.InvariantCulture),
+                SafeCoreMirOperandKind.Place => "place " + (operand.Place?.ToString() ?? "<invalid>"),
                 _ => "const " + Escape(operand.Value ?? ""),
             });
             Add($":{operand.Type}");

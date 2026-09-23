@@ -457,12 +457,51 @@ public static class SafeCoreHirLowering
                 LowerAttributes(syntax.Attributes, node);
                 LowerAttributes(syntax.InnerAttributes, node);
                 LowerGenericParameters(syntax.GenericParameters, node);
-                AddChild(node, LowerTraitBound(null, syntax.Trait!, syntax.Trait!.Span));
-                AddChild(node, LowerType(syntax.SelfType, requireBinding: true));
+                bool isDrop = _options.NameResolution.EnableDropImplementations &&
+                    syntax.Trait is SafeCorePathTypeSyntax { IsAbsolute: false, Segments.Count: 1 } traitPath &&
+                    traitPath.Segments[0].Name == "Drop";
+                if (!isDrop)
+                {
+                    AddChild(node, LowerTraitBound(null, syntax.Trait!, syntax.Trait!.Span));
+                    AddChild(node, LowerType(syntax.SelfType, requireBinding: true));
+                }
+                else
+                {
+                    AddChild(node, LowerType(syntax.SelfType, requireBinding: true));
+                }
                 LowerWhereBounds(syntax.WhereClause, node);
+                if (isDrop &&
+                    syntax.Items.Count == 1 && syntax.Items[0] is SafeCoreAssociatedFunctionSyntax associated &&
+                    associated.Name == "drop" && associated.Body is not null)
+                {
+                    AddChild(node, LowerFunction(NormalizeDropMethod(syntax, associated)));
+                }
                 return node.Id;
             }
             finally { Exit(); }
+        }
+
+        private static SafeCoreFunctionSyntax NormalizeDropMethod(
+            SafeCoreImplSyntax implementation,
+            SafeCoreAssociatedFunctionSyntax associated)
+        {
+            var parameters = new List<SafeCoreParameterSyntax>(associated.Parameters.Count);
+            foreach (SafeCoreParameterSyntax parameter in associated.Parameters)
+            {
+                SafeCoreTypeSyntax type = parameter.Receiver is { } receiver
+                    ? receiver.IsByReference
+                        ? new SafeCoreReferenceTypeSyntax(receiver.Lifetime, receiver.IsMutable,
+                            implementation.SelfType, receiver.Span)
+                        : implementation.SelfType
+                    : parameter.Type;
+                parameters.Add(parameter with { Type = type, Receiver = null, Attributes = [] });
+            }
+            return new SafeCoreFunctionSyntax(associated.Name, associated.GenericParameters,
+                parameters.AsReadOnly(), associated.ReturnType, associated.Body!, false, [], associated.Span)
+            {
+                WhereClause = associated.WhereClause,
+                IsConst = associated.IsConst,
+            };
         }
 
         private int LowerTraitBound(SafeCoreTypeSyntax? target, SafeCoreTypeSyntax trait, TextSpan span,
@@ -1844,11 +1883,22 @@ public static class SafeCoreHirLowering
 
             var key = new ReferenceKey(span, path);
             if (_references.TryGetValue(key, out List<SafeCorePathResolution>? candidates) &&
-                candidates.Count == 1 &&
+                candidates.Count > 0 &&
                 candidates[0].Status == SafeCoreNameResolutionStatus.Resolved &&
                 candidates[0].Symbol is not null)
             {
-                return candidates[0].Symbol;
+                // A normalized receiver reuses the impl target's source span.
+                // Multiple resolutions are valid only if every occurrence binds
+                // to exactly the same symbol; never guess by an unqualified name.
+                SafeCoreSymbol symbol = candidates[0].Symbol!;
+                bool consistent = true;
+                for (int index = 1; index < candidates.Count; index++)
+                {
+                    if (!Step(span)) return null;
+                    consistent &= candidates[index].Status == SafeCoreNameResolutionStatus.Resolved &&
+                        candidates[index].Symbol == symbol;
+                }
+                if (consistent) return symbol;
             }
 
             AddDiagnostic(

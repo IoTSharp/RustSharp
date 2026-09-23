@@ -394,7 +394,24 @@ public static class SafeCoreMirCleanupLowering
                 actions.Add(SafeCoreMirCleanupAction.Boundary(
                     SafeCoreMirCleanupActionKind.UnreachableBoundary, function.Source));
                 hasBoundary = true;
+                continue;
             }
+
+            // Ownership also records semantic events that are consumed by the
+            // borrow/move analysis, but which do not create cleanup actions.
+            // Keep this allow-list explicit and validate the bounded shape so
+            // a future producer event cannot disappear silently.
+            if (IsKnownNonCleanupTrace(trace))
+                continue;
+
+            // Ownership traces are a versioned producer/consumer contract.
+            // Never ignore an event that this cleanup profile cannot lower:
+            // silently dropping it would turn incomplete destructor evidence
+            // into an apparently successful cleanup path.
+            AddDiagnostic(diagnostics, Unsupported,
+                $"Cleanup ownership trace event '{trace}' is outside the supported P1-08 lowering contract.",
+                function.Source, options);
+            return null;
         }
 
         // DropOrder is a compact, stable ownership fact. Older ownership
@@ -495,6 +512,53 @@ public static class SafeCoreMirCleanupLowering
         int projection = name.IndexOfAny(['.', '[']);
         if (projection > 0) name = name[..projection];
         return locals.TryGetValue(name, out local);
+    }
+
+    private static bool IsKnownNonCleanupTrace(string trace)
+    {
+        const StringComparison comparison = StringComparison.Ordinal;
+
+        if (trace.StartsWith("branch ", comparison))
+        {
+            return int.TryParse(
+                trace["branch ".Length..], NumberStyles.None, CultureInfo.InvariantCulture,
+                out int target) && target >= 0;
+        }
+
+        if (trace.StartsWith("return_move ", comparison))
+            return trace["return_move ".Length..].Length > 0;
+
+        if (trace.StartsWith("use_borrow ", comparison) ||
+            trace.StartsWith("use ", comparison) ||
+            trace.StartsWith("assign ", comparison) ||
+            trace.StartsWith("write ", comparison))
+        {
+            int separator = trace.IndexOf(' ');
+            return separator >= 0 && trace[(separator + 1)..].Length > 0;
+        }
+
+        if (trace.StartsWith("move ", comparison))
+        {
+            string body = trace["move ".Length..];
+            int separator = body.IndexOf(" -> ", comparison);
+            return separator > 0 && separator + " -> ".Length < body.Length;
+        }
+
+        if (trace.StartsWith("copy_ref ", comparison))
+        {
+            string body = trace["copy_ref ".Length..];
+            int separator = body.IndexOf(" -> ", comparison);
+            return separator > 0 && separator + " -> ".Length < body.Length;
+        }
+
+        if (trace.StartsWith("borrow_mut ", comparison) ||
+            trace.StartsWith("borrow ", comparison))
+        {
+            int separator = trace.IndexOf(" as ", comparison);
+            return separator > 0 && separator + " as ".Length < trace.Length;
+        }
+
+        return false;
     }
 
     private static string Format(

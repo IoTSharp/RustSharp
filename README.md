@@ -88,38 +88,44 @@ and passes 377/377 tests; this supplemental run used the installed 10.0.401 SDK
 through explicit MSBuild and does not replace the recorded 10.0.400 AOT
 evidence.
 
-P1-06 is 🚧 In progress for its bounded typed-MIR contract. The implementation
-provides immutable typed MIR arenas, strict CFG/type/constant/operator/call
-validation, deterministic bounded formatting and snapshots, nested tuple and
-fixed-array aggregate rvalues with statically checked indexing, HIR lowering
-with source spans, bounded source-to-MIR ownership/cleanup evidence, direct
-MIR-to-CLR-LIR lowering for the supported value subset, and
-cancellation/work/depth/collection/diagnostic limits. Fixed-array construction
-and indexing are covered by a real compile/run regression.
-P1-07 and P1-08 are 🚧 In progress with bounded ownership, NLL, reborrow,
-deterministic cleanup, and `RustPanicBoundary` outcomes; the compiler persists
-ownership and cleanup evidence for supported MIR values. P1-09 is 🚧 In progress
-with deterministic PE metadata, canonical zero-arity `()` generic instances,
-bounded metadata consumption that reconciles each function with its generated
-MethodDef signature, visibility, and static flag, ownership/MIR evidence,
-imported declarations resolved through HIR, and bounded scalar external calls
-emitted through AssemblyRef/TypeRef/MemberRef. P1-10 is 🚧 In progress with an eight-case
-versioned regression report. The current Windows/.NET 10.0.401 Release harness
-passes 412/412 tests; the recorded
-`artifacts/p1-10/safe-core-regression-v1.json` report passes 8/8 cases with no
-failures or skips, and both run-pass cases compare bounded rustc 1.98
-compile/run output. A producer-to-consumer scalar external call also executes
-through the emitted metadata references. Repeated arrays, slices/unsizing,
-patterns, closures, reference semantics, compiler-integrated destructor/Drop
-lowering, broader declaration synthesis, runtime/AOT gates, and the full
-differential denominators remain open; this evidence does not claim Linux
-Native AOT or cross-platform execution.
+P1-06 through P1-10 and the P1 stage remain 🚧 In progress. The opt-in
+`safe-core-mir-p1-v2` profile adds structural-`Copy` repeated arrays, bounded
+tuple/scalar patterns, guarded/or-pattern `match`, and statically expanded
+captured closures to source-mapped HIR → typed MIR → CLR LIR emission. The v1
+repeated-array rejection remains unchanged. The pipeline has deterministic
+snapshots and PE/PDB checks, explicit unsupported diagnostics, and bounded
+work, size, depth, time and cancellation behavior.
 
-The recorded `p1-exit-gate-v1` report at `artifacts/p1-10/p1-exit-gate-v1.json`
-passes 5/5 in-process library-contract probes: `typed-mir-validation`,
-`ownership-bridge`, `drop-order`, `panic-unwind`, and `metadata-consumer`. It
-records `"nativeAot": false` and `"crossPlatform": false`; this is
-library-contract evidence only and does not close the full P1 exit gate.
+Bounded direct-local borrow/reborrow origins, place/projection models and
+ownership evidence now flow through typed MIR and the CLR LIR backend. Shared
+reference copies clone their loan, mutable reference moves transfer it, and
+source escapes receive stable ownership diagnostics; projected aggregate moves,
+interprocedural contracts and the complete NLL join space remain open. The
+supported unit `impl Drop` path now emits explicit MIR destructor calls and
+ownership Drop facts, while panic/unwind/abort behavior for generated
+destructor failures and field-owning aggregates remains open. Cross-package
+scalar calls already use AssemblyRef/TypeRef/MemberRef and strict MethodDef
+signature/static/visibility checks; imported reference, aggregate and ownership
+contracts remain open.
+
+The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
+skips. `p1-exit-gate-v1` passes 5/5 in-process library probes and explicitly
+records `"nativeAot": false` and `"crossPlatform": false`. The immutable
+`p1-differential-v2` manifest executes 16/16 cases (10 borrow, 6 Drop) against
+rustc 1.98.0 with zero failures, blocked cases or skips. The new
+`p1-platform.yml` workflow fixes 12 run-pass cases per native Windows/Linux x64
+runner and aggregates CoreCLR, ILVerify, Native AOT and differential reports;
+those final CI reports are still required for P1 completion.
+
+Local hello probes provide ILVerify, CoreCLR and Windows x64 Native AOT
+evidence. Linux x64 Native AOT hello also runs under Ubuntu WSL2 with SDK
+10.0.112; the native Linux probe explicitly excludes WSL2 from its native-host
+claim. Neither result proves the full P1 language surface. Completion requires
+the expanded fixed denominators on CoreCLR, ILVerify, native Windows/Linux
+x64 AOT and rustc 1.98, with zero failures/skips and CI at the final pushed SHA.
+The [P1 gap matrix](docs/p1-gap-matrix.md) maps every remaining requirement to
+implementation, tests, local evidence and CI evidence; the
+[typed MIR contract](docs/typed-mir-profile.md) defines the implemented boundary.
 
 Run the generic sample, which prints `42` and `true`, with:
 

@@ -108,6 +108,12 @@ public static class SafeCoreNameResolution
         return value[..(maximumLength - 3)] + "...";
     }
 
+    private static string GetLastPathSegment(string path)
+    {
+        int separator = path.LastIndexOf("::", StringComparison.Ordinal);
+        return separator < 0 ? path : path[(separator + 2)..];
+    }
+
     private static SafeCoreNameResolutionOptions NormalizeOptions(SafeCoreNameResolutionOptions? options)
     {
         options ??= new SafeCoreNameResolutionOptions();
@@ -136,6 +142,7 @@ public static class SafeCoreNameResolution
         {
             EnableTypeSystemExtensions = options.EnableTypeSystemExtensions,
             EnableGenericExtensions = options.EnableGenericExtensions,
+            EnableDropImplementations = options.EnableDropImplementations,
             Crates = options.Crates,
             Timeout = options.Timeout > TimeSpan.Zero && options.Timeout <= TimeSpan.FromMinutes(1)
                 ? options.Timeout : TimeSpan.FromSeconds(10),
@@ -174,6 +181,8 @@ public static class SafeCoreNameResolution
         private readonly List<PathRecord> _pathRecords = [];
         private readonly Dictionary<SafeCoreItemSyntax, ScopeBuilder> _itemScopes =
             new(ReferenceComparer<SafeCoreItemSyntax>.Instance);
+        private readonly Dictionary<SafeCoreImplSyntax, IReadOnlyList<SafeCoreFunctionSyntax>> _implementationFunctions =
+            new(ReferenceComparer<SafeCoreImplSyntax>.Instance);
         private readonly Dictionary<SafeCoreBlockSyntax, ScopeBuilder> _blockScopes =
             new(ReferenceComparer<SafeCoreBlockSyntax>.Instance);
         private readonly HashSet<SymbolBuilder> _activeImports =
@@ -751,7 +760,18 @@ public static class SafeCoreNameResolution
 
         private void CollectImplementation(SafeCoreImplSyntax implementation, ScopeBuilder parent)
         {
-            if (implementation.Trait is not SafeCorePathTypeSyntax || implementation.Items.Count != 0)
+            bool isDrop = _options.EnableDropImplementations &&
+                implementation.Trait is SafeCorePathTypeSyntax { IsAbsolute: false, Segments.Count: 1 } trait &&
+                trait.Segments[0].Name == "Drop" &&
+                implementation.GenericParameters.Count == 0 && implementation.WhereClause is null &&
+                implementation.Items.Count == 1 && implementation.Items[0] is SafeCoreAssociatedFunctionSyntax
+                {
+                    Name: "drop", Body: not null, GenericParameters.Count: 0, Parameters.Count: 1,
+                    WhereClause: null, IsConst: false
+                } destructor &&
+                destructor.Parameters[0].Receiver is { IsByReference: true, IsMutable: true } &&
+                destructor.ReturnType is null or SafeCoreUnitTypeSyntax;
+            if (!isDrop && (implementation.Trait is not SafeCorePathTypeSyntax || implementation.Items.Count != 0))
             {
                 RejectNewSyntax(implementation.Span);
                 return;
@@ -763,6 +783,38 @@ public static class SafeCoreNameResolution
             scope.Span = implementation.Span;
             _itemScopes[implementation] = scope;
             CollectGenericParameters(implementation.GenericParameters, scope);
+            if (!isDrop) return;
+            var methods = new List<SafeCoreFunctionSyntax>();
+            foreach (SafeCoreAssociatedFunctionSyntax associated in implementation.Items.OfType<SafeCoreAssociatedFunctionSyntax>())
+            {
+                SafeCoreFunctionSyntax method = NormalizeDropMethod(implementation, associated);
+                methods.Add(method);
+                CollectFunction(method, scope, 1);
+            }
+            _implementationFunctions[implementation] = methods.AsReadOnly();
+        }
+
+        private static SafeCoreFunctionSyntax NormalizeDropMethod(
+            SafeCoreImplSyntax implementation,
+            SafeCoreAssociatedFunctionSyntax associated)
+        {
+            var parameters = new List<SafeCoreParameterSyntax>(associated.Parameters.Count);
+            foreach (SafeCoreParameterSyntax parameter in associated.Parameters)
+            {
+                SafeCoreTypeSyntax type = parameter.Receiver is { } receiver
+                    ? receiver.IsByReference
+                        ? new SafeCoreReferenceTypeSyntax(receiver.Lifetime, receiver.IsMutable,
+                            implementation.SelfType, receiver.Span)
+                        : implementation.SelfType
+                    : parameter.Type;
+                parameters.Add(parameter with { Type = type, Receiver = null, Attributes = [] });
+            }
+            return new SafeCoreFunctionSyntax(associated.Name, associated.GenericParameters,
+                parameters.AsReadOnly(), associated.ReturnType, associated.Body!, false, [], associated.Span)
+            {
+                WhereClause = associated.WhereClause,
+                IsConst = associated.IsConst,
+            };
         }
 
         private void CollectStruct(SafeCoreStructSyntax structure, ScopeBuilder parent)
@@ -1676,6 +1728,11 @@ public static class SafeCoreNameResolution
                                 ResolveTraitPath(implementation.Trait, implementationScope, depth + 1);
                             ResolveType(implementation.SelfType, implementationScope, depth + 1);
                             ResolveWhereBounds(implementation.WhereClause, implementationScope, depth + 1);
+                            if (_implementationFunctions.TryGetValue(implementation, out IReadOnlyList<SafeCoreFunctionSyntax>? methods))
+                            {
+                                foreach (SafeCoreFunctionSyntax method in methods)
+                                    ResolveFunction(method, GetItemScope(method, implementationScope), depth + 1);
+                            }
                             break;
                         case SafeCoreStructSyntax structure:
                             ResolveStruct(structure, GetItemScope(structure, scope));
@@ -1868,7 +1925,16 @@ public static class SafeCoreNameResolution
 
         private void ResolveTraitPath(SafeCoreTypeSyntax syntax, ScopeBuilder scope, int depth)
         {
-            if (ValidateMarkerTraitPath(syntax)) ResolveType(syntax, scope, depth);
+            if (ValidateMarkerTraitPath(syntax))
+            {
+                // `Drop` is a closed runtime trait supplied by the profile;
+                // it has no source declaration to enter in the crate scope.
+                if (_options.EnableDropImplementations &&
+                    syntax is SafeCorePathTypeSyntax { IsAbsolute: false, Segments.Count: 1 } path &&
+                    path.Segments[0].Name == "Drop")
+                    return;
+                ResolveType(syntax, scope, depth);
+            }
         }
 
         private void ResolveWhereBounds(SafeCoreWhereClauseSyntax? where, ScopeBuilder scope, int depth)

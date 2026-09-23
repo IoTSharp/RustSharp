@@ -250,10 +250,10 @@ jobs:
         run: |
           set -euo pipefail
           set +e
-          bash eng/Invoke-LinuxNativeAotProbe.sh samples/safe-core.rs artifacts/p1-06/linux-x64 300 safe-core-mir-p1-v1 $'Safe core on .NET\n42\ntrue\n'
+          bash eng/Invoke-LinuxNativeAotProbe.sh samples/safe-core.rs artifacts/p1-10/linux-x64-v2 300 safe-core-mir-p1-v2 $'Safe core on .NET\n42\ntrue\n'
           probe_exit=$?
           set -e
-          evidence="artifacts/p1-06/linux-x64/linux-aot-evidence.json"
+          evidence="artifacts/p1-10/linux-x64-v2/linux-aot-evidence.json"
           if [[ ! -f "$evidence" ]]; then
             echo "Typed MIR Linux Native AOT probe did not write $evidence" >&2
             exit 1
@@ -335,6 +335,19 @@ jobs:
           & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('src/RustSharp.Cli/bin/Release/net10.0/rsc.dll', 'compile', 'tests/workspaces/generics/Cargo.toml', '--profile', 'safe-core-generics-v1', '--output', 'artifacts/p1-05/generic-packages.dll') -TimeoutSeconds 30
           & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('artifacts/p1-05/generic-packages.dll') -TimeoutSeconds 10
           & ./eng/Invoke-ILVerify.ps1 -AssemblyPath artifacts/p1-05/generic-packages.dll -EvidencePath artifacts/p1-05/generic-packages.ilverify.json
+      - name: Run P1 v2 borrow and Drop differential gate
+        shell: pwsh
+        timeout-minutes: 20
+        env:
+          DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll', '--profile', 'p1-differential-v2', '--oracle', 'rustc-1.98', '--report', 'artifacts/p1-10/p1-differential-v2.json') -TimeoutSeconds 900 -CapturePrefix 'artifacts/p1-10/p1-differential-v2'
+          $report = Get-Content -Raw -LiteralPath 'artifacts/p1-10/p1-differential-v2.json' | ConvertFrom-Json
+          if ([string]$report.summary.status -ne 'passed' -or $report.summary.denominator -ne 16 -or $report.summary.executed -ne 16 -or $report.summary.passed -ne 16 -or $report.summary.failed -ne 0 -or $report.summary.skipped -ne 0 -or $report.summary.blocked -ne 0) {
+            throw 'P1 v2 differential gate did not produce 16/16 with zero failed, skipped, or blocked cases.'
+          }
       - name: Upload Linux evidence
         if: always()
         uses: actions/upload-artifact@v4
