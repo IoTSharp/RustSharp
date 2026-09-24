@@ -531,6 +531,8 @@ public static class SafeCoreMirCleanupLowering
         if (trace.StartsWith("use_borrow ", comparison) ||
             trace.StartsWith("use ", comparison) ||
             trace.StartsWith("assign ", comparison) ||
+            trace.StartsWith("consume ", comparison) ||
+            trace.StartsWith("borrow_call ", comparison) ||
             trace.StartsWith("write ", comparison))
         {
             int separator = trace.IndexOf(' ');

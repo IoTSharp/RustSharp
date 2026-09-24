@@ -16,6 +16,9 @@ public sealed record SafeCoreMirValidationOptions
     public int MaximumStatements { get; init; } = 100_000;
     public int MaximumDiagnostics { get; init; } = 128;
     public int MaximumTypeDepth { get; init; } = 128;
+    public int MaximumProjectionDepth { get; init; } = 128;
+    public int MaximumAdtLayouts { get; init; } = 4_096;
+    public int MaximumAdtFields { get; init; } = 100_000;
 }
 
 public static class SafeCoreMirDiagnosticCodes
@@ -35,16 +38,21 @@ public sealed record SafeCoreMirDiagnostic(string Code, string Message, SafeCore
 public sealed class SafeCoreMirValidationResult
 {
     internal SafeCoreMirValidationResult(List<SafeCoreMirDiagnostic> diagnostics,
-        Dictionary<int, IReadOnlyList<int>> reachableBlocks, bool isTruncated, int operations = 0)
+        Dictionary<int, IReadOnlyList<int>> reachableBlocks, bool isTruncated, int operations = 0,
+        List<SafeCoreMirPlaceType>? places = null)
     {
         Diagnostics = diagnostics.AsReadOnly();
         ReachableBlocks = new ReadOnlyDictionary<int, IReadOnlyList<int>>(reachableBlocks);
         IsTruncated = isTruncated;
         Operations = Math.Max(0, operations);
+        Places = !isTruncated && diagnostics.Count == 0 && places is not null
+            ? places.AsReadOnly() : Array.Empty<SafeCoreMirPlaceType>();
     }
     public IReadOnlyList<SafeCoreMirDiagnostic> Diagnostics { get; }
     public IReadOnlyDictionary<int, IReadOnlyList<int>> ReachableBlocks { get; }
     public bool IsTruncated { get; }
+    /// <summary>Checked place occurrences in function/block/operand order. Empty on failure.</summary>
+    public IReadOnlyList<SafeCoreMirPlaceType> Places { get; }
     /// <summary>
     /// Number of bounded validator steps consumed before this result was
     /// published.  Callers that compose validation with another bounded pass
@@ -75,7 +83,10 @@ public static class SafeCoreMirValidation
             options.MaximumBlocks is < 1 or > 100_000 ||
             options.MaximumStatements is < 1 or > 100_000 ||
             options.MaximumDiagnostics is < 1 or > 4_096 ||
-            options.MaximumTypeDepth is < 1 or > 128)
+            options.MaximumTypeDepth is < 1 or > 128 ||
+            options.MaximumProjectionDepth is < 1 or > 128 ||
+            options.MaximumAdtLayouts is < 1 or > 4_096 ||
+            options.MaximumAdtFields is < 1 or > 100_000)
             throw new ArgumentOutOfRangeException(nameof(options));
         return new Validator(program, options).Run();
     }
@@ -85,6 +96,11 @@ public static class SafeCoreMirValidation
         private readonly Stopwatch _clock = Stopwatch.StartNew();
         private readonly List<SafeCoreMirDiagnostic> _diagnostics = [];
         private readonly Dictionary<int, IReadOnlyList<int>> _reachable = [];
+        private readonly List<SafeCoreMirPlaceType> _places = [];
+        private readonly Dictionary<string, SafeCoreMirAdtLayout> _adtLayouts = new(StringComparer.Ordinal);
+        private readonly Dictionary<(string Type, string Field), int> _fieldIndices = [];
+        private readonly HashSet<string> _checkedLayouts = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _checkedCopyLayouts = new(StringComparer.Ordinal);
         private SafeCoreMirFunction? _function;
         private SafeCoreMirBlock? _block;
         private int _operations;
@@ -98,6 +114,7 @@ public static class SafeCoreMirValidation
             {
                 Step();
                 Limit(program.Functions.Count, options.MaximumFunctions, 4_096);
+                AdtLayouts();
                 var names = new HashSet<string>(StringComparer.Ordinal);
                 for (int index = 0; index < program.Functions.Count; index++)
                 {
@@ -110,7 +127,7 @@ public static class SafeCoreMirValidation
                         Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Function IDs must index the arena and names must be unique and bounded.", _function.Source);
                     if (Type(_function.ReturnType)) Function();
                 }
-                return new(_diagnostics, _reachable, false, _operations);
+                return new(_diagnostics, _reachable, false, _operations, _places);
             }
             catch (SafeCoreMirLimitException exception)
             {
@@ -178,6 +195,94 @@ public static class SafeCoreMirValidation
             return valid;
         }
 
+        private void AdtLayouts()
+        {
+            Limit(program.AdtLayouts.Count, options.MaximumAdtLayouts, 4_096);
+            int fields = 0;
+            foreach (SafeCoreMirAdtLayout layout in program.AdtLayouts)
+            {
+                Step();
+                Source(layout.Source);
+                fields += layout.Fields.Count;
+                Limit(fields, options.MaximumAdtFields, 100_000);
+                Limit(layout.Fields.Count, 4_096, 4_096);
+                if (layout.Type is null || layout.Type.Kind != SafeCoreSemanticTypeKind.Adt ||
+                    string.IsNullOrWhiteSpace(layout.Type.Name) || layout.Type.Name.Length > 4_096)
+                {
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An ADT layout requires a bounded nominal type identity.", layout.Source);
+                    continue;
+                }
+                if (!_adtLayouts.TryAdd(layout.Type.Name, layout))
+                    Error(SafeCoreMirDiagnosticCodes.InvalidInput, "ADT layout identities must be unique.", layout.Source);
+                for (int index = 0; index < layout.Fields.Count; index++)
+                {
+                    Step();
+                    SafeCoreMirAdtField field = layout.Fields[index];
+                    Source(field.Source);
+                    if (string.IsNullOrWhiteSpace(field.Name) || field.Name.Length > 4_096 ||
+                        !_fieldIndices.TryAdd((layout.Type.Name, field.Name), index))
+                        Error(SafeCoreMirDiagnosticCodes.InvalidInput, "ADT field names must be unique and bounded within their declaration.", field.Source);
+                    Type(field.Type);
+                }
+            }
+            foreach (SafeCoreMirAdtLayout layout in _adtLayouts.Values)
+            {
+                Step();
+                ValidateLayoutType(layout.Type, layout.Source, new(StringComparer.Ordinal), 0, requireCopy: false);
+                if (layout.IsCopy)
+                    ValidateLayoutType(layout.Type, layout.Source, new(StringComparer.Ordinal), 0, requireCopy: true);
+            }
+        }
+
+        private void ValidateLayoutType(SafeCoreType? type, SafeCoreMirSource source,
+            HashSet<string> active, int depth, bool requireCopy)
+        {
+            Step();
+            if (depth > options.MaximumTypeDepth)
+                throw new SafeCoreMirLimitException("MIR ADT layout nesting limit reached.");
+            if (type is null || type.Kind is SafeCoreSemanticTypeKind.Error or SafeCoreSemanticTypeKind.Inference)
+                return; // Already diagnosed by Type.
+            if (type.Kind == SafeCoreSemanticTypeKind.Reference)
+            {
+                if (requireCopy && type.IsMutable)
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "A Copy ADT cannot contain a mutable reference.", source);
+                return; // A reference does not recursively embed its referent layout.
+            }
+            if (type.Kind is SafeCoreSemanticTypeKind.Never or SafeCoreSemanticTypeKind.Slice or SafeCoreSemanticTypeKind.Str or SafeCoreSemanticTypeKind.Closure)
+            {
+                Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "ADT fields require resolved sized storage types.", source);
+                return;
+            }
+            if (type.Kind is SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Tuple)
+            {
+                for (int index = 0; index < type.Elements.Count; index++)
+                    ValidateLayoutType(type.Elements[index], source, active, depth + 1, requireCopy);
+                return;
+            }
+            if (type.Kind != SafeCoreSemanticTypeKind.Adt) return;
+            if (!_adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? layout))
+            {
+                Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An embedded ADT requires its declared layout.", source);
+                return;
+            }
+            if (requireCopy && !layout.IsCopy)
+            {
+                Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "A Copy ADT cannot contain a non-Copy ADT.", source);
+                return;
+            }
+            HashSet<string> checkedLayouts = requireCopy ? _checkedCopyLayouts : _checkedLayouts;
+            if (checkedLayouts.Contains(type.Name!)) return;
+            if (!active.Add(type.Name!))
+            {
+                Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "ADT layouts cannot contain a recursive by-value field cycle.", source);
+                return;
+            }
+            foreach (SafeCoreMirAdtField field in layout.Fields)
+                ValidateLayoutType(field.Type, field.Source, active, depth + 1, requireCopy);
+            active.Remove(type.Name!);
+            checkedLayouts.Add(type.Name!);
+        }
+
         private void Function()
         {
             SafeCoreMirFunction function = _function!;
@@ -191,6 +296,15 @@ public static class SafeCoreMirValidation
                 Step();
                 SafeCoreMirLocal local = function.Locals[index];
                 Source(local.Source);
+                if (local.StorageScope is { } storageScope)
+                {
+                    Source(storageScope);
+                    if (local.Kind == SafeCoreMirLocalKind.Parameter ||
+                        storageScope.SourcePath != local.Source.SourcePath ||
+                        storageScope.Span.Start > local.Source.Span.Start ||
+                        (long)storageScope.Span.Start + storageScope.Span.Length < (long)local.Source.Span.Start + local.Source.Span.Length)
+                        Error(SafeCoreMirDiagnosticCodes.InvalidSource, "Local storage scope must contain its declaration in the same source file.", local.Source);
+                }
                 Type(local.Type);
                 if (local.Id != index || string.IsNullOrEmpty(local.Name) || local.Name.Length > 4_096
                     || !Enum.IsDefined(local.Kind))
@@ -199,6 +313,14 @@ public static class SafeCoreMirValidation
                     Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "The never type cannot occupy a local slot.", local.Source);
                 if (local.IsUnitAdt && local.Type?.Kind != SafeCoreSemanticTypeKind.Adt)
                     Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Unit ADT evidence requires a nominal ADT type.", local.Source);
+                if (local.Type?.Kind == SafeCoreSemanticTypeKind.Adt &&
+                    _adtLayouts.TryGetValue(local.Type.Name!, out SafeCoreMirAdtLayout? declared))
+                {
+                    if (local.IsUnitAdt && declared.Fields.Count != 0)
+                        Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Unit ADT evidence conflicts with declared fields.", local.Source);
+                    if (local.DestructorFunctionId.HasValue && declared.IsCopy)
+                        Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An ADT with Drop cannot be Copy.", local.Source);
+                }
                 if (local.Kind == SafeCoreMirLocalKind.Parameter && pastParameters)
                     Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Parameter slots must precede other locals.", local.Source);
                 pastParameters |= local.Kind != SafeCoreMirLocalKind.Parameter;
@@ -218,6 +340,19 @@ public static class SafeCoreMirValidation
                     SafeCoreMirStatement statement = _block.Statements[statementIndex];
                     Source(statement.Source);
                     SafeCoreType? destination = LocalType(statement.DestinationLocalId, statement.Source);
+                    if (statement.DestinationPlace is { } place)
+                    {
+                        if (place.LocalId != statement.DestinationLocalId)
+                            Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Projected destination root differs from its local ID.", statement.Source);
+                        SafeCoreMirPlaceType? placeType = ResolvePlace(place, statement.Source);
+                        destination = placeType?.Type;
+                        if (placeType is not null)
+                        {
+                            _places.Add(placeType);
+                            if (!placeType.IsMutable)
+                                Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Projected assignment requires mutable storage access.", statement.Source);
+                        }
+                    }
                     if (statement.Value is null)
                         Error(SafeCoreMirDiagnosticCodes.InvalidInput, "An assignment requires a value.", statement.Source);
                     else
@@ -254,6 +389,8 @@ public static class SafeCoreMirValidation
             Step();
             Source(operand.Source);
             if (!Type(operand.Type)) return false;
+            if (operand.Kind != SafeCoreMirOperandKind.Place && operand.Place is not null)
+                Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Only a place operand may carry a projection chain.", operand.Source);
             switch (operand.Kind)
             {
                 case SafeCoreMirOperandKind.Local:
@@ -286,8 +423,11 @@ public static class SafeCoreMirValidation
                     if (operand.Value is not null || operand.Place is null || operand.Place.LocalId != operand.Id ||
                         operand.Place.LocalId < 0 || operand.Place.LocalId >= _function!.Locals.Count)
                         Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "A MIR place operand must reference a local and a valid projection chain.", operand.Source);
-                    else if (operand.Place.Projections.Count > 128)
-                        Error(SafeCoreMirDiagnosticCodes.InvalidInput, "MIR place projection depth exceeds its bound.", operand.Source);
+                    else if (ResolvePlace(operand.Place, operand.Source) is { } placeType)
+                    {
+                        Equal(placeType.Type, operand.Type, operand.Source, "Place operand type differs from its projected storage.");
+                        _places.Add(placeType);
+                    }
                     break;
                 case SafeCoreMirOperandKind.Constant:
                     if (operand.Id != -1 || !Constant(operand.Type, operand.Value))
@@ -300,13 +440,111 @@ public static class SafeCoreMirValidation
             return true;
         }
 
-        private static bool Constant(SafeCoreType type, string? text)
+        private SafeCoreMirPlaceType? ResolvePlace(SafeCoreMirPlace place, SafeCoreMirSource source,
+            bool dereference = false)
+        {
+            Step();
+            if (place.Projections.Count + (dereference ? 1 : 0) > options.MaximumProjectionDepth)
+                throw new SafeCoreMirLimitException("MIR place projection depth limit reached.");
+            SafeCoreType? root = LocalType(place.LocalId, source);
+            if (root is null || !Type(root)) return null;
+            SafeCoreMirLocal local = _function!.Locals[place.LocalId];
+            SafeCoreType type = root;
+            // A temporary is owned expression storage. An immutable binding may
+            // still hold &mut T, but no later dereference can cross a shared barrier.
+            bool mutable = local.IsMutable || local.Kind == SafeCoreMirLocalKind.Temporary;
+            bool sharedBarrier = false;
+            for (int index = 0; index < place.Projections.Count; index++)
+            {
+                Step();
+                SafeCoreMirProjection projection = place.Projections[index];
+                switch (projection.Kind)
+                {
+                    case SafeCoreMirProjectionKind.TupleIndex when type.Kind == SafeCoreSemanticTypeKind.Tuple &&
+                        projection.Index < type.Elements.Count:
+                        type = type.Elements[projection.Index];
+                        break;
+                    case SafeCoreMirProjectionKind.ArrayIndex when type.Kind == SafeCoreSemanticTypeKind.Array &&
+                        type.Length is long length && projection.Index < length:
+                        type = type.ElementType;
+                        break;
+                    case SafeCoreMirProjectionKind.DynamicIndex when type.Kind == SafeCoreSemanticTypeKind.Array:
+                        SafeCoreType? indexType = LocalType(projection.Index, source);
+                        if (indexType?.Kind != SafeCoreSemanticTypeKind.Usize)
+                        {
+                            Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "A dynamic place index must identify a usize local.", source);
+                            return null;
+                        }
+                        type = type.ElementType;
+                        break;
+                    case SafeCoreMirProjectionKind.Dereference when type.Kind == SafeCoreSemanticTypeKind.Reference:
+                        sharedBarrier |= !type.IsMutable;
+                        mutable = !sharedBarrier;
+                        type = type.ElementType;
+                        break;
+                    case SafeCoreMirProjectionKind.Field when type.Kind == SafeCoreSemanticTypeKind.Adt:
+                        if (!_adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? layout))
+                        {
+                            Error(SafeCoreMirDiagnosticCodes.UnsupportedNode,
+                                "Named MIR fields require declared aggregate layout evidence.", source);
+                            return null;
+                        }
+                        if (!_fieldIndices.TryGetValue((type.Name!, projection.Name!), out int fieldIndex))
+                        {
+                            Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Named field is absent from its owner's declared layout.", source);
+                            return null;
+                        }
+                        type = layout.Fields[fieldIndex].Type;
+                        break;
+                    case SafeCoreMirProjectionKind.TupleIndex when type.Kind == SafeCoreSemanticTypeKind.Adt &&
+                        _adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? tupleLayout) &&
+                        projection.Index < tupleLayout.Fields.Count &&
+                        tupleLayout.Fields[projection.Index].Name == projection.Index.ToString(CultureInfo.InvariantCulture):
+                        type = tupleLayout.Fields[projection.Index].Type;
+                        break;
+                    default:
+                        Error(SafeCoreMirDiagnosticCodes.TypeMismatch,
+                            "MIR projection is incompatible with its owner type or static bounds.", source);
+                        return null;
+                }
+            }
+            if (dereference)
+            {
+                Step();
+                if (type.Kind != SafeCoreSemanticTypeKind.Reference) return null;
+                mutable = !sharedBarrier && type.IsMutable;
+                type = type.ElementType;
+            }
+            return new(_function.Id, place, root, type, mutable, source);
+        }
+
+        private bool MutablePlace(SafeCoreMirOperand operand)
+        {
+            if (operand.Kind == SafeCoreMirOperandKind.Place && operand.Place is { } place)
+                return ResolvePlace(place, operand.Source) is { IsMutable: true };
+            if (operand.Kind != SafeCoreMirOperandKind.Local ||
+                operand.Id < 0 || operand.Id >= _function!.Locals.Count) return false;
+            SafeCoreMirLocal local = _function.Locals[operand.Id];
+            return local.IsMutable || local.Kind == SafeCoreMirLocalKind.Temporary;
+        }
+
+        private bool MutableReferent(SafeCoreMirOperand operand)
+        {
+            if (operand.Type.Kind != SafeCoreSemanticTypeKind.Reference || !operand.Type.IsMutable) return false;
+            // Reading an &mut value out of a shared projected place must not
+            // discard the shared barrier before a write or mutable reborrow.
+            return operand.Kind != SafeCoreMirOperandKind.Place || operand.Place is { } place &&
+                ResolvePlace(place, operand.Source, dereference: true) is { IsMutable: true };
+        }
+
+        private bool Constant(SafeCoreType type, string? text)
         {
             if (text is null || text.Length > 4_096) return false;
             if (type.Kind == SafeCoreSemanticTypeKind.Unit) return text == "()";
             // Unit structs retain their nominal ADT identity in MIR while
             // carrying the same zero-field runtime representation as `()`.
-            if (type.Kind == SafeCoreSemanticTypeKind.Adt) return text == "()";
+            if (type.Kind == SafeCoreSemanticTypeKind.Adt) return text == "()" &&
+                (!_adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? layout) || layout.Fields.Count == 0);
             if (type.Kind == SafeCoreSemanticTypeKind.Bool) return text is "true" or "false";
             if (type.IsFloat)
                 return text == text.Trim() && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
@@ -342,6 +580,8 @@ public static class SafeCoreMirValidation
                 SafeCoreMirRvalueKind.Write => 2,
                 SafeCoreMirRvalueKind.Tuple => value.Type.Kind == SafeCoreSemanticTypeKind.Unit ? 0 : value.Type.Elements.Count,
                 SafeCoreMirRvalueKind.Array => ArrayOperandCount(value.Type),
+                SafeCoreMirRvalueKind.Adt => value.Type.Kind == SafeCoreSemanticTypeKind.Adt &&
+                    _adtLayouts.TryGetValue(value.Type.Name!, out SafeCoreMirAdtLayout? layout) ? layout.Fields.Count : -1,
                 SafeCoreMirRvalueKind.Print => value.Operator == "{}" ? 1 : 0,
                 _ => -1,
             };
@@ -358,12 +598,15 @@ public static class SafeCoreMirValidation
             bool valid = value.Kind switch
             {
                 SafeCoreMirRvalueKind.Use => first == value.Type,
-                SafeCoreMirRvalueKind.Unary => Unary(value.Operator, first!, value.Type),
+                SafeCoreMirRvalueKind.Unary => Unary(value.Operator, first!, value.Type) &&
+                    (value.Operator != "&mut" || MutablePlace(value.Operands[0])) &&
+                    (value.Operator != "reborrow_mut" || MutableReferent(value.Operands[0])),
                 SafeCoreMirRvalueKind.Binary => Binary(value.Operator, first!, value.Operands[1].Type, value.Type),
                 SafeCoreMirRvalueKind.Coerce => Coercion(first!, value.Type),
                 SafeCoreMirRvalueKind.Cast => Cast(first!, value.Type),
                 SafeCoreMirRvalueKind.Tuple => Tuple(value),
                 SafeCoreMirRvalueKind.Array => Array(value),
+                SafeCoreMirRvalueKind.Adt => Adt(value),
                 SafeCoreMirRvalueKind.Index => Index(value),
                 SafeCoreMirRvalueKind.Field => Field(value),
                 SafeCoreMirRvalueKind.Write => Write(value),
@@ -372,6 +615,19 @@ public static class SafeCoreMirValidation
                 _ => false,
             };
             if (!valid) Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Rvalue operator and operand/result types are incompatible.", value.Source);
+        }
+
+        private bool Adt(SafeCoreMirRvalue value)
+        {
+            if (value.Type.Kind != SafeCoreSemanticTypeKind.Adt ||
+                !_adtLayouts.TryGetValue(value.Type.Name!, out SafeCoreMirAdtLayout? layout) ||
+                layout.Fields.Count != value.Operands.Count) return false;
+            for (int index = 0; index < layout.Fields.Count; index++)
+            {
+                Step();
+                if (layout.Fields[index].Type != value.Operands[index].Type) return false;
+            }
+            return true;
         }
 
         private static bool Field(SafeCoreMirRvalue value) =>
@@ -393,13 +649,13 @@ public static class SafeCoreMirValidation
                 result.IsMutable == (op == "&mut"),
             "reborrow" or "reborrow_mut" => result.Kind == SafeCoreSemanticTypeKind.Reference &&
                 operand.Kind == SafeCoreSemanticTypeKind.Reference && result.ElementType == operand.ElementType &&
-                result.IsMutable == (op == "reborrow_mut"),
+                result.IsMutable == (op == "reborrow_mut") && (op != "reborrow_mut" || operand.IsMutable),
             "*" => operand.Kind == SafeCoreSemanticTypeKind.Reference && result == operand.ElementType,
             _ => false,
         };
 
-        private static bool Write(SafeCoreMirRvalue value) =>
-            value.Operands.Count == 2 && value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+        private bool Write(SafeCoreMirRvalue value) =>
+            value.Operands.Count == 2 && MutableReferent(value.Operands[0]) &&
             value.Operands[1].Type == value.Type && value.Operands[0].Type.ElementType == value.Type;
 
         private static bool Binary(string? op, SafeCoreType left, SafeCoreType right, SafeCoreType result) => op switch

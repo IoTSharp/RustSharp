@@ -53,6 +53,7 @@ public static partial class SafeCoreMirLowering
     public const string InvalidEvidence = "RSM2001";
     public const string UnsupportedSyntax = "RSM2002";
     public const string LimitReached = "RSM2003";
+    public const string InvalidLifetimeElision = "RSM2004";
 
     public static SafeCoreMirLoweringResult Lower(SafeCoreTypeAnalysisProgram program,
         SafeCoreMirLoweringOptions? options = null, CancellationToken cancellationToken = default)
@@ -113,7 +114,9 @@ public static partial class SafeCoreMirLowering
         private readonly Dictionary<string, int> _functions = new(StringComparer.Ordinal);
         private readonly List<SafeCoreMirLocal> _locals = [];
         private readonly Dictionary<SafeCoreSymbol, int> _bindings = [];
-        private readonly Dictionary<int, int> _referenceOwners = [];
+        private readonly List<SafeCoreMirSource> _storageScopes = [];
+        private readonly List<SafeCoreMirSource> _temporaryScopes = [];
+        private readonly Dictionary<int, SafeCoreMirSource> _extendedTemporaryScopes = [];
         private readonly Dictionary<string, int> _dropFunctions = new(StringComparer.Ordinal);
         private readonly HashSet<int> _destructorNodes = [];
         private readonly List<List<int>> _dropScopes = [];
@@ -161,6 +164,7 @@ public static partial class SafeCoreMirLowering
 
         public SafeCoreMirProgram Run()
         {
+            if (options.EnableP1Extensions) CollectAdtLayouts();
             Collect(input.Hir.Root!, 0);
             var functions = new List<SafeCoreMirFunction>(_functionNodes.Count);
             for (int index = 0; index < _functionNodes.Count; index++)
@@ -168,7 +172,7 @@ public static partial class SafeCoreMirLowering
                 Step(_functionNodes[index], 0);
                 functions.Add(Function(_functionNodes[index], index));
             }
-            return new(functions, cancellation);
+            return new(functions, _adtLayouts.Values.ToArray(), cancellation);
         }
 
         private void Collect(SafeCoreHirNode node, int depth)
@@ -180,12 +184,15 @@ public static partial class SafeCoreMirLowering
                 return;
             }
             if (node.Kind is N.Attribute or N.Import or N.ImportGroup or N.TypeAlias) return;
+            // Type analysis has already evaluated constants used in array
+            // lengths. The resolved layout carries the resulting length;
+            // runtime uses still require an explicit value-lowering path.
+            if (options.EnableP1Extensions && node.Kind == N.Const) return;
             // Nominal unit ADTs and bounded Drop implementations contribute
             // type/cleanup metadata to the HIR but are not standalone MIR
             // entry functions. Their associated Drop body is consumed by the
             // owning function's cleanup projection.
-            if (options.EnableP1Extensions && node.Kind == N.Struct &&
-                node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct)) return;
+            if (options.EnableP1Extensions && node.Kind == N.Struct) return;
             if (options.EnableP1Extensions && node.Kind == N.Implementation)
             {
                 ValidateDropImplementation(node, depth);
@@ -214,7 +221,7 @@ public static partial class SafeCoreMirLowering
                     // as the evidence anchor gives unsupported signature types their
                     // exact source span instead of the enclosing function span.
                     SafeCoreHirNode typeNode = Child(child, 1);
-                    if (!IsStructuralCopy(signature.ParameterTypes[parameterIndex])) Unsupported(typeNode);
+                    if (!options.EnableP1Extensions && !IsStructuralCopy(signature.ParameterTypes[parameterIndex])) Unsupported(typeNode);
                     ValueType(signature.ParameterTypes[parameterIndex++], typeNode);
                 }
                 else if (IsTypeNode(child.Kind))
@@ -224,8 +231,9 @@ public static partial class SafeCoreMirLowering
             }
             if (!_destructorNodes.Contains(node.Id) && parameterIndex != signature.ParameterTypes.Count)
                 Invalid(node);
-            if (!IsStructuralCopy(signature.ReturnType) && signature.ReturnType.Kind != K.Never)
+            if (!options.EnableP1Extensions && !IsStructuralCopy(signature.ReturnType) && signature.ReturnType.Kind != K.Never)
                 Unsupported(returnTypeNode);
+            if (options.EnableP1Extensions) ValidateLifetimeElision(signature, returnTypeNode);
             ValueType(signature.ReturnType, returnTypeNode, allowNever: true);
             if (!_functions.TryAdd(SymbolKey(node.DeclaredSymbol!), _functionNodes.Count)) Invalid(node);
             _functionNodes.Add(node);
@@ -233,7 +241,8 @@ public static partial class SafeCoreMirLowering
 
         private SafeCoreMirFunction Function(SafeCoreHirNode node, int id)
         {
-            _locals.Clear(); _bindings.Clear(); _referenceOwners.Clear(); _blocks.Clear(); _loops.Clear();
+            _locals.Clear(); _bindings.Clear(); _storageScopes.Clear(); _temporaryScopes.Clear(); _extendedTemporaryScopes.Clear();
+            _blocks.Clear(); _loops.Clear();
             _closures.Clear(); _closureReturns.Clear(); _dropScopes.Clear();
             SafeCoreType signature = Type(node);
             bool isDestructor = _destructorNodes.Contains(node.Id);
@@ -286,14 +295,20 @@ public static partial class SafeCoreMirLowering
         {
             Step(node, depth);
             if (_current is null) return null;
-            SafeCoreMirOperand? value = ExprCore(node, depth);
-            if (value is not null && _current is not null && input.Coercions.TryGetValue(node.Id, out SafeCoreType? target) &&
-                !value.Type.Equals(target))
+            bool temporaryScope = options.EnableP1Extensions && node.Kind is N.LetStatement or N.ExpressionStatement;
+            if (temporaryScope) _temporaryScopes.Add(Source(node));
+            try
             {
-                ValueType(target, node);
-                value = Emit(SafeCoreMirRvalue.Coerce(value, target, Source(node)), target, node);
+                SafeCoreMirOperand? value = ExprCore(node, depth);
+                if (value is not null && _current is not null && input.Coercions.TryGetValue(node.Id, out SafeCoreType? target) &&
+                    !value.Type.Equals(target))
+                {
+                    ValueType(target, node);
+                    value = Emit(SafeCoreMirRvalue.Coerce(value, target, Source(node)), target, node);
+                }
+                return value;
             }
-            return value;
+            finally { if (temporaryScope) _temporaryScopes.RemoveAt(_temporaryScopes.Count - 1); }
         }
 
         private SafeCoreMirOperand? ExprCore(SafeCoreHirNode node, int depth)
@@ -302,31 +317,17 @@ public static partial class SafeCoreMirLowering
             {
                 case N.Attribute: return Unit(node);
                 case N.Block:
-                    int firstLocal = _locals.Count;
                     _dropScopes.Add([]);
+                    _storageScopes.Add(Source(node));
                     try
                     {
                         SafeCoreMirOperand? result = Unit(node);
                         for (int index = 0; index < node.ChildIds.Count && _current is not null; index++)
                             result = Expr(Child(node, index), depth + 1);
-                        if (result is { Kind: SafeCoreMirOperandKind.Local, Type.Kind: K.Reference } &&
-                            _referenceOwners.TryGetValue(result.Id, out int escapedOwner) && escapedOwner >= firstLocal)
-                            throw new LoweringException(new(SafeCoreOwnershipDiagnosticCodes.Escape,
-                                "A reference cannot escape the lexical scope of its owner.", node.Span));
-                        // A reference local from an outer scope may be
-                        // reassigned while this block is active. If its new
-                        // provenance points at a block local, the borrow
-                        // would outlive the owner even though the block's
-                        // value is unit, so report the stable ownership escape
-                        // diagnostic at the block boundary.
-                        foreach ((int reference, int owner) in _referenceOwners)
-                            if (reference < firstLocal && owner >= firstLocal)
-                                throw new LoweringException(new(SafeCoreOwnershipDiagnosticCodes.Escape,
-                                    "A reference cannot escape the lexical scope of its owner.", node.Span));
                         if (_current is not null) EmitScopeDrops(_dropScopes.Count - 1);
                         return result;
                     }
-                    finally { _dropScopes.RemoveAt(_dropScopes.Count - 1); }
+                    finally { _dropScopes.RemoveAt(_dropScopes.Count - 1); _storageScopes.RemoveAt(_storageScopes.Count - 1); }
                 case N.BlockExpression: return Expr(Child(node, 0), depth + 1);
                 case N.TupleExpression when node.ChildIds.Count == 0: return Unit(node);
                 case N.TupleExpression when node.ChildIds.Count == 1 &&
@@ -334,6 +335,7 @@ public static partial class SafeCoreMirLowering
                     return Expr(Child(node, 0), depth + 1);
                 case N.TupleExpression: return Tuple(node, depth);
                 case N.ArrayExpression: return Array(node, depth);
+                case N.StructExpression when options.EnableP1Extensions: return ConstructAdt(node, depth);
                 case N.ExpressionStatement:
                     _ = Expr(Child(node, 0), depth + 1);
                     return _current is null ? null : Unit(node);
@@ -344,12 +346,12 @@ public static partial class SafeCoreMirLowering
                     if (node.ReferencedSymbol is null || !_bindings.TryGetValue(node.ReferencedSymbol, out binding))
                     {
                         SafeCoreType constructorType = Type(node);
-                        if (node.ReferencedSymbol?.Kind == SafeCoreSymbolKind.Struct && IsUnitAdt(constructorType))
+                        if (node.ReferencedSymbol is { } constructor && IsUnitAdt(constructorType) &&
+                            SymbolKey(constructor) == constructorType.Name)
                             return SafeCoreMirOperand.Constant(constructorType, "()", Source(node));
                         Unsupported(node);
                     }
                     SafeCoreMirLocal local = _locals[binding];
-                    if (local.Type.Kind == K.Adt) Unsupported(node);
                     if (local.Type.Kind == K.Reference)
                         return SafeCoreMirOperand.Local(binding, local.Type, Source(node));
                     // Snapshot the read before a later operand can mutate the user local.
@@ -366,12 +368,7 @@ public static partial class SafeCoreMirLowering
                     if (node.Value == "*")
                     {
                         if (!options.EnableP1Extensions) Unsupported(node);
-                        SafeCoreMirOperand? reference = Expr(Child(node, 0), depth + 1);
-                        SafeCoreType resultType = Type(node);
-                        if (reference is null || reference.Type.Kind != K.Reference ||
-                            reference.Type.ElementType != resultType)
-                            Unsupported(node);
-                        return Emit(SafeCoreMirRvalue.Unary("*", reference, resultType, Source(node)), resultType, node);
+                        return ReadPlace(node, depth);
                     }
                     if (node.Value is not ("!" or "-")) Unsupported(node);
                     SafeCoreHirNode inner = UnwrapExpression(Child(node, 0), depth + 1);
@@ -441,58 +438,16 @@ public static partial class SafeCoreMirLowering
             if (op is "&&" or "||") return ShortCircuit(node, depth);
             if (op is "=" or "+=" or "-=" or "*=" or "/=" or "%=" or "&=" or "|=" or "^=" or "<<=" or ">>=")
             {
+                if (options.EnableP1Extensions) return AssignPlace(node, depth);
                 SafeCoreHirNode place = UnwrapExpression(Child(node, 0), depth + 1);
                 int destination = -1;
-                int? throughReference = null;
                 if (place.Kind == N.NameExpression && place.ReferencedSymbol is not null)
                 {
                     if (!_bindings.TryGetValue(place.ReferencedSymbol, out destination)) Unsupported(place);
                 }
-                else if (place.Kind == N.UnaryExpression && place.Value == "*" && place.ChildIds.Count == 1)
-                {
-                    SafeCoreHirNode referenceNode = UnwrapExpression(Child(place, 0), depth + 1);
-                    int referenceId = -1;
-                    int ownerId = -1;
-                    if (referenceNode.Kind != N.NameExpression || referenceNode.ReferencedSymbol is null ||
-                        !_bindings.TryGetValue(referenceNode.ReferencedSymbol, out referenceId) ||
-                        _locals[referenceId].Type.Kind != K.Reference ||
-                        !_referenceOwners.TryGetValue(referenceId, out ownerId))
-                        Unsupported(place);
-                    throughReference = referenceId;
-                    destination = ownerId;
-                }
                 else Unsupported(place);
                 SafeCoreMirOperand? right = Expr(Child(node, 1), depth + 1);
                 if (right is null || _current is null) return null;
-                if (throughReference is int referenceLocal)
-                {
-                    SafeCoreMirOperand reference = SafeCoreMirOperand.Local(referenceLocal,
-                        _locals[referenceLocal].Type, Source(place));
-                    if (op != "=")
-                    {
-                        SafeCoreMirOperand owner = Emit(SafeCoreMirRvalue.Unary("*", reference,
-                            _locals[destination].Type, Source(place)), _locals[destination].Type, place);
-                        right = Emit(SafeCoreMirRvalue.Binary(op[..^1], owner, right,
-                            _locals[destination].Type, Source(node)), _locals[destination].Type, node);
-                    }
-                    _current.Statements.Add(new(destination,
-                        SafeCoreMirRvalue.Write(reference, right, _locals[destination].Type, Source(node)), Source(node)));
-                    return Unit(node);
-                }
-                if (_locals[destination].Type.Kind == K.Reference)
-                {
-                    int rightOwner = -1;
-                    if (right.Kind != SafeCoreMirOperandKind.Local || right.Type != _locals[destination].Type ||
-                        !_referenceOwners.TryGetValue(right.Id, out rightOwner))
-                        Unsupported(place);
-                    // Replacing a reference keeps its provenance explicit. A
-                    // later ownership pass distinguishes shared Copy from
-                    // mutable Move using the source reference type.
-                    _referenceOwners[destination] = rightOwner;
-                    _current.Statements.Add(new(destination,
-                        SafeCoreMirRvalue.Use(right, Source(node)), Source(node)));
-                    return Unit(node);
-                }
                 if (_locals[destination].Type.Kind is K.Reference or K.Adt) Unsupported(place);
                 if (op != "=")
                     right = Emit(SafeCoreMirRvalue.Binary(op[..^1],
@@ -587,6 +542,9 @@ public static partial class SafeCoreMirLowering
 
         private SafeCoreMirOperand? Index(SafeCoreHirNode node, int depth)
         {
+            SafeCoreType indexedType = Type(Child(node, 0));
+            if (options.EnableP1Extensions && !(indexedType.Kind == K.Reference && indexedType.ElementType?.Kind == K.Slice))
+                return ReadPlace(node, depth);
             SafeCoreMirOperand? array = Expr(Child(node, 0), depth + 1);
             SafeCoreMirOperand? index = Expr(Child(node, 1), depth + 1);
             if (_current is null || array is null || index is null) return null;
@@ -606,6 +564,9 @@ public static partial class SafeCoreMirLowering
         private SafeCoreMirOperand? Call(SafeCoreHirNode node, int depth)
         {
             SafeCoreHirNode calleeNode = UnwrapExpression(Child(node, 0), depth + 1);
+            if (options.EnableP1Extensions && Type(node).Kind == K.Adt &&
+                calleeNode.ReferencedSymbol is { } constructor && _adtLayouts.ContainsKey(SymbolKey(constructor)))
+                return ConstructTupleAdt(node, depth);
             // A full array-to-slice view has a stable owner length. Keep
             // `.len()` explicit in MIR so the backend cannot silently treat a
             // slice as a fixed array value or drop its provenance.
@@ -630,7 +591,7 @@ public static partial class SafeCoreMirLowering
             for (int index = 1; index < node.ChildIds.Count && _current is not null; index++)
             {
                 SafeCoreMirOperand? argument = Expr(Child(node, index), depth + 1);
-                if (argument is not null) arguments.Add(argument);
+                if (argument is not null) arguments.Add(SnapshotCallArgument(argument, Child(node, index)));
             }
             if (_current is null) return null;
             int? destination = signature.ReturnType.Kind is K.Unit or K.Never ? null : Temp(signature.ReturnType, node);
@@ -882,6 +843,7 @@ public static partial class SafeCoreMirLowering
             int id = _locals.Count;
             _locals.Add(new(id, name, type, kind, mutable, Source(node))
             {
+                StorageScope = StorageScope(node, kind),
                 IsUnitAdt = options.EnableP1Extensions && type.Kind == K.Adt && IsUnitAdt(type),
                 DestructorFunctionId = type.Name is { } identity && _dropFunctions.TryGetValue(identity, out int destructor)
                     ? destructor : null,
@@ -1020,7 +982,6 @@ public static partial class SafeCoreMirLowering
                     ValueType(element.ElementType!, node, allowNever: false, depth + 1);
                     return;
                 }
-                if (!IsStructuralCopy(element)) Unsupported(node);
                 ValueType(element, node, allowNever: false, depth + 1);
                 return;
             }
@@ -1028,7 +989,13 @@ public static partial class SafeCoreMirLowering
             // Unit structs carry no runtime fields. Keep their nominal type in
             // MIR for Drop/provenance metadata while allowing the CLR backend
             // to use the zero-field value representation.
-            if (options.EnableP1Extensions && type.Kind == K.Adt && IsUnitAdt(type)) return;
+            if (options.EnableP1Extensions && type.Kind == K.Adt &&
+                type.Name is { } adtName && _adtLayouts.TryGetValue(adtName, out SafeCoreMirAdtLayout? layout))
+            {
+                for (int index = 0; index < layout.Fields.Count; index++)
+                    ValueType(layout.Fields[index].Type, node, allowNever: false, depth + 1);
+                return;
+            }
 
             if (type.Kind is K.Tuple or K.Array)
             {
@@ -1045,10 +1012,7 @@ public static partial class SafeCoreMirLowering
             Scalar(type, node, allowNever);
         }
 
-        private bool IsUnitAdt(SafeCoreType type) => type.Kind == K.Adt &&
-            input.Hir.Nodes.Any(node => node.Kind == N.Struct &&
-                node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct) &&
-                node.DeclaredSymbol is not null && SymbolKey(node.DeclaredSymbol) == type.Name);
+        private bool IsUnitAdt(SafeCoreType type) => type.Kind == K.Adt && type.Name is { } name && _unitAdts.Contains(name);
 
         private SafeCoreHirNode Child(SafeCoreHirNode node, int index)
         {

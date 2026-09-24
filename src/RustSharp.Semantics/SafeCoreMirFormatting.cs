@@ -36,7 +36,25 @@ public static class SafeCoreMirFormatting
 
         public string Format(SafeCoreMirProgram program)
         {
-            Add("safe-core-mir-v1\n");
+            bool extended = UsesExtendedFormat(program);
+            Add(extended ? "safe-core-mir-v2\n" : "safe-core-mir-v1\n");
+            for (int layoutIndex = 0; layoutIndex < program.AdtLayouts.Count; layoutIndex++)
+            {
+                Step();
+                SafeCoreMirAdtLayout layout = program.AdtLayouts[layoutIndex];
+                Add($"adt {Escape(layout.Type.ToString())}{(layout.IsCopy ? " copy" : " move")} ");
+                Source(layout.Source);
+                Add(" {\n");
+                for (int fieldIndex = 0; fieldIndex < layout.Fields.Count; fieldIndex++)
+                {
+                    Step();
+                    SafeCoreMirAdtField field = layout.Fields[fieldIndex];
+                    Add(FormattableString.Invariant($"  field {fieldIndex} {Escape(field.Name)}: {field.Type} "));
+                    Source(field.Source);
+                    Add("\n");
+                }
+                Add("}\n");
+            }
             for (int index = 0; index < program.Functions.Count; index++)
             {
                 Step();
@@ -53,6 +71,11 @@ public static class SafeCoreMirFormatting
                     if (local.DestructorFunctionId is int destructor)
                         Add(FormattableString.Invariant($"drop=@{destructor} "));
                     Source(local.Source);
+                    if (extended && local.StorageScope is { } storageScope)
+                    {
+                        Add(" storage ");
+                        Source(storageScope);
+                    }
                     Add("\n");
                 }
                 for (int blockIndex = 0; blockIndex < function.Blocks.Count; blockIndex++)
@@ -67,7 +90,9 @@ public static class SafeCoreMirFormatting
                         Step();
                         SafeCoreMirStatement statement = block.Statements[statementIndex];
                         SafeCoreMirRvalue value = statement.Value;
-                        Add(FormattableString.Invariant($"    %{statement.DestinationLocalId} = {value.Kind.ToString().ToLowerInvariant()}"));
+                        Add(statement.DestinationPlace is { } place
+                            ? $"    place {place} = {value.Kind.ToString().ToLowerInvariant()}"
+                            : FormattableString.Invariant($"    %{statement.DestinationLocalId} = {value.Kind.ToString().ToLowerInvariant()}"));
                         if (value.Operator is not null) Add($" {Escape(value.Operator)}");
                         Add("(");
                         Operands(value.Operands);
@@ -80,6 +105,54 @@ public static class SafeCoreMirFormatting
                 Add("}\n");
             }
             return _text.ToString();
+        }
+
+        private bool UsesExtendedFormat(SafeCoreMirProgram program)
+        {
+            if (program.AdtLayouts.Count != 0) return true;
+            foreach (SafeCoreMirFunction function in program.Functions)
+            {
+                Step();
+                foreach (SafeCoreMirLocal local in function.Locals)
+                {
+                    Step();
+                    if (local.StorageScope is not null) return true;
+                }
+                foreach (SafeCoreMirBlock block in function.Blocks)
+                {
+                    Step();
+                    foreach (SafeCoreMirStatement statement in block.Statements)
+                    {
+                        Step();
+                        if (statement.DestinationPlace is not null) return true;
+                        if (UsesDynamicIndex(statement.Value.Operands)) return true;
+                    }
+                    if (block.Terminator.Operand is { } operand && UsesDynamicIndex(operand)) return true;
+                    if (UsesDynamicIndex(block.Terminator.Arguments)) return true;
+                }
+            }
+            return false;
+        }
+
+        private bool UsesDynamicIndex(IReadOnlyList<SafeCoreMirOperand> operands)
+        {
+            foreach (SafeCoreMirOperand operand in operands)
+            {
+                Step();
+                if (UsesDynamicIndex(operand)) return true;
+            }
+            return false;
+        }
+
+        private bool UsesDynamicIndex(SafeCoreMirOperand operand)
+        {
+            if (operand.Place is not { } place) return false;
+            foreach (SafeCoreMirProjection projection in place.Projections)
+            {
+                Step();
+                if (projection.Kind == SafeCoreMirProjectionKind.DynamicIndex) return true;
+            }
+            return false;
         }
 
         private void Terminator(SafeCoreMirTerminator terminator)

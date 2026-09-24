@@ -115,6 +115,14 @@ public static partial class SafeCoreMirOwnershipAdapter
             // ownership analysis cannot reset the caller's operation limit.
             operations = validation.OperationsUsed;
 
+            SafeCoreMirReferenceProvenanceResult provenance = SafeCoreMirReferenceProvenance.AnalyzeValidated(program,
+                options with { MaximumOperations = Math.Max(1, options.MaximumOperations - operations),
+                    Timeout = options.Timeout - clock.Elapsed > TimeSpan.Zero ? options.Timeout - clock.Elapsed : TimeSpan.FromTicks(1) });
+            operations += provenance.OperationsUsed;
+            foreach (Diagnostic diagnostic in provenance.Diagnostics) AddDiagnostic(diagnostics, diagnostic, options);
+            if (!provenance.IsSuccessful)
+                return new(null, null, validation, diagnostics.AsReadOnly(), provenance.IsTruncated);
+
             if (program.Functions.Count == 0)
             {
                 AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
@@ -127,7 +135,7 @@ public static partial class SafeCoreMirOwnershipAdapter
             {
                 Step(options, clock, ref operations);
                 SafeCoreMirFunction function = program.Functions[functionIndex];
-                SafeCoreOwnershipFunction? ownership = AdaptFunction(function, options, clock, ref operations, diagnostics);
+                SafeCoreOwnershipFunction? ownership = AdaptFunction(program, provenance, function, options, clock, ref operations, diagnostics);
                 if (ownership is null)
                     continue;
                 ownershipFunctions.Add(ownership);
@@ -173,6 +181,8 @@ public static partial class SafeCoreMirOwnershipAdapter
         SafeCoreMirOwnershipOptions? options = null) => Analyze(program, options);
 
     private static SafeCoreOwnershipFunction? AdaptFunction(
+        SafeCoreMirProgram program,
+        SafeCoreMirReferenceProvenanceResult provenance,
         SafeCoreMirFunction function,
         SafeCoreMirOwnershipOptions options,
         Stopwatch clock,
@@ -188,80 +198,12 @@ public static partial class SafeCoreMirOwnershipAdapter
         }
 
         var locals = new List<SafeCoreOwnershipLocal>(function.Locals.Count);
-        var referenceOrigins = new Dictionary<int, SafeCoreOwnershipPlace>();
-        for (int blockIndex = 0; blockIndex < function.Blocks.Count; blockIndex++)
-        {
-            Step(options, clock, ref operations);
-            foreach (SafeCoreMirStatement statement in function.Blocks[blockIndex].Statements)
-            {
-                Step(options, clock, ref operations);
-                if (statement.Value.Type.Kind != SafeCoreSemanticTypeKind.Reference) continue;
-                SafeCoreMirRvalue value = statement.Value;
-                bool directBorrow = value.Kind == SafeCoreMirRvalueKind.Unary &&
-                    value.Operator is ("&" or "&mut" or "reborrow" or "reborrow_mut") &&
-                    value.Operands.Count == 1 &&
-                    value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place;
-                bool arraySliceCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
-                    value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
-                    value.Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice &&
-                    value.Operands.Count == 1 &&
-                    value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place &&
-                    (value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Array ||
-                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
-                     value.Operands[0].Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Array);
-                bool referenceCopy = value.Kind == SafeCoreMirRvalueKind.Use &&
-                    value.Operands.Count == 1 &&
-                    (value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place) &&
-                    value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
-                if (!directBorrow && !referenceCopy && !arraySliceCoercion)
-                {
-                    AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                        "Reference locals require one explicit MIR borrow origin; unproven reference copies are unsupported.", value.Source), options);
-                    return null;
-                }
-
-                SafeCoreOwnershipPlace origin;
-                if (directBorrow || arraySliceCoercion)
-                {
-                    if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
-                        diagnostics, out origin)) return null;
-                }
-                else if (value.Operands[0].Kind == SafeCoreMirOperandKind.Place)
-                {
-                    if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
-                        diagnostics, out origin)) return null;
-                }
-                else if (!referenceOrigins.TryGetValue(value.Operands[0].Id, out SafeCoreOwnershipPlace? copiedOrigin) ||
-                         copiedOrigin is null)
-                {
-                    AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
-                        "A reference copy must name a reference local with established place provenance.", value.Source), options);
-                    return null;
-                }
-                else origin = copiedOrigin;
-
-                if (!referenceOrigins.TryAdd(statement.DestinationLocalId, origin))
-                {
-                    AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                        "A reference local may have only one explicit MIR provenance fact.", value.Source), options);
-                    return null;
-                }
-            }
-        }
         bool valid = true;
         for (int index = 0; index < function.Locals.Count; index++)
         {
             Step(options, clock, ref operations);
             SafeCoreMirLocal local = function.Locals[index];
-            if (local.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
-                (local.Kind == SafeCoreMirLocalKind.Parameter || !referenceOrigins.ContainsKey(local.Id)))
-            {
-                AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                    "A reference requires local MIR provenance; imported reference contracts are not available.", local.Source), options);
-                valid = false;
-                continue;
-            }
-            if (!IsStructuralCopy(local.Type) && local.Type.Kind != SafeCoreSemanticTypeKind.Reference &&
+            if (!IsSupportedOwnedType(local.Type, program) &&
                 !local.IsUnitAdt && !local.DestructorFunctionId.HasValue)
             {
                 AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
@@ -275,8 +217,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                 local.Id,
                 local.Name,
                 local.Type,
-                local.Type.Kind == SafeCoreSemanticTypeKind.Reference && local.Type.IsMutable ||
-                local.DestructorFunctionId.HasValue
+                !IsCopyType(local.Type, program) || local.DestructorFunctionId.HasValue
                     ? SafeCoreOwnershipKind.Move : SafeCoreOwnershipKind.Copy,
                 HasDrop: local.DestructorFunctionId.HasValue,
                 ScopeId: 0,
@@ -286,34 +227,6 @@ public static partial class SafeCoreMirOwnershipAdapter
         }
 
         if (!valid) return null;
-
-        var referenceRoots = new Dictionary<int, SafeCoreOwnershipPlace>();
-        foreach (int reference in referenceOrigins.Keys)
-        {
-            Step(options, clock, ref operations);
-            SafeCoreOwnershipPlace current = referenceOrigins[reference];
-            for (int depth = 0; depth <= function.Locals.Count; depth++)
-            {
-                Step(options, clock, ref operations);
-                if (current.LocalId < 0 || current.LocalId >= function.Locals.Count) break;
-                if (function.Locals[current.LocalId].Type.Kind != SafeCoreSemanticTypeKind.Reference)
-                {
-                    referenceRoots.Add(reference, current);
-                    break;
-                }
-                if (!referenceOrigins.TryGetValue(current.LocalId, out SafeCoreOwnershipPlace? next) || next is null) break;
-                if (current.Projections.Count != 0)
-                    foreach (SafeCoreOwnershipProjection projection in current.Projections)
-                        next = next.Append(projection);
-                current = next;
-            }
-            if (!referenceRoots.ContainsKey(reference))
-            {
-                AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
-                    "MIR reference provenance must terminate at an in-scope owner local.", function.Locals[reference].Source), options);
-                return null;
-            }
-        }
 
         var blocks = new List<SafeCoreOwnershipBlock>(function.Blocks.Count);
         int statements = 0;
@@ -346,19 +259,29 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
 
                 SafeCoreMirRvalue value = statement.Value;
+                AddIndexUses(statement.DestinationPlace, statement.Source, instructions, options, clock, ref operations, diagnostics, ref valid);
+                foreach (SafeCoreMirOperand operand in value.Operands)
+                    AddIndexUses(operand.Place, operand.Source, instructions, options, clock, ref operations, diagnostics, ref valid);
                 bool referenceAssignment = value.Kind == SafeCoreMirRvalueKind.Use &&
                     value.Operands.Count == 1 &&
                     value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
                     function.Locals[statement.DestinationLocalId].Type.Kind == SafeCoreSemanticTypeKind.Reference;
-                bool nonCopyMove = !IsStructuralCopy(value.Type) &&
+                SafeCoreOwnershipPlace destinationPlace = SafeCoreOwnershipPlace.Root(statement.DestinationLocalId);
+                if (statement.DestinationPlace is { } destinationMirPlace &&
+                    !TryOwnershipPlace(SafeCoreMirOperand.PlaceValue(destinationMirPlace, value.Type, statement.Source),
+                        function, options, clock, ref operations, diagnostics, out destinationPlace))
+                { valid = false; continue; }
+                bool nonCopyMove = !IsCopyType(value.Type, program) &&
                     value.Kind == SafeCoreMirRvalueKind.Use && value.Operands.Count == 1 &&
                     value.Operands[0].Kind is SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place &&
-                    function.Locals[statement.DestinationLocalId].Type == value.Type &&
                     !referenceAssignment;
                 bool unsizingCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
                     value.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
                     value.Type.ElementType?.Kind == SafeCoreSemanticTypeKind.Slice;
-                if (!IsStructuralCopy(value.Type) && !unsizingCoercion && !nonCopyMove && value.Kind != SafeCoreMirRvalueKind.Unary &&
+                bool referenceCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
+                    value.Type.Kind == SafeCoreSemanticTypeKind.Reference && value.Operands.Count == 1 &&
+                    value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
+                if (!IsSupportedOwnedType(value.Type, program) && !unsizingCoercion && !nonCopyMove && value.Kind != SafeCoreMirRvalueKind.Unary &&
                     value.Kind != SafeCoreMirRvalueKind.Write && !referenceAssignment &&
                     !(function.Locals[statement.DestinationLocalId].IsUnitAdt && value.Kind == SafeCoreMirRvalueKind.Use &&
                         value.Operands[0].Kind == SafeCoreMirOperandKind.Constant && value.Operands[0].Value == "()"))
@@ -386,7 +309,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                     {
                         AddInstruction(instructions,
                             SafeCoreOwnershipInstruction.Move(sourcePlace,
-                                SafeCoreOwnershipPlace.Root(statement.DestinationLocalId), value.Source),
+                                destinationPlace, value.Source),
                             options, diagnostics, value.Source, ref valid);
                     }
                     continue;
@@ -406,11 +329,11 @@ public static partial class SafeCoreMirOwnershipAdapter
                     }
                     else AddInstruction(instructions,
                         SafeCoreOwnershipInstruction.Borrow(ownerPlace,
-                            SafeCoreOwnershipPlace.Root(statement.DestinationLocalId),
+                            destinationPlace,
                             value.Operator is "&mut" or "reborrow_mut", value.Source), options, diagnostics, value.Source, ref valid);
                     continue;
                 }
-                if (unsizingCoercion)
+                if (unsizingCoercion || referenceCoercion)
                 {
                     if (!TryOwnershipPlace(value.Operands[0], function, options, clock, ref operations,
                         diagnostics, out SafeCoreOwnershipPlace ownerPlace))
@@ -421,7 +344,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                     {
                         AddInstruction(instructions,
                             SafeCoreOwnershipInstruction.Borrow(ownerPlace,
-                                SafeCoreOwnershipPlace.Root(statement.DestinationLocalId),
+                                destinationPlace,
                                 value.Type.IsMutable, value.Source),
                             options, diagnostics, value.Source, ref valid);
                     }
@@ -431,10 +354,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                 {
                     SafeCoreMirOperand reference = value.Operands[0];
                     if (!TryOwnershipPlace(reference, function, options, clock, ref operations, diagnostics,
-                            out SafeCoreOwnershipPlace referencePlace) ||
-                        !referenceRoots.TryGetValue(reference.Id, out SafeCoreOwnershipPlace? rootPlace) ||
-                        rootPlace is null ||
-                        rootPlace.LocalId != statement.DestinationLocalId)
+                            out SafeCoreOwnershipPlace referencePlace))
                     {
                         AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
                             "A dereference write requires a reference local.", value.Source), options);
@@ -499,7 +419,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                     {
                         AddInstruction(instructions,
                             SafeCoreOwnershipInstruction.Move(sourcePlace,
-                                SafeCoreOwnershipPlace.Root(statement.DestinationLocalId), value.Source),
+                                destinationPlace, value.Source),
                             options, diagnostics, value.Source, ref valid);
                     }
                     else
@@ -524,15 +444,18 @@ public static partial class SafeCoreMirOwnershipAdapter
                                     "A typed MIR rvalue local operand is outside the function arena.", operand.Source), options);
                                 valid = false;
                             }
-                            else AddInstruction(instructions,
-                                SafeCoreOwnershipInstruction.Use(operand.Id, operand.Source),
-                                options, diagnostics, operand.Source, ref valid);
+                            else if (!IsCopyType(operand.Type, program) && value.Kind is SafeCoreMirRvalueKind.Adt or SafeCoreMirRvalueKind.Tuple or SafeCoreMirRvalueKind.Array)
+                                AddInstruction(instructions, SafeCoreOwnershipInstruction.Consume(SafeCoreOwnershipPlace.Root(operand.Id), operand.Source),
+                                    options, diagnostics, operand.Source, ref valid);
+                            else AddInstruction(instructions, SafeCoreOwnershipInstruction.Use(operand.Id, operand.Source),
+                                    options, diagnostics, operand.Source, ref valid);
                             break;
                         case SafeCoreMirOperandKind.Place:
                             if (TryOwnershipPlace(operand, function, options, clock, ref operations, diagnostics,
                                 out SafeCoreOwnershipPlace place))
                                 AddInstruction(instructions,
-                                    SafeCoreOwnershipInstruction.Use(place, operand.Source),
+                                    !IsCopyType(operand.Type, program) && value.Kind is SafeCoreMirRvalueKind.Adt or SafeCoreMirRvalueKind.Tuple or SafeCoreMirRvalueKind.Array
+                                        ? SafeCoreOwnershipInstruction.Consume(place, operand.Source) : SafeCoreOwnershipInstruction.Use(place, operand.Source),
                                     options, diagnostics, operand.Source, ref valid);
                             else valid = false;
                             break;
@@ -555,12 +478,12 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
 
                 AddInstruction(instructions,
-                    SafeCoreOwnershipInstruction.Assign(statement.DestinationLocalId, statement.Source),
+                    SafeCoreOwnershipInstruction.Assign(destinationPlace, statement.Source),
                     options, diagnostics, statement.Source, ref valid);
             }
 
             SafeCoreOwnershipTerminator? terminator = AdaptTerminator(
-                function, block, instructions, locals, options, clock, ref operations, diagnostics, ref valid);
+                program, provenance, function, block, instructions, locals, options, clock, ref operations, diagnostics, ref valid);
             if (terminator is not null)
                 blocks.Add(new SafeCoreOwnershipBlock(block.Id, 0, instructions, terminator, block.Source));
         }
@@ -577,6 +500,8 @@ public static partial class SafeCoreMirOwnershipAdapter
     }
 
     private static SafeCoreOwnershipTerminator? AdaptTerminator(
+        SafeCoreMirProgram program,
+        SafeCoreMirReferenceProvenanceResult provenance,
         SafeCoreMirFunction function,
         SafeCoreMirBlock block,
         List<SafeCoreOwnershipInstruction> instructions,
@@ -597,12 +522,15 @@ public static partial class SafeCoreMirOwnershipAdapter
         }
 
         Step(options, clock, ref operations);
+        AddIndexUses(terminator.Operand?.Place, terminator.Source, instructions, options, clock, ref operations, diagnostics, ref valid);
+        foreach (SafeCoreMirOperand argument in terminator.Arguments)
+            AddIndexUses(argument.Place, argument.Source, instructions, options, clock, ref operations, diagnostics, ref valid);
         switch (terminator.Kind)
         {
             case SafeCoreMirTerminatorKind.Return:
                 if (terminator.Operand is null) return SafeCoreOwnershipTerminator.ReturnUnit(terminator.Source);
                 int? returnLocal = MaterializeTerminatorOperand(
-                    terminator.Operand, instructions, locals, function, options, clock, ref operations, diagnostics);
+                    program, terminator.Operand, instructions, locals, function, options, clock, ref operations, diagnostics);
                 if (returnLocal is null)
                 {
                     valid = false;
@@ -622,7 +550,7 @@ public static partial class SafeCoreMirOwnershipAdapter
 
             case SafeCoreMirTerminatorKind.Branch:
                 int? condition = MaterializeTerminatorOperand(
-                    terminator.Operand, instructions, locals, function, options, clock, ref operations, diagnostics);
+                    program, terminator.Operand, instructions, locals, function, options, clock, ref operations, diagnostics);
                 if (condition is null || !ValidTarget(terminator.TargetBlockId, function.Blocks.Count) ||
                     !ValidTarget(terminator.FalseTargetBlockId, function.Blocks.Count))
                 {
@@ -667,8 +595,8 @@ public static partial class SafeCoreMirOwnershipAdapter
                             : InvalidCallTarget(terminator.Source, diagnostics, options, ref valid);
                 }
                 SafeCoreType callType = terminator.Operand.Type;
-                if (callType.ParameterTypes.Any(parameterType => !IsStructuralCopy(parameterType)) ||
-                    (!IsStructuralCopy(callType.ReturnType) && callType.ReturnType.Kind != SafeCoreSemanticTypeKind.Never))
+                if (callType.ParameterTypes.Any(parameterType => !IsSupportedOwnedType(parameterType, program)) ||
+                    (!IsSupportedOwnedType(callType.ReturnType, program) && callType.ReturnType.Kind != SafeCoreSemanticTypeKind.Never))
                 {
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                         "The typed-MIR ownership bridge only accepts direct calls with structural Copy parameters and structural Copy or diverging results.",
@@ -676,10 +604,17 @@ public static partial class SafeCoreMirOwnershipAdapter
                     valid = false;
                     return null;
                 }
+                var referenceArguments = new List<SafeCoreOwnershipCallArgument>();
                 for (int argumentIndex = 0; argumentIndex < terminator.Arguments.Count; argumentIndex++)
                 {
                     Step(options, clock, ref operations);
                     SafeCoreMirOperand argument = terminator.Arguments[argumentIndex];
+                    if (argument.Type.Kind == SafeCoreSemanticTypeKind.Reference &&
+                        TryOwnershipPlace(argument, function, options, clock, ref operations, diagnostics, out SafeCoreOwnershipPlace referencePlace))
+                    {
+                        referenceArguments.Add(new(referencePlace, argument.Type.IsMutable));
+                        continue;
+                    }
                     if (argument.Kind == SafeCoreMirOperandKind.Local)
                     {
                         if (argument.Id < 0 || argument.Id >= function.Locals.Count)
@@ -688,16 +623,17 @@ public static partial class SafeCoreMirOwnershipAdapter
                                 "A typed MIR call local argument is outside the function arena.", argument.Source), options);
                             valid = false;
                         }
-                        else if (!IsStructuralCopy(argument.Type))
-                        {
-                            AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
-                                "A non-Copy call local argument has no ownership bridge representation.", argument.Source), options);
-                            valid = false;
-                        }
                         else AddInstruction(instructions,
-                            SafeCoreOwnershipInstruction.Use(argument.Id, argument.Source),
+                            !IsCopyType(argument.Type, program) && argument.Type.Kind != SafeCoreSemanticTypeKind.Reference
+                                ? SafeCoreOwnershipInstruction.Consume(SafeCoreOwnershipPlace.Root(argument.Id), argument.Source)
+                                : SafeCoreOwnershipInstruction.Use(argument.Id, argument.Source),
                             options, diagnostics, argument.Source, ref valid);
                     }
+                    else if (argument.Kind == SafeCoreMirOperandKind.Place && TryOwnershipPlace(argument, function, options, clock,
+                        ref operations, diagnostics, out SafeCoreOwnershipPlace argumentPlace))
+                        AddInstruction(instructions, !IsCopyType(argument.Type, program) && argument.Type.Kind != SafeCoreSemanticTypeKind.Reference
+                            ? SafeCoreOwnershipInstruction.Consume(argumentPlace, argument.Source)
+                            : SafeCoreOwnershipInstruction.Use(argumentPlace, argument.Source), options, diagnostics, argument.Source, ref valid);
                     else if (argument.Kind == SafeCoreMirOperandKind.Constant && IsStructuralCopy(argument.Type))
                     {
                         // Constants do not consume or move an ownership local.
@@ -709,6 +645,9 @@ public static partial class SafeCoreMirOwnershipAdapter
                         valid = false;
                     }
                 }
+                if (referenceArguments.Count != 0)
+                    AddInstruction(instructions, SafeCoreOwnershipInstruction.CheckCallArguments(referenceArguments.AsReadOnly(), terminator.Source),
+                        options, diagnostics, terminator.Source, ref valid);
                 if (terminator.DestinationLocalId is int destination)
                 {
                     if (destination < 0 || destination >= function.Locals.Count)
@@ -717,8 +656,27 @@ public static partial class SafeCoreMirOwnershipAdapter
                             "A typed MIR call destination is outside the function arena.", terminator.Source), options);
                         valid = false;
                     }
-                    else AddInstruction(instructions,
-                        SafeCoreOwnershipInstruction.Assign(destination, terminator.Source),
+                    else if (callType.ReturnType.Kind == SafeCoreSemanticTypeKind.Reference)
+                    {
+                        var sources = new List<SafeCoreOwnershipPlace>();
+                        SafeCoreMirReferenceSummary summary = provenance.Functions[terminator.Operand.Id];
+                        foreach (SafeCoreMirReferenceOrigin origin in summary.ReturnOrigins)
+                        {
+                            Step(options, clock, ref operations);
+                            SafeCoreMirOperand argument = terminator.Arguments[origin.LocalId];
+                            SafeCoreMirPlace source = (argument.Place ?? SafeCoreMirPlace.Root(argument.Id))
+                                .Append(SafeCoreMirProjection.Dereference());
+                            foreach (SafeCoreMirProjection projection in origin.Projections) source = source.Append(projection);
+                            if (TryOwnershipPlace(SafeCoreMirOperand.PlaceValue(source, callType.ReturnType.ElementType!, terminator.Source),
+                                function, options, clock, ref operations, diagnostics, out SafeCoreOwnershipPlace converted)) sources.Add(converted);
+                            else valid = false;
+                        }
+                        if (sources.Count == 0) valid = false;
+                        else AddInstruction(instructions,
+                            SafeCoreOwnershipInstruction.Borrow(sources[0], SafeCoreOwnershipPlace.Root(destination), callType.ReturnType.IsMutable, terminator.Source)
+                                with { AlternativePlaces = sources.AsReadOnly() }, options, diagnostics, terminator.Source, ref valid);
+                    }
+                    else AddInstruction(instructions, SafeCoreOwnershipInstruction.Assign(destination, terminator.Source),
                         options, diagnostics, terminator.Source, ref valid);
                 }
                 if (!valid) return null;
@@ -752,6 +710,7 @@ public static partial class SafeCoreMirOwnershipAdapter
     }
 
     private static int? MaterializeTerminatorOperand(
+        SafeCoreMirProgram program,
         SafeCoreMirOperand? operand,
         List<SafeCoreOwnershipInstruction> instructions,
         List<SafeCoreOwnershipLocal> locals,
@@ -780,7 +739,8 @@ public static partial class SafeCoreMirOwnershipAdapter
             return operand.Id;
         }
 
-        if (operand.Kind != SafeCoreMirOperandKind.Constant || !IsStructuralCopy(operand.Type))
+        bool projected = operand.Kind == SafeCoreMirOperandKind.Place;
+        if (!projected && (operand.Kind != SafeCoreMirOperandKind.Constant || !IsStructuralCopy(operand.Type)))
         {
             AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                 "Only structural Copy locals and constants can be represented by an ownership terminator.", operand.Source), options);
@@ -812,13 +772,27 @@ public static partial class SafeCoreMirOwnershipAdapter
             localId,
             "__mir_const_" + localId.ToString(CultureInfo.InvariantCulture),
             operand.Type,
-            SafeCoreOwnershipKind.Copy,
+            IsCopyType(operand.Type, program) ? SafeCoreOwnershipKind.Copy : SafeCoreOwnershipKind.Move,
             HasDrop: false,
             ScopeId: 0,
-            IsReference: false,
+            IsReference: operand.Type.Kind == SafeCoreSemanticTypeKind.Reference,
             InitiallyInitialized: false,
             operand.Source));
-        instructions.Add(SafeCoreOwnershipInstruction.Assign(localId, operand.Source));
+        if (projected)
+        {
+            if (!TryOwnershipPlace(operand, function, options, clock, ref operations, diagnostics, out SafeCoreOwnershipPlace place)) return null;
+            if (!IsCopyType(operand.Type, program))
+                instructions.Add(SafeCoreOwnershipInstruction.Move(place, SafeCoreOwnershipPlace.Root(localId), operand.Source));
+            else if (operand.Type.Kind == SafeCoreSemanticTypeKind.Reference)
+                instructions.Add(SafeCoreOwnershipInstruction.AssignReference(operand.Id, localId, operand.Source));
+            else
+            {
+                if (instructions.Count + 2 > options.MaximumInstructionsPerBlock) throw new AdapterLimitException();
+                instructions.Add(SafeCoreOwnershipInstruction.Use(place, operand.Source));
+                instructions.Add(SafeCoreOwnershipInstruction.Assign(localId, operand.Source));
+            }
+        }
+        else instructions.Add(SafeCoreOwnershipInstruction.Assign(localId, operand.Source));
         return localId;
     }
 
@@ -840,6 +814,19 @@ public static partial class SafeCoreMirOwnershipAdapter
 
         instructions.Add(instruction);
         return true;
+    }
+
+    private static void AddIndexUses(SafeCoreMirPlace? place, SafeCoreMirSource source,
+        List<SafeCoreOwnershipInstruction> instructions, SafeCoreMirOwnershipOptions options, Stopwatch clock,
+        ref int operations, List<Diagnostic> diagnostics, ref bool valid)
+    {
+        if (place is null) return;
+        foreach (SafeCoreMirProjection projection in place.Projections)
+        {
+            Step(options, clock, ref operations);
+            if (projection.Kind == SafeCoreMirProjectionKind.DynamicIndex)
+                AddInstruction(instructions, SafeCoreOwnershipInstruction.Use(projection.Index, source), options, diagnostics, source, ref valid);
+        }
     }
 
     private static bool IsStructuralCopy(SafeCoreType? type)
@@ -866,6 +853,37 @@ public static partial class SafeCoreMirOwnershipAdapter
             // make a successful adapter result claim more than MIR proves.
             _ => false,
         };
+    }
+
+    private static bool IsCopyType(SafeCoreType type, SafeCoreMirProgram program, int depth = 0)
+    {
+        if (depth >= 128) return false;
+        if (type.Kind == SafeCoreSemanticTypeKind.Reference) return !type.IsMutable;
+        if (type.Kind == SafeCoreSemanticTypeKind.Adt)
+            return program.AdtLayouts.Any(layout => layout.Type == type && layout.IsCopy);
+        if (type.Kind == SafeCoreSemanticTypeKind.Tuple) return type.Elements.All(element => IsCopyType(element, program, depth + 1));
+        if (type.Kind == SafeCoreSemanticTypeKind.Array) return IsCopyType(type.ElementType!, program, depth + 1);
+        return IsStructuralCopy(type);
+    }
+
+    private static bool IsSupportedOwnedType(SafeCoreType type, SafeCoreMirProgram program, int depth = 0)
+    {
+        if (depth >= 128) return false;
+        if (type.Kind == SafeCoreSemanticTypeKind.Reference) return !ContainsReference(type.ElementType!, program, depth + 1);
+        if (type.Kind == SafeCoreSemanticTypeKind.Adt) return program.AdtLayouts.Any(layout => layout.Type == type &&
+            layout.Fields.All(field => !ContainsReference(field.Type, program, depth + 1)));
+        if (type.Kind == SafeCoreSemanticTypeKind.Tuple) return type.Elements.All(element => !ContainsReference(element, program, depth + 1) && IsSupportedOwnedType(element, program, depth + 1));
+        if (type.Kind == SafeCoreSemanticTypeKind.Array) return !ContainsReference(type.ElementType!, program, depth + 1) && IsSupportedOwnedType(type.ElementType!, program, depth + 1);
+        return IsStructuralCopy(type);
+    }
+
+    private static bool ContainsReference(SafeCoreType type, SafeCoreMirProgram program, int depth)
+    {
+        if (depth >= 128 || type.Kind == SafeCoreSemanticTypeKind.Reference) return true;
+        if (type.Kind == SafeCoreSemanticTypeKind.Tuple) return type.Elements.Any(element => ContainsReference(element, program, depth + 1));
+        if (type.Kind is SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Slice) return ContainsReference(type.ElementType!, program, depth + 1);
+        if (type.Kind == SafeCoreSemanticTypeKind.Adt) return program.AdtLayouts.Any(layout => layout.Type == type && layout.Fields.Any(field => ContainsReference(field.Type, program, depth + 1)));
+        return false;
     }
 
     private static bool TryOwnershipPlace(
@@ -920,6 +938,9 @@ public static partial class SafeCoreMirOwnershipAdapter
                 case SafeCoreMirProjectionKind.ArrayIndex when
                     projection.Name is null && projection.Index >= 0:
                     ownershipProjection = SafeCoreOwnershipProjection.ArrayIndex(projection.Index);
+                    break;
+                case SafeCoreMirProjectionKind.DynamicIndex:
+                    ownershipProjection = SafeCoreOwnershipProjection.DynamicIndex(projection.Index);
                     break;
                 case SafeCoreMirProjectionKind.Dereference when
                     projection.Name is null && projection.Index == -1:

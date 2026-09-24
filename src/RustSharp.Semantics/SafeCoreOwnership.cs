@@ -63,6 +63,7 @@ public enum SafeCoreOwnershipProjectionKind
     TupleIndex,
     ArrayIndex,
     Dereference,
+    DynamicIndex,
 }
 
 public sealed record SafeCoreOwnershipProjection(
@@ -81,6 +82,9 @@ public sealed record SafeCoreOwnershipProjection(
 
     public static SafeCoreOwnershipProjection Dereference() =>
         new(SafeCoreOwnershipProjectionKind.Dereference, null, -1);
+
+    public static SafeCoreOwnershipProjection DynamicIndex(int localId) =>
+        new(SafeCoreOwnershipProjectionKind.DynamicIndex, null, localId);
 }
 
 /// <summary>
@@ -159,6 +163,8 @@ public enum SafeCoreOwnershipInstructionKind
     EndBorrow,
     Write,
     Drop,
+    Consume,
+    CallArguments,
     EnterScope,
     ExitScope,
 }
@@ -172,6 +178,15 @@ public sealed record SafeCoreOwnershipInstruction(
     int ScopeId,
     SafeCoreMirSource Source)
 {
+    /// <summary>Checked possible referents of a direct call's returned reference.</summary>
+    public IReadOnlyList<SafeCoreOwnershipPlace>? AlternativePlaces { get; init; }
+    public IReadOnlyList<SafeCoreOwnershipCallArgument>? ReferenceArguments { get; init; }
+
+    public static SafeCoreOwnershipInstruction CheckCallArguments(IReadOnlyList<SafeCoreOwnershipCallArgument> arguments, SafeCoreMirSource source) =>
+        new(SafeCoreOwnershipInstructionKind.CallArguments, -1, -1, false, -1, source) { ReferenceArguments = arguments };
+
+    public static SafeCoreOwnershipInstruction Consume(SafeCoreOwnershipPlace place, SafeCoreMirSource source) =>
+        new(SafeCoreOwnershipInstructionKind.Consume, place.LocalId, -1, false, -1, source) { Place = place };
     /// <summary>Optional projected place; null means the root local in LocalId.</summary>
     public SafeCoreOwnershipPlace? Place { get; init; }
 
@@ -247,6 +262,9 @@ public sealed record SafeCoreOwnershipInstruction(
     public static SafeCoreOwnershipInstruction ExitScope(int scopeId, SafeCoreMirSource source) =>
         new(SafeCoreOwnershipInstructionKind.ExitScope, -1, -1, false, scopeId, source);
 }
+
+/// <summary>A reference argument whose loan remains active throughout one direct call.</summary>
+public sealed record SafeCoreOwnershipCallArgument(SafeCoreOwnershipPlace Place, bool IsMutable);
 
 public enum SafeCoreOwnershipTerminatorKind
 {
@@ -601,7 +619,7 @@ public static class SafeCoreOwnershipAnalysis
                     SafeCoreOwnershipInstructionKind.Borrow or
                     SafeCoreOwnershipInstructionKind.EndBorrow or
                     SafeCoreOwnershipInstructionKind.Write or
-                    SafeCoreOwnershipInstructionKind.Drop;
+                    SafeCoreOwnershipInstructionKind.Drop or SafeCoreOwnershipInstructionKind.Consume;
                 bool requiresRelatedLocal = instruction.Kind is
                     SafeCoreOwnershipInstructionKind.Move or
                     SafeCoreOwnershipInstructionKind.Borrow;
@@ -612,6 +630,22 @@ public static class SafeCoreOwnershipAnalysis
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidInput, "Ownership instruction references a local outside the arena.", function.Name, block.Id, instructionIndex, instruction.Source);
                 ValidatePlace(instruction.Place, instruction.LocalId, function, block, instructionIndex, add);
                 ValidatePlace(instruction.RelatedPlace, instruction.RelatedLocalId, function, block, instructionIndex, add);
+                if (instruction.AlternativePlaces is { } alternatives)
+                {
+                    if (instruction.Kind != SafeCoreOwnershipInstructionKind.Borrow || alternatives.Count is < 1 or > 4096)
+                        add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "Alternative origins require a bounded borrow instruction.", function.Name, block.Id, instructionIndex, instruction.Source);
+                    foreach (SafeCoreOwnershipPlace alternative in alternatives.Take(4096))
+                    { step(); ValidatePlace(alternative, alternative.LocalId, function, block, instructionIndex, add); }
+                }
+                if (instruction.ReferenceArguments is { } referenceArguments)
+                {
+                    if (instruction.Kind != SafeCoreOwnershipInstructionKind.CallArguments || referenceArguments.Count is < 1 or > 4096)
+                        add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "Call reference arguments require a bounded call ownership effect.", function.Name, block.Id, instructionIndex, instruction.Source);
+                    foreach (SafeCoreOwnershipCallArgument argument in referenceArguments.Take(4096))
+                    { step(); ValidatePlace(argument.Place, argument.Place.LocalId, function, block, instructionIndex, add); }
+                }
+                else if (instruction.Kind == SafeCoreOwnershipInstructionKind.CallArguments)
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A call ownership effect requires reference argument evidence.", function.Name, block.Id, instructionIndex, instruction.Source);
                 if (instruction.Kind is not (SafeCoreOwnershipInstructionKind.Move or SafeCoreOwnershipInstructionKind.Borrow) &&
                     instruction.RelatedPlace is not null)
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath,
@@ -784,7 +818,7 @@ public static class SafeCoreOwnershipAnalysis
                     break;
                 case SafeCoreOwnershipTerminatorKind.Return:
                     if (terminator.LocalId >= 0 && !state.Use(terminator.LocalId, locals, add, function, block, -1, terminator.Source)) break;
-                    if (terminator.LocalId >= 0 && locals[terminator.LocalId].IsReference && state.IsBorrowActive(terminator.LocalId))
+                if (terminator.LocalId >= 0 && locals[terminator.LocalId].IsReference && state.IsBorrowActive(terminator.LocalId) && !state.IsExternalBorrow(terminator.LocalId))
                         add(SafeCoreOwnershipDiagnosticCodes.Escape, "A borrowed reference cannot escape through a return.", function.Name, block.Id, -1, terminator.Source);
                     int? transferredLocalId = terminator.LocalId >= 0 &&
                         locals[terminator.LocalId].Kind == SafeCoreOwnershipKind.Move
@@ -826,19 +860,10 @@ public static class SafeCoreOwnershipAnalysis
     {
         var blocks = function.Blocks.ToDictionary(block => block.Id);
         var successors = new Dictionary<int, int[]>(blocks.Count);
-        var blockUses = new Dictionary<int, HashSet<int>>(blocks.Count);
         foreach (SafeCoreOwnershipBlock block in function.Blocks)
         {
             step();
             successors[block.Id] = Successors(block.Terminator, blocks.Count);
-            var uses = new HashSet<int>();
-            foreach (SafeCoreOwnershipInstruction instruction in block.Instructions)
-            {
-                step();
-                AddReferencedLocals(instruction, uses, locals);
-            }
-            AddReferencedLocals(block.Terminator, uses, locals);
-            blockUses[block.Id] = uses;
         }
 
         var liveIn = blocks.Keys.ToDictionary(id => id, static _ => new HashSet<int>());
@@ -872,8 +897,13 @@ public static class SafeCoreOwnershipAnalysis
                 if (liveIn.TryGetValue(successor, out HashSet<int>? successorLive))
                     nextOut.UnionWith(successorLive);
             }
-            var nextIn = new HashSet<int>(blockUses[blockId]);
-            nextIn.UnionWith(nextOut);
+            var nextIn = new HashSet<int>(nextOut);
+            AddReferencedLocals(block.Terminator, nextIn, locals);
+            for (int index = block.Instructions.Count - 1; index >= 0; index--)
+            {
+                step();
+                AddReferencedLocals(block.Instructions[index], nextIn, locals);
+            }
             if (liveOut[blockId].SetEquals(nextOut) && liveIn[blockId].SetEquals(nextIn))
                 continue;
             liveOut[blockId] = nextOut;
@@ -920,19 +950,33 @@ public static class SafeCoreOwnershipAnalysis
         HashSet<int> references,
         IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals)
     {
-        if (instruction.Kind is SafeCoreOwnershipInstructionKind.Use or
-            SafeCoreOwnershipInstructionKind.Assign or
-            SafeCoreOwnershipInstructionKind.Move or
-            SafeCoreOwnershipInstructionKind.Borrow or
-            SafeCoreOwnershipInstructionKind.EndBorrow or
-            SafeCoreOwnershipInstructionKind.Write or
-            SafeCoreOwnershipInstructionKind.Drop)
+        if (instruction.Kind == SafeCoreOwnershipInstructionKind.CallArguments && instruction.ReferenceArguments is { } arguments)
         {
+            foreach (SafeCoreOwnershipCallArgument argument in arguments) references.Add(argument.Place.LocalId);
+            return;
+        }
+        if (instruction.Kind is SafeCoreOwnershipInstructionKind.Borrow or SafeCoreOwnershipInstructionKind.Move)
+        {
+            // A new loan/value replaces its destination's previous value.
+            // Backward liveness must not keep the overwritten loan alive.
+            if (instruction.RelatedPlace is null || instruction.RelatedPlace.IsRoot)
+                references.Remove(instruction.RelatedLocalId);
             if (locals.TryGetValue(instruction.LocalId, out SafeCoreOwnershipLocal? local) && local.IsReference)
                 references.Add(instruction.LocalId);
-            if (locals.TryGetValue(instruction.RelatedLocalId, out SafeCoreOwnershipLocal? related) && related.IsReference)
-                references.Add(instruction.RelatedLocalId);
+            if (instruction.AlternativePlaces is { } alternatives)
+                foreach (SafeCoreOwnershipPlace place in alternatives)
+                    if (locals.TryGetValue(place.LocalId, out SafeCoreOwnershipLocal? alternative) && alternative.IsReference) references.Add(place.LocalId);
+            return;
         }
+        if (instruction.Kind == SafeCoreOwnershipInstructionKind.Assign && (instruction.Place is null || instruction.Place.IsRoot))
+        {
+            references.Remove(instruction.LocalId);
+            if (locals.TryGetValue(instruction.RelatedLocalId, out SafeCoreOwnershipLocal? source) && source.IsReference)
+                references.Add(instruction.RelatedLocalId);
+            return;
+        }
+        if (locals.TryGetValue(instruction.LocalId, out SafeCoreOwnershipLocal? used) && used.IsReference)
+            references.Add(instruction.LocalId);
     }
 
     private static void AddReferencedLocals(
@@ -991,6 +1035,8 @@ public static class SafeCoreOwnershipAnalysis
     {
         switch (instruction.Kind)
         {
+            case SafeCoreOwnershipInstructionKind.CallArguments:
+                return state.CheckCallArguments(instruction.ReferenceArguments ?? [], locals, add, function, block, index, instruction.Source, step);
             case SafeCoreOwnershipInstructionKind.Use:
                 return instruction.Place is null || instruction.Place.IsRoot
                     ? state.Use(instruction.LocalId, locals, add, function, block, index, instruction.Source)
@@ -1008,6 +1054,9 @@ public static class SafeCoreOwnershipAnalysis
                         instruction.RelatedPlace ?? SafeCoreOwnershipPlace.Root(instruction.RelatedLocalId),
                         locals, add, function, block, index, instruction.Source);
             case SafeCoreOwnershipInstructionKind.Borrow:
+                if (instruction.AlternativePlaces is { Count: > 0 } alternatives)
+                    return state.BorrowAlternatives(alternatives, instruction.RelatedLocalId, instruction.IsMutable,
+                        locals, add, function, block, index, instruction.Source, step);
                 return instruction.Place is null && instruction.RelatedPlace is null
                     ? state.Borrow(instruction.LocalId, instruction.RelatedLocalId, instruction.IsMutable, locals, add, function, block, index, instruction.Source)
                     : state.BorrowPlace(instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId),
@@ -1025,6 +1074,9 @@ public static class SafeCoreOwnershipAnalysis
                 return instruction.Place is null || instruction.Place.IsRoot
                     ? state.Drop(instruction.LocalId, locals, add, function, block, index, instruction.Source, step)
                     : state.DropPlace(instruction.Place, locals, add, function, block, index, instruction.Source, step);
+            case SafeCoreOwnershipInstructionKind.Consume:
+                return state.Consume(instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId),
+                    locals, add, function, block, index, instruction.Source);
             case SafeCoreOwnershipInstructionKind.EnterScope:
                 state.EnterBlock(instruction.ScopeId, scopes, locals, step, reportEscape);
                 return true;
@@ -1057,12 +1109,17 @@ public static class SafeCoreOwnershipAnalysis
         public PathState(SafeCoreOwnershipFunction function)
         {
             foreach (SafeCoreOwnershipLocal local in function.Locals)
+            {
                 values[local.Id] = new(
                     local.ScopeId == 0 && local.InitiallyInitialized,
                     local.ScopeId == 0,
                     false,
                     local.HasDrop,
                     null);
+                if (local.IsReference && local.InitiallyInitialized)
+                    borrows[local.Id] = new(local.Id, SafeCoreOwnershipPlace.Root(local.Id).Append(SafeCoreOwnershipProjection.Dereference()),
+                        local.Type.IsMutable, true, null, false, false) { External = true };
+            }
             activeScopes.Add(0);
         }
 
@@ -1278,6 +1335,9 @@ public static class SafeCoreOwnershipAnalysis
         {
             if (place.IsRoot)
                 return Use(place.LocalId, locals, add, function, block, index, source);
+            if (place.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference &&
+                locals.TryGetValue(place.LocalId, out SafeCoreOwnershipLocal? reference) && reference.IsReference)
+                return AccessReferencePlace(place, false, locals, add, function, block, index, source);
             if (!EnsureLocalScope(place.LocalId, locals, add, function, block, index, source)) return false;
             if (!values.TryGetValue(place.LocalId, out ValueState? root) ||
                 !root.Available || !root.Initialized || root.Moved || root.Dropped ||
@@ -1317,6 +1377,8 @@ public static class SafeCoreOwnershipAnalysis
         {
             if (place.IsRoot)
                 return Assign(place.LocalId, locals, add, function, block, index, source);
+            if (place.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference)
+                return AccessReferencePlace(place, true, locals, add, function, block, index, source);
             if (!EnsureLocalScope(place.LocalId, locals, add, function, block, index, source) ||
                 !values.TryGetValue(place.LocalId, out ValueState? root)) return false;
             if (!root.Available || !root.Initialized || root.Moved || root.Dropped)
@@ -1324,6 +1386,11 @@ public static class SafeCoreOwnershipAnalysis
                 add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove,
                     $"The projected place '{DisplayPlace(place, locals)}' has no live aggregate owner.",
                     function.Name, block.Id, index, source);
+                return false;
+            }
+            if (HasMovedAncestor(place))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove, "A projected assignment cannot access a moved containing field.", function.Name, block.Id, index, source);
                 return false;
             }
             if (HasActiveBorrow(place, mutableOnly: false))
@@ -1368,6 +1435,11 @@ public static class SafeCoreOwnershipAnalysis
             SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
             SafeCoreMirSource source)
         {
+            if (sourcePlace.Projections.Any(projection => projection.Kind is SafeCoreOwnershipProjectionKind.Dereference or SafeCoreOwnershipProjectionKind.DynamicIndex))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath, "A non-Copy value cannot move out through a reference or a runtime array index.", function.Name, block.Id, index, source);
+                return false;
+            }
             if (sourcePlace.IsRoot && destinationPlace.IsRoot)
                 return Move(sourcePlace.LocalId, destinationPlace.LocalId, locals, add, function, block, index, source);
             if (PlacesOverlap(sourcePlace, destinationPlace))
@@ -1390,10 +1462,11 @@ public static class SafeCoreOwnershipAnalysis
             if (!UsePlace(sourcePlace, locals, add, function, block, index, source) ||
                 !EnsureLocalScope(destinationPlace.LocalId, locals, add, function, block, index, source) ||
                 !values.TryGetValue(destinationPlace.LocalId, out ValueState? destinationRoot)) return false;
-            if (HasMovedProjection(destinationPlace))
+            if (!destinationPlace.IsRoot &&
+                (!destinationRoot.Available || !destinationRoot.Initialized || destinationRoot.Moved || destinationRoot.Dropped || HasMovedAncestor(destinationPlace)))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove,
-                    $"The projected destination '{DisplayPlace(destinationPlace, locals)}' is unavailable after a partial move.",
+                    $"The projected destination '{DisplayPlace(destinationPlace, locals)}' has an unavailable containing value.",
                     function.Name, block.Id, index, source);
                 return false;
             }
@@ -1403,9 +1476,20 @@ public static class SafeCoreOwnershipAnalysis
                     "A projected value cannot move while its owner is borrowed.", function.Name, block.Id, index, source);
                 return false;
             }
+            bool writesThroughReference = destinationPlace.Projections.Count != 0 &&
+                destinationPlace.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference;
+            if (writesThroughReference)
+            {
+                if (!AccessReferencePlace(destinationPlace, true, locals, add, function, block, index, source)) return false;
+            }
+            else if (HasActiveBorrow(destinationPlace, mutableOnly: false))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "Cannot replace a move destination while it is borrowed.", function.Name, block.Id, index, source);
+                return false;
+            }
 
             ValueState destination = ReadPlace(destinationPlace, destinationRoot);
-            if (destination.Initialized && !destination.Moved && !destination.Dropped)
+            if (destination.Initialized && !destination.Moved && !destination.Dropped && destination.DropOwned)
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop,
                     $"A move destination '{DisplayPlace(destinationPlace, locals)}' is already initialized.",
@@ -1458,6 +1542,13 @@ public static class SafeCoreOwnershipAnalysis
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination must be a reference local.", function.Name, block.Id, index, source);
                 return false;
             }
+            if (referenceValue.Initialized && !referenceValue.Moved && !referenceValue.Dropped &&
+                borrows.TryGetValue(referencePlace.LocalId, out BorrowState? replacingBorrow) && replacingBorrow.Active &&
+                !HasActiveChild(referencePlace.LocalId))
+            {
+                EndBorrowInternal(referencePlace.LocalId);
+                referenceValue = referenceValue with { Initialized = false };
+            }
             if (referenceValue.Initialized && !referenceValue.Moved && !referenceValue.Dropped)
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination is already initialized.", function.Name, block.Id, index, source);
@@ -1465,7 +1556,10 @@ public static class SafeCoreOwnershipAnalysis
             }
 
             int? parentReferenceId = null;
-            if (ownerPlace.IsRoot && owner.IsReference && borrows.TryGetValue(ownerPlace.LocalId, out BorrowState? parentBorrow) && parentBorrow.Active)
+            bool external = false;
+            IReadOnlyList<SafeCoreOwnershipPlace> alternativeOwners = [];
+            if (owner.IsReference && (ownerPlace.IsRoot || ownerPlace.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference) &&
+                borrows.TryGetValue(ownerPlace.LocalId, out BorrowState? parentBorrow) && parentBorrow.Active)
             {
                 parentReferenceId = ownerPlace.LocalId;
                 if (mutable && !parentBorrow.Mutable)
@@ -1473,11 +1567,16 @@ public static class SafeCoreOwnershipAnalysis
                     add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A mutable reborrow requires a mutable parent reference.", function.Name, block.Id, index, source);
                     return false;
                 }
-                if (parentBorrow.Suspended || (mutable && HasActiveChild(ownerPlace.LocalId)))
+                if ((parentBorrow.Suspended || mutable && HasActiveChild(ownerPlace.LocalId)) &&
+                    (ownerPlace.IsRoot || ownerPlace.Projections.Count == 1))
                 {
                     add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A reference cannot be reborrowed while another reborrow is active.", function.Name, block.Id, index, source);
                     return false;
                 }
+                IReadOnlyList<SafeCoreOwnershipProjection> suffix = ownerPlace.IsRoot ? [] : ownerPlace.Projections.Skip(1).ToArray();
+                ownerPlace = AppendProjections(parentBorrow.OwnerPlace, suffix);
+                alternativeOwners = parentBorrow.AlternativeOwners.Select(place => AppendProjections(place, suffix)).ToArray();
+                external = parentBorrow.External;
             }
             else if (owner.IsReference && mutable && owner.Type.Kind == SafeCoreSemanticTypeKind.Reference && !owner.Type.IsMutable)
             {
@@ -1485,9 +1584,10 @@ public static class SafeCoreOwnershipAnalysis
                 return false;
             }
 
-            foreach (BorrowState active in borrows.Values.Where(borrow => borrow.Active &&
-                         PlacesOverlap(borrow.OwnerPlace, ownerPlace)))
+            foreach ((int activeId, BorrowState active) in borrows.Where(pair => pair.Value.Active &&
+                         (PlacesOverlap(pair.Value.OwnerPlace, ownerPlace) || pair.Value.AlternativeOwners.Any(place => PlacesOverlap(place, ownerPlace)))))
             {
+                if (IsAncestorReference(activeId, parentReferenceId)) continue;
                 if (mutable || active.Mutable)
                 {
                     add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict,
@@ -1497,7 +1597,8 @@ public static class SafeCoreOwnershipAnalysis
                 }
             }
 
-            borrows[referencePlace.LocalId] = new(ownerPlace.LocalId, ownerPlace, mutable, true, parentReferenceId, false, false);
+            borrows[referencePlace.LocalId] = new(ownerPlace.LocalId, ownerPlace, mutable, true, parentReferenceId, false, false)
+                { External = external, AlternativeOwners = alternativeOwners };
             if (parentReferenceId is int parentId && borrows.TryGetValue(parentId, out BorrowState? parent))
             {
                 bool suspendParent = mutable || parent.Mutable;
@@ -1505,6 +1606,137 @@ public static class SafeCoreOwnershipAnalysis
             }
             values[referencePlace.LocalId] = referenceValue with { Initialized = true, Moved = false, Dropped = false, DropOwned = false };
             Trace.Add(mutable ? $"borrow_mut {owner.Name} as {reference.Name}" : $"borrow {owner.Name} as {reference.Name}");
+            return true;
+        }
+
+        private static SafeCoreOwnershipPlace AppendProjections(SafeCoreOwnershipPlace root,
+            IReadOnlyList<SafeCoreOwnershipProjection> suffix)
+        {
+            if (root.Projections.Count + suffix.Count > 128) throw new OwnershipLimitException();
+            return new(root.LocalId, [.. root.Projections, .. suffix]);
+        }
+
+        private bool IsAncestorReference(int possibleAncestor, int? child)
+        {
+            if (child is not int initial) return false;
+            var pending = new Stack<int>();
+            var seen = new HashSet<int> { initial };
+            pending.Push(initial);
+            int edges = 0;
+            for (int visit = 0; pending.Count != 0; visit++)
+            {
+                if (visit >= 4096) throw new OwnershipLimitException();
+                int referenceId = pending.Pop();
+                if (referenceId == possibleAncestor) return true;
+                if (!borrows.TryGetValue(referenceId, out BorrowState? borrow)) continue;
+                if (borrow.ParentReferenceId is int parent && seen.Add(parent)) pending.Push(parent);
+                foreach (int additional in borrow.AdditionalParents)
+                {
+                    if (++edges > 65_536) throw new OwnershipLimitException();
+                    if (seen.Add(additional)) pending.Push(additional);
+                }
+            }
+            return false;
+        }
+
+        public bool BorrowAlternatives(IReadOnlyList<SafeCoreOwnershipPlace> places, int destination, bool mutable,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source, Action step)
+        {
+            if (places.Count > 4096) throw new OwnershipLimitException();
+            var loans = new List<BorrowState>();
+            foreach (SafeCoreOwnershipPlace place in places)
+            {
+                step();
+                PathState candidate = Clone();
+                if (!candidate.BorrowPlace(place, SafeCoreOwnershipPlace.Root(destination), mutable, locals, add, function, block, index, source)) return false;
+                loans.Add(candidate.borrows[destination]);
+            }
+            BorrowState primary = loans[0];
+            var parents = loans.Where(loan => loan.ParentReferenceId.HasValue).Select(loan => loan.ParentReferenceId!.Value).Distinct().ToArray();
+            borrows[destination] = primary with
+            {
+                AlternativeOwners = loans.SelectMany(loan => new[] { loan.OwnerPlace }.Concat(loan.AlternativeOwners)).ToArray(),
+                AdditionalParents = parents,
+                External = loans.All(loan => loan.External),
+            };
+            values[destination] = values[destination] with { Initialized = true, Moved = false, Dropped = false, DropOwned = false };
+            foreach (int parentId in parents)
+            {
+                step();
+                BorrowState parent = borrows[parentId];
+                borrows[parentId] = parent with { Suspended = parent.Mutable || mutable };
+            }
+            Trace.Add($"borrow_call {locals[destination].Name}");
+            return true;
+        }
+
+        public bool CheckCallArguments(IReadOnlyList<SafeCoreOwnershipCallArgument> arguments,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source, Action step)
+        {
+            if (arguments.Count > 4096) throw new OwnershipLimitException();
+            var referents = new List<IReadOnlyList<SafeCoreOwnershipPlace>>(arguments.Count);
+            for (int argumentIndex = 0; argumentIndex < arguments.Count; argumentIndex++)
+            {
+                step();
+                SafeCoreOwnershipCallArgument argument = arguments[argumentIndex];
+                if (!argument.Place.IsRoot || !locals.TryGetValue(argument.Place.LocalId, out SafeCoreOwnershipLocal? local) ||
+                    !local.IsReference || argument.IsMutable != local.Type.IsMutable ||
+                    !Use(argument.Place.LocalId, locals, add, function, block, index, source) ||
+                    !borrows.TryGetValue(argument.Place.LocalId, out BorrowState? loan) || !loan.Active)
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A call argument requires a live reference with a checked mutability contract.", function.Name, block.Id, index, source);
+                    return false;
+                }
+                IReadOnlyList<SafeCoreOwnershipPlace> possible = [loan.OwnerPlace, .. loan.AlternativeOwners];
+                for (int previous = 0; previous < argumentIndex; previous++)
+                {
+                    step();
+                    if (!argument.IsMutable && !arguments[previous].IsMutable) continue;
+                    foreach (SafeCoreOwnershipPlace left in possible)
+                    {
+                        step();
+                        foreach (SafeCoreOwnershipPlace right in referents[previous])
+                        {
+                            step();
+                            if (!PlacesOverlap(left, right)) continue;
+                            add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict,
+                                "Reference arguments overlap during one call and at least one requires exclusive access.", function.Name, block.Id, index, source);
+                            return false;
+                        }
+                    }
+                }
+                referents.Add(possible);
+            }
+            return true;
+        }
+
+        public bool Consume(SafeCoreOwnershipPlace place, IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source)
+        {
+            if (place.Projections.Any(projection => projection.Kind is SafeCoreOwnershipProjectionKind.Dereference or SafeCoreOwnershipProjectionKind.DynamicIndex))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath, "A non-Copy value cannot be consumed through a reference or a runtime array index.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (!UsePlace(place, locals, add, function, block, index, source)) return false;
+            if (HasActiveBorrow(place, false))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.MoveWhileBorrowed, "Cannot consume a borrowed value.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (!place.IsRoot && locals[place.LocalId].HasDrop)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath, "Cannot move a field out of a value requiring Drop.", function.Name, block.Id, index, source);
+                return false;
+            }
+            ValueState value = ReadPlace(place, values[place.LocalId]);
+            WritePlace(place, value with { Initialized = false, Moved = true, DropOwned = false });
+            Trace.Add($"consume {DisplayPlace(place, locals)}");
             return true;
         }
 
@@ -1525,10 +1757,43 @@ public static class SafeCoreOwnershipAnalysis
         {
             if (place.IsRoot)
                 return Write(place.LocalId, locals, add, function, block, index, source);
-            // A projected reference still aliases its reference local. The
-            // root check intentionally remains conservative until typed MIR
-            // supplies field-level borrow provenance.
-            return Write(place.LocalId, locals, add, function, block, index, source);
+            return AccessReferencePlace(place, true, locals, add, function, block, index, source);
+        }
+
+        private bool AccessReferencePlace(SafeCoreOwnershipPlace place, bool mutable,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source)
+        {
+            if (!EnsureLocalScope(place.LocalId, locals, add, function, block, index, source) ||
+                !values.TryGetValue(place.LocalId, out ValueState? value) || !value.Initialized || value.Moved || value.Dropped ||
+                !borrows.TryGetValue(place.LocalId, out BorrowState? loan) || !loan.Active)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove, "A projected reference requires a live initialized loan.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (mutable && !loan.Mutable)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.ImmutableBorrow, "Cannot write through a shared reference projection.", function.Name, block.Id, index, source);
+                return false;
+            }
+            IReadOnlyList<SafeCoreOwnershipProjection> suffix = place.Projections.Count == 0 ? [] : place.Projections.Skip(1).ToArray();
+            SafeCoreOwnershipPlace[] canonical = [AppendProjections(loan.OwnerPlace, suffix),
+                .. loan.AlternativeOwners.Select(owner => AppendProjections(owner, suffix))];
+            foreach ((int referenceId, BorrowState active) in borrows)
+            {
+                if (!active.Active || referenceId == place.LocalId || IsAncestorReference(referenceId, loan.ParentReferenceId) ||
+                    loan.AdditionalParents.Any(parent => IsAncestorReference(referenceId, parent))) continue;
+                bool overlap = canonical.Any(candidate => PlacesOverlap(active.OwnerPlace, candidate) ||
+                    active.AlternativeOwners.Any(owner => PlacesOverlap(owner, candidate)));
+                if (overlap && (mutable || active.Mutable))
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "The reference projection overlaps another live loan.", function.Name, block.Id, index, source);
+                    return false;
+                }
+            }
+            Trace.Add($"{(mutable ? "write" : "use_borrow")} {DisplayPlace(place, locals)}");
+            return true;
         }
 
         public bool DropPlace(SafeCoreOwnershipPlace place,
@@ -1606,7 +1871,10 @@ public static class SafeCoreOwnershipAnalysis
                 return;
             }
 
-            projectedValues[PlaceKey(place)] = value;
+            string key = PlaceKey(place);
+            foreach (string descendant in projectedValues.Keys.Where(candidate => IsPlacePrefix(key, candidate)).ToArray())
+                projectedValues.Remove(descendant);
+            projectedValues[key] = value;
         }
 
         private void InvalidateProjected(int localId)
@@ -1628,12 +1896,23 @@ public static class SafeCoreOwnershipAnalysis
                 (pair.Value.Moved || pair.Value.Dropped));
         }
 
+        private bool HasMovedAncestor(SafeCoreOwnershipPlace place)
+        {
+            string key = PlaceKey(place);
+            return projectedValues.Any(pair => IsPlacePrefix(pair.Key, key) && (pair.Value.Moved || pair.Value.Dropped));
+        }
+
         private static bool PlacesOverlap(SafeCoreOwnershipPlace left, SafeCoreOwnershipPlace right)
         {
             if (left.LocalId != right.LocalId) return false;
-            string leftKey = PlaceKey(left);
-            string rightKey = PlaceKey(right);
-            return leftKey == rightKey || IsPlacePrefix(leftKey, rightKey) || IsPlacePrefix(rightKey, leftKey);
+            int shared = Math.Min(left.Projections.Count, right.Projections.Count);
+            for (int index = 0; index < shared; index++)
+            {
+                SafeCoreOwnershipProjection first = left.Projections[index], second = right.Projections[index];
+                if (first.Kind == SafeCoreOwnershipProjectionKind.DynamicIndex || second.Kind == SafeCoreOwnershipProjectionKind.DynamicIndex) continue;
+                if (first != second) return false;
+            }
+            return true;
         }
 
         private static bool IsPlacePrefix(string prefix, string candidate) =>
@@ -1747,6 +2026,7 @@ public static class SafeCoreOwnershipAnalysis
             }
 
             values[id] = value with { Initialized = true, Moved = false, Dropped = false, DropOwned = local.HasDrop, MovedTo = null };
+            InvalidateProjected(id);
             Trace.Add($"assign {local.Name}");
             return true;
         }
@@ -1824,13 +2104,19 @@ public static class SafeCoreOwnershipAnalysis
                 }
                 EndBorrowInternal(destinationId);
             }
-            if (borrows.Values.Any(borrow => borrow.Active && borrow.OwnerId == sourceId))
+            if (borrows.Any(pair => pair.Key != sourceId && pair.Value.Active && pair.Value.OwnerId == sourceId))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.MoveWhileBorrowed, "A value cannot move while it is borrowed.", function.Name, block.Id, index, source);
                 return false;
             }
 
-            if (destination.Initialized && !destination.Moved && !destination.Dropped && !destinationLocal.IsReference)
+            if (!destinationLocal.IsReference && HasActiveBorrow(destinationId, mutableOnly: false))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "Cannot replace a move destination while it is borrowed.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (destination.Initialized && !destination.Moved && !destination.Dropped && !destinationLocal.IsReference &&
+                (destination.DropOwned || destinationLocal.HasDrop))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop, "A move destination is already initialized.", function.Name, block.Id, index, source);
                 return false;
@@ -1840,6 +2126,7 @@ public static class SafeCoreOwnershipAnalysis
                 sourceLocal.IsReference && sourceLocal.Type.IsMutable)
                 values[sourceId] = values[sourceId] with { Initialized = false, Moved = true, MovedTo = destinationId };
             values[destinationId] = destination with { Initialized = true, Moved = false, Dropped = false, DropOwned = values[sourceId].DropOwned || sourceLocal.HasDrop, MovedTo = null };
+            InvalidateProjected(destinationId);
             if (transferBorrow)
             {
                 if (sourceLocal.Type.IsMutable) borrows.Remove(sourceId);
@@ -2015,7 +2302,7 @@ public static class SafeCoreOwnershipAnalysis
         {
             foreach (BorrowState borrow in borrows.Values)
             {
-                if (borrow.Active && PlacesOverlap(borrow.OwnerPlace, ownerPlace) && (!mutableOnly || borrow.Mutable))
+                if (borrow.Active && (PlacesOverlap(borrow.OwnerPlace, ownerPlace) || borrow.AlternativeOwners.Any(place => PlacesOverlap(place, ownerPlace))) && (!mutableOnly || borrow.Mutable))
                     return true;
             }
 
@@ -2023,13 +2310,14 @@ public static class SafeCoreOwnershipAnalysis
         }
 
         private bool HasActiveChild(int parentReferenceId) =>
-            borrows.Values.Any(borrow => borrow.Active && borrow.ParentReferenceId == parentReferenceId);
+            borrows.Values.Any(borrow => borrow.Active && (borrow.ParentReferenceId == parentReferenceId || borrow.AdditionalParents.Contains(parentReferenceId)));
 
         private void EndBorrowInternal(int id)
         {
             if (!borrows.TryGetValue(id, out BorrowState? borrow) || !borrow.Active) return;
             borrows[id] = borrow with { Active = false, Suspended = false };
             ResumeParent(borrow.ParentReferenceId);
+            foreach (int parent in borrow.AdditionalParents) ResumeParent(parent);
         }
 
         private void EndBorrowAtScopeExit(int id)
@@ -2040,6 +2328,7 @@ public static class SafeCoreOwnershipAnalysis
                 values[id] = value with { Initialized = false, Dropped = true };
             Trace.Add($"end_borrow {id.ToString(CultureInfo.InvariantCulture)} (scope)");
             ResumeParent(borrow.ParentReferenceId);
+            foreach (int parent in borrow.AdditionalParents) ResumeParent(parent);
         }
 
         private void ResumeParent(int? parentReferenceId)
@@ -2059,6 +2348,7 @@ public static class SafeCoreOwnershipAnalysis
         }
 
         public bool IsBorrowActive(int id) => borrows.TryGetValue(id, out BorrowState? borrow) && borrow.Active;
+        public bool IsExternalBorrow(int id) => borrows.TryGetValue(id, out BorrowState? borrow) && borrow.Active && borrow.External;
 
         public SafeCoreOwnershipPath ToPath(int id, string functionName, SafeCoreOwnershipOutcome outcome) =>
             new(id, functionName, outcome, DropOrder.ToImmutableArray(), Trace.ToImmutableArray());
@@ -2076,7 +2366,12 @@ public static class SafeCoreOwnershipAnalysis
             bool Active,
             int? ParentReferenceId,
             bool Suspended,
-            bool EscapeReported);
+            bool EscapeReported)
+        {
+            public bool External { get; init; }
+            public IReadOnlyList<SafeCoreOwnershipPlace> AlternativeOwners { get; init; } = [];
+            public IReadOnlyList<int> AdditionalParents { get; init; } = [];
+        }
     }
 
     private sealed class OwnershipLimitException : Exception;

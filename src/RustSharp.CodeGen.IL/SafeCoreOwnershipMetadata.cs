@@ -17,7 +17,10 @@ public static class SafeCoreOwnershipMetadata
         ArgumentNullException.ThrowIfNull(ownership);
         if (!ownership.IsSuccessful || ownership.Program is null || ownership.Ownership is null)
             throw new ArgumentException("A successful ownership result is required.", nameof(ownership));
-        if (ownership.Program.Functions.Count != result.Methods.Count)
+        if (result.Methods.Any(static method => method.IsCompilerGenerated &&
+            (method.IsPublic || method.SourceQualifiedName is not null)))
+            throw new ArgumentException("Compiler helpers must be internal and cannot claim a source ownership identity.", nameof(result));
+        if (ownership.Program.Functions.Count != result.Methods.Count(static method => !method.IsCompilerGenerated))
             throw new ArgumentException("Ownership and emitted method counts must match.", nameof(ownership));
 
         var facts = new List<RustSharpMetadataOwnershipFunction>(ownership.Program.Functions.Count);

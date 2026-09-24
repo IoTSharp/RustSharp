@@ -2,7 +2,7 @@ namespace RustSharp.Tests;
 
 internal static class Program
 {
-    private const int MaximumTestCount = 512;
+    private const int MaximumTestCount = 768;
 
     public static async Task<int> Main(string[] args)
     {
@@ -27,6 +27,10 @@ internal static class Program
         tests = [.. tests, .. SafeCoreRegressionV2Tests.All];
         tests = [.. tests, .. SafeCoreMirReferenceExecutionTests.All];
         tests = [.. tests, .. SafeCoreMirSliceTests.All];
+        tests = [.. tests, .. SafeCoreMirPlaceTests.All];
+        tests = [.. tests, .. SafeCoreMirAdtLayoutTests.All];
+        tests = [.. tests, .. SafeCoreMirAdtSourceTests.All, .. SafeCoreMirProjectionBackendTests.All];
+        tests = [.. tests, .. SafeCoreMirReferenceProvenanceTests.All];
         tests = [.. tests, .. SafeCoreMirDropCodegenTests.All];
         tests = [.. tests, .. P1DifferentialProfileTests.All];
         if (tests.Count > MaximumTestCount)

@@ -53,7 +53,7 @@ public static class ClrLirEmitter
         var encoder = new InstructionEncoder(code, controlFlow);
         long started = Stopwatch.GetTimestamp();
         int maxStack = EncodeInstructions(method, metadata, callResolver, encoder,
-            constructorResolver, fieldResolver, CheckBudget, cancellationToken);
+            constructorResolver, fieldResolver, CheckBudget, cancellationToken: cancellationToken);
 
         return new ClrLirMethodBody(code.ToArray().ToImmutableArray(), maxStack);
 
@@ -78,6 +78,7 @@ public static class ClrLirEmitter
         Func<ClrLirValueType, EntityHandle>? constructorResolver = null,
         Func<ClrLirValueType, int, EntityHandle>? fieldResolver = null,
         Action? checkBudget = null,
+        Func<ClrLirType, EntityHandle>? valueTypeResolver = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(method);
@@ -148,6 +149,28 @@ public static class ClrLirEmitter
                     case ClrLirLoadLocal loadLocal:
                         encoder.LoadLocal(loadLocal.Index);
                         break;
+                    case ClrLirLoadLocalAddress address:
+                        encoder.LoadLocalAddress(address.Index);
+                        break;
+                    case ClrLirFieldAddress address:
+                        EntityHandle addressField = fieldResolver?.Invoke(address.Definition, address.FieldIndex) ?? default;
+                        if (addressField.IsNil) throw new InvalidOperationException("Field address requires a resolved field.");
+                        encoder.OpCode(ILOpCode.Ldflda);
+                        encoder.Token(addressField);
+                        break;
+                    case ClrLirLoadIndirect indirect:
+                        EncodeIndirect(indirect.Type, store: false);
+                        break;
+                    case ClrLirStoreIndirect indirect:
+                        EncodeIndirect(indirect.Type, store: true);
+                        break;
+                    case ClrLirReadOnlyReference:
+                        break;
+                    case ClrLirThrowIndexOutOfRange:
+                        encoder.OpCode(ILOpCode.Newobj);
+                        encoder.Token(AddIndexOutOfRangeConstructor(metadata));
+                        encoder.OpCode(ILOpCode.Throw);
+                        break;
                     case ClrLirStoreLocal storeLocal:
                         encoder.StoreLocal(storeLocal.Index);
                         break;
@@ -214,6 +237,25 @@ public static class ClrLirEmitter
             blockOrdinal++;
         }
 
+        void EncodeIndirect(ClrLirType type, bool store)
+        {
+            if (type.Kind == ClrLirTypeKind.Value)
+            {
+                EntityHandle token = valueTypeResolver?.Invoke(type) ?? default;
+                if (token.IsNil) throw new InvalidOperationException("Indirect aggregate access requires a resolved value type.");
+                encoder.OpCode(store ? ILOpCode.Stobj : ILOpCode.Ldobj);
+                encoder.Token(token);
+                return;
+            }
+            encoder.OpCode(type.Kind switch
+            {
+                ClrLirTypeKind.I32 => store ? ILOpCode.Stind_i4 : ILOpCode.Ldind_i4,
+                ClrLirTypeKind.Bool => store ? ILOpCode.Stind_i1 : ILOpCode.Ldind_u1,
+                ClrLirTypeKind.Any or ClrLirTypeKind.Text => store ? ILOpCode.Stind_ref : ILOpCode.Ldind_ref,
+                _ => throw new InvalidOperationException("Invalid indirect CLR type."),
+            });
+        }
+
         if (!method.ExceptionCleanup.IsEmpty)
         {
             if (!tryEndMarked)
@@ -233,6 +275,19 @@ public static class ClrLirEmitter
         }
 
         return Math.Max(1, validation.MaximumStackDepth);
+    }
+
+    private static MemberReferenceHandle AddIndexOutOfRangeConstructor(MetadataBuilder metadata)
+    {
+        AssemblyReferenceHandle runtime = metadata.AddAssemblyReference(metadata.GetOrAddString("System.Runtime"),
+            new Version(10, 0, 0, 0), default,
+            metadata.GetOrAddBlob(new byte[] { 0xb0, 0x3f, 0x5f, 0x7f, 0x11, 0xd5, 0x0a, 0x3a }), default, default);
+        TypeReferenceHandle exception = metadata.AddTypeReference(runtime, metadata.GetOrAddString("System"),
+            metadata.GetOrAddString("IndexOutOfRangeException"));
+        var signature = new BlobBuilder();
+        new BlobEncoder(signature).MethodSignature(isInstanceMethod: true).Parameters(0,
+            static result => result.Void(), static _ => { });
+        return metadata.AddMemberReference(exception, metadata.GetOrAddString(".ctor"), metadata.GetOrAddBlob(signature));
     }
 
     private static (MemberReferenceHandle Culture, MemberReferenceHandle Convert) AddInvariantFormatReferences(MetadataBuilder metadata)

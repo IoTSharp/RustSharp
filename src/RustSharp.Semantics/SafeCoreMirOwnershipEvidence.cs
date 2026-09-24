@@ -90,7 +90,17 @@ public static partial class SafeCoreMirOwnershipAdapter
             // phase to restart from the full caller budget.
             operations = validation.OperationsUsed;
 
+            SafeCoreMirReferenceProvenanceResult provenance = SafeCoreMirReferenceProvenance.AnalyzeValidated(mir,
+                options with { MaximumOperations = Math.Max(1, options.MaximumOperations - operations), Timeout = Remaining(options.Timeout, clock) });
+            operations += provenance.OperationsUsed;
+            foreach (Diagnostic diagnostic in provenance.Diagnostics) AddEvidenceDiagnostic(diagnostics, diagnostic, options);
+            if (!provenance.IsSuccessful)
+                return new(null, null, validation, diagnostics.AsReadOnly(), provenance.IsTruncated);
+
             Correlate(mir, evidence.Program, diagnostics, options, clock, ref operations);
+            if (diagnostics.Count != 0)
+                return new(null, null, validation, diagnostics.AsReadOnly(), false);
+            CorrelateReferenceEffects(mir, evidence.Program, provenance, diagnostics, options, clock, ref operations);
             if (diagnostics.Count != 0)
                 return new(null, null, validation, diagnostics.AsReadOnly(), false);
 
@@ -184,13 +194,13 @@ public static partial class SafeCoreMirOwnershipAdapter
 
                 SafeCoreMirLocal mirLocal = mirFunction.Locals[ownershipLocal.Id];
 
-                SafeCoreOwnershipKind expectedKind = mirLocal.DestructorFunctionId.HasValue ||
-                    mirLocal.Type.Kind == SafeCoreSemanticTypeKind.Reference && mirLocal.Type.IsMutable
+                SafeCoreOwnershipKind expectedKind = mirLocal.DestructorFunctionId.HasValue || !IsCopyType(mirLocal.Type, mir)
                     ? SafeCoreOwnershipKind.Move : SafeCoreOwnershipKind.Copy;
                 bool expectedDrop = mirLocal.DestructorFunctionId.HasValue;
                 if (!string.Equals(mirLocal.Name, ownershipLocal.Name, StringComparison.Ordinal) ||
                     mirLocal.Type != ownershipLocal.Type || ownershipLocal.Kind != expectedKind ||
-                    ownershipLocal.HasDrop != expectedDrop)
+                    ownershipLocal.HasDrop != expectedDrop || ownershipLocal.IsReference != (mirLocal.Type.Kind == SafeCoreSemanticTypeKind.Reference) ||
+                    ownershipLocal.InitiallyInitialized != (mirLocal.Kind == SafeCoreMirLocalKind.Parameter))
                 {
                     AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
                         $"Ownership fact for local {mirLocal.Id} does not match its typed-MIR name, type, move kind, or Drop contract.",
@@ -250,6 +260,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                 {
                     StepEvidence(options, clock, ref operations);
                     allowedSources.Add(statement.Source);
+                    if (statement.DestinationPlace is { } destinationPlace) allowedPlaces.Add(destinationPlace);
                     foreach (SafeCoreMirOperand operand in statement.Value.Operands)
                     {
                         StepEvidence(options, clock, ref operations);
@@ -295,6 +306,87 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
             }
         }
+    }
+
+    private static void CorrelateReferenceEffects(SafeCoreMirProgram mir, SafeCoreOwnershipProgram evidence,
+        SafeCoreMirReferenceProvenanceResult provenance, List<Diagnostic> diagnostics,
+        SafeCoreMirOwnershipOptions options, Stopwatch clock, ref int operations)
+    {
+        try
+        {
+            for (int functionIndex = 0; functionIndex < mir.Functions.Count; functionIndex++)
+            {
+                StepEvidence(options, clock, ref operations);
+                SafeCoreMirFunction function = mir.Functions[functionIndex];
+                if (!function.Locals.Any(local => local.Type.Kind == SafeCoreSemanticTypeKind.Reference)) continue;
+                SafeCoreOwnershipFunction? expected = AdaptFunction(mir, provenance, function, options, clock, ref operations, diagnostics);
+                if (expected is null) continue;
+                if (evidence.Functions[functionIndex].Scopes.Count != 1 ||
+                    evidence.Functions[functionIndex].Locals.Any(local => local.ScopeId != 0))
+                    AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                        "Reference evidence cannot replace typed-MIR storage scopes with invented ownership scopes.", function.Source), options);
+                foreach (SafeCoreOwnershipBlock block in expected.Blocks)
+                {
+                    StepEvidence(options, clock, ref operations);
+                    SafeCoreOwnershipBlock actual = evidence.Functions[functionIndex].Blocks.Single(candidate => candidate.Id == block.Id);
+                    SafeCoreOwnershipInstruction[] effects = block.Instructions.Where(effect => effect.LocalId < function.Locals.Count).ToArray();
+                    if (effects.Length != actual.Instructions.Count || actual.ScopeId != 0)
+                        AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                            "Explicit reference evidence must retain the exact typed-MIR ownership effects and their order.", block.Source), options);
+                    for (int effectIndex = 0; effectIndex < Math.Min(effects.Length, actual.Instructions.Count); effectIndex++)
+                    {
+                        StepEvidence(options, clock, ref operations);
+                        SafeCoreOwnershipInstruction effect = effects[effectIndex];
+                        SafeCoreOwnershipInstruction candidate = actual.Instructions[effectIndex];
+                        bool matched = effect.Kind == candidate.Kind && effect.LocalId == candidate.LocalId &&
+                                effect.RelatedLocalId == candidate.RelatedLocalId && effect.IsMutable == candidate.IsMutable &&
+                                SameSource(effect.Source, candidate.Source) && EqualOwnershipPlace(effect.Place, candidate.Place, effect.LocalId) &&
+                                EqualOwnershipPlace(effect.RelatedPlace, candidate.RelatedPlace, effect.RelatedLocalId) &&
+                                EqualAlternativePlaces(effect.AlternativePlaces, candidate.AlternativePlaces, options, clock, ref operations) &&
+                                EqualReferenceArguments(effect.ReferenceArguments, candidate.ReferenceArguments, options, clock, ref operations);
+                        if (!matched) AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                            "Explicit evidence omits or changes a typed-MIR reference ownership effect.", effect.Source), options);
+                    }
+                    if (block.Terminator.LocalId < function.Locals.Count &&
+                        (block.Terminator.Kind != actual.Terminator.Kind || block.Terminator.LocalId != actual.Terminator.LocalId ||
+                         block.Terminator.TargetBlockId != actual.Terminator.TargetBlockId || block.Terminator.FalseTargetBlockId != actual.Terminator.FalseTargetBlockId))
+                        AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                            "Explicit reference evidence changes the typed-MIR control-flow or return contract.", block.Source), options);
+                }
+            }
+        }
+        catch (AdapterLimitException) { throw new EvidenceLimitException(); }
+    }
+
+    private static bool EqualOwnershipPlace(SafeCoreOwnershipPlace? expected, SafeCoreOwnershipPlace? actual, int localId)
+    {
+        if (expected is null || expected.IsRoot) return actual is null || actual.IsRoot && actual.LocalId == localId;
+        return actual is not null && expected.LocalId == actual.LocalId && expected.Projections.SequenceEqual(actual.Projections);
+    }
+
+    private static bool EqualAlternativePlaces(IReadOnlyList<SafeCoreOwnershipPlace>? expected,
+        IReadOnlyList<SafeCoreOwnershipPlace>? actual, SafeCoreMirOwnershipOptions options, Stopwatch clock, ref int operations)
+    {
+        if ((expected?.Count ?? 0) != (actual?.Count ?? 0)) return false;
+        for (int index = 0; index < (expected?.Count ?? 0); index++)
+        {
+            StepEvidence(options, clock, ref operations);
+            if (!EqualOwnershipPlace(expected![index], actual![index], expected[index].LocalId)) return false;
+        }
+        return true;
+    }
+
+    private static bool EqualReferenceArguments(IReadOnlyList<SafeCoreOwnershipCallArgument>? expected,
+        IReadOnlyList<SafeCoreOwnershipCallArgument>? actual, SafeCoreMirOwnershipOptions options, Stopwatch clock, ref int operations)
+    {
+        if ((expected?.Count ?? 0) != (actual?.Count ?? 0)) return false;
+        for (int index = 0; index < (expected?.Count ?? 0); index++)
+        {
+            StepEvidence(options, clock, ref operations);
+            if (expected![index].IsMutable != actual![index].IsMutable ||
+                !EqualOwnershipPlace(expected[index].Place, actual[index].Place, expected[index].Place.LocalId)) return false;
+        }
+        return true;
     }
 
     private static void ValidateEvidencePlace(

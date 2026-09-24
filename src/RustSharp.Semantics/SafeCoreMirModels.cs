@@ -11,7 +11,7 @@ public enum SafeCoreMirLocalKind { Parameter, User, Temporary }
 public enum SafeCoreMirOperandKind { Local, Constant, Function, Place }
 
 /// <summary>A typed-MIR storage place: a local plus a bounded projection chain.</summary>
-public enum SafeCoreMirProjectionKind { Field, TupleIndex, ArrayIndex, Dereference }
+public enum SafeCoreMirProjectionKind { Field, TupleIndex, ArrayIndex, Dereference, DynamicIndex }
 
 public sealed record SafeCoreMirProjection(SafeCoreMirProjectionKind Kind, string? Name, int Index)
 {
@@ -23,6 +23,9 @@ public sealed record SafeCoreMirProjection(SafeCoreMirProjectionKind Kind, strin
         new(SafeCoreMirProjectionKind.ArrayIndex, null, index);
     public static SafeCoreMirProjection Dereference() =>
         new(SafeCoreMirProjectionKind.Dereference, null, -1);
+    /// <summary>Index is the ID of an evaluated usize local, not an array offset.</summary>
+    public static SafeCoreMirProjection DynamicIndex(int localId) =>
+        new(SafeCoreMirProjectionKind.DynamicIndex, null, localId);
 }
 
 public sealed class SafeCoreMirPlace
@@ -40,7 +43,7 @@ public sealed class SafeCoreMirPlace
             if (!Enum.IsDefined(projection.Kind) ||
                 (projection.Kind == SafeCoreMirProjectionKind.Field &&
                  (string.IsNullOrWhiteSpace(projection.Name) || projection.Name.Length > 4096 || projection.Index != -1)) ||
-                (projection.Kind is SafeCoreMirProjectionKind.TupleIndex or SafeCoreMirProjectionKind.ArrayIndex &&
+                (projection.Kind is SafeCoreMirProjectionKind.TupleIndex or SafeCoreMirProjectionKind.ArrayIndex or SafeCoreMirProjectionKind.DynamicIndex &&
                  (projection.Name is not null || projection.Index < 0)) ||
                 (projection.Kind == SafeCoreMirProjectionKind.Dereference &&
                  (projection.Name is not null || projection.Index != -1)))
@@ -68,12 +71,19 @@ public sealed class SafeCoreMirPlace
                 case SafeCoreMirProjectionKind.TupleIndex: builder.Append(".tuple[").Append(projection.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(']'); break;
                 case SafeCoreMirProjectionKind.ArrayIndex: builder.Append('[').Append(projection.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(']'); break;
                 case SafeCoreMirProjectionKind.Dereference: builder.Append('.').Append('*'); break;
+                case SafeCoreMirProjectionKind.DynamicIndex: builder.Append("[%").Append(projection.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(']'); break;
             }
         }
         return builder.ToString();
     }
 }
-public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple, Print, Array, Index, Field, Write, SliceLength }
+
+/// <summary>A checked place occurrence. Mutability describes access through this path,
+/// not initialization, borrow liveness, or the lifetime of the ultimate referent.</summary>
+public sealed record SafeCoreMirPlaceType(int FunctionId, SafeCoreMirPlace Place,
+    SafeCoreType RootType, SafeCoreType Type, bool IsMutable, SafeCoreMirSource Source);
+
+public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple, Print, Array, Index, Field, Write, SliceLength, Adt }
 public enum SafeCoreMirTerminatorKind { Return, Goto, Branch, Call, Unreachable }
 
 /// <summary>A local slot. ID is its index in the owning function. Parameters precede other slots.</summary>
@@ -84,6 +94,9 @@ public sealed record SafeCoreMirLocal(int Id, string Name, SafeCoreType Type,
     public bool IsUnitAdt { get; init; }
     /// <summary>Canonical MIR destructor function for an owned local, if any.</summary>
     public int? DestructorFunctionId { get; init; }
+    /// <summary>Lexical storage extent for source locals and temporaries. Parameters
+    /// have no local storage extent; missing legacy evidence uses the function extent.</summary>
+    public SafeCoreMirSource? StorageScope { get; init; }
 }
 
 /// <summary>One immutable leaf operand. Constants use invariant decimal text, bool words,
@@ -142,6 +155,10 @@ public sealed class SafeCoreMirRvalue
     public static SafeCoreMirRvalue Array(IReadOnlyList<SafeCoreMirOperand> operands, SafeCoreType resultType,
         SafeCoreMirSource source, CancellationToken cancellationToken = default) =>
         new(SafeCoreMirRvalueKind.Array, resultType, operands, null, source, cancellationToken);
+    /// <summary>Constructs a declared nominal aggregate in declaration field order.</summary>
+    public static SafeCoreMirRvalue Adt(IReadOnlyList<SafeCoreMirOperand> operands, SafeCoreType resultType,
+        SafeCoreMirSource source, CancellationToken cancellationToken = default) =>
+        new(SafeCoreMirRvalueKind.Adt, resultType, operands, null, source, cancellationToken);
     public static SafeCoreMirRvalue Index(SafeCoreMirOperand array, SafeCoreMirOperand index,
         SafeCoreType resultType, SafeCoreMirSource source) =>
         new(SafeCoreMirRvalueKind.Index, resultType, [array, index], null, source);
@@ -176,7 +193,12 @@ public sealed class SafeCoreMirRvalue
 
 /// <summary>Assign a value to a local slot. Source binding mutability is checked by HIR;
 /// MIR locals are storage slots and may be written on separate CFG paths.</summary>
-public sealed record SafeCoreMirStatement(int DestinationLocalId, SafeCoreMirRvalue Value, SafeCoreMirSource Source);
+public sealed record SafeCoreMirStatement(int DestinationLocalId, SafeCoreMirRvalue Value, SafeCoreMirSource Source)
+{
+    /// <summary>Explicit projected storage destination. Its root must match
+    /// DestinationLocalId; null retains the original local-assignment contract.</summary>
+    public SafeCoreMirPlace? DestinationPlace { get; init; }
+}
 
 /// <summary>Exactly one explicit control-flow terminator ends every basic block.
 /// Unused target IDs use -1; a diverging call uses continuation -1 and no destination.</summary>
@@ -270,9 +292,38 @@ public sealed class SafeCoreMirFunction
 /// <summary>Backend-independent typed MIR. IDs index immutable owning collections.</summary>
 public sealed class SafeCoreMirProgram
 {
-    public SafeCoreMirProgram(IReadOnlyList<SafeCoreMirFunction> functions, CancellationToken cancellationToken = default) =>
+    public SafeCoreMirProgram(IReadOnlyList<SafeCoreMirFunction> functions, CancellationToken cancellationToken = default)
+        : this(functions, [], cancellationToken) { }
+
+    public SafeCoreMirProgram(IReadOnlyList<SafeCoreMirFunction> functions,
+        IReadOnlyList<SafeCoreMirAdtLayout> adtLayouts, CancellationToken cancellationToken = default)
+    {
         Functions = SafeCoreMirCollections.Freeze(functions, cancellationToken);
+        AdtLayouts = SafeCoreMirCollections.Freeze(adtLayouts, cancellationToken);
+    }
     public IReadOnlyList<SafeCoreMirFunction> Functions { get; }
+    public IReadOnlyList<SafeCoreMirAdtLayout> AdtLayouts { get; }
+}
+
+/// <summary>A field's declared name, type and original declaration source.</summary>
+public sealed record SafeCoreMirAdtField(string Name, SafeCoreType Type, SafeCoreMirSource Source);
+
+/// <summary>Immutable nominal struct layout. Copy is explicit declaration evidence,
+/// never inferred merely because each field is Copy.</summary>
+public sealed class SafeCoreMirAdtLayout
+{
+    public SafeCoreMirAdtLayout(SafeCoreType type, IReadOnlyList<SafeCoreMirAdtField> fields,
+        SafeCoreMirSource source, bool isCopy = false, CancellationToken cancellationToken = default)
+    {
+        Type = type;
+        Fields = SafeCoreMirCollections.Freeze(fields, cancellationToken);
+        Source = source;
+        IsCopy = isCopy;
+    }
+    public SafeCoreType Type { get; }
+    public IReadOnlyList<SafeCoreMirAdtField> Fields { get; }
+    public SafeCoreMirSource Source { get; }
+    public bool IsCopy { get; }
 }
 
 public sealed class SafeCoreMirLimitException(string message) : Exception(message);

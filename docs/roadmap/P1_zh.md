@@ -6,11 +6,11 @@
 
 ## 范围与证据基线
 
-这份清单把现有承诺分配给固定编号，不扩大或削减语言范围。P1-06.01 必须把 [类型化 MIR 契约](../typed-mir-profile.md)、[P1 缺口矩阵](../p1-gap-matrix.md) 和原验收要求逐项登记；已有的仅检查类型配置档保持仅检查，既有可执行承诺与已列剩余项不得通过重新分类而消失。引用/provenance、切片/unsizing、模式/闭包、完整源码移动借用、生成 Drop/panic、源码跨包契约及所有必需后端必须各有叶子与用例。
+这份清单把现有承诺分配给固定编号，不扩大或削减语言范围。P1-06.01 的[冻结账本](../p1-exit-scope-v1_zh.md) 已把[类型化 MIR 契约](../typed-mir-profile.md)、[P1 缺口矩阵](../p1-gap-matrix.md) 和原验收要求逐项登记；已有的仅检查类型配置档保持仅检查，既有可执行承诺与已列剩余项不得通过重新分类而消失。引用/provenance、切片/unsizing、模式/闭包、完整源码移动借用、生成 Drop/panic、源码跨包契约及所有必需后端必须各有叶子与用例。
 
 当前退出候选尚未形成。新 v3/v2 套件名称及新文件均是 **计划交付物**，未记录新分母或运行成功。先完成 P1-10.01/.02 的逐用例清单与整数分母，再以其验收；不能把现有 8/8、5/5、24/24、16/16、12/12 或 6/6 自动提升为扩展契约完成。
 
-历史/现有证据标签（仅用于对应已完成叶子的限定范围）：
+历史/现有证据标签（仅用于对应的限定范围）：
 
 | 标签 | 已有证据及限制 |
 | --- | --- |
@@ -20,6 +20,13 @@
 | E4 | [类型契约](../type-system-profile.md)：仅检查的 96 差分用例、16 类别；历史 265 项回归。 |
 | E5 | [泛型契约](../generic-profile.md)：32 用例及已记录 ILVerify/Windows AOT；不替代整个 P1 平台验收。 |
 | E6 | `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`：本地 Release 零警告/错误、464/464；[Windows CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341932)、[Linux CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341925)、[P1 平台 CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341877) 全通过。后者每平台 12 平台/24 回归/16 差分用例、6 份聚合输入；新增构造未被该平台清单覆盖时，不据此声称其 AOT 已验收。 |
+| E7 | 当前 struct/place/reference 子集：`SafeCoreMirAdtLayoutTests`、`SafeCoreMirAdtSourceTests`、`SafeCoreMirPlaceTests`、`SafeCoreMirProjectionBackendTests`、`SafeCoreMirReferenceProvenanceTests` 和 `SafeCoreMirSliceTests`。[投影示例](../../samples/mir-places.rs) 的 CoreCLR/rustc 输出一致，并通过 Windows x64 Native AOT。ILVerify 10.0.11 对引用返回报告 `ReturnPtrToStack`，等价 C# `Direct(ref Pair) => ref p.X` 在 Release/Debug 下也出现同一诊断；ILVerify 验收仍未解决。这些结果不关闭 enum/tag/downcast、嵌套引用、存储引用的聚合、通用切片 ABI 或完整原生平台门槛。 |
+
+E7 本地验证（SDK 10.0.401）：Release 零警告/错误，551/551 项测试，
+`safe-core-regression-v2` 24/24 个用例、`p1-differential-v2` 16/16 个用例。
+配套[存储示例](../../samples/mir-places-verified.rs) 同样与 rustc 1.98.0 输出一致，
+并通过 ILVerify 10.0.11 和 Windows x64 Native AOT。引用返回的 ILVerify 验收仍未解决，
+详见 E7。
 
 <a id="p1-01"></a>
 
@@ -82,25 +89,25 @@
 
 | ID | 状态 | 交付物 / 文件所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| P1-06.01 | ⏳ 计划中 | 固定 P1 可执行覆盖账本 — Semantics + QA | P1-04, P1-05 | 逐项列出现有 P1 承诺：可执行、按既有契约仅检查、明确排除；每个可执行类别映射下列叶子。不得为结项把缺失语义改为排除。 | 计划：`docs/p1-exit-scope-v1.md`、版本化需求 ID |
+| P1-06.01 | ✅ 已完成 | 固定 P1 可执行覆盖账本 — Semantics + QA | P1-04, P1-05 | 逐项列出现有 P1 承诺：可执行、按既有契约仅检查、明确排除；每个可执行类别映射下列叶子。不得为结项把缺失语义改为排除。 | [冻结双语账本](../p1-exit-scope-v1_zh.md)：`p1-exit-scope-v1`，40 个稳定需求 ID；用例/后端分母仍归 P1-10.01/.02 |
 | P1-06.02 | ✅ 已完成 | 不可变 arena 与结构 CFG 验证 — MIR model | P1-04 | 稠密 ID、类型操作数、终结符及 CFG 目标可验证；畸形 MIR 在发射前失败。 | `SafeCoreMirModels.cs`, `SafeCoreMirValidationTests`; E6 |
 | P1-06.03 | ✅ 已完成 | 标量/控制流 HIR→MIR→CLR LIR 基础 | P1-06.02 | 已支持 i32/bool/unit 控制流在生成程序中保持操作数顺序、调用、分支和早返回。 | `SafeCoreMirLoweringTests`, `SafeCoreMirPatternExecutionTests`; E6 |
-| P1-06.04 | 🚧 进行中 | 为每个 place/projection 定型 — MIR model + validator | P1-06.01, P1-06.02 | 根/字段/元组/索引/解引用链保持所有者、结果类型和可变性；非法字段/索引/类型及深度越限被拒绝。 | 计划扩展：`SafeCoreMirValidationTests`、源码 place 夹具 |
-| P1-06.05 | 🚧 进行中 | 跨局部变量、调用与合流的引用来源 | P1-06.04 | 每个引用具有显式来源 place 与生命周期关系；返回、参数及 CFG 合流不能伪造来源。 | 计划扩展：`SafeCoreMirOwnershipEvidence.cs`、来源证据篡改夹具 |
+| P1-06.04 | 🚧 进行中 | 为每个 place/projection 定型 — MIR model + validator | P1-06.01, P1-06.02 | 根/字段/元组/索引/解引用链保持所有者、结果类型和可变性；非法字段/索引/类型及深度越限被拒绝。 | `SafeCoreMirPlaceTests`、`SafeCoreMirAdtLayoutTests`、`SafeCoreMirAdtSourceTests`：显式具名/元组结构体布局、嵌套 root/field/tuple/固定数组/deref 链、`DynamicIndex`、源码关联类型/访问事实及投影/工作量/时间/取消边界。enum/tag/downcast 和通用切片投影仍未完成；E7。 |
+| P1-06.05 | 🚧 进行中 | 跨局部变量、调用与合流的引用来源 | P1-06.04 | 每个引用具有显式来源 place 与生命周期关系；返回、参数及 CFG 合流不能伪造来源。 | `SafeCoreMirReferenceProvenanceTests`、`SafeCoreMirAdtSourceTests`：有界 CFG/调用返回来源传播、`StorageScope`、源码逃逸及来源证据篡改；真实托管引用保持调用方所有者。源码生命周期省略对缺失/歧义输入生命周期报告 `RSM2004`。嵌套引用、存储引用的聚合及通用切片 ABI 仍未完成；E7。 |
 | P1-06.06 | ✅ 已完成 | 结构化 Copy 重复数组 | P1-06.02 | 重复操作数只求值一次，含零长度；拒绝非 Copy 重复并保持长度/工作量/快照预算。 | `SafeCoreMirV2ProfileTests`; E6 |
-| P1-06.07 | ✅ 已完成 | 完整数组局部切片基础 | P1-06.03 | 所有者特化的 unsizing、长度与常量读取可执行；动态索引和空数组越界明确拒绝。 | `SafeCoreMirSliceTests`; E6 |
+| P1-06.07 | ✅ 已完成 | 完整数组局部切片基础 | P1-06.03 | 所有者特化的 unsizing、长度及常量/动态读取可执行；检查包含空数组在内的索引边界。通用切片参数/返回、子切片和写入保持独立叶子。 | `SafeCoreMirSliceTests`、`SafeCoreMirProjectionBackendTests`：完整数组所有者保持、动态读取执行及越界失败；E6、E7 |
 | P1-06.08 | ⏳ 计划中 | 通用切片表示与调用 ABI | P1-06.04, P1-06.05 | 表示共享/可变切片的数据/长度/所有者、数组 unsizing 和参数/返回；拒绝非法生命周期或元素转换。 | 计划：切片 ABI 夹具；MIR/LIR 快照及生成程序的 CoreCLR 运行 |
 | P1-06.09 | ⏳ 计划中 | 切片索引、子切片与写入 | P1-06.08 | 动态索引/范围检查、空/末端边界及可变写入保持共享所有者标识；越界/别名错误不能静默执行。 | 计划：切片正向/负向/边界用例及分配/工作量预算 |
-| P1-06.10 | 🚧 进行中 | 模式与 match 降低，含 move/ref 绑定 | P1-06.04, P1-06.05 | 元组/标量/已声明 ADT 模式、guard、or-pattern、穷尽性保持求值/绑定语义；不匹配绑定被拒绝。 | `SafeCoreMirLowering.Extensions.cs`；计划源码 match 语料 |
+| P1-06.10 | 🚧 进行中 | 模式与 match 降低，含 move/ref 绑定 | P1-06.04, P1-06.05 | 元组/标量/已声明 ADT 模式、guard、or-pattern、穷尽性保持求值/绑定语义；不匹配绑定被拒绝。 | `SafeCoreMirPatternExecutionTests`、`SafeCoreMirAdtSourceTests`：已有标量/元组 match 及具名/元组结构体绑定投影；完整源码 match/move/ref 语料仍未完成。 |
 | P1-06.11 | 🚧 进行中 | 闭包环境与捕获所有权 | P1-06.04, P1-06.05 | 声明捕获区分复制、移动、共享/可变借用；生成调用保持捕获生命周期，并稳定拒绝未支持逃逸。 | 计划扩展：`SafeCoreMirPatternExecutionTests`、捕获/析构夹具 |
 | P1-06.12 | ⏳ 计划中 | const 到 MIR 接入 | P1-06.01, P1-06.02 | 固定范围内每个可执行 const 条目/块从已检查值降低；const 环、溢出、求值预算在源码位置诊断。 | 计划源码 const 执行夹具；`SafeCoreConstantTests` 仍作为类型/const 证据 |
 | P1-06.13 | 🚧 进行中 | 对账固定的可执行降低清单 | P1-06.01, P1-06.08, P1-06.10, P1-06.11, P1-06.12, P1-06.17, P1-06.18, P1-06.19 | 按固定账本整合具名类别实现和夹具；每个可执行行有归属，仅检查排除项保持能力诊断。缺失实现归入所属类别叶子，不在本行追加无界工作。 | 计划：可执行类别覆盖清单；`SafeCoreMirClrLowering.cs` |
 | P1-06.14 | 🚧 进行中 | 每个新增 MIR/LIR 节点的源码映射 | P1-06.13 | 脱糖、嵌套作用域和导入后的诊断/序列点指向原文件/范围；拒绝损坏源码证据。 | 计划扩展 `WorkspaceSourceMapTests` 及 Portable PDB 断言 |
-| P1-06.15 | 🚧 进行中 | 预算、取消与失败时关闭能力检查 | P1-06.13 | 每个新增类别都有正例、未支持、大小/深度/工作量/时间/取消测试；check/build 一致，失败不产出部分结果。 | 计划扩展 MIR 限制与编译器边界套件 |
-| P1-06.16 | 🚧 进行中 | 确定性 MIR/LIR/PE/PDB 快照 | P1-06.14, P1-06.15 | 相同固定输入重复构建保持字节及有序源码/来源事实；格式变更使用新版本。 | 计划快照清单及 PE/PDB 哈希比较 |
+| P1-06.15 | 🚧 进行中 | 预算、取消与失败时关闭能力检查 | P1-06.13 | 每个新增类别都有正例、未支持、大小/深度/工作量/时间/取消测试；check/build 一致，失败不产出部分结果。 | `SafeCoreMirPlaceTests`、`SafeCoreMirAdtLayoutTests`、`SafeCoreMirReferenceProvenanceTests`、`SafeCoreMirAdtSourceTests`：投影/布局/来源限制、源码拒绝及无输出检查；其余类别边界仍需覆盖。 |
+| P1-06.16 | 🚧 进行中 | 确定性 MIR/LIR/PE/PDB 快照 | P1-06.14, P1-06.15 | 相同固定输入重复构建保持字节及有序源码/来源事实；格式变更使用新版本。 | `SafeCoreMirAdtSourceTests`、`SafeCoreMirReferenceProvenanceTests`：确定性 MIR 布局/源码快照及有序返回来源事实；完整快照清单及 PE/PDB 哈希覆盖仍未完成。 |
 | P1-06.17 | 🚧 进行中 | 标量操作符与转换 — MIR/CLR 数值降低 | P1-06.01, P1-06.03 | 实现固定的可执行标量/操作符/cast 行，覆盖符号性、溢出、比较和转换边界；仅检查的位宽或 char/float 形式在显式纳入前保持规定拒绝。 | 计划：逐类型/操作符的生成行为与拒绝夹具 |
-| P1-06.18 | 🚧 进行中 | 聚合构造与布局 — MIR/CLR 值类型 | P1-06.01, P1-06.04 | 声明的元组、数组和 ADT 变体保持字段顺序、判别值、嵌套布局及一次求值；拒绝畸形/递归/超限布局。 | 计划：聚合构造/布局快照与发射运行用例 |
-| P1-06.19 | 🚧 进行中 | 聚合投影读取、写入及求值顺序 | P1-06.18, P1-06.05 | 声明的字段/元组/索引/解引用访问已检查所有者，按顺序求值 receiver/index/value 并保持修改；错误所有者/类型/边界失败，不替换别名。 | 计划：源码投影/修改/顺序夹具与 LIR 验证负例 |
+| P1-06.18 | 🚧 进行中 | 聚合构造与布局 — MIR/CLR 值类型 | P1-06.01, P1-06.04 | 声明的元组、数组和 ADT 变体保持字段顺序、判别值、嵌套布局及一次求值；拒绝畸形/递归/超限布局。 | `SafeCoreMirAdtLayoutTests`、`SafeCoreMirAdtSourceTests`、`SafeCoreMirProjectionBackendTests`：具名/元组/单元结构体、嵌套元组/固定数组字段、按声明顺序存储、按源码顺序初始化、结构体更新及导入构造器别名。enum/tag/downcast 和存储引用的聚合仍未完成；E7。 |
+| P1-06.19 | 🚧 进行中 | 聚合投影读取、写入及求值顺序 | P1-06.18, P1-06.05 | 声明的字段/元组/索引/解引用访问已检查所有者，按顺序求值 receiver/index/value 并保持修改；错误所有者/类型/边界失败，不替换别名。 | `SafeCoreMirAdtSourceTests`、`SafeCoreMirProjectionBackendTests`：嵌套 field/tuple/固定数组/deref 读取、投影写入/借用、有界检查的 `DynamicIndex` 读写及 RHS 先于 place 的基础类型复合赋值；`SafeCoreMirSliceTests` 覆盖完整数组切片的动态读取。通用切片写入及其余值类别仍未完成；E7。 |
 
 <a id="p1-07"></a>
 
@@ -114,9 +121,9 @@
 | P1-07.04 | 🚧 进行中 | NLL 使用/定义活跃性 | P1-07.01 | 借用在最后可达使用后结束，含临时值和死分支；词法重叠但活跃区间不重叠的借用合法。 | 计划源码 NLL 夹具及确定性活跃性快照 |
 | P1-07.05 | 🚧 进行中 | 共享/可变借用冲突与所有者写入 | P1-07.04, P1-07.01 | 读/写/移动冲突按投影别名而非仅局部 ID 判定；共享读取合法，重叠独占访问被拒绝。 | `SafeCoreMirReferenceExecutionTests`；计划投影别名负例 |
 | P1-07.06 | 🚧 进行中 | 再借用暂停、恢复与失效 | P1-07.05 | 父引用仅在子借用结束后恢复；可变/共享链正确拒绝父使用及失效子引用复用。 | 计划嵌套投影再借用及生命周期边夹具 |
-| P1-07.07 | 🚧 进行中 | 参数/返回来源与逃逸 | P1-07.06, P1-06.05 | 本地函数保持声明的输入到输出生命周期关系；栈所有者、分支局部值、捕获逃逸在源码位置被拒绝。 | 计划跨过程源码编译通过/失败生命周期语料 |
+| P1-07.07 | 🚧 进行中 | 参数/返回来源与逃逸 | P1-07.06, P1-06.05 | 本地函数保持声明的输入到输出生命周期关系；栈所有者、分支局部值、捕获逃逸在源码位置被拒绝。 | `SafeCoreMirReferenceProvenanceTests`、`SafeCoreMirAdtSourceTests`：投影引用返回、重复可变引用调用、CFG 来源并集、调用方借用冲突及局部/分支作用域逃逸；其余生命周期类别仍未完成。 |
 | P1-07.08 | 🚧 进行中 | 分支合流与循环不动点 | P1-07.03, P1-07.04, P1-07.06 | move/init/loan 状态在 if/match/回边、break、continue 合流时保守；工作量耗尽不能接受不完整分析。 | 计划合流/循环正例、负例及访问预算测试 |
-| P1-07.09 | 🚧 进行中 | MIR/所有权证据双向完整性 | P1-07.07, P1-07.08 | 每个 place、借用来源、生命周期边和调用效果均有匹配 MIR 证据；缺失、额外、替换、陈旧事实均失败。 | `SafeCoreMirOwnershipEvidence.cs`；计划证据篡改用例 |
+| P1-07.09 | 🚧 进行中 | MIR/所有权证据双向完整性 | P1-07.07, P1-07.08 | 每个 place、借用来源、生命周期边和调用效果均有匹配 MIR 证据；缺失、额外、替换、陈旧事实均失败。 | `SafeCoreMirOwnershipAdapterTests`、`SafeCoreMirReferenceProvenanceTests`：MIR/来源关联及缺失/替换/逃逸来源负例；全部类别的证据覆盖仍未完成。 |
 | P1-07.10 | 🚧 进行中 | 稳定源码所有权诊断 | P1-07.09, P1-06.14 | 非法程序报告预期 move/borrow/escape 代码及原始范围；未支持降低诊断不能冒充借用拒绝。 | 计划以源码用例 ID 为键的诊断黄金测试 |
 | P1-07.11 | ⏳ 计划中 | 固定 rustc 1.98 源码借用差分 | P1-07.10, P1-10.05 | 固定借用用例包括合法/非法投影移动、再借用、NLL、合流、逃逸和限制；逐例执行且未解释差异/跳过为零。 | 计划 `p1-differential-v3` 的借用部分；逐用例 rustc/源码哈希 |
 | P1-07.12 | 🚧 进行中 | 所有权求解器资源契约 | P1-07.09 | 操作量/路径/块/诊断限制及取消覆盖新增分析边；畸形/循环证据确定性终止。 | 计划所有权预算/取消边界夹具 |
@@ -191,7 +198,7 @@
 
 ## 下一批可交付工作及并行边界
 
-1. 先交付 P1-06.01、P1-10.01、P1-10.02：固定范围、覆盖关系和分母。这是有限清单交付，不是重新编写整个设计。
+1. P1-06.01 已随范围账本冻结而 ✅ 已完成。接下来交付 P1-10.01、P1-10.02，固定用例覆盖关系和分母。这是有限清单交付，不是重新编写整个设计。
 2. MIR/类型线程交付 P1-06.04/.05/.08/.09；所有权线程在 place/schema 前提满足后推进 P1-07.01～.10；析构线程在 move/drop flag 前提满足后推进 P1-08.01～.11。引用同一 `SafeCoreMirLowering.cs` 或 validator 时必须串行集成，不能让不同智能体同时写该文件。
 3. 元数据线程可先推进 P1-09.03/.04；语料/运行器线程可独立推进 P1-10.03/.05/.06/.07。源码调用集成 P1-09.06 必须等引用和 panic 契约到位。
 4. 最后交付源码 borrow/Drop 差分、真实跨包平台用例及 P1-10.08～.10；按 P1-GATE.01～.06 逐项对账。已有库探针和手工 LIR 测试继续保留。

@@ -11,7 +11,7 @@ internal static class SafeCoreMirOwnershipAdapterTests
         new("typed MIR ownership adapter applies local limits per function", PerFunctionLimitAsync),
         new("typed MIR ownership adapter bounds materialized constants", MaterializedConstantLimitAsync),
         new("typed MIR ownership adapter reports use before initialization", UseBeforeInitializationAsync),
-        new("typed MIR ownership adapter rejects reference evidence it cannot prove", UnsupportedReferenceAsync),
+        new("typed MIR ownership adapter preserves returned parameter provenance", ParameterReferenceAsync),
         new("typed MIR ownership adapter accepts finite Copy tuple aggregates", CopyTupleAsync),
         new("typed MIR ownership adapter lowers non-Copy place reads as moves", NonCopyMoveAsync),
         new("typed MIR ownership adapter preserves projected MIR places", ProjectedPlaceAsync),
@@ -137,7 +137,7 @@ internal static class SafeCoreMirOwnershipAdapterTests
             0,
             Source);
 
-    private static Task UnsupportedReferenceAsync()
+    private static Task ParameterReferenceAsync()
     {
         SafeCoreMirProgram program = new([
             new SafeCoreMirFunction(
@@ -155,8 +155,11 @@ internal static class SafeCoreMirOwnershipAdapterTests
         ]);
 
         SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(program);
-        AssertEx.False(result.IsSuccessful, "Reference ownership cannot be inferred from typed MIR alone.");
-        AssertEx.Equal(SafeCoreMirOwnershipDiagnosticCodes.Unsupported, result.Diagnostics.Single().Code);
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        SafeCoreMirReferenceProvenanceResult provenance = SafeCoreMirReferenceProvenance.Analyze(program);
+        AssertEx.True(provenance.IsSuccessful, string.Join(Environment.NewLine, provenance.Diagnostics));
+        AssertEx.True(provenance.Functions.Single().ReturnOrigins.Single() is { LocalId: 0, IsParameter: true },
+            "A returned input reference retains its checked parameter origin.");
         return Task.CompletedTask;
     }
 
@@ -278,7 +281,7 @@ internal static class SafeCoreMirOwnershipAdapterTests
                 "crate::projected-borrow",
                 SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Unit),
                 [
-                    new SafeCoreMirLocal(0, "pair", tuple, SafeCoreMirLocalKind.Parameter, false, Source),
+                    new SafeCoreMirLocal(0, "pair", tuple, SafeCoreMirLocalKind.Parameter, true, Source),
                     new SafeCoreMirLocal(1, "view", mutableReference, SafeCoreMirLocalKind.Temporary, false, Source),
                 ],
                 [new SafeCoreMirBlock(

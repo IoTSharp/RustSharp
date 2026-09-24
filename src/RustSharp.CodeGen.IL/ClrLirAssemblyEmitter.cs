@@ -252,7 +252,7 @@ public static class ClrLirAssemblyEmitter
                 site => ResolveCall(metadata, consoleType, definitions, externalAssemblies, externalTypes, site),
                 instructionEncoder,
                 layout => constructorHandles[layout.Name], (layout, index) => fieldHandles[layout.Name][index],
-                CheckSourceMapBudget, cancellationToken);
+                CheckSourceMapBudget, type => valueHandles[type.Name!], cancellationToken);
             StandaloneSignatureHandle localSignature = AddLocalSignature(metadata, method.Locals, valueHandles);
             localSignatures.Add(localSignature);
             int methodBodyOffset = methodBodyStream.AddMethodBody(instructionEncoder, maxStack, localSignature);
@@ -305,7 +305,7 @@ public static class ClrLirAssemblyEmitter
                     ClrLirField field = layout.Fields[index];
                     var signature = new BlobBuilder();
                     EncodeSignatureType(new BlobEncoder(signature).FieldSignature(), field.Type, valueHandles);
-                    FieldDefinitionHandle handle = metadata.AddFieldDefinition(FieldAttributes.Public | FieldAttributes.InitOnly,
+                    FieldDefinitionHandle handle = metadata.AddFieldDefinition(FieldAttributes.Public,
                         metadata.GetOrAddString(field.Name), metadata.GetOrAddBlob(signature));
                     if (handle != fieldHandles[layout.Name][index]) throw new InvalidOperationException("Unstable CLR field order.");
                     nextFieldRow++;
@@ -712,7 +712,10 @@ public static class ClrLirAssemblyEmitter
             }
             if (local.Type.Kind == ClrLirTypeKind.ByReference)
             {
-                throw new ArgumentException("Managed by-reference locals are not supported by this CLR LIR.", nameof(locals));
+                if (!local.Type.TryGetByReferenceElement(out ClrLirType element))
+                    throw new ArgumentException("Invalid managed by-reference local.", nameof(locals));
+                EncodeSignatureType(variables.AddVariable().Type(isByRef: true, isPinned: false), element, valueHandles);
+                continue;
             }
 
             EncodeSignatureType(variables.AddVariable().Type(isByRef: false, isPinned: false), local.Type, valueHandles);
@@ -762,6 +765,21 @@ public static class ClrLirAssemblyEmitter
                         break;
                     case ClrLirLoadLocal loadLocal:
                         _ = descriptor.Append(':').Append(loadLocal.Index);
+                        break;
+                    case ClrLirLoadLocalAddress address:
+                        descriptor.Append(address.Index).Append(':').Append(address.IsMutable);
+                        break;
+                    case ClrLirFieldAddress address:
+                        descriptor.Append(address.Definition.Name).Append(':').Append(address.FieldIndex).Append(':').Append(address.IsMutable);
+                        break;
+                    case ClrLirLoadIndirect load:
+                        descriptor.Append(load.Type);
+                        break;
+                    case ClrLirStoreIndirect store:
+                        descriptor.Append(store.Type);
+                        break;
+                    case ClrLirReadOnlyReference readOnly:
+                        descriptor.Append(readOnly.ElementType);
                         break;
                     case ClrLirStoreLocal storeLocal:
                         _ = descriptor.Append(':').Append(storeLocal.Index);

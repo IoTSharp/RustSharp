@@ -280,6 +280,27 @@ public sealed record ClrLirLoadString : ClrLirInstruction
 }
 
 public sealed record ClrLirLoadLocal(int Index) : ClrLirInstruction;
+/// <summary>Produces a managed pointer to the actual local storage.</summary>
+public sealed record ClrLirLoadLocalAddress(int Index, bool IsMutable = false) : ClrLirInstruction;
+public sealed record ClrLirFieldAddress : ClrLirInstruction
+{
+    public ClrLirFieldAddress(ClrLirValueType definition, int fieldIndex, bool isMutable = false)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        Definition = definition;
+        FieldIndex = fieldIndex;
+        IsMutable = isMutable;
+    }
+
+    public ClrLirValueType Definition { get; }
+    public int FieldIndex { get; }
+    public bool IsMutable { get; }
+}
+public sealed record ClrLirLoadIndirect(ClrLirType Type) : ClrLirInstruction;
+public sealed record ClrLirStoreIndirect(ClrLirType Type) : ClrLirInstruction;
+/// <summary>Erases write access; the managed pointer is unchanged at runtime.</summary>
+public sealed record ClrLirReadOnlyReference(ClrLirType ElementType) : ClrLirInstruction;
+public sealed record ClrLirThrowIndexOutOfRange : ClrLirInstruction;
 public sealed record ClrLirStoreLocal(int Index) : ClrLirInstruction;
 public sealed record ClrLirLoadArgument(int Index) : ClrLirInstruction;
 public sealed record ClrLirDiscard(ClrLirType Type) : ClrLirInstruction;
@@ -482,6 +503,8 @@ public sealed class ClrLirMethod
     public string? SourceQualifiedName { get; init; }
     /// <summary>Whether a source declaration may be imported by another package.</summary>
     public bool IsPublic { get; init; } = true;
+    /// <summary>An internal backend helper without an independent source ownership body.</summary>
+    public bool IsCompilerGenerated { get; init; }
     public ClrLirType ReturnType { get; }
     public ImmutableArray<ClrLirType> Parameters { get; }
     public ImmutableArray<ClrLirLocal> Locals { get; }
@@ -501,6 +524,8 @@ public sealed class ClrLirMethod
         long started = Stopwatch.GetTimestamp();
         cancellationToken.ThrowIfCancellationRequested();
         var diagnostics = ImmutableArray.CreateBuilder<ClrLirDiagnostic>();
+        if (IsCompilerGenerated && (IsPublic || SourceQualifiedName is not null))
+            diagnostics.Add(new("LIR021", "Compiler helpers must be internal and have no source declaration identity.", null, -1));
         ValidateType(ReturnType, "return", null, -1, diagnostics, allowVoid: true);
         for (var index = 0; index < Parameters.Length; index++)
         {
@@ -553,6 +578,7 @@ public sealed class ClrLirMethod
             {
                 CheckBudget();
                 ClrLirInstruction instruction = block.Instructions[index];
+                int inputDepth = stack.Length;
                 if (terminated)
                 {
                     diagnostics.Add(new("LIR002", "Instructions after a terminator are unreachable.", block.Label, index));
@@ -564,7 +590,8 @@ public sealed class ClrLirMethod
                     break;
                 }
 
-                maximumStackDepth = Math.Max(maximumStackDepth, stack.Length + (instruction is ClrLirFormatInt32 ? 1 : 0));
+                maximumStackDepth = Math.Max(maximumStackDepth, instruction is ClrLirThrowIndexOutOfRange
+                    ? inputDepth + 1 : stack.Length + (instruction is ClrLirFormatInt32 ? 1 : 0));
                 if (maximumStackDepth > ushort.MaxValue)
                 {
                     diagnostics.Add(new("LIR017", "Evaluation stack exceeds the ECMA-335 maxstack limit.", block.Label, index));
@@ -585,6 +612,7 @@ public sealed class ClrLirMethod
                         Propagate(branchTrue.Target, stack, block.Label, index, byLabel, incoming, work, diagnostics);
                         break;
                     case ClrLirReturn:
+                    case ClrLirThrowIndexOutOfRange:
                         terminated = true;
                         break;
                 }
@@ -641,6 +669,42 @@ public sealed class ClrLirMethod
         {
             case ClrLirLoadInt32:
                 stack = stack.Add(ClrLirType.I32);
+                return true;
+            case ClrLirLoadLocalAddress address:
+                if (!TryGetLocal(address.Index, blockLabel, instructionIndex, diagnostics, out ClrLirLocal addressed)) return false;
+                if (!addressed.Type.IsKnown || addressed.Type.Kind is ClrLirTypeKind.ByReference or ClrLirTypeKind.Void)
+                {
+                    diagnostics.Add(new("LIR020", "CLR managed pointers cannot refer to another managed pointer.", blockLabel, instructionIndex));
+                    return false;
+                }
+                stack = stack.Add(ClrLirType.ByReference(addressed.Type, address.IsMutable));
+                return true;
+            case ClrLirFieldAddress address:
+                if (!ValidateValueDefinition(address.Definition, blockLabel, instructionIndex, diagnostics)) return false;
+                if ((uint)address.FieldIndex >= (uint)address.Definition.Fields.Length)
+                {
+                    diagnostics.Add(new("LIR018", "Value field index is out of range.", blockLabel, instructionIndex));
+                    return false;
+                }
+                if (!TryPop(ClrLirType.ByReference(address.Definition.Type, address.IsMutable), ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(ClrLirType.ByReference(address.Definition.Fields[address.FieldIndex].Type, address.IsMutable));
+                return true;
+            case ClrLirLoadIndirect indirect:
+                if (!ValidateIndirectType(indirect.Type, blockLabel, instructionIndex, diagnostics)) return false;
+                if (!TryPop(ClrLirType.ByReference(indirect.Type), ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(indirect.Type);
+                return true;
+            case ClrLirStoreIndirect indirect:
+                if (!ValidateIndirectType(indirect.Type, blockLabel, instructionIndex, diagnostics)) return false;
+                return TryPop(indirect.Type, ref stack, blockLabel, instructionIndex, diagnostics) &&
+                    TryPop(ClrLirType.ByReference(indirect.Type, mutable: true), ref stack, blockLabel, instructionIndex, diagnostics);
+            case ClrLirReadOnlyReference readOnly:
+                if (!ValidateIndirectType(readOnly.ElementType, blockLabel, instructionIndex, diagnostics)) return false;
+                if (!TryPop(ClrLirType.ByReference(readOnly.ElementType), ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(ClrLirType.ByReference(readOnly.ElementType));
+                return true;
+            case ClrLirThrowIndexOutOfRange:
+                stack = [];
                 return true;
             case ClrLirLoadBoolean:
                 stack = stack.Add(ClrLirType.Bool);
@@ -740,6 +804,14 @@ public sealed class ClrLirMethod
         }
     }
 
+    private static bool ValidateIndirectType(ClrLirType type, string blockLabel, int instructionIndex,
+        ImmutableArray<ClrLirDiagnostic>.Builder diagnostics)
+    {
+        if (type.IsKnown && type.Kind is not (ClrLirTypeKind.Void or ClrLirTypeKind.ByReference)) return true;
+        diagnostics.Add(new("LIR020", "Indirect operations require a closed non-void, non-reference referent.", blockLabel, instructionIndex));
+        return false;
+    }
+
     private bool TryGetLocal(int index, string blockLabel, int instructionIndex, ImmutableArray<ClrLirDiagnostic>.Builder diagnostics, out ClrLirLocal local)
     {
         if ((uint)index < (uint)Locals.Length)
@@ -764,6 +836,8 @@ public sealed class ClrLirMethod
         ClrLirType actual = stack[^1];
         stack = stack[..^1];
         if (actual != expected &&
+            !(expected.Kind == ClrLirTypeKind.ByReference && !expected.IsMutable &&
+              actual.Kind == ClrLirTypeKind.ByReference && actual.Name == expected.Name) &&
             !(expected == ClrLirType.Any && actual is { Kind: ClrLirTypeKind.Text or ClrLirTypeKind.Any }))
         {
             diagnostics.Add(new("LIR009", $"Expected {expected}, but found {actual}.", blockLabel, instructionIndex));
@@ -853,6 +927,8 @@ public sealed class ClrLirMethod
         foreach (ClrLirField field in definition.Fields)
         {
             ValidateType(field.Type, "field", blockLabel, instructionIndex, diagnostics, allowVoid: false);
+            if (field.Type.Kind == ClrLirTypeKind.ByReference)
+                diagnostics.Add(new("LIR020", "Ordinary CLR value layouts cannot contain managed reference fields.", blockLabel, instructionIndex));
             if (!names.Add(field.Name))
                 diagnostics.Add(new("LIR019", "Value field names must be unique.", blockLabel, instructionIndex));
         }
@@ -907,6 +983,8 @@ internal sealed class ClrLirValueTypeSet
             {
                 checkBudget();
                 ValidateType(field.Type, allowVoid: false);
+                if (field.Type.Kind == ClrLirTypeKind.ByReference)
+                    throw new InvalidOperationException("Ordinary CLR value layouts cannot contain managed reference fields.");
                 long fieldSize = field.Type.Kind == ClrLirTypeKind.Value ? Visit(byName[field.Type.Name!], depth + 1) : 8;
                 if (field.Type.Kind == ClrLirTypeKind.Value) height = Math.Max(height, heights[field.Type.Name!] + 1);
                 size += (fieldSize + 7) / 8 * 8;
@@ -936,6 +1014,9 @@ internal sealed class ClrLirValueTypeSet
                 {
                     case ClrLirConstructValue construct: ValidateDefinition(construct.Definition); break;
                     case ClrLirReadField field: ValidateDefinition(field.Definition); break;
+                    case ClrLirFieldAddress field: ValidateDefinition(field.Definition); break;
+                    case ClrLirLoadIndirect load: ValidateType(load.Type, allowVoid: false); break;
+                    case ClrLirStoreIndirect store: ValidateType(store.Type, allowVoid: false); break;
                     case ClrLirDiscard discard: ValidateType(discard.Type, allowVoid: false); break;
                     case ClrLirCall call:
                         ValidateType(call.Site.ReturnType, allowVoid: true);
@@ -952,6 +1033,7 @@ internal sealed class ClrLirValueTypeSet
             throw new InvalidOperationException($"Invalid closed CLR type '{type}'.");
         if (type.Kind == ClrLirTypeKind.Value && !byName.ContainsKey(type.Name!))
             throw new InvalidOperationException($"Unknown closed CLR value type '{type.Name}'.");
+        if (type.TryGetByReferenceElement(out ClrLirType element)) ValidateType(element, allowVoid: false);
     }
 
     private void ValidateDefinition(ClrLirValueType definition)

@@ -14,7 +14,8 @@ internal static class SafeCoreMirSliceTests
     [
         new("MIR v2 lowers a full array slice, length and constant index", RunFullSliceAsync),
         new("MIR v2 preserves slice provenance in deterministic MIR", SnapshotAsync),
-        new("MIR v2 rejects dynamic slice indexes at the CLR capability boundary", DynamicIndexAsync),
+        new("MIR v2 executes dynamic full-array slice indexes", DynamicIndexAsync),
+        new("MIR v2 dynamic full-array slice indexes trap outside their bounds", DynamicBoundsAsync),
         new("MIR v2 rejects an out-of-bounds empty slice index", EmptyBoundsAsync),
     ];
 
@@ -63,16 +64,34 @@ internal static class SafeCoreMirSliceTests
         return Task.CompletedTask;
     }
 
-    private static Task DynamicIndexAsync()
+    private static Task DynamicIndexAsync() => WithWorkspaceAsync(async (directory, token) =>
     {
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         const string source = "fn main() { let values = [10, 20]; let view: &[i32] = &values; let index: usize = 1; println!(\"{}\", view[index]); }";
-        CompilationResult result = CompilerDriver.Check(source, "slice-dynamic.rs", Profile, deadline.Token);
-        AssertEx.False(result.Success, "The bounded CLR backend must reject dynamic slice indexing explicitly.");
-        AssertEx.True(result.Diagnostics.Any(static diagnostic => diagnostic.Code == SafeCoreMirClrLowering.Unsupported),
-            Format(result.Diagnostics));
-        return Task.CompletedTask;
-    }
+        string output = Path.Combine(directory, "slice.dll");
+        CompilationResult result = CompilerDriver.Compile(source, "slice-dynamic.rs", output,
+            assemblyName: "DynamicSlice", profile: Profile, cancellationToken: token);
+        AssertEx.True(result.Success, Format(result.Diagnostics));
+        BoundedProcessResult run = await new BoundedProcessRunner().RunAsync(
+            new("dotnet", [output], directory, TimeSpan.FromSeconds(10),
+                static started => Console.WriteLine($"dynamic slice PID={started.ProcessId}; parent={started.ParentProcessId}; started={started.StartedAt:O}; timeout=10s")), token).ConfigureAwait(false);
+        AssertEx.True(run.Succeeded && !run.ProcessTreeCleanupIncomplete, run.StandardError);
+        AssertEx.Equal("20\n", run.StandardOutput.Replace("\r\n", "\n", StringComparison.Ordinal));
+    });
+
+    private static Task DynamicBoundsAsync() => WithWorkspaceAsync(async (directory, token) =>
+    {
+        const string source = "fn main() { let values = [10, 20]; let view: &[i32] = &values; let index: usize = 2; println!(\"{}\", view[index]); }";
+        string output = Path.Combine(directory, "slice.dll");
+        CompilationResult result = CompilerDriver.Compile(source, "slice-dynamic-bounds.rs", output,
+            assemblyName: "DynamicSliceBounds", profile: Profile, cancellationToken: token);
+        AssertEx.True(result.Success, Format(result.Diagnostics));
+        BoundedProcessResult run = await new BoundedProcessRunner().RunAsync(
+            new("dotnet", [output], directory, TimeSpan.FromSeconds(10),
+                static started => Console.WriteLine($"slice bounds PID={started.ProcessId}; parent={started.ParentProcessId}; started={started.StartedAt:O}; timeout=10s")), token).ConfigureAwait(false);
+        AssertEx.False(run.Succeeded, "A dynamic out-of-range slice index must fail at runtime.");
+        AssertEx.False(run.ProcessTreeCleanupIncomplete, "The bounded runtime must clean its process tree.");
+        AssertEx.True(run.StandardError.Contains("IndexOutOfRangeException", StringComparison.Ordinal), run.StandardError);
+    });
 
     private static Task EmptyBoundsAsync()
     {
