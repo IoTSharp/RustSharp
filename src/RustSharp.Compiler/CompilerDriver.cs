@@ -664,6 +664,9 @@ public sealed class CompilerDriver
     {
         var outputDirectory = Path.GetDirectoryName(assemblyPath)
                 ?? throw new InvalidOperationException("The output path has no parent directory.");
+        if (generated.RequiresMirRuntime && string.Equals(Path.GetFileName(assemblyPath),
+                "RustSharp.Runtime.dll", StringComparison.OrdinalIgnoreCase))
+            throw new IOException("The MIR output filename is reserved for its RustSharp.Runtime.dll dependency.");
         Directory.CreateDirectory(outputDirectory);
 
         // FileStream.Lock is an OS-level advisory/mandatory lock (depending on
@@ -686,6 +689,13 @@ public sealed class CompilerDriver
                 Path.Combine(stagingDirectory, Path.GetFileName(runtimeConfigPath)),
                 new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(generated.RuntimeConfigJson)),
         };
+        if (generated.RequiresMirRuntime)
+        {
+            string runtimePath = Path.Combine(outputDirectory, "RustSharp.Runtime.dll");
+            artifacts = [.. artifacts, new PendingArtifact(runtimePath,
+                Path.Combine(stagingDirectory, "RustSharp.Runtime.dll"),
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "RustSharp.Runtime.dll")))];
+        }
         var movedTargets = new List<string>(artifacts.Length);
         var backups = new List<(string Target, string Backup)>(artifacts.Length);
         var transactionDiagnostics = new List<string>(capacity: artifacts.Length + 1);

@@ -37,7 +37,7 @@ public static class SafeCoreMirFormatting
         public string Format(SafeCoreMirProgram program)
         {
             bool extended = UsesExtendedFormat(program);
-            Add(extended ? "safe-core-mir-v2\n" : "safe-core-mir-v1\n");
+            Add(UsesFamilyFormat(program) ? "safe-core-mir-v3\n" : extended ? "safe-core-mir-v2\n" : "safe-core-mir-v1\n");
             for (int layoutIndex = 0; layoutIndex < program.AdtLayouts.Count; layoutIndex++)
             {
                 Step();
@@ -50,7 +50,16 @@ public static class SafeCoreMirFormatting
                     Step();
                     SafeCoreMirAdtField field = layout.Fields[fieldIndex];
                     Add(FormattableString.Invariant($"  field {fieldIndex} {Escape(field.Name)}: {field.Type} "));
+                    if (field.RequiresStaticLifetime) Add("static_refs ");
                     Source(field.Source);
+                    Add("\n");
+                }
+                for (int variantIndex = 0; variantIndex < layout.Variants.Count; variantIndex++)
+                {
+                    Step();
+                    SafeCoreMirAdtVariant variant = layout.Variants[variantIndex];
+                    Add(FormattableString.Invariant($"  variant {variantIndex} {Escape(variant.Name)} tag={variant.Discriminant} offset={variant.FieldOffset} fields={variant.Fields.Count} "));
+                    Source(variant.Source);
                     Add("\n");
                 }
                 Add("}\n");
@@ -61,6 +70,7 @@ public static class SafeCoreMirFormatting
                 SafeCoreMirFunction function = program.Functions[index];
                 Add(FormattableString.Invariant($"fn @{function.Id} {Escape(function.Name)} -> {function.ReturnType} entry bb{function.EntryBlockId} "));
                 Source(function.Source);
+                if (function.ReturnsStaticReference) Add(" returns_static");
                 Add(" {\n");
                 for (int localIndex = 0; localIndex < function.Locals.Count; localIndex++)
                 {
@@ -68,6 +78,8 @@ public static class SafeCoreMirFormatting
                     SafeCoreMirLocal local = function.Locals[localIndex];
                     Add(FormattableString.Invariant($"  let %{local.Id} {local.Kind.ToString().ToLowerInvariant()}{(local.IsMutable ? " mut" : "")} {Escape(local.Name)}: {local.Type} "));
                     if (local.IsUnitAdt) Add("unit_adt ");
+                    if (local.IsPromotedConstant) Add("promoted_constant ");
+                    if (local.RequiresStaticLifetime) Add("static_lifetime ");
                     if (local.DestructorFunctionId is int destructor)
                         Add(FormattableString.Invariant($"drop=@{destructor} "));
                     Source(local.Source);
@@ -105,6 +117,42 @@ public static class SafeCoreMirFormatting
                 Add("}\n");
             }
             return _text.ToString();
+        }
+
+        private bool UsesFamilyFormat(SafeCoreMirProgram program)
+        {
+            foreach (SafeCoreMirAdtLayout layout in program.AdtLayouts)
+            { Step(); if (layout.Variants.Count != 0 || layout.Fields.Any(field => field.RequiresStaticLifetime)) return true; }
+            foreach (SafeCoreMirFunction function in program.Functions)
+            {
+                Step();
+                if (function.ReturnsStaticReference) return true;
+                foreach (SafeCoreMirLocal local in function.Locals)
+                { Step(); if (local.IsPromotedConstant || local.RequiresStaticLifetime) return true; }
+                foreach (SafeCoreMirBlock block in function.Blocks)
+                {
+                    foreach (SafeCoreMirStatement statement in block.Statements)
+                    {
+                        Step();
+                        if (statement.Value.Kind is SafeCoreMirRvalueKind.Subslice or SafeCoreMirRvalueKind.PromotedBorrow) return true;
+                        if (UsesFromEnd(statement.DestinationPlace)) return true;
+                        foreach (SafeCoreMirOperand operand in statement.Value.Operands)
+                        { Step(); if (UsesFromEnd(operand.Place)) return true; }
+                    }
+                    if (UsesFromEnd(block.Terminator.Operand?.Place)) return true;
+                    foreach (SafeCoreMirOperand argument in block.Terminator.Arguments)
+                    { Step(); if (UsesFromEnd(argument.Place)) return true; }
+                }
+            }
+            return false;
+        }
+
+        private bool UsesFromEnd(SafeCoreMirPlace? place)
+        {
+            if (place is null) return false;
+            foreach (SafeCoreMirProjection projection in place.Projections)
+            { Step(); if (projection.Kind == SafeCoreMirProjectionKind.FromEndIndex) return true; }
+            return false;
         }
 
         private bool UsesExtendedFormat(SafeCoreMirProgram program)

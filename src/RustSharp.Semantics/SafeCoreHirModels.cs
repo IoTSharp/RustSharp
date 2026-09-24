@@ -96,6 +96,7 @@ public enum SafeCoreHirNodeKind
     Trait,
     Implementation,
     TraitBound,
+    RangeExpression,
 }
 
 /// <summary>Compact properties whose meaning is determined by a HIR node kind.</summary>

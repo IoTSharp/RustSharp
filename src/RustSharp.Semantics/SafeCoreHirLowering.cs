@@ -646,6 +646,9 @@ public static class SafeCoreHirLowering
                     AddChild(node, LowerField(syntax.Fields[index], index));
                 }
 
+                if (syntax.Discriminant is not null && !_truncated)
+                    AddChild(node, LowerExpression(syntax.Discriminant));
+
                 return node.Id;
             }
             finally
@@ -1175,6 +1178,7 @@ public static class SafeCoreHirLowering
             SafeCoreBlockExpressionSyntax block => LowerBlockExpression(block),
             SafeCoreIfExpressionSyntax conditional => LowerIf(conditional),
             SafeCoreIndexExpressionSyntax index => LowerIndex(index),
+            SafeCoreRangeExpressionSyntax range => LowerRangeExpression(range),
             SafeCoreStructExpressionSyntax structure => LowerStructExpression(structure),
             SafeCoreMemberExpressionSyntax member => LowerMember(member),
             SafeCoreCastExpressionSyntax cast => LowerCast(cast),
@@ -1471,6 +1475,21 @@ public static class SafeCoreHirLowering
             {
                 Exit();
             }
+        }
+
+        private int LowerRangeExpression(SafeCoreRangeExpressionSyntax syntax)
+        {
+            SafeCoreHirNodeModifiers flags = syntax.IsInclusive ? SafeCoreHirNodeModifiers.InclusiveRange : SafeCoreHirNodeModifiers.None;
+            if (syntax.Start is not null) flags |= SafeCoreHirNodeModifiers.HasRangeStart;
+            if (syntax.End is not null) flags |= SafeCoreHirNodeModifiers.HasRangeEnd;
+            if (!TryCreateNode(SafeCoreHirNodeKind.RangeExpression, syntax.Span, out NodeBuilder? node, flags: flags)) return -1;
+            try
+            {
+                if (syntax.Start is not null) AddChild(node, LowerExpression(syntax.Start));
+                if (syntax.End is not null) AddChild(node, LowerExpression(syntax.End));
+                return node.Id;
+            }
+            finally { Exit(); }
         }
 
         private int LowerBlockExpression(SafeCoreBlockExpressionSyntax syntax)

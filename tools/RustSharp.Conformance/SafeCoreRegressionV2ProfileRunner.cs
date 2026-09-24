@@ -9,15 +9,17 @@ using RustSharp.Compiler;
 namespace RustSharp.Conformance;
 
 /// <summary>
-/// Versioned source regression runner for the bounded typed-MIR v2 profile.
-/// The v1 manifest remains immutable; this runner owns the additive v2
-/// denominator and preserves rustc/RustSharp process provenance for every
-/// case.
+/// Versioned source regression runner for bounded typed-MIR profiles.
+/// Existing manifests remain immutable; additive versions preserve process
+/// provenance while advancing the explicitly declared source contracts.
 /// </summary>
 internal static class SafeCoreRegressionV2ProfileRunner
 {
     internal const string ProfileName = "safe-core-regression-v2";
     internal const string ManifestFileName = "safe-core-regression-v2-manifest.json";
+    internal const string ProfileV3Name = "safe-core-regression-v3";
+    internal const string ManifestV3FileName = "safe-core-regression-v3-manifest.json";
+    internal const int V3Denominator = 26;
     internal const int ManifestVersion = 2;
     internal const string RustVersion = "1.98.0";
     internal const string Edition = "2024";
@@ -51,6 +53,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
         "typed-mir-binding-or-pattern", "typed-mir-mutable-capture", "typed-mir-borrow-conflict",
         "borrow-write-read", "borrow-mutable-reborrow-chain", "drop-reverse-locals", "drop-branch-return",
     ];
+    private static readonly string[] V3Ids = ["typed-mir-family-completion", "typed-mir-place-completion"];
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     internal sealed record Fixture(string Id, string File, string Kind, string? ExpectedOutput, string Area)
@@ -104,11 +107,11 @@ internal static class SafeCoreRegressionV2ProfileRunner
     internal sealed record HostReport(string OperatingSystem, string Architecture, string ProcessArchitecture,
         string Framework, string RuntimeIdentifier);
 
-    internal static Manifest ParseManifest(string json)
+    internal static Manifest ParseManifest(string json, string profileName = ProfileName)
     {
         ArgumentNullException.ThrowIfNull(json);
         if (Encoding.UTF8.GetByteCount(json) > MaximumManifestBytes)
-            throw new ArgumentException("safe-core-regression-v2 manifest exceeds its byte bound.", nameof(json));
+            throw new ArgumentException("Source regression manifest exceeds its byte bound.", nameof(json));
         ValidateNoDuplicateProperties(Encoding.UTF8.GetBytes(json));
         using JsonDocument document = JsonDocument.Parse(json, new JsonDocumentOptions
         {
@@ -126,11 +129,12 @@ internal static class SafeCoreRegressionV2ProfileRunner
         Dictionary<string, int> coverage = ParseCoverage(root);
         if (!root.TryGetProperty("cases", out JsonElement casesElement) || casesElement.ValueKind != JsonValueKind.Array)
             throw new ArgumentException("Manifest must contain a cases array.", nameof(json));
-        var cases = new List<Fixture>(Math.Min(Math.Max(denominator, 0), MaximumCases));
+        int maximumCases = ProfileDenominator(profileName);
+        var cases = new List<Fixture>(Math.Min(Math.Max(denominator, 0), maximumCases));
         int index = 0;
         foreach (JsonElement element in casesElement.EnumerateArray())
         {
-            if (++index > MaximumCases) throw new ArgumentException("Manifest exceeds its case bound.", nameof(json));
+            if (++index > maximumCases) throw new ArgumentException("Manifest exceeds its case bound.", nameof(json));
             if (element.ValueKind != JsonValueKind.Object) throw new ArgumentException("Case must be an object.", nameof(json));
             string id = RequiredString(element, "id");
             string file = RequiredString(element, "file");
@@ -152,25 +156,27 @@ internal static class SafeCoreRegressionV2ProfileRunner
             DeclaredLimits = limits,
             DeclaredCoverage = coverage,
         };
-        ValidateManifest(manifest);
+        ValidateManifest(manifest, profileName);
         return manifest;
     }
 
-    internal static void ValidateManifest(Manifest manifest)
+    internal static void ValidateManifest(Manifest manifest, string profileName = ProfileName)
     {
         ArgumentNullException.ThrowIfNull(manifest);
-        if (manifest.Profile != ProfileName || manifest.Version != ManifestVersion ||
+        int denominator = ProfileDenominator(profileName);
+        bool v3 = profileName == ProfileV3Name;
+        if (manifest.Profile != profileName || manifest.Version != (v3 ? 3 : ManifestVersion) ||
             manifest.RustVersion != RustVersion || manifest.Edition != Edition ||
-            manifest.CompilerProfile != CompilerProfile || manifest.Denominator != Denominator ||
-            manifest.Cases.Count != Denominator)
-            throw new ArgumentException("safe-core-regression-v2 version/profile contract is invalid.", nameof(manifest));
+            manifest.CompilerProfile != CompilerProfile || manifest.Denominator != denominator ||
+            manifest.Cases.Count != denominator)
+            throw new ArgumentException(profileName + " version/profile contract is invalid.", nameof(manifest));
         Limits limits = manifest.DeclaredLimits ?? throw new ArgumentException("Manifest limits are required.", nameof(manifest));
-        if (limits.MaximumCases != MaximumCases || limits.MaximumManifestBytes is < 1 or > MaximumManifestBytes ||
+        if (limits.MaximumCases != denominator || limits.MaximumManifestBytes is < 1 or > MaximumManifestBytes ||
             limits.MaximumFixtureBytes is < 1 or > MaximumFixtureBytes || limits.CaseTimeoutSeconds is < 1 or > MaximumTimeoutSeconds ||
             limits.DeadlineSeconds is < 1 or > MaximumDeadlineSeconds)
-            throw new ArgumentException("Manifest limits are outside the v2 bounds.", nameof(manifest));
+            throw new ArgumentException("Manifest limits are outside the selected profile bounds.", nameof(manifest));
         if (manifest.DeclaredCoverage is null || manifest.DeclaredCoverage.Count != 8)
-            throw new ArgumentException("Manifest coverage must declare all v2 categories.", nameof(manifest));
+            throw new ArgumentException("Manifest coverage must declare all regression categories.", nameof(manifest));
         var ids = new HashSet<string>(StringComparer.Ordinal);
         var files = new HashSet<string>(StringComparer.Ordinal);
         var actualKinds = Kinds.ToDictionary(static kind => kind, static _ => 0, StringComparer.Ordinal);
@@ -185,7 +191,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
                 !fixture.File.EndsWith(".rs", StringComparison.Ordinal) || fixture.File.Length > MaximumIdLength)
                 throw new ArgumentException("Fixture file names must be unique, flat .rs files.", nameof(manifest));
             if (!Kinds.Contains(fixture.Kind, StringComparer.Ordinal) || !Areas.Contains(fixture.Area, StringComparer.Ordinal))
-                throw new ArgumentException("Fixture kind or area is outside the v2 contract.", nameof(manifest));
+                throw new ArgumentException("Fixture kind or area is outside the regression contract.", nameof(manifest));
             if (fixture.Expectation is not ("compile-pass" or "run-pass" or "compile-fail" or "rustsharp-fail"))
                 throw new ArgumentException("Fixture expectation is invalid.", nameof(manifest));
             if (fixture.Expectation is "compile-fail" or "rustsharp-fail" && fixture.Kind != "compile-fail")
@@ -202,21 +208,37 @@ internal static class SafeCoreRegressionV2ProfileRunner
             actualAreas[fixture.Area]++;
             if (index < LegacyIds.Length && fixture.Id != LegacyIds[index])
                 throw new ArgumentException("The first eight v2 cases must preserve the v1 IDs and order.", nameof(manifest));
-            if (index >= LegacyIds.Length && fixture.Id != V2Ids[index - LegacyIds.Length])
+            if (index >= LegacyIds.Length && index < Denominator && fixture.Id != V2Ids[index - LegacyIds.Length])
                 throw new ArgumentException("The additive v2 cases must preserve their fixed IDs and order.", nameof(manifest));
+            if (index >= Denominator && fixture.Id != V3Ids[index - Denominator])
+                throw new ArgumentException("The additive v3 cases must preserve their fixed IDs and order.", nameof(manifest));
+            if (v3 && fixture.Id is ("typed-mir-binding-or-pattern" or "typed-mir-mutable-capture"))
+            {
+                string output = fixture.Id == "typed-mir-binding-or-pattern" ? "7\n" : "3\n";
+                if (fixture.Kind != "run-pass" || fixture.Expectation != "run-pass" || fixture.ExpectedOutput != output ||
+                    fixture.RustcDiagnostic is not null || fixture.RustSharpDiagnostic is not null)
+                    throw new ArgumentException("V3 completed pattern and capture contracts must execute with fixed output.", nameof(manifest));
+            }
         }
         IReadOnlyDictionary<string, int> expected = new Dictionary<string, int>(StringComparer.Ordinal)
         {
-            ["compile-pass"] = 1, ["compile-fail"] = 6, ["run-pass"] = 13, ["differential"] = 4,
-            ["legacy"] = 8, ["typed-mir"] = 12, ["borrow"] = 2, ["drop"] = 2,
+            ["compile-pass"] = 1, ["compile-fail"] = v3 ? 4 : 6, ["run-pass"] = v3 ? 17 : 13, ["differential"] = 4,
+            ["legacy"] = 8, ["typed-mir"] = v3 ? 14 : 12, ["borrow"] = 2, ["drop"] = 2,
         };
         foreach ((string key, int value) in expected)
         {
-            if (!manifest.DeclaredCoverage.TryGetValue(key, out int declared) ||
+            if (!manifest.DeclaredCoverage.TryGetValue(key, out int declared) || declared != value ||
                 (actualKinds.TryGetValue(key, out int kind) ? kind : actualAreas[key]) != declared)
                 throw new ArgumentException("Manifest coverage does not match its fixed denominator.", nameof(manifest));
         }
     }
+
+    private static int ProfileDenominator(string profileName) => profileName switch
+    {
+        ProfileName => Denominator,
+        ProfileV3Name => V3Denominator,
+        _ => throw new ArgumentException("Unknown source regression profile.", nameof(profileName)),
+    };
 
     internal static IReadOnlyDictionary<string, int> CountCoverage(IEnumerable<Fixture> fixtures)
     {
@@ -224,7 +246,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
         int count = 0;
         foreach (Fixture fixture in fixtures)
         {
-            if (++count > MaximumCases) throw new ArgumentException("Fixture count exceeds its bound.", nameof(fixtures));
+            if (++count > V3Denominator) throw new ArgumentException("Fixture count exceeds its bound.", nameof(fixtures));
             if (!result.TryGetValue(fixture.Kind, out int kindCount) ||
                 !result.TryGetValue(fixture.Area, out int areaCount))
                 throw new ArgumentException("Unknown fixture category.", nameof(fixtures));
@@ -235,8 +257,9 @@ internal static class SafeCoreRegressionV2ProfileRunner
     }
 
     public static async Task<int> RunAsync(string repositoryRoot, string reportPath, TimeSpan timeout,
-        TimeSpan deadline, DateTimeOffset startedAtUtc, Stopwatch harnessClock)
+        TimeSpan deadline, DateTimeOffset startedAtUtc, Stopwatch harnessClock, string profileName = ProfileName)
     {
+        int denominator = ProfileDenominator(profileName);
         if (timeout <= TimeSpan.Zero || timeout > TimeSpan.FromSeconds(MaximumTimeoutSeconds))
             throw new ArgumentOutOfRangeException(nameof(timeout));
         if (deadline <= TimeSpan.Zero || deadline > TimeSpan.FromSeconds(MaximumDeadlineSeconds))
@@ -244,7 +267,8 @@ internal static class SafeCoreRegressionV2ProfileRunner
         string root = Path.GetFullPath(repositoryRoot);
         string fullReport = Path.GetFullPath(reportPath, root);
         Directory.CreateDirectory(Path.GetDirectoryName(fullReport)!);
-        string manifestPath = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", ManifestFileName);
+        string manifestPath = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures",
+            profileName == ProfileV3Name ? ManifestV3FileName : ManifestFileName);
         string relativeManifest = Path.GetRelativePath(root, manifestPath).Replace(Path.DirectorySeparatorChar, '/');
         Manifest? manifest = null;
         string? manifestError = null;
@@ -252,7 +276,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
         try
         {
             manifestBytes = await File.ReadAllBytesAsync(manifestPath).ConfigureAwait(false);
-            manifest = ParseManifest(Encoding.UTF8.GetString(manifestBytes));
+            manifest = ParseManifest(Encoding.UTF8.GetString(manifestBytes), profileName);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
         {
@@ -266,7 +290,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
             effectiveDeadline = TimeSpan.FromSeconds(Math.Min(deadline.TotalSeconds, limits.DeadlineSeconds));
         }
         using var cancellation = new CancellationTokenSource(effectiveDeadline);
-        string runDirectory = Path.Combine(Path.GetDirectoryName(fullReport)!, ".run-safe-core-regression-v2-" + Environment.ProcessId + "-" + Guid.NewGuid().ToString("N"));
+        string runDirectory = Path.Combine(Path.GetDirectoryName(fullReport)!, ".run-" + profileName + "-" + Environment.ProcessId + "-" + Guid.NewGuid().ToString("N"));
         var cases = new List<CaseReport>(manifest?.Cases.Count ?? 0);
         string? cleanupDiagnostic = null;
         string? harnessError = manifestError;
@@ -288,7 +312,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
                 {
                     if (cancellation.IsCancellationRequested)
                     {
-                        cases.Add(Blocked(fixture, "v2 deadline expired before this case started."));
+                        cases.Add(Blocked(fixture, "Regression deadline expired before this case started."));
                     }
                     else if (!oracleAvailable || !rustSharpAvailable)
                     {
@@ -303,7 +327,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            harnessError ??= "v2 deadline expired.";
+            harnessError ??= "Regression deadline expired.";
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or Win32Exception)
         {
@@ -321,9 +345,9 @@ internal static class SafeCoreRegressionV2ProfileRunner
         int blocked = cases.Count(static item => item.Status == "blocked");
         int skipped = cases.Count(static item => item.Status == "skipped");
         string status = manifest is null || harnessError is not null || cleanupDiagnostic is not null || cancellation.IsCancellationRequested || blocked > 0
-            ? "blocked" : failed > 0 ? "failed" : passed == Denominator && skipped == 0 ? "passed" : "blocked";
+            ? "blocked" : failed > 0 ? "failed" : passed == denominator && skipped == 0 ? "passed" : "blocked";
         int exitCode = status == "passed" ? 0 : status == "failed" ? 1 : 2;
-        var report = new Report(2, "safe-core-typed-mir-regression", ProfileName, DateTimeOffset.UtcNow, relativeManifest,
+        var report = new Report(2, "safe-core-typed-mir-regression", profileName, DateTimeOffset.UtcNow, relativeManifest,
             manifestBytes.Length == 0 ? "" : Convert.ToHexString(SHA256.HashData(manifestBytes)), manifestBytes.Length, manifest is not null,
             manifestError, rustcVersion, rustSharpVersion, effectiveTimeout.TotalSeconds, effectiveDeadline.TotalSeconds,
             new Summary(status, exitCode, manifest?.Denominator ?? 0, passed + failed, passed, failed, blocked, skipped,
@@ -368,7 +392,7 @@ internal static class SafeCoreRegressionV2ProfileRunner
             : fixture.Expectation == "rustsharp-fail"
                 ? rustcCompile.Succeeded && MatchesCompileFailure(rustSharpCheck.ToEvidence(), fixture.RustSharpDiagnostic!) && rustSharpCompile is not null && MatchesCompileFailure(rustSharpCompile.ToEvidence(), fixture.RustSharpDiagnostic!)
             : fixture.Kind == "compile-pass" ? rustcCompile.Succeeded && rustSharpCheck.Succeeded : rustcCompile.Succeeded && rustcRun?.Succeeded == true && rustSharpCheck.Succeeded && rustSharpCompile?.Succeeded == true && rustSharpRun?.Succeeded == true && string.IsNullOrEmpty(Normalize(rustcRun.StandardError)) && string.IsNullOrEmpty(Normalize(rustSharpRun.StandardError)) && Normalize(rustcRun.StandardOutput) == Normalize(rustSharpRun.StandardOutput) && Normalize(rustcRun.StandardOutput) == Normalize(fixture.ExpectedOutput);
-        string? difference = passed ? null : fixture.Expectation == "compile-fail" ? "Expected rustc " + fixture.RustcDiagnostic + " and RustSharp " + fixture.RustSharpDiagnostic + "; rustc=" + Trim(rustcCompile.StandardError) + "; RustSharp=" + Trim(rustSharpCheck.StandardError + rustSharpCompile?.StandardError) : fixture.Expectation == "rustsharp-fail" ? "Expected RustSharp " + fixture.RustSharpDiagnostic + " while rustc accepted the source; RustSharp=" + Trim(rustSharpCheck.StandardError + rustSharpCompile?.StandardError) : "Compiler or runtime output differed from the fixed v2 contract.";
+        string? difference = passed ? null : fixture.Expectation == "compile-fail" ? "Expected rustc " + fixture.RustcDiagnostic + " and RustSharp " + fixture.RustSharpDiagnostic + "; rustc=" + Trim(rustcCompile.StandardError) + "; RustSharp=" + Trim(rustSharpCheck.StandardError + rustSharpCompile?.StandardError) : fixture.Expectation == "rustsharp-fail" ? "Expected RustSharp " + fixture.RustSharpDiagnostic + " while rustc accepted the source; RustSharp=" + Trim(rustSharpCheck.StandardError + rustSharpCompile?.StandardError) : "Compiler or runtime output differed from the fixed regression contract.";
         return new(fixture.Id, fixture.File, fixture.Kind, fixture.Area, fixture.Expectation, passed ? "passed" : "failed", difference, fixture.ExpectedOutput, rustcCompile.ToEvidence(), rustcRun?.ToEvidence(), rustSharpCheck.ToEvidence(), rustSharpCompile?.ToEvidence(), rustSharpRun?.ToEvidence()) { SourceSha256 = sourceSha, RustcDiagnostic = fixture.RustcDiagnostic, RustSharpDiagnostic = fixture.RustSharpDiagnostic };
     }
 
@@ -443,6 +467,6 @@ internal static class SafeCoreRegressionV2ProfileRunner
             if (!Directory.Exists(path)) return null;
             Thread.Sleep(50);
         }
-        return "v2 run directory cleanup failed: " + (last?.Message ?? "directory still exists");
+        return "Regression run directory cleanup failed: " + (last?.Message ?? "directory still exists");
     }
 }

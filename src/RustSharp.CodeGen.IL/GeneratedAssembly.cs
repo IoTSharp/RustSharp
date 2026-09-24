@@ -4,4 +4,7 @@ public sealed record GeneratedAssembly(
     byte[] PeImage,
     byte[]? PdbImage,
     string RuntimeConfigJson,
-    string? RustSharpMetadataJson = null);
+    string? RustSharpMetadataJson = null)
+{
+    public bool RequiresMirRuntime { get; init; }
+}

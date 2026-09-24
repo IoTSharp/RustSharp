@@ -165,6 +165,7 @@ public static partial class SafeCoreMirLowering
         public SafeCoreMirProgram Run()
         {
             if (options.EnableP1Extensions) CollectAdtLayouts();
+            if (options.EnableP1Extensions) FindRuntimeConstFunctions();
             Collect(input.Hir.Root!, 0);
             var functions = new List<SafeCoreMirFunction>(_functionNodes.Count);
             for (int index = 0; index < _functionNodes.Count; index++)
@@ -192,13 +193,15 @@ public static partial class SafeCoreMirLowering
             // type/cleanup metadata to the HIR but are not standalone MIR
             // entry functions. Their associated Drop body is consumed by the
             // owning function's cleanup projection.
-            if (options.EnableP1Extensions && node.Kind == N.Struct) return;
+            if (options.EnableP1Extensions && node.Kind is N.Struct or N.Enum) return;
             if (options.EnableP1Extensions && node.Kind == N.Implementation)
             {
                 ValidateDropImplementation(node, depth);
                 return;
             }
             if (node.Kind != N.Function) Unsupported(node);
+            if (options.EnableP1Extensions && node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ConstFunction) &&
+                !_runtimeConstFunctions.Contains(node.Id)) return;
             if (_functionNodes.Count >= options.MaximumFunctions) Limit(node);
             SafeCoreType signature = Type(node);
             // Function-item evidence must carry a named signature that the call
@@ -243,7 +246,9 @@ public static partial class SafeCoreMirLowering
         {
             _locals.Clear(); _bindings.Clear(); _storageScopes.Clear(); _temporaryScopes.Clear(); _extendedTemporaryScopes.Clear();
             _blocks.Clear(); _loops.Clear();
-            _closures.Clear(); _closureReturns.Clear(); _dropScopes.Clear();
+            _closures.Clear(); _closureReturns.Clear(); _dropScopes.Clear(); _capturePlaces.Clear();
+            _captureProjections.Clear();
+            _patternChoices = null; _patternDestinations = null; _guardBindingPreview = false;
             SafeCoreType signature = Type(node);
             bool isDestructor = _destructorNodes.Contains(node.Id);
             var parameterPatterns = new List<(SafeCoreHirNode Pattern, int Local)>();
@@ -255,14 +260,17 @@ public static partial class SafeCoreMirLowering
                 if (child.Kind != N.Parameter) continue;
                 if (isDestructor) continue;
                 SafeCoreHirNode pattern = UnwrapPattern(Child(child, 0));
-                if (!options.EnableP1Extensions && pattern.Kind is not (N.IdentifierPattern or N.WildcardPattern) ||
-                    pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ByReference)) Unsupported(pattern);
+                bool referencePattern = pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ByReference);
+                if (!options.EnableP1Extensions && (pattern.Kind is not (N.IdentifierPattern or N.WildcardPattern) ||
+                    referencePattern)) Unsupported(pattern);
                 int local = Local(pattern.Name ?? $"arg{parameterIndex.ToString(CultureInfo.InvariantCulture)}",
                     signature.ParameterTypes[parameterIndex++], SafeCoreMirLocalKind.Parameter,
-                    pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
-                if (pattern.DeclaredSymbol is not null && !_bindings.TryAdd(pattern.DeclaredSymbol, local))
+                    pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable) ||
+                    options.EnableP1Extensions && PatternBorrowsMutably(pattern, 1), pattern);
+                if (HasStaticLifetime(Child(child, 1))) _locals[local] = _locals[local] with { RequiresStaticLifetime = true };
+                if (!referencePattern && pattern.DeclaredSymbol is not null && !_bindings.TryAdd(pattern.DeclaredSymbol, local))
                     Invalid(pattern);
-                if (pattern.Kind is not (N.IdentifierPattern or N.WildcardPattern))
+                if (pattern.Kind is not (N.IdentifierPattern or N.WildcardPattern) || referencePattern)
                     parameterPatterns.Add((pattern, local));
             }
             if (!isDestructor && parameterIndex != signature.ParameterTypes.Count) Invalid(node);
@@ -288,7 +296,8 @@ public static partial class SafeCoreMirLowering
                     block.Terminator ?? SafeCoreMirTerminator.Unreachable(block.Source), block.Source, cancellation));
             }
             return new(id, signature.Name!, signature.ReturnType, _locals.ToArray(), blocks, 0, Source(node),
-                node.DeclaredSymbol!.IsPublic, cancellation);
+                node.DeclaredSymbol!.IsPublic, cancellation)
+            { ReturnsStaticReference = node.ChildIds.Select(input.Hir.GetNode).Any(HasStaticLifetime) };
         }
 
         private SafeCoreMirOperand? Expr(SafeCoreHirNode node, int depth)
@@ -313,6 +322,14 @@ public static partial class SafeCoreMirLowering
 
         private SafeCoreMirOperand? ExprCore(SafeCoreHirNode node, int depth)
         {
+            if (options.EnableP1Extensions)
+            {
+                if (input.Constants.TryGetValue(node.Id, out SafeCoreEvaluatedConstant? constant))
+                    return MaterializeConstant(constant, node, depth + 1);
+                if (input.Promotions.TryGetValue(node.Id, out SafeCoreEvaluatedConstant? promotion) &&
+                    CanPromoteConstant(promotion, node, depth + 1))
+                    return MaterializeConstant(promotion, node, depth + 1);
+            }
             switch (node.Kind)
             {
                 case N.Attribute: return Unit(node);
@@ -342,10 +359,13 @@ public static partial class SafeCoreMirLowering
                 case N.LetStatement: return Let(node, depth);
                 case N.LiteralExpression: return Literal(node, Type(node));
                 case N.NameExpression:
+                    if (TryCapturedPlace(node, out CapturedPlace captured)) return ReadCapturedPlace(node, captured);
                     int binding = -1;
                     if (node.ReferencedSymbol is null || !_bindings.TryGetValue(node.ReferencedSymbol, out binding))
                     {
                         SafeCoreType constructorType = Type(node);
+                        if (options.EnableP1Extensions && TryEnumVariant(node, out SafeCoreMirAdtLayout enumLayout, out int variantIndex))
+                            return ConstructEnum(node, enumLayout, variantIndex, depth);
                         if (node.ReferencedSymbol is { } constructor && IsUnitAdt(constructorType) &&
                             SymbolKey(constructor) == constructorType.Name)
                             return SafeCoreMirOperand.Constant(constructorType, "()", Source(node));
@@ -564,6 +584,8 @@ public static partial class SafeCoreMirLowering
         private SafeCoreMirOperand? Call(SafeCoreHirNode node, int depth)
         {
             SafeCoreHirNode calleeNode = UnwrapExpression(Child(node, 0), depth + 1);
+            if (options.EnableP1Extensions && TryEnumVariant(calleeNode, out SafeCoreMirAdtLayout enumLayout, out int variantIndex))
+                return ConstructEnum(node, enumLayout, variantIndex, depth);
             if (options.EnableP1Extensions && Type(node).Kind == K.Adt &&
                 calleeNode.ReferencedSymbol is { } constructor && _adtLayouts.ContainsKey(SymbolKey(constructor)))
                 return ConstructTupleAdt(node, depth);
@@ -978,7 +1000,6 @@ public static partial class SafeCoreMirLowering
                     // slot. A reference to a slice is admitted only when the
                     // element has a bounded structural Copy representation;
                     // the executable backend retains the full-array owner.
-                    if (!IsStructuralCopy(element.ElementType!)) Unsupported(node);
                     ValueType(element.ElementType!, node, allowNever: false, depth + 1);
                     return;
                 }

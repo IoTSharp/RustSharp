@@ -102,7 +102,28 @@ internal static class RustSharpMetadataTests
             generated.RustSharpMetadataJson,
             "The emitter result must expose the embedded RustSharp metadata.");
         AssertEx.Equal(document.Json, generatedJson);
+        CustomAttribute attribute = metadata.GetCustomAttribute(metadata.CustomAttributes.Single());
+        CustomAttributeValue<string> decoded = attribute.DecodeValue(new AttributeTypes());
+        AssertEx.Equal(2, decoded.FixedArguments.Length);
+        AssertEx.Equal(RustSharpMetadataReader.AttributeKey, (string)decoded.FixedArguments[0].Value!);
+        AssertEx.Equal(document.Json, (string)decoded.FixedArguments[1].Value!);
+        AssertEx.Equal(0, decoded.NamedArguments.Length,
+            "Standard CLR attribute decoding must consume the required zero named-argument count.");
         return Task.CompletedTask;
+    }
+
+    private sealed class AttributeTypes : ICustomAttributeTypeProvider<string>
+    {
+        public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
+        public string GetSystemType() => "System.Type";
+        public bool IsSystemType(string type) => type == "System.Type";
+        public string GetSZArrayType(string elementType) => elementType + "[]";
+        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) =>
+            reader.GetString(reader.GetTypeDefinition(handle).Name);
+        public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) =>
+            reader.GetString(reader.GetTypeReference(handle).Name);
+        public string GetTypeFromSerializedName(string name) => name;
+        public PrimitiveTypeCode GetUnderlyingEnumType(string type) => PrimitiveTypeCode.Int32;
     }
 
     private static Task ParseAsync()

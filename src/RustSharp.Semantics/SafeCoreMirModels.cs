@@ -11,10 +11,12 @@ public enum SafeCoreMirLocalKind { Parameter, User, Temporary }
 public enum SafeCoreMirOperandKind { Local, Constant, Function, Place }
 
 /// <summary>A typed-MIR storage place: a local plus a bounded projection chain.</summary>
-public enum SafeCoreMirProjectionKind { Field, TupleIndex, ArrayIndex, Dereference, DynamicIndex }
+public enum SafeCoreMirProjectionKind { Field, TupleIndex, ArrayIndex, Dereference, DynamicIndex, Downcast, FromEndIndex }
 
 public sealed record SafeCoreMirProjection(SafeCoreMirProjectionKind Kind, string? Name, int Index)
 {
+    /// <summary>FromEndIndex checks this minimum owner length before computing length minus Index.</summary>
+    public int MinimumLength { get; init; }
     public static SafeCoreMirProjection Field(string name) =>
         new(SafeCoreMirProjectionKind.Field, name, -1);
     public static SafeCoreMirProjection TupleIndex(int index) =>
@@ -26,6 +28,11 @@ public sealed record SafeCoreMirProjection(SafeCoreMirProjectionKind Kind, strin
     /// <summary>Index is the ID of an evaluated usize local, not an array offset.</summary>
     public static SafeCoreMirProjection DynamicIndex(int localId) =>
         new(SafeCoreMirProjectionKind.DynamicIndex, null, localId);
+    /// <summary>Selects one declared enum variant before projecting its payload.</summary>
+    public static SafeCoreMirProjection Downcast(int variantIndex) =>
+        new(SafeCoreMirProjectionKind.Downcast, null, variantIndex);
+    public static SafeCoreMirProjection FromEndIndex(int distance, int minimumLength) =>
+        new(SafeCoreMirProjectionKind.FromEndIndex, null, distance) { MinimumLength = minimumLength };
 }
 
 public sealed class SafeCoreMirPlace
@@ -41,9 +48,12 @@ public sealed class SafeCoreMirPlace
             SafeCoreMirProjection projection = projections[index] ??
                 throw new ArgumentException("MIR projections cannot contain null values.", nameof(projections));
             if (!Enum.IsDefined(projection.Kind) ||
+                (projection.Kind != SafeCoreMirProjectionKind.FromEndIndex && projection.MinimumLength != 0) ||
+                (projection.Kind == SafeCoreMirProjectionKind.FromEndIndex &&
+                 (projection.Name is not null || projection.Index <= 0 || projection.MinimumLength < projection.Index)) ||
                 (projection.Kind == SafeCoreMirProjectionKind.Field &&
                  (string.IsNullOrWhiteSpace(projection.Name) || projection.Name.Length > 4096 || projection.Index != -1)) ||
-                (projection.Kind is SafeCoreMirProjectionKind.TupleIndex or SafeCoreMirProjectionKind.ArrayIndex or SafeCoreMirProjectionKind.DynamicIndex &&
+                (projection.Kind is SafeCoreMirProjectionKind.TupleIndex or SafeCoreMirProjectionKind.ArrayIndex or SafeCoreMirProjectionKind.DynamicIndex or SafeCoreMirProjectionKind.Downcast &&
                  (projection.Name is not null || projection.Index < 0)) ||
                 (projection.Kind == SafeCoreMirProjectionKind.Dereference &&
                  (projection.Name is not null || projection.Index != -1)))
@@ -72,6 +82,10 @@ public sealed class SafeCoreMirPlace
                 case SafeCoreMirProjectionKind.ArrayIndex: builder.Append('[').Append(projection.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(']'); break;
                 case SafeCoreMirProjectionKind.Dereference: builder.Append('.').Append('*'); break;
                 case SafeCoreMirProjectionKind.DynamicIndex: builder.Append("[%").Append(projection.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(']'); break;
+                case SafeCoreMirProjectionKind.Downcast: builder.Append(".variant[").Append(projection.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(']'); break;
+                case SafeCoreMirProjectionKind.FromEndIndex:
+                    builder.Append("[^").Append(projection.Index.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                        .Append(";min=").Append(projection.MinimumLength.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(']'); break;
             }
         }
         return builder.ToString();
@@ -83,7 +97,7 @@ public sealed class SafeCoreMirPlace
 public sealed record SafeCoreMirPlaceType(int FunctionId, SafeCoreMirPlace Place,
     SafeCoreType RootType, SafeCoreType Type, bool IsMutable, SafeCoreMirSource Source);
 
-public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple, Print, Array, Index, Field, Write, SliceLength, Adt }
+public enum SafeCoreMirRvalueKind { Use, Unary, Binary, Coerce, Cast, Tuple, Print, Array, Index, Field, Write, SliceLength, Adt, Enum, Discriminant, Subslice, PromotedBorrow }
 public enum SafeCoreMirTerminatorKind { Return, Goto, Branch, Call, Unreachable }
 
 /// <summary>A local slot. ID is its index in the owning function. Parameters precede other slots.</summary>
@@ -92,6 +106,8 @@ public sealed record SafeCoreMirLocal(int Id, string Name, SafeCoreType Type,
 {
     /// <summary>Source-checked zero-field ADT declaration evidence.</summary>
     public bool IsUnitAdt { get; init; }
+    public bool IsPromotedConstant { get; init; }
+    public bool RequiresStaticLifetime { get; init; }
     /// <summary>Canonical MIR destructor function for an owned local, if any.</summary>
     public int? DestructorFunctionId { get; init; }
     /// <summary>Lexical storage extent for source locals and temporaries. Parameters
@@ -159,6 +175,24 @@ public sealed class SafeCoreMirRvalue
     public static SafeCoreMirRvalue Adt(IReadOnlyList<SafeCoreMirOperand> operands, SafeCoreType resultType,
         SafeCoreMirSource source, CancellationToken cancellationToken = default) =>
         new(SafeCoreMirRvalueKind.Adt, resultType, operands, null, source, cancellationToken);
+    public static SafeCoreMirRvalue Enum(int variantIndex, IReadOnlyList<SafeCoreMirOperand> operands,
+        SafeCoreType resultType, SafeCoreMirSource source, CancellationToken cancellationToken = default) =>
+        new(SafeCoreMirRvalueKind.Enum, resultType, operands,
+            variantIndex.ToString(System.Globalization.CultureInfo.InvariantCulture), source, cancellationToken);
+    public static SafeCoreMirRvalue PromotedBorrow(SafeCoreMirOperand operand, SafeCoreType resultType, SafeCoreMirSource source) =>
+        new(SafeCoreMirRvalueKind.PromotedBorrow, resultType, [operand], null, source);
+    public static SafeCoreMirRvalue Discriminant(SafeCoreMirOperand value, SafeCoreMirSource source) =>
+        new(SafeCoreMirRvalueKind.Discriminant, SafeCoreType.Primitive(SafeCoreSemanticTypeKind.I32), [value], null, source);
+    public static SafeCoreMirRvalue Subslice(SafeCoreMirOperand value, SafeCoreMirOperand start,
+        SafeCoreMirOperand end, SafeCoreType resultType, SafeCoreMirSource source, bool inclusive = false) =>
+        new(SafeCoreMirRvalueKind.Subslice, resultType, [value, start, end], inclusive ? "..=" : "..", source);
+
+    /// <summary>A pattern rest excludes a fixed prefix and suffix; the runtime checks both against the actual length.</summary>
+    public static SafeCoreMirRvalue PatternSubslice(SafeCoreMirOperand value, int prefix,
+        int suffix, SafeCoreType resultType, SafeCoreMirSource source) =>
+        new(SafeCoreMirRvalueKind.Subslice, resultType,
+            [value, SafeCoreMirOperand.Constant(SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Usize), prefix.ToString(System.Globalization.CultureInfo.InvariantCulture), source),
+                SafeCoreMirOperand.Constant(SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Usize), suffix.ToString(System.Globalization.CultureInfo.InvariantCulture), source)], "pattern", source);
     public static SafeCoreMirRvalue Index(SafeCoreMirOperand array, SafeCoreMirOperand index,
         SafeCoreType resultType, SafeCoreMirSource source) =>
         new(SafeCoreMirRvalueKind.Index, resultType, [array, index], null, source);
@@ -287,6 +321,7 @@ public sealed class SafeCoreMirFunction
     public SafeCoreMirSource Source { get; }
     /// <summary>Whether the source declaration is visible to external crates.</summary>
     public bool IsPublic { get; }
+    public bool ReturnsStaticReference { get; init; }
 }
 
 /// <summary>Backend-independent typed MIR. IDs index immutable owning collections.</summary>
@@ -306,7 +341,29 @@ public sealed class SafeCoreMirProgram
 }
 
 /// <summary>A field's declared name, type and original declaration source.</summary>
-public sealed record SafeCoreMirAdtField(string Name, SafeCoreType Type, SafeCoreMirSource Source);
+public sealed record SafeCoreMirAdtField(string Name, SafeCoreType Type, SafeCoreMirSource Source)
+{
+    public bool RequiresStaticLifetime { get; init; }
+}
+
+/// <summary>One enum payload. FieldOffset indexes the enum's physical field layout after its tag.</summary>
+public sealed class SafeCoreMirAdtVariant
+{
+    public SafeCoreMirAdtVariant(string name, int discriminant, int fieldOffset,
+        IReadOnlyList<SafeCoreMirAdtField> fields, SafeCoreMirSource source, CancellationToken cancellationToken = default)
+    {
+        Name = name;
+        Discriminant = discriminant;
+        FieldOffset = fieldOffset;
+        Fields = SafeCoreMirCollections.Freeze(fields, cancellationToken);
+        Source = source;
+    }
+    public string Name { get; }
+    public int Discriminant { get; }
+    public int FieldOffset { get; }
+    public IReadOnlyList<SafeCoreMirAdtField> Fields { get; }
+    public SafeCoreMirSource Source { get; }
+}
 
 /// <summary>Immutable nominal struct layout. Copy is explicit declaration evidence,
 /// never inferred merely because each field is Copy.</summary>
@@ -314,14 +371,21 @@ public sealed class SafeCoreMirAdtLayout
 {
     public SafeCoreMirAdtLayout(SafeCoreType type, IReadOnlyList<SafeCoreMirAdtField> fields,
         SafeCoreMirSource source, bool isCopy = false, CancellationToken cancellationToken = default)
+        : this(type, fields, [], source, isCopy, cancellationToken) { }
+
+    public SafeCoreMirAdtLayout(SafeCoreType type, IReadOnlyList<SafeCoreMirAdtField> fields,
+        IReadOnlyList<SafeCoreMirAdtVariant> variants, SafeCoreMirSource source,
+        bool isCopy = false, CancellationToken cancellationToken = default)
     {
         Type = type;
         Fields = SafeCoreMirCollections.Freeze(fields, cancellationToken);
+        Variants = SafeCoreMirCollections.Freeze(variants, cancellationToken);
         Source = source;
         IsCopy = isCopy;
     }
     public SafeCoreType Type { get; }
     public IReadOnlyList<SafeCoreMirAdtField> Fields { get; }
+    public IReadOnlyList<SafeCoreMirAdtVariant> Variants { get; }
     public SafeCoreMirSource Source { get; }
     public bool IsCopy { get; }
 }

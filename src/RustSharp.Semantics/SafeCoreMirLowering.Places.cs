@@ -14,6 +14,7 @@ public static partial class SafeCoreMirLowering
 
         private void ValidateLifetimeElision(SafeCoreType signature, SafeCoreHirNode returnTypeNode)
         {
+            if (HasStaticLifetime(returnTypeNode)) return;
             if (CountElidedLifetimes(signature.ReturnType, returnTypeNode, 0) == 0) return;
             int inputLifetimes = 0;
             for (int index = 0; index < signature.ParameterTypes.Count && inputLifetimes < 2; index++)
@@ -26,6 +27,9 @@ public static partial class SafeCoreMirLowering
                     "An elided reference return requires exactly one input reference lifetime; explicit lifetime parameters are outside this profile.",
                     returnTypeNode.Span));
         }
+
+        private static bool HasStaticLifetime(SafeCoreHirNode node) =>
+            node.Kind == N.ReferenceType && node.Value is "'static" or "static";
 
         private int CountElidedLifetimes(SafeCoreType type, SafeCoreHirNode node, int depth)
         {
@@ -108,6 +112,7 @@ public static partial class SafeCoreMirLowering
             {
                 SafeCoreHirNode node = input.Hir.Nodes[index];
                 Step(node, 0);
+                if (node.Kind == N.Enum) { CollectEnumLayout(node); continue; }
                 if (node.Kind != N.Struct) continue;
                 SafeCoreType type = Type(node);
                 var fields = new List<SafeCoreMirAdtField>();
@@ -118,7 +123,7 @@ public static partial class SafeCoreMirLowering
                     if (field.Kind == N.Attribute) continue;
                     if (field.Kind != N.Field) Unsupported(field);
                     string name = field.Name is { } named ? CanonicalField(named) : fields.Count.ToString(CultureInfo.InvariantCulture);
-                    fields.Add(new(name, Type(field), Source(field)));
+                    fields.Add(new(name, Type(field), Source(field)) { RequiresStaticLifetime = Type(field).Kind == K.Reference });
                 }
                 if (type.Kind != K.Adt || type.Name is null ||
                     !_adtLayouts.TryAdd(type.Name, new(type, fields, Source(node), cancellationToken: cancellation))) Invalid(node);
@@ -128,6 +133,8 @@ public static partial class SafeCoreMirLowering
 
         private SafeCoreMirOperand? ConstructAdt(SafeCoreHirNode node, int depth)
         {
+            if (TryEnumVariant(node, out SafeCoreMirAdtLayout enumLayout, out int variantIndex))
+                return ConstructEnum(node, enumLayout, variantIndex, depth);
             SafeCoreType type = Type(node);
             if (type.Kind != K.Adt || type.Name is null) Unsupported(node);
             if (!_adtLayouts.TryGetValue(type.Name, out SafeCoreMirAdtLayout? layout)) Unsupported(node);
@@ -214,6 +221,8 @@ public static partial class SafeCoreMirLowering
         {
             SafeCoreHirNode node = UnwrapExpression(rawNode, depth);
             Step(node, depth);
+            if (TryCapturedPlace(node, out CapturedPlace captured))
+                return (captured.Place, captured.Type);
             if (node.Kind == N.NameExpression && node.ReferencedSymbol is { } symbol && _bindings.TryGetValue(symbol, out int binding))
                 return (SafeCoreMirPlace.Root(binding), _locals[binding].Type);
             if (node.Kind == N.UnaryExpression && node.Value == "*")

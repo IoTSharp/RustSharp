@@ -3,10 +3,12 @@
 Status: 🚧 In progress. The opt-in `safe-core-mir-p1-v1` API establishes a bounded
 value HIR-to-MIR boundary, including nested tuple and fixed-array rvalues. The
 compiler now wires supported source through ownership/cleanup evidence and a
-direct MIR-to-CLR-LIR backend. The v2 profile implements named struct and tuple-struct
-layouts, nested projected reads/writes, and checked reference origins across local
-assignments, calls and CFG joins. P1-06 remains open for enum layouts, nested/stored
-references, general slices and the remaining frozen language families.
+direct MIR-to-CLR-LIR backend. The v2 profile implements named struct, tuple-struct
+and enum layouts, nested projected reads/writes, nested/stored references,
+constant promotion and a general slice call ABI. Checked reference origins flow
+across local assignments, aggregate slots, calls and CFG joins. The
+[implementation inventory](p1-06-implementation.md) maps the frozen language families
+to their source and generated-program tests.
 
 The [P1 exit scope ledger](p1-exit-scope-v1.md) freezes requirement IDs and leaf
 ownership. Its executable requirements include remaining implementation work;
@@ -19,8 +21,9 @@ lowering extensions when their CLR-LIR capability checks succeed. Tuple/scalar
 patterns, guards, or-pattern CFGs and statically expanded captured closures
 have deterministic source-mapped MIR and a CoreCLR execution regression. It preserves
 the v1 deterministic MIR snapshot format for compatible consumers; layouts, storage
-scopes, projected destinations or dynamic place indices select `safe-core-mir-v2`,
-and records the v2 profile name in Rust# metadata. The v1 profile continues to
+scopes, projected destinations or dynamic place indices select `safe-core-mir-v2`;
+enum variants, promotions, slice ranges and static lifetime contracts select
+`safe-core-mir-v3`. Rust# metadata retains the v2 compiler profile name. The v1 profile continues to
 reject repeated arrays with a stable unsupported diagnostic; no profile silently
 widens its accepted semantics.
 
@@ -34,11 +37,14 @@ executable CLR value subset. MIR may preserve the P1-04 scalar descriptors
 and operators needed for typed analysis, snapshots, ownership evidence, and
 later backends. The direct MIR-to-CLR-LIR path currently accepts only `unit`,
 `bool`, `i32`, and the bounded `usize` representation, plus tuples and fixed
-arrays and declared structs made from those values, references to those sized values,
-and the local full-array slice subset below.
-Floating-point and wider integer values,
-`char` ABI values, non-identity casts/coercions other than that slice unsizing, division/remainder and
-bitwise/shift operators are rejected with `RSM2101` at the executable
+arrays and declared structs/enums made from those values, nested references,
+aggregates containing references and shared/mutable slices. Division/remainder,
+integer bitwise/shift operators and conversions within the executable scalar set
+are implemented. `usize` retains its declared 0..`int.MaxValue` representation;
+operations outside that representation fail instead of silently wrapping as a
+32-bit substitute for Rust's native `usize`. Floating-point and wider integer
+values, `char` ABI values and conversions involving those excluded types are
+rejected with `RSM2101` at the executable
 capability boundary. Malformed MIR/LIR or an inconsistent typed contract is
 reported as `RSM2102`; `CompilerDriver.Check` runs this same capability gate
 as `compile` so an accepted source cannot fail later only during emission.
@@ -50,7 +56,12 @@ fixed-array parameters and return values in the structural typed-MIR contract.
 The v2 profile additionally lowers named struct/tuple-struct values and shared or
 mutable reference parameters/returns. Elided reference returns require exactly one
 input reference lifetime; ambiguous or missing input lifetimes receive `RSM2004`.
-Explicit lifetime syntax remains outside the upstream type profile (`RST2001`).
+Named and generic lifetime syntax remains outside the upstream type profile
+(`RST2001`). MIR v2 additionally accepts direct `'static` reference declarations
+for immutable promoted storage and validates their lifetime contracts. Nominal
+reference fields require direct `'static`; nested explicit lifetime spellings and
+lifetime parameters remain excluded. The check-only type profile retains its
+original explicit-lifetime rejection.
 Tuple and array elements may themselves be bounded aggregates; arity, array
 length, and nesting remain subject to the lowering limits. A function may also
 return never (`!`). Scalar aliases, modules, and resolved imports keep their
@@ -91,8 +102,10 @@ order, then place them in their declared slots; struct updates evaluate the base
 and preserve omitted fields. Tuple structs, nested tuples/arrays/structs, field binding
 patterns and by-value calls/returns share the declared layout evidence. Nominal
 values are Move unless their layout explicitly proves Copy; a layout cannot forge
-Copy for mutable references, non-Copy fields or values with a destructor. Enum
-variants/discriminants and field-owning Drop execution remain unsupported.
+Copy for mutable references, non-Copy fields or values with a destructor. Enums
+carry explicit variant/discriminant metadata, a tag and flattened payload slots;
+typed downcasts select the checked variant layout. Field-owning Drop execution
+belongs to the separate P1-08 cleanup contract.
 
 Nested field/tuple/fixed-array/deref reads and writes preserve their actual owner.
 Dynamic array indices are evaluated once into a `usize` local. Bounds failures
@@ -101,14 +114,14 @@ array. Primitive assignments and compound assignments evaluate the RHS before
 resolving the destination; a RHS reference reassignment therefore changes which
 referent the subsequent write accesses, matching Rust 1.98.
 
-The v2 local slice subset lowers `&[T]` and `&mut [T]` from a complete local
-array or sized-array reference, retaining the proven array owner identity.
-`.len()` is represented by a typed `SliceLength` rvalue; constant and dynamic indices
-read the owner's fixed storage through its current managed reference. This is bounded
-owner specialization, not a general fat-pointer ABI. Subslices, slice writes and
-general slice parameters/returns remain unsupported. Dynamic bounds errors throw;
-an invalid static executable index receives `RSM2102`. Slice provenance and
-unsizing flow through ownership validation before CLR LIR emission.
+The v2 slice ABI represents `&[T]` and `&mut [T]` as owner, start and length.
+Array unsizing, parameters/returns, joins between different owner lengths,
+constant/dynamic indexing, mutable writes and half-open/inclusive subslices use
+that representation. `.len()` is an explicit `SliceLength` rvalue. Index and range
+checks prevent a subview from accessing adjacent owner elements, including empty
+and end boundaries. Aggregate element layouts retain typed field projections.
+Dynamic bounds errors throw; an invalid static executable index receives
+`RSM2102`. Provenance and unsizing flow through ownership validation before emission.
 
 Loop/control-flow labels remain outside the upstream P1-04 HIR gate and receive
 `RSN1007` before MIR lowering. Internal loop contexts retain label information,
@@ -159,8 +172,8 @@ place payloads attached to other operand kinds. Named ADT fields require exact d
 layout evidence. Missing/duplicate/recursive by-value layouts, unsized fields,
 constructor arity/type mismatches and invalid storage scopes reject before emission.
 Dynamic indices identify checked `usize` locals, not constant slots; ownership also
-checks that these locals are initialized. Unsized slice indexing remains a separate
-rvalue path rather than a statically checked place projection. These checks also
+checks that these locals are initialized. Slice indices retain their element type
+and checked runtime length through place projections. These checks also
 apply to unreachable blocks and to call/return operands.
 
 A successful validation result exposes immutable `Places` facts in
@@ -175,7 +188,9 @@ structural access checks, not proof of the ultimate referent's lifetime or loan 
 
 `SafeCoreMirReferenceProvenance` runs bounded forward dataflow and interprocedural
 return summaries. Joins union possible origins and intersect initialization; each
-origin retains its input/local root, projection path and mutability. Callee dynamic
+origin retains its input/local root, projection path, reference-slot path, static
+storage fact and mutability. Aggregate slots are tracked independently; nested
+dereferences resolve the references stored in those slots. Callee dynamic
 indices become conservative wildcard projections in exported summaries, never
 callee-local IDs transplanted into the caller. Missing/fabricated origins receive
 `RSM3010`; returning local storage or using references beyond their storage scope
@@ -194,14 +209,21 @@ runs full ownership and cleanup analysis. The public CLR lowering entry separate
 checks MIR structure and provenance; it does not certify full loan/initialization
 correctness for arbitrary hand-built MIR.
 
-The CLR backend emits managed references, field/local addresses and indirect loads
-and stores. A runtime branch or reassignment selects the actual referent; compilation
-does not substitute a remembered owner local. References inside aggregates and
-nested references such as `&&T` require a further lifetime/storage contract and are
-explicitly rejected. Constant promotion into static storage is not implemented;
-expressions such as `let r = identity(&7)` can be conservatively rejected even when
-Rust promotes the constant. General slice call ABI and enum downcasts remain separate work;
-P1-06.04/.05/.18/.19 are still 🚧 In progress for their complete frozen scope.
+The MIR CLR backend emits GC-owned cells and object reference handles containing
+the owner and a bounded typed projection path. Generated value structs implement
+`IMirValue` accessors; writes reconstruct value boxes so copied aggregates retain
+independent storage. Nested reference slots and slice views preserve the actual
+runtime-selected owner across calls and returns. This representation uses neither
+reflection nor unmanaged pointers and is compatible with Native AOT. Existing
+hand-built CLR LIR byref APIs retain their separate representation.
+
+Checked const values feed MIR scalar/aggregate construction directly; const-only
+helper functions need no runtime lowering. Eligible immutable constant borrows use
+`PromotedBorrow` and per-program static storage, including `identity(&7)`. Promotion
+identity is scoped to the generated assembly through a weak-key cache, preserving
+collectible assembly lifetime and isolating different programs. The compiler writes
+`RustSharp.Runtime.dll` transactionally beside the generated assembly; Native AOT
+includes that dependency in its disposable host project.
 
 `MaximumProjectionDepth` independently bounds a place chain (1–128, default
 128), including an implicit dereference for a write or mutable reborrow.
@@ -276,22 +298,27 @@ indexing and an empty-array bounds failure. The additional
 [`samples/mir-places.rs`](../samples/mir-places.rs) probe exercises nested nominal
 fields, a dynamically selected returned mutable reference, shared reference returns,
 whole-tuple indirect replacement, CFG-selected owners and full-array dynamic slice reads.
-Its CoreCLR output matches rustc 1.98.0, and the Windows x64 Native AOT probe passes
-using the explicitly selected installed SDK 10.0.401 (the repository pin remains
-10.0.400). ILVerify 10.0.11 reports `ReturnPtrToStack` for its reference-returning
-methods. Equivalent C# methods, including a direct `return ref parameter.Field`,
-reproduce the diagnostic in Release and Debug; no verifier errors are suppressed.
-The companion [`mir-places-verified.rs`](../samples/mir-places-verified.rs) keeps
-references inside calls and adds whole-aggregate indirect reads and boolean mutation
-to independently exercise address/load/store emission without reference returns;
-its output matches rustc 1.98.0 and its generated assembly passes ILVerify 10.0.11
-and Windows x64 Native AOT.
-Per-probe execution evidence does not expand the frozen platform suite denominator.
+The historical CLR byref implementation matched CoreCLR/rustc and Windows x64
+Native AOT but reported ILVerify `ReturnPtrToStack` for reference returns; equivalent
+C# Release/Debug methods reproduced that diagnostic. The current GC-owned
+reference representation removes that limitation. Both the projection sample and
+[`samples/mir-families.rs`](../samples/mir-families.rs), covering enum payloads,
+checked constants/promotion, nested reference storage and general slices, now
+match rustc 1.98.0 on CoreCLR and Windows x64 Native AOT and pass ILVerify 10.0.11
+without suppressed diagnostics. The companion
+[`mir-places-verified.rs`](../samples/mir-places-verified.rs) retains its historical
+storage-only CoreCLR, ILVerify and Windows x64 Native AOT evidence.
+Per-probe evidence does not expand the frozen 12-case native platform denominator.
 
-Local verification on 2026-09-24: Release build with SDK 10.0.401, zero warnings/errors;
-551/551 harness tests; `safe-core-regression-v2` 24/24 and `p1-differential-v2` 16/16
-with rustc 1.98.0. Build/test/probe logs are retained under
-`artifacts/p1-06/adt-projections` (a C-drive evidence junction because D: ran out of space).
+Final local verification on 2026-09-24 used the installed SDK 10.0.401 (repository
+pin 10.0.400): Release zero warnings/errors, 670/670 harness tests,
+`safe-core-regression-v3` 26/26 and `p1-differential-v2` 16/16 with rustc 1.98.0,
+zero failures/blocked/skips and reclaimed Native AOT temporary directories.
+Logs/reports are retained under `artifacts/p1-06-final-session`; the earlier
+551-test projection subset remains historical evidence under
+`artifacts/p1-06/adt-projections`. P1-06's frozen leaves are ✅ Complete;
+P1-07–P1-10 and the expanded native Windows/Linux x64 candidate-SHA gate remain
+🚧 In progress.
 The retained `p1-differential-v1` corpus records four historical
 RustSharp source-level unsupported diagnostics against four passing rustc 1.98
 oracle executions, with zero skips. The expanded immutable `p1-differential-v2`

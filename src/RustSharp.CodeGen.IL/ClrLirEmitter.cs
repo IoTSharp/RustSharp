@@ -134,6 +134,21 @@ public static class ClrLirEmitter
                 checkBudget?.Invoke();
                 switch (instruction)
                 {
+                    case ClrLirLoadNull:
+                        encoder.OpCode(ILOpCode.Ldnull);
+                        break;
+                    case ClrLirLoadType loadType:
+                        encoder.OpCode(ILOpCode.Ldtoken);
+                        encoder.Token(valueTypeResolver?.Invoke(loadType.Type) ??
+                            throw new InvalidOperationException("A runtime type token requires a value type resolver."));
+                        encoder.Call(AddTypeFromHandle(metadata));
+                        break;
+                    case ClrLirBox box:
+                        EncodeBox(box.Type, false);
+                        break;
+                    case ClrLirUnbox unbox:
+                        EncodeBox(unbox.Type, true);
+                        break;
                     case ClrLirLoadInt32 loadInt32:
                         encoder.LoadConstantI4(loadInt32.Value);
                         break;
@@ -256,6 +271,25 @@ public static class ClrLirEmitter
             });
         }
 
+        void EncodeBox(ClrLirType type, bool unbox)
+        {
+            if (type == ClrLirType.Any) return;
+            if (type == ClrLirType.Text)
+            {
+                if (unbox)
+                {
+                    encoder.OpCode(ILOpCode.Castclass);
+                    encoder.Token(PrimitiveTypeHandle(metadata, "String"));
+                }
+                return;
+            }
+            EntityHandle handle = type.Kind == ClrLirTypeKind.Value
+                ? valueTypeResolver?.Invoke(type) ?? throw new InvalidOperationException("Boxing requires a value type resolver.")
+                : PrimitiveTypeHandle(metadata, type == ClrLirType.Bool ? "Boolean" : "Int32");
+            encoder.OpCode(unbox ? ILOpCode.Unbox_any : ILOpCode.Box);
+            encoder.Token(handle);
+        }
+
         if (!method.ExceptionCleanup.IsEmpty)
         {
             if (!tryEndMarked)
@@ -288,6 +322,25 @@ public static class ClrLirEmitter
         new BlobEncoder(signature).MethodSignature(isInstanceMethod: true).Parameters(0,
             static result => result.Void(), static _ => { });
         return metadata.AddMemberReference(exception, metadata.GetOrAddString(".ctor"), metadata.GetOrAddBlob(signature));
+    }
+
+    internal static TypeReferenceHandle PrimitiveTypeHandle(MetadataBuilder metadata, string name)
+    {
+        AssemblyReferenceHandle runtime = metadata.AddAssemblyReference(metadata.GetOrAddString("System.Runtime"),
+            new Version(10, 0, 0, 0), default,
+            metadata.GetOrAddBlob(new byte[] { 0xb0, 0x3f, 0x5f, 0x7f, 0x11, 0xd5, 0x0a, 0x3a }), default, default);
+        return metadata.AddTypeReference(runtime, metadata.GetOrAddString("System"), metadata.GetOrAddString(name));
+    }
+
+    private static MemberReferenceHandle AddTypeFromHandle(MetadataBuilder metadata)
+    {
+        TypeReferenceHandle type = PrimitiveTypeHandle(metadata, "Type");
+        TypeReferenceHandle handle = PrimitiveTypeHandle(metadata, "RuntimeTypeHandle");
+        var signature = new BlobBuilder();
+        new BlobEncoder(signature).MethodSignature().Parameters(1,
+            result => result.Type().Type(type, isValueType: false),
+            parameters => parameters.AddParameter().Type().Type(handle, isValueType: true));
+        return metadata.AddMemberReference(type, metadata.GetOrAddString("GetTypeFromHandle"), metadata.GetOrAddBlob(signature));
     }
 
     private static (MemberReferenceHandle Culture, MemberReferenceHandle Convert) AddInvariantFormatReferences(MetadataBuilder metadata)

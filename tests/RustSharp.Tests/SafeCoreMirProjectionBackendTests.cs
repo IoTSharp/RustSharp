@@ -17,8 +17,8 @@ internal static class SafeCoreMirProjectionBackendTests
         new("MIR CLR rejects forged projected operands at its public entry", ForgedPlaceAsync),
         new("CLR LIR rejects immutable indirect stores and malformed referent types", InvalidAddressesAsync),
         new("MIR CLR public lowering rejects a reference to dead callee storage", DeadReturnAsync),
-        new("MIR CLR rejects reference-bearing aggregates before assembly emission", ReferenceAggregateAsync),
-        new("MIR source zero-array indexing emits a private bounds helper with valid metadata", SourceZeroArrayAsync),
+        new("MIR CLR reference-bearing aggregates preserve mutation of their original owner", ReferenceAggregateAsync),
+        new("MIR source zero-array indexing preserves metadata and traps at runtime", SourceZeroArrayAsync),
         new("MIR CLR managed references load and store complete aggregate values", AggregateReferenceAsync),
         new("MIR CLR legacy shared slice reborrows preserve their fixed-array layout", SliceReborrowAsync),
         new("MIR CLR executes the declared CFG entry before reading a reference", NonzeroEntryAsync),
@@ -197,21 +197,21 @@ internal static class SafeCoreMirProjectionBackendTests
     private static Task ReferenceAggregateAsync()
     {
         SafeCoreType tuple = SafeCoreType.Tuple([Mutable]);
-        SafeCoreMirProgram program = new([new(0, "main", Integer, [Local(0, tuple)],
-            [new(0, [], SafeCoreMirTerminator.Return(Int(0), Source), Source)], 0, Source)]);
-        SafeCoreClrResult result = SafeCoreMirClrLowering.Lower(program);
-        AssertEx.False(result.IsSuccessful, "An ordinary CLR struct must never contain a managed reference field.");
-        AssertEx.True(result.Diagnostics.Any(static diagnostic => diagnostic.Code == SafeCoreMirClrLowering.Unsupported ||
-            diagnostic.Code == SafeCoreMirReferenceProvenance.InvalidOrigin &&
-            diagnostic.Message.Contains("nested lifetime contract", StringComparison.Ordinal)),
-            "The byref-like aggregate boundary must be explicit before emitting metadata.");
+        SafeCoreMirProgram program = new([new(0, "main", Integer,
+            [Local(0, Integer, true), Local(1, Mutable), Local(2, tuple)],
+            [new(0, [Use(0, Int(3)), Assign(1, SafeCoreMirRvalue.Unary("&mut", Value(0, Integer), Mutable, Source)),
+                Assign(2, SafeCoreMirRvalue.Tuple([Value(1, Mutable)], tuple, Source)),
+                Use(2, Int(61)) with { DestinationPlace = new(2,
+                    [SafeCoreMirProjection.TupleIndex(0), SafeCoreMirProjection.Dereference()]) }],
+                SafeCoreMirTerminator.Return(Value(0, Integer), Source), Source)], 0, Source)]);
+        AssertEx.Equal(61, Run(program));
         return Task.CompletedTask;
     }
 
     private static Task SourceZeroArrayAsync()
     {
         const string source = "fn main() { let values: [i32; 0] = []; let index: usize = 0; println!(\"{}\", values[index]); }";
-        string root = Path.GetFullPath(Path.Combine("artifacts", "tests"));
+        string root = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "RustSharp.Tests"));
         string directory = Path.Combine(root, "mir-zero-array-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
@@ -223,8 +223,8 @@ internal static class SafeCoreMirProjectionBackendTests
             AssertEx.True(compilation.Success, string.Join("; ", compilation.Diagnostics.Select(static item => item.Code + ": " + item.Message)));
             RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(output);
             AssertEx.True(imported.IsSuccessful, string.Join("; ", imported.Diagnostics));
-            RustSharpMetadataFunction helper = imported.Document!.Functions.Single(static method => method.Name.StartsWith("bounds_failure_", StringComparison.Ordinal));
-            AssertEx.False(helper.IsPublic, "Bounds helpers cannot become source exports.");
+            AssertEx.True(imported.Document!.Functions.All(static method => !method.Name.StartsWith("MirReference.", StringComparison.Ordinal)),
+                "Runtime storage helpers cannot become source exports.");
             bool trapped = false;
             try { _ = Invoke(File.ReadAllBytes(output)); }
             catch (TargetInvocationException exception) when (exception.InnerException is IndexOutOfRangeException) { trapped = true; }

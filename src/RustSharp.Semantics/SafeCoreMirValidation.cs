@@ -67,7 +67,7 @@ public sealed class SafeCoreMirValidationResult
 
 /// <summary>Checks structural, source and type invariants, including unreachable blocks.
 /// CFG cycles are legal. This is not ownership or definite-initialization analysis.</summary>
-public static class SafeCoreMirValidation
+public static partial class SafeCoreMirValidation
 {
     private const long MaximumArrayElements = 100_000;
 
@@ -91,7 +91,7 @@ public static class SafeCoreMirValidation
         return new Validator(program, options).Run();
     }
 
-    private sealed class Validator(SafeCoreMirProgram program, SafeCoreMirValidationOptions options)
+    private sealed partial class Validator(SafeCoreMirProgram program, SafeCoreMirValidationOptions options)
     {
         private readonly Stopwatch _clock = Stopwatch.StartNew();
         private readonly List<SafeCoreMirDiagnostic> _diagnostics = [];
@@ -214,6 +214,7 @@ public static class SafeCoreMirValidation
                 }
                 if (!_adtLayouts.TryAdd(layout.Type.Name, layout))
                     Error(SafeCoreMirDiagnosticCodes.InvalidInput, "ADT layout identities must be unique.", layout.Source);
+                ValidateEnumLayout(layout);
                 for (int index = 0; index < layout.Fields.Count; index++)
                 {
                     Step();
@@ -454,21 +455,49 @@ public static class SafeCoreMirValidation
             // still hold &mut T, but no later dereference can cross a shared barrier.
             bool mutable = local.IsMutable || local.Kind == SafeCoreMirLocalKind.Temporary;
             bool sharedBarrier = false;
+            SafeCoreMirAdtVariant? selectedVariant = null;
             for (int index = 0; index < place.Projections.Count; index++)
             {
                 Step();
                 SafeCoreMirProjection projection = place.Projections[index];
+                if (selectedVariant is not null && projection.Kind is not (SafeCoreMirProjectionKind.Field or SafeCoreMirProjectionKind.TupleIndex))
+                {
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An enum downcast must immediately select a payload field.", source);
+                    return null;
+                }
                 switch (projection.Kind)
                 {
+                    case SafeCoreMirProjectionKind.Downcast when type.Kind == SafeCoreSemanticTypeKind.Adt &&
+                        selectedVariant is null && _adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? enumeration) &&
+                        projection.Index < enumeration.Variants.Count:
+                        selectedVariant = enumeration.Variants[projection.Index];
+                        break;
+                    case SafeCoreMirProjectionKind.Field or SafeCoreMirProjectionKind.TupleIndex when selectedVariant is not null:
+                        int variantFieldIndex = projection.Kind == SafeCoreMirProjectionKind.TupleIndex ? projection.Index :
+                            FindVariantField(selectedVariant, projection.Name!);
+                        if (variantFieldIndex < 0 || variantFieldIndex >= selectedVariant.Fields.Count)
+                        {
+                            Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An enum projection must name a declared variant payload field.", source);
+                            return null;
+                        }
+                        type = selectedVariant.Fields[variantFieldIndex].Type;
+                        selectedVariant = null;
+                        break;
                     case SafeCoreMirProjectionKind.TupleIndex when type.Kind == SafeCoreSemanticTypeKind.Tuple &&
                         projection.Index < type.Elements.Count:
                         type = type.Elements[projection.Index];
                         break;
                     case SafeCoreMirProjectionKind.ArrayIndex when type.Kind == SafeCoreSemanticTypeKind.Array &&
                         type.Length is long length && projection.Index < length:
+                    case SafeCoreMirProjectionKind.ArrayIndex when type.Kind == SafeCoreSemanticTypeKind.Slice:
                         type = type.ElementType;
                         break;
-                    case SafeCoreMirProjectionKind.DynamicIndex when type.Kind == SafeCoreSemanticTypeKind.Array:
+                    case SafeCoreMirProjectionKind.FromEndIndex when type.Kind == SafeCoreSemanticTypeKind.Array &&
+                        type.Length is long suffixOwnerLength && projection.MinimumLength <= suffixOwnerLength:
+                    case SafeCoreMirProjectionKind.FromEndIndex when type.Kind == SafeCoreSemanticTypeKind.Slice:
+                        type = type.ElementType;
+                        break;
+                    case SafeCoreMirProjectionKind.DynamicIndex when type.Kind is SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Slice:
                         SafeCoreType? indexType = LocalType(projection.Index, source);
                         if (indexType?.Kind != SafeCoreSemanticTypeKind.Usize)
                         {
@@ -483,7 +512,7 @@ public static class SafeCoreMirValidation
                         type = type.ElementType;
                         break;
                     case SafeCoreMirProjectionKind.Field when type.Kind == SafeCoreSemanticTypeKind.Adt:
-                        if (!_adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? layout))
+                        if (!_adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? layout) || layout.Variants.Count != 0)
                         {
                             Error(SafeCoreMirDiagnosticCodes.UnsupportedNode,
                                 "Named MIR fields require declared aggregate layout evidence.", source);
@@ -498,6 +527,7 @@ public static class SafeCoreMirValidation
                         break;
                     case SafeCoreMirProjectionKind.TupleIndex when type.Kind == SafeCoreSemanticTypeKind.Adt &&
                         _adtLayouts.TryGetValue(type.Name!, out SafeCoreMirAdtLayout? tupleLayout) &&
+                        tupleLayout.Variants.Count == 0 &&
                         projection.Index < tupleLayout.Fields.Count &&
                         tupleLayout.Fields[projection.Index].Name == projection.Index.ToString(CultureInfo.InvariantCulture):
                         type = tupleLayout.Fields[projection.Index].Type;
@@ -507,6 +537,11 @@ public static class SafeCoreMirValidation
                             "MIR projection is incompatible with its owner type or static bounds.", source);
                         return null;
                 }
+            }
+            if (selectedVariant is not null)
+            {
+                Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An enum downcast must be followed by a payload projection.", source);
+                return null;
             }
             if (dereference)
             {
@@ -575,13 +610,15 @@ public static class SafeCoreMirValidation
             if (!validOperands) return;
             int expectedCount = value.Kind switch
             {
-                SafeCoreMirRvalueKind.Use or SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Coerce or SafeCoreMirRvalueKind.Cast or SafeCoreMirRvalueKind.Field or SafeCoreMirRvalueKind.SliceLength => 1,
+                SafeCoreMirRvalueKind.Use or SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Coerce or SafeCoreMirRvalueKind.Cast or SafeCoreMirRvalueKind.Field or SafeCoreMirRvalueKind.SliceLength or SafeCoreMirRvalueKind.Discriminant or SafeCoreMirRvalueKind.PromotedBorrow => 1,
+                SafeCoreMirRvalueKind.Subslice => 3,
                 SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Index => 2,
                 SafeCoreMirRvalueKind.Write => 2,
                 SafeCoreMirRvalueKind.Tuple => value.Type.Kind == SafeCoreSemanticTypeKind.Unit ? 0 : value.Type.Elements.Count,
                 SafeCoreMirRvalueKind.Array => ArrayOperandCount(value.Type),
                 SafeCoreMirRvalueKind.Adt => value.Type.Kind == SafeCoreSemanticTypeKind.Adt &&
                     _adtLayouts.TryGetValue(value.Type.Name!, out SafeCoreMirAdtLayout? layout) ? layout.Fields.Count : -1,
+                SafeCoreMirRvalueKind.Enum => EnumVariant(value)?.Fields.Count ?? -1,
                 SafeCoreMirRvalueKind.Print => value.Operator == "{}" ? 1 : 0,
                 _ => -1,
             };
@@ -590,7 +627,7 @@ public static class SafeCoreMirValidation
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Rvalue operand count or kind is invalid.", value.Source);
                 return;
             }
-            if (value.Kind is not (SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Print or SafeCoreMirRvalueKind.Field) && value.Operator is not null)
+            if (value.Kind is not (SafeCoreMirRvalueKind.Unary or SafeCoreMirRvalueKind.Binary or SafeCoreMirRvalueKind.Print or SafeCoreMirRvalueKind.Field or SafeCoreMirRvalueKind.Enum or SafeCoreMirRvalueKind.Subslice) && value.Operator is not null)
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Only unary and binary computations carry an operator.", value.Source);
             if (value.Operator is { Length: > 128 })
                 Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "MIR operators must be bounded.", value.Source);
@@ -607,6 +644,11 @@ public static class SafeCoreMirValidation
                 SafeCoreMirRvalueKind.Tuple => Tuple(value),
                 SafeCoreMirRvalueKind.Array => Array(value),
                 SafeCoreMirRvalueKind.Adt => Adt(value),
+                SafeCoreMirRvalueKind.Enum => EnumValue(value),
+                SafeCoreMirRvalueKind.Discriminant => first!.Kind == SafeCoreSemanticTypeKind.Adt &&
+                    _adtLayouts.TryGetValue(first.Name!, out SafeCoreMirAdtLayout? enumLayout) && enumLayout.Variants.Count > 0 && value.Type.Kind == SafeCoreSemanticTypeKind.I32,
+                SafeCoreMirRvalueKind.Subslice => Subslice(value),
+                SafeCoreMirRvalueKind.PromotedBorrow => PromotedBorrow(value),
                 SafeCoreMirRvalueKind.Index => Index(value),
                 SafeCoreMirRvalueKind.Field => Field(value),
                 SafeCoreMirRvalueKind.Write => Write(value),
@@ -621,7 +663,7 @@ public static class SafeCoreMirValidation
         {
             if (value.Type.Kind != SafeCoreSemanticTypeKind.Adt ||
                 !_adtLayouts.TryGetValue(value.Type.Name!, out SafeCoreMirAdtLayout? layout) ||
-                layout.Fields.Count != value.Operands.Count) return false;
+                layout.Variants.Count != 0 || layout.Fields.Count != value.Operands.Count) return false;
             for (int index = 0; index < layout.Fields.Count; index++)
             {
                 Step();

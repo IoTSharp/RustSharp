@@ -37,9 +37,30 @@ internal static class EmissionTests
         new("emitted portable PDB maps sequence points to source spans", EmitsPortablePdbSequencePointsAsync),
         new("emitted portable PDB hashes the original source bytes", EmitsPortablePdbSourceHashAsync),
         new("compiler writes PE, PDB, and runtime config", WritesCompilationArtifactsAsync),
+        new("MIR output cannot overwrite its runtime dependency", RejectsRuntimeOutputCollisionAsync),
         new("disk compilation emits deterministic artifacts and valid IL", DiskCompilationEmitsDeterministicallyAsync),
         new("concurrent compiler writes produce readable artifacts", ConcurrentWritesProduceReadableArtifactsAsync),
     ];
+
+    private static Task RejectsRuntimeOutputCollisionAsync()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "RustSharp.Tests", "runtime-collision-" + Guid.NewGuid().ToString("N"));
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        Directory.CreateDirectory(directory);
+        string output = Path.Combine(directory, "RustSharp.Runtime.dll");
+        try
+        {
+            File.WriteAllText(output, "existing runtime sentinel");
+            CompilationResult result = CompilerDriver.Compile(
+                "fn main() { let value = 7; let reference = &value; println!(\"{}\", *reference); }",
+                "runtime-collision.rs", output, profile: CompilationProfile.SafeCoreMirV2, cancellationToken: deadline.Token);
+            AssertEx.False(result.Success, "The compiler must reject a dependency/output collision before its artifact transaction.");
+            AssertEx.Equal("existing runtime sentinel", File.ReadAllText(output));
+            AssertEx.False(File.Exists(Path.ChangeExtension(output, ".pdb")), "Failure must not publish partial PDB output.");
+        }
+        finally { Directory.Delete(directory, recursive: true); }
+        return Task.CompletedTask;
+    }
 
     private static Task ReportsMissingSourceFileAsync()
     {

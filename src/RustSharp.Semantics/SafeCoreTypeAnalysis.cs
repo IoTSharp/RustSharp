@@ -17,13 +17,23 @@ public sealed record SafeCoreTypeAnalysisOptions
     public int MaximumNestingDepth { get; init; } = 128;
     /// <summary>Enables the P1 source profile's one-time uninitialized binding form.</summary>
     public bool EnableUninitializedBindings { get; init; }
+    /// <summary>Allows static reference spellings in the executable promotion profile.</summary>
+    public bool EnableStaticLifetimeReferences { get; init; }
 }
 
 /// <summary>Resolved type evidence, indexed by stable HIR node identity.</summary>
 public sealed record SafeCoreTypeAnalysisProgram(
     SafeCoreHirResult Hir,
     IReadOnlyDictionary<int, SafeCoreType> Types,
-    IReadOnlyDictionary<int, SafeCoreType> Coercions);
+    IReadOnlyDictionary<int, SafeCoreType> Coercions)
+{
+    /// <summary>Checked constant items, uses and inline blocks, keyed by HIR identity.</summary>
+    public IReadOnlyDictionary<int, SafeCoreEvaluatedConstant> Constants { get; init; } =
+        new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreEvaluatedConstant>(new Dictionary<int, SafeCoreEvaluatedConstant>());
+    /// <summary>Closed immutable borrow expressions eligible for constant promotion.</summary>
+    public IReadOnlyDictionary<int, SafeCoreEvaluatedConstant> Promotions { get; init; } =
+        new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreEvaluatedConstant>(new Dictionary<int, SafeCoreEvaluatedConstant>());
+}
 
 public sealed record SafeCoreTypeAnalysisResult(
     SafeCoreTypeAnalysisProgram? Program, IReadOnlyList<Diagnostic> Diagnostics)
@@ -168,11 +178,12 @@ public static partial class SafeCoreTypeAnalysis
                 if (node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ConstFunction))
                     ValidateConstContext(node, 0);
             }
+            EvaluateEnumDiscriminants();
             foreach (SafeCoreHirNode block in _constBlocks.Values.ToArray())
             {
                 Step(block, 0);
                 ValidateConstContext(block, 0);
-                _ = EvaluateConstant(Child(block, 0), new(null), 0);
+                _constantBlocks[block.Id] = EvaluateConstant(Child(block, 0), new(null), 0);
             }
             ValidatePatternCoverage();
             foreach (var integer in _integers)
@@ -228,8 +239,11 @@ public static partial class SafeCoreTypeAnalysis
                 Step(_hir.GetNode(entry.Key), 0);
                 coercions.Add(entry.Key, _inference.Resolve(entry.Value, defaultNumerics: true));
             }
+            (IReadOnlyDictionary<int, SafeCoreEvaluatedConstant> constants,
+                IReadOnlyDictionary<int, SafeCoreEvaluatedConstant> promotions) = PublishConstants();
             return new(_hir, new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreType>(resolved),
-                new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreType>(coercions));
+                new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreType>(coercions))
+            { Constants = constants, Promotions = promotions };
         }
 
         private void Collect(SafeCoreHirNode node, int depth)
@@ -317,7 +331,9 @@ public static partial class SafeCoreTypeAnalysis
                 var fields = new List<Field>();
                 foreach (SafeCoreHirNode field in Parts(shapeNode).Where(static p => p.Kind == N.Field))
                 {
-                    SafeCoreType fieldType = Type(Parts(field).First(IsType), false, 0);
+                    SafeCoreHirNode fieldTypeNode = Parts(field).First(IsType);
+                    if (_options.EnableStaticLifetimeReferences) ValidateFieldLifetimes(fieldTypeNode, 0);
+                    SafeCoreType fieldType = Type(fieldTypeNode, false, 0);
                     Sized(fieldType, field, 0);
                     fields.Add(new(field, fieldType));
                     _types[field.Id] = fieldType;
@@ -390,7 +406,11 @@ public static partial class SafeCoreTypeAnalysis
                     TypeVisible(type, node, depth + 1);
                     break;
                 case N.ReferenceType:
-                    if (node.Value is not null) Unsupported(node);
+                    if (node.Value is not null)
+                    {
+                        if (!(_options.EnableStaticLifetimeReferences && node.Value is "'static" or "static")) Unsupported(node);
+                        ValidateStaticLifetimePosition(node);
+                    }
                     type = SafeCoreType.Reference(Type(Child(node, 0), allowInference, depth + 1),
                         node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.MutableReference)); break;
                 case N.TupleType:
@@ -550,9 +570,16 @@ public static partial class SafeCoreTypeAnalysis
                     break;
                 case N.IndexExpression:
                     SafeCoreType target = AutoDeref(Expr(Child(node, 0), null, depth + 1), node, depth + 1);
-                    Expr(Child(node, 1), Primitive(K.Usize), depth + 1);
                     if (target.Kind is not (K.Array or K.Slice)) Fail(node, "RST2002", "Only arrays and slices can be indexed in this profile.");
-                    type = target.ElementType!; break;
+                    SafeCoreHirNode offset = Child(node, 1);
+                    if (offset.Kind == N.RangeExpression)
+                    {
+                        foreach (SafeCoreHirNode bound in Parts(offset)) Expr(bound, Primitive(K.Usize), depth + 1);
+                        type = SafeCoreType.Slice(target.ElementType!);
+                        _types[offset.Id] = type;
+                    }
+                    else { Expr(offset, Primitive(K.Usize), depth + 1); type = target.ElementType!; }
+                    break;
                 case N.MemberExpression: type = Member(node, depth + 1); break;
                 case N.StructExpression: type = Construct(node, depth + 1); break;
                 case N.CastExpression:

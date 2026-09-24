@@ -80,6 +80,14 @@ The authoritative inputs are the [main roadmap](../ROADMAP.md), [P1 leaf contrac
 
 ## Evidence and change rules
 
+Implementation note (2026-09-24): the opt-in MIR v2 pipeline separately enables
+direct `'static` reference declarations for checked immutable promotion. The
+default monomorphic check-only profile still rejects explicit lifetime spellings
+under P1-REQ-037; named/generic lifetimes and nested explicit contracts remain
+excluded. This additive executable extension does not remove any frozen
+reference, slice, ownership or platform requirement. See the
+[implementation inventory](p1-06-implementation.md) for its storage and test contract.
+
 P1-06.01 is satisfied by this bilingual inventory and its explicit leaf ownership. It does not satisfy P1-10.01/.02: named cases, immutable hashes, exact test denominators and backend mappings still need their own versioned manifests. Required supporting invariants use diagnostic/structural/budget cases where execution is inapplicable; every executable source family requires generated CoreCLR, ILVerify and native Windows/Linux x64 AOT evidence through P1-10.06. Borrow/Drop differential cases additionally use the pinned rustc 1.98 oracle. Snapshot or interpreter evidence cannot replace emitted execution.
 
 The recorded E6 baseline in the P1 leaf page is `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`: 464 harness, 12 platform, 24 regression and 16 differential cases per recorded scope, plus 6 aggregate inputs. None is the denominator for these 40 requirements. Missing reference/slice/pattern/closure/const/aggregate/Drop/import behavior remains implementation work; absent new platform evidence remains evidence work. Neither is silently passed or omitted.

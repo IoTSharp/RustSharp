@@ -88,25 +88,27 @@ and passes 377/377 tests; this supplemental run used the installed 10.0.401 SDK
 through explicit MSBuild and does not replace the recorded 10.0.400 AOT
 evidence.
 
-P1-06 through P1-10 and the P1 stage remain 🚧 In progress. The opt-in
-`safe-core-mir-p1-v2` profile adds structural-`Copy` repeated arrays, bounded
-tuple/scalar patterns, guarded/or-pattern `match`, and statically expanded
-captured closures to source-mapped HIR → typed MIR → CLR LIR emission. The v1
+P1-06 is ✅ Complete for its frozen typed-MIR contract; P1-07 through P1-10 and
+the P1 stage remain 🚧 In progress. The opt-in
+`safe-core-mir-p1-v2` profile adds structural-`Copy` repeated arrays, named and
+enum layouts, nested references and reference-bearing aggregates, checked constants
+and promotion, patterns and captured closures to source-mapped HIR → typed MIR → CLR LIR emission. The v1
 repeated-array rejection remains unchanged. The pipeline has deterministic
 snapshots and PE/PDB checks, explicit unsupported diagnostics, and bounded
 work, size, depth, time and cancellation behavior.
 
-Full-array local slice references now support array-to-slice unsizing, `.len()`
-and constant indexing through proven owner storage, with CoreCLR regressions.
-Dynamic indexing, subslices, slice writes and general slice parameters/returns
-remain unsupported.
+Shared/mutable slices support array-to-slice unsizing, `.len()`, dynamic indexing,
+subslices, writes and parameters/returns. GC-owned reference handles preserve
+owner identity through nested projections, reference slots and slice ranges.
+The [P1-06 inventory](docs/p1-06-implementation.md) maps each executable family
+to its registered tests and separates local evidence from the full platform gate.
 
-Bounded direct-local borrow/reborrow origins, place/projection models and
+Bounded composite borrow/reborrow origins, place/projection models and
 ownership evidence now flow through typed MIR and the CLR LIR backend. Shared
 reference copies clone their loan, mutable reference moves transfer it, and
 source escapes receive stable ownership diagnostics. The adapter maps non-`Copy`
-MIR uses to moves and checks projected move paths; complete source place lowering,
-interprocedural contracts and the complete NLL join space remain open. The
+MIR uses to moves and checks projected move paths and stored-reference aliases;
+the broader P1-07 source ownership and cross-package contracts remain open. The
 supported unit `impl Drop` path now emits explicit MIR destructor calls and
 ownership Drop facts, with generated fault cleanup exercised on CoreCLR. Complete
 panic/unwind/abort behavior, destructor-failure continuation and field-owning
@@ -117,18 +119,24 @@ contracts now have metadata and manually constructed CLR LIR producer/consumer
 CoreCLR tests; full source-level cross-package ownership contracts and evidence
 for these additions on ILVerify and both Native AOT platforms remain open.
 
-The current local Release build has zero errors/warnings, and the executable harness passes 464/464 with zero failures/skips. This is local evidence for the current changes, not the complete P1 exit gate.
+The current local Release build has zero errors/warnings, and the executable harness passes 670/670 with zero failures/skips using the installed SDK 10.0.401; the repository pin remains 10.0.400. Logs are retained under `artifacts/p1-06-final-session`. These results do not close the complete P1 exit gate.
 
 The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
-skips. The versioned `safe-core-regression-v2` report passes 24/24 with one
+skips. The historical `safe-core-regression-v2` report passes 24/24 with one
 compile-pass, six compile-fail, thirteen run-pass and four differential cases;
 its rustc 1.98.0 process records have zero failures, blocked cases or skips.
+The immutable v2 manifest remains unchanged. `safe-core-regression-v3` versions
+the now-executable or-pattern and mutable-capture expectations and adds the
+combined MIR family and projection samples: 26 cases (one compile-pass, four
+compile-fail, seventeen run-pass and four differential), passing 26/26 with zero
+failures, blocked cases or skips. Both samples match rustc 1.98.0 on CoreCLR and
+Windows x64 Native AOT and pass ILVerify 10.0.11 without suppressed diagnostics.
 `p1-exit-gate-v1` passes 5/5 in-process library probes and explicitly
 records `"nativeAot": false` and `"crossPlatform": false`. The immutable
 `p1-differential-v2` manifest executes 16/16 cases (10 borrow, 6 Drop) against
 rustc 1.98.0 with zero failures, blocked cases or skips. The new
 `p1-platform.yml` workflow fixes 12 run-pass cases per native Windows/Linux x64
-runner, runs the 24-case v2 regression suite on each platform, and aggregates
+runner, runs the 26-case v3 regression suite on each platform, and aggregates
 six reports covering CoreCLR, ILVerify, Native AOT, differential and regression
 evidence. [Run 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833)
 passed all six gates at historical commit `23279d93267a814c643baddc29c72918ff0fda0b`.

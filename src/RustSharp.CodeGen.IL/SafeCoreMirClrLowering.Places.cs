@@ -6,20 +6,63 @@ public static partial class SafeCoreMirClrLowering
 {
     private sealed partial class BodyLowerer
     {
+        private void Runtime(string name, ClrLirType result, params ClrLirType[] parameters) =>
+            Emit(new ClrLirCall(new("MirReference." + name, result, parameters)
+            {
+                ExternalCall = new("RustSharp.Runtime", "RustSharp.Runtime", "MirReference", name),
+            }));
+
+        private void ReadReference(ClrLirType type)
+        {
+            Runtime("Read", ClrLirType.Any, ClrLirType.Any);
+            Emit(new ClrLirUnbox(type));
+        }
+
+        private void ReadSemanticReference(SafeCoreType type, SafeCoreMirSource source)
+        {
+            ClrLirType storage = owner.StorageType(type, source);
+            if (type.Kind != SafeCoreSemanticTypeKind.Array)
+            {
+                ReadReference(storage);
+                return;
+            }
+            // Borrowed array rest patterns retain &[T; N], while their owner is
+            // a checked window into a larger array. Typed accessors reconstruct
+            // the exact value layout when the entire view is dereferenced.
+            EmitDefault(type, source);
+            Emit(new ClrLirBox(storage));
+            Runtime("ReadArray", ClrLirType.Any, ClrLirType.Any, ClrLirType.Any);
+            Emit(new ClrLirUnbox(storage));
+        }
+
+        private void WriteReference(ClrLirType type)
+        {
+            Emit(new ClrLirBox(type));
+            Runtime("Write", ClrLirType.Void, ClrLirType.Any, ClrLirType.Any);
+        }
+
+        private void Load(int id, SafeCoreMirSource source)
+        {
+            if (!_localTypes.TryGetValue(id, out ClrLirType type))
+                Lowerer.Fail(source, "MIR local operand is outside its local arena.");
+            Emit(new ClrLirLoadLocal(id));
+            ReadReference(type);
+        }
+
         private void EmitStatement(SafeCoreMirStatement statement)
         {
             if (statement.Value.Kind == SafeCoreMirRvalueKind.Write)
             {
                 EmitOperand(statement.Value.Operands[0]);
                 EmitOperand(statement.Value.Operands[1]);
-                Emit(new ClrLirStoreIndirect(owner.StorageType(statement.Value.Operands[1].Type, statement.Source)));
+                WriteReference(owner.StorageType(statement.Value.Operands[1].Type, statement.Source));
                 return;
             }
             if (statement.DestinationPlace is { IsRoot: false } destination)
             {
                 EmitPlaceAddress(destination, statement.Source, mutable: true);
                 EmitRvalue(statement.Value);
-                Emit(new ClrLirStoreIndirect(owner.StorageType(statement.Value.Type, statement.Source)));
+                WriteReference(owner.StorageType(statement.Value.Type, statement.Source));
                 return;
             }
             EmitRvalue(statement.Value);
@@ -37,28 +80,67 @@ public static partial class SafeCoreMirClrLowering
         {
             owner.Step();
             SafeCoreType current = function.Locals[place.LocalId].Type;
-            int start = 0;
-            if (current.Kind == SafeCoreSemanticTypeKind.Reference)
-            {
-                if (place.Projections.Count == 0 || place.Projections[0].Kind != SafeCoreMirProjectionKind.Dereference)
-                    Lowerer.FailUnsupported(source, "Taking the address of a reference slot requires nested managed pointers.");
-                Emit(new ClrLirLoadLocal(place.LocalId));
-                current = current.ElementType!;
-                if (current.Kind == SafeCoreSemanticTypeKind.Slice) current = SliceArray(place.LocalId, source);
-                if (!mutable) Emit(new ClrLirReadOnlyReference(owner.StorageType(current, source)));
-                start = 1;
-            }
-            else Emit(new ClrLirLoadLocalAddress(place.LocalId, mutable));
-
-            for (int projectionIndex = start; projectionIndex < place.Projections.Count; projectionIndex++)
+            Emit(new ClrLirLoadLocal(place.LocalId));
+            int variant = -1;
+            foreach (SafeCoreMirProjection projection in place.Projections)
             {
                 owner.Step();
-                SafeCoreMirProjection projection = place.Projections[projectionIndex];
                 if (projection.Kind == SafeCoreMirProjectionKind.Dereference)
-                    Lowerer.FailUnsupported(source, "Nested reference projections require a CLR byref-like representation.");
+                {
+                    ReadReference(owner.StorageType(current, source));
+                    current = current.ElementType!;
+                    variant = -1;
+                    continue;
+                }
+                if (projection.Kind == SafeCoreMirProjectionKind.Downcast)
+                {
+                    variant = projection.Index;
+                    continue;
+                }
+                if (current.Kind is SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Slice)
+                {
+                    if (projection.Kind == SafeCoreMirProjectionKind.FromEndIndex)
+                    {
+                        Emit(new ClrLirLoadInt32(projection.Index));
+                        Emit(new ClrLirLoadInt32(projection.MinimumLength));
+                        Emit(new ClrLirLoadInt32(current.Kind == SafeCoreSemanticTypeKind.Array
+                            ? checked((int)current.Length!.Value) : -1));
+                        Runtime("FromEndIndex", ClrLirType.Any, ClrLirType.Any, ClrLirType.I32, ClrLirType.I32, ClrLirType.I32);
+                        current = current.ElementType!;
+                        continue;
+                    }
+                    if (projection.Kind == SafeCoreMirProjectionKind.DynamicIndex) Load(projection.Index, source);
+                    else Emit(new ClrLirLoadInt32(projection.Index));
+                    if (current.Kind == SafeCoreSemanticTypeKind.Slice)
+                        Runtime("SliceIndex", ClrLirType.Any, ClrLirType.Any, ClrLirType.I32);
+                    else
+                    {
+                        Emit(new ClrLirLoadInt32(checked((int)current.Length!.Value)));
+                        Runtime("ArrayIndex", ClrLirType.Any, ClrLirType.Any, ClrLirType.I32, ClrLirType.I32);
+                    }
+                    current = current.ElementType!;
+                    continue;
+                }
                 ClrLirValueType layout = owner.Layout(current, source);
                 int fieldIndex = projection.Index;
-                if (projection.Kind == SafeCoreMirProjectionKind.Field)
+                if (variant >= 0)
+                {
+                    SafeCoreMirAdtVariant selected = owner.Variant(current, variant, source);
+                    if (projection.Kind == SafeCoreMirProjectionKind.Field)
+                    {
+                        fieldIndex = -1;
+                        for (int index = 0; index < selected.Fields.Count; index++)
+                        {
+                            owner.Step();
+                            if (selected.Fields[index].Name == projection.Name) { fieldIndex = index; break; }
+                        }
+                    }
+                    if (fieldIndex < 0 || fieldIndex >= selected.Fields.Count)
+                        Lowerer.Fail(source, "An enum projection does not match its selected variant.");
+                    fieldIndex += selected.FieldOffset;
+                    variant = -1;
+                }
+                else if (projection.Kind == SafeCoreMirProjectionKind.Field)
                 {
                     fieldIndex = -1;
                     for (int index = 0; index < layout.Fields.Length; index++)
@@ -66,62 +148,13 @@ public static partial class SafeCoreMirClrLowering
                         owner.Step();
                         if (layout.Fields[index].Name == projection.Name) { fieldIndex = index; break; }
                     }
-                    if (fieldIndex < 0) Lowerer.Fail(source, "A named MIR projection does not match its ADT layout.");
                 }
-                if (projection.Kind == SafeCoreMirProjectionKind.DynamicIndex)
-                {
-                    Emit(new ClrLirLoadLocal(projection.Index));
-                    EmitArrayElementAddress(layout, owner.StorageType(current.ElementType!, source), mutable, source);
-                    current = current.ElementType!;
-                }
-                else
-                {
-                    Emit(new ClrLirFieldAddress(layout, fieldIndex, mutable));
-                    current = owner.FieldType(current, fieldIndex, source);
-                }
+                if (fieldIndex < 0 || fieldIndex >= layout.Fields.Length)
+                    Lowerer.Fail(source, "A MIR projection does not match its aggregate layout.");
+                Emit(new ClrLirLoadInt32(fieldIndex));
+                Runtime("Field", ClrLirType.Any, ClrLirType.Any, ClrLirType.I32);
+                current = owner.FieldType(current, fieldIndex, source);
             }
-        }
-
-        // Fixed arrays use sequential fields. A bounded decision chain selects
-        // one field address, retaining the real owner through subsequent writes.
-        // The index is captured once even when the place appears in a reborrow.
-        private void EmitArrayElementAddress(ClrLirValueType layout, ClrLirType elementType, bool mutable, SafeCoreMirSource source)
-        {
-            owner.Step();
-            int indexLocal = Temporary(ClrLirType.I32, source);
-            Emit(new ClrLirStoreLocal(indexLocal));
-            int ownerLocal = Temporary(ClrLirType.ByReference(layout.Type, mutable), source);
-            Emit(new ClrLirStoreLocal(ownerLocal));
-            if (layout.Fields.Length == 0)
-            {
-                // A typed helper has no return instruction: its byref signature
-                // permits the surrounding expression while its body always traps.
-                Emit(new ClrLirCall(owner.BoundsFailure(elementType, mutable, source)));
-                return;
-            }
-            Block join = NewBlock();
-            var cases = new List<Block>(layout.Fields.Length);
-            for (int index = 0; index < layout.Fields.Length; index++)
-            {
-                owner.Step();
-                Block selected = NewBlock();
-                cases.Add(selected);
-                Emit(new ClrLirLoadLocal(indexLocal));
-                Emit(new ClrLirLoadInt32(index));
-                Emit(new ClrLirBinary(ClrLirBinaryOperator.Equal, ClrLirType.I32));
-                Terminate(new ClrLirBranchTrue(selected.Label));
-                Start(NewBlock());
-            }
-            Terminate(new ClrLirThrowIndexOutOfRange());
-            for (int index = 0; index < cases.Count; index++)
-            {
-                owner.Step();
-                Start(cases[index]);
-                Emit(new ClrLirLoadLocal(ownerLocal));
-                Emit(new ClrLirFieldAddress(layout, index, mutable));
-                Terminate(new ClrLirBranch(join.Label));
-            }
-            Start(join);
         }
 
         private int Temporary(ClrLirType type, SafeCoreMirSource source)
@@ -134,39 +167,19 @@ public static partial class SafeCoreMirClrLowering
             return id;
         }
 
-        private SafeCoreType SliceArray(int local, SafeCoreMirSource source)
+        private void EmitDefault(SafeCoreType type, SafeCoreMirSource source)
         {
-            if (_sliceArrays.TryGetValue(local, out SafeCoreType? array)) return array;
-            Lowerer.FailUnsupported(source, "Slice execution requires a proven full fixed-array layout; a general slice ABI is not implemented.");
-            return null!;
-        }
-
-        private void CollectSliceLayouts()
-        {
-            // This map carries only slice ABI layout information, never owner
-            // identity. The runtime managed pointer carries the selected owner.
-            for (int pass = 0; pass <= function.Locals.Count; pass++)
+            owner.Step();
+            ClrLirType storage = owner.StorageType(type, source);
+            if (storage == ClrLirType.Any) Emit(new ClrLirLoadNull());
+            else if (storage == ClrLirType.Bool) Emit(new ClrLirLoadBoolean(false));
+            else if (storage == ClrLirType.I32) Emit(new ClrLirLoadInt32(0));
+            else
             {
-                owner.Step();
-                bool changed = false;
-                foreach (SafeCoreMirBlock block in function.Blocks)
-                foreach (SafeCoreMirStatement statement in block.Statements)
-                {
-                    owner.Step();
-                    SafeCoreMirRvalue value = statement.Value;
-                    if (value.Type.Kind != SafeCoreSemanticTypeKind.Reference ||
-                        value.Type.ElementType?.Kind != SafeCoreSemanticTypeKind.Slice || value.Operands.Count != 1) continue;
-                    SafeCoreMirOperand origin = value.Operands[0];
-                    SafeCoreType candidate = origin.Type.Kind == SafeCoreSemanticTypeKind.Reference ? origin.Type.ElementType! : origin.Type;
-                    if (candidate.Kind == SafeCoreSemanticTypeKind.Slice && _sliceArrays.TryGetValue(origin.Id, out SafeCoreType? prior)) candidate = prior;
-                    if (candidate.Kind != SafeCoreSemanticTypeKind.Array) continue;
-                    if (_sliceArrays.TryGetValue(statement.DestinationLocalId, out SafeCoreType? previous))
-                    {
-                        if (previous != candidate) Lowerer.FailUnsupported(value.Source, "Slice joins require the same fixed-array layout on every edge.");
-                    }
-                    else { _sliceArrays.Add(statement.DestinationLocalId, candidate); changed = true; }
-                }
-                if (!changed) break;
+                ClrLirValueType layout = owner.Layout(type, source);
+                for (int index = 0; index < layout.Fields.Length; index++)
+                    EmitDefault(owner.FieldType(type, index, source), source);
+                Emit(new ClrLirConstructValue(layout));
             }
         }
     }

@@ -1264,6 +1264,10 @@ public static class SafeCoreNameResolution
                         CollectNestedExpressionScopes(indexExpression.Target, parent, depth + 1);
                         CollectNestedExpressionScopes(indexExpression.Index, parent, depth + 1);
                         break;
+                    case SafeCoreRangeExpressionSyntax range when _options.EnableTypeSystemExtensions:
+                        if (range.Start is not null) CollectNestedExpressionScopes(range.Start, parent, depth + 1);
+                        if (range.End is not null) CollectNestedExpressionScopes(range.End, parent, depth + 1);
+                        break;
                     case SafeCoreStructExpressionSyntax structure when _options.EnableTypeSystemExtensions || _options.EnableGenericExtensions:
                         for (var index = 0; index < structure.Fields.Count && !_truncated; index++)
                             CollectNestedExpressionScopes(structure.Fields[index].Value, parent, depth + 1);
@@ -1818,7 +1822,7 @@ public static class SafeCoreNameResolution
                 SafeCoreEnumVariantSyntax variant = enumeration.Variants[variantIndex];
                 if (HasUnsupportedAttributes(variant.Attributes) ||
                     variant.Kind == SafeCoreEnumVariantKind.Struct && !_options.EnableTypeSystemExtensions ||
-                    variant.Discriminant is not null)
+                    variant.Discriminant is not null && !_options.EnableTypeSystemExtensions)
                 {
                     RejectNewSyntax(variant.Span);
                 }
@@ -1831,6 +1835,8 @@ public static class SafeCoreNameResolution
                         return;
                     }
                 }
+                if (variant.Discriminant is not null && _options.EnableTypeSystemExtensions)
+                    ResolveExpression(variant.Discriminant, scope, 0);
             }
         }
 
@@ -2055,6 +2061,10 @@ public static class SafeCoreNameResolution
                             break;
                         case SafeCoreIndexExpressionSyntax indexExpression:
                             pending.Push((indexExpression.Target, depth + 1)); pending.Push((indexExpression.Index, depth + 1));
+                            break;
+                        case SafeCoreRangeExpressionSyntax range when _options.EnableTypeSystemExtensions:
+                            if (range.Start is not null) pending.Push((range.Start, depth + 1));
+                            if (range.End is not null) pending.Push((range.End, depth + 1));
                             break;
                         case SafeCoreIfExpressionSyntax conditional:
                             pending.Push((conditional.Condition, depth + 1)); pending.Push((conditional.Then, depth + 1));
@@ -2484,6 +2494,10 @@ public static class SafeCoreNameResolution
                     case SafeCoreIndexExpressionSyntax indexExpression:
                         ResolveExpression(indexExpression.Target, scope, depth + 1);
                         ResolveExpression(indexExpression.Index, scope, depth + 1);
+                        break;
+                    case SafeCoreRangeExpressionSyntax range when _options.EnableTypeSystemExtensions:
+                        if (range.Start is not null) ResolveExpression(range.Start, scope, depth + 1);
+                        if (range.End is not null) ResolveExpression(range.End, scope, depth + 1);
                         break;
                     case SafeCoreLiteralExpressionSyntax:
                         break;

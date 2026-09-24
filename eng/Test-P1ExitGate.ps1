@@ -19,6 +19,10 @@ param(
     [string] $LinuxRegressionReport,
 
     [Parameter()]
+    [ValidateSet('safe-core-regression-v2', 'safe-core-regression-v3')]
+    [string] $RegressionProfile = 'safe-core-regression-v2',
+
+    [Parameter()]
     [string] $EvidencePath = 'artifacts/p1-exit-gate/p1-exit-gate.json',
 
     [Parameter()]
@@ -248,7 +252,7 @@ function Validate-RegressionReport {
     if ($document.evidenceKind -ne 'safe-core-typed-mir-regression') {
         Add-Failure $InputName 'failed' "Unexpected evidence kind '$($document.evidenceKind)'."
     }
-    if ($document.profile -ne 'safe-core-regression-v2') {
+    if ($document.profile -ne $RegressionProfile) {
         Add-Failure $InputName 'failed' "Unexpected profile '$($document.profile)'."
     }
     if ([int]$document.schemaVersion -ne 2) {
@@ -259,23 +263,28 @@ function Validate-RegressionReport {
         Add-Failure $InputName 'failed' 'Regression summary is missing.'
         return
     }
-    Validate-CountSummary $InputName $summary 24 'passed'
+    $denominator = if ($RegressionProfile -eq 'safe-core-regression-v3') { 26 } else { 24 }
+    Validate-CountSummary $InputName $summary $denominator 'passed'
     $coverage = $summary.coverage
     if ($null -eq $coverage) {
         Add-Failure $InputName 'failed' 'Regression coverage is missing.'
     }
     else {
-        foreach ($expected in @{
-            'compile-pass' = 1; 'compile-fail' = 6; 'run-pass' = 13; 'differential' = 4;
-            legacy = 8; 'typed-mir' = 12; borrow = 2; drop = 2
-        }.GetEnumerator()) {
+        $expectedCoverage = if ($RegressionProfile -eq 'safe-core-regression-v3') {
+            @{ 'compile-pass' = 1; 'compile-fail' = 4; 'run-pass' = 17; 'differential' = 4;
+               legacy = 8; 'typed-mir' = 14; borrow = 2; drop = 2 }
+        } else {
+            @{ 'compile-pass' = 1; 'compile-fail' = 6; 'run-pass' = 13; 'differential' = 4;
+               legacy = 8; 'typed-mir' = 12; borrow = 2; drop = 2 }
+        }
+        foreach ($expected in $expectedCoverage.GetEnumerator()) {
             if ($null -eq $coverage.PSObject.Properties[$expected.Key] -or [int]$coverage.($expected.Key) -ne $expected.Value) {
                 Add-Failure $InputName 'failed' "Regression coverage '$($expected.Key)' did not equal $($expected.Value)."
             }
         }
     }
-    if ($null -eq $document.cases -or @($document.cases).Count -ne 24) {
-        Add-Failure $InputName 'failed' "Regression case count was $(@($document.cases).Count), expected 24."
+    if ($null -eq $document.cases -or @($document.cases).Count -ne $denominator) {
+        Add-Failure $InputName 'failed' "Regression case count was $(@($document.cases).Count), expected $denominator."
     }
     foreach ($case in @($document.cases)) {
         if ($case.status -ne 'passed') {
@@ -292,8 +301,8 @@ try {
         [pscustomobject]@{ Name = 'linux-platform'; Path = $LinuxPlatformReport; Kind = 'platform' },
         [pscustomobject]@{ Name = 'windows-differential-v2'; Path = $WindowsDifferentialReport; Kind = 'differential' },
         [pscustomobject]@{ Name = 'linux-differential-v2'; Path = $LinuxDifferentialReport; Kind = 'differential' },
-        [pscustomobject]@{ Name = 'windows-safe-core-regression-v2'; Path = $WindowsRegressionReport; Kind = 'regression' },
-        [pscustomobject]@{ Name = 'linux-safe-core-regression-v2'; Path = $LinuxRegressionReport; Kind = 'regression' }
+        [pscustomobject]@{ Name = "windows-$RegressionProfile"; Path = $WindowsRegressionReport; Kind = 'regression' },
+        [pscustomobject]@{ Name = "linux-$RegressionProfile"; Path = $LinuxRegressionReport; Kind = 'regression' }
     )
 
     foreach ($specification in $specifications) {
@@ -350,6 +359,7 @@ finally {
             SchemaVersion = 1
             EvidenceKind = 'p1-complete-exit-gate'
             Profile = 'p1-differential-v2'
+            RegressionProfile = $RegressionProfile
             Summary = [ordered]@{
                 Status = $status
                 ExitCode = if ($status -eq 'passed') { 0 } elseif ($status -eq 'failed') { 1 } else { 2 }
@@ -374,7 +384,7 @@ finally {
         $temporaryPath = $reportFullPath + '.tmp-' + $PID + '-' + [Guid]::NewGuid().ToString('N')
         try {
             [IO.File]::WriteAllText($temporaryPath, ($report | ConvertTo-Json -Depth 20))
-            [IO.File]::Move($temporaryPath, $reportFullPath)
+            [IO.File]::Move($temporaryPath, $reportFullPath, $true)
         }
         finally {
             if ([IO.File]::Exists($temporaryPath)) { [IO.File]::Delete($temporaryPath) }

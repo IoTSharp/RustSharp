@@ -125,12 +125,15 @@ public sealed class NativeAotPublisher
             ownsHostParentDirectory = !hostParentExisted;
 
             File.Copy(generatedAssemblyPath, hostAssemblyPath, overwrite: false);
+            string runtimeDependency = Path.Combine(Path.GetDirectoryName(generatedAssemblyPath)!, "RustSharp.Runtime.dll");
+            bool requiresRuntime = File.Exists(runtimeDependency);
+            if (requiresRuntime) File.Copy(runtimeDependency, Path.Combine(hostDirectory, "RustSharp.Runtime.dll"), overwrite: false);
 
             var hostSource = CreateHostSource();
             var hostProject = CreateHostProject(
                 request.AssemblyName,
                 hostAssemblyName,
-                hostAssemblyFileName);
+                hostAssemblyFileName, requiresRuntime);
 
             await File.WriteAllTextAsync(
                 hostSourcePath,
@@ -243,7 +246,7 @@ public sealed class NativeAotPublisher
     private static string CreateHostProject(
         string generatedAssemblyName,
         string hostAssemblyName,
-        string generatedAssemblyFileName)
+        string generatedAssemblyFileName, bool requiresRuntime)
     {
         var document = new XDocument(
             new XElement(
@@ -273,6 +276,10 @@ public sealed class NativeAotPublisher
                         new XElement("HintPath", generatedAssemblyFileName),
                         new XElement("Private", "true")))));
 
+        if (requiresRuntime)
+            document.Root!.Add(new XElement("ItemGroup", new XElement("Reference",
+                new XAttribute("Include", "RustSharp.Runtime"),
+                new XElement("HintPath", "RustSharp.Runtime.dll"), new XElement("Private", "true"))));
         return document.ToString(SaveOptions.DisableFormatting);
     }
 

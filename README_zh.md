@@ -82,20 +82,22 @@ Cargo 包示例也分别通过 ILVerify 与 Windows x64 Native AOT。P1-05 合�
 测试工具当前注册并通过 377/377 项测试；这次补充运行使用已安装的 10.0.401 SDK
 通过显式 MSBuild 完成，不替代已记录的 10.0.400 Native AOT 证据。
 
-P1-06～P1-10 及 P1 阶段仍为 🚧 进行中。可选的 `safe-core-mir-p1-v2` 配置档在
+P1-06 对冻结的类型化 MIR 契约为 ✅ 已完成；P1-07～P1-10 及 P1 阶段仍为
+🚧 进行中。可选的 `safe-core-mir-p1-v2` 配置档在
 带源码映射的 HIR → 类型化 MIR → CLR LIR 发射链路上增加结构化 `Copy` 重复数组、
-有界元组/标量模式、带 guard/or-pattern 的 `match` 及静态展开的捕获闭包。v1 对
+具名及枚举布局、嵌套引用与含引用聚合、已检查常量与提升、模式及捕获闭包。v1 对
 重复数组的拒绝契约保持不变。流水线具有确定性快照与 PE/PDB 检查、显式未支持诊断，
 以及工作量、大小、深度、时间和取消边界。
 
-完整数组的局部切片引用现支持数组到切片的 unsizing、`.len()` 和常量索引，
-通过已证明的所有者存储执行，并有 CoreCLR 回归。动态索引、子切片、切片写入和
-通用切片参数/返回值仍不支持。
+共享/可变切片支持数组到切片的 unsizing、`.len()`、动态索引、子切片、写入及
+参数/返回值。GC 拥有的引用句柄在嵌套投影、引用槽及切片范围间保持所有者标识。
+[P1-06 清单](docs/p1-06-implementation_zh.md)将每个可执行类别映射到已注册测试，
+并区分本地证据和完整平台门禁。
 
-有界的直接局部变量借用/再借用来源、place/projection 模型及所有权证据现在贯穿类型化
+有界的复合借用/再借用来源、place/projection 模型及所有权证据现在贯穿类型化
 MIR 与 CLR LIR 后端。共享引用复制会克隆借用，`&mut` 引用移动会转移借用，源码逃逸
-会得到稳定的所有权诊断。适配器将非 `Copy` MIR 使用映射为移动并检查投影移动路径；
-完整源码 place 降低、跨函数契约和完整的 NLL 合流空间仍待完成。
+会得到稳定的所有权诊断。适配器将非 `Copy` MIR 使用映射为移动，并检查投影移动路径
+和已存储引用的别名；更广的 P1-07 源码所有权及跨包契约仍待完成。
 受支持的 unit `impl Drop` 路径现在发出显式 MIR 析构调用和所有权 Drop 事实，生成的
 fault 清理已有 CoreCLR 回归。完整 panic/unwind/abort 行为、析构失败后继续清理策略及
 含字段聚合仍待完成。跨包标量调用已使用 AssemblyRef/TypeRef/MemberRef，并严格核对
@@ -103,16 +105,21 @@ MethodDef 的签名、static 属性和可见性。导入聚合/byref 签名及�
 手工构建的 CLR LIR producer/consumer CoreCLR 测试；完整源码级跨包所有权契约及这些
 新增能力的 ILVerify 和双平台 Native AOT 证据仍待补齐。
 
-当前本地 Release 构建零错误/零警告，可执行测试工具通过 464/464，失败/跳过均为零。这是当前变更的本地证据，不能关闭完整 P1 退出门槛。
+当前本地 Release 构建零错误/零警告，可执行测试工具使用已安装的 SDK 10.0.401 通过 670/670，失败/跳过均为零；仓库固定版本仍为 10.0.400。日志保留于 `artifacts/p1-06-final-session`。这些结果不能关闭完整 P1 退出门槛。
 
 已记录的 `safe-core-regression-v1` 报告通过 8/8，失败和跳过均为零。
-版本化的 `safe-core-regression-v2` 报告通过 24/24，包含 1 个编译通过、6 个编译失败、
+历史 `safe-core-regression-v2` 报告通过 24/24，包含 1 个编译通过、6 个编译失败、
 13 个运行通过和 4 个差分用例；其中 rustc 1.98.0 进程记录的失败、阻塞和跳过均为零。
+不可变的 v2 清单保持原样。`safe-core-regression-v3` 以新版本记录现已可执行的
+or-pattern 和可变捕获预期，并增加综合 MIR 类别与投影示例：固定 26 用例
+（1 个编译通过、4 个编译失败、17 个运行通过和 4 个差分），通过 26/26，失败、阻塞及
+跳过均为零。两个示例的 CoreCLR 和 Windows x64 Native AOT 输出均与 rustc 1.98.0
+一致，并通过 ILVerify 10.0.11，没有抑制诊断。
 `p1-exit-gate-v1` 通过 5/5 个进程内库探针，并明确记录 `"nativeAot": false` 和
 `"crossPlatform": false`。不可变的 `p1-differential-v2` 清单针对 rustc 1.98.0
 执行 16/16 项（10 借用、6 Drop），失败、阻塞和跳过均为零。新的
 `p1-platform.yml` 工作流在原生 Windows/Linux x64 runner 上固定 12 个运行通过用例，
-并在每个平台运行 24 用例的 v2 回归套件，聚合覆盖 CoreCLR、ILVerify、Native AOT、差分和
+并在每个平台运行 26 用例的 v3 回归套件，聚合覆盖 CoreCLR、ILVerify、Native AOT、差分和
 回归证据的 6 份报告。[运行 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833)
 已在历史提交 `23279d93267a814c643baddc29c72918ff0fda0b` 上通过全部 6 个门禁。
 该运行不验证上述后续新增能力；P1 阶段仍因语义及最终提交证据缺口保持开放。

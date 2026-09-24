@@ -304,8 +304,6 @@ internal static class SafeCoreMirCleanupTests
         // must nevertheless run the same backend capability gate as `compile`.
         (string Source, string Code)[] unsupported =
         [
-            ("fn main() { let value: i32 = 6 / 2; println!(\"{}\", value); }", SafeCoreMirClrLowering.Unsupported),
-            ("fn main() { let value: i32 = true as i32; println!(\"{}\", value); }", SafeCoreMirClrLowering.Unsupported),
             ("fn main() { println!(\"{}\", 'A'); }", SafeCoreMirClrLowering.Unsupported),
             ("fn identity(value: char) -> char { value } fn main() { identity('A'); }", SafeCoreMirClrLowering.Unsupported),
         ];
@@ -322,7 +320,7 @@ internal static class SafeCoreMirCleanupTests
         }
 
         CompilationResult supported = CompilerDriver.Check(
-            "fn main() { let value: i32 = 6 * 2; println!(\"{}\", value); }",
+            "fn main() { let value: i32 = 6 / 2 + true as i32; println!(\"{}\", value); }",
             "mir-backend-capability-ok.rs", CompilationProfile.SafeCoreMir);
         AssertEx.True(supported.Success,
             "A supported MIR scalar program must remain checkable after the backend gate.");

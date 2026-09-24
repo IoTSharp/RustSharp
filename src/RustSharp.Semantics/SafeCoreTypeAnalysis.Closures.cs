@@ -87,6 +87,18 @@ public static partial class SafeCoreTypeAnalysis
                     SafeCoreType type = _inference.Resolve(binding.Type);
                     if (type.Kind == K.Closure && type.IsMutable) mutableCaptures.Add(root);
                 }
+                if (Child(node, 0).ReferencedSymbol is { } callee && _values.TryGetValue(Key(callee), out SafeCoreType? signature) &&
+                    signature.Kind == K.Function)
+                {
+                    for (int argumentIndex = 1; argumentIndex < node.ChildIds.Count && argumentIndex <= signature.ParameterTypes.Count; argumentIndex++)
+                    {
+                        Step(node, depth);
+                        SafeCoreType parameter = signature.ParameterTypes[argumentIndex - 1];
+                        if (parameter.Kind != K.Reference || !parameter.IsMutable) continue;
+                        SafeCoreSymbol? argumentRoot = CaptureRoot(Child(node, argumentIndex), depth + 1);
+                        if (argumentRoot is not null && outer.ContainsKey(argumentRoot)) mutableCaptures.Add(argumentRoot);
+                    }
+                }
             }
             foreach (SafeCoreHirNode child in Parts(node)) CaptureUses(child, outer, captures, mutableCaptures, depth + 1);
         }

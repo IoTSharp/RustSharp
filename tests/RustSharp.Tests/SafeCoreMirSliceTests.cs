@@ -1,5 +1,4 @@
 using RustSharp.Compiler;
-using RustSharp.CodeGen.IL;
 using RustSharp.Semantics;
 using RustSharp.Syntax;
 
@@ -16,7 +15,7 @@ internal static class SafeCoreMirSliceTests
         new("MIR v2 preserves slice provenance in deterministic MIR", SnapshotAsync),
         new("MIR v2 executes dynamic full-array slice indexes", DynamicIndexAsync),
         new("MIR v2 dynamic full-array slice indexes trap outside their bounds", DynamicBoundsAsync),
-        new("MIR v2 rejects an out-of-bounds empty slice index", EmptyBoundsAsync),
+        new("MIR v2 traps an out-of-bounds empty slice index", EmptyBoundsAsync),
     ];
 
     private static Task RunFullSliceAsync() => WithWorkspaceAsync(async (directory, token) =>
@@ -93,23 +92,26 @@ internal static class SafeCoreMirSliceTests
         AssertEx.True(run.StandardError.Contains("IndexOutOfRangeException", StringComparison.Ordinal), run.StandardError);
     });
 
-    private static Task EmptyBoundsAsync()
+    private static Task EmptyBoundsAsync() => WithWorkspaceAsync(async (directory, token) =>
     {
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         const string source = "fn main() { let values: [i32; 0] = []; let view: &[i32] = &values; println!(\"{}\", view[0]); }";
-        CompilationResult result = CompilerDriver.Check(source, "slice-empty.rs", Profile, deadline.Token);
-        AssertEx.False(result.Success, "An empty full-array slice must reject a statically out-of-bounds index.");
-        AssertEx.True(result.Diagnostics.Any(static diagnostic => diagnostic.Code == SafeCoreMirClrLowering.Invalid),
-            Format(result.Diagnostics));
-        return Task.CompletedTask;
-    }
+        string output = Path.Combine(directory, "empty.dll");
+        CompilationResult result = CompilerDriver.Compile(source, "slice-empty.rs", output,
+            assemblyName: "EmptySlice", profile: Profile, cancellationToken: token);
+        AssertEx.True(result.Success, Format(result.Diagnostics));
+        BoundedProcessResult run = await new BoundedProcessRunner().RunAsync(
+            new("dotnet", [output], directory, TimeSpan.FromSeconds(10)), token).ConfigureAwait(false);
+        AssertEx.False(run.Succeeded, "Every access to an empty slice must trap.");
+        AssertEx.False(run.ProcessTreeCleanupIncomplete, "The runtime bounds failure must leave no child process.");
+        AssertEx.True(run.StandardError.Contains("IndexOutOfRangeException", StringComparison.Ordinal), run.StandardError);
+    });
 
     private static string Format(IReadOnlyList<Diagnostic> diagnostics) => string.Join("; ",
         diagnostics.Select(static diagnostic => diagnostic.Code + ": " + diagnostic.Message));
 
     private static async Task WithWorkspaceAsync(Func<string, CancellationToken, Task> action)
     {
-        string root = Path.GetFullPath(Path.Combine("artifacts", "tests"));
+        string root = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "RustSharp.Tests"));
         string directory = Path.Combine(root, "mir-slice-" + Guid.NewGuid().ToString("N"));
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         Directory.CreateDirectory(directory);

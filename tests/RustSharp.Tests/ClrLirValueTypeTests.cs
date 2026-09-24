@@ -146,6 +146,13 @@ internal static class ClrLirValueTypeTests
         ClrLirMethod conflict = Method(ClrLirType.Void, [new ClrLirLoadInt32(1), new ClrLirConstructValue(changedUnit),
             new ClrLirDiscard(Unit.Type), new ClrLirReturn()]);
         AssertEx.Throws<InvalidOperationException>(() => ClrLirAssemblyEmitter.Emit(conflict, "Invalid", [Unit]));
+        ClrLirValueType mirUnit = Unit with { ImplementsMirValue = true };
+        ClrLirMethod mirConstruction = Method(ClrLirType.Void, [new ClrLirConstructValue(mirUnit),
+            new ClrLirDiscard(Unit.Type), new ClrLirReturn()]);
+        AssertEx.Throws<InvalidOperationException>(() => ClrLirAssemblyEmitter.Emit(mirConstruction, "Invalid", [Unit]));
+        ClrLirMethod plainConstruction = Method(ClrLirType.Void, [new ClrLirConstructValue(Unit),
+            new ClrLirDiscard(Unit.Type), new ClrLirReturn()]);
+        AssertEx.Throws<InvalidOperationException>(() => ClrLirAssemblyEmitter.Emit(plainConstruction, "Invalid", [mirUnit]));
         ClrLirMethod unknownLocal = new("Main", ClrLirType.Void, [], [new("unknown", ClrLirType.Value("Missing"))], [new("entry", [new ClrLirReturn()])]);
         AssertEx.Throws<InvalidOperationException>(() => ClrLirAssemblyEmitter.Emit(unknownLocal, "Invalid"));
 

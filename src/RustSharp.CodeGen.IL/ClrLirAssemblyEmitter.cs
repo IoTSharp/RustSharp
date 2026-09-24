@@ -15,7 +15,7 @@ namespace RustSharp.CodeGen.IL;
 /// Emits executable PE images from validated CLR LIR, including direct calls
 /// between generated static methods and the supported Console.WriteLine overloads.
 /// </summary>
-public static class ClrLirAssemblyEmitter
+public static partial class ClrLirAssemblyEmitter
 {
     private const string EmitterIdentity = "RustSharp.CodeGen.IL/ClrLir/0.1.0";
 
@@ -149,6 +149,7 @@ public static class ClrLirAssemblyEmitter
         {
             CheckSourceMapBudget();
             identity.AppendData(Encoding.UTF8.GetBytes("\0value\0" + layout.Name));
+            identity.AppendData(layout.ImplementsMirValue ? "\0mir-accessors\0"u8 : "\0plain-value\0"u8);
             foreach (ClrLirField field in layout.Fields)
                 identity.AppendData(Encoding.UTF8.GetBytes("\0" + field.Name + ":" + field.Type));
         }
@@ -228,12 +229,14 @@ public static class ClrLirAssemblyEmitter
         var constructorHandles = new Dictionary<string, MethodDefinitionHandle>(StringComparer.Ordinal);
         var fieldHandles = new Dictionary<string, ImmutableArray<FieldDefinitionHandle>>(StringComparer.Ordinal);
         int fieldRow = 1;
+        int valueMethodRow = methods.Count + 1;
         for (int index = 0; index < layouts.Definitions.Length; index++)
         {
             CheckSourceMapBudget();
             ClrLirValueType layout = layouts.Definitions[index];
             valueHandles.Add(layout.Name, MetadataTokens.TypeDefinitionHandle(index + 3));
-            constructorHandles.Add(layout.Name, MetadataTokens.MethodDefinitionHandle(methods.Count + index + 1));
+            constructorHandles.Add(layout.Name, MetadataTokens.MethodDefinitionHandle(valueMethodRow));
+            valueMethodRow += layout.ImplementsMirValue ? 3 : 1;
             var fields = ImmutableArray.CreateBuilder<FieldDefinitionHandle>(layout.Fields.Length);
             for (int fieldIndex = 0; fieldIndex < layout.Fields.Length; fieldIndex++)
                 fields.Add(MetadataTokens.FieldDefinitionHandle(fieldRow++));
@@ -328,6 +331,9 @@ public static class ClrLirAssemblyEmitter
                     metadata.GetOrAddString("RustSharp.Generated.Values"), metadata.GetOrAddString(layout.Name),
                     valueTypeBase, firstValueField, constructor);
                 if (handleType != valueHandles[layout.Name]) throw new InvalidOperationException("Unstable CLR value type order.");
+                if (layout.ImplementsMirValue)
+                    EmitMirValueAccessors(metadata, methodBodyStream, layout, handleType,
+                        constructor, fieldHandles[layout.Name], valueHandles, CheckSourceMapBudget);
             }
         }
         BlobBuilder? managedResources = null;
@@ -381,8 +387,15 @@ public static class ClrLirAssemblyEmitter
                     MetadataTokens.GetRowNumber(localSignatures[index]));
                 pdbMetadata.AddMethodDebugInformation(points.IsNil ? default : methodDocument, points);
             }
-            foreach (ClrLirValueType _ in layouts.Definitions)
+            foreach (ClrLirValueType layout in layouts.Definitions)
+            {
                 pdbMetadata.AddMethodDebugInformation(default, default);
+                if (layout.ImplementsMirValue)
+                {
+                    pdbMetadata.AddMethodDebugInformation(default, default);
+                    pdbMetadata.AddMethodDebugInformation(default, default);
+                }
+            }
 
             var pdbImage = new BlobBuilder();
             BlobContentId pdbId = new PortablePdbBuilder(pdbMetadata, metadata.GetRowCounts(), entryPoint, ComputeContentId).Serialize(pdbImage);
@@ -411,7 +424,12 @@ public static class ClrLirAssemblyEmitter
         var peImage = new BlobBuilder();
         peBuilder.Serialize(peImage);
 
-        return new GeneratedAssembly(peImage.ToArray(), pdbBytes, RuntimeConfig, metadataDocument?.Json);
+        return new GeneratedAssembly(peImage.ToArray(), pdbBytes, RuntimeConfig, metadataDocument?.Json)
+        {
+            RequiresMirRuntime = layouts.Definitions.Any(static layout => layout.ImplementsMirValue) ||
+                methods.Any(static method => method.Blocks.Any(static block => block.Instructions.Any(static instruction =>
+                    instruction is ClrLirCall { Site.ExternalCall.AssemblyName: "RustSharp.Runtime" }))),
+        };
 
         void CheckSourceMapBudget()
         {
@@ -450,6 +468,9 @@ public static class ClrLirAssemblyEmitter
         value.WriteUInt16(1);
         value.WriteSerializedString(RustSharpMetadataReader.AttributeKey);
         value.WriteSerializedString(json);
+        // ECMA-335 II.23.3 requires NumNamed even when it is zero. NativeAOT
+        // decodes assembly attributes while rooting reflected value layouts.
+        value.WriteUInt16(0);
         metadata.AddCustomAttribute(assembly, constructor, metadata.GetOrAddBlob(value));
     }
 
@@ -487,7 +508,7 @@ public static class ClrLirAssemblyEmitter
         {
             assembly = metadata.AddAssemblyReference(
                 name: metadata.GetOrAddString(external.AssemblyName),
-                version: new Version(1, 0, 0, 0),
+                version: external.AssemblyName == "RustSharp.Runtime" ? new Version(0, 1, 0, 0) : new Version(1, 0, 0, 0),
                 culture: default,
                 publicKeyOrToken: default,
                 flags: default,
@@ -754,6 +775,15 @@ public static class ClrLirAssemblyEmitter
                 _ = descriptor.Append('\0').Append(instruction.GetType().Name);
                 switch (instruction)
                 {
+                    case ClrLirBox box:
+                        descriptor.Append(box.Type);
+                        break;
+                    case ClrLirLoadType loadType:
+                        descriptor.Append(loadType.Type);
+                        break;
+                    case ClrLirUnbox unbox:
+                        descriptor.Append(unbox.Type);
+                        break;
                     case ClrLirLoadInt32 loadInt32:
                         _ = descriptor.Append(':').Append(loadInt32.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
                         break;

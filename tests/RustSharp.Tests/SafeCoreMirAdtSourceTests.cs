@@ -34,7 +34,7 @@ internal static class SafeCoreMirAdtSourceTests
         new("MIR v2 counts nested input reference lifetimes independently", NestedReferenceElisionAsync),
         new("MIR v2 counts tuple input reference lifetimes independently", TupleReferenceElisionAsync),
         new("MIR v2 checks elision for references nested in return values", AggregateReturnElisionAsync),
-        new("MIR v2 preserves the explicit lifetime source boundary", ExplicitLifetimeBoundaryAsync),
+        new("MIR v2 preserves the named lifetime source boundary", ExplicitLifetimeBoundaryAsync),
         new("MIR v2 permits multiple reference inputs for scalar returns", MultipleReferenceInputAsync),
         new("MIR v2 qualified nominal layouts keep distinct field identities", QualifiedLayoutAsync),
         new("MIR v2 imported tuple and unit constructors retain nominal identity", ImportedConstructorsAsync),
@@ -156,7 +156,7 @@ internal static class SafeCoreMirAdtSourceTests
         "fn pair() -> (&i32, &i32) { (&7, &9) } fn main() {}", SafeCoreMirLowering.InvalidLifetimeElision);
 
     private static Task ExplicitLifetimeBoundaryAsync() => RejectAsync(
-        "fn identity(input: &'static i32) -> &'static i32 { input } fn main() {}", "RST2001");
+        "fn identity(input: &'a i32) -> &'a i32 { input } fn main() {}", "RST2001");
 
     private static Task MultipleReferenceInputAsync() => RunAsync(
         "fn sum(left: &i32, right: &i32) -> i32 { *left + *right } " +

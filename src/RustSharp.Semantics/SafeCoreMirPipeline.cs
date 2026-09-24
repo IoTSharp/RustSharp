@@ -166,6 +166,7 @@ public static class SafeCoreMirPipeline
                 MaximumOperations = options.MaximumOperations,
                 MaximumNestingDepth = options.MaximumNestingDepth,
                 EnableUninitializedBindings = options.EnableP1Extensions,
+                EnableStaticLifetimeReferences = options.EnableP1Extensions,
             }, options.CancellationToken);
             if (!typed.IsSuccessful)
                 return Failure(hir, null, null, null, typed.Diagnostics, false, options);

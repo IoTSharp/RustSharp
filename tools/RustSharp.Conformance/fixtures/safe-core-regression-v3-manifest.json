@@ -1,0 +1,218 @@
+{
+  "profile": "safe-core-regression-v3",
+  "version": 3,
+  "rustVersion": "1.98.0",
+  "edition": "2024",
+  "compilerProfile": "safe-core-mir-p1-v2",
+  "denominator": 26,
+  "limits": {
+    "maximumCases": 26,
+    "maximumManifestBytes": 524288,
+    "maximumFixtureBytes": 1048576,
+    "caseTimeoutSeconds": 30,
+    "deadlineSeconds": 300
+  },
+  "coverage": {
+    "compile-pass": 1,
+    "compile-fail": 4,
+    "run-pass": 17,
+    "differential": 4,
+    "legacy": 8,
+    "typed-mir": 14,
+    "borrow": 2,
+    "drop": 2
+  },
+  "cases": [
+    {
+      "id": "compile-pass-baseline",
+      "file": "regression-compile-pass.rs",
+      "kind": "compile-pass",
+      "area": "legacy",
+      "expectation": "compile-pass"
+    },
+    {
+      "id": "compile-fail-immutable",
+      "file": "primitives-immutable.rs",
+      "kind": "compile-fail",
+      "area": "legacy",
+      "expectation": "compile-fail",
+      "rustcDiagnostic": "E0384",
+      "rustSharpDiagnostic": "RST2003"
+    },
+    {
+      "id": "compile-fail-type",
+      "file": "primitives-type-error.rs",
+      "kind": "compile-fail",
+      "area": "legacy",
+      "expectation": "compile-fail",
+      "rustcDiagnostic": "E0308",
+      "rustSharpDiagnostic": "RST2002"
+    },
+    {
+      "id": "run-pass-functions",
+      "file": "primitives-functions.rs",
+      "kind": "run-pass",
+      "area": "legacy",
+      "expectedOutput": "42\ntrue\n"
+    },
+    {
+      "id": "run-pass-returns",
+      "file": "primitives-returns.rs",
+      "kind": "run-pass",
+      "area": "legacy",
+      "expectedOutput": "left\n11\nleft\n7\n2\n"
+    },
+    {
+      "id": "differential-short-circuit",
+      "file": "primitives-short-circuit.rs",
+      "kind": "run-pass",
+      "area": "legacy",
+      "expectedOutput": "false\ntrue\nprobe\ntrue\n"
+    },
+    {
+      "id": "differential-integers",
+      "file": "primitives-integers.rs",
+      "kind": "run-pass",
+      "area": "legacy",
+      "expectedOutput": "37\n-2147483648\n-1\ntrue\n"
+    },
+    {
+      "id": "differential-shadowing",
+      "file": "primitives-shadowing.rs",
+      "kind": "run-pass",
+      "area": "legacy",
+      "expectedOutput": "true\n8\n21\n"
+    },
+    {
+      "id": "typed-mir-match-guard",
+      "file": "p1-regression-v2-match-guard.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "7\n"
+    },
+    {
+      "id": "typed-mir-or-pattern",
+      "file": "p1-regression-v2-or-pattern.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "1\n"
+    },
+    {
+      "id": "typed-mir-closure",
+      "file": "p1-regression-v2-closure.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "4\n"
+    },
+    {
+      "id": "typed-mir-repeated-array",
+      "file": "p1-regression-v2-repeated-array.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "7\n7\n"
+    },
+    {
+      "id": "typed-mir-shared-borrow",
+      "file": "p1-regression-v2-shared-borrow.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "7\n"
+    },
+    {
+      "id": "typed-mir-mutable-reborrow",
+      "file": "p1-regression-v2-mutable-reborrow.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "9\n9\n"
+    },
+    {
+      "id": "typed-mir-drop-return",
+      "file": "p1-regression-v2-drop-return.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "body\ndrop\n"
+    },
+    {
+      "id": "typed-mir-drop-nested",
+      "file": "p1-regression-v2-drop-nested.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "nested\ninside\ninner\nafter\nouter\n"
+    },
+    {
+      "id": "typed-mir-closure-escape",
+      "file": "p1-regression-v2-closure-escape.rs",
+      "kind": "compile-fail",
+      "area": "typed-mir",
+      "expectation": "rustsharp-fail",
+      "rustSharpDiagnostic": "RSM2002"
+    },
+    {
+      "id": "typed-mir-binding-or-pattern",
+      "file": "p1-regression-v2-binding-or-pattern.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectation": "run-pass",
+      "expectedOutput": "7\n"
+    },
+    {
+      "id": "typed-mir-mutable-capture",
+      "file": "p1-regression-v2-mutable-capture.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectation": "run-pass",
+      "expectedOutput": "3\n"
+    },
+    {
+      "id": "typed-mir-borrow-conflict",
+      "file": "p1-regression-v2-borrow-conflict.rs",
+      "kind": "compile-fail",
+      "area": "typed-mir",
+      "expectation": "compile-fail",
+      "rustcDiagnostic": "E0499",
+      "rustSharpDiagnostic": "RSO1002"
+    },
+    {
+      "id": "borrow-write-read",
+      "file": "p1-regression-v2-borrow-write-read.rs",
+      "kind": "differential",
+      "area": "borrow",
+      "expectedOutput": "9\n9\n"
+    },
+    {
+      "id": "borrow-mutable-reborrow-chain",
+      "file": "p1-regression-v2-borrow-mutable-reborrow-chain.rs",
+      "kind": "differential",
+      "area": "borrow",
+      "expectedOutput": "9\n9\n9\n"
+    },
+    {
+      "id": "drop-reverse-locals",
+      "file": "p1-regression-v2-drop-reverse-locals.rs",
+      "kind": "differential",
+      "area": "drop",
+      "expectedOutput": "body\nsecond\nfirst\n"
+    },
+    {
+      "id": "drop-branch-return",
+      "file": "p1-regression-v2-drop-branch-return.rs",
+      "kind": "differential",
+      "area": "drop",
+      "expectedOutput": "early\nsecond\nfirst\nlate\nfirst\n"
+    },
+    {
+      "id": "typed-mir-family-completion",
+      "file": "p1-regression-v3-mir-families.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "42\n0\n7\n8\n17\n17\n3\n42\n42\n4\n42\n42\n10\n9\n13\n1\n8\n19\n11\n5\n5\n7\n8\n12\n13\n"
+    },
+    {
+      "id": "typed-mir-place-completion",
+      "file": "p1-regression-v3-mir-places.rs",
+      "kind": "run-pass",
+      "area": "typed-mir",
+      "expectedOutput": "41\n2\n41\n6\n29\n9\n13\n"
+    }
+  ]
+}

@@ -229,6 +229,7 @@ public static partial class SafeCoreTypeAnalysis
         private Coverage PathPattern(SafeCoreHirNode pattern, SafeCoreType type, BindingMode mode, int depth)
         {
             Step(pattern, depth);
+            _types[pattern.Id] = type;
             if (pattern.ReferencedSymbol is { } symbol && _declarations.TryGetValue(Key(symbol), out SafeCoreHirNode? declaration)
                 && declaration.Kind == N.Const)
             {
@@ -355,6 +356,7 @@ public static partial class SafeCoreTypeAnalysis
 
         private BigInteger PatternBound(SafeCoreHirNode pattern, SafeCoreType type, int depth)
         {
+            _types[pattern.Id] = type;
             Coverage coverage = pattern.Kind == N.LiteralPattern ? LiteralPattern(pattern, type, depth)
                 : PathPattern(pattern, type, BindingMode.Value, depth);
             if (coverage.Kind != CoverageKind.Interval || !coverage.Lower.HasValue)

@@ -506,6 +506,9 @@ public static class SafeCoreMirCleanupLowering
         string name = trace[prefix.Length..];
         int suffix = name.IndexOf(" (scope)", StringComparison.Ordinal);
         if (suffix >= 0) name = name[..suffix];
+        // Synthetic reference slots have their complete projected name in
+        // ownership evidence; retain that identity before trying a root name.
+        if (locals.TryGetValue(name, out local)) return true;
         // Projected places retain a source display such as `owner.field`; the
         // cleanup projection records the owning root while preserving source
         // correlation through the local fact.

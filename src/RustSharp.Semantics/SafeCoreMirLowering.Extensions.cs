@@ -12,7 +12,8 @@ public static partial class SafeCoreMirLowering
         private sealed record ClosureBinding(
             SafeCoreHirNode Node,
             SafeCoreType Type,
-            IReadOnlyDictionary<SafeCoreSymbol, SafeCoreMirOperand> Captures);
+            IReadOnlyDictionary<SafeCoreSymbol, CapturedPlace> Captures,
+            IReadOnlyDictionary<CapturePath, CapturedPlace> ProjectedCaptures);
 
         private sealed class ClosureReturn(int? destination, BlockBuilder join)
         {
@@ -26,7 +27,6 @@ public static partial class SafeCoreMirLowering
 
         private SafeCoreMirOperand? ExtendedLet(SafeCoreHirNode node, int depth)
         {
-            if (node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasElse)) Unsupported(node);
             SafeCoreHirNode pattern = UnwrapPattern(Child(node, 0));
             int valueIndex = node.ChildIds.Count > 1 && IsTypeNode(Child(node, 1).Kind) ? 2 : 1;
             // A declaration without an initializer creates an uninitialized
@@ -51,17 +51,18 @@ public static partial class SafeCoreMirLowering
             if (initializer.Kind == N.ClosureExpression && pattern.Kind == N.IdentifierPattern &&
                 pattern.DeclaredSymbol is not null)
             {
-                SafeCoreType closureType = Type(initializer);
-                if (closureType.Kind != K.Closure) Unsupported(initializer);
-                var captures = new Dictionary<SafeCoreSymbol, SafeCoreMirOperand>();
-                CollectClosureCaptures(Child(initializer, initializer.ChildIds.Count - 1), captures, initializer);
-                _closures[pattern.DeclaredSymbol] = new(initializer, closureType, captures);
+                _closures[pattern.DeclaredSymbol] = CreateClosureBinding(initializer);
                 return Unit(node);
             }
+            if (node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasElse) ||
+                pattern.Kind is not (N.IdentifierPattern or N.WildcardPattern) ||
+                pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ByReference))
+                return PatternLet(node, pattern, initializer, depth + 1);
             // Bind a direct borrow into its destination slot so the MIR carries
             // the owner/reference pair without introducing an unproven alias
             // copy through a temporary reference local.
             if (initializer.Kind == N.UnaryExpression && initializer.Value is ("&" or "&mut") &&
+                !input.Promotions.ContainsKey(initializer.Id) &&
                 pattern.Kind == N.IdentifierPattern && pattern.DeclaredSymbol is not null)
             {
                 // Preserve a declaration's unsizing target. For
@@ -73,6 +74,8 @@ public static partial class SafeCoreMirLowering
                     referenceType = Type(initializer);
                 int borrowLocal = Local(pattern.Name ?? string.Empty, referenceType, SafeCoreMirLocalKind.User,
                     pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
+                if (node.ChildIds.Count > 1 && HasStaticLifetime(Child(node, 1)))
+                    _locals[borrowLocal] = _locals[borrowLocal] with { RequiresStaticLifetime = true };
                 if (!_bindings.TryAdd(pattern.DeclaredSymbol, borrowLocal)) Invalid(pattern);
                 LowerBorrow(initializer, borrowLocal, depth);
                 return Unit(node);
@@ -96,15 +99,15 @@ public static partial class SafeCoreMirLowering
                  _loops.Count != 0 || _closureReturns.Count != 0 || _dropScopes.Count == 0)) Unsupported(initializer);
             int local = Local(pattern.Name, type, SafeCoreMirLocalKind.User,
                 pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
+            if (node.ChildIds.Count > 1 && HasStaticLifetime(Child(node, 1)))
+                _locals[local] = _locals[local] with { RequiresStaticLifetime = true };
             if (!_bindings.TryAdd(pattern.DeclaredSymbol!, local)) Invalid(pattern);
             Assign(local, value, node);
             if (type.Kind == K.Adt && _dropFunctions.ContainsKey(type.Name!))
                 _dropScopes[^1].Add(local);
             if (initializer.Kind == N.ClosureExpression && type.Kind == K.Closure)
             {
-                var captures = new Dictionary<SafeCoreSymbol, SafeCoreMirOperand>();
-                CollectClosureCaptures(Child(initializer, initializer.ChildIds.Count - 1), captures, initializer);
-                _closures[pattern.DeclaredSymbol!] = new(initializer, type, captures);
+                _closures[pattern.DeclaredSymbol!] = CreateClosureBinding(initializer);
             }
             return Unit(node);
         }
@@ -122,6 +125,11 @@ public static partial class SafeCoreMirLowering
         {
             Step(node, depth);
             SafeCoreHirNode borrowed = UnwrapExpression(Child(node, 0), depth + 1);
+            if (borrowed.Kind == N.IndexExpression && Child(borrowed, 1).Kind == N.RangeExpression)
+            {
+                LowerSubsliceBorrow(node, borrowed, destination, depth + 1);
+                return;
+            }
             (SafeCoreMirPlace place, SafeCoreType ownerType) = ResolvePlace(borrowed, depth + 1);
             SafeCoreType referenceType = _locals[destination].Type;
             bool mutable = node.Value == "&mut";
@@ -134,41 +142,13 @@ public static partial class SafeCoreMirLowering
                     referenceType, Source(node)), Source(node)));
         }
 
-        private void CollectClosureCaptures(SafeCoreHirNode node,
-            Dictionary<SafeCoreSymbol, SafeCoreMirOperand> captures, SafeCoreHirNode closure)
-        {
-            Step(node, 0);
-            if (node.Kind == N.NameExpression && node.ReferencedSymbol is { } symbol &&
-                _bindings.TryGetValue(symbol, out int local))
-            {
-                SafeCoreMirLocal source = _locals[local];
-                if (!IsStructuralCopy(source.Type)) Unsupported(node);
-                // Mutable captures require write-back into the original place.
-                // Closure expansion currently snapshots captures into detached
-                // locals, so accepting this shape would silently lose writes.
-                // Reject it at the lowering boundary until place-aware capture
-                // lowering is available.
-                if (source.IsMutable) Unsupported(node);
-                SafeCoreMirOperand operand = SafeCoreMirOperand.Local(local, source.Type, Source(node));
-                if (closure.Modifiers.HasFlag(SafeCoreHirNodeModifiers.MoveCapture))
-                    operand = Emit(SafeCoreMirRvalue.Use(operand, Source(node)), source.Type, node);
-                captures.TryAdd(symbol, operand);
-                return;
-            }
-            for (int childIndex = 0; childIndex < node.ChildIds.Count; childIndex++)
-            {
-                SafeCoreHirNode child = Child(node, childIndex);
-                CollectClosureCaptures(child, captures, closure);
-            }
-        }
-
         private SafeCoreMirOperand ClosureCall(SafeCoreHirNode call, SafeCoreHirNode calleeNode, int depth)
         {
             ClosureBinding closure = null!;
             if (calleeNode.Kind == N.NameExpression && calleeNode.ReferencedSymbol is { } closureSymbol &&
                 _closures.TryGetValue(closureSymbol, out ClosureBinding? known)) closure = known;
             else if (calleeNode.Kind == N.ClosureExpression)
-                closure = new(calleeNode, Type(calleeNode), new Dictionary<SafeCoreSymbol, SafeCoreMirOperand>());
+                closure = CreateClosureBinding(calleeNode);
             else Unsupported(calleeNode);
 
             SafeCoreType signature = closure.Type;
@@ -188,13 +168,15 @@ public static partial class SafeCoreMirLowering
             int? destination = signature.ReturnType.Kind is K.Unit or K.Never ? null : Temp(signature.ReturnType, call);
             BlockBuilder join = Block(call);
             var savedBindings = new Dictionary<SafeCoreSymbol, int>(_bindings);
+            var savedCaptures = new Dictionary<SafeCoreSymbol, CapturedPlace>(_capturePlaces);
+            var savedProjections = new Dictionary<CapturePath, CapturedPlace>(_captureProjections);
             _bindings.Clear();
-            foreach ((SafeCoreSymbol captureSymbol, SafeCoreMirOperand operand) in closure.Captures)
-            {
-                int capture = Temp(operand.Type, closure.Node);
-                Assign(capture, operand, closure.Node);
-                _bindings[captureSymbol] = capture;
-            }
+            _capturePlaces.Clear();
+            _captureProjections.Clear();
+            foreach ((SafeCoreSymbol captureSymbol, CapturedPlace capture) in closure.Captures)
+                _capturePlaces[captureSymbol] = capture;
+            foreach ((CapturePath capturePath, CapturedPlace capture) in closure.ProjectedCaptures)
+                _captureProjections[capturePath] = capture;
             try
             {
                 int parameterIndex = 0;
@@ -203,13 +185,14 @@ public static partial class SafeCoreMirLowering
                     SafeCoreHirNode parameter = Child(closure.Node, childIndex);
                     if (parameter.Kind != N.Parameter) continue;
                     SafeCoreHirNode pattern = UnwrapPattern(Child(parameter, 0));
-                    if (pattern.Kind != N.IdentifierPattern || pattern.DeclaredSymbol is null)
-                        Unsupported(pattern);
                     SafeCoreType type = signature.ParameterTypes[parameterIndex++];
                     int local = Local(pattern.Name ?? $"closure_arg{parameterIndex.ToString(CultureInfo.InvariantCulture)}",
-                        type, SafeCoreMirLocalKind.User, pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
-                    _bindings[pattern.DeclaredSymbol] = local;
+                        type, SafeCoreMirLocalKind.User, pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable) ||
+                        PatternBorrowsMutably(pattern, depth + 1), pattern);
                     Assign(local, arguments[parameterIndex - 1], pattern);
+                    if (pattern.Kind == N.IdentifierPattern && !pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ByReference))
+                        _bindings[pattern.DeclaredSymbol!] = local;
+                    else BindIrrefutablePattern(pattern, SafeCoreMirOperand.Local(local, type, Source(pattern)), depth + 1);
                 }
                 BlockBuilder? caller = _current;
                 _closureReturns.Add(new(destination, join));
@@ -223,66 +206,16 @@ public static partial class SafeCoreMirLowering
             {
                 _bindings.Clear();
                 foreach ((SafeCoreSymbol savedSymbol, int local) in savedBindings) _bindings[savedSymbol] = local;
+                _capturePlaces.Clear();
+                foreach ((SafeCoreSymbol savedSymbol, CapturedPlace capture) in savedCaptures) _capturePlaces[savedSymbol] = capture;
+                _captureProjections.Clear();
+                foreach ((CapturePath savedPath, CapturedPlace capture) in savedProjections) _captureProjections[savedPath] = capture;
             }
             return destination is int result ? SafeCoreMirOperand.Local(result, signature.ReturnType, Source(call)) : Unit(call);
         }
 
-        private void BindIrrefutablePattern(SafeCoreHirNode pattern, SafeCoreMirOperand value, int depth)
-        {
-            Step(pattern, depth);
-            switch (pattern.Kind)
-            {
-                case N.WildcardPattern: return;
-                case N.IdentifierPattern:
-                    if (pattern.DeclaredSymbol is null || pattern.Name is null) Invalid(pattern);
-                    int local = Local(pattern.Name, value.Type, SafeCoreMirLocalKind.User,
-                        pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
-                    if (!_bindings.TryAdd(pattern.DeclaredSymbol!, local)) Invalid(pattern);
-                    Assign(local, value, pattern);
-                    return;
-                case N.TuplePattern:
-                    for (int index = 0; index < pattern.ChildIds.Count; index++)
-                    {
-                        SafeCoreHirNode child = Child(pattern, index);
-                        if (child.Kind == N.RestPattern) continue;
-                        SafeCoreType fieldType = value.Type.Kind == K.Tuple && index < value.Type.Elements.Count
-                            ? value.Type.Elements[index] : Type(child);
-                        SafeCoreMirOperand field = PatternField(value, SafeCoreMirProjection.TupleIndex(index), fieldType, child);
-                        BindIrrefutablePattern(child, field, depth + 1);
-                    }
-                    return;
-                case N.StructPattern:
-                    if (value.Type.Kind != K.Adt || value.Type.Name is null) Unsupported(pattern);
-                    if (!_adtLayouts.TryGetValue(value.Type.Name, out SafeCoreMirAdtLayout? layout)) Unsupported(pattern);
-                    for (int index = 0; index < pattern.ChildIds.Count; index++)
-                    {
-                        SafeCoreHirNode fieldPattern = Child(pattern, index);
-                        SafeCoreMirAdtField field = layout.Fields[FindAdtField(layout, fieldPattern.Name!, fieldPattern)];
-                        SafeCoreMirOperand projected = PatternField(value, SafeCoreMirProjection.Field(field.Name), field.Type, fieldPattern);
-                        BindIrrefutablePattern(Child(fieldPattern, 0), projected, depth + 1);
-                    }
-                    return;
-                case N.PathPattern:
-                    if (value.Type.Kind != K.Adt || value.Type.Name is null) Unsupported(pattern);
-                    if (!_adtLayouts.TryGetValue(value.Type.Name, out SafeCoreMirAdtLayout? tupleLayout)) Unsupported(pattern);
-                    int fieldIndex = 0;
-                    for (int index = 0; index < pattern.ChildIds.Count; index++)
-                    {
-                        SafeCoreHirNode child = Child(pattern, index);
-                        if (child.Kind == N.RestPattern)
-                        {
-                            fieldIndex = tupleLayout.Fields.Count - (pattern.ChildIds.Count - index - 1);
-                            continue;
-                        }
-                        if ((uint)fieldIndex >= (uint)tupleLayout.Fields.Count) Invalid(child);
-                        SafeCoreMirAdtField field = tupleLayout.Fields[fieldIndex++];
-                        BindIrrefutablePattern(child, PatternField(value, SafeCoreMirProjection.Field(field.Name), field.Type, child), depth + 1);
-                    }
-                    return;
-                default: Unsupported(pattern); return;
-            }
-        }
-
+        private void BindIrrefutablePattern(SafeCoreHirNode pattern, SafeCoreMirOperand value, int depth) =>
+            BindDeclarationPattern(pattern, value, pattern, depth);
         private SafeCoreMirOperand PatternField(SafeCoreMirOperand value, SafeCoreMirProjection projection,
             SafeCoreType fieldType, SafeCoreHirNode node)
         {
@@ -295,143 +228,80 @@ public static partial class SafeCoreMirLowering
             return ReadPlace(node, depth);
         }
 
-        private SafeCoreMirOperand Match(SafeCoreHirNode node, int depth)
+        private SafeCoreMirOperand Match(SafeCoreHirNode node, int depth) => MatchPatterns(node, depth);
+
+        private SafeCoreMirOperand DereferencePattern(SafeCoreMirOperand value, SafeCoreHirNode pattern)
         {
-            SafeCoreMirOperand? scrutinee = Expr(Child(node, 0), depth + 1);
-            if (scrutinee is null) return null!;
-            SafeCoreType resultType = EffectiveType(node);
-            int? destination = resultType.Kind is K.Unit or K.Never ? null : Temp(resultType, node);
-            BlockBuilder join = Block(node);
-            Dictionary<SafeCoreSymbol, int> outer = new(_bindings);
-            BlockBuilder? test = _current;
-            int armCount = node.ChildIds.Count - 1;
-            if (armCount > options.MaximumPatternAlternatives) Limit(node);
-            for (int index = 0; index < armCount; index++)
-            {
-                SafeCoreHirNode arm = Child(node, index + 1);
-                if (test is null) break;
-                _current = test;
-                _bindings.Clear(); foreach ((SafeCoreSymbol s, int l) in outer) _bindings[s] = l;
-                BindPatternLocals(Child(arm, 0), scrutinee, depth + 1);
-                SafeCoreMirOperand condition = PatternCondition(Child(arm, 0), scrutinee, depth + 1);
-                BlockBuilder body = Block(arm);
-                BlockBuilder fail = index == armCount - 1 ? Block(node) : Block(Child(node, index + 2));
-                if (arm.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasGuard))
-                {
-                    BlockBuilder guardBlock = Block(arm);
-                    End(SafeCoreMirTerminator.Branch(condition, guardBlock.Id, fail.Id, Source(arm)));
-                    _current = guardBlock;
-                    SafeCoreMirOperand? guard = Expr(Child(arm, 1), depth + 1);
-                    if (guard is null) return null!;
-                    End(SafeCoreMirTerminator.Branch(guard, body.Id, fail.Id, Source(arm)));
-                }
-                else End(SafeCoreMirTerminator.Branch(condition, body.Id, fail.Id, Source(arm)));
-                _current = body;
-                SafeCoreMirOperand? value = Expr(Child(arm, arm.ChildIds.Count - 1), depth + 1);
-                if (_current is not null) Join(destination, value, join, arm);
-                test = fail;
-            }
-            _current = test;
-            if (_current is not null) End(SafeCoreMirTerminator.Unreachable(Source(node)));
-            _bindings.Clear(); foreach ((SafeCoreSymbol s, int l) in outer) _bindings[s] = l;
-            _current = join;
-            return destination is int local ? SafeCoreMirOperand.Local(local, resultType, Source(node)) : Unit(node);
+            if (value.Type.Kind != K.Reference) Invalid(pattern);
+            return PatternField(value, SafeCoreMirProjection.Dereference(), value.Type.ElementType, pattern);
         }
 
         private void BindPatternLocals(SafeCoreHirNode pattern, SafeCoreMirOperand value, int depth)
         {
-              Step(pattern, depth);
-              if (pattern.Kind == N.OrPattern && PatternContainsBinding(pattern, depth + 1))
-                  Unsupported(pattern);
-              switch (pattern.Kind)
+            Step(pattern, depth);
+            pattern = SelectedPattern(pattern, depth);
+            if (TryEnumVariant(pattern, out SafeCoreMirAdtLayout enumLayout, out int variantIndex))
+            { BindEnumPattern(pattern, value, enumLayout, variantIndex, depth); return; }
+            switch (pattern.Kind)
             {
                 case N.IdentifierPattern when pattern.DeclaredSymbol is not null:
-                    int local = Local(pattern.Name ?? "match", value.Type, SafeCoreMirLocalKind.User,
-                        pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
-                    _bindings[pattern.DeclaredSymbol] = local;
-                    Assign(local, value, pattern);
-                    return;
+                    BindPatternValue(pattern, value); return;
                 case N.TuplePattern:
-                    for (int index = 0; index < pattern.ChildIds.Count; index++)
-                    {
-                        SafeCoreHirNode child = Child(pattern, index);
-                        if (child.Kind == N.RestPattern) continue;
-                        SafeCoreType fieldType = value.Type.Kind == K.Tuple && index < value.Type.Elements.Count
-                            ? value.Type.Elements[index] : Type(child);
-                        SafeCoreMirOperand field = Emit(SafeCoreMirRvalue.Field(value, index, fieldType, Source(child)), fieldType, child);
-                        BindPatternLocals(child, field, depth + 1);
-                    }
+                case N.StructPattern:
+                case N.PathPattern when value.Type.Kind == K.Adt || value.Type.Kind == K.Reference:
+                    foreach ((SafeCoreHirNode child, SafeCoreMirOperand field) in AggregatePatternFields(pattern, value, depth + 1))
+                    { Step(child, depth); BindPatternLocals(child, field, depth + 1); }
                     return;
-                case N.OrPattern:
-                    BindPatternLocals(Child(pattern, 0), value, depth + 1); return;
+                case N.ReferencePattern:
+                    BindPatternLocals(Child(pattern, 0), DereferencePattern(value, pattern), depth + 1); return;
+                case N.SlicePattern:
+                    BindSlicePattern(pattern, value, depth + 1); return;
                 case N.AtPattern:
                     BindPatternLocals(Child(pattern, 0), value, depth + 1);
                     BindPatternLocals(Child(pattern, 1), value, depth + 1); return;
-                  default: return;
-              }
-          }
-
-          private bool PatternContainsBinding(SafeCoreHirNode pattern, int depth)
-          {
-              Step(pattern, depth);
-              if (pattern.Kind is N.IdentifierPattern or N.AtPattern)
-                  return true;
-              for (int childIndex = 0; childIndex < pattern.ChildIds.Count; childIndex++)
-                  if (PatternContainsBinding(Child(pattern, childIndex), depth + 1))
-                      return true;
-              return false;
-          }
+                default: return;
+            }
+        }
 
         private SafeCoreMirOperand PatternCondition(SafeCoreHirNode pattern, SafeCoreMirOperand value, int depth)
         {
             Step(pattern, depth);
+            pattern = SelectedPattern(pattern, depth);
+            if (TryEnumVariant(pattern, out SafeCoreMirAdtLayout enumLayout, out int variantIndex))
+                return EnumPatternCondition(pattern, value, enumLayout, variantIndex, depth);
             SafeCoreType boolType = SafeCoreType.Primitive(K.Bool);
             switch (pattern.Kind)
             {
                 case N.WildcardPattern:
+                case N.RestPattern:
                 case N.IdentifierPattern when pattern.DeclaredSymbol is not null:
                     return SafeCoreMirOperand.Constant(boolType, "true", Source(pattern));
                 case N.LiteralPattern:
-                    SafeCoreMirOperand literal = Literal(pattern, Type(pattern));
+                case N.PathPattern when pattern.ReferencedSymbol?.Kind == SafeCoreSymbolKind.Const:
+                    if (value.Type != Type(pattern)) value = PatternValue(value, pattern, depth);
+                    SafeCoreMirOperand literal = PatternConstant(pattern, depth + 1);
                     return Emit(SafeCoreMirRvalue.Binary("==", value, literal, boolType, Source(pattern)), boolType, pattern);
+                case N.RangePattern:
+                    return PatternRangeCondition(pattern, PatternValue(value, pattern, depth), depth + 1);
                 case N.TuplePattern:
-                    SafeCoreMirOperand? condition = null;
-                    for (int index = 0; index < pattern.ChildIds.Count; index++)
-                    {
-                        SafeCoreHirNode child = Child(pattern, index);
-                        if (child.Kind == N.RestPattern) continue;
-                        SafeCoreType fieldType = value.Type.Kind == K.Tuple && index < value.Type.Elements.Count
-                            ? value.Type.Elements[index] : Type(child);
-                        SafeCoreMirOperand field = Emit(SafeCoreMirRvalue.Field(value, index, fieldType, Source(child)), fieldType, child);
-                        SafeCoreMirOperand item = PatternCondition(child, field, depth + 1);
-                        condition = condition is null ? item : CombineCondition(condition, item, and: true, pattern, boolType, allowDynamic: false);
-                    }
-                    return condition ?? SafeCoreMirOperand.Constant(boolType, "true", Source(pattern));
-                case N.OrPattern:
-                    SafeCoreMirOperand? alternative = null;
-                    for (int childIndex = 0; childIndex < pattern.ChildIds.Count; childIndex++)
-                    {
-                        SafeCoreHirNode child = Child(pattern, childIndex);
-                        SafeCoreMirOperand item = PatternCondition(child, value, depth + 1);
-                        alternative = alternative is null ? item : CombineCondition(alternative, item, and: false, pattern, boolType, allowDynamic: true);
-                    }
-                    return alternative ?? SafeCoreMirOperand.Constant(boolType, "false", Source(pattern));
+                case N.StructPattern:
+                case N.PathPattern:
+                    return AggregatePatternCondition(pattern, value, depth + 1);
+                case N.ReferencePattern:
+                    return PatternCondition(Child(pattern, 0), DereferencePattern(value, pattern), depth + 1);
+                case N.SlicePattern:
+                    return SlicePatternCondition(pattern, value, depth + 1);
                 case N.AtPattern: return PatternCondition(Child(pattern, 1), value, depth + 1);
                 default: Unsupported(pattern); return null!;
             }
         }
-
         private SafeCoreMirOperand CombineCondition(SafeCoreMirOperand left, SafeCoreMirOperand right,
             bool and, SafeCoreHirNode node, SafeCoreType boolType, bool allowDynamic)
         {
-            if (left.Kind == SafeCoreMirOperandKind.Constant && left.Value == (and ? "true" : "false"))
-                return and ? right : left;
-            if (right.Kind == SafeCoreMirOperandKind.Constant && right.Value == (and ? "true" : "false"))
-                return and ? left : right;
-            if (left.Kind == SafeCoreMirOperandKind.Constant && left.Value == (and ? "false" : "true"))
-                return and ? left : right;
-            if (right.Kind == SafeCoreMirOperandKind.Constant && right.Value == (and ? "false" : "true"))
-                return and ? right : left;
+            if (left.Kind == SafeCoreMirOperandKind.Constant)
+                return left.Value == (and ? "true" : "false") ? right : left;
+            if (right.Kind == SafeCoreMirOperandKind.Constant)
+                return right.Value == (and ? "true" : "false") ? left : right;
             if (!allowDynamic) Unsupported(node);
             int result = Temp(boolType, node);
             BlockBuilder evaluateRight = Block(node);

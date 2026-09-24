@@ -54,7 +54,13 @@ public sealed record SafeCoreOwnershipLocal(
     int ScopeId,
     bool IsReference,
     bool InitiallyInitialized,
-    SafeCoreMirSource Source);
+    SafeCoreMirSource Source)
+{
+    /// <summary>Original aggregate field represented by a synthetic reference slot.</summary>
+    public SafeCoreOwnershipPlace? StoragePlace { get; init; }
+    /// <summary>The physical reference slot exists only while its containing enum variant is active.</summary>
+    public bool IsOptionalEnumPayload { get; init; }
+}
 
 /// <summary>A bounded projection used to identify a move/borrow path.</summary>
 public enum SafeCoreOwnershipProjectionKind
@@ -64,6 +70,9 @@ public enum SafeCoreOwnershipProjectionKind
     ArrayIndex,
     Dereference,
     DynamicIndex,
+    ArrayRange,
+    SliceRange,
+    FromEndIndex,
 }
 
 public sealed record SafeCoreOwnershipProjection(
@@ -71,6 +80,10 @@ public sealed record SafeCoreOwnershipProjection(
     string? Name,
     int Index)
 {
+    /// <summary>Exclusive upper bound for a constant array or slice range.</summary>
+    public int EndIndex { get; init; } = -1;
+    public int MinimumLength { get; init; }
+
     public static SafeCoreOwnershipProjection Field(string name) =>
         new(SafeCoreOwnershipProjectionKind.Field, name, -1);
 
@@ -85,6 +98,16 @@ public sealed record SafeCoreOwnershipProjection(
 
     public static SafeCoreOwnershipProjection DynamicIndex(int localId) =>
         new(SafeCoreOwnershipProjectionKind.DynamicIndex, null, localId);
+
+    public static SafeCoreOwnershipProjection ArrayRange(int start, int end) =>
+        new(SafeCoreOwnershipProjectionKind.ArrayRange, null, start) { EndIndex = end };
+
+    /// <summary>A pattern partition excluding a fixed prefix and suffix from a dynamic slice.</summary>
+    public static SafeCoreOwnershipProjection SliceRange(int prefix, int suffix) =>
+        new(SafeCoreOwnershipProjectionKind.SliceRange, null, prefix) { EndIndex = suffix };
+
+    public static SafeCoreOwnershipProjection FromEndIndex(int distance, int minimumLength) =>
+        new(SafeCoreOwnershipProjectionKind.FromEndIndex, null, distance) { MinimumLength = minimumLength };
 }
 
 /// <summary>
@@ -105,10 +128,18 @@ public sealed class SafeCoreOwnershipPlace
             SafeCoreOwnershipProjection projection = projections[index] ??
                 throw new ArgumentException("Ownership projections cannot contain null values.", nameof(projections));
             if (!Enum.IsDefined(projection.Kind) ||
+                (projection.Kind != SafeCoreOwnershipProjectionKind.FromEndIndex && projection.MinimumLength != 0) ||
+                (projection.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex &&
+                    (projection.Name is not null || projection.Index <= 0 || projection.MinimumLength < projection.Index)) ||
                 (projection.Kind == SafeCoreOwnershipProjectionKind.Field &&
                     (string.IsNullOrWhiteSpace(projection.Name) || projection.Name.Length > 4_096 || projection.Index != -1)) ||
-                (projection.Kind is SafeCoreOwnershipProjectionKind.TupleIndex or SafeCoreOwnershipProjectionKind.ArrayIndex &&
+                (projection.Kind is SafeCoreOwnershipProjectionKind.TupleIndex or SafeCoreOwnershipProjectionKind.ArrayIndex or SafeCoreOwnershipProjectionKind.DynamicIndex &&
                     (projection.Name is not null || projection.Index < 0)) ||
+                (projection.Kind == SafeCoreOwnershipProjectionKind.ArrayRange &&
+                    (projection.Name is not null || projection.Index < 0 || projection.EndIndex < projection.Index)) ||
+                (projection.Kind == SafeCoreOwnershipProjectionKind.SliceRange &&
+                    (projection.Name is not null || projection.Index < 0 || projection.EndIndex < 0)) ||
+                (projection.Kind is not (SafeCoreOwnershipProjectionKind.ArrayRange or SafeCoreOwnershipProjectionKind.SliceRange) && projection.EndIndex != -1) ||
                 (projection.Kind is SafeCoreOwnershipProjectionKind.Dereference &&
                     (projection.Name is not null || projection.Index != -1)))
                 throw new ArgumentException("Ownership projection metadata is invalid.", nameof(projections));
@@ -143,6 +174,21 @@ public sealed class SafeCoreOwnershipPlace
                     break;
                 case SafeCoreOwnershipProjectionKind.ArrayIndex:
                     builder.Append('[').Append(projection.Index.ToString(CultureInfo.InvariantCulture)).Append(']');
+                    break;
+                case SafeCoreOwnershipProjectionKind.ArrayRange:
+                    builder.Append('[').Append(projection.Index.ToString(CultureInfo.InvariantCulture)).Append("..")
+                        .Append(projection.EndIndex.ToString(CultureInfo.InvariantCulture)).Append(']');
+                    break;
+                case SafeCoreOwnershipProjectionKind.SliceRange:
+                    builder.Append('[').Append(projection.Index.ToString(CultureInfo.InvariantCulture)).Append("..len-")
+                        .Append(projection.EndIndex.ToString(CultureInfo.InvariantCulture)).Append(']');
+                    break;
+                case SafeCoreOwnershipProjectionKind.DynamicIndex:
+                    builder.Append("[local:").Append(projection.Index.ToString(CultureInfo.InvariantCulture)).Append(']');
+                    break;
+                case SafeCoreOwnershipProjectionKind.FromEndIndex:
+                    builder.Append("[len-").Append(projection.Index.ToString(CultureInfo.InvariantCulture)).Append(";min=")
+                        .Append(projection.MinimumLength.ToString(CultureInfo.InvariantCulture)).Append(']');
                     break;
                 case SafeCoreOwnershipProjectionKind.Dereference:
                     builder.Append('.').Append('*');
@@ -192,6 +238,15 @@ public sealed record SafeCoreOwnershipInstruction(
 
     /// <summary>Optional projected destination/related place for Move/Borrow.</summary>
     public SafeCoreOwnershipPlace? RelatedPlace { get; init; }
+    /// <summary>The borrow refers to checked immutable promoted storage.</summary>
+    public bool IsStaticBorrow { get; init; }
+    /// <summary>An aggregate enum transfer may have an inactive reference payload slot.</summary>
+    public bool AllowAbsentReference { get; init; }
+    /// <summary>Exact boolean assignment facts derived from the corresponding MIR rvalue.</summary>
+    public bool? ConstantBoolean { get; init; }
+    public int CopiedBooleanLocalId { get; init; } = -1;
+    /// <summary>Required payload slots for an enum tag equality; absence proves the comparison false.</summary>
+    public IReadOnlyList<int>? EnumVariantReferenceSlots { get; init; }
 
     public static SafeCoreOwnershipInstruction Use(int localId, SafeCoreMirSource source) =>
         new(SafeCoreOwnershipInstructionKind.Use, localId, -1, false, -1, source);
@@ -206,6 +261,10 @@ public sealed record SafeCoreOwnershipInstruction(
     public static SafeCoreOwnershipInstruction AssignReference(int sourceLocalId, int destinationLocalId,
         SafeCoreMirSource source) =>
         new(SafeCoreOwnershipInstructionKind.Assign, destinationLocalId, sourceLocalId, false, -1, source);
+    public static SafeCoreOwnershipInstruction AssignReference(SafeCoreOwnershipPlace sourcePlace,
+        SafeCoreOwnershipPlace destinationPlace, SafeCoreMirSource source) =>
+        new(SafeCoreOwnershipInstructionKind.Assign, destinationPlace.LocalId, sourcePlace.LocalId, false, -1, source)
+        { Place = destinationPlace, RelatedPlace = sourcePlace };
 
     public static SafeCoreOwnershipInstruction Assign(SafeCoreOwnershipPlace place, SafeCoreMirSource source) =>
         new(SafeCoreOwnershipInstructionKind.Assign, place.LocalId, -1, false, -1, source) { Place = place };
@@ -264,7 +323,10 @@ public sealed record SafeCoreOwnershipInstruction(
 }
 
 /// <summary>A reference argument whose loan remains active throughout one direct call.</summary>
-public sealed record SafeCoreOwnershipCallArgument(SafeCoreOwnershipPlace Place, bool IsMutable);
+public sealed record SafeCoreOwnershipCallArgument(SafeCoreOwnershipPlace Place, bool IsMutable)
+{
+    public bool AllowAbsent { get; init; }
+}
 
 public enum SafeCoreOwnershipTerminatorKind
 {
@@ -550,7 +612,8 @@ public static class SafeCoreOwnershipAnalysis
             if (!IsValidSource(local.Source))
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidInput, "Ownership local source evidence is invalid.", function.Name, -1, -1, local.Source);
             if (local.Id < 0 || local.Id != localIds.Count || !localIds.Add(local.Id) ||
-                string.IsNullOrWhiteSpace(local.Name) || local.Type is null || !Enum.IsDefined(local.Kind))
+                string.IsNullOrWhiteSpace(local.Name) || local.Type is null || !Enum.IsDefined(local.Kind) ||
+                local.IsOptionalEnumPayload && (!local.IsReference || local.StoragePlace is null))
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidInput, "Ownership local IDs and metadata must be dense and valid.", function.Name, -1, -1, local.Source);
         }
 
@@ -630,6 +693,27 @@ public static class SafeCoreOwnershipAnalysis
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidInput, "Ownership instruction references a local outside the arena.", function.Name, block.Id, instructionIndex, instruction.Source);
                 ValidatePlace(instruction.Place, instruction.LocalId, function, block, instructionIndex, add);
                 ValidatePlace(instruction.RelatedPlace, instruction.RelatedLocalId, function, block, instructionIndex, add);
+                if (instruction.ConstantBoolean is not null || instruction.CopiedBooleanLocalId != -1 || instruction.EnumVariantReferenceSlots is not null)
+                {
+                    bool validBoolean = instruction.Kind == SafeCoreOwnershipInstructionKind.Assign && instruction.RelatedLocalId == -1 &&
+                        instruction.Place is not { IsRoot: false } && IsValidLocalId(instruction.LocalId, function.Locals.Count) &&
+                        function.Locals[instruction.LocalId].Type.Kind == SafeCoreSemanticTypeKind.Bool;
+                    if (instruction.CopiedBooleanLocalId != -1)
+                        validBoolean &= IsValidLocalId(instruction.CopiedBooleanLocalId, function.Locals.Count) &&
+                            function.Locals[instruction.CopiedBooleanLocalId].Type.Kind == SafeCoreSemanticTypeKind.Bool;
+                    if (instruction.EnumVariantReferenceSlots is { } required)
+                    {
+                        validBoolean &= required.Count is > 0 and <= 4096;
+                        foreach (int slot in required.Take(4096))
+                        {
+                            step();
+                            validBoolean &= IsValidLocalId(slot, function.Locals.Count) && function.Locals[slot].IsOptionalEnumPayload;
+                        }
+                    }
+                    if (!validBoolean)
+                        add(SafeCoreOwnershipDiagnosticCodes.InvalidInput, "Boolean ownership facts require a checked boolean assignment and optional enum reference slots.",
+                            function.Name, block.Id, instructionIndex, instruction.Source);
+                }
                 if (instruction.AlternativePlaces is { } alternatives)
                 {
                     if (instruction.Kind != SafeCoreOwnershipInstructionKind.Borrow || alternatives.Count is < 1 or > 4096)
@@ -646,10 +730,10 @@ public static class SafeCoreOwnershipAnalysis
                 }
                 else if (instruction.Kind == SafeCoreOwnershipInstructionKind.CallArguments)
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A call ownership effect requires reference argument evidence.", function.Name, block.Id, instructionIndex, instruction.Source);
-                if (instruction.Kind is not (SafeCoreOwnershipInstructionKind.Move or SafeCoreOwnershipInstructionKind.Borrow) &&
+                if (instruction.Kind is not (SafeCoreOwnershipInstructionKind.Move or SafeCoreOwnershipInstructionKind.Borrow or SafeCoreOwnershipInstructionKind.Assign) &&
                     instruction.RelatedPlace is not null)
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath,
-                        "Only move and borrow instructions may carry a related projected place.",
+                        "Only move, borrow and reference assignment instructions may carry a related projected place.",
                         function.Name, block.Id, instructionIndex, instruction.Source);
                 if (instruction.Kind is SafeCoreOwnershipInstructionKind.EnterScope or SafeCoreOwnershipInstructionKind.ExitScope)
                 {
@@ -687,10 +771,18 @@ public static class SafeCoreOwnershipAnalysis
         {
             SafeCoreOwnershipProjection? projection = place.Projections[index];
             if (projection is null || !Enum.IsDefined(projection.Kind) ||
+                (projection.Kind != SafeCoreOwnershipProjectionKind.FromEndIndex && projection.MinimumLength != 0) ||
+                (projection.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex &&
+                    (projection.Name is not null || projection.Index <= 0 || projection.MinimumLength < projection.Index)) ||
                 (projection.Kind == SafeCoreOwnershipProjectionKind.Field &&
                     (string.IsNullOrWhiteSpace(projection.Name) || projection.Name.Length > 4_096 || projection.Index != -1)) ||
-                (projection.Kind is SafeCoreOwnershipProjectionKind.TupleIndex or SafeCoreOwnershipProjectionKind.ArrayIndex &&
+                (projection.Kind is SafeCoreOwnershipProjectionKind.TupleIndex or SafeCoreOwnershipProjectionKind.ArrayIndex or SafeCoreOwnershipProjectionKind.DynamicIndex &&
                     (projection.Name is not null || projection.Index < 0)) ||
+                (projection.Kind == SafeCoreOwnershipProjectionKind.ArrayRange &&
+                    (projection.Name is not null || projection.Index < 0 || projection.EndIndex < projection.Index)) ||
+                (projection.Kind == SafeCoreOwnershipProjectionKind.SliceRange &&
+                    (projection.Name is not null || projection.Index < 0 || projection.EndIndex < 0)) ||
+                (projection.Kind is not (SafeCoreOwnershipProjectionKind.ArrayRange or SafeCoreOwnershipProjectionKind.SliceRange) && projection.EndIndex != -1) ||
                 (projection.Kind == SafeCoreOwnershipProjectionKind.Dereference &&
                     (projection.Name is not null || projection.Index != -1)))
             {
@@ -765,7 +857,7 @@ public static class SafeCoreOwnershipAnalysis
             ? BuildNllLiveness(function, locals, step)
             : null;
         var work = new Stack<WorkItem>();
-        work.Push(new WorkItem(function.EntryBlockId, new PathState(function), 0));
+        work.Push(new WorkItem(function.EntryBlockId, new PathState(function, step), 0));
         while (work.Count > 0)
         {
             step();
@@ -809,6 +901,14 @@ public static class SafeCoreOwnershipAnalysis
                     break;
                 case SafeCoreOwnershipTerminatorKind.Branch:
                     if (!state.RequireBool(terminator.LocalId, locals, add, function, block, -1, terminator.Source)) break;
+                    bool? knownCondition = state.KnownBoolean(terminator.LocalId);
+                    if (knownCondition is { } known)
+                    {
+                        int target = known ? terminator.TargetBlockId : terminator.FalseTargetBlockId;
+                        state.Trace.Add($"branch {target}");
+                        work.Push(new WorkItem(target, state, item.Depth + 1));
+                        break;
+                    }
                     PathState falseState = state.Clone();
                     PathState trueState = state;
                     falseState.Trace.Add($"branch {terminator.FalseTargetBlockId}");
@@ -963,16 +1063,31 @@ public static class SafeCoreOwnershipAnalysis
                 references.Remove(instruction.RelatedLocalId);
             if (locals.TryGetValue(instruction.LocalId, out SafeCoreOwnershipLocal? local) && local.IsReference)
                 references.Add(instruction.LocalId);
+            if (instruction.Kind == SafeCoreOwnershipInstructionKind.Borrow)
+            {
+                SafeCoreOwnershipPlace owner = instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId);
+                foreach (SafeCoreOwnershipLocal stored in locals.Values)
+                {
+                    if (stored.StoragePlace is not { } storage || owner.LocalId != storage.LocalId ||
+                        owner.Projections.Count > storage.Projections.Count ||
+                        !owner.Projections.SequenceEqual(storage.Projections.Take(owner.Projections.Count))) continue;
+                    references.Add(stored.Id);
+                }
+            }
             if (instruction.AlternativePlaces is { } alternatives)
                 foreach (SafeCoreOwnershipPlace place in alternatives)
                     if (locals.TryGetValue(place.LocalId, out SafeCoreOwnershipLocal? alternative) && alternative.IsReference) references.Add(place.LocalId);
             return;
         }
-        if (instruction.Kind == SafeCoreOwnershipInstructionKind.Assign && (instruction.Place is null || instruction.Place.IsRoot))
+        if (instruction.Kind == SafeCoreOwnershipInstructionKind.Assign)
         {
-            references.Remove(instruction.LocalId);
+            if (instruction.Place is null || instruction.Place.IsRoot) references.Remove(instruction.LocalId);
+            else if (locals.TryGetValue(instruction.LocalId, out SafeCoreOwnershipLocal? target) && target.IsReference)
+                references.Add(instruction.LocalId);
             if (locals.TryGetValue(instruction.RelatedLocalId, out SafeCoreOwnershipLocal? source) && source.IsReference)
                 references.Add(instruction.RelatedLocalId);
+            if (instruction.EnumVariantReferenceSlots is { } variantSlots)
+                foreach (int slot in variantSlots) references.Add(slot);
             return;
         }
         if (locals.TryGetValue(instruction.LocalId, out SafeCoreOwnershipLocal? used) && used.IsReference)
@@ -986,6 +1101,9 @@ public static class SafeCoreOwnershipAnalysis
     {
         if (locals.TryGetValue(terminator.LocalId, out SafeCoreOwnershipLocal? local) && local.IsReference)
             references.Add(terminator.LocalId);
+        if (terminator.Kind == SafeCoreOwnershipTerminatorKind.Return)
+            foreach (SafeCoreOwnershipLocal stored in locals.Values)
+                if (stored.StoragePlace?.LocalId == terminator.LocalId) references.Add(stored.Id);
     }
 
     private sealed class NllLiveness(
@@ -1033,6 +1151,18 @@ public static class SafeCoreOwnershipAnalysis
         Action step,
         Action<int, int> reportEscape)
     {
+        if (instruction.AllowAbsentReference)
+        {
+            int sourceId = instruction.Kind == SafeCoreOwnershipInstructionKind.Assign
+                ? instruction.RelatedLocalId : instruction.LocalId;
+            if (!state.IsInitialized(sourceId))
+            {
+                if (instruction.Kind is SafeCoreOwnershipInstructionKind.Move or SafeCoreOwnershipInstructionKind.Assign)
+                    state.ClearReference(instruction.Kind == SafeCoreOwnershipInstructionKind.Move
+                        ? instruction.RelatedLocalId : instruction.LocalId);
+                return true;
+            }
+        }
         switch (instruction.Kind)
         {
             case SafeCoreOwnershipInstructionKind.CallArguments:
@@ -1042,18 +1172,29 @@ public static class SafeCoreOwnershipAnalysis
                     ? state.Use(instruction.LocalId, locals, add, function, block, index, instruction.Source)
                     : state.UsePlace(instruction.Place, locals, add, function, block, index, instruction.Source);
             case SafeCoreOwnershipInstructionKind.Assign:
-                if (instruction.RelatedLocalId >= 0 && instruction.Place is null)
-                    return state.CopyReference(instruction.RelatedLocalId, instruction.LocalId, locals, add, function, block, index, instruction.Source);
-                return instruction.Place is null || instruction.Place.IsRoot
+                if (instruction.RelatedLocalId >= 0)
+                    return state.CopyReferencePlace(instruction.RelatedPlace ?? SafeCoreOwnershipPlace.Root(instruction.RelatedLocalId),
+                        instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId), locals, add, function, block, index, instruction.Source, step);
+                bool assigned = instruction.Place is null || instruction.Place.IsRoot
                     ? state.Assign(instruction.LocalId, locals, add, function, block, index, instruction.Source)
                     : state.AssignPlace(instruction.Place, locals, add, function, block, index, instruction.Source);
+                if (assigned) state.AssignBooleanFacts(instruction, locals, step);
+                return assigned;
             case SafeCoreOwnershipInstructionKind.Move:
                 return instruction.Place is null && instruction.RelatedPlace is null
                     ? state.Move(instruction.LocalId, instruction.RelatedLocalId, locals, add, function, block, index, instruction.Source)
                     : state.MovePlace(instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId),
                         instruction.RelatedPlace ?? SafeCoreOwnershipPlace.Root(instruction.RelatedLocalId),
-                        locals, add, function, block, index, instruction.Source);
+                        locals, add, function, block, index, instruction.Source, step);
             case SafeCoreOwnershipInstructionKind.Borrow:
+                if (instruction.IsStaticBorrow)
+                {
+                    bool promoted = state.BorrowPlace(instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId),
+                        instruction.RelatedPlace ?? SafeCoreOwnershipPlace.Root(instruction.RelatedLocalId),
+                        false, locals, add, function, block, index, instruction.Source);
+                    if (promoted) state.MarkStaticBorrow(instruction.RelatedLocalId);
+                    return promoted;
+                }
                 if (instruction.AlternativePlaces is { Count: > 0 } alternatives)
                     return state.BorrowAlternatives(alternatives, instruction.RelatedLocalId, instruction.IsMutable,
                         locals, add, function, block, index, instruction.Source, step);
@@ -1098,18 +1239,23 @@ public static class SafeCoreOwnershipAnalysis
 
     private sealed class PathState
     {
+        private readonly Action _step;
         private readonly Dictionary<int, ValueState> values = [];
         private readonly Dictionary<string, ValueState> projectedValues = new(StringComparer.Ordinal);
         private readonly Dictionary<int, BorrowState> borrows = [];
+        private readonly Dictionary<int, SafeCoreOwnershipPlace> storageAliases = [];
+        private readonly Dictionary<int, bool> booleanValues = [];
         private readonly HashSet<int> activeScopes = [];
         private readonly Dictionary<int, int> visits = [];
         public List<string> DropOrder { get; } = [];
         public List<string> Trace { get; } = [];
 
-        public PathState(SafeCoreOwnershipFunction function)
+        public PathState(SafeCoreOwnershipFunction function, Action step)
         {
+            _step = step;
             foreach (SafeCoreOwnershipLocal local in function.Locals)
             {
+                if (local.StoragePlace is { } storage) storageAliases.Add(local.Id, storage);
                 values[local.Id] = new(
                     local.ScopeId == 0 && local.InitiallyInitialized,
                     local.ScopeId == 0,
@@ -1125,9 +1271,12 @@ public static class SafeCoreOwnershipAnalysis
 
         private PathState(PathState other)
         {
+            _step = other._step;
             foreach ((int id, ValueState value) in other.values) values[id] = value with { };
             foreach ((string key, ValueState value) in other.projectedValues) projectedValues[key] = value with { };
             foreach ((int id, BorrowState borrow) in other.borrows) borrows[id] = borrow with { };
+            foreach ((int id, SafeCoreOwnershipPlace storage) in other.storageAliases) storageAliases[id] = storage;
+            foreach ((int id, bool value) in other.booleanValues) booleanValues[id] = value;
             foreach (int scope in other.activeScopes) activeScopes.Add(scope);
             foreach ((int block, int count) in other.visits) visits[block] = count;
             DropOrder.AddRange(other.DropOrder);
@@ -1433,8 +1582,31 @@ public static class SafeCoreOwnershipAnalysis
             IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
             Action<string, string, string, int, int, SafeCoreMirSource> add,
             SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
-            SafeCoreMirSource source)
+            SafeCoreMirSource source, Action step)
         {
+            if (sourcePlace.IsRoot && !destinationPlace.IsRoot &&
+                locals.TryGetValue(sourcePlace.LocalId, out SafeCoreOwnershipLocal? movedReference) && movedReference.IsReference)
+            {
+                if (!AccessReferencePlace(destinationPlace, true, locals, add, function, block, index, source)) return false;
+                for (int depth = 0; depth < 128 && !destinationPlace.IsRoot; depth++)
+                {
+                    step();
+                    if (destinationPlace.Projections[0].Kind != SafeCoreOwnershipProjectionKind.Dereference ||
+                        !borrows.TryGetValue(destinationPlace.LocalId, out BorrowState? destinationBorrow) || !destinationBorrow.Active) break;
+                    if (destinationBorrow.External)
+                        return Consume(sourcePlace, locals, add, function, block, index, source);
+                    destinationPlace = AppendProjections(destinationBorrow.OwnerPlace, destinationPlace.Projections.Skip(1).ToArray());
+                    foreach (SafeCoreOwnershipLocal local in locals.Values)
+                    {
+                        step();
+                        if (local.StoragePlace is { } storage && storage.LocalId == destinationPlace.LocalId &&
+                            storage.Projections.SequenceEqual(destinationPlace.Projections))
+                        { destinationPlace = SafeCoreOwnershipPlace.Root(local.Id); break; }
+                    }
+                }
+                if (destinationPlace.IsRoot)
+                    return Move(sourcePlace.LocalId, destinationPlace.LocalId, locals, add, function, block, index, source, projectedDestination: true);
+            }
             if (sourcePlace.Projections.Any(projection => projection.Kind is SafeCoreOwnershipProjectionKind.Dereference or SafeCoreOwnershipProjectionKind.DynamicIndex))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath, "A non-Copy value cannot move out through a reference or a runtime array index.", function.Name, block.Id, index, source);
@@ -1537,6 +1709,7 @@ public static class SafeCoreOwnershipAnalysis
                 return false;
             }
             if (!UsePlace(ownerPlace, locals, add, function, block, index, source)) return false;
+            if (!EnsureReferenceStorage(reference, locals, add, function, block, index, source)) return false;
             if (!reference.IsReference)
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A borrow destination must be a reference local.", function.Name, block.Id, index, source);
@@ -1558,7 +1731,10 @@ public static class SafeCoreOwnershipAnalysis
             int? parentReferenceId = null;
             bool external = false;
             IReadOnlyList<SafeCoreOwnershipPlace> alternativeOwners = [];
-            if (owner.IsReference && (ownerPlace.IsRoot || ownerPlace.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference) &&
+            bool referenceStorage = owner.IsReference && ownerPlace.IsRoot && reference.Type.ElementType == owner.Type;
+            if (referenceStorage)
+                parentReferenceId = ownerPlace.LocalId;
+            else if (owner.IsReference && (ownerPlace.IsRoot || ownerPlace.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference) &&
                 borrows.TryGetValue(ownerPlace.LocalId, out BorrowState? parentBorrow) && parentBorrow.Active)
             {
                 parentReferenceId = ownerPlace.LocalId;
@@ -1597,8 +1773,15 @@ public static class SafeCoreOwnershipAnalysis
                 }
             }
 
+            var containedReferences = new List<int>();
+            foreach (var storage in storageAliases)
+            {
+                _step();
+                if (PlacesOverlap(storage.Value, ownerPlace) && borrows.TryGetValue(storage.Key, out BorrowState? contained) && contained.Active)
+                    containedReferences.Add(storage.Key);
+            }
             borrows[referencePlace.LocalId] = new(ownerPlace.LocalId, ownerPlace, mutable, true, parentReferenceId, false, false)
-                { External = external, AlternativeOwners = alternativeOwners };
+                { External = external, AlternativeOwners = alternativeOwners, AdditionalParents = containedReferences.AsReadOnly() };
             if (parentReferenceId is int parentId && borrows.TryGetValue(parentId, out BorrowState? parent))
             {
                 bool suspendParent = mutable || parent.Mutable;
@@ -1609,11 +1792,67 @@ public static class SafeCoreOwnershipAnalysis
             return true;
         }
 
-        private static SafeCoreOwnershipPlace AppendProjections(SafeCoreOwnershipPlace root,
+        private SafeCoreOwnershipPlace AppendProjections(SafeCoreOwnershipPlace root,
             IReadOnlyList<SafeCoreOwnershipProjection> suffix)
         {
             if (root.Projections.Count + suffix.Count > 128) throw new OwnershipLimitException();
-            return new(root.LocalId, [.. root.Projections, .. suffix]);
+            var projections = new List<SafeCoreOwnershipProjection>(root.Projections);
+            foreach (SafeCoreOwnershipProjection projection in suffix)
+            {
+                _step();
+                if (projections.Count != 0 && projections[^1] is { Kind: SafeCoreOwnershipProjectionKind.ArrayRange or SafeCoreOwnershipProjectionKind.SliceRange } range)
+                {
+                    if (projection.Kind == SafeCoreOwnershipProjectionKind.DynamicIndex) continue;
+                    if (projection.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex)
+                    {
+                        if (range.Kind == SafeCoreOwnershipProjectionKind.ArrayRange)
+                        {
+                            if (range.EndIndex - range.Index < projection.MinimumLength) throw new OwnershipLimitException();
+                            projections[^1] = SafeCoreOwnershipProjection.ArrayIndex(range.EndIndex - projection.Index);
+                        }
+                        else
+                        {
+                            long distance = (long)range.EndIndex + projection.Index;
+                            long minimum = (long)range.Index + range.EndIndex + projection.MinimumLength;
+                            if (distance > int.MaxValue || minimum > int.MaxValue) throw new OwnershipLimitException();
+                            projections[^1] = SafeCoreOwnershipProjection.FromEndIndex((int)distance, (int)minimum);
+                        }
+                        continue;
+                    }
+                    if (range.Kind == SafeCoreOwnershipProjectionKind.SliceRange && projection.Kind == SafeCoreOwnershipProjectionKind.ArrayIndex)
+                    {
+                        // The access remains inside the pattern's partition:
+                        // runtime bounds checks reject a too-short middle. An
+                        // absolute prefix index would discard the excluded
+                        // suffix and falsely overlap a live suffix binding.
+                        continue;
+                    }
+                    if (projection.Kind is SafeCoreOwnershipProjectionKind.ArrayIndex or SafeCoreOwnershipProjectionKind.ArrayRange)
+                    {
+                        long start = (long)range.Index + projection.Index;
+                        long end = (long)range.Index + projection.EndIndex;
+                        if (start > int.MaxValue || end > int.MaxValue) throw new OwnershipLimitException();
+                        projections[^1] = projection.Kind == SafeCoreOwnershipProjectionKind.ArrayIndex
+                            ? SafeCoreOwnershipProjection.ArrayIndex((int)start)
+                            : SafeCoreOwnershipProjection.ArrayRange((int)start, (int)end);
+                        continue;
+                    }
+                    if (projection.Kind == SafeCoreOwnershipProjectionKind.SliceRange)
+                    {
+                        long start = (long)range.Index + projection.Index;
+                        long end = range.Kind == SafeCoreOwnershipProjectionKind.ArrayRange
+                            ? (long)range.EndIndex - projection.EndIndex : (long)range.EndIndex + projection.EndIndex;
+                        if (start > int.MaxValue || end > int.MaxValue || end < 0 || range.Kind == SafeCoreOwnershipProjectionKind.ArrayRange && end < start)
+                            throw new OwnershipLimitException();
+                        projections[^1] = range.Kind == SafeCoreOwnershipProjectionKind.ArrayRange
+                            ? SafeCoreOwnershipProjection.ArrayRange((int)start, (int)end)
+                            : SafeCoreOwnershipProjection.SliceRange((int)start, (int)end);
+                        continue;
+                    }
+                }
+                projections.Add(projection);
+            }
+            return new(root.LocalId, projections);
         }
 
         private bool IsAncestorReference(int possibleAncestor, int? child)
@@ -1625,6 +1864,7 @@ public static class SafeCoreOwnershipAnalysis
             int edges = 0;
             for (int visit = 0; pending.Count != 0; visit++)
             {
+                _step();
                 if (visit >= 4096) throw new OwnershipLimitException();
                 int referenceId = pending.Pop();
                 if (referenceId == possibleAncestor) return true;
@@ -1632,6 +1872,7 @@ public static class SafeCoreOwnershipAnalysis
                 if (borrow.ParentReferenceId is int parent && seen.Add(parent)) pending.Push(parent);
                 foreach (int additional in borrow.AdditionalParents)
                 {
+                    _step();
                     if (++edges > 65_536) throw new OwnershipLimitException();
                     if (seen.Add(additional)) pending.Push(additional);
                 }
@@ -1654,7 +1895,8 @@ public static class SafeCoreOwnershipAnalysis
                 loans.Add(candidate.borrows[destination]);
             }
             BorrowState primary = loans[0];
-            var parents = loans.Where(loan => loan.ParentReferenceId.HasValue).Select(loan => loan.ParentReferenceId!.Value).Distinct().ToArray();
+            var parents = loans.SelectMany(loan => loan.ParentReferenceId is int parent
+                ? new[] { parent }.Concat(loan.AdditionalParents) : loan.AdditionalParents).Distinct().ToArray();
             borrows[destination] = primary with
             {
                 AlternativeOwners = loans.SelectMany(loan => new[] { loan.OwnerPlace }.Concat(loan.AlternativeOwners)).ToArray(),
@@ -1683,6 +1925,8 @@ public static class SafeCoreOwnershipAnalysis
             {
                 step();
                 SafeCoreOwnershipCallArgument argument = arguments[argumentIndex];
+                if (argument.AllowAbsent && !IsInitialized(argument.Place.LocalId))
+                { referents.Add([]); continue; }
                 if (!argument.Place.IsRoot || !locals.TryGetValue(argument.Place.LocalId, out SafeCoreOwnershipLocal? local) ||
                     !local.IsReference || argument.IsMutable != local.Type.IsMutable ||
                     !Use(argument.Place.LocalId, locals, add, function, block, index, source) ||
@@ -1846,6 +2090,10 @@ public static class SafeCoreOwnershipAnalysis
                 else
                 {
                     builder.Append(projection.Index.ToString(CultureInfo.InvariantCulture));
+                    if (projection.Kind is SafeCoreOwnershipProjectionKind.ArrayRange or SafeCoreOwnershipProjectionKind.SliceRange)
+                        builder.Append(':').Append(projection.EndIndex.ToString(CultureInfo.InvariantCulture));
+                    if (projection.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex)
+                        builder.Append(':').Append(projection.MinimumLength.ToString(CultureInfo.InvariantCulture));
                 }
 
                 builder.Append('|');
@@ -1891,7 +2139,8 @@ public static class SafeCoreOwnershipAnalysis
         private bool HasMovedProjection(SafeCoreOwnershipPlace root)
         {
             string key = PlaceKey(root);
-            return projectedValues.Any(pair =>
+            return storageAliases.Any(pair => PlacesOverlap(root, pair.Value) &&
+                values.TryGetValue(pair.Key, out ValueState? value) && (value.Moved || value.Dropped)) || projectedValues.Any(pair =>
                 (IsPlacePrefix(key, pair.Key) || IsPlacePrefix(pair.Key, key) || pair.Key == key) &&
                 (pair.Value.Moved || pair.Value.Dropped));
         }
@@ -1902,14 +2151,49 @@ public static class SafeCoreOwnershipAnalysis
             return projectedValues.Any(pair => IsPlacePrefix(pair.Key, key) && (pair.Value.Moved || pair.Value.Dropped));
         }
 
-        private static bool PlacesOverlap(SafeCoreOwnershipPlace left, SafeCoreOwnershipPlace right)
+        private bool PlacesOverlap(SafeCoreOwnershipPlace left, SafeCoreOwnershipPlace right)
         {
+            if (storageAliases.TryGetValue(left.LocalId, out SafeCoreOwnershipPlace? leftStorage) &&
+                !left.Projections.Any(projection => projection.Kind == SafeCoreOwnershipProjectionKind.Dereference))
+                left = AppendProjections(leftStorage, left.Projections);
+            if (storageAliases.TryGetValue(right.LocalId, out SafeCoreOwnershipPlace? rightStorage) &&
+                !right.Projections.Any(projection => projection.Kind == SafeCoreOwnershipProjectionKind.Dereference))
+                right = AppendProjections(rightStorage, right.Projections);
             if (left.LocalId != right.LocalId) return false;
+            if (left.Projections.Any(projection => projection.Kind == SafeCoreOwnershipProjectionKind.ArrayRange && projection.Index == projection.EndIndex) ||
+                right.Projections.Any(projection => projection.Kind == SafeCoreOwnershipProjectionKind.ArrayRange && projection.Index == projection.EndIndex)) return false;
             int shared = Math.Min(left.Projections.Count, right.Projections.Count);
             for (int index = 0; index < shared; index++)
             {
+                _step();
                 SafeCoreOwnershipProjection first = left.Projections[index], second = right.Projections[index];
                 if (first.Kind == SafeCoreOwnershipProjectionKind.DynamicIndex || second.Kind == SafeCoreOwnershipProjectionKind.DynamicIndex) continue;
+                if (first.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex || second.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex)
+                {
+                    SafeCoreOwnershipProjection suffixIndex = first.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex ? first : second;
+                    SafeCoreOwnershipProjection other = first.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex ? second : first;
+                    if (other.Kind == SafeCoreOwnershipProjectionKind.ArrayIndex && (long)other.Index + suffixIndex.Index < suffixIndex.MinimumLength ||
+                        other.Kind == SafeCoreOwnershipProjectionKind.ArrayRange && (long)other.EndIndex + suffixIndex.Index <= suffixIndex.MinimumLength ||
+                        other.Kind == SafeCoreOwnershipProjectionKind.SliceRange && suffixIndex.Index <= other.EndIndex ||
+                        other.Kind == SafeCoreOwnershipProjectionKind.FromEndIndex && other.Index != suffixIndex.Index) return false;
+                    continue;
+                }
+                if (first.Kind == SafeCoreOwnershipProjectionKind.SliceRange || second.Kind == SafeCoreOwnershipProjectionKind.SliceRange)
+                {
+                    SafeCoreOwnershipProjection range = first.Kind == SafeCoreOwnershipProjectionKind.SliceRange ? first : second;
+                    SafeCoreOwnershipProjection other = first.Kind == SafeCoreOwnershipProjectionKind.SliceRange ? second : first;
+                    if (other.Kind == SafeCoreOwnershipProjectionKind.ArrayIndex && other.Index < range.Index ||
+                        other.Kind == SafeCoreOwnershipProjectionKind.ArrayRange && other.EndIndex <= range.Index) return false;
+                    continue;
+                }
+                if (first.Kind == SafeCoreOwnershipProjectionKind.ArrayRange || second.Kind == SafeCoreOwnershipProjectionKind.ArrayRange)
+                {
+                    SafeCoreOwnershipProjection range = first.Kind == SafeCoreOwnershipProjectionKind.ArrayRange ? first : second;
+                    SafeCoreOwnershipProjection other = first.Kind == SafeCoreOwnershipProjectionKind.ArrayRange ? second : first;
+                    if (other.Kind == SafeCoreOwnershipProjectionKind.ArrayIndex && (other.Index < range.Index || other.Index >= range.EndIndex) ||
+                        other.Kind == SafeCoreOwnershipProjectionKind.ArrayRange && (other.EndIndex <= range.Index || range.EndIndex <= other.Index)) return false;
+                    continue;
+                }
                 if (first != second) return false;
             }
             return true;
@@ -2031,11 +2315,135 @@ public static class SafeCoreOwnershipAnalysis
             return true;
         }
 
+        public void MarkStaticBorrow(int referenceId)
+        {
+            if (borrows.TryGetValue(referenceId, out BorrowState? borrow))
+                borrows[referenceId] = borrow with { External = true };
+        }
+
+        private bool EnsureReferenceStorage(SafeCoreOwnershipLocal reference,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source, bool projectedDestination = false)
+        {
+            if (reference.StoragePlace is not { } storage) return true;
+            if (IsInitialized(storage.LocalId) && !HasMovedAncestor(storage))
+            {
+                if (projectedDestination || !HasActiveBorrow(storage, false)) return true;
+                add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict,
+                    "Cannot replace a reference field while its aggregate storage is borrowed.", function.Name, block.Id, index, source);
+                return false;
+            }
+            add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove,
+                $"Reference field '{DisplayPlace(storage, locals)}' belongs to unavailable aggregate storage.",
+                function.Name, block.Id, index, source);
+            return false;
+        }
+
+        public bool IsInitialized(int localId) => values.TryGetValue(localId, out ValueState? value) &&
+            value.Available && value.Initialized && !value.Moved && !value.Dropped;
+
+        public bool? KnownBoolean(int localId) => booleanValues.TryGetValue(localId, out bool value) ? value : null;
+
+        public void AssignBooleanFacts(SafeCoreOwnershipInstruction instruction,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals, Action step)
+        {
+            bool? known = instruction.ConstantBoolean;
+            if (instruction.CopiedBooleanLocalId >= 0) known = KnownBoolean(instruction.CopiedBooleanLocalId);
+            if (instruction.EnumVariantReferenceSlots is { } required)
+                foreach (int slot in required)
+                {
+                    step();
+                    if (locals.TryGetValue(slot, out SafeCoreOwnershipLocal? optional) && optional.IsOptionalEnumPayload &&
+                        optional.StoragePlace is { } storage && IsInitialized(storage.LocalId) && !HasMovedAncestor(storage) &&
+                        values.TryGetValue(slot, out ValueState? absent) && !absent.Initialized && !absent.Moved && !absent.Dropped)
+                        known = false;
+                }
+            if (known is { } value) booleanValues[instruction.LocalId] = value;
+            else booleanValues.Remove(instruction.LocalId);
+        }
+
+        public void ClearReference(int localId)
+        {
+            EndBorrowInternal(localId);
+            if (values.TryGetValue(localId, out ValueState? value))
+                values[localId] = value with { Initialized = false, Moved = false, Dropped = false };
+        }
+
+        public bool CopyReferencePlace(SafeCoreOwnershipPlace sourcePlace, SafeCoreOwnershipPlace destinationPlace,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
+            SafeCoreMirSource source, Action step)
+        {
+            bool destinationProjection = !destinationPlace.IsRoot;
+            if (destinationProjection)
+            {
+                if (!AccessReferencePlace(destinationPlace, true, locals, add, function, block, index, source)) return false;
+                for (int depth = 0; depth < 128 && !destinationPlace.IsRoot; depth++)
+                {
+                    step();
+                    if (destinationPlace.Projections[0].Kind != SafeCoreOwnershipProjectionKind.Dereference ||
+                        !borrows.TryGetValue(destinationPlace.LocalId, out BorrowState? destinationBorrow) || !destinationBorrow.Active) break;
+                    if (destinationBorrow.External)
+                        return UsePlace(sourcePlace, locals, add, function, block, index, source);
+                    destinationPlace = AppendProjections(destinationBorrow.OwnerPlace, destinationPlace.Projections.Skip(1).ToArray());
+                    foreach (SafeCoreOwnershipLocal local in locals.Values)
+                    {
+                        step();
+                        if (local.StoragePlace is { } storage && storage.LocalId == destinationPlace.LocalId &&
+                            storage.Projections.SequenceEqual(destinationPlace.Projections))
+                        { destinationPlace = SafeCoreOwnershipPlace.Root(local.Id); break; }
+                    }
+                }
+            }
+            if (!destinationPlace.IsRoot)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "Reference assignment requires a resolved storage slot.", function.Name, block.Id, index, source);
+                return false;
+            }
+            if (!UsePlace(sourcePlace, locals, add, function, block, index, source)) return false;
+            SafeCoreOwnershipPlace place = sourcePlace;
+            for (int depth = 0; depth < 128; depth++)
+            {
+                step();
+                foreach (SafeCoreOwnershipLocal local in locals.Values)
+                {
+                    step();
+                    if (local.StoragePlace is not { } storage || storage.LocalId != place.LocalId ||
+                        storage.Projections.Count > place.Projections.Count ||
+                        !storage.Projections.SequenceEqual(place.Projections.Take(storage.Projections.Count))) continue;
+                    place = new(local.Id, place.Projections.Skip(storage.Projections.Count).ToArray());
+                    break;
+                }
+                if (place.IsRoot)
+                    return CopyReference(place.LocalId, destinationPlace.LocalId, locals, add, function, block, index, source,
+                        projectedSource: !sourcePlace.IsRoot, projectedDestination: destinationProjection);
+                if (place.Projections[0].Kind != SafeCoreOwnershipProjectionKind.Dereference ||
+                    !borrows.TryGetValue(place.LocalId, out BorrowState? parent) || !parent.Active) break;
+                var suffix = place.Projections.Skip(1).ToArray();
+                if (parent.External)
+                {
+                    if (!Assign(destinationPlace.LocalId, locals, add, function, block, index, source)) return false;
+                    borrows[destinationPlace.LocalId] = parent with
+                    {
+                        OwnerPlace = AppendProjections(parent.OwnerPlace, suffix),
+                        ParentReferenceId = place.LocalId, Suspended = false,
+                        Mutable = locals[destinationPlace.LocalId].Type.IsMutable,
+                    };
+                    return true;
+                }
+                place = AppendProjections(parent.OwnerPlace, suffix);
+            }
+            add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "Reference projection has no live stored loan.", function.Name, block.Id, index, source);
+            return false;
+        }
+
         public bool CopyReference(int sourceId, int destinationId,
             IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
             Action<string, string, string, int, int, SafeCoreMirSource> add,
             SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
-            SafeCoreMirSource source)
+            SafeCoreMirSource source, bool projectedSource = false, bool projectedDestination = false)
         {
             if (!EnsureLocalScope(sourceId, locals, add, function, block, index, source) ||
                 !EnsureLocalScope(destinationId, locals, add, function, block, index, source) ||
@@ -2048,10 +2456,11 @@ public static class SafeCoreOwnershipAnalysis
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A shared reference copy requires reference locals.", function.Name, block.Id, index, source);
                 return false;
             }
-            if (!Use(sourceId, locals, add, function, block, index, source)) return false;
+            if (!EnsureReferenceStorage(destinationLocal, locals, add, function, block, index, source, projectedDestination)) return false;
+            if (projectedSource ? !IsInitialized(sourceId) : !Use(sourceId, locals, add, function, block, index, source)) return false;
             if (borrows.TryGetValue(destinationId, out BorrowState? destinationBorrow) && destinationBorrow.Active)
             {
-                if (HasActiveChild(destinationId))
+                if (!projectedDestination && HasActiveChild(destinationId))
                 {
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A reference destination cannot be replaced while a reborrow is active.", function.Name, block.Id, index, source);
                     return false;
@@ -2072,14 +2481,14 @@ public static class SafeCoreOwnershipAnalysis
             {
                 Initialized = true, Moved = false, Dropped = false, DropOwned = false, MovedTo = null,
             };
-            borrows[destinationId] = borrow with { Suspended = false, EscapeReported = false };
+            borrows[destinationId] = borrow with { Suspended = projectedDestination && HasActiveChild(destinationId), EscapeReported = false };
             Trace.Add($"copy_ref {sourceLocal.Name} -> {destinationLocal.Name}");
             return true;
         }
 
         public bool Move(int sourceId, int destinationId, IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
             Action<string, string, string, int, int, SafeCoreMirSource> add, SafeCoreOwnershipFunction function,
-            SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source)
+            SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source, bool projectedDestination = false)
         {
             if (!Use(sourceId, locals, add, function, block, index, source) ||
                 !EnsureLocalScope(destinationId, locals, add, function, block, index, source) ||
@@ -2088,6 +2497,7 @@ public static class SafeCoreOwnershipAnalysis
                 !locals.TryGetValue(destinationId, out SafeCoreOwnershipLocal? destinationLocal))
                 return false;
             BorrowState? sourceBorrow = null;
+            if (!EnsureReferenceStorage(destinationLocal, locals, add, function, block, index, source, projectedDestination)) return false;
             bool transferBorrow = sourceLocal.IsReference &&
                 borrows.TryGetValue(sourceId, out sourceBorrow) && sourceBorrow.Active;
             if (transferBorrow && HasActiveChild(sourceId))
@@ -2097,14 +2507,14 @@ public static class SafeCoreOwnershipAnalysis
             }
             if (borrows.TryGetValue(destinationId, out BorrowState? destinationBorrow) && destinationBorrow.Active)
             {
-                if (!destinationLocal.IsReference || HasActiveChild(destinationId))
+                if (!destinationLocal.IsReference || !projectedDestination && HasActiveChild(destinationId))
                 {
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow, "A move destination cannot overwrite an active reference.", function.Name, block.Id, index, source);
                     return false;
                 }
                 EndBorrowInternal(destinationId);
             }
-            if (borrows.Any(pair => pair.Key != sourceId && pair.Value.Active && pair.Value.OwnerId == sourceId))
+            if (HasActiveBorrow(SafeCoreOwnershipPlace.Root(sourceId), mutableOnly: false, excludedReferenceId: sourceId))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.MoveWhileBorrowed, "A value cannot move while it is borrowed.", function.Name, block.Id, index, source);
                 return false;
@@ -2130,7 +2540,7 @@ public static class SafeCoreOwnershipAnalysis
             if (transferBorrow)
             {
                 if (sourceLocal.Type.IsMutable) borrows.Remove(sourceId);
-                borrows[destinationId] = sourceBorrow!;
+                borrows[destinationId] = sourceBorrow! with { Suspended = projectedDestination && HasActiveChild(destinationId) };
             }
             Trace.Add($"move {sourceLocal.Name} -> {destinationLocal.Name}");
             return true;
@@ -2298,10 +2708,12 @@ public static class SafeCoreOwnershipAnalysis
         private bool HasActiveBorrow(int ownerId, bool mutableOnly) =>
             HasActiveBorrow(SafeCoreOwnershipPlace.Root(ownerId), mutableOnly);
 
-        private bool HasActiveBorrow(SafeCoreOwnershipPlace ownerPlace, bool mutableOnly)
+        private bool HasActiveBorrow(SafeCoreOwnershipPlace ownerPlace, bool mutableOnly, int excludedReferenceId = -1)
         {
-            foreach (BorrowState borrow in borrows.Values)
+            foreach ((int referenceId, BorrowState borrow) in borrows)
             {
+                _step();
+                if (referenceId == excludedReferenceId) continue;
                 if (borrow.Active && (PlacesOverlap(borrow.OwnerPlace, ownerPlace) || borrow.AlternativeOwners.Any(place => PlacesOverlap(place, ownerPlace))) && (!mutableOnly || borrow.Mutable))
                     return true;
             }

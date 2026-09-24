@@ -26,6 +26,8 @@ internal static class SafeCoreMirReferenceProvenanceTests
         new("MIR call arguments reject repeated exclusive references", CallArgumentAliasAsync),
         new("MIR source calls reject exclusive aliases and allow disjoint consecutive calls", SourceCallAliasesAsync),
         new("MIR reference coercion creates a shared reborrow with the right provenance", SharedCoercionAsync),
+        new("MIR provenance keeps dynamic reference writes on concrete array elements", DynamicReferenceWriteAsync),
+        new("MIR provenance retains offset owners through reference subslices and calls", ReferenceSubsliceAsync),
     ];
 
     private static readonly SafeCoreMirSource Source = new("provenance.rs", new TextSpan(0, 1), 0, 1);
@@ -325,6 +327,69 @@ internal static class SafeCoreMirReferenceProvenanceTests
         CheckSource("fn main(){let mut x=1;let r=&mut x;let s:&i32=r;println!(\"{}\",*s);*r=2;}", true);
         CheckSource("fn main(){let mut x=1;let r=&mut x;let s:&i32=r;*r=2;println!(\"{}\",*s);}", false);
         return Task.CompletedTask;
+    }
+
+    private static Task DynamicReferenceWriteAsync()
+    {
+        SafeCoreType array = SafeCoreType.Array(Reference, 2);
+        SafeCoreType usize = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Usize);
+        SafeCoreMirPlace dynamicElement = SafeCoreMirPlace.Root(4).Append(SafeCoreMirProjection.DynamicIndex(1));
+        SafeCoreMirPlace firstElement = SafeCoreMirPlace.Root(4).Append(SafeCoreMirProjection.ArrayIndex(0));
+        SafeCoreMirFunction function = new(0, "dynamic_reference_write", Reference,
+            [Local(0, Reference, true), Local(1, usize, true), Local(2, Integer, true),
+             Local(3, Reference), Local(4, array)],
+            [Block(0,
+                [new(3, SafeCoreMirRvalue.Unary("&", Operand(2, Integer), Reference, Source), Source),
+                 new(4, SafeCoreMirRvalue.Array([Operand(0, Reference), Operand(0, Reference)], array, Source), Source),
+                 new SafeCoreMirStatement(4, SafeCoreMirRvalue.Use(Operand(3, Reference), Source), Source)
+                 { DestinationPlace = dynamicElement }],
+                SafeCoreMirTerminator.Return(SafeCoreMirOperand.PlaceValue(firstElement, Reference, Source), Source))], 0, Source);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        SafeCoreMirReferenceProvenanceResult result = SafeCoreMirReferenceProvenance.Analyze(new([function]),
+            new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = timeout.Token });
+        AssertEx.False(result.IsSuccessful, "A dynamic write may replace the returned element with a reference to local storage.");
+        AssertEx.True(result.Diagnostics.Any(d => d.Code == SafeCoreMirReferenceProvenance.EscapingReference), Format(result.Diagnostics));
+        return Task.CompletedTask;
+    }
+
+    private static Task ReferenceSubsliceAsync()
+    {
+        CheckReferenceSubslice(throughCall: false);
+        CheckReferenceSubslice(throughCall: true);
+        return Task.CompletedTask;
+    }
+
+    private static void CheckReferenceSubslice(bool throughCall)
+    {
+        SafeCoreType array = SafeCoreType.Array(Reference, 2);
+        SafeCoreType arrayReference = SafeCoreType.Reference(array, false);
+        SafeCoreType sliceReference = SafeCoreType.Reference(SafeCoreType.Slice(Reference), false);
+        SafeCoreType usize = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Usize);
+        SafeCoreMirPlace firstElement = SafeCoreMirPlace.Root(5).Append(SafeCoreMirProjection.Dereference()).Append(SafeCoreMirProjection.ArrayIndex(0));
+        SafeCoreMirRvalue window = SafeCoreMirRvalue.Subslice(Operand(throughCall ? 0 : 4, arrayReference),
+            SafeCoreMirOperand.Constant(usize, "1", Source), SafeCoreMirOperand.Constant(usize, "2", Source), sliceReference, Source);
+        List<SafeCoreMirStatement> statements =
+            [new(2, SafeCoreMirRvalue.Unary("&", Operand(1, Integer), Reference, Source), Source),
+             new(3, SafeCoreMirRvalue.Array([Operand(0, Reference), Operand(2, Reference)], array, Source), Source),
+             new(4, SafeCoreMirRvalue.Unary("&", Operand(3, array), arrayReference, Source), Source)];
+        SafeCoreMirTerminator resultReturn = SafeCoreMirTerminator.Return(SafeCoreMirOperand.PlaceValue(firstElement, Reference, Source), Source);
+        if (!throughCall) statements.Add(new(5, window, Source));
+        SafeCoreMirFunction function = new(0, "reference_subslice", Reference,
+            [Local(0, Reference, true), Local(1, Integer, true), Local(2, Reference),
+             Local(3, array), Local(4, arrayReference), Local(5, sliceReference)],
+            throughCall
+                ? [Block(0, statements, SafeCoreMirTerminator.Call(SafeCoreMirOperand.Function(1,
+                    SafeCoreType.Function([arrayReference], sliceReference, "window"), Source), [Operand(4, arrayReference)], 5, 1, Source)),
+                   Block(1, [], resultReturn)]
+                : [Block(0, statements, resultReturn)], 0, Source);
+        SafeCoreMirFunction callee = new(1, "window", sliceReference,
+            [Local(0, arrayReference, true), Local(1, sliceReference)],
+            [Block(0, [new(1, window, Source)], SafeCoreMirTerminator.Return(Operand(1, sliceReference), Source))], 0, Source);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        SafeCoreMirReferenceProvenanceResult result = SafeCoreMirReferenceProvenance.Analyze(new(throughCall ? [function, callee] : [function]),
+            new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = timeout.Token });
+        AssertEx.False(result.IsSuccessful, "Index zero of a subslice must retain the shifted element's local-storage origin.");
+        AssertEx.True(result.Diagnostics.Any(d => d.Code == SafeCoreMirReferenceProvenance.EscapingReference), Format(result.Diagnostics));
     }
 
     private static void CheckSource(string source, bool successful)

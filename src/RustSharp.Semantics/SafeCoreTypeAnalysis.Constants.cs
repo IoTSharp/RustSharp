@@ -31,6 +31,7 @@ public static partial class SafeCoreTypeAnalysis
         private readonly HashSet<string> _definingFunctions = new(StringComparer.Ordinal);
         private readonly HashSet<string> _checkedConstBodies = new(StringComparer.Ordinal);
         private readonly Dictionary<int, SafeCoreHirNode> _constBlocks = [];
+        private readonly Dictionary<int, Constant> _constantBlocks = [];
 
         private void ValidateConstContext(SafeCoreHirNode node, int depth)
         {
@@ -68,8 +69,10 @@ public static partial class SafeCoreTypeAnalysis
                     function.Kind == N.Function && function.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ConstFunction)))
                     Fail(node, "RST2010", "Only direct const function calls are allowed in constant contexts.");
             }
-            if (node.Kind == N.ClosureExpression || node.Kind == N.UnaryExpression && node.Value is "&" or "&mut" or "*")
+            if (node.Kind == N.ClosureExpression || node.Kind == N.UnaryExpression && node.Value == "&mut")
                 Fail(node, "RST2010", "This operation is outside the bounded scalar and aggregate const interpreter.");
+            if (node.Kind == N.UnaryExpression && node.Value == "&" && !IsClosedPromotable(Child(node, 0), depth + 1))
+                Fail(node, "RST2010", "A constant shared borrow requires a closed immutable value with no local storage dependency.");
             if (node.Kind is N.LoopExpression or N.WhileExpression) loopDepth++;
             foreach (SafeCoreHirNode child in Parts(node)) ValidateConstNode(child, locals, allowReturn, loopDepth, root, depth + 1);
         }
@@ -163,6 +166,14 @@ public static partial class SafeCoreTypeAnalysis
                     break;
                 case N.UnaryExpression:
                     Constant operand = EvaluateConstant(Child(node, 0), environment, depth + 1);
+                    if (node.Value == "&")
+                    {
+                        if (!IsClosedPromotable(Child(node, 0), depth + 1))
+                            Fail(node, "RST2010", "A constant reference cannot borrow a local storage slot.");
+                        result = new(known, operand); break;
+                    }
+                    if (node.Value == "*" && operand.Value is Constant referent)
+                    { result = referent; break; }
                     object? unaryValue = node.Value switch
                     {
                         "-" when operand.Value is BigInteger number => -number,

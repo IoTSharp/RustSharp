@@ -174,6 +174,8 @@ public sealed record ClrLirValueType
     public string Name { get; }
     public ImmutableArray<ClrLirField> Fields { get; }
     public ClrLirType Type => ClrLirType.Value(Name);
+    /// <summary>Emit typed, reflection-free field accessors for GC-owned MIR references.</summary>
+    public bool ImplementsMirValue { get; init; }
 }
 
 public sealed record ClrLirLocal
@@ -258,6 +260,10 @@ public sealed record ClrLirCallSite
 public abstract record ClrLirInstruction;
 
 public sealed record ClrLirLoadInt32(int Value) : ClrLirInstruction;
+public sealed record ClrLirLoadNull : ClrLirInstruction;
+public sealed record ClrLirLoadType(ClrLirType Type) : ClrLirInstruction;
+public sealed record ClrLirBox(ClrLirType Type) : ClrLirInstruction;
+public sealed record ClrLirUnbox(ClrLirType Type) : ClrLirInstruction;
 public sealed record ClrLirLoadBoolean(bool Value) : ClrLirInstruction;
 public sealed record ClrLirLoadString : ClrLirInstruction
 {
@@ -667,6 +673,27 @@ public sealed class ClrLirMethod
     {
         switch (instruction)
         {
+            case ClrLirLoadNull:
+                stack = stack.Add(ClrLirType.Any);
+                return true;
+            case ClrLirLoadType loadType:
+                if (loadType.Type.Kind != ClrLirTypeKind.Value || !loadType.Type.IsKnown)
+                {
+                    diagnostics.Add(new("LIR018", "A runtime type token requires a closed value layout.", blockLabel, instructionIndex));
+                    return false;
+                }
+                stack = stack.Add(ClrLirType.Any);
+                return true;
+            case ClrLirBox box:
+                if (!ValidateIndirectType(box.Type, blockLabel, instructionIndex, diagnostics) ||
+                    !TryPop(box.Type, ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(ClrLirType.Any);
+                return true;
+            case ClrLirUnbox unbox:
+                if (!ValidateIndirectType(unbox.Type, blockLabel, instructionIndex, diagnostics) ||
+                    !TryPop(ClrLirType.Any, ref stack, blockLabel, instructionIndex, diagnostics)) return false;
+                stack = stack.Add(unbox.Type);
+                return true;
             case ClrLirLoadInt32:
                 stack = stack.Add(ClrLirType.I32);
                 return true;
@@ -1012,6 +1039,9 @@ internal sealed class ClrLirValueTypeSet
                 checkBudget();
                 switch (instruction)
                 {
+                    case ClrLirBox box: ValidateType(box.Type, allowVoid: false); break;
+                    case ClrLirLoadType loadType: ValidateType(loadType.Type, allowVoid: false); break;
+                    case ClrLirUnbox unbox: ValidateType(unbox.Type, allowVoid: false); break;
                     case ClrLirConstructValue construct: ValidateDefinition(construct.Definition); break;
                     case ClrLirReadField field: ValidateDefinition(field.Definition); break;
                     case ClrLirFieldAddress field: ValidateDefinition(field.Definition); break;
@@ -1039,6 +1069,7 @@ internal sealed class ClrLirValueTypeSet
     private void ValidateDefinition(ClrLirValueType definition)
     {
         if (!byName.TryGetValue(definition.Name, out ClrLirValueType? known) ||
+            definition.ImplementsMirValue != known.ImplementsMirValue ||
             !definition.Fields.SequenceEqual(known.Fields))
             throw new InvalidOperationException($"Instruction layout does not match closed CLR value type '{definition.Name}'.");
     }
