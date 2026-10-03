@@ -415,7 +415,9 @@ internal static class RustSharpMetadataTests
                 [new(0, source.Length), new(0, source.Length)],
                 []) { ValueTypes = [pair] };
             RustSharpMetadataDocument producerMetadata = RustSharpMetadataDocument.ForProgram(
-                "safe-core-mir-v1", Encoding.UTF8.GetBytes(source), producerProgram.Methods);
+                "safe-core-mir-v1", Encoding.UTF8.GetBytes(source), producerProgram.Methods,
+                callContracts: [new RustSharpMetadataCallContract(
+                    "MakePair", "unwind", [], "move")]);
             GeneratedAssembly producer = ClrLirAssemblyEmitter.EmitProgram(
                 producerProgram, "Producer", source, sourcePath, "Producer.pdb",
                 Encoding.UTF8.GetBytes(source), null, producerMetadata);

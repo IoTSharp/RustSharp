@@ -16,6 +16,14 @@ function Test-P1ProcessEvidence($Process, [string] $Label, [Collections.Generic.
         elseif ((Get-P1Property $Process $name) -le 0) { $Errors.Add("$Label.$name must be positive.") }
     }
     if ((Get-P1Property $Process 'cleanupIncomplete') -cne $false) { $Errors.Add("$Label process cleanup is incomplete or missing.") }
+    # A process can exit successfully while its captured output is truncated or
+    # its reader/drain hit a timeout/limit. Such evidence cannot establish a
+    # semantic result, so every bounded-output marker must be present and false.
+    foreach ($name in @('outputTruncated', 'outputReadTimedOut', 'outputDrainTimedOut', 'outputReadLimitReached')) {
+        $value = Get-P1Property $Process $name
+        if ($value -isnot [bool]) { $Errors.Add("$Label.$name must be a boolean false marker.") }
+        elseif ($value) { $Errors.Add("$Label output evidence is incomplete ($name is true).") }
+    }
     if ((Get-P1Property $Process 'termination') -cne 'exited') { $Errors.Add("$Label did not exit normally.") }
     $exitCode = Get-P1Property $Process 'exitCode'
     if ($null -eq $exitCode -or ($Successful -and $exitCode -ne 0)) { $Errors.Add("$Label exit code is missing or unsuccessful.") }

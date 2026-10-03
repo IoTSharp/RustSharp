@@ -2558,6 +2558,28 @@ public static class SafeCoreOwnershipAnalysis
             SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
             SafeCoreMirSource source, bool projectedSource = false, bool projectedDestination = false)
         {
+            // A root shared-reference self-copy is a legal Copy no-op. Handle
+            // it before destination replacement can end the source loan; the
+            // ordinary path would otherwise report a misleading inactive-loan
+            // diagnostic. Projected storage copies remain on the normal path
+            // because equal local IDs can identify distinct fields.
+            if (sourceId == destinationId && !projectedSource && !projectedDestination)
+            {
+                if (!EnsureLocalScope(sourceId, locals, add, function, block, index, source) ||
+                    !locals.TryGetValue(sourceId, out SafeCoreOwnershipLocal? self) ||
+                    !self.IsReference ||
+                    !borrows.TryGetValue(sourceId, out BorrowState? selfBorrow) ||
+                    !selfBorrow.Active || selfBorrow.Mutable)
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath,
+                        "A reference self-copy requires an active shared reference.",
+                        function.Name, block.Id, index, source);
+                    return false;
+                }
+
+                Trace.Add($"copy_ref {self.Name} -> {self.Name} (no-op)");
+                return true;
+            }
             if (!EnsureLocalScope(sourceId, locals, add, function, block, index, source) ||
                 !EnsureLocalScope(destinationId, locals, add, function, block, index, source) ||
                 !locals.TryGetValue(sourceId, out SafeCoreOwnershipLocal? sourceLocal) ||

@@ -17,6 +17,7 @@ internal static class P1SourcePackageContractTests
     public static IReadOnlyList<TestCase> All { get; } =
     [
         new("P1-09 rejects stale producer aggregate layout metadata", RejectsStaleAggregateMetadataAsync),
+        new("P1-09 rejects reference exports without ownership contracts", RejectsReferenceExportWithoutContractAsync),
         new("P1-09 rejects unsupported source aggregate imports before emission", RejectsUnsupportedSourceAggregateImportAsync),
         new("P1-09 emits identical consumer artifacts for reordered metadata references", ReorderedMetadataReferencesAreDeterministicAsync),
         new("P1-09 executes deterministic scalar source packages with positional Copy contracts", ScalarSourcePackagesAsync),
@@ -396,6 +397,48 @@ internal static class P1SourcePackageContractTests
                     string.Equals(diagnostic.Code, "RSN1003", StringComparison.Ordinal)),
                 "The source import rejection must carry a stable compiler diagnostic: " +
                 string.Join("; ", consumer.Diagnostics));
+        }
+        finally
+        {
+            TryDelete(directory);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static Task RejectsReferenceExportWithoutContractAsync()
+    {
+        string directory = Path.Combine(Path.GetTempPath(),
+            "rustsharp-p1-source-contract-reference-contract-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        string assemblyPath = Path.Combine(directory, "ReferenceProducer.dll");
+        try
+        {
+            ClrLirType reference = ClrLirType.ByReference(ClrLirType.I32);
+            var main = new ClrLirMethod("Main", ClrLirType.Void, [], [],
+                [new ClrLirBlock("entry", [new ClrLirReturn()])]);
+            var identity = new ClrLirMethod("RefIdentity", reference, [reference], [],
+                [new ClrLirBlock("entry", [new ClrLirLoadArgument(0), new ClrLirReturn()])]);
+            const string source = "pub fn ref_identity(value: &i32) -> &i32 { value } fn main() {}";
+            SafeCoreClrResult program = new(
+                [main, identity],
+                [new(0, source.Length), new(0, source.Length)],
+                []);
+            RustSharpMetadataDocument metadata = RustSharpMetadataDocument.ForProgram(
+                "safe-core-mir-v1", System.Text.Encoding.UTF8.GetBytes(source), program.Methods);
+            GeneratedAssembly generated = ClrLirAssemblyEmitter.EmitProgram(
+                program, "ReferenceProducer", source, Path.Combine(directory, "producer.rs"),
+                "ReferenceProducer.pdb", System.Text.Encoding.UTF8.GetBytes(source), null, metadata);
+            File.WriteAllBytes(assemblyPath, generated.PeImage);
+
+            RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
+                assemblyPath, "safe-core-mir-v1", ["RefIdentity"]);
+            AssertEx.False(imported.IsSuccessful,
+                "A reference export without an ownership contract must be rejected.");
+            AssertEx.True(imported.Diagnostics.Any(diagnostic =>
+                    diagnostic.Contains("no ownership call contract", StringComparison.Ordinal)),
+                "The rejection must identify the missing ownership contract: " +
+                string.Join("; ", imported.Diagnostics));
         }
         finally
         {

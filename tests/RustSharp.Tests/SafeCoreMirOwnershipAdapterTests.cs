@@ -15,6 +15,7 @@ internal static class SafeCoreMirOwnershipAdapterTests
         new("typed MIR ownership adapter accepts finite Copy tuple aggregates", CopyTupleAsync),
         new("typed MIR ownership adapter lowers non-Copy place reads as moves", NonCopyMoveAsync),
         new("typed MIR ownership adapter rejects a second non-Copy source use", NonCopyUseAfterMoveAsync),
+        new("ownership preserves a shared-reference self-copy loan", SelfReferenceCopyAsync),
         new("typed MIR ownership adapter preserves projected MIR places", ProjectedPlaceAsync),
         new("typed MIR ownership adapter preserves projected borrow provenance", ProjectedBorrowAsync),
         new("typed MIR ownership evidence rejects projected source drift", ProjectedEvidenceSourceDriftAsync),
@@ -280,6 +281,39 @@ internal static class SafeCoreMirOwnershipAdapterTests
         AssertEx.True(result.Diagnostics.Any(diagnostic =>
             diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.UseAfterMove),
             string.Join(Environment.NewLine, result.Diagnostics));
+        return Task.CompletedTask;
+    }
+
+    private static Task SelfReferenceCopyAsync()
+    {
+        SafeCoreOwnershipProgram ownership = new([
+            new SafeCoreOwnershipFunction(
+                "crate::self-copy",
+                [
+                    new SafeCoreOwnershipLocal(0, "owner", Integer, SafeCoreOwnershipKind.Move,
+                        HasDrop: false, ScopeId: 0, IsReference: false, InitiallyInitialized: true, Source),
+                    new SafeCoreOwnershipLocal(1, "view", Reference, SafeCoreOwnershipKind.Copy,
+                        HasDrop: false, ScopeId: 0, IsReference: true, InitiallyInitialized: false, Source),
+                ],
+                [new SafeCoreOwnershipScope(0, -1, Source)],
+                [new SafeCoreOwnershipBlock(
+                    0,
+                    0,
+                    [
+                        SafeCoreOwnershipInstruction.Borrow(0, 1, mutable: false, Source),
+                        SafeCoreOwnershipInstruction.AssignReference(1, 1, Source),
+                    ],
+                    SafeCoreOwnershipTerminator.ReturnUnit(Source),
+                    Source)],
+                0,
+                SafeCorePanicStrategy.Unwind,
+                Source),
+        ]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(ownership);
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        AssertEx.True(result.Paths.Single().Trace.Any(trace => trace.Contains("(no-op)", StringComparison.Ordinal)),
+            "A shared-reference self-copy must preserve its active loan as a no-op.");
         return Task.CompletedTask;
     }
 

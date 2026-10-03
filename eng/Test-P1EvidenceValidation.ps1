@@ -17,7 +17,7 @@ $manifest = [Text.Encoding]::UTF8.GetString($manifestBytes) | ConvertFrom-Json
 $suite = @($manifest.suites | Where-Object profile -EQ 'p1-platform-v2')[0]
 $candidate = 'a' * 40
 $compilerHash = 'B' * 64
-$process = [ordered]@{ commandLine='synthetic test only'; processId=1; parentProcessId=2; startedAtUtc='2026-10-03T00:00:00Z'; exitCode=0; termination='exited'; cleanupIncomplete=$false; outputMatches=$true }
+$process = [ordered]@{ commandLine='synthetic test only'; processId=1; parentProcessId=2; startedAtUtc='2026-10-03T00:00:00Z'; exitCode=0; termination='exited'; cleanupIncomplete=$false; outputTruncated=$false; outputReadTimedOut=$false; outputDrainTimedOut=$false; outputReadLimitReached=$false; outputMatches=$true }
 $rows = @(foreach ($fixture in $suite.cases) {
     [ordered]@{ id=$fixture.id; sourceSha256=$fixture.sourceSha256; expectationSha256=$fixture.expectationSha256; status='passed'; semanticClosureEligible=$true; coreClrCompile=$process; coreClrRun=$process; ilVerify=[ordered]@{ status='passed'; succeeded=$true; process=$process }; nativeAot=[ordered]@{ status='passed'; succeeded=$true; outputMatches=$true; hostCleanupIncomplete=$false; publish=$process; run=$process } }
 })
@@ -39,6 +39,10 @@ $report = New-Report; $report.cases[0].coreClrRun.outputMatches = $false
 Assert-Rejected (Validate $report) 'CoreCLR output was not verified'
 $report = New-Report; $report.cases[0].coreClrCompile.cleanupIncomplete = $true
 Assert-Rejected (Validate $report) 'process cleanup is incomplete'
+$report = New-Report; $report.cases[0].coreClrCompile.outputReadLimitReached = $true
+Assert-Rejected (Validate $report) 'output evidence is incomplete'
+$report = New-Report; $report.cases[0].coreClrCompile.PSObject.Properties.Remove('outputReadLimitReached')
+Assert-Rejected (Validate $report) 'must be a boolean false marker'
 $report = New-Report; $report.cases[0].sourceSha256 = 'C' * 64
 Assert-Rejected (Validate $report) 'sourceSha256 is stale'
 $report = New-Report; $report.cases[1].id = $report.cases[0].id

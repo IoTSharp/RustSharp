@@ -772,6 +772,7 @@ public static class RustSharpMetadataConsumer
         List<string> diagnostics)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
+        var contracted = new HashSet<string>(StringComparer.Ordinal);
         var clock = Stopwatch.StartNew();
         var ownershipPanics = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (RustSharpMetadataOwnershipFunction ownership in document.Ownership)
@@ -790,6 +791,8 @@ public static class RustSharpMetadataConsumer
                     "call contract references unknown function '" + Trim(contract.FunctionId) + "'.");
                 continue;
             }
+
+            contracted.Add(function.Name);
 
             // CLR and source IDs are aliases for one callable MethodDef. Two
             // records under different aliases must not supply conflicting facts.
@@ -848,6 +851,22 @@ public static class RustSharpMetadataConsumer
                     Trim(contract.FunctionId) + "' contradicts its ownership evidence.");
         }
 
+        // CLR signatures do not encode Rust# ownership or panic semantics.
+        // Require an explicit contract whenever an exported function carries
+        // a nominal value or managed reference. Accepting these methods with
+        // an omitted contract would let a consumer guess move/borrow terms
+        // from CLR value semantics and silently bypass the package boundary.
+        foreach (RustSharpMetadataFunction function in document.Functions)
+        {
+            CheckBudget();
+            if (RequiresOwnershipContract(function) && !contracted.Contains(function.Name))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "exported function '" + Trim(function.Name) +
+                    "' has a value or reference signature but no ownership call contract.");
+            }
+        }
+
         void CheckBudget()
         {
             if (document.CallContracts.Length > RustSharpMetadataDocument.MaximumCallContracts ||
@@ -870,6 +889,20 @@ public static class RustSharpMetadataConsumer
                 "unit" => isReturn && type == "Void",
                 _ => false,
             };
+        }
+
+        static bool RequiresOwnershipContract(RustSharpMetadataFunction function)
+        {
+            // Closed generic helper MethodDefs are generated implementation
+            // details. Their source declaration's contract is represented by
+            // the specialization metadata and is reconciled separately.
+            if (function.Name.StartsWith("generic_", StringComparison.Ordinal)) return false;
+            string signature = function.Signature;
+            // Signatures are canonicalized by the metadata writer. A bounded
+            // token scan is sufficient here and avoids accepting arbitrary
+            // nested syntax as a contract-bearing type.
+            return signature.Contains("Value(", StringComparison.Ordinal) ||
+                signature.Contains('&');
         }
     }
 
