@@ -32,7 +32,7 @@ param(
     [string] $CandidateSha = '',
 
     [Parameter()]
-    [ValidateRange(1, 32)]
+    [ValidateRange(1024, 33554432)]
     [int] $MaximumReportBytes = 16MB
 )
 

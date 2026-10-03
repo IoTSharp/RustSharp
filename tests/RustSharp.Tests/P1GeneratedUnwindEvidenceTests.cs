@@ -116,9 +116,34 @@ internal static class P1GeneratedUnwindEvidenceTests
         }
         finally
         {
-            if (Directory.Exists(directory))
-                Directory.Delete(directory, recursive: true);
+            await DeleteOwnedDirectoryAsync(directory).ConfigureAwait(false);
         }
+    }
+
+    private static async Task DeleteOwnedDirectoryAsync(string directory)
+    {
+        string fullPath = Path.GetFullPath(directory);
+        string ownedRoot = Path.GetFullPath(Path.Combine("artifacts", "tests"));
+        string name = Path.GetFileName(fullPath);
+        if (!Directory.Exists(fullPath)) return;
+        if (!string.Equals(Path.GetDirectoryName(fullPath), ownedRoot,
+                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) ||
+            !name.StartsWith("p1-generated-unwind-", StringComparison.Ordinal) ||
+            (File.GetAttributes(fullPath) & FileAttributes.ReparsePoint) != 0)
+            throw new InvalidOperationException("Refusing to clean an unowned unwind test directory: " + fullPath);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        Exception? lastFailure = null;
+        for (int attempt = 0; attempt < 40 && clock.Elapsed < TimeSpan.FromSeconds(5); attempt++)
+        {
+            try { Directory.Delete(fullPath, recursive: true); }
+            catch (IOException exception) { lastFailure = exception; }
+            catch (UnauthorizedAccessException exception) { lastFailure = exception; }
+            if (!Directory.Exists(fullPath)) return;
+            TimeSpan remaining = TimeSpan.FromSeconds(5) - clock.Elapsed;
+            if (remaining <= TimeSpan.Zero) break;
+            await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(250, 25L * (attempt + 1))), CancellationToken.None).ConfigureAwait(false);
+        }
+        throw new IOException("Owned unwind test directory cleanup did not complete: " + fullPath, lastFailure);
     }
 
     private static string Normalize(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal);

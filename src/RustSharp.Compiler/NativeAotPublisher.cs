@@ -179,6 +179,9 @@ public sealed class NativeAotPublisher
                 {
                     "publish",
                     hostProjectPath,
+                    "--disable-build-servers",
+                    "-m:1",
+                    "-p:UseSharedCompilation=false",
                     "-c",
                     "Release",
                     "-r",

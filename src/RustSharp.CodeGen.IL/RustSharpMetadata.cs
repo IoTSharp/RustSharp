@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -59,7 +60,13 @@ public sealed record RustSharpMetadataCallContract(
     string FunctionId,
     string PanicStrategy,
     IEnumerable<string>? ParameterContracts = null,
-    string? ReturnContract = null);
+    string? ReturnContract = null)
+{
+    public const string ScalarSchema = "rustsharp-scalar-call-v1";
+
+    /// <summary>An explicit schema for a complete source-generated scalar contract.</summary>
+    public string? Schema { get; init; }
+}
 
 /// <summary>A bounded result returned when an independent assembly is imported.</summary>
 public sealed record RustSharpMetadataImportResult(
@@ -159,6 +166,7 @@ public sealed partial record RustSharpMetadataDocument
     {
         ArgumentNullException.ThrowIfNull(methods);
         if (methods.Count > MaximumFunctions) throw new ArgumentException("Too many methods.", nameof(methods));
+        var linkClock = Stopwatch.StartNew();
         var functions = new RustSharpMetadataFunction[methods.Count];
         for (int index = 0; index < methods.Count; index++)
         {
@@ -178,14 +186,10 @@ public sealed partial record RustSharpMetadataDocument
             // while the emitted method carries the source identity. Resolve
             // the contract against the actual function table so a producer
             // never publishes a self-referential but unimportable term.
-            RustSharpMetadataFunction? target = functions.FirstOrDefault(function =>
-                string.Equals(function.Name, contract.FunctionId, StringComparison.Ordinal) ||
-                string.Equals(function.SourceQualifiedName, contract.FunctionId, StringComparison.Ordinal) ||
-                string.Equals(function.SourceQualifiedName, contract.FunctionId + "#value", StringComparison.Ordinal) ||
-                string.Equals(function.SourceQualifiedName + "#value", contract.FunctionId, StringComparison.Ordinal));
+            RustSharpMetadataFunction? target = ResolveTarget(contract.FunctionId);
             return target is null
                 ? contract
-                : contract with { FunctionId = target.SourceQualifiedName ?? target.Name };
+                : contract with { FunctionId = LinkedIdentity(target) };
         });
 
         IEnumerable<RustSharpMetadataOwnershipFunction>? linkedOwnership = ownership?.Select(value =>
@@ -193,19 +197,46 @@ public sealed partial record RustSharpMetadataDocument
             // The ownership pass may report its internal body identity with a
             // `#value` suffix. Persist the emitted source identity so consumers
             // can correlate the evidence with the generated MethodDef.
-            RustSharpMetadataFunction? target = functions.FirstOrDefault(function =>
-                string.Equals(function.Name, value.FunctionId, StringComparison.Ordinal) ||
-                string.Equals(function.SourceQualifiedName, value.FunctionId, StringComparison.Ordinal) ||
-                string.Equals(function.SourceQualifiedName, value.FunctionId + "#value", StringComparison.Ordinal) ||
-                string.Equals(function.SourceQualifiedName + "#value", value.FunctionId, StringComparison.Ordinal));
+            RustSharpMetadataFunction? target = ResolveTarget(value.FunctionId);
             return target is null
                 ? value
-                : value with { FunctionId = target.SourceQualifiedName ?? target.Name };
+                : value with { FunctionId = LinkedIdentity(target) };
         });
 
         return new(profile, Convert.ToHexString(SHA256.HashData(sourceBytes)), functions,
             genericInstances, traitImplementations, mirSnapshot, linkedOwnership, cleanupSnapshot, linkedContracts,
             valueTypes);
+
+        RustSharpMetadataFunction? ResolveTarget(string functionId)
+        {
+            CheckLinkBudget();
+            // A closed CLR identity takes precedence over a source alias shared
+            // by several generic instances. Source-only evidence cannot choose
+            // one of those instances without its emitted specialization ID.
+            RustSharpMetadataFunction? emitted = functions.FirstOrDefault(function => function.Name == functionId);
+            if (emitted is not null) return emitted;
+            RustSharpMetadataFunction[] matches = functions.Where(function =>
+                function.SourceQualifiedName == functionId ||
+                function.SourceQualifiedName == functionId + "#value" ||
+                function.SourceQualifiedName + "#value" == functionId).Take(2).ToArray();
+            if (matches.Length > 1)
+                throw new ArgumentException("Ambiguous source call evidence requires an emitted CLR specialization ID.", nameof(callContracts));
+            return matches.FirstOrDefault();
+        }
+
+        string LinkedIdentity(RustSharpMetadataFunction target)
+        {
+            CheckLinkBudget();
+            return target.SourceQualifiedName is { } source &&
+                functions.Count(function => function.SourceQualifiedName == source) == 1
+                    ? source : target.Name;
+        }
+
+        void CheckLinkBudget()
+        {
+            if (linkClock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new TimeoutException("Source-to-CLR metadata linking exceeded its bounded budget.");
+        }
     }
 
     /// <summary>
@@ -394,7 +425,13 @@ public sealed partial record RustSharpMetadataDocument
                 returnContract = returnContract.Trim();
             }
 
-            normalized.Add(new(value.FunctionId, value.PanicStrategy, parameters, returnContract));
+            if (value.Schema is { } schema &&
+                (string.IsNullOrWhiteSpace(schema) || schema.Length > 128 || schema.Contains('\0')))
+                throw new ArgumentException("Rust# call contract schema is invalid.", nameof(values));
+            normalized.Add(new(value.FunctionId, value.PanicStrategy, parameters, returnContract)
+            {
+                Schema = value.Schema,
+            });
         }
 
         return [.. normalized.OrderBy(static value => value.FunctionId, StringComparer.Ordinal)];
@@ -735,15 +772,17 @@ public static class RustSharpMetadataConsumer
         List<string> diagnostics)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
+        var clock = Stopwatch.StartNew();
+        var ownershipPanics = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (RustSharpMetadataOwnershipFunction ownership in document.Ownership)
+        {
+            CheckBudget();
+            if (FindFunction(document, ownership.FunctionId) is { } target)
+                ownershipPanics.TryAdd(target.Name, ownership.PanicStrategy);
+        }
         foreach (RustSharpMetadataCallContract contract in document.CallContracts)
         {
-            if (!seen.Add(contract.FunctionId))
-            {
-                AddContractDiagnostic(diagnostics,
-                    "call contract function ID '" + Trim(contract.FunctionId) + "' is duplicated.");
-                continue;
-            }
-
+            CheckBudget();
             RustSharpMetadataFunction? function = FindFunction(document, contract.FunctionId);
             if (function is null)
             {
@@ -751,6 +790,18 @@ public static class RustSharpMetadataConsumer
                     "call contract references unknown function '" + Trim(contract.FunctionId) + "'.");
                 continue;
             }
+
+            // CLR and source IDs are aliases for one callable MethodDef. Two
+            // records under different aliases must not supply conflicting facts.
+            if (!seen.Add(function.Name))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "call contract for resolved function '" + Trim(function.Name) + "' is duplicated.");
+                continue;
+            }
+
+            if (contract.Schema is not null && contract.Schema != RustSharpMetadataCallContract.ScalarSchema)
+                AddContractDiagnostic(diagnostics, "call contract has an unsupported schema.");
 
             if (!string.Equals(contract.PanicStrategy, "unwind", StringComparison.Ordinal) &&
                 !string.Equals(contract.PanicStrategy, "abort", StringComparison.Ordinal))
@@ -767,15 +818,58 @@ public static class RustSharpMetadataConsumer
                 continue;
             }
 
-            int parameterCount = string.IsNullOrWhiteSpace(function.Signature[..arrow])
-                ? 0
-                : function.Signature[..arrow].Split(',', StringSplitOptions.None).Length;
-            int contractParameterCount = contract.ParameterContracts?.Count() ?? 0;
-            if (contractParameterCount != 0 && contractParameterCount != parameterCount)
+            string[] parameters = string.IsNullOrWhiteSpace(function.Signature[..arrow])
+                ? [] : function.Signature[..arrow].Split(',', StringSplitOptions.None);
+            string[] terms = (contract.ParameterContracts ?? []).ToArray();
+            bool scalarSchema = contract.Schema == RustSharpMetadataCallContract.ScalarSchema;
+            if ((terms.Length != 0 || scalarSchema) && terms.Length != parameters.Length)
             {
                 AddContractDiagnostic(diagnostics,
                     "call contract for '" + Trim(contract.FunctionId) + "' does not cover every parameter.");
             }
+
+            for (int index = 0; index < Math.Min(terms.Length, parameters.Length); index++)
+            {
+                if (!TermMatchesType(terms[index], parameters[index], isReturn: false, scalarSchema))
+                    AddContractDiagnostic(diagnostics, "call contract parameter " +
+                        index.ToString(CultureInfo.InvariantCulture) + " for '" + Trim(contract.FunctionId) +
+                        "' is unsupported or contradicts its CLR signature.");
+            }
+
+            string returnType = function.Signature[(arrow + 2)..];
+            if ((contract.ReturnContract is null && scalarSchema) ||
+                (contract.ReturnContract is { } result &&
+                    !TermMatchesType(result, returnType, isReturn: true, scalarSchema)))
+                AddContractDiagnostic(diagnostics, "call contract return for '" + Trim(contract.FunctionId) +
+                    "' is missing, unsupported or contradicts its CLR signature.");
+
+            if (ownershipPanics.TryGetValue(function.Name, out string? panic) && panic != contract.PanicStrategy)
+                AddContractDiagnostic(diagnostics, "call contract panic strategy for '" +
+                    Trim(contract.FunctionId) + "' contradicts its ownership evidence.");
+        }
+
+        void CheckBudget()
+        {
+            if (document.CallContracts.Length > RustSharpMetadataDocument.MaximumCallContracts ||
+                document.Ownership.Length > RustSharpMetadataDocument.MaximumOwnershipFunctions ||
+                clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new InvalidDataException("Imported call contracts exceeded their bounded validation budget.");
+        }
+
+        static bool TermMatchesType(string term, string type, bool isReturn, bool scalarSchema)
+        {
+            if (scalarSchema)
+                return type is "I32" or "Bool" ? term == "copy" :
+                    isReturn && type == "Void" && term == "unit";
+            return term switch
+            {
+                "copy" => type is "I32" or "Bool",
+                "move" => type.StartsWith("Value(", StringComparison.Ordinal),
+                "borrow:shared" or "borrow:mut" or "borrow:mutable" =>
+                    type.StartsWith('&'),
+                "unit" => isReturn && type == "Void",
+                _ => false,
+            };
         }
     }
 
@@ -786,14 +880,15 @@ public static class RustSharpMetadataConsumer
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (RustSharpMetadataOwnershipFunction ownership in document.Ownership)
         {
-            if (!seen.Add(ownership.FunctionId))
+            RustSharpMetadataFunction? function = FindFunction(document, ownership.FunctionId);
+            if (function is not null && !seen.Add(function.Name))
             {
                 AddContractDiagnostic(diagnostics,
                     "ownership contract function ID '" + Trim(ownership.FunctionId) + "' is duplicated.");
                 continue;
             }
 
-            if (FindFunction(document, ownership.FunctionId) is null)
+            if (function is null)
             {
                 AddContractDiagnostic(diagnostics,
                     "ownership contract references unknown function '" + Trim(ownership.FunctionId) + "'.");

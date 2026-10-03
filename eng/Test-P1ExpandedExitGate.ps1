@@ -6,12 +6,13 @@ param(
     [Parameter(Mandatory = $true)][string] $PlatformLinuxReport,
     [Parameter()][string] $EvidencePath = 'artifacts/p1-expanded/p1-expanded-exit-gate.json',
     [Parameter()][string] $CandidateSha = '',
-    [Parameter()][ValidateRange(1, 32)][int] $MaximumReportBytes = 16MB
+    [Parameter()][ValidateRange(1024, 33554432)][int] $MaximumReportBytes = 16MB
 )
 
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Test-P1ExpandedExitGate.ps1 requires PowerShell 7 or newer.' }
+. (Join-Path $PSScriptRoot 'P1EvidenceValidation.ps1')
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $started = [DateTimeOffset]::UtcNow
 $checks = [Collections.Generic.List[object]]::new()
@@ -26,6 +27,7 @@ if (-not [string]::IsNullOrWhiteSpace($candidate) -and $candidate -notmatch '^[0
 function Read-Report([string] $name, [string] $path) {
     $full = [IO.Path]::GetFullPath($path, $root)
     if (-not [IO.File]::Exists($full)) { [void]$checks.Add([pscustomobject]@{ Name=$name; Status='blocked'; Message='Report is missing.' }); return $null }
+    if (([IO.FileInfo]::new($full)).Length -gt $MaximumReportBytes) { [void]$checks.Add([pscustomobject]@{ Name=$name; Status='failed'; Message='Report exceeds byte bound.' }); return $null }
     $bytes = [IO.File]::ReadAllBytes($full)
     if ($bytes.Length -lt 1 -or $bytes.Length -gt $MaximumReportBytes) { [void]$checks.Add([pscustomobject]@{ Name=$name; Status='failed'; Message='Report exceeds byte bound.' }); return $null }
     $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes))
@@ -35,17 +37,8 @@ function Read-Report([string] $name, [string] $path) {
 
 function Validate-Expanded([string] $name, [object] $report, [string] $profile, [int] $denominator, [string] $rid) {
     if ($null -eq $report) { return }
-    $errors = [Collections.Generic.List[string]]::new()
-    $blocked = $false
-    if (-not [string]::IsNullOrWhiteSpace($candidate)) {
-        if ($null -eq $report.PSObject.Properties['candidateSha'] -or [string]::IsNullOrWhiteSpace([string]$report.candidateSha)) { [void]$errors.Add('candidate SHA is missing'); $blocked = $true }
-        elseif ([string]$report.candidateSha -cne $candidate) { [void]$errors.Add('candidate SHA mismatch') }
-    }
-    if ($report.profile -ne $profile) { [void]$errors.Add("profile mismatch") }
-    if ($null -eq $report.summary -or [int]$report.summary.denominator -ne $denominator -or [int]$report.summary.passed -ne $denominator -or [int]$report.summary.failed -ne 0 -or [int]$report.summary.blocked -ne 0 -or [int]$report.summary.skipped -ne 0 -or [string]$report.summary.status -ne 'passed') { [void]$errors.Add('summary does not close denominator') }
-    if ($null -eq $report.platform -or [string]$report.platform.runtimeIdentifier -ne $rid) { [void]$errors.Add('runtime identifier mismatch') }
-    if ($null -eq $report.cases -or @($report.cases).Count -ne $denominator) { [void]$errors.Add('case denominator mismatch') }
-    else { foreach ($case in @($report.cases)) { if ($case.status -ne 'passed') { [void]$errors.Add("case $($case.id) is $($case.status)") } } }
+    $errors = @(Test-P1ExpandedEvidence $report $root $profile $rid $candidate)
+    $blocked = @($errors | Where-Object { $_ -like 'blocked:*' }).Count -gt 0
     $status = if ($errors.Count -eq 0) { 'passed' } elseif ($blocked) { 'blocked' } else { 'failed' }
     $message = if ($errors.Count -eq 0) { 'Evidence report closes its fixed denominator.' } else { $errors -join '; ' }
     [void]$checks.Add([pscustomobject]@{ Name=$name; Status=$status; Message=$message })

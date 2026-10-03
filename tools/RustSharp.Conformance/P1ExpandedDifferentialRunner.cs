@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -22,6 +23,27 @@ internal static class P1ExpandedDifferentialRunner
     private const int MaximumCases = P1ExpandedSuiteValidator.DifferentialDenominator;
     private const int MaximumTimeoutSeconds = 300;
     private const int MaximumDeadlineSeconds = 900;
+    // The frozen v3 denominator intentionally contains the original sixteen
+    // ownership/Drop scenarios followed by sixteen placeholder sources.  A
+    // placeholder may prove process/provenance plumbing, but it cannot close
+    // the semantic leaf it names.  Keep this classification in the runner so
+    // a successful println-only program cannot be mistaken for semantic proof.
+    private static readonly HashSet<string> PlaceholderCaseIds =
+    [
+        "borrow-aggregate-copy", "borrow-partial-move", "borrow-nll-branch", "borrow-reborrow-escape",
+        "borrow-loop-join", "borrow-index-projection", "borrow-deref-projection", "borrow-call-return",
+        "borrow-move-reinit", "borrow-budget-limit", "drop-aggregate-fields", "drop-partial-move",
+        "drop-assignment-replacement", "drop-temporary-scope", "drop-unwind-nested", "drop-double-panic",
+    ];
+
+    private static readonly Dictionary<string, (string Rustc, string RustSharp)> ExpectedCompileFailures =
+        new Dictionary<string, (string Rustc, string RustSharp)>(StringComparer.Ordinal)
+        {
+            ["borrow-fail-mut-alias"] = ("E0499", "RSO1002"),
+            ["borrow-fail-shared-write"] = ("E0506", "RSO1002"),
+            ["borrow-fail-moved-mut-ref"] = ("E0382", "RSO1001"),
+            ["borrow-fail-escape"] = ("E0597", "RSO1005"),
+        };
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     internal static async Task<int> RunAsync(
@@ -64,17 +86,35 @@ internal static class P1ExpandedDifferentialRunner
         var cases = new List<JsonObject>(MaximumCases);
         string runDirectory = Path.Combine(Path.GetDirectoryName(fullReport)!, ".run-p1-differential-v3-" + Environment.ProcessId + "-" + Guid.NewGuid().ToString("N"));
         string? cleanupDiagnostic = null;
+        ProcessEvidence? rustcProbe = null, compilerProbe = null, sdkProbe = null;
+        string? rustcVersion = null, compilerVersion = null, sdkVersion = null;
         try
         {
             if (suite is not null)
             {
                 Directory.CreateDirectory(runDirectory);
                 var runner = new BoundedProcessRunner();
+                rustcProbe = ProcessEvidence.From(await runner.RunAsync(new BoundedProcessRequest("rustc", ["+" + RustVersion, "--version"], root, timeout), cancellation.Token).ConfigureAwait(false));
+                compilerProbe = ProcessEvidence.From(await runner.RunAsync(new BoundedProcessRequest("dotnet", BuildRustSharpArguments(root, "--version"), root, timeout), cancellation.Token).ConfigureAwait(false));
+                // A runtime invocation is independent of the repository's SDK
+                // pin. Probe SDK selection outside that pin and record its cwd;
+                // this does not pretend to prove the compiler's build SDK.
+                sdkProbe = ProcessEvidence.From(await runner.RunAsync(new BoundedProcessRequest("dotnet", ["--version"], Path.GetTempPath(), timeout), cancellation.Token).ConfigureAwait(false));
+                rustcVersion = FirstLine(rustcProbe.StandardOutput);
+                compilerVersion = FirstLine(compilerProbe.StandardOutput);
+                sdkVersion = sdkProbe.Succeeded ? FirstLine(sdkProbe.StandardOutput) : null;
+                bool toolsAvailable = rustcProbe.Succeeded && rustcVersion == suite.Oracle && compilerProbe.Succeeded && sdkProbe.Succeeded;
                 foreach (P1ExpandedSuiteValidator.CaseSpec fixture in suite.Cases)
                 {
+                    Console.WriteLine($"P1 differential v3: {cases.Count + 1}/{suite.Denominator} {fixture.Id}");
                     if (cancellation.IsCancellationRequested)
                     {
                         cases.Add(BlockedCase(fixture, "P1 differential v3 deadline expired before this case started."));
+                        continue;
+                    }
+                    if (!toolsAvailable)
+                    {
+                        cases.Add(BlockedCase(fixture, "The exact frozen rustc oracle, compiled CLI, or SDK probe was unavailable."));
                         continue;
                     }
                     try
@@ -92,6 +132,10 @@ internal static class P1ExpandedDifferentialRunner
                 }
             }
         }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException or Win32Exception or OperationCanceledException)
+        {
+            harnessError = Trim(exception.Message);
+        }
         finally
         {
             Console.CancelKeyPress -= cancelHandler;
@@ -100,7 +144,7 @@ internal static class P1ExpandedDifferentialRunner
 
         if (suite is not null)
         {
-            while (cases.Count < suite.Denominator)
+            for (int missing = cases.Count; missing < suite.Denominator; missing++)
                 cases.Add(BlockedCase(suite.Cases[cases.Count], harnessError ?? "P1 differential v3 case did not start."));
         }
         harnessClock.Stop();
@@ -108,6 +152,9 @@ internal static class P1ExpandedDifferentialRunner
         int passed = cases.Count(static item => item["status"]?.GetValue<string>() == "passed");
         int failed = cases.Count(static item => item["status"]?.GetValue<string>() == "failed");
         int blocked = cases.Count(static item => item["status"]?.GetValue<string>() == "blocked");
+        int placeholderCases = suite?.Cases.Count(static item => IsPlaceholderCase(item)) ?? 0;
+        int semanticCases = denominator - placeholderCases;
+        bool semanticClosureEligible = suite is not null && placeholderCases == 0;
         string status = suite is null || harnessError is not null || cleanupDiagnostic is not null || cancellation.IsCancellationRequested || blocked > 0
             ? "blocked" : failed > 0 ? "failed" : passed == denominator ? "passed" : "blocked";
         var report = new JsonObject
@@ -117,20 +164,23 @@ internal static class P1ExpandedDifferentialRunner
             ["profile"] = ProfileName,
             ["candidateSha"] = ResolveCandidateSha(),
             ["backend"] = suite?.Backend ?? "",
-            ["compilerSha256"] = suite?.CompilerSha256 ?? "",
+            ["compilerSha256"] = ComputeSha256IfPresent(CliPath(root)),
+            ["declaredCompilerSha256"] = suite?.CompilerSha256 ?? "",
+            ["semanticClosureEligible"] = semanticClosureEligible,
             ["manifest"] = new JsonObject
             {
                 ["path"] = Path.GetRelativePath(root, manifestPath).Replace(Path.DirectorySeparatorChar, '/'),
-                ["sha256"] = suite?.ManifestSha256 ?? (manifestBytes is null ? "" : Convert.ToHexString(SHA256.HashData(manifestBytes))),
+                ["sha256"] = manifestBytes is null ? "" : Convert.ToHexString(SHA256.HashData(manifestBytes)),
+                ["declaredSha256"] = suite?.ManifestSha256 ?? "",
+                ["version"] = expanded?.Version ?? 0,
                 ["denominator"] = denominator,
                 ["validated"] = suite is not null,
             },
             ["compiler"] = new JsonObject
             {
-                // The manifest freezes the candidate identity.  The observed hash is
-                // retained separately so a stale candidate cannot be mistaken for it.
-                ["sha256"] = suite?.CompilerSha256 ?? "",
-                ["observedSha256"] = ComputeSha256IfPresent(Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll")),
+                ["sha256"] = ComputeSha256IfPresent(CliPath(root)),
+                ["declaredSha256"] = suite?.CompilerSha256 ?? "",
+                ["cliPath"] = CliPath(root),
                 ["profile"] = CompilerProfile,
             },
             ["platform"] = new JsonObject
@@ -138,13 +188,30 @@ internal static class P1ExpandedDifferentialRunner
                 ["name"] = OperatingSystem.IsWindows() ? "windows-x64" : OperatingSystem.IsLinux() ? "linux-x64" : "unknown",
                 ["runtimeIdentifier"] = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,
                 ["backend"] = suite?.Backend ?? "p1-differential-v3",
+                ["oracle"] = rustcVersion,
+                ["nativeHost"] = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.X64 &&
+                    System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.X64,
+                ["operatingSystem"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
+                ["osArchitecture"] = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(),
+                ["processArchitecture"] = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),
             },
-            ["oracle"] = new JsonObject { ["version"] = "rustc 1.98.0 (required)" },
+            ["oracle"] = new JsonObject { ["version"] = rustcVersion, ["requestedVersion"] = suite?.Oracle, ["probe"] = rustcProbe?.ToJson() },
+            ["toolProbes"] = new JsonObject { ["compiler"] = compilerProbe?.ToJson(), ["sdk"] = sdkProbe?.ToJson(), ["sdkWorkingDirectory"] = Path.GetTempPath() },
+            ["semanticClosure"] = new JsonObject
+            {
+                ["eligible"] = semanticClosureEligible,
+                ["eligibleCases"] = semanticCases,
+                ["placeholderCases"] = placeholderCases,
+                ["reason"] = semanticClosureEligible
+                    ? null
+                    : "The frozen v3 suite contains placeholder sources; passing process outcomes do not close their named ownership/Drop semantics.",
+            },
             ["toolVersions"] = new JsonObject
             {
                 ["dotnet"] = Environment.Version.ToString(),
-                ["sdkVersion"] = Environment.GetEnvironmentVariable("DOTNET_SDK_VERSION") ?? "unknown",
-                ["rustc"] = "rustc 1.98.0 (required)",
+                ["sdkVersion"] = sdkVersion,
+                ["rustc"] = rustcVersion,
+                ["compiler"] = compilerVersion,
             },
             ["summary"] = new JsonObject
             {
@@ -157,6 +224,8 @@ internal static class P1ExpandedDifferentialRunner
             {
                 ["startedAtUtc"] = startedAtUtc, ["finishedAtUtc"] = DateTimeOffset.UtcNow,
                 ["elapsedMilliseconds"] = harnessClock.Elapsed.TotalMilliseconds, ["deadlineExpired"] = cancellation.IsCancellationRequested,
+                ["caseTimeoutSeconds"] = timeout.TotalSeconds, ["deadlineSeconds"] = deadline.TotalSeconds,
+                ["maximumCases"] = MaximumCases,
             },
             ["cleanup"] = new JsonObject { ["completed"] = cleanupDiagnostic is null, ["diagnostic"] = cleanupDiagnostic },
             ["harnessError"] = harnessError,
@@ -206,15 +275,39 @@ internal static class P1ExpandedDifferentialRunner
                 rustSharpRun = ProcessEvidence.From(run);
             }
         }
-        bool passed = oracleCompiles
-            ? rustcRun is { Succeeded: true } && rustSharpCheck is { Succeeded: true } && rustSharpCompile is { Succeeded: true } && rustSharpRun is { Succeeded: true } && Normalize(rustcRun.StandardOutput) == Normalize(rustSharpRun.StandardOutput)
-            : rustcCompile is { ExitCode: 1, Termination: "exited" } && rustSharpCheck is { ExitCode: 1, Termination: "exited" } && rustSharpCompile is { ExitCode: 1, Termination: "exited" };
-        string? difference = passed ? null : "rustc and RustSharp emitted different compile/run outcomes.";
+        bool expectedCompileFailure = ExpectedCompileFailures.TryGetValue(fixture.Id, out var expectedDiagnostics);
+        bool passed = expectedCompileFailure
+            ? !oracleCompiles && ContainsDiagnostic(rustcCompile, expectedDiagnostics.Rustc) &&
+              ContainsDiagnostic(rustSharpCheck, expectedDiagnostics.RustSharp) &&
+              rustSharpCompile is not null && ContainsDiagnostic(rustSharpCompile, expectedDiagnostics.RustSharp)
+            : oracleCompiles
+                ? rustcRun is { Succeeded: true } && rustSharpCheck is { Succeeded: true } && rustSharpCompile is { Succeeded: true } && rustSharpRun is { Succeeded: true } && Normalize(rustcRun.StandardOutput) == Normalize(rustSharpRun.StandardOutput)
+                : false;
+        string? difference = passed ? null : expectedCompileFailure
+            ? $"Expected rustc {expectedDiagnostics.Rustc} and RustSharp {expectedDiagnostics.RustSharp} ownership diagnostics; observed compile/check output did not match."
+            : "rustc and RustSharp emitted different compile/run outcomes.";
+        bool placeholder = IsPlaceholderCase(fixture);
+        bool incompleteProcess = new[] { rustcCompile, rustcRun, rustSharpCheck, rustSharpCompile, rustSharpRun }
+            .Any(static evidence => evidence is not null &&
+                (evidence.Termination is "timedout" or "cancelled" || evidence.OutputTruncated || evidence.OutputReadTimedOut ||
+                 evidence.OutputDrainTimedOut || evidence.OutputReadLimitReached || evidence.CleanupIncomplete));
+        string? failureKind = passed ? null : incompleteProcess ? "incomplete-process-evidence" :
+            rustSharpCheck.StandardError.Contains("RSC0009", StringComparison.Ordinal) ? "unsupported-lowering" : "semantic-difference";
         var result = new JsonObject
         {
             ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256,
-            ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = passed ? "passed" : "failed", ["difference"] = difference,
+            ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = incompleteProcess ? "blocked" : passed ? "passed" : "failed", ["difference"] = difference,
+            ["failureKind"] = failureKind,
+            ["expectedOutcome"] = expectedCompileFailure ? "compile-fail" : "run-pass",
+            ["semanticCoverage"] = placeholder ? "placeholder" : "ownership-drop-scenario",
+            ["semanticClosureEligible"] = !placeholder,
+            ["placeholderReason"] = placeholder ? "Source is a frozen println-only placeholder; outcome evidence cannot prove the named semantic." : null,
         };
+        if (expectedCompileFailure)
+        {
+            result["expectedRustcDiagnostic"] = expectedDiagnostics.Rustc;
+            result["expectedRustSharpDiagnostic"] = expectedDiagnostics.RustSharp;
+        }
         result["rustcCompile"] = rustcCompile?.ToJson();
         result["rustcRun"] = rustcRun?.ToJson();
         result["rustSharpCheck"] = rustSharpCheck?.ToJson();
@@ -227,19 +320,68 @@ internal static class P1ExpandedDifferentialRunner
     {
         ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256,
         ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = "blocked", ["difference"] = reason,
+        ["expectedOutcome"] = ExpectedCompileFailures.ContainsKey(fixture.Id) ? "compile-fail" : "run-pass",
+        ["semanticCoverage"] = IsPlaceholderCase(fixture) ? "placeholder" : "ownership-drop-scenario",
+        ["semanticClosureEligible"] = !IsPlaceholderCase(fixture),
+        ["placeholderReason"] = IsPlaceholderCase(fixture) ? "Source is a frozen println-only placeholder; outcome evidence cannot prove the named semantic." : null,
     };
+
+    private static bool IsPlaceholderCase(P1ExpandedSuiteValidator.CaseSpec fixture) => PlaceholderCaseIds.Contains(fixture.Id);
+
+    private static bool ContainsDiagnostic(ProcessEvidence evidence, string diagnostic) =>
+        evidence.Termination == "exited" && evidence.ExitCode == 1 && evidence.ProcessId > 0 &&
+        !evidence.OutputTruncated && !evidence.OutputReadTimedOut && !evidence.OutputDrainTimedOut &&
+        !evidence.OutputReadLimitReached && !evidence.CleanupIncomplete &&
+        !evidence.StandardError.Contains("RSC0009", StringComparison.Ordinal) &&
+        !evidence.StandardOutput.Contains("RSC0009", StringComparison.Ordinal) &&
+        HasDiagnosticErrorLine(evidence.StandardError, diagnostic);
+
+    private static bool HasDiagnosticErrorLine(string output, string diagnostic)
+    {
+        const int maximumLines = 8192;
+        var clock = Stopwatch.StartNew();
+        using var reader = new StringReader(output);
+        // Captured output already has the BoundedProcessRunner byte bound.
+        // Keep diagnostic parsing independently bounded too, and accept only
+        // a real rustc error header or the CLI's source-span error format.
+        for (int lineIndex = 0; lineIndex < maximumLines && clock.Elapsed < TimeSpan.FromMilliseconds(250); lineIndex++)
+        {
+            string? rawLine = reader.ReadLine();
+            if (rawLine is null) return false;
+            string line = rawLine.TrimStart();
+            if (line.StartsWith("error[" + diagnostic + "]:", StringComparison.Ordinal) ||
+                line.StartsWith("error " + diagnostic + ":", StringComparison.Ordinal)) return true;
+
+            string marker = "]: error " + diagnostic + ":";
+            int markerIndex = line.IndexOf(marker, StringComparison.Ordinal);
+            if (markerIndex < 0) continue;
+            int spanStart = line.LastIndexOf('[', markerIndex);
+            if (spanStart <= 0 || !Path.IsPathRooted(line.AsSpan(0, spanStart))) continue;
+            ReadOnlySpan<char> span = line.AsSpan(spanStart + 1, markerIndex - spanStart - 1);
+            int separator = span.IndexOf("..".AsSpan(), StringComparison.Ordinal);
+            if (separator <= 0 || separator + 2 >= span.Length) continue;
+            if (int.TryParse(span[..separator], NumberStyles.None, CultureInfo.InvariantCulture, out int start) &&
+                int.TryParse(span[(separator + 2)..], NumberStyles.None, CultureInfo.InvariantCulture, out int end) &&
+                start >= 0 && end >= start) return true;
+        }
+        return false;
+    }
+
+    internal static bool MatchesCompileFailure(BoundedProcessResult evidence, string diagnostic) => ContainsDiagnostic(ProcessEvidence.From(evidence), diagnostic);
+    internal static bool IsPlaceholderCase(string id) => PlaceholderCaseIds.Contains(id);
 
     private static bool Succeeded(BoundedProcessResult result) => result.Succeeded && !result.OutputTruncated && !result.OutputReadTimedOut && !result.OutputDrainTimedOut && !result.OutputReadLimitReached && !result.ProcessTreeCleanupIncomplete;
 
     private static List<string> BuildRustSharpArguments(string root, params string[] arguments)
     {
-        string cli = Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll");
-        var result = new List<string> { cli };
+        var result = new List<string> { CliPath(root) };
         result.AddRange(arguments);
         return result;
     }
 
     private static string Normalize(string? value) => (value ?? "").Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+    private static string CliPath(string root) => Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll");
+    private static string? FirstLine(string value) => Normalize(value).Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
     private static string ComputeSha256IfPresent(string path) => File.Exists(path) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))) : "";
     private static string? ResolveCandidateSha() =>
         Environment.GetEnvironmentVariable("GITHUB_SHA") ??
@@ -250,10 +392,10 @@ internal static class P1ExpandedDifferentialRunner
         string CommandLine, int ProcessId, int ParentProcessId, DateTimeOffset StartedAtUtc,
         int? ExitCode, string Termination, double ElapsedMilliseconds, string StandardOutput,
         string StandardError, bool OutputTruncated, bool OutputReadTimedOut, bool OutputDrainTimedOut,
-        bool OutputReadLimitReached, bool CleanupIncomplete, string? Diagnostic)
+        bool OutputReadLimitReached, bool CleanupAttempted, bool CleanupIncomplete, string? Diagnostic)
     {
         public bool Succeeded => Termination == "exited" && ExitCode == 0 && !OutputTruncated && !OutputReadTimedOut && !OutputDrainTimedOut && !OutputReadLimitReached && !CleanupIncomplete;
-        public static ProcessEvidence From(BoundedProcessResult result) => new(result.StartedProcess.CommandLine, result.StartedProcess.ProcessId, result.StartedProcess.ParentProcessId, result.StartedProcess.StartedAt, result.ExitCode, result.Termination.ToString().ToLowerInvariant(), result.Elapsed.TotalMilliseconds, result.StandardOutput, result.StandardError, result.OutputTruncated, result.OutputReadTimedOut, result.OutputDrainTimedOut, result.OutputReadLimitReached, result.ProcessTreeCleanupIncomplete, result.OutputDiagnostic ?? result.ProcessTreeCleanupDiagnostic);
+        public static ProcessEvidence From(BoundedProcessResult result) => new(result.StartedProcess.CommandLine, result.StartedProcess.ProcessId, result.StartedProcess.ParentProcessId, result.StartedProcess.StartedAt, result.ExitCode, result.Termination.ToString().ToLowerInvariant(), result.Elapsed.TotalMilliseconds, result.StandardOutput, result.StandardError, result.OutputTruncated, result.OutputReadTimedOut, result.OutputDrainTimedOut, result.OutputReadLimitReached, result.ProcessTreeCleanupAttempted, result.ProcessTreeCleanupIncomplete, result.OutputDiagnostic ?? result.ProcessTreeCleanupDiagnostic);
         public JsonObject ToJson() => new()
         {
             ["commandLine"] = CommandLine, ["processId"] = ProcessId, ["parentProcessId"] = ParentProcessId,
@@ -261,7 +403,7 @@ internal static class P1ExpandedDifferentialRunner
             ["elapsedMilliseconds"] = ElapsedMilliseconds, ["standardOutput"] = StandardOutput, ["standardError"] = StandardError,
             ["outputTruncated"] = OutputTruncated, ["outputReadTimedOut"] = OutputReadTimedOut,
             ["outputDrainTimedOut"] = OutputDrainTimedOut, ["outputReadLimitReached"] = OutputReadLimitReached,
-            ["cleanupIncomplete"] = CleanupIncomplete, ["diagnostic"] = Diagnostic,
+            ["cleanupAttempted"] = CleanupAttempted, ["cleanupIncomplete"] = CleanupIncomplete, ["diagnostic"] = Diagnostic,
         };
     }
 

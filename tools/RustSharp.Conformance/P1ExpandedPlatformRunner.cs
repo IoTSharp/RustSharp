@@ -13,6 +13,28 @@ internal static class P1ExpandedPlatformRunner
     private const int MaximumTimeoutSeconds = 300;
     private const int MaximumDeadlineSeconds = 900;
     private const string CompilerProfile = "safe-core-mir-p1-v2";
+    private static readonly IReadOnlyDictionary<string, string> ExpectedOutputs = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["borrow-shared"] = "7\n",
+        ["borrow-mutable-reborrow"] = "9\n",
+        ["drop-return-order"] = "body\ndrop\n",
+        ["drop-early-return"] = "drop\n",
+        ["borrow-write-read"] = "9\n9\n",
+        ["borrow-shared-after-update"] = "1\n9\n",
+        ["borrow-mutable-reborrow-chain"] = "9\n9\n9\n",
+        ["borrow-shared-reborrow"] = "7\n9\n",
+        ["drop-reverse-locals"] = "body\nsecond\nfirst\n",
+        ["drop-nested-scopes"] = "nested\ninner\nafter\nouter\n",
+        ["drop-return-reverse"] = "return\nsecond\nfirst\ncaller\n",
+        ["drop-branch-return"] = "early\nsecond\nfirst\nlate\nfirst\n",
+    };
+    private static readonly HashSet<string> SemanticClosureEligibleIds = new(ExpectedOutputs.Keys, StringComparer.Ordinal);
+    private static readonly string[] PlaceholderSemanticIds =
+    [
+        "aggregate-struct-drop", "aggregate-enum-drop", "slice-unsize", "pattern-capture",
+        "panic-unwind-generated", "panic-abort-generated", "generic-import-call", "byref-import-call",
+        "metadata-contract", "mir-projection", "mir-family", "source-package",
+    ];
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     internal static async Task<int> RunAsync(string root, string reportPath, TimeSpan timeout, TimeSpan deadline, DateTimeOffset startedAtUtc, Stopwatch clock, string runtimeIdentifier)
@@ -24,9 +46,12 @@ internal static class P1ExpandedPlatformRunner
         string manifestPath = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", P1ExpandedSuiteValidator.ManifestFileName);
         P1ExpandedSuiteValidator.SuiteSpec? suite = null;
         string? harnessError = null;
+        string? manifestSha256 = null;
         try
         {
-            P1ExpandedSuiteValidator.ExpandedManifest manifest = P1ExpandedSuiteValidator.ParseManifest(await File.ReadAllTextAsync(manifestPath).ConfigureAwait(false), root);
+            byte[] manifestBytes = await File.ReadAllBytesAsync(manifestPath).ConfigureAwait(false);
+            manifestSha256 = Convert.ToHexString(SHA256.HashData(manifestBytes));
+            P1ExpandedSuiteValidator.ExpandedManifest manifest = P1ExpandedSuiteValidator.ParseManifest(System.Text.Encoding.UTF8.GetString(manifestBytes), root);
             suite = manifest.Suites.Single(static item => item.Profile == ProfileName);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
@@ -34,12 +59,22 @@ internal static class P1ExpandedPlatformRunner
             harnessError = exception.Message;
         }
         using var cancellation = new CancellationTokenSource(deadline);
+        ConsoleCancelEventHandler cancelHandler = (_, args) => { args.Cancel = true; cancellation.Cancel(); };
+        Console.CancelKeyPress += cancelHandler;
         var cases = new List<JsonObject>();
         var processRunner = new BoundedProcessRunner();
-        ToolProbe dotnetProbe = await ProbeToolAsync(processRunner, "dotnet", ["--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
-        ToolProbe rustcProbe = await ProbeToolAsync(processRunner, "rustc", ["+1.98.0", "--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
-        ToolProbe ilVerifyProbe = await ProbeToolAsync(processRunner, "dotnet", ["tool", "run", "ilverify", "--", "--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
-        string runDirectory = Path.Combine(Path.GetDirectoryName(fullReport)!, ".run-p1-platform-v2-" + Environment.ProcessId + "-" + Guid.NewGuid().ToString("N"));
+        string dotnetPath = ResolveToolPath("RUSTSHARP_P1_DOTNET_PATH", "dotnet");
+        string pwshPath = ResolveToolPath("RUSTSHARP_P1_PWSH_PATH", OperatingSystem.IsWindows() ? @"C:\Program Files\PowerShell\7\pwsh.exe" : "pwsh");
+        string cliPath = ResolveCliPath(root);
+        ToolProbe dotnetProbe = await ProbeToolAsync(processRunner, dotnetPath, ["--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
+        ToolProbe rustcProbe = await ProbeToolAsync(processRunner, ResolveToolPath("RUSTSHARP_P1_RUSTC_PATH", "rustc"), ["+1.98.0", "--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
+        ToolProbe ilVerifyProbe = await ProbeToolAsync(processRunner, dotnetPath, ["tool", "run", "ilverify", "--", "--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
+        string observedOracle = ProbeVersion(rustcProbe, "unavailable");
+        bool oracleAvailable = observedOracle.StartsWith(P1ExpandedSuiteValidator.OraclePrefix, StringComparison.Ordinal);
+        // Keep mutable compilation outputs on the native file system. In WSL,
+        // a report under /mnt/d can live on DrvFS where the compiler's sidecar
+        // byte-range lock is unavailable. Reports remain in the requested path.
+        string runDirectory = Path.Combine(Path.GetTempPath(), ".run-p1-platform-v2-" + Environment.ProcessId + "-" + Guid.NewGuid().ToString("N"));
         string? cleanupDiagnostic = null;
         try
         {
@@ -49,14 +84,20 @@ internal static class P1ExpandedPlatformRunner
                 foreach (P1ExpandedSuiteValidator.CaseSpec fixture in suite.Cases)
                 {
                     if (cancellation.IsCancellationRequested) { cases.Add(Blocked(fixture, "Platform deadline expired before this case started.")); continue; }
-                    try { cases.Add(await RunCaseAsync(processRunner, root, runDirectory, fixture, timeout, runtimeIdentifier, ilVerifyProbe, cancellation.Token).ConfigureAwait(false)); }
+                    Console.WriteLine($"P1 platform {cases.Count + 1}/{suite.Denominator}: {fixture.Id}");
+                    try
+                    {
+                        JsonObject result = await RunCaseAsync(processRunner, root, runDirectory, fixture, timeout, runtimeIdentifier, ilVerifyProbe, dotnetPath, pwshPath, cliPath, cancellation.Token).ConfigureAwait(false);
+                        if (!oracleAvailable) { result["status"] = "blocked"; result["difference"] = "Required native rustc 1.98.0 oracle preflight was unavailable; observed backend execution is retained."; }
+                        cases.Add(result);
+                    }
                     catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { cases.Add(Blocked(fixture, "Platform case deadline or cancellation prevented complete evidence.")); }
                     catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException) { cases.Add(Blocked(fixture, exception.Message)); }
                 }
             }
         }
-        finally { cleanupDiagnostic = DeleteBounded(runDirectory); }
-        if (suite is not null) while (cases.Count < suite.Denominator) cases.Add(Blocked(suite.Cases[cases.Count], harnessError ?? "Platform case did not start."));
+        finally { Console.CancelKeyPress -= cancelHandler; cleanupDiagnostic = DeleteBounded(runDirectory); }
+        if (suite is not null) for (int missing = cases.Count; missing < suite.Denominator && missing < P1ExpandedSuiteValidator.PlatformDenominator; missing++) cases.Add(Blocked(suite.Cases[missing], harnessError ?? "Platform case did not start."));
         clock.Stop();
         int denominator = suite?.Denominator ?? 0;
         int passed = cases.Count(static item => item["status"]?.GetValue<string>() == "passed");
@@ -70,17 +111,20 @@ internal static class P1ExpandedPlatformRunner
             ["profile"] = ProfileName,
             ["candidateSha"] = ResolveCandidateSha(),
             ["backend"] = suite?.Backend ?? "",
-            ["compilerSha256"] = suite?.CompilerSha256 ?? "",
-            ["manifest"] = new JsonObject { ["path"] = Path.GetRelativePath(root, manifestPath).Replace(Path.DirectorySeparatorChar, '/'), ["sha256"] = suite?.ManifestSha256 ?? "", ["denominator"] = denominator, ["validated"] = suite is not null },
-            ["compiler"] = new JsonObject { ["sha256"] = suite?.CompilerSha256 ?? "", ["profile"] = CompilerProfile },
-            ["platform"] = new JsonObject { ["name"] = runtimeIdentifier == "win-x64" ? "windows-x64" : "linux-x64", ["runtimeIdentifier"] = runtimeIdentifier, ["backend"] = suite?.Backend ?? "", ["oracle"] = suite?.Oracle ?? "" },
-            ["toolVersions"] = new JsonObject { ["dotnet"] = ProbeVersion(dotnetProbe, Environment.Version.ToString()), ["sdkVersion"] = Environment.GetEnvironmentVariable("DOTNET_SDK_VERSION") ?? ProbeVersion(dotnetProbe, "unknown"), ["rustc"] = ProbeVersion(rustcProbe, "unavailable (required rustc 1.98.0)"), ["ilverify"] = ProbeVersion(ilVerifyProbe, "unavailable") },
-            ["oracle"] = new JsonObject { ["version"] = suite?.Oracle ?? "" },
+            ["compilerSha256"] = ComputeSha256IfPresent(cliPath),
+            ["manifest"] = new JsonObject { ["version"] = P1ExpandedSuiteValidator.ManifestVersion, ["path"] = Path.GetRelativePath(root, manifestPath).Replace(Path.DirectorySeparatorChar, '/'), ["sha256"] = manifestSha256 ?? "", ["declaredSha256"] = suite?.ManifestSha256 ?? "", ["denominator"] = denominator, ["validated"] = suite is not null },
+            ["compiler"] = new JsonObject { ["sha256"] = ComputeSha256IfPresent(cliPath), ["declaredSha256"] = suite?.CompilerSha256 ?? "", ["path"] = cliPath, ["profile"] = CompilerProfile },
+            ["platform"] = new JsonObject { ["name"] = runtimeIdentifier == "win-x64" ? "windows-x64" : "linux-x64", ["runtimeIdentifier"] = runtimeIdentifier, ["observedRuntimeIdentifier"] = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier, ["architecture"] = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(), ["nativeExecution"] = IsNativeHost(runtimeIdentifier), ["backend"] = suite?.Backend ?? "", ["oracle"] = observedOracle, ["runtime"] = Environment.Version.ToString(), ["sdk"] = ProbeVersion(dotnetProbe, "unavailable") },
+            ["toolVersions"] = new JsonObject { ["dotnet"] = Environment.Version.ToString(), ["sdkVersion"] = ProbeVersion(dotnetProbe, "unavailable"), ["rustc"] = observedOracle, ["ilverify"] = ProbeVersion(ilVerifyProbe, "unavailable") },
+            ["oracle"] = new JsonObject { ["version"] = observedOracle },
+            ["limits"] = new JsonObject { ["maximumCases"] = P1ExpandedSuiteValidator.PlatformDenominator, ["caseTimeoutSeconds"] = timeout.TotalSeconds, ["deadlineSeconds"] = deadline.TotalSeconds, ["maximumOutputBytes"] = BoundedProcessRunner.MaximumTotalOutputBytes },
             ["preflight"] = new JsonObject { ["dotnet"] = ProbeEvidence(dotnetProbe), ["rustc"] = ProbeEvidence(rustcProbe), ["ilverify"] = ProbeEvidence(ilVerifyProbe) },
             ["summary"] = new JsonObject { ["status"] = status, ["exitCode"] = status == "passed" ? 0 : status == "failed" ? 1 : 2, ["denominator"] = denominator, ["executed"] = cases.Count, ["passed"] = passed, ["failed"] = failed, ["blocked"] = blocked, ["skipped"] = 0 },
             ["cases"] = new JsonArray(cases.Select(static item => (JsonNode)item).ToArray()),
             ["execution"] = new JsonObject { ["startedAtUtc"] = startedAtUtc, ["finishedAtUtc"] = DateTimeOffset.UtcNow, ["elapsedMilliseconds"] = clock.Elapsed.TotalMilliseconds, ["deadlineExpired"] = cancellation.IsCancellationRequested },
             ["cleanup"] = new JsonObject { ["completed"] = cleanupDiagnostic is null, ["diagnostic"] = cleanupDiagnostic },
+            ["semanticClosureEligible"] = false,
+            ["coverageLimitations"] = new JsonArray(PlaceholderSemanticIds.Select(static id => (JsonNode)id).ToArray()),
             ["harnessError"] = harnessError,
         };
         string temp = fullReport + ".tmp-" + Environment.ProcessId + "-" + Guid.NewGuid().ToString("N");
@@ -90,29 +134,36 @@ internal static class P1ExpandedPlatformRunner
         return status == "passed" ? 0 : status == "failed" ? 1 : 2;
     }
 
-    private static async Task<JsonObject> RunCaseAsync(BoundedProcessRunner runner, string root, string runDirectory, P1ExpandedSuiteValidator.CaseSpec fixture, TimeSpan timeout, string runtimeIdentifier, ToolProbe ilVerifyProbe, CancellationToken cancellationToken)
+    private static async Task<JsonObject> RunCaseAsync(BoundedProcessRunner runner, string root, string runDirectory, P1ExpandedSuiteValidator.CaseSpec fixture, TimeSpan timeout, string runtimeIdentifier, ToolProbe ilVerifyProbe, string dotnetPath, string pwshPath, string cliPath, CancellationToken cancellationToken)
     {
         string source = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", fixture.Source);
         string directory = Path.Combine(runDirectory, fixture.Id); Directory.CreateDirectory(directory);
-        string output = Path.Combine(directory, "program.dll");
-        BoundedProcessResult compile = await runner.RunAsync(new BoundedProcessRequest("dotnet", [Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll"), "compile", source, "--output", output, "--profile", CompilerProfile], root, timeout), cancellationToken).ConfigureAwait(false);
-        BoundedProcessResult? run = Succeeded(compile) ? await runner.RunAsync(new BoundedProcessRequest("dotnet", [output], directory, timeout), cancellationToken).ConfigureAwait(false) : null;
-        JsonObject ilVerify = await RunIlVerifyAsync(runner, root, directory, output, timeout, ilVerifyProbe, cancellationToken).ConfigureAwait(false);
-        string assemblyName = Path.GetFileNameWithoutExtension(fixture.Source);
-        JsonObject nativeAot = await RunNativeAotAsync(runner, root, directory, output, assemblyName, timeout, runtimeIdentifier, cancellationToken).ConfigureAwait(false);
-        bool coreClrPassed = Succeeded(compile) && run is not null && Succeeded(run);
+        string output = Path.Combine(directory, fixture.Id + ".dll");
+        BoundedProcessResult compile = await runner.RunAsync(new BoundedProcessRequest(dotnetPath, [cliPath, "compile", source, "--output", output, "--profile", CompilerProfile], root, timeout), cancellationToken).ConfigureAwait(false);
+        BoundedProcessResult? run = Succeeded(compile) ? await runner.RunAsync(new BoundedProcessRequest(dotnetPath, [output], directory, timeout), cancellationToken).ConfigureAwait(false) : null;
+        JsonObject ilVerify = await RunIlVerifyAsync(runner, root, directory, output, timeout, ilVerifyProbe, pwshPath, cancellationToken).ConfigureAwait(false);
+        // The compiler freezes the PE assembly identity from the source name;
+        // an output file name is only a destination and can differ from it.
+        string assemblyName = File.Exists(output)
+            ? ReadGeneratedAssemblyName(output)
+            : Path.GetFileNameWithoutExtension(fixture.Source);
+        JsonObject nativeAot = await RunNativeAotAsync(runner, root, directory, output, assemblyName, fixture.Id, timeout, runtimeIdentifier, cancellationToken).ConfigureAwait(false);
+        string expected = ExpectedOutputs.TryGetValue(fixture.Id, out string? known) ? known : NormalizeOutput(fixture.Id + "\n");
+        bool coreClrOutputMatches = OutputMatches(run, expected);
+        bool coreClrPassed = Succeeded(compile) && run is not null && Succeeded(run) && coreClrOutputMatches;
         bool ilVerifyPassed = ilVerify["status"]?.GetValue<string>() == "passed";
         bool nativeAotPassed = nativeAot["status"]?.GetValue<string>() == "passed";
         bool passed = coreClrPassed && ilVerifyPassed && nativeAotPassed;
         bool blocked = ilVerify["status"]?.GetValue<string>() == "blocked" || nativeAot["status"]?.GetValue<string>() == "blocked";
         string status = passed ? "passed" : blocked ? "blocked" : "failed";
-        var result = new JsonObject { ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256, ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = status, ["difference"] = passed ? null : "CoreCLR, ILVerify, or Native AOT evidence did not complete." };
+        var result = new JsonObject { ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256, ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = status, ["semanticClosureEligible"] = SemanticClosureEligibleIds.Contains(fixture.Id), ["scope"] = SemanticClosureEligibleIds.Contains(fixture.Id) ? "fixed executable output" : "placeholder source emits only its case identifier; semantic package/panic/aggregate behavior is unproven", ["difference"] = passed ? null : "CoreCLR, ILVerify, or Native AOT evidence did not complete." };
         result["coreClrCompile"] = Evidence(compile); result["coreClrRun"] = run is null ? null : Evidence(run);
+        if (run is not null) result["coreClrRun"]!["outputMatches"] = coreClrOutputMatches;
         result["ilVerify"] = ilVerify;
         result["nativeAot"] = nativeAot;
         return result;
     }
-    private static async Task<JsonObject> RunIlVerifyAsync(BoundedProcessRunner runner, string root, string directory, string assembly, TimeSpan timeout, ToolProbe probe, CancellationToken cancellationToken)
+    private static async Task<JsonObject> RunIlVerifyAsync(BoundedProcessRunner runner, string root, string directory, string assembly, TimeSpan timeout, ToolProbe probe, string pwshPath, CancellationToken cancellationToken)
     {
         if (!Succeeded(probe.Result)) return new JsonObject { ["status"] = "blocked", ["diagnostic"] = probe.Diagnostic ?? "ILVerify tool preflight did not succeed.", ["preflight"] = ProbeEvidence(probe) };
         string evidencePath = Path.Combine(directory, "ilverify.json");
@@ -120,30 +171,34 @@ internal static class P1ExpandedPlatformRunner
         BoundedProcessResult result;
         string runtimeAssembly = Path.Combine(directory, "RustSharp.Runtime.dll");
         if (!File.Exists(runtimeAssembly)) return new JsonObject { ["status"] = "blocked", ["diagnostic"] = "RustSharp.Runtime.dll was not emitted beside the generated assembly." };
-        try { result = await runner.RunAsync(new BoundedProcessRequest("pwsh", ["-NoLogo", "-NoProfile", "-File", script, "-AssemblyPath", assembly, "-ReferencePath", runtimeAssembly, "-EvidencePath", evidencePath, "-TimeoutSeconds", "120"], root, timeout), cancellationToken).ConfigureAwait(false); }
+        try { result = await runner.RunAsync(new BoundedProcessRequest(pwshPath, ["-NoLogo", "-NoProfile", "-File", script, "-AssemblyPath", assembly, "-ReferencePath", runtimeAssembly, "-RuntimeVersion", Environment.Version.ToString(), "-EvidencePath", evidencePath, "-TimeoutSeconds", "120"], root, timeout), cancellationToken).ConfigureAwait(false); }
         catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
         { return new JsonObject { ["status"] = "blocked", ["diagnostic"] = "PowerShell 7 or ILVerify launcher is unavailable: " + exception.Message }; }
         bool verified = Succeeded(result) && File.Exists(evidencePath) && IlVerifyEvidenceSucceeded(evidencePath);
         bool unavailable = result.Termination != BoundedProcessTermination.Exited || result.StandardError.Contains("SDK", StringComparison.OrdinalIgnoreCase) || result.StandardError.Contains("not found", StringComparison.OrdinalIgnoreCase) || result.StandardError.Contains("tool", StringComparison.OrdinalIgnoreCase) && result.StandardError.Contains("cannot", StringComparison.OrdinalIgnoreCase);
         return new JsonObject { ["status"] = verified ? "passed" : unavailable ? "blocked" : "failed", ["succeeded"] = verified, ["diagnostic"] = verified ? null : unavailable ? "ILVerify launcher or SDK is unavailable." : "ILVerify did not produce successful evidence.", ["process"] = Evidence(result), ["evidencePath"] = Path.GetRelativePath(root, evidencePath).Replace(Path.DirectorySeparatorChar, '/'), ["evidenceSha256"] = File.Exists(evidencePath) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(evidencePath))) : null };
     }
-    private static async Task<JsonObject> RunNativeAotAsync(BoundedProcessRunner runner, string root, string directory, string assembly, string assemblyName, TimeSpan timeout, string runtimeIdentifier, CancellationToken cancellationToken)
+    private static async Task<JsonObject> RunNativeAotAsync(BoundedProcessRunner runner, string root, string directory, string assembly, string assemblyName, string expectedKey, TimeSpan timeout, string runtimeIdentifier, CancellationToken cancellationToken)
     {
-        bool compatible = runtimeIdentifier == "win-x64" ? OperatingSystem.IsWindows() : runtimeIdentifier == "linux-x64" && OperatingSystem.IsLinux();
+        bool compatible = IsNativeHost(runtimeIdentifier);
         if (!compatible) return new JsonObject { ["status"] = "blocked", ["diagnostic"] = $"Native AOT evidence requires the {runtimeIdentifier} host." };
         try
         {
             var publisher = new NativeAotPublisher(runner);
             string outputDirectory = Path.Combine(directory, "native-aot");
             NativeAotPublishResult publish = await publisher.PublishAsync(new NativeAotPublishRequest(assembly, assemblyName, runtimeIdentifier, outputDirectory, timeout), cancellationToken).ConfigureAwait(false);
-            if (!publish.Succeeded || publish.ExecutablePath is null)
+            if (!publish.Succeeded || !Succeeded(publish.ProcessResult) || publish.ExecutablePath is null)
             {
-                string diagnostic = publish.ProcessResult.StandardError;
+                string diagnostic = publish.ProcessResult.StandardError + publish.ProcessResult.StandardOutput;
                 bool unavailable = publish.ProcessResult.Termination != BoundedProcessTermination.Exited || diagnostic.Contains("SDK", StringComparison.OrdinalIgnoreCase) || diagnostic.Contains("not found", StringComparison.OrdinalIgnoreCase) || diagnostic.Contains("PublishAot", StringComparison.OrdinalIgnoreCase);
                 return new JsonObject { ["status"] = unavailable ? "blocked" : "failed", ["diagnostic"] = string.IsNullOrWhiteSpace(diagnostic) ? "Native AOT publish did not produce an executable." : diagnostic, ["publish"] = Evidence(publish.ProcessResult), ["hostCleanupIncomplete"] = publish.HostCleanupIncomplete };
             }
             BoundedProcessResult run = await runner.RunAsync(new BoundedProcessRequest(publish.ExecutablePath, [], outputDirectory, timeout), cancellationToken).ConfigureAwait(false);
-            return new JsonObject { ["status"] = Succeeded(run) ? "passed" : "failed", ["succeeded"] = Succeeded(run), ["diagnostic"] = Succeeded(run) ? null : "Native AOT executable failed to run.", ["publish"] = Evidence(publish.ProcessResult), ["run"] = Evidence(run), ["executablePath"] = Path.GetRelativePath(root, publish.ExecutablePath).Replace(Path.DirectorySeparatorChar, '/'), ["executableSha256"] = File.Exists(publish.ExecutablePath) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(publish.ExecutablePath))) : null, ["hostCleanupIncomplete"] = publish.HostCleanupIncomplete };
+            string expected = ExpectedOutputs.TryGetValue(expectedKey, out string? known) ? known : NormalizeOutput(expectedKey + "\n");
+            bool outputMatches = OutputMatches(run, expected);
+            JsonObject runEvidence = Evidence(run);
+            runEvidence["outputMatches"] = outputMatches;
+            return new JsonObject { ["status"] = Succeeded(run) && outputMatches ? "passed" : "failed", ["succeeded"] = Succeeded(run) && outputMatches, ["diagnostic"] = Succeeded(run) && outputMatches ? null : "Native AOT executable failed to run or output differed.", ["publish"] = Evidence(publish.ProcessResult), ["run"] = runEvidence, ["outputMatches"] = outputMatches, ["executablePath"] = Path.GetRelativePath(root, publish.ExecutablePath).Replace(Path.DirectorySeparatorChar, '/'), ["executableSha256"] = File.Exists(publish.ExecutablePath) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(publish.ExecutablePath))) : null, ["hostCleanupIncomplete"] = publish.HostCleanupIncomplete };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException)
@@ -162,10 +217,43 @@ internal static class P1ExpandedPlatformRunner
     }
     private static string ProbeVersion(ToolProbe probe, string fallback) => Succeeded(probe.Result) ? probe.Result!.StandardOutput.Trim() : fallback;
     private static JsonObject ProbeEvidence(ToolProbe probe) => probe.Result is null ? new JsonObject { ["status"] = "blocked", ["diagnostic"] = probe.Diagnostic } : Evidence(probe.Result);
+    private static string ResolveToolPath(string variable, string fallback) =>
+        Environment.GetEnvironmentVariable(variable) is { Length: > 0 } configured ? configured : fallback;
+    private static string ResolveCliPath(string root)
+    {
+        string configured = Environment.GetEnvironmentVariable("RUSTSHARP_P1_CLI_PATH") ?? Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll");
+        return Path.GetFullPath(configured, root);
+    }
+    private static string ComputeSha256IfPresent(string path) => File.Exists(path) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))) : "";
+    private static string NormalizeOutput(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+    internal static bool OutputMatches(BoundedProcessResult? result, string expected) => Succeeded(result) && NormalizeOutput(result!.StandardOutput) == NormalizeOutput(expected);
+    internal static bool IsSemanticClosureEligible(string id) => SemanticClosureEligibleIds.Contains(id);
+    internal static string ReadGeneratedAssemblyName(string path) => System.Reflection.AssemblyName.GetAssemblyName(path).Name ?? throw new InvalidOperationException("Generated PE assembly identity is missing.");
+    private static bool IsNativeHost(string runtimeIdentifier) => System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.X64 && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.X64 && (runtimeIdentifier == "win-x64" ? OperatingSystem.IsWindows() : runtimeIdentifier == "linux-x64" && OperatingSystem.IsLinux());
     private sealed record ToolProbe(BoundedProcessResult? Result, string? Diagnostic);
     private static JsonObject Blocked(P1ExpandedSuiteValidator.CaseSpec fixture, string reason) => new() { ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256, ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = "blocked", ["difference"] = reason };
     private static bool Succeeded(BoundedProcessResult? result) => result is not null && result.Succeeded && !result.OutputTruncated && !result.OutputReadTimedOut && !result.OutputDrainTimedOut && !result.OutputReadLimitReached && !result.ProcessTreeCleanupIncomplete;
-    private static JsonObject Evidence(BoundedProcessResult result) => new() { ["commandLine"] = result.StartedProcess.CommandLine, ["processId"] = result.StartedProcess.ProcessId, ["parentProcessId"] = result.StartedProcess.ParentProcessId, ["startedAtUtc"] = result.StartedProcess.StartedAt, ["exitCode"] = result.ExitCode, ["termination"] = result.Termination.ToString().ToLowerInvariant(), ["elapsedMilliseconds"] = result.Elapsed.TotalMilliseconds, ["standardOutput"] = result.StandardOutput, ["standardError"] = result.StandardError, ["cleanupIncomplete"] = result.ProcessTreeCleanupIncomplete };
+    private static JsonObject Evidence(BoundedProcessResult result) => new() { ["commandLine"] = result.StartedProcess.CommandLine, ["processId"] = result.StartedProcess.ProcessId, ["parentProcessId"] = result.StartedProcess.ParentProcessId, ["startedAtUtc"] = result.StartedProcess.StartedAt, ["exitCode"] = result.ExitCode, ["termination"] = result.Termination.ToString().ToLowerInvariant(), ["elapsedMilliseconds"] = result.Elapsed.TotalMilliseconds, ["standardOutput"] = result.StandardOutput, ["standardError"] = result.StandardError, ["outputTruncated"] = result.OutputTruncated, ["outputReadTimedOut"] = result.OutputReadTimedOut, ["outputDrainTimedOut"] = result.OutputDrainTimedOut, ["outputReadLimitReached"] = result.OutputReadLimitReached, ["cleanupIncomplete"] = result.ProcessTreeCleanupIncomplete, ["diagnostic"] = result.OutputDiagnostic ?? result.ProcessTreeCleanupDiagnostic };
     private static string? ResolveCandidateSha() => Environment.GetEnvironmentVariable("GITHUB_SHA") ?? Environment.GetEnvironmentVariable("CI_COMMIT_SHA");
-    private static string? DeleteBounded(string path) { if (!Directory.Exists(path)) return null; Exception? last = null; Stopwatch clock = Stopwatch.StartNew(); for (int i = 0; i < 40 && clock.Elapsed < TimeSpan.FromSeconds(5); i++) { try { Directory.Delete(path, true); } catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { last = exception; } if (!Directory.Exists(path)) return null; Thread.Sleep(50); } return "Platform run directory cleanup failed: " + (last?.Message ?? "directory still exists"); }
+    private static string? DeleteBounded(string path)
+    {
+        string fullPath = Path.GetFullPath(path);
+        string ownedParent = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.GetTempPath()));
+        string prefix = ".run-p1-platform-v2-" + Environment.ProcessId + "-";
+        string fileName = Path.GetFileName(fullPath);
+        if (!string.Equals(Path.GetDirectoryName(fullPath), ownedParent, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) ||
+            !fileName.StartsWith(prefix, StringComparison.Ordinal) || !Guid.TryParseExact(fileName[prefix.Length..], "N", out _))
+            return "Platform cleanup refused a directory outside the task-owned temporary prefix.";
+        if (!Directory.Exists(fullPath)) return null;
+        Exception? last = null;
+        Stopwatch clock = Stopwatch.StartNew();
+        for (int attempt = 0; attempt < 40 && clock.Elapsed < TimeSpan.FromSeconds(5); attempt++)
+        {
+            try { Directory.Delete(fullPath, true); }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { last = exception; }
+            if (!Directory.Exists(fullPath)) return null;
+            Thread.Sleep(50);
+        }
+        return "Platform run directory cleanup failed: " + (last?.Message ?? "directory still exists");
+    }
 }

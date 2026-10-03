@@ -10,12 +10,13 @@ param(
     [Parameter()][string] $ExpandedLinuxPlatformReport = 'artifacts/p1-expanded/linux-x64/p1-platform-v2.json',
     [Parameter()][string] $ClosureRecordPath = 'docs/p1-completion.json',
     [Parameter()][string] $EvidencePath = 'artifacts/p1-candidate/p1-candidate-gate.json',
-    [Parameter()][ValidateRange(1, 32)][int] $MaximumReportBytes = 16MB
+    [Parameter()][ValidateRange(1024, 33554432)][int] $MaximumReportBytes = 16MB
 )
 
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Test-P1CandidateGate.ps1 requires PowerShell 7 or newer.' }
+. (Join-Path $PSScriptRoot 'P1EvidenceValidation.ps1')
 
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $started = [DateTimeOffset]::UtcNow
@@ -58,6 +59,7 @@ function Read-BoundedJson {
     $record.Path = [IO.Path]::GetRelativePath($root, $full).Replace('\', '/')
     if (-not [IO.File]::Exists($full)) { $record.Summary = 'Evidence report was not found.'; [void]$inputs.Add([pscustomobject]$record); return $null }
     try {
+        if (([IO.FileInfo]::new($full)).Length -gt $MaximumReportBytes) { throw "Evidence report exceeds the $MaximumReportBytes-byte bound." }
         $bytes = [IO.File]::ReadAllBytes($full)
         $record.Bytes = $bytes.Length
         if ($bytes.Length -lt 1 -or $bytes.Length -gt $MaximumReportBytes) { throw "Evidence report exceeds the $MaximumReportBytes-byte bound." }
@@ -157,6 +159,7 @@ function Test-Report {
     }
     if ($Profile -in @('p1-differential-v3', 'p1-platform-v2')) {
         foreach ($manifestError in @(Test-ExpandedManifest $Document $Profile)) { [void]$errors.Add($manifestError) }
+        foreach ($bindingError in @(Test-P1ExpandedEvidence $Document $root $Profile $RuntimeIdentifier $candidate)) { [void]$errors.Add($bindingError) }
     }
     elseif ($CaseDenominator -lt 0) {
         $gateRows = if ($null -ne $Document.PSObject.Properties['Gates']) { @($Document.Gates) } elseif ($null -ne $Document.PSObject.Properties['Checks']) { @($Document.Checks) } else { @() }
@@ -190,6 +193,8 @@ try {
     $lp = Read-BoundedJson 'expanded-linux-platform' $ExpandedLinuxPlatformReport
 
     $coverageStatus = Test-Report 'P1-GATE.01' 'coverage' $coverage 'p1-requirement-coverage' 'p1-coverage-v1' 40 -CaseDenominator 160
+    $requirementErrors = @(Test-P1RequirementClosure $root)
+    if ($requirementErrors.Count -gt 0) { Add-Check 'P1-GATE.01' 'designated-leaf-closure' 'blocked' ($requirementErrors -join '; '); $coverageStatus = Combine-Status @($coverageStatus, 'blocked') }
     if ($null -ne $coverage -and ($null -eq $coverage.PSObject.Properties['summary'] -or $null -eq $coverage.summary.PSObject.Properties['caseDenominator'] -or [int]$coverage.summary.caseDenominator -ne 160)) { Add-Check 'P1-GATE.01' 'coverage-cases' 'failed' 'Coverage case denominator must equal 160.'; $coverageStatus = 'failed' }
     $diffWindows = Test-Report 'P1-GATE.02' 'expanded-windows-differential' $wd 'p1-source-borrow-drop-differential' 'p1-differential-v3' 32 'win-x64' -CaseDenominator 32
     $diffLinux = Test-Report 'P1-GATE.02' 'expanded-linux-differential' $ld 'p1-source-borrow-drop-differential' 'p1-differential-v3' 32 'linux-x64' -CaseDenominator 32
@@ -204,7 +209,8 @@ try {
         'P1-GATE.03' = (Combine-Status @($platformWindows, $platformLinux))
         'P1-GATE.04' = (Combine-Status @($oldStatus, $expandedExitStatus, $coverageStatus))
     }
-    $gateFiveStatus = Combine-Status @($gateStatuses.Values + @($platformWindows, $platformLinux))
+    $candidateStatus = if ([string]::IsNullOrWhiteSpace($candidate)) { 'blocked' } elseif ($candidate -notmatch '^[0-9a-fA-F]{40,64}$') { 'failed' } else { 'passed' }
+    $gateFiveStatus = Combine-Status @($gateStatuses.Values + @($platformWindows, $platformLinux, $candidateStatus))
     Add-Check 'P1-GATE.05' 'native-candidate-aggregate' $gateFiveStatus $(if ($gateFiveStatus -eq 'passed') { 'Both native x64 platform reports and all prerequisite gates bind to one candidate SHA.' } else { 'Native platform, candidate SHA, or prerequisite evidence is incomplete.' })
     $closureStatus = 'blocked'
     try {
@@ -213,10 +219,11 @@ try {
         else {
             if (([IO.FileInfo]::new($closureFull)).Length -gt $MaximumReportBytes) { Add-Check 'P1-GATE.06' 'closure-record' 'blocked' 'P1 closure record exceeds its byte bound.' }
             else {
-                $closureText = [IO.File]::ReadAllText($closureFull)
-                if ([string]::IsNullOrWhiteSpace($candidate) -or -not $closureText.Contains($candidate, [StringComparison]::Ordinal) -or -not $closureText.Contains('P1-GATE.05', [StringComparison]::Ordinal)) { Add-Check 'P1-GATE.06' 'closure-record' 'failed' 'Closure record does not bind the candidate SHA and P1-GATE.05.' }
+                $closure = [IO.File]::ReadAllText($closureFull) | ConvertFrom-Json -Depth 32
+                $closureErrors = @(Test-P1ClosureRecord $closure $candidate $root @($inputs.ToArray()))
+                if ($closureErrors.Count -gt 0) { $closureStatus = if (@($closureErrors | Where-Object { $_ -like 'blocked:*' }).Count -gt 0) { 'blocked' } else { 'failed' }; Add-Check 'P1-GATE.06' 'closure-record' $closureStatus ($closureErrors -join '; ') }
                 elseif ($gateFiveStatus -ne 'passed') { Add-Check 'P1-GATE.06' 'closure-record' 'blocked' 'P1-GATE.05 is not passed; closure cannot be published.' }
-                else { $closureStatus = 'passed'; Add-Check 'P1-GATE.06' 'closure-record' 'passed' 'Closure record binds the candidate SHA and P1-GATE.05.' }
+                else { $closureStatus = 'passed'; Add-Check 'P1-GATE.06' 'closure-record' 'passed' 'Structured closure binds all leaves, reports, native runs, documents and cleanup.' }
             }
         }
     }

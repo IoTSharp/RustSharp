@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using RustSharp.Compiler;
 using RustSharp.Runtime;
 using RustSharp.Semantics;
@@ -250,8 +251,9 @@ internal static class SafeCoreMirDropCodegenTests
 
     private static async Task<BoundedProcessResult> CompileAndRunAsync(string source, string? expectedOutput)
     {
-        string directory = Path.GetFullPath(Path.Combine(
-            "artifacts", "tests", "mir-drop-codegen-" + Guid.NewGuid().ToString("N")));
+        string ownedRoot = Path.GetFullPath(Path.Combine("artifacts", "tests"));
+        string directory = Path.Combine(ownedRoot, "mir-drop-codegen-" + Guid.NewGuid().ToString("N"));
+        if (Directory.Exists(directory)) throw new IOException("Drop test directory already exists: " + directory);
         Directory.CreateDirectory(directory);
         string sourcePath = Path.Combine(directory, "program.rs");
         string outputPath = Path.Combine(directory, "program.dll");
@@ -267,17 +269,52 @@ internal static class SafeCoreMirDropCodegenTests
 
             using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             BoundedProcessResult result = await new BoundedProcessRunner().RunAsync(
-                new("dotnet", [outputPath], directory, TimeSpan.FromSeconds(10)), deadline.Token)
+                new("dotnet", [outputPath], directory, TimeSpan.FromSeconds(10), started =>
+                    Console.WriteLine($"generated MIR Drop process: pid={started.ProcessId} parent={started.ParentProcessId} started={started.StartedAt:O} cwd={started.WorkingDirectory} command={started.CommandLine}")), deadline.Token)
                 .ConfigureAwait(false);
+            AssertEx.False(result.ProcessTreeCleanupIncomplete,
+                "Generated Drop process tree cleanup is incomplete: " + result.ProcessTreeCleanupDiagnostic);
             if (expectedOutput is not null)
                 AssertEx.Equal(expectedOutput, Normalize(result.StandardOutput));
             return result;
         }
         finally
         {
-            if (Directory.Exists(directory))
-                Directory.Delete(directory, recursive: true);
+            await DeleteOwnedDirectoryAsync(directory, ownedRoot).ConfigureAwait(false);
         }
+    }
+
+    private static async Task DeleteOwnedDirectoryAsync(string directory, string ownedRoot)
+    {
+        const string prefix = "mir-drop-codegen-";
+        string fullPath = Path.GetFullPath(directory);
+        string fullRoot = Path.GetFullPath(ownedRoot);
+        StringComparison comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        string name = Path.GetFileName(fullPath);
+        if (!string.Equals(Path.GetDirectoryName(fullPath), fullRoot, comparison) ||
+            !name.StartsWith(prefix, StringComparison.Ordinal) ||
+            !Guid.TryParseExact(name.AsSpan(prefix.Length), "N", out _))
+            throw new InvalidOperationException("Refusing to clean an unowned Drop test directory: " + fullPath);
+        if (!Directory.Exists(fullPath)) return;
+        if ((File.GetAttributes(fullPath) & FileAttributes.ReparsePoint) != 0)
+            throw new InvalidOperationException("Refusing to clean a redirected Drop test directory: " + fullPath);
+
+        const int maximumAttempts = 40;
+        TimeSpan timeout = TimeSpan.FromSeconds(5);
+        var clock = Stopwatch.StartNew();
+        Exception? lastFailure = null;
+        for (int attempt = 0; attempt < maximumAttempts && clock.Elapsed < timeout; attempt++)
+        {
+            try { Directory.Delete(fullPath, recursive: true); }
+            catch (IOException exception) { lastFailure = exception; }
+            catch (UnauthorizedAccessException exception) { lastFailure = exception; }
+            if (!Directory.Exists(fullPath)) return;
+            TimeSpan remaining = timeout - clock.Elapsed;
+            if (remaining <= TimeSpan.Zero) break;
+            double delay = Math.Min(50 + attempt * 25, Math.Min(150, remaining.TotalMilliseconds));
+            await Task.Delay(TimeSpan.FromMilliseconds(delay)).ConfigureAwait(false);
+        }
+        throw new IOException("Drop test directory cleanup exceeded 40 attempts or five seconds: " + fullPath, lastFailure);
     }
 
     private static string Normalize(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal);

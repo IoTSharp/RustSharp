@@ -364,12 +364,7 @@ public sealed class CompilerDriver
                     safeCore.MirSnapshot,
                     safeCore.Ownership,
                     safeCore.CleanupSnapshot,
-                    safeCore.Ownership.Select(static function =>
-                        new RustSharpMetadataCallContract(
-                            function.FunctionId.EndsWith("#value", StringComparison.Ordinal)
-                                ? function.FunctionId[..^6]
-                                : function.FunctionId,
-                            function.PanicStrategy)));
+                    BuildCallContracts(safeCore, cancellationToken));
             GeneratedAssembly generated;
             try
             {
@@ -588,6 +583,59 @@ public sealed class CompilerDriver
         catch (OperationCanceledException) { throw; }
         catch (TimeoutException) { }
         return lowered;
+    }
+
+    private static IEnumerable<RustSharpMetadataCallContract> BuildCallContracts(SafeCoreClrResult program,
+        CancellationToken cancellationToken)
+    {
+        // Scalars have a checked language-level Copy ABI. Nominal values and
+        // GC-owned references need semantic contracts; CLR value/object shapes
+        // are deliberately not used to infer their ownership or lifetimes.
+        var covered = new HashSet<string>(StringComparer.Ordinal);
+        var clock = Stopwatch.StartNew();
+        foreach (ClrLirMethod method in program.Methods)
+        {
+            CheckBudget();
+            if (method.IsCompilerGenerated ||
+                method.ReturnType.Kind is not (ClrLirTypeKind.Void or ClrLirTypeKind.I32 or ClrLirTypeKind.Bool) ||
+                method.Parameters.Any(static type => type.Kind is not (ClrLirTypeKind.I32 or ClrLirTypeKind.Bool)))
+                continue;
+
+            string identity = method.SourceQualifiedName ?? method.Name;
+            covered.Add(method.Name);
+            covered.Add(identity);
+            if (identity.EndsWith("#value", StringComparison.Ordinal)) covered.Add(identity[..^6]);
+            RustSharpMetadataOwnershipFunction? ownership = program.Ownership.FirstOrDefault(value =>
+                string.Equals(value.FunctionId, identity, StringComparison.Ordinal) ||
+                string.Equals(value.FunctionId, identity + "#value", StringComparison.Ordinal));
+            // Generic instances may share the declaration's source identity.
+            // Bind each contract to its actual emitted method first; metadata
+            // linking retains a source alias only when it names one method.
+            yield return new RustSharpMetadataCallContract(method.Name, ownership?.PanicStrategy ?? "unwind",
+                method.Parameters.Select(static _ => "copy").ToArray(),
+                method.ReturnType == ClrLirType.Void ? "unit" : "copy")
+            {
+                Schema = RustSharpMetadataCallContract.ScalarSchema,
+            };
+        }
+
+        foreach (RustSharpMetadataOwnershipFunction ownership in program.Ownership)
+        {
+            CheckBudget();
+            string identity = ownership.FunctionId.EndsWith("#value", StringComparison.Ordinal)
+                ? ownership.FunctionId[..^6] : ownership.FunctionId;
+            if (!covered.Contains(identity))
+                yield return new(identity, ownership.PanicStrategy);
+        }
+
+        void CheckBudget()
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (program.Methods.Count > RustSharpMetadataDocument.MaximumFunctions ||
+                program.Ownership.Count > RustSharpMetadataDocument.MaximumOwnershipFunctions ||
+                clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new TimeoutException("Source call metadata exceeded its bounded generation budget.");
+        }
     }
 
     private static SafeCoreClrResult AttachMirEvidence(
