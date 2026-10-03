@@ -121,6 +121,9 @@ public static partial class SafeCoreMirOwnershipAdapter
                     InferNll = options.InferNll,
                     CancellationToken = options.CancellationToken,
                 });
+            foreach (SafeCoreOwnershipDiagnostic diagnostic in ownershipResult.Diagnostics)
+                AddEvidenceDiagnostic(diagnostics, new Diagnostic(diagnostic.Code, diagnostic.Message, diagnostic.Source.Span)
+                { SourcePath = diagnostic.Source.SourcePath }, options);
             return new(evidence.Program, ownershipResult, validation, diagnostics.AsReadOnly(), ownershipResult.IsTruncated);
         }
         catch (Exception exception) when (exception is EvidenceLimitException or AdapterLimitException)
@@ -152,6 +155,28 @@ public static partial class SafeCoreMirOwnershipAdapter
             StepEvidence(options, clock, ref operations);
             SafeCoreMirFunction mirFunction = mir.Functions[functionIndex];
             SafeCoreOwnershipFunction ownershipFunction = ownership.Functions[functionIndex];
+            // Whole-program MIR validation uses aggregate arena limits. An
+            // independent evidence producer must still obey the adapter's
+            // per-function limits, including generated ownership effects.
+            if (mirFunction.Locals.Count > options.MaximumLocalsPerFunction ||
+                ownershipFunction.Locals.Count > options.MaximumLocalsPerFunction ||
+                mirFunction.Blocks.Count > options.MaximumBlocksPerFunction ||
+                ownershipFunction.Blocks.Count > options.MaximumBlocksPerFunction)
+                throw new EvidenceLimitException();
+            int statements = 0;
+            foreach (SafeCoreMirBlock block in mirFunction.Blocks)
+            {
+                StepEvidence(options, clock, ref operations);
+                if ((long)statements + block.Statements.Count > options.MaximumStatementsPerFunction)
+                    throw new EvidenceLimitException();
+                statements += block.Statements.Count;
+            }
+            foreach (SafeCoreOwnershipBlock block in ownershipFunction.Blocks)
+            {
+                StepEvidence(options, clock, ref operations);
+                if (block.Instructions.Count > options.MaximumInstructionsPerBlock)
+                    throw new EvidenceLimitException();
+            }
             bool referenceFunction = mirFunction.Locals.Any(local => ContainsReference(local.Type, mir, 0));
             SafeCoreOwnershipFunction? expectedFunction = referenceFunction
                 ? AdaptFunction(mir, provenance, mirFunction, options, clock, ref operations, diagnostics) : null;
@@ -269,7 +294,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                 // statement or terminator source in this block. This keeps
                 // independently produced ownership facts auditable and
                 // prevents fabricated projected places at unrelated spans.
-                var allowedSources = new List<SafeCoreMirSource> { mirBlock.Source, mirBlock.Terminator.Source };
+                var allowedSources = new HashSet<SafeCoreMirSource> { mirBlock.Source, mirBlock.Terminator.Source };
                 var allowedPlaces = new List<SafeCoreMirPlace>();
                 foreach (SafeCoreMirStatement statement in mirBlock.Statements)
                 {
@@ -302,7 +327,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                 foreach (SafeCoreOwnershipInstruction instruction in ownershipBlock.Instructions)
                 {
                     StepEvidence(options, clock, ref operations);
-                    if (!allowedSources.Any(source => SameSource(source, instruction.Source)))
+                    if (!allowedSources.Contains(instruction.Source))
                     {
                         AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
                             $"Ownership instruction in block {ownershipBlock.Id} has source evidence absent from typed MIR.", instruction.Source), options);
@@ -528,18 +553,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                 "Typed MIR ownership evidence exceeded its bounded work or time limit.", null));
     }
 
-    private static void ValidateEvidenceOptions(SafeCoreMirOwnershipOptions options)
-    {
-        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1) ||
-            options.MaximumOperations is < 1 or > 4_000_000 ||
-            options.MaximumDiagnostics is < 1 or > 4_096 ||
-            options.MaximumFunctions is < 1 or > 4_096 ||
-            options.MaximumLocalsPerFunction is < 1 or > 4_096 ||
-            options.MaximumBlocksPerFunction is < 1 or > 16_384 ||
-            options.MaximumPaths is < 1 or > 65_536 ||
-            options.MaximumBlockVisits is < 1 or > 4_096)
-            throw new ArgumentOutOfRangeException(nameof(options));
-    }
+    private static void ValidateEvidenceOptions(SafeCoreMirOwnershipOptions options) => ValidateOptions(options);
 
     private static int AggregateEvidenceValidationLimit(int perFunctionLimit, int functionCount, int hardLimit) =>
         (int)Math.Min(hardLimit, (long)perFunctionLimit * Math.Max(1, functionCount));

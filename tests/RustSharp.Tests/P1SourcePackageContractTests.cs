@@ -2,6 +2,7 @@ using System.Text;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
+using System.Text.Json.Nodes;
 using RustSharp.CodeGen.IL;
 using RustSharp.Compiler;
 
@@ -28,7 +29,129 @@ internal static class P1SourcePackageContractTests
         new("P1-09 rejects duplicate source and CLR call contract aliases", () => RejectsScalarContractAsync("alias")),
         new("P1-09 rejects source call panic and ownership disagreement", () => RejectsScalarContractAsync("panic")),
         new("P1-09 rejects missing scalar source return contracts", () => RejectsScalarContractAsync("missing-return")),
+        new("P1-09 rejects source scalar schema removal", () => RejectsScalarContractAsync("missing-schema")),
+        new("P1-09 rejects source scalar schema and terms downgrade", () => RejectsScalarContractAsync("schema-downgrade")),
+        new("P1-09 rejects malformed source metadata core and unknown fields", RejectsMalformedSourceMetadataAsync),
+        new("P1-09 resolves exact CLR identities and rejects ambiguous source aliases", FunctionIdentityAsync),
+        new("P1-09 preserves legacy optional metadata extensions", LegacyMetadataExtensionsAsync),
     ];
+
+    private static Task FunctionIdentityAsync()
+    {
+        var document = new RustSharpMetadataDocument("safe-core-generics-v1", new string('a', 64),
+        [
+            new("A", "I32->I32", "crate::identity"),
+            new("Z", "Bool->Bool", "crate::identity"),
+            new("crate::identity", "->Void", "crate::other"),
+        ]);
+        AssertEx.Equal("crate::identity", RustSharpMetadataConsumer.FindFunction(document, "crate::identity")!.Name,
+            "An exact emitted CLR name must win over the earlier source alias.");
+        AssertEx.Equal("Z", RustSharpMetadataConsumer.FindFunction(document, "Z")!.Name);
+        AssertEx.True(RustSharpMetadataConsumer.FindFunction(document, "crate::identity#value") is null,
+            "A shared source body alias must not silently choose one specialization.");
+        var specializations = new RustSharpMetadataDocument(document.Profile, document.SourceSha256,
+            document.Functions.Where(value => value.Name != "crate::identity"));
+        AssertEx.True(RustSharpMetadataConsumer.FindFunction(specializations, "crate::identity") is null,
+            "A source-only declaration shared by two MethodDefs is ambiguous.");
+        var legacy = new RustSharpMetadataDocument(document.Profile, document.SourceSha256, [new("Plain", "->Void")]);
+        AssertEx.True(RustSharpMetadataConsumer.FindFunction(legacy, "#value") is null,
+            "A missing source name must not synthesize a #value alias.");
+        return Task.CompletedTask;
+    }
+
+    private static Task LegacyMetadataExtensionsAsync()
+    {
+        var original = new RustSharpMetadataDocument("safe-core-primitives-v1", new string('a', 64),
+            [new("Identity", "I32->I32", "Identity")]);
+        JsonObject json = JsonNode.Parse(original.Json)!.AsObject();
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        foreach (string extension in new[] { "mirSnapshot", "ownership", "cleanupSnapshot", "callContracts", "valueTypes" })
+        {
+            deadline.Token.ThrowIfCancellationRequested();
+            json.Remove(extension);
+        }
+        AssertEx.Equal(original.Json, RustSharpMetadataDocument.Parse(json.ToJsonString()).Json,
+            "Pre-extension v1 metadata must still canonicalize with empty optional evidence.");
+        return Task.CompletedTask;
+    }
+
+    private static Task RejectsMalformedSourceMetadataAsync()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "rustsharp-p1-source-contract-shape-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        const string source = "pub fn add(left: i32, right: i32) -> i32 { left + right } fn main() {}";
+        string producerPath = Path.Combine(directory, "ContractProducer.dll");
+        string[] mutations = ["unknown-root", "unknown-function", "unknown-call-contract", "unknown-ownership",
+            "missing-schema", "missing-profile", "missing-sourceSha256", "missing-functions", "missing-genericInstances",
+            "missing-traitImplementations", "null-functions", "null-genericInstances", "null-traitImplementations",
+            "missing-function-name", "missing-function-signature", "missing-contract-panic"];
+        try
+        {
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            string sourcePath = Path.Combine(directory, "producer.rs");
+            File.WriteAllText(sourcePath, source);
+            CompilationResult producer = CompilerDriver.CompileFile(sourcePath, producerPath, "ContractProducer",
+                CompilationProfile.SafeCorePrimitives, deadline.Token);
+            AssertEx.True(producer.Success, string.Join("; ", producer.Diagnostics));
+            RustSharpMetadataImportResult original = RustSharpMetadataConsumer.ReadAssembly(producerPath, "safe-core-primitives-v1");
+            AssertEx.True(original.IsSuccessful, string.Join("; ", original.Diagnostics));
+            RustSharpMetadataDocument document = original.Document!;
+            byte[] originalImage = File.ReadAllBytes(producerPath);
+            byte[] originalJson = Encoding.UTF8.GetBytes(document.Json);
+            int offset = originalImage.AsSpan().IndexOf(originalJson);
+            AssertEx.True(offset >= 0, "The real producer PE must embed its canonical JSON.");
+            AssertEx.True(mutations.Length <= 16, "The malformed metadata matrix has a fixed maximum denominator.");
+            for (int index = 0; index < mutations.Length; index++)
+            {
+                deadline.Token.ThrowIfCancellationRequested();
+                string mutation = mutations[index];
+                JsonObject changed = JsonNode.Parse(document.Json)!.AsObject();
+                // The real producer's optional snapshots reserve enough blob
+                // space to patch JSON without altering any MethodDef or IL.
+                changed.Remove("mirSnapshot");
+                changed.Remove("cleanupSnapshot");
+                if (mutation.StartsWith("missing-", StringComparison.Ordinal) &&
+                    mutation is not ("missing-function-name" or "missing-function-signature" or "missing-contract-panic"))
+                    changed.Remove(mutation[8..]);
+                else if (mutation.StartsWith("null-", StringComparison.Ordinal))
+                    changed[mutation[5..]] = null;
+                else
+                {
+                    switch (mutation)
+                    {
+                        case "unknown-root": changed["functinos"] = new JsonArray(); break;
+                        case "unknown-function": changed["functions"]![0]!["signatuer"] = "I32->I32"; break;
+                        case "unknown-call-contract": changed["callContracts"]![0]!["scheam"] = "unknown"; break;
+                        case "unknown-ownership": changed["ownership"]![0]!["panicStratgey"] = "abort"; break;
+                        case "missing-function-name": changed["functions"]![0]!.AsObject().Remove("name"); break;
+                        case "missing-function-signature": changed["functions"]![0]!.AsObject().Remove("signature"); break;
+                        case "missing-contract-panic": changed["callContracts"]![0]!.AsObject().Remove("panicStrategy"); break;
+                        default: throw new InvalidOperationException("Unknown bounded metadata shape mutation.");
+                    }
+                }
+                byte[] replacement = Encoding.UTF8.GetBytes(changed.ToJsonString());
+                AssertEx.True(replacement.Length <= originalJson.Length, "The shape mutation must fit the original attribute blob.");
+                byte[] image = (byte[])originalImage.Clone();
+                image.AsSpan(offset, originalJson.Length).Fill((byte)' ');
+                replacement.CopyTo(image.AsSpan(offset));
+                File.WriteAllBytes(producerPath, image);
+                RustSharpMetadataImportResult rejected = RustSharpMetadataConsumer.ReadAssembly(producerPath, "safe-core-primitives-v1");
+                AssertEx.False(rejected.IsSuccessful, "Malformed source metadata must reject: " + mutation);
+                AssertEx.True(rejected.Diagnostics.Any(value => value.StartsWith(RustSharpMetadataConsumer.InvalidMetadata, StringComparison.Ordinal)),
+                    "A shape rejection must carry the stable import diagnostic: " + mutation);
+                string output = Path.Combine(directory, "RejectedConsumer.dll");
+                CompilationResult consumer = CompilerDriver.CompileWithMetadataReferences(
+                    "use ContractProducer::add; fn main() { println!(\"{}\", add(20, 22)); }",
+                    Path.Combine(directory, "consumer.rs"), output, "RejectedConsumer", CompilationProfile.SafeCorePrimitives,
+                    [producerPath], cancellationToken: deadline.Token);
+                AssertEx.False(consumer.Success || File.Exists(output), "The malformed producer must reject before consumer PE emission: " + mutation);
+                if (index == 0 || (index + 1) % 4 == 0)
+                    Console.WriteLine("Source metadata shape mutations: " + (index + 1) + "/" + mutations.Length + "; latest=" + mutation);
+            }
+        }
+        finally { TryDelete(directory); }
+        return Task.CompletedTask;
+    }
 
     private static async Task GenericSourceContractsAsync()
     {
@@ -53,6 +176,9 @@ internal static class P1SourcePackageContractTests
             RustSharpMetadataFunction[] scalarInstances = document.Functions.Where(value =>
                 value.SourceQualifiedName == "crate::identity" && value.Signature is "I32->I32" or "Bool->Bool").ToArray();
             AssertEx.Equal(2, scalarInstances.Length, "The shared source declaration must retain two distinct scalar MethodDefs.");
+            AssertEx.True(RustSharpMetadataConsumer.FindFunction(document, "crate::identity") is null &&
+                RustSharpMetadataConsumer.FindFunction(document, "crate::identity#value") is null,
+                "A real source declaration with multiple scalar and unit instances must not resolve as one callable alias.");
             foreach (RustSharpMetadataFunction instance in scalarInstances)
             {
                 deadline.Token.ThrowIfCancellationRequested();
@@ -66,6 +192,33 @@ internal static class P1SourcePackageContractTests
             AssertEx.True(run.Succeeded && !run.ProcessTreeCleanupIncomplete && !run.OutputTruncated,
                 "Generic source specialization execution must exit cleanly: " + run.StandardError);
             AssertEx.Equal("42\ntrue\n9\n", run.StandardOutput.Replace("\r\n", "\n", StringComparison.Ordinal));
+
+            RustSharpMetadataImportResult exactImport = RustSharpMetadataConsumer.ReadAssembly(assemblyPath,
+                "safe-core-generics-v1", [scalarInstances[1].Name]);
+            AssertEx.True(exactImport.IsSuccessful, "An exact CLR specialization remains importable after rejecting source ambiguity.");
+            RustSharpMetadataCallContract target = document.CallContracts.Single(value => value.FunctionId == scalarInstances[0].Name);
+            var ambiguous = new RustSharpMetadataDocument(document.Profile, document.SourceSha256, document.Functions,
+                document.GenericInstances, document.TraitImplementations, ownership: document.Ownership,
+                callContracts: document.CallContracts.Select(value => value == target
+                    ? value with { FunctionId = "crate::identity" } : value), valueTypes: document.ValueTypes);
+            byte[] image = File.ReadAllBytes(assemblyPath);
+            byte[] originalJson = Encoding.UTF8.GetBytes(document.Json);
+            JsonObject ambiguousJson = JsonNode.Parse(ambiguous.Json)!.AsObject();
+            // Omit an optional null extension to make room for the longer
+            // source alias without changing the PE attribute blob length.
+            ambiguousJson.Remove("cleanupSnapshot");
+            byte[] replacement = Encoding.UTF8.GetBytes(ambiguousJson.ToJsonString());
+            int offset = image.AsSpan().IndexOf(originalJson);
+            AssertEx.True(offset >= 0 && replacement.Length <= originalJson.Length,
+                "The real generic producer must reserve space for the ambiguous contract mutation.");
+            image.AsSpan(offset, originalJson.Length).Fill((byte)' ');
+            replacement.CopyTo(image.AsSpan(offset));
+            File.WriteAllBytes(assemblyPath, image);
+            RustSharpMetadataImportResult rejected = RustSharpMetadataConsumer.ReadAssembly(assemblyPath, "safe-core-generics-v1");
+            AssertEx.False(rejected.IsSuccessful, "A generic source-only contract must not bind to the first emitted specialization.");
+            AssertEx.True(rejected.Diagnostics.Any(value => value.StartsWith(RustSharpMetadataConsumer.InvalidMetadata, StringComparison.Ordinal) &&
+                value.Contains("unknown function 'crate::identity'", StringComparison.Ordinal)),
+                "An ambiguous specialization contract must retain its stable unresolved-function diagnostic.");
         }
         finally { TryDelete(directory); }
     }
@@ -154,6 +307,8 @@ internal static class P1SourcePackageContractTests
                 "schema" => target with { Schema = "rustsharp-scalar-call-v9" },
                 "panic" => target with { PanicStrategy = "abort" },
                 "missing-return" => target with { ReturnContract = null },
+                "missing-schema" => target with { Schema = null },
+                "schema-downgrade" => target with { Schema = null, ParameterContracts = [], ReturnContract = null },
                 "alias" => target,
                 _ => throw new InvalidOperationException("Unknown bounded source contract mutation."),
             };

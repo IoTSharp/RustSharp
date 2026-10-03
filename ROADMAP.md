@@ -550,9 +550,18 @@ GC-owned references resolve the former `ReturnPtrToStack` diagnostic. The histor
 Final local Release validation with SDK 10.0.401 (repository pin 10.0.400) has
 zero warnings/errors and passes 670/670 harness tests, regression v3 26/26 and
 borrow/Drop v2 16/16, with zero failures/blocked/skips. Reports are retained under
-`artifacts/p1-06-final-session`. P1-10.01/.02 still require the complete case
-inventory and expanded differential/platform denominators; these local results
-do not close the full native candidate-SHA gate.
+`artifacts/p1-06-final-session`. P1-10.01/.02 are ✅ Complete as inventory
+deliveries; the expanded suites still contain label-only placeholders and need
+real semantic sources in a new immutable version. These local results do not
+close the full native candidate-SHA gate.
+
+The follow-up from `e601789` advances P1-07.12, P1-09.03/.07 and P1-10.07:
+explicit ownership evidence obeys per-function resource bounds and preserves
+source diagnostics; package metadata rejects missing/unknown fields, scalar
+schema downgrades and ambiguous source aliases; expanded platform reports bind
+fixed sources/expectations, outputs and backend process evidence. The
+[evidence audit](docs/p1-evidence-audit.md) records focused verification and the
+remaining semantic/native boundaries. P1 and all six P1-GATE leaves remain open.
 Use the exact leaf dependencies in the [P1 execution order](docs/roadmap/P1.md):
 typed place/provenance work unlocks source ownership; drop flags unlock cleanup;
 metadata contracts and test runners can advance in separate owned files.

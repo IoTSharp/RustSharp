@@ -11,6 +11,7 @@ internal static class P1EvidenceBindingTests
         new("P1 evidence binding rejects stale hashes and skipped cases", RejectsForgedReportAsync),
         new("P1 evidence binding rejects missing oracle and cleanup provenance", RejectsMissingProvenanceAsync),
         new("P1 evidence binding enforces an optional candidate SHA", CandidateShaAsync),
+        .. P1PlatformBindingContractTests.All,
     ];
 
     private static Task AcceptsCompleteReportAsync()

@@ -66,6 +66,7 @@ internal static class P1ExpandedPlatformRunner
         string dotnetPath = ResolveToolPath("RUSTSHARP_P1_DOTNET_PATH", "dotnet");
         string pwshPath = ResolveToolPath("RUSTSHARP_P1_PWSH_PATH", OperatingSystem.IsWindows() ? @"C:\Program Files\PowerShell\7\pwsh.exe" : "pwsh");
         string cliPath = ResolveCliPath(root);
+        string compilerSha256 = ComputeSha256IfPresent(cliPath);
         ToolProbe dotnetProbe = await ProbeToolAsync(processRunner, dotnetPath, ["--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
         ToolProbe rustcProbe = await ProbeToolAsync(processRunner, ResolveToolPath("RUSTSHARP_P1_RUSTC_PATH", "rustc"), ["+1.98.0", "--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
         ToolProbe ilVerifyProbe = await ProbeToolAsync(processRunner, dotnetPath, ["tool", "run", "ilverify", "--", "--version"], root, timeout, cancellation.Token).ConfigureAwait(false);
@@ -114,7 +115,7 @@ internal static class P1ExpandedPlatformRunner
             ["compilerSha256"] = ComputeSha256IfPresent(cliPath),
             ["manifest"] = new JsonObject { ["version"] = P1ExpandedSuiteValidator.ManifestVersion, ["path"] = Path.GetRelativePath(root, manifestPath).Replace(Path.DirectorySeparatorChar, '/'), ["sha256"] = manifestSha256 ?? "", ["declaredSha256"] = suite?.ManifestSha256 ?? "", ["denominator"] = denominator, ["validated"] = suite is not null },
             ["compiler"] = new JsonObject { ["sha256"] = ComputeSha256IfPresent(cliPath), ["declaredSha256"] = suite?.CompilerSha256 ?? "", ["path"] = cliPath, ["profile"] = CompilerProfile },
-            ["platform"] = new JsonObject { ["name"] = runtimeIdentifier == "win-x64" ? "windows-x64" : "linux-x64", ["runtimeIdentifier"] = runtimeIdentifier, ["observedRuntimeIdentifier"] = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier, ["architecture"] = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(), ["nativeExecution"] = IsNativeHost(runtimeIdentifier), ["backend"] = suite?.Backend ?? "", ["oracle"] = observedOracle, ["runtime"] = Environment.Version.ToString(), ["sdk"] = ProbeVersion(dotnetProbe, "unavailable") },
+            ["platform"] = new JsonObject { ["name"] = runtimeIdentifier == "win-x64" ? "windows-x64" : "linux-x64", ["runtimeIdentifier"] = runtimeIdentifier, ["observedRuntimeIdentifier"] = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier, ["architecture"] = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(), ["processArchitecture"] = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(), ["nativeExecution"] = IsNativeHost(runtimeIdentifier), ["backend"] = suite?.Backend ?? "", ["oracle"] = observedOracle, ["runtime"] = Environment.Version.ToString(), ["sdk"] = ProbeVersion(dotnetProbe, "unavailable") },
             ["toolVersions"] = new JsonObject { ["dotnet"] = Environment.Version.ToString(), ["sdkVersion"] = ProbeVersion(dotnetProbe, "unavailable"), ["rustc"] = observedOracle, ["ilverify"] = ProbeVersion(ilVerifyProbe, "unavailable") },
             ["oracle"] = new JsonObject { ["version"] = observedOracle },
             ["limits"] = new JsonObject { ["maximumCases"] = P1ExpandedSuiteValidator.PlatformDenominator, ["caseTimeoutSeconds"] = timeout.TotalSeconds, ["deadlineSeconds"] = deadline.TotalSeconds, ["maximumOutputBytes"] = BoundedProcessRunner.MaximumTotalOutputBytes },
@@ -127,6 +128,20 @@ internal static class P1ExpandedPlatformRunner
             ["coverageLimitations"] = new JsonArray(PlaceholderSemanticIds.Select(static id => (JsonNode)id).ToArray()),
             ["harnessError"] = harnessError,
         };
+        P1EvidenceBindingValidator.ValidationResult bindingValidation = suite is null
+            ? P1EvidenceBindingValidator.ValidationResult.Fail(["Frozen platform manifest was not validated."])
+            : P1EvidenceBindingValidator.Validate(report.ToJsonString(JsonOptions), CreateBindingExpectation(suite, runtimeIdentifier, manifestSha256 ?? "", compilerSha256, ResolveCandidateSha()));
+        report["bindingValidation"] = new JsonObject
+        {
+            ["valid"] = bindingValidation.Valid, ["status"] = bindingValidation.Status,
+            ["errors"] = new JsonArray(bindingValidation.Errors.Select(static error => (JsonNode)error).ToArray()),
+            ["scope"] = "Frozen identity, output, provenance and bounded backend execution; semantic closure remains ineligible.",
+        };
+        if (status == "passed" && !bindingValidation.Valid)
+        {
+            status = "failed";
+            report["summary"]!["status"] = status; report["summary"]!["exitCode"] = 1;
+        }
         string temp = fullReport + ".tmp-" + Environment.ProcessId + "-" + Guid.NewGuid().ToString("N");
         try { await File.WriteAllTextAsync(temp, report.ToJsonString(JsonOptions)).ConfigureAwait(false); File.Move(temp, fullReport, true); }
         finally { if (File.Exists(temp)) File.Delete(temp); }
@@ -137,6 +152,7 @@ internal static class P1ExpandedPlatformRunner
     private static async Task<JsonObject> RunCaseAsync(BoundedProcessRunner runner, string root, string runDirectory, P1ExpandedSuiteValidator.CaseSpec fixture, TimeSpan timeout, string runtimeIdentifier, ToolProbe ilVerifyProbe, string dotnetPath, string pwshPath, string cliPath, CancellationToken cancellationToken)
     {
         string source = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", fixture.Source);
+        string sourceSha256 = ComputeSha256IfPresent(source);
         string directory = Path.Combine(runDirectory, fixture.Id); Directory.CreateDirectory(directory);
         string output = Path.Combine(directory, fixture.Id + ".dll");
         BoundedProcessResult compile = await runner.RunAsync(new BoundedProcessRequest(dotnetPath, [cliPath, "compile", source, "--output", output, "--profile", CompilerProfile], root, timeout), cancellationToken).ConfigureAwait(false);
@@ -156,7 +172,7 @@ internal static class P1ExpandedPlatformRunner
         bool passed = coreClrPassed && ilVerifyPassed && nativeAotPassed;
         bool blocked = ilVerify["status"]?.GetValue<string>() == "blocked" || nativeAot["status"]?.GetValue<string>() == "blocked";
         string status = passed ? "passed" : blocked ? "blocked" : "failed";
-        var result = new JsonObject { ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256, ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = status, ["semanticClosureEligible"] = SemanticClosureEligibleIds.Contains(fixture.Id), ["scope"] = SemanticClosureEligibleIds.Contains(fixture.Id) ? "fixed executable output" : "placeholder source emits only its case identifier; semantic package/panic/aggregate behavior is unproven", ["difference"] = passed ? null : "CoreCLR, ILVerify, or Native AOT evidence did not complete." };
+        var result = new JsonObject { ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = sourceSha256 == ComputeSha256IfPresent(source) ? sourceSha256 : "", ["expectationSha256"] = fixture.ExpectationSha256, ["assemblySha256"] = ComputeSha256IfPresent(output), ["status"] = status, ["semanticClosureEligible"] = SemanticClosureEligibleIds.Contains(fixture.Id), ["scope"] = SemanticClosureEligibleIds.Contains(fixture.Id) ? "fixed executable output" : "placeholder source emits only its case identifier; semantic package/panic/aggregate behavior is unproven", ["difference"] = passed ? null : "CoreCLR, ILVerify, or Native AOT evidence did not complete." };
         result["coreClrCompile"] = Evidence(compile); result["coreClrRun"] = run is null ? null : Evidence(run);
         if (run is not null) result["coreClrRun"]!["outputMatches"] = coreClrOutputMatches;
         result["ilVerify"] = ilVerify;
@@ -174,9 +190,10 @@ internal static class P1ExpandedPlatformRunner
         try { result = await runner.RunAsync(new BoundedProcessRequest(pwshPath, ["-NoLogo", "-NoProfile", "-File", script, "-AssemblyPath", assembly, "-ReferencePath", runtimeAssembly, "-RuntimeVersion", Environment.Version.ToString(), "-EvidencePath", evidencePath, "-TimeoutSeconds", "120"], root, timeout), cancellationToken).ConfigureAwait(false); }
         catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
         { return new JsonObject { ["status"] = "blocked", ["diagnostic"] = "PowerShell 7 or ILVerify launcher is unavailable: " + exception.Message }; }
-        bool verified = Succeeded(result) && File.Exists(evidencePath) && IlVerifyEvidenceSucceeded(evidencePath);
+        string? evidenceJson = File.Exists(evidencePath) && new FileInfo(evidencePath).Length <= 1_048_576 ? await File.ReadAllTextAsync(evidencePath, cancellationToken).ConfigureAwait(false) : null;
+        bool verified = Succeeded(result) && evidenceJson is not null && IlVerifyEvidenceSucceeded(evidenceJson);
         bool unavailable = result.Termination != BoundedProcessTermination.Exited || result.StandardError.Contains("SDK", StringComparison.OrdinalIgnoreCase) || result.StandardError.Contains("not found", StringComparison.OrdinalIgnoreCase) || result.StandardError.Contains("tool", StringComparison.OrdinalIgnoreCase) && result.StandardError.Contains("cannot", StringComparison.OrdinalIgnoreCase);
-        return new JsonObject { ["status"] = verified ? "passed" : unavailable ? "blocked" : "failed", ["succeeded"] = verified, ["diagnostic"] = verified ? null : unavailable ? "ILVerify launcher or SDK is unavailable." : "ILVerify did not produce successful evidence.", ["process"] = Evidence(result), ["evidencePath"] = Path.GetRelativePath(root, evidencePath).Replace(Path.DirectorySeparatorChar, '/'), ["evidenceSha256"] = File.Exists(evidencePath) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(evidencePath))) : null };
+        return new JsonObject { ["status"] = verified ? "passed" : unavailable ? "blocked" : "failed", ["succeeded"] = verified, ["diagnostic"] = verified ? null : unavailable ? "ILVerify launcher or SDK is unavailable." : "ILVerify did not produce successful evidence.", ["process"] = Evidence(result), ["evidencePath"] = Path.GetRelativePath(root, evidencePath).Replace(Path.DirectorySeparatorChar, '/'), ["evidenceJson"] = evidenceJson, ["evidenceSha256"] = evidenceJson is not null ? Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(evidenceJson))) : null };
     }
     private static async Task<JsonObject> RunNativeAotAsync(BoundedProcessRunner runner, string root, string directory, string assembly, string assemblyName, string expectedKey, TimeSpan timeout, string runtimeIdentifier, CancellationToken cancellationToken)
     {
@@ -198,15 +215,15 @@ internal static class P1ExpandedPlatformRunner
             bool outputMatches = OutputMatches(run, expected);
             JsonObject runEvidence = Evidence(run);
             runEvidence["outputMatches"] = outputMatches;
-            return new JsonObject { ["status"] = Succeeded(run) && outputMatches ? "passed" : "failed", ["succeeded"] = Succeeded(run) && outputMatches, ["diagnostic"] = Succeeded(run) && outputMatches ? null : "Native AOT executable failed to run or output differed.", ["publish"] = Evidence(publish.ProcessResult), ["run"] = runEvidence, ["outputMatches"] = outputMatches, ["executablePath"] = Path.GetRelativePath(root, publish.ExecutablePath).Replace(Path.DirectorySeparatorChar, '/'), ["executableSha256"] = File.Exists(publish.ExecutablePath) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(publish.ExecutablePath))) : null, ["hostCleanupIncomplete"] = publish.HostCleanupIncomplete };
+            return new JsonObject { ["status"] = Succeeded(run) && outputMatches ? "passed" : "failed", ["succeeded"] = Succeeded(run) && outputMatches, ["diagnostic"] = Succeeded(run) && outputMatches ? null : "Native AOT executable failed to run or output differed.", ["publish"] = Evidence(publish.ProcessResult), ["run"] = runEvidence, ["outputMatches"] = outputMatches, ["assemblySha256"] = ComputeSha256IfPresent(assembly), ["executablePath"] = Path.GetRelativePath(root, publish.ExecutablePath).Replace(Path.DirectorySeparatorChar, '/'), ["executableSha256"] = File.Exists(publish.ExecutablePath) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(publish.ExecutablePath))) : null, ["hostCleanupIncomplete"] = publish.HostCleanupIncomplete };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException)
         { return new JsonObject { ["status"] = "blocked", ["diagnostic"] = "Native AOT toolchain unavailable: " + exception.Message }; }
     }
-    private static bool IlVerifyEvidenceSucceeded(string path)
+    private static bool IlVerifyEvidenceSucceeded(string json)
     {
-        try { using JsonDocument document = JsonDocument.Parse(File.ReadAllBytes(path)); return document.RootElement.TryGetProperty("Succeeded", out JsonElement succeeded) && succeeded.ValueKind == JsonValueKind.True; }
+        try { using JsonDocument document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 32 }); return document.RootElement.ValueKind == JsonValueKind.Object && document.RootElement.TryGetProperty("Succeeded", out JsonElement succeeded) && succeeded.ValueKind == JsonValueKind.True; }
         catch (JsonException) { return false; }
     }
     private static async Task<ToolProbe> ProbeToolAsync(BoundedProcessRunner runner, string fileName, IReadOnlyList<string> arguments, string workingDirectory, TimeSpan timeout, CancellationToken cancellationToken)
@@ -228,12 +245,21 @@ internal static class P1ExpandedPlatformRunner
     private static string NormalizeOutput(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
     internal static bool OutputMatches(BoundedProcessResult? result, string expected) => Succeeded(result) && NormalizeOutput(result!.StandardOutput) == NormalizeOutput(expected);
     internal static bool IsSemanticClosureEligible(string id) => SemanticClosureEligibleIds.Contains(id);
+    internal static P1EvidenceBindingValidator.BindingExpectation CreateBindingExpectation(P1ExpandedSuiteValidator.SuiteSpec suite, string runtimeIdentifier, string manifestSha256, string compilerSha256, string? candidateSha = null)
+    {
+        ArgumentNullException.ThrowIfNull(suite);
+        if (suite.Profile != ProfileName || suite.Cases.Count != P1ExpandedSuiteValidator.PlatformDenominator || suite.Denominator != P1ExpandedSuiteValidator.PlatformDenominator)
+            throw new ArgumentException("Binding requires the previously validated frozen platform suite.", nameof(suite));
+        return new("p1-platform-coreclr-ilverify-native-aot", ProfileName, runtimeIdentifier, suite.Denominator, manifestSha256, compilerSha256,
+            CandidateSha: candidateSha, CaseBindings: suite.Cases.Select(static fixture => new P1EvidenceBindingValidator.CaseBinding(fixture.Id, fixture.Source, fixture.SourceSha256, fixture.ExpectationSha256,
+                ExpectedOutputs.TryGetValue(fixture.Id, out string? output) ? output : fixture.Id + "\n")).ToArray());
+    }
     internal static string ReadGeneratedAssemblyName(string path) => System.Reflection.AssemblyName.GetAssemblyName(path).Name ?? throw new InvalidOperationException("Generated PE assembly identity is missing.");
     private static bool IsNativeHost(string runtimeIdentifier) => System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.X64 && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.X64 && (runtimeIdentifier == "win-x64" ? OperatingSystem.IsWindows() : runtimeIdentifier == "linux-x64" && OperatingSystem.IsLinux());
     private sealed record ToolProbe(BoundedProcessResult? Result, string? Diagnostic);
     private static JsonObject Blocked(P1ExpandedSuiteValidator.CaseSpec fixture, string reason) => new() { ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256, ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = "blocked", ["difference"] = reason };
     private static bool Succeeded(BoundedProcessResult? result) => result is not null && result.Succeeded && !result.OutputTruncated && !result.OutputReadTimedOut && !result.OutputDrainTimedOut && !result.OutputReadLimitReached && !result.ProcessTreeCleanupIncomplete;
-    private static JsonObject Evidence(BoundedProcessResult result) => new() { ["commandLine"] = result.StartedProcess.CommandLine, ["processId"] = result.StartedProcess.ProcessId, ["parentProcessId"] = result.StartedProcess.ParentProcessId, ["startedAtUtc"] = result.StartedProcess.StartedAt, ["exitCode"] = result.ExitCode, ["termination"] = result.Termination.ToString().ToLowerInvariant(), ["elapsedMilliseconds"] = result.Elapsed.TotalMilliseconds, ["standardOutput"] = result.StandardOutput, ["standardError"] = result.StandardError, ["outputTruncated"] = result.OutputTruncated, ["outputReadTimedOut"] = result.OutputReadTimedOut, ["outputDrainTimedOut"] = result.OutputDrainTimedOut, ["outputReadLimitReached"] = result.OutputReadLimitReached, ["cleanupIncomplete"] = result.ProcessTreeCleanupIncomplete, ["diagnostic"] = result.OutputDiagnostic ?? result.ProcessTreeCleanupDiagnostic };
+    private static JsonObject Evidence(BoundedProcessResult result) => new() { ["commandLine"] = result.StartedProcess.CommandLine, ["fileName"] = result.StartedProcess.FileName, ["arguments"] = new JsonArray(result.StartedProcess.Arguments.Select(static argument => (JsonNode)argument).ToArray()), ["workingDirectory"] = result.StartedProcess.WorkingDirectory, ["processId"] = result.StartedProcess.ProcessId, ["parentProcessId"] = result.StartedProcess.ParentProcessId, ["startedAtUtc"] = result.StartedProcess.StartedAt, ["exitCode"] = result.ExitCode, ["termination"] = result.Termination.ToString().ToLowerInvariant(), ["elapsedMilliseconds"] = result.Elapsed.TotalMilliseconds, ["standardOutput"] = result.StandardOutput, ["standardError"] = result.StandardError, ["outputTruncated"] = result.OutputTruncated, ["outputReadTimedOut"] = result.OutputReadTimedOut, ["outputDrainTimedOut"] = result.OutputDrainTimedOut, ["outputReadLimitReached"] = result.OutputReadLimitReached, ["cleanupIncomplete"] = result.ProcessTreeCleanupIncomplete, ["diagnostic"] = result.OutputDiagnostic ?? result.ProcessTreeCleanupDiagnostic };
     private static string? ResolveCandidateSha() => Environment.GetEnvironmentVariable("GITHUB_SHA") ?? Environment.GetEnvironmentVariable("CI_COMMIT_SHA");
     private static string? DeleteBounded(string path)
     {

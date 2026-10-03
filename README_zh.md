@@ -105,7 +105,7 @@ MethodDef 的签名、static 属性和可见性。导入聚合/byref 签名及�
 手工构建的 CLR LIR producer/consumer CoreCLR 测试；完整源码级跨包所有权契约及这些
 新增能力的 ILVerify 和双平台 Native AOT 证据仍待补齐。
 
-当前本地 Release 构建零错误/零警告，可执行测试工具使用已安装的 SDK 10.0.401 通过 670/670，失败/跳过均为零；仓库固定版本仍为 10.0.400。日志保留于 `artifacts/p1-06-final-session`。这些结果不能关闭完整 P1 退出门槛。
+2026-10-04 的本地 Release 构建零错误/零警告，可执行测试工具使用已安装的 SDK 10.0.401 通过 755/755，失败/跳过均为零；仓库固定版本仍为 10.0.400。日志保留于 `artifacts/p1-next-session`。[后续审计](docs/p1-evidence-audit_zh.md) 记录所有权资源、源码包元数据及平台证据绑定的改进。这些结果不能关闭完整 P1 退出门槛。
 
 已记录的 `safe-core-regression-v1` 报告通过 8/8，失败和跳过均为零。
 历史 `safe-core-regression-v2` 报告通过 24/24，包含 1 个编译通过、6 个编译失败、

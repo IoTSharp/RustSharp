@@ -502,7 +502,9 @@ public sealed partial record RustSharpMetadataDocument
         value.Length <= maximum ? value : throw new ArgumentException("Rust# metadata text exceeds its size limit.");
 
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-        WriteIndented = false, GenerationMode = JsonSourceGenerationMode.Metadata)]
+        WriteIndented = false, GenerationMode = JsonSourceGenerationMode.Metadata,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        RespectRequiredConstructorParameters = true)]
     [JsonSerializable(typeof(RustSharpMetadataDocument))]
     [JsonSerializable(typeof(MetadataPayload))]
     private sealed partial class MetadataJsonContext : JsonSerializerContext;
@@ -532,6 +534,8 @@ public sealed partial record RustSharpMetadataDocument
             throw new ArgumentException("Unsupported Rust# metadata schema.", nameof(json));
         if (parsed.Profile is null || parsed.SourceSha256 is null)
             throw new ArgumentException("Rust# metadata identity is incomplete.", nameof(json));
+        if (parsed.Functions is null || parsed.GenericInstances is null || parsed.TraitImplementations is null)
+            throw new ArgumentException("Rust# metadata core collections are incomplete.", nameof(json));
 
         // Reconstruct through the validating constructor. The document has
         // derived Schema/Json state and is intentionally not a direct
@@ -555,11 +559,17 @@ public sealed partial record RustSharpMetadataDocument
 
     private sealed class MetadataPayload
     {
+        [JsonRequired]
         public string? Schema { get; set; }
+        [JsonRequired]
         public string? Profile { get; set; }
+        [JsonRequired]
         public string? SourceSha256 { get; set; }
+        [JsonRequired]
         public RustSharpMetadataFunction[]? Functions { get; set; }
+        [JsonRequired]
         public RustSharpMetadataGenericInstance[]? GenericInstances { get; set; }
+        [JsonRequired]
         public string[]? TraitImplementations { get; set; }
         public string? MirSnapshot { get; set; }
         public RustSharpMetadataOwnershipFunction[]? Ownership { get; set; }
@@ -760,11 +770,18 @@ public static class RustSharpMetadataConsumer
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentException.ThrowIfNullOrWhiteSpace(functionId);
-        return document.Functions.FirstOrDefault(function =>
-            string.Equals(function.Name, functionId, StringComparison.Ordinal) ||
-            string.Equals(function.SourceQualifiedName, functionId, StringComparison.Ordinal) ||
-            string.Equals(function.SourceQualifiedName, functionId + "#value", StringComparison.Ordinal) ||
-            string.Equals(function.SourceQualifiedName + "#value", functionId, StringComparison.Ordinal));
+        // A source declaration may have several closed MethodDefs. An exact
+        // emitted identity must win even if an earlier entry shares its name
+        // as a source alias; a source-only ID may resolve only one MethodDef.
+        RustSharpMetadataFunction? emitted = document.Functions.FirstOrDefault(function =>
+            string.Equals(function.Name, functionId, StringComparison.Ordinal));
+        if (emitted is not null) return emitted;
+        RustSharpMetadataFunction[] aliases = document.Functions.Where(function =>
+            function.SourceQualifiedName is { } source &&
+            (string.Equals(source, functionId, StringComparison.Ordinal) ||
+             string.Equals(source, functionId + "#value", StringComparison.Ordinal) ||
+             string.Equals(source + "#value", functionId, StringComparison.Ordinal))).Take(2).ToArray();
+        return aliases.Length == 1 ? aliases[0] : null;
     }
 
     private static void ValidateCallContracts(
@@ -823,8 +840,16 @@ public static class RustSharpMetadataConsumer
 
             string[] parameters = string.IsNullOrWhiteSpace(function.Signature[..arrow])
                 ? [] : function.Signature[..arrow].Split(',', StringSplitOptions.None);
+            string returnType = function.Signature[(arrow + 2)..];
+            bool sourceScalar = function.SourceQualifiedName is { } source &&
+                !string.Equals(source, function.Name, StringComparison.Ordinal) &&
+                parameters.All(static type => type is "I32" or "Bool") &&
+                returnType is "I32" or "Bool" or "Void";
+            if (sourceScalar && contract.Schema != RustSharpMetadataCallContract.ScalarSchema)
+                AddContractDiagnostic(diagnostics, "source scalar call contract for '" +
+                    Trim(contract.FunctionId) + "' requires its explicit scalar schema.");
             string[] terms = (contract.ParameterContracts ?? []).ToArray();
-            bool scalarSchema = contract.Schema == RustSharpMetadataCallContract.ScalarSchema;
+            bool scalarSchema = sourceScalar || contract.Schema == RustSharpMetadataCallContract.ScalarSchema;
             if ((terms.Length != 0 || scalarSchema) && terms.Length != parameters.Length)
             {
                 AddContractDiagnostic(diagnostics,
@@ -839,7 +864,6 @@ public static class RustSharpMetadataConsumer
                         "' is unsupported or contradicts its CLR signature.");
             }
 
-            string returnType = function.Signature[(arrow + 2)..];
             if ((contract.ReturnContract is null && scalarSchema) ||
                 (contract.ReturnContract is { } result &&
                     !TermMatchesType(result, returnType, isReturn: true, scalarSchema)))

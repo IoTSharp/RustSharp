@@ -128,7 +128,7 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | P1-07.09 | 🚧 进行中 | MIR/所有权证据双向完整性 | P1-07.07, P1-07.08 | 每个 place、借用来源、生命周期边和调用效果均有匹配 MIR 证据；缺失、额外、替换、陈旧事实均失败。 | `SafeCoreMirOwnershipAdapterTests`、`SafeCoreMirReferenceProvenanceTests`：MIR/来源关联及缺失/替换/逃逸来源负例；全部类别的证据覆盖仍未完成。 |
 | P1-07.10 | 🚧 进行中 | 稳定源码所有权诊断 | P1-07.09, P1-06.14 | 非法程序报告预期 move/borrow/escape 代码及原始范围；未支持降低诊断不能冒充借用拒绝。 | `SafeCoreMirAdtSourceTests` 检查源码诊断代码/范围；完整黄金目录仍开放 |
 | P1-07.11 | ⏳ 计划中 | 固定 rustc 1.98 源码借用差分 | P1-07.10, P1-10.05 | 固定借用用例包括合法/非法投影移动、再借用、NLL、合流、逃逸和限制；逐例执行且未解释差异/跳过为零。 | 计划 `p1-differential-v3` 的借用部分；逐用例 rustc/源码哈希 |
-| P1-07.12 | 🚧 进行中 | 所有权求解器资源契约 | P1-07.09 | 操作量/路径/块/诊断限制及取消覆盖新增分析边；畸形/循环证据确定性终止。 | 计划所有权预算/取消边界夹具 |
+| P1-07.12 | 🚧 进行中 | 所有权求解器资源契约 | P1-07.09 | 操作量/路径/块/诊断限制及取消覆盖新增分析边；畸形/循环证据确定性终止。 | `P1OwnershipResourceContractTests` 覆盖显式证据逐函数 arena、语句/效果、精确边界、共享工作量/时间预算、取消及源码诊断；完整求解器语料仍开放。 |
 
 <a id="p1-08"></a>
 
@@ -159,11 +159,11 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | --- | --- | --- | --- | --- | --- |
 | P1-09.01 | 🚧 进行中 | 每个可执行类别统一 CLR LIR 发射路线 | P1-06.13 | 所有固定可执行类别走已验证 CLR LIR/PE；未支持 MIR 不回退到 primitive 或模拟执行。 | 计划编译器路径覆盖及输出前拒绝夹具 |
 | P1-09.02 | ✅ 已完成 | 标量导入签名与真实外部调用 | P1-05 | 标量 producer/consumer 经 AssemblyRef/TypeRef/MemberRef 执行；MethodDef static/可见性/签名漂移被拒绝。 | `RustSharpMetadataTests.CrossAssemblyCallAsync`; E6 |
-| P1-09.03 | 🚧 进行中 | 版本化导入所有权/生命周期/panic 模式 | P1-06.01, P1-07.01 | 参数位置、move/copy/borrow 效果、返回来源及 panic 策略往返不去重，不接受未知函数。 | `RustSharpMetadata.cs`；计划模式及证据篡改夹具 |
+| P1-09.03 | 🚧 进行中 | 版本化导入所有权/生命周期/panic 模式 | P1-06.01, P1-07.01 | 参数位置、move/copy/borrow 效果、返回来源及 panic 策略往返不去重，不接受未知函数。 | `P1SourcePackageContractTests` 覆盖显式标量 schema、按位置 Copy/返回条款、缺失/未知 JSON 成员及歧义特化别名；源码引用/聚合契约仍开放。 |
 | P1-09.04 | 🚧 进行中 | 导入聚合布局与名义标识 | P1-09.03, P1-06.13 | 源码导入跨 producer 重建声明布局/标识；拒绝同名异布局及未支持泛型形状。 | `P1SourcePackageContractTests` 覆盖陈旧 producer 布局及源码聚合导入拒绝；成功源码包重建仍开放 |
 | P1-09.05 | 🚧 进行中 | 源码引用/切片签名与生命周期检查 | P1-09.04, P1-07.07, P1-06.08 | 源码 consumer HIR/类型分析理解支持的引用/切片/聚合签名；非法返回来源/借用效果被拒绝。 | 已有手工 LIR byref 测试；计划源码导入签名语料 |
 | P1-09.06 | 🚧 进行中 | 导入调用经过所有权感知的 MIR/LIR | P1-09.05, P1-08.11, P1-09.01 | 源码跨包调用按检查后的契约转移/复制/借用及展开；真实 MemberRef 签名一致。 | 计划导入调用的 MIR/所有权/PE 夹具 |
-| P1-09.07 | 🚧 进行中 | producer/consumer 元数据对账与限制 | P1-09.04, P1-09.05 | 对账 MethodDef/MemberRef 类型、程序集、可见性、static 和全部条款；拒绝畸形、重复、超限或缺失证据。 | `P1SourcePackageContractTests` 覆盖陈旧布局拒绝；畸形/限制语料仍开放 |
+| P1-09.07 | 🚧 进行中 | producer/consumer 元数据对账与限制 | P1-09.04, P1-09.05 | 对账 MethodDef/MemberRef 类型、程序集、可见性、static 和全部条款；拒绝畸形、重复、超限或缺失证据。 | `P1SourcePackageContractTests` 覆盖陈旧布局、畸形/缺失 schema 字段及精确 CLR 名与源码别名对账；完整聚合/引用及限制语料仍开放。 |
 | P1-09.08 | 🚧 进行中 | 确定性跨包制品 | P1-09.06, P1-09.07 | 相同固定源码/包输入产生相同有序元数据及 PE/PDB 字节；不能复用陈旧 producer 证据。 | 计划独立构建哈希及陈旧程序集负例 |
 | P1-09.09 | ⏳ 计划中 | 源码 producer/consumer CoreCLR 集成 | P1-09.08 | 分别编译真实源码包并执行聚合/引用/所有权/Drop 调用；仅手工 LIR 不能满足本行。 | 计划源码包夹具、输出/跟踪及包哈希 |
 | P1-09.10 | ⏳ 计划中 | 跨包 ILVerify 与双原生 x64 AOT 平台 | P1-09.09, P1-10.06 | 相同固定源码包通过 ILVerify，并在 Windows/Linux 原生 x64 AOT 执行，跟踪与 CoreCLR 一致且警告/跳过为零。 | 计划版本化 P1 平台套件中的包平台条目 |
@@ -180,8 +180,8 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | P1-10.04 | ✅ 已完成 | 保留既有不可变回归基线 | P0-11 | 保留 regression v1 8、regression v2 24、differential v2 16 的 ID/期望；当前平台 v1 每原生平台仍为 12。 | `SafeCoreRegressionV2Tests`, `P1DifferentialProfileTests`; E6 |
 | P1-10.05 | 🚧 进行中 | 借用/Drop 差分进程运行器 | P1-10.02 | 以确切 rustc 1.98 执行每个固定 v3 源码；失败时也记录版本、命令、PID/启动/父进程、超时、终止和清理。 | `P1ExpandedDifferentialRunner` 与 `p1-differential-v3` 报告提供有界进程证据；完整分母仍需原生候选资源 |
 | P1-10.06 | 🚧 进行中 | 扩展原生平台执行运行器 | P1-10.02 | 每个可执行类别/包用例在 Windows/Linux x64 经 CoreCLR、ILVerify、原生 AOT；声明的非运行负例仍按诊断验收。 | `P1ExpandedPlatformRunner` 生成固定 24 用例 CoreCLR/来源证明报告；ILVerify 与 Native AOT 扩展仍开放 |
-| P1-10.07 | 🚧 进行中 | 绑定报告到源码、工具和用例清单 | P1-10.03, P1-10.05, P1-10.06 | 报告包含编译器 SHA、清单哈希、平台/RID、runtime/SDK/oracle 版本、边界及清理；空/缺失/重复/陈旧记录失败。 | `P1EvidenceBindingValidator` 与 `P1EvidenceBindingTests` 校验完整、伪造、陈旧及缺失来源；扩展平台报告集成仍开放 |
-| P1-10.08 | 🚧 进行中 | 聚合语义覆盖与平台证据 | P1-10.07 | 聚合器要求同一候选 SHA 的扩展固定分母及每个必需叶子/后端；仅 6 份旧报告不能关闭新契约。 | `eng/Test-P1ExpandedExitGate.ps1`、`eng/Test-P1CandidateGate.ps1`、共享 `eng/P1EvidenceValidation.ps1` 和 13 项有界拒绝检查；真实语义/原生候选证据仍开放 |
+| P1-10.07 | 🚧 进行中 | 绑定报告到源码、工具和用例清单 | P1-10.03, P1-10.05, P1-10.06 | 报告包含编译器 SHA、清单哈希、平台/RID、runtime/SDK/oracle 版本、边界及清理；空/缺失/重复/陈旧记录失败。 | `P1EvidenceBindingValidator` 与 `P1EvidenceBindingTests` 绑定扩展平台 ID/源码/期望哈希、输出、原生宿主/工具及后端进程证据；真实完整原生候选报告仍开放。 |
+| P1-10.08 | 🚧 进行中 | 聚合语义覆盖与平台证据 | P1-10.07 | 聚合器要求同一候选 SHA 的扩展固定分母及每个必需叶子/后端；仅 6 份旧报告不能关闭新契约。 | `eng/Test-P1ExpandedExitGate.ps1`、`eng/Test-P1CandidateGate.ps1`、共享 `eng/P1EvidenceValidation.ps1` 和 15 项有界拒绝检查；真实语义/原生候选证据仍开放 |
 | P1-10.09 | 🚧 进行中 | CI 报告发布与失败来源 | P1-10.08 | 两个原生任务上传成功/失败报告并有稳定 run/artifact 引用；设施不可用记阻塞，不记通过/跳过。 | 手动 `.github/workflows/p1-expanded.yml` 发布成对差分/平台报告；候选 SHA 聚合仍开放 |
 | P1-10.10 | ⏳ 计划中 | 审计回归保留与全新候选验证 | P1-10.09, P1-10.04 | 完整 Release 工具至少 464 用例并加新增项，失败/跳过及构建警告/错误为零；旧套件不可变，新套件固定分母。 | 计划全新候选构建/测试工具/清单审计报告 |
 
