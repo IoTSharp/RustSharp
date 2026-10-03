@@ -387,7 +387,9 @@ try {
             $compile = Invoke-TrackedProcess $dotnetPath @($cliPath, 'compile', $sourcePath, '--output', $managedPath, '--profile', 'safe-core-mir-p1-v2') $scriptRoot (Get-RemainingTimeoutSeconds 300)
             Add-ProcessToCase $case 'CoreClrCompile' $compile
             if (-not $compile.Succeeded) { throw 'RustSharp CoreCLR compilation failed.' }
-            $ilverify = Invoke-TrackedProcess $pwshPath @('-NoLogo', '-NoProfile', '-File', $ilVerifyScript, '-AssemblyPath', $managedPath, '-EvidencePath', $ilverifyEvidencePath, '-TimeoutSeconds', '120') $scriptRoot (Get-RemainingTimeoutSeconds 150)
+            $runtimeAssembly = Join-Path $caseDirectory 'RustSharp.Runtime.dll'
+            if (-not [IO.File]::Exists($runtimeAssembly)) { throw "RustSharp.Runtime.dll was not emitted beside '$managedPath'." }
+            $ilverify = Invoke-TrackedProcess $pwshPath @('-NoLogo', '-NoProfile', '-File', $ilVerifyScript, '-AssemblyPath', $managedPath, '-ReferencePath', $runtimeAssembly, '-EvidencePath', $ilverifyEvidencePath, '-TimeoutSeconds', '120') $scriptRoot (Get-RemainingTimeoutSeconds 150)
             Add-ProcessToCase $case 'ILVerify' $ilverify
             if (-not $ilverify.Succeeded -or -not [IO.File]::Exists($ilverifyEvidencePath)) { throw 'ILVerify did not produce successful evidence.' }
             $ilverifyReport = [IO.File]::ReadAllText($ilverifyEvidencePath) | ConvertFrom-Json

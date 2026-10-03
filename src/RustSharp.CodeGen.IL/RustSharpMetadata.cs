@@ -24,6 +24,17 @@ public sealed record RustSharpMetadataFunction(
     string? SourceQualifiedName = null,
     bool IsPublic = true);
 
+/// <summary>A field in a versioned Rust# nominal value layout.</summary>
+public sealed record RustSharpMetadataField(string Name, string Type);
+
+/// <summary>
+/// A closed nominal value layout exported by a producer. Field order is part
+/// of the source contract and is therefore retained in the metadata document.
+/// </summary>
+public sealed record RustSharpMetadataValueType(
+    string Name,
+    IEnumerable<RustSharpMetadataField>? Fields = null);
+
 /// <summary>A closed generic instance carried in Rust# assembly metadata.</summary>
 public sealed record RustSharpMetadataGenericInstance(string FunctionId, string Arguments);
 
@@ -79,6 +90,8 @@ public sealed partial record RustSharpMetadataDocument
     public const int MaximumOwnershipFactsPerFunction = 4096;
     public const int MaximumCallContracts = 4096;
     public const int MaximumCallTermsPerFunction = 256;
+    public const int MaximumValueTypes = 4096;
+    public const int MaximumFieldsPerValueType = 256;
     public const int MaximumJsonCharacters = 1_000_000;
 
     public RustSharpMetadataDocument(
@@ -90,7 +103,8 @@ public sealed partial record RustSharpMetadataDocument
         string? mirSnapshot = null,
         IEnumerable<RustSharpMetadataOwnershipFunction>? ownership = null,
         string? cleanupSnapshot = null,
-        IEnumerable<RustSharpMetadataCallContract>? callContracts = null)
+        IEnumerable<RustSharpMetadataCallContract>? callContracts = null,
+        IEnumerable<RustSharpMetadataValueType>? valueTypes = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(profile);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceSha256);
@@ -108,6 +122,7 @@ public sealed partial record RustSharpMetadataDocument
         Ownership = NormalizeOwnership(ownership);
         CleanupSnapshot = cleanupSnapshot is null ? null : LimitText(cleanupSnapshot, MaximumJsonCharacters);
         CallContracts = NormalizeCallContracts(callContracts);
+        ValueTypes = NormalizeValueTypes(valueTypes);
         Json = Serialize(this);
         if (Json.Length > MaximumJsonCharacters)
             throw new ArgumentException("Rust# metadata JSON exceeds its size limit.");
@@ -125,6 +140,8 @@ public sealed partial record RustSharpMetadataDocument
     public string? CleanupSnapshot { get; }
     /// <summary>Explicit imported-call ownership and panic terms.</summary>
     public ImmutableArray<RustSharpMetadataCallContract> CallContracts { get; }
+    /// <summary>Closed nominal layouts used by aggregate MemberRefs.</summary>
+    public ImmutableArray<RustSharpMetadataValueType> ValueTypes { get; }
     [JsonIgnore]
     public string Json { get; }
 
@@ -137,7 +154,8 @@ public sealed partial record RustSharpMetadataDocument
         string? mirSnapshot = null,
         IEnumerable<RustSharpMetadataOwnershipFunction>? ownership = null,
         string? cleanupSnapshot = null,
-        IEnumerable<RustSharpMetadataCallContract>? callContracts = null)
+        IEnumerable<RustSharpMetadataCallContract>? callContracts = null,
+        IEnumerable<RustSharpMetadataValueType>? valueTypes = null)
     {
         ArgumentNullException.ThrowIfNull(methods);
         if (methods.Count > MaximumFunctions) throw new ArgumentException("Too many methods.", nameof(methods));
@@ -163,14 +181,72 @@ public sealed partial record RustSharpMetadataDocument
             RustSharpMetadataFunction? target = functions.FirstOrDefault(function =>
                 string.Equals(function.Name, contract.FunctionId, StringComparison.Ordinal) ||
                 string.Equals(function.SourceQualifiedName, contract.FunctionId, StringComparison.Ordinal) ||
-                string.Equals(function.SourceQualifiedName, contract.FunctionId + "#value", StringComparison.Ordinal));
+                string.Equals(function.SourceQualifiedName, contract.FunctionId + "#value", StringComparison.Ordinal) ||
+                string.Equals(function.SourceQualifiedName + "#value", contract.FunctionId, StringComparison.Ordinal));
             return target is null
                 ? contract
                 : contract with { FunctionId = target.SourceQualifiedName ?? target.Name };
         });
 
+        IEnumerable<RustSharpMetadataOwnershipFunction>? linkedOwnership = ownership?.Select(value =>
+        {
+            // The ownership pass may report its internal body identity with a
+            // `#value` suffix. Persist the emitted source identity so consumers
+            // can correlate the evidence with the generated MethodDef.
+            RustSharpMetadataFunction? target = functions.FirstOrDefault(function =>
+                string.Equals(function.Name, value.FunctionId, StringComparison.Ordinal) ||
+                string.Equals(function.SourceQualifiedName, value.FunctionId, StringComparison.Ordinal) ||
+                string.Equals(function.SourceQualifiedName, value.FunctionId + "#value", StringComparison.Ordinal) ||
+                string.Equals(function.SourceQualifiedName + "#value", value.FunctionId, StringComparison.Ordinal));
+            return target is null
+                ? value
+                : value with { FunctionId = target.SourceQualifiedName ?? target.Name };
+        });
+
         return new(profile, Convert.ToHexString(SHA256.HashData(sourceBytes)), functions,
-            genericInstances, traitImplementations, mirSnapshot, ownership, cleanupSnapshot, linkedContracts);
+            genericInstances, traitImplementations, mirSnapshot, linkedOwnership, cleanupSnapshot, linkedContracts,
+            valueTypes);
+    }
+
+    /// <summary>
+    /// Returns a document reconciled with the actual LIR layouts. A producer
+    /// cannot omit layouts when it emits nominal values, and a supplied layout
+    /// list must match declaration order exactly.
+    /// </summary>
+    public RustSharpMetadataDocument WithValueTypes(IEnumerable<RustSharpMetadataValueType> valueTypes)
+    {
+        ArgumentNullException.ThrowIfNull(valueTypes);
+        RustSharpMetadataValueType[] actual = NormalizeValueTypes(valueTypes).ToArray();
+        if (ValueTypes.Length != 0 && !ValueTypesEqual(ValueTypes, actual))
+            throw new ArgumentException("Rust# metadata value layouts do not match emitted layouts.", nameof(valueTypes));
+        return ValueTypes.Length == 0
+            ? new(Profile, SourceSha256, Functions, GenericInstances, TraitImplementations, MirSnapshot,
+                Ownership, CleanupSnapshot, CallContracts, actual)
+            : this;
+    }
+
+    private static bool ValueTypesEqual(
+        IReadOnlyList<RustSharpMetadataValueType> expected,
+        RustSharpMetadataValueType[] actual)
+    {
+        if (expected.Count != actual.Length) return false;
+        for (int index = 0; index < expected.Count; index++)
+        {
+            RustSharpMetadataValueType left = expected[index];
+            RustSharpMetadataValueType right = actual[index];
+            RustSharpMetadataField[] leftFields = left.Fields?.ToArray() ?? [];
+            RustSharpMetadataField[] rightFields = right.Fields?.ToArray() ?? [];
+            if (!string.Equals(left.Name, right.Name, StringComparison.Ordinal) ||
+                leftFields.Length != rightFields.Length)
+                return false;
+            for (int fieldIndex = 0; fieldIndex < leftFields.Length; fieldIndex++)
+            {
+                if (!string.Equals(leftFields[fieldIndex].Name, rightFields[fieldIndex].Name, StringComparison.Ordinal) ||
+                    !string.Equals(leftFields[fieldIndex].Type, rightFields[fieldIndex].Type, StringComparison.Ordinal))
+                    return false;
+            }
+        }
+        return true;
     }
 
     private static ImmutableArray<RustSharpMetadataFunction> NormalizeFunctions(IEnumerable<RustSharpMetadataFunction>? values)
@@ -179,15 +255,26 @@ public sealed partial record RustSharpMetadataDocument
         RustSharpMetadataFunction[] result = Materialize(values, MaximumFunctions, nameof(values));
         if (result.Any(static value => value is null))
             throw new ArgumentException("Rust# metadata function count is out of bounds.", nameof(values));
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var sourceNames = new HashSet<string>(StringComparer.Ordinal);
         foreach (RustSharpMetadataFunction value in result)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(value.Name);
             ArgumentException.ThrowIfNullOrWhiteSpace(value.Signature);
             if (value.Name.Length > 4096 || value.Signature.Length > 4096)
                 throw new ArgumentException("Rust# metadata function identity is too long.", nameof(values));
+            if (!names.Add(value.Name))
+                throw new ArgumentException("Rust# metadata function names must be unique.", nameof(values));
             if (value.SourceQualifiedName is not null &&
                 (string.IsNullOrWhiteSpace(value.SourceQualifiedName) || value.SourceQualifiedName.Length > 4096))
                 throw new ArgumentException("Rust# metadata source function identity is invalid.", nameof(values));
+            // A source item may have several closed generic instances or
+            // overloads.  Its source identity is unique only together with
+            // the declared signature; rejecting the source name alone would
+            // make valid monomorphized functions impossible to emit.
+            if (value.SourceQualifiedName is not null &&
+                !sourceNames.Add(value.SourceQualifiedName + "\u001f" + value.Signature))
+                throw new ArgumentException("Rust# metadata source function identities must be unique for a signature.", nameof(values));
         }
 
         return [.. result.OrderBy(static value => value.Name, StringComparer.Ordinal)
@@ -265,7 +352,11 @@ public sealed partial record RustSharpMetadataDocument
                 result.Add(fact);
             }
 
-            return [.. result.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+            // These sequences are evidence, not sets. Preserve declaration
+            // order and repeated terms (for example two equal borrow facts
+            // attached to different MIR positions) so a consumer can replay
+            // the producer contract exactly.
+            return result.ToArray();
         }
     }
 
@@ -318,6 +409,38 @@ public sealed partial record RustSharpMetadataDocument
             // argument indices must remain separate and in declaration order.
             return [.. result.Select(static term => term.Trim())];
         }
+    }
+
+    private static ImmutableArray<RustSharpMetadataValueType> NormalizeValueTypes(
+        IEnumerable<RustSharpMetadataValueType>? values)
+    {
+        if (values is null) return [];
+        RustSharpMetadataValueType[] result = Materialize(values, MaximumValueTypes, nameof(values));
+        if (result.Any(static value => value is null))
+            throw new ArgumentException("Rust# value layout count is out of bounds.", nameof(values));
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var normalized = new List<RustSharpMetadataValueType>(result.Length);
+        foreach (RustSharpMetadataValueType value in result)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(value.Name);
+            if (value.Name.Length > 1024 || !names.Add(value.Name))
+                throw new ArgumentException("Rust# value layout identities must be unique and bounded.", nameof(values));
+            RustSharpMetadataField[] fields = Materialize(
+                value.Fields ?? [], MaximumFieldsPerValueType, "value fields");
+            var fieldNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (RustSharpMetadataField field in fields)
+            {
+                if (field is null || string.IsNullOrWhiteSpace(field.Name) ||
+                    string.IsNullOrWhiteSpace(field.Type) || field.Name.Length > 1024 ||
+                    field.Type.Length > 1024 || !fieldNames.Add(field.Name) ||
+                    field.Type.Contains('\0'))
+                    throw new ArgumentException("Rust# value layout fields are invalid or duplicated.", nameof(values));
+            }
+            normalized.Add(new(value.Name, fields));
+        }
+
+        return [.. normalized.OrderBy(static value => value.Name, StringComparer.Ordinal)];
     }
 
     private static T[] Materialize<T>(IEnumerable<T> values, int maximum, string parameterName)
@@ -385,7 +508,8 @@ public sealed partial record RustSharpMetadataDocument
             parsed.MirSnapshot,
             parsed.Ownership,
             parsed.CleanupSnapshot,
-            parsed.CallContracts);
+            parsed.CallContracts,
+            parsed.ValueTypes);
         // Older v1 producers predate the ownership extension and therefore do
         // not contain an `ownership` property. Return the canonical document
         // while accepting that additive shape for cross-package compatibility.
@@ -404,6 +528,7 @@ public sealed partial record RustSharpMetadataDocument
         public RustSharpMetadataOwnershipFunction[]? Ownership { get; set; }
         public string? CleanupSnapshot { get; set; }
         public RustSharpMetadataCallContract[]? CallContracts { get; set; }
+        public RustSharpMetadataValueType[]? ValueTypes { get; set; }
     }
 }
 
@@ -415,17 +540,23 @@ public static class RustSharpMetadataReader
     public static string? FindJson(System.Reflection.Metadata.MetadataReader metadata)
     {
         ArgumentNullException.ThrowIfNull(metadata);
+        string? found = null;
         foreach (System.Reflection.Metadata.CustomAttributeHandle handle in metadata.GetAssemblyDefinition().GetCustomAttributes())
         {
             System.Reflection.Metadata.CustomAttribute attribute = metadata.GetCustomAttribute(handle);
             string? name = TryGetAttributeTypeName(metadata, attribute.Constructor);
             if (!string.Equals(name, "System.Reflection.AssemblyMetadataAttribute", StringComparison.Ordinal)) continue;
             string? value = TryDecodeValue(metadata, attribute.Value);
-            if (value is not null && value.StartsWith(AttributeKey + "\u001f", StringComparison.Ordinal))
-                return value[(AttributeKey.Length + 1)..];
+            if (value is null || !value.StartsWith(AttributeKey + "\u001f", StringComparison.Ordinal))
+                continue;
+
+            string json = value[(AttributeKey.Length + 1)..];
+            if (found is not null)
+                throw new InvalidDataException("The assembly contains duplicate Rust# metadata attributes.");
+            found = json;
         }
 
-        return null;
+        return found;
     }
 
     /// <summary>Reads and validates the canonical Rust# metadata document.</summary>
@@ -564,6 +695,8 @@ public static class RustSharpMetadataConsumer
                 if (expectedProfile is not null && !string.Equals(document.Profile, expectedProfile, StringComparison.Ordinal))
                     diagnostics.Add(ProfileMismatch + ": producer profile does not match the consumer profile.");
                 ValidateGeneratedFunctions(metadata, document, diagnostics);
+                ValidateGeneratedValueTypes(metadata, document, diagnostics);
+                ValidateOwnershipContracts(document, diagnostics);
                 ValidateCallContracts(document, diagnostics);
                 ValidateRequiredFunctions(document, requiredFunctions, diagnostics);
             }
@@ -592,7 +725,9 @@ public static class RustSharpMetadataConsumer
         ArgumentException.ThrowIfNullOrWhiteSpace(functionId);
         return document.Functions.FirstOrDefault(function =>
             string.Equals(function.Name, functionId, StringComparison.Ordinal) ||
-            string.Equals(function.SourceQualifiedName, functionId, StringComparison.Ordinal));
+            string.Equals(function.SourceQualifiedName, functionId, StringComparison.Ordinal) ||
+            string.Equals(function.SourceQualifiedName, functionId + "#value", StringComparison.Ordinal) ||
+            string.Equals(function.SourceQualifiedName + "#value", functionId, StringComparison.Ordinal));
     }
 
     private static void ValidateCallContracts(
@@ -640,6 +775,35 @@ public static class RustSharpMetadataConsumer
             {
                 AddContractDiagnostic(diagnostics,
                     "call contract for '" + Trim(contract.FunctionId) + "' does not cover every parameter.");
+            }
+        }
+    }
+
+    private static void ValidateOwnershipContracts(
+        RustSharpMetadataDocument document,
+        List<string> diagnostics)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (RustSharpMetadataOwnershipFunction ownership in document.Ownership)
+        {
+            if (!seen.Add(ownership.FunctionId))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "ownership contract function ID '" + Trim(ownership.FunctionId) + "' is duplicated.");
+                continue;
+            }
+
+            if (FindFunction(document, ownership.FunctionId) is null)
+            {
+                AddContractDiagnostic(diagnostics,
+                    "ownership contract references unknown function '" + Trim(ownership.FunctionId) + "'.");
+            }
+
+            if (!string.Equals(ownership.PanicStrategy, "unwind", StringComparison.Ordinal) &&
+                !string.Equals(ownership.PanicStrategy, "abort", StringComparison.Ordinal))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "ownership contract for '" + Trim(ownership.FunctionId) + "' has an unsupported panic strategy.");
             }
         }
     }
@@ -826,6 +990,117 @@ public static class RustSharpMetadataConsumer
         }
     }
 
+    /// <summary>
+    /// Correlates nominal layout evidence with the generated ValueType and
+    /// Field tables. This prevents a stale producer JSON document from
+    /// describing a different aggregate shape than its MemberRefs expose.
+    /// </summary>
+    private static void ValidateGeneratedValueTypes(
+        MetadataReader metadata,
+        RustSharpMetadataDocument document,
+        List<string> diagnostics)
+    {
+        const string generatedNamespace = "RustSharp.Generated.Values";
+        var actual = new Dictionary<string, (string Name, string Type)[]>(StringComparer.Ordinal);
+        int typeRows = metadata.GetTableRowCount(TableIndex.TypeDef);
+        int typeLimit = Math.Min(typeRows, RustSharpMetadataDocument.MaximumValueTypes + 2);
+        int generatedCount = 0;
+        for (int row = 1; row <= typeLimit; row++)
+        {
+            TypeDefinitionHandle handle = MetadataTokens.TypeDefinitionHandle(row);
+            TypeDefinition definition = metadata.GetTypeDefinition(handle);
+            if (!string.Equals(metadata.GetString(definition.Namespace), generatedNamespace, StringComparison.Ordinal))
+                continue;
+            generatedCount++;
+            string typeName = metadata.GetString(definition.Name);
+            if (actual.ContainsKey(typeName))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "generated value type '" + Trim(typeName) + "' is duplicated.");
+                continue;
+            }
+
+            var fields = new List<(string Name, string Type)>();
+            int fieldCount = 0;
+            foreach (FieldDefinitionHandle fieldHandle in definition.GetFields())
+            {
+                if (++fieldCount > RustSharpMetadataDocument.MaximumFieldsPerValueType)
+                {
+                    AddContractDiagnostic(diagnostics,
+                        "generated value type '" + Trim(typeName) + "' exceeds its field bound.");
+                    break;
+                }
+                FieldDefinition field = metadata.GetFieldDefinition(fieldHandle);
+                string fieldName = metadata.GetString(field.Name);
+                string? error = null;
+                if ((field.Attributes & FieldAttributes.Static) != 0 ||
+                    !TryDecodeGeneratedField(metadata, field, out string fieldType, out error))
+                {
+                    AddContractDiagnostic(diagnostics,
+                        "generated value field '" + Trim(fieldName) + "' has an invalid shape: " + Trim(error));
+                    continue;
+                }
+                fields.Add((fieldName, fieldType));
+            }
+            actual[typeName] = fields.ToArray();
+        }
+
+        if (typeRows > typeLimit)
+            AddContractDiagnostic(diagnostics, "generated value type table exceeds its bounded correlation limit.");
+        if (generatedCount != document.ValueTypes.Length)
+            AddContractDiagnostic(diagnostics,
+                "metadata value layout count " + document.ValueTypes.Length.ToString(CultureInfo.InvariantCulture) +
+                " does not match generated value type count " + generatedCount.ToString(CultureInfo.InvariantCulture) + ".");
+
+        foreach (RustSharpMetadataValueType declared in document.ValueTypes)
+        {
+            if (!actual.TryGetValue(declared.Name, out (string Name, string Type)[]? fields))
+            {
+                AddContractDiagnostic(diagnostics,
+                    "metadata value layout '" + Trim(declared.Name) + "' has no generated value type.");
+                continue;
+            }
+            RustSharpMetadataField[] expected = declared.Fields?.ToArray() ?? [];
+            if (expected.Length != fields.Length)
+            {
+                AddContractDiagnostic(diagnostics,
+                    "metadata value layout '" + Trim(declared.Name) + "' field count does not match generated fields.");
+                continue;
+            }
+            for (int index = 0; index < expected.Length; index++)
+            {
+                if (!string.Equals(expected[index].Name, fields[index].Name, StringComparison.Ordinal) ||
+                    !string.Equals(expected[index].Type, fields[index].Type, StringComparison.Ordinal))
+                {
+                    AddContractDiagnostic(diagnostics,
+                        "metadata value layout '" + Trim(declared.Name) + "' field order or type does not match the generated Field table.");
+                    break;
+                }
+            }
+        }
+    }
+
+    private static bool TryDecodeGeneratedField(
+        MetadataReader metadata,
+        FieldDefinition field,
+        out string type,
+        out string? error)
+    {
+        type = string.Empty;
+        error = null;
+        try
+        {
+            type = field.DecodeSignature(GeneratedSignatureTypeProvider.Instance, genericContext: null);
+            return !string.IsNullOrWhiteSpace(type);
+        }
+        catch (Exception exception) when (exception is ArgumentException or BadImageFormatException or
+            InvalidOperationException or NotSupportedException or IndexOutOfRangeException)
+        {
+            error = exception.Message;
+            return false;
+        }
+    }
+
     private static void AddContractDiagnostic(List<string> diagnostics, string message)
     {
         // Keep malformed PE diagnostics bounded even when a producer contains
@@ -951,11 +1226,18 @@ public static class RustSharpMetadataConsumer
     private static string? TryReadGenericResource(
         PEReader pe, MetadataReader metadata, List<string> diagnostics)
     {
+        bool found = false;
         foreach (ManifestResourceHandle handle in metadata.ManifestResources)
         {
             ManifestResource resource = metadata.GetManifestResource(handle);
             if (!string.Equals(metadata.GetString(resource.Name), "RustSharp.Generics.v1.json", StringComparison.Ordinal))
                 continue;
+            if (found)
+            {
+                diagnostics.Add(InvalidMetadata + ": generic metadata resource is duplicated.");
+                return null;
+            }
+            found = true;
             if (!resource.Implementation.IsNil)
             {
                 diagnostics.Add(InvalidMetadata + ": generic metadata must be embedded in the producer assembly.");

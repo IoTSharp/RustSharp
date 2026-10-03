@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using RustSharp.Compiler;
+using RustSharp.Runtime;
 
 namespace RustSharp.Tests;
 
@@ -11,6 +12,7 @@ internal static class BoundedProcessTests
     private const string NormalMode = "normal";
     private const string TimeoutMode = "timeout";
     private const string CancellationMode = "cancel";
+    private const string DropAbortMode = "drop-abort";
     private const string StandardOutputMarker = "RSC bounded child stdout";
     private const string StandardErrorMarker = "RSC bounded child stderr";
     private const int ChildOutputCharacters = BoundedProcessRunner.MaximumOutputBytesPerStream + (256 * 1024);
@@ -31,6 +33,7 @@ internal static class BoundedProcessTests
         new("bounded process captures stdout and stderr on normal exit", CapturesBothStreamsOnExitAsync),
         new("bounded process times out with bounded output and cleanup", TimesOutWithBoundedOutputAsync),
         new("bounded process reports caller cancellation and cleanup", ReportsCancellationAndCleanupAsync),
+        new("bounded child records generated double-panic abort exit", RecordsDropAbortExitAsync),
     ];
 
     internal static bool IsChildInvocation(IReadOnlyList<string> arguments) =>
@@ -64,6 +67,18 @@ internal static class BoundedProcessTests
                 Console.Out.Flush();
                 await Task.Delay(TimeSpan.FromSeconds(ChildLifetimeSeconds)).ConfigureAwait(false);
                 return 0;
+
+            case DropAbortMode:
+                var scope = new DropScope();
+                scope.Track(new ThrowingDisposable());
+                RustPanicReport report = RustPanicBoundary.Run(
+                    () => RustPanicBoundary.Panic("child body panic"), scope);
+                Console.Out.WriteLine($"RSC drop abort outcome={report.Outcome} double={report.IsDoublePanic} cleanup={report.CleanupException?.Message}");
+                Console.Out.Flush();
+                // Translate the managed abort outcome to the process boundary
+                // used by generated hosts.  The explicit code is stable and
+                // avoids platform-specific signal values in this probe.
+                return report.IsDoublePanic ? 134 : 1;
 
             default:
                 Console.Error.WriteLine($"Unknown bounded-process child mode '{arguments[1]}'.");
@@ -151,6 +166,25 @@ internal static class BoundedProcessTests
         }
     }
 
+    private static async Task RecordsDropAbortExitAsync()
+    {
+        BoundedProcessResult result = await RunChildAsync(
+            DropAbortMode,
+            NormalProcessTimeout,
+            onStarted: null,
+            CancellationToken.None).ConfigureAwait(false);
+
+        AssertEx.Equal(BoundedProcessTermination.Exited, result.Termination);
+        AssertEx.Equal(134, result.ExitCode ?? -1);
+        AssertEx.True(result.StandardOutput.Contains("outcome=Aborted", StringComparison.Ordinal) &&
+            result.StandardOutput.Contains("double=True", StringComparison.Ordinal) &&
+            result.StandardOutput.Contains("cleanup=", StringComparison.Ordinal),
+            "The child must publish both panic failures before the abort exit: " + result.StandardOutput);
+        AssertEx.False(result.ProcessTreeCleanupAttempted,
+            "A bounded abort probe that exits on its own must not require forced cleanup.");
+        await AssertProcessExitedAsync(result.StartedProcess).ConfigureAwait(false);
+    }
+
     private static async Task<BoundedProcessResult> RunChildAsync(
         string mode,
         TimeSpan processTimeout,
@@ -207,6 +241,11 @@ internal static class BoundedProcessTests
         }
 
         await ObserveTaskBoundedAsync(runTask).ConfigureAwait(false);
+    }
+
+    private sealed class ThrowingDisposable : IDisposable
+    {
+        public void Dispose() => throw new InvalidOperationException("child destructor panic");
     }
 
     private static async Task ObserveTaskBoundedAsync(Task task)

@@ -296,30 +296,34 @@ public sealed class DropScope : IDisposable
 
     public void Dispose()
     {
+        RustDropCleanupReport report = Cleanup(duringUnwind: false);
+        if (report.FirstFailure is not null) throw report.FirstFailure;
+    }
+
+    /// <summary>
+    /// Consumes the scope and reports every attempted destructor.  Generated
+    /// panic boundaries use <paramref name="duringUnwind"/> to apply the
+    /// double-panic abort rule while ordinary disposal continues after the
+    /// first failure.
+    /// </summary>
+    public RustDropCleanupReport Cleanup(bool duringUnwind)
+    {
         if (disposed)
         {
-            return;
+            return new(RustDropCleanupOutcome.Completed, null, null, 0, 0);
         }
 
         disposed = true;
-        Exception? first = null;
-        for (var index = values.Count - 1; index >= 0; index--)
+        var pending = new IDisposable[values.Count];
+        for (int index = 0; index < values.Count; index++)
         {
-            try
-            {
-                values[index].Dispose();
-            }
-            catch (Exception exception)
-            {
-                first ??= exception;
-            }
+            // DropScope is LIFO; preserve that order in the generated glue
+            // input while keeping the list immutable after disposal begins.
+            pending[index] = values[values.Count - index - 1];
         }
 
         values.Clear();
-        if (first is not null)
-        {
-            throw first;
-        }
+        return RustDropGlue.Run(pending, duringUnwind: duringUnwind);
     }
 
     private sealed class DropAdapter(IRustDrop value) : IDisposable

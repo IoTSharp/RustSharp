@@ -115,6 +115,17 @@ public static partial class ClrLirAssemblyEmitter
         if (sourceMap is not null && sourceMap.Documents.Count is (< 1 or > 1024))
             throw new ArgumentException("Expected 1 to 1024 source documents.", nameof(sourceMap));
         var layouts = new ClrLirValueTypeSet(valueTypes ?? [], CheckSourceMapBudget);
+        // Value layouts are part of the source package contract. Reconcile the
+        // caller-supplied document with the actual emitted definitions before
+        // embedding it, so consumers can validate nominal MemberRefs without
+        // loading or executing producer code.
+        if (metadataDocument is not null && layouts.Definitions.Length != 0)
+        {
+            var metadataLayouts = layouts.Definitions.Select(static layout =>
+                new RustSharpMetadataValueType(layout.Name,
+                    layout.Fields.Select(static field => new RustSharpMetadataField(field.Name, field.Type.ToString()))));
+            metadataDocument = metadataDocument.WithValueTypes(metadataLayouts);
+        }
         var definitions = new Dictionary<string, (ClrLirMethod Method, MethodDefinitionHandle Handle)>(StringComparer.Ordinal);
         for (int index = 0; index < methods.Count; index++)
         {

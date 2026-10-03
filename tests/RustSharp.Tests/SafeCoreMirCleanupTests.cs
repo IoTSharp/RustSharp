@@ -11,6 +11,7 @@ internal static class SafeCoreMirCleanupTests
     [
         new("typed MIR cleanup lowers source return scope exit", SourceReturnAsync),
         new("typed MIR cleanup preserves unwind and abort boundaries", PanicStrategiesAsync),
+        new("typed MIR cleanup keeps branch and bounded-loop paths distinct", BranchLoopCleanupAsync),
         new("typed MIR cleanup rejects incomplete ownership evidence", RejectsIncompleteEvidenceAsync),
         new("typed MIR cleanup snapshot is deterministic and bounded", DeterministicSnapshotAsync),
         new("typed MIR cleanup snapshot round-trips through metadata", MetadataSnapshotAsync),
@@ -19,6 +20,32 @@ internal static class SafeCoreMirCleanupTests
         new("compiler MIR backend executes direct calls and inclusive comparisons", MirBackendCallAsync),
         new("compiler MIR check shares backend capability diagnostics", BackendCapabilityGateAsync),
     ];
+
+    private static Task BranchLoopCleanupAsync()
+    {
+        (SafeCoreMirProgram mir, SafeCoreMirOwnershipResult ownership) = BuildBranchLoopEvidence();
+        SafeCoreMirCleanupResult cleanup = SafeCoreMirCleanupLowering.Lower(mir, ownership);
+        AssertEx.True(cleanup.IsSuccessful, string.Join(Environment.NewLine, cleanup.Diagnostics));
+        AssertEx.Equal(3, cleanup.Functions.Single().Paths.Count,
+            "The bounded branch/loop fixture must retain all three terminal paths.");
+        foreach (SafeCoreMirCleanupPath path in cleanup.Functions.Single().Paths)
+        {
+            AssertEx.Equal(1, path.Actions.Count(action =>
+                action.Kind == SafeCoreMirCleanupActionKind.Drop && action.LocalName == "resource"));
+            AssertEx.Equal(1, path.Actions.Count(action =>
+                action.Kind == SafeCoreMirCleanupActionKind.ScopeExit));
+            AssertEx.Equal(SafeCoreMirCleanupExitKind.Returned, path.ExitKind);
+        }
+
+        SafeCoreMirDropFlagResult flags = SafeCoreMirDropFlagLowering.Lower(ownership);
+        AssertEx.True(flags.IsSuccessful, string.Join(Environment.NewLine, flags.Diagnostics));
+        AssertEx.Equal(3, flags.Paths.Count,
+            "Drop flags must preserve the same branch/loop path denominator.");
+        AssertEx.True(flags.Paths.All(path => path.FinalFlags.Any(flag =>
+                flag.LocalName == "resource" && flag.State == SafeCoreDropPlaceState.Dropped)),
+            "Every terminal path must consume the resource drop flag exactly once.");
+        return Task.CompletedTask;
+    }
 
     private static Task SourceReturnAsync()
     {
@@ -379,6 +406,63 @@ internal static class SafeCoreMirCleanupTests
             validation,
             [],
             false));
+    }
+
+    private static (SafeCoreMirProgram Mir, SafeCoreMirOwnershipResult Ownership) BuildBranchLoopEvidence()
+    {
+        SafeCoreType boolean = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Bool);
+        SafeCoreType integer = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.I32);
+        SafeCoreMirSource source = Source(0);
+        SafeCoreMirOperand condition = SafeCoreMirOperand.Local(0, boolean, source);
+        SafeCoreMirProgram mir = new([
+            new SafeCoreMirFunction(
+                0,
+                "crate::branch_loop_probe",
+                boolean,
+                [
+                    new SafeCoreMirLocal(0, "condition", boolean, SafeCoreMirLocalKind.Parameter, false, source),
+                    new SafeCoreMirLocal(1, "resource", integer, SafeCoreMirLocalKind.User, false, source),
+                ],
+                [
+                    new SafeCoreMirBlock(0, [], SafeCoreMirTerminator.Branch(condition, 1, 3, source), source),
+                    new SafeCoreMirBlock(1, [], SafeCoreMirTerminator.Branch(condition, 2, 3, source), source),
+                    new SafeCoreMirBlock(2, [], SafeCoreMirTerminator.Goto(3, source), source),
+                    new SafeCoreMirBlock(3, [], SafeCoreMirTerminator.Return(condition, source), source),
+                ],
+                0,
+                source),
+        ]);
+
+        SafeCoreOwnershipFunction ownershipFunction = new(
+            "crate::branch_loop_probe",
+            [
+                new SafeCoreOwnershipLocal(
+                    0, "condition", boolean, SafeCoreOwnershipKind.Copy,
+                    HasDrop: false, ScopeId: 0, IsReference: false,
+                    InitiallyInitialized: true, source),
+                new SafeCoreOwnershipLocal(
+                    1, "resource", integer, SafeCoreOwnershipKind.Move,
+                    HasDrop: true, ScopeId: 0, IsReference: false,
+                    InitiallyInitialized: true, source),
+            ],
+            [new SafeCoreOwnershipScope(0, -1, source)],
+            [
+                new SafeCoreOwnershipBlock(0, 0, [], SafeCoreOwnershipTerminator.Branch(0, 1, 3, source), source),
+                new SafeCoreOwnershipBlock(1, 0, [], SafeCoreOwnershipTerminator.Branch(0, 2, 3, source), source),
+                new SafeCoreOwnershipBlock(2, 0, [], SafeCoreOwnershipTerminator.Goto(3, source), source),
+                new SafeCoreOwnershipBlock(3, 0, [], SafeCoreOwnershipTerminator.Return(0, source), source),
+            ],
+            0,
+            SafeCorePanicStrategy.Unwind,
+            source);
+        SafeCoreOwnershipProgram ownershipProgram = new([ownershipFunction]);
+        SafeCoreMirValidationResult validation = SafeCoreMirValidation.Validate(mir);
+        SafeCoreOwnershipAnalysisResult analysis = SafeCoreOwnershipAnalysis.Analyze(ownershipProgram);
+        AssertEx.True(validation.IsSuccessful && analysis.IsSuccessful,
+            "Branch/loop evidence must validate before cleanup lowering: " +
+            string.Join(Environment.NewLine, analysis.Diagnostics));
+        return (mir, new SafeCoreMirOwnershipResult(
+            ownershipProgram, analysis, validation, [], false));
     }
 
     private static SafeCoreMirSource Source(int start) =>

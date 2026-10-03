@@ -14,6 +14,7 @@ internal static class Program
         TestCase[] tests =
             [.. SyntaxTests.All, .. LexerTests.All, .. LexerClosureTests.All, .. LexingManifestTests.All, .. SafeCoreSyntaxTests.All, .. SafeCoreTypeHirTests.All, .. SafeCoreTypeInferenceTests.All, .. SafeCoreTypeProfileTests.All, .. SafeCoreTypeAnalysisTests.All, .. SafeCoreTypeConformanceTests.All, .. SafeCoreRegressionTests.All, .. SafeCoreOwnershipTests.All, .. SafeCoreMirOwnershipAdapterTests.All, .. RustSharpMetadataTests.All, .. SyntaxGrammarTests.All, .. SyntaxModuleExpansionTests.All, .. SyntaxItemExpansionTests.All, .. SyntaxExpressionExpansionTests.All, .. SyntaxProfileBoundaryTests.All, .. SemanticAstBoundaryTests.All, .. SyntaxManifestTests.All, .. NameResolutionManifestTests.All, .. SafeCoreNameResolutionTests.All, .. SafeCoreModuleResolutionTests.All, .. SafeCoreHirTests.All, .. SafeCoreCompilationTests.All, .. SafeCoreWorkspaceTests.All, .. CargoWorkspaceTests.All, .. SafeCoreModuleCompilationTests.All, .. WorkspaceSourceMapTests.All, .. EmissionTests.All, .. NativeAotTests.All, .. BoundedProcessTests.All, .. ClrLirTests.All, .. VerticalProofTests.All, .. OwnershipTests.All];
         tests = [.. tests, .. P1ExitGateTests.All];
+        tests = [.. tests, .. P1CoverageProfileTests.All];
         tests = [.. tests, .. SafeCoreAdvancedTypeHirTests.All, .. SafeCorePatternClosureTests.All, .. SafeCoreConstantTests.All];
         tests = [.. tests, .. SafeCoreMirPatternExecutionTests.All];
         tests = [.. tests, .. GenericFoundationTests.All];
@@ -39,6 +40,9 @@ internal static class Program
         tests = [.. tests, .. SafeCoreMirClosureCaptureTests.All];
         tests = [.. tests, .. SafeCoreMirDropCodegenTests.All];
         tests = [.. tests, .. P1DifferentialProfileTests.All];
+        tests = [.. tests, .. P1EvidenceBindingTests.All];
+        tests = [.. tests, .. P1SourcePackageContractTests.All, .. P1GeneratedUnwindEvidenceTests.All];
+        tests = [.. tests, .. P1ExpandedSuiteTests.All];
         if (args.Length != 0)
         {
             if (args.Length != 2 || args[0] != "--filter" || args[1].Length is 0 or > 256)

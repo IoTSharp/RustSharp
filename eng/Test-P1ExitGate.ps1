@@ -19,11 +19,17 @@ param(
     [string] $LinuxRegressionReport,
 
     [Parameter()]
+    [string] $CoverageReport = '',
+
+    [Parameter()]
     [ValidateSet('safe-core-regression-v2', 'safe-core-regression-v3')]
     [string] $RegressionProfile = 'safe-core-regression-v2',
 
     [Parameter()]
     [string] $EvidencePath = 'artifacts/p1-exit-gate/p1-exit-gate.json',
+
+    [Parameter()]
+    [string] $CandidateSha = '',
 
     [Parameter()]
     [ValidateRange(1, 32)]
@@ -46,6 +52,11 @@ $status = 'blocked'
 $harnessError = $null
 $reportFullPath = $null
 $specifications = @()
+$candidate = if ([string]::IsNullOrWhiteSpace($CandidateSha)) { $env:GITHUB_SHA } else { $CandidateSha }
+if ([string]::IsNullOrWhiteSpace($candidate)) { $candidate = $env:CI_COMMIT_SHA }
+if (-not [string]::IsNullOrWhiteSpace($candidate) -and $candidate -notmatch '^[0-9a-fA-F]{40,64}$') {
+    throw 'CandidateSha must be a 40-64 character hexadecimal commit identifier.'
+}
 
 function Resolve-RepositoryPath {
     param([Parameter(Mandatory = $true)][string] $Path)
@@ -69,6 +80,21 @@ function Add-Failure {
         Status = $State
         Message = $Message
     })
+}
+
+function Validate-CandidateSha {
+    param(
+        [Parameter(Mandatory = $true)][string] $InputName,
+        [Parameter(Mandatory = $true)][object] $Document
+    )
+
+    if ([string]::IsNullOrWhiteSpace($candidate)) { return }
+    if ($null -eq $Document.PSObject.Properties['candidateSha'] -or [string]::IsNullOrWhiteSpace([string]$Document.candidateSha)) {
+        Add-Failure $InputName 'blocked' 'Candidate SHA provenance is missing.'
+    }
+    elseif ([string]$Document.candidateSha -cne $candidate) {
+        Add-Failure $InputName 'failed' 'Candidate SHA does not match the requested candidate.'
+    }
 }
 
 function Read-BoundedJson {
@@ -163,6 +189,7 @@ function Validate-PlatformReport {
     )
 
     $document = $Loaded.Document
+    Validate-CandidateSha $InputName $document
     if ($document.EvidenceKind -ne 'p1-platform-coreclr-ilverify-native-aot') {
         Add-Failure $InputName 'failed' "Unexpected EvidenceKind '$($document.EvidenceKind)'."
     }
@@ -209,6 +236,7 @@ function Validate-DifferentialReport {
     )
 
     $document = $Loaded.Document
+    Validate-CandidateSha $InputName $document
     if ($document.profile -ne 'p1-differential-v2') {
         Add-Failure $InputName 'failed' "Unexpected profile '$($document.profile)'."
     }
@@ -249,6 +277,7 @@ function Validate-RegressionReport {
     )
 
     $document = $Loaded.Document
+    Validate-CandidateSha $InputName $document
     if ($document.evidenceKind -ne 'safe-core-typed-mir-regression') {
         Add-Failure $InputName 'failed' "Unexpected evidence kind '$($document.evidenceKind)'."
     }
@@ -294,6 +323,37 @@ function Validate-RegressionReport {
     }
 }
 
+function Validate-CoverageReport {
+    param(
+        [Parameter(Mandatory = $true)][string] $InputName,
+        [Parameter(Mandatory = $true)][object] $Loaded
+    )
+
+    $document = $Loaded.Document
+    Validate-CandidateSha $InputName $document
+    if ($document.evidenceKind -ne 'p1-requirement-coverage' -or
+        $document.profile -ne 'p1-coverage-v1' -or $document.status -ne 'passed') {
+        Add-Failure $InputName 'failed' 'Coverage report identity or status is invalid.'
+        return
+    }
+    if ($null -eq $document.summary -or [int]$document.summary.denominator -ne 40 -or
+        [int]$document.summary.caseDenominator -ne 160 -or
+        [int]$document.summary.passed -ne 40 -or [int]$document.summary.failed -ne 0 -or
+        [int]$document.summary.blocked -ne 0 -or [int]$document.summary.skipped -ne 0) {
+        Add-Failure $InputName 'failed' 'Coverage report does not close its fixed denominator.'
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$document.manifestSha256) -or
+        ([string]$document.manifestSha256).Length -ne 64) {
+        Add-Failure $InputName 'failed' 'Coverage report manifest hash is missing or malformed.'
+    }
+    if ($null -eq $document.requirements -or @($document.requirements).Count -ne 40) {
+        Add-Failure $InputName 'failed' 'Coverage requirement rows do not match the fixed denominator.'
+    }
+    if ($null -eq $document.cases -or @($document.cases).Count -ne 160) {
+        Add-Failure $InputName 'failed' 'Coverage case rows do not match the fixed denominator.'
+    }
+}
+
 try {
     $reportFullPath = Resolve-RepositoryPath $EvidencePath
     $specifications = @(
@@ -304,6 +364,9 @@ try {
         [pscustomobject]@{ Name = "windows-$RegressionProfile"; Path = $WindowsRegressionReport; Kind = 'regression' },
         [pscustomobject]@{ Name = "linux-$RegressionProfile"; Path = $LinuxRegressionReport; Kind = 'regression' }
     )
+    if (-not [string]::IsNullOrWhiteSpace($CoverageReport)) {
+        $specifications += [pscustomobject]@{ Name = 'p1-coverage-v1'; Path = $CoverageReport; Kind = 'coverage' }
+    }
 
     foreach ($specification in $specifications) {
         $loaded = Read-BoundedJson $specification.Name $specification.Path
@@ -313,6 +376,9 @@ try {
         }
         elseif ($specification.Kind -eq 'differential') {
             Validate-DifferentialReport $specification.Name $loaded
+        }
+        elseif ($specification.Kind -eq 'coverage') {
+            Validate-CoverageReport $specification.Name $loaded
         }
         else {
             Validate-RegressionReport $specification.Name $loaded
@@ -359,11 +425,12 @@ finally {
             SchemaVersion = 1
             EvidenceKind = 'p1-complete-exit-gate'
             Profile = 'p1-differential-v2'
+            CandidateSha = $candidate
             RegressionProfile = $RegressionProfile
             Summary = [ordered]@{
                 Status = $status
                 ExitCode = if ($status -eq 'passed') { 0 } elseif ($status -eq 'failed') { 1 } else { 2 }
-                Denominator = 6
+                Denominator = $gates.Count
                 Executed = $gates.Count
                 Passed = $passed
                 Failed = $failed

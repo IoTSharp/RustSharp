@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Runtime.InteropServices;
 using RustSharp.Compiler;
 
@@ -152,6 +153,35 @@ internal static class P1DifferentialProfileRunner
         string Framework,
         string RuntimeIdentifier);
 
+    internal sealed record ManifestEvidence(
+        string Path,
+        string Sha256,
+        int Denominator,
+        bool Validated);
+
+    internal sealed record CompilerEvidence(
+        string CliPath,
+        string Sha256,
+        string Profile);
+
+    internal sealed record PlatformEvidence(
+        string Name,
+        string RuntimeIdentifier);
+
+    internal sealed record ToolVersionEvidence(
+        string Dotnet,
+        string Rustc,
+        string SdkVersion);
+
+    internal sealed record ExecutionEvidence(
+        DateTimeOffset StartedAtUtc,
+        DateTimeOffset FinishedAtUtc,
+        bool DeadlineExpired);
+
+    internal sealed record CleanupEvidence(
+        bool Completed,
+        string? Diagnostic);
+
     internal sealed record Report(
         int SchemaVersion,
         string EvidenceKind,
@@ -174,7 +204,26 @@ internal static class P1DifferentialProfileRunner
         double ElapsedMilliseconds,
         bool DeadlineExpired,
         string? CleanupDiagnostic,
-        string? HarnessError);
+        string? HarnessError)
+    {
+        [JsonPropertyName("manifest")]
+        public ManifestEvidence? ManifestEvidence { get; init; }
+
+        [JsonPropertyName("compiler")]
+        public CompilerEvidence? CompilerEvidence { get; init; }
+
+        [JsonPropertyName("platform")]
+        public PlatformEvidence? PlatformEvidence { get; init; }
+
+        [JsonPropertyName("toolVersions")]
+        public ToolVersionEvidence? ToolVersions { get; init; }
+
+        [JsonPropertyName("execution")]
+        public ExecutionEvidence? ExecutionEvidence { get; init; }
+
+        [JsonPropertyName("cleanup")]
+        public CleanupEvidence? CleanupEvidence { get; init; }
+    }
 
     internal static Manifest ParseManifest(string json)
     {
@@ -418,7 +467,18 @@ internal static class P1DifferentialProfileRunner
             ? "blocked"
             : failed > 0 ? "failed" : passed == denominator && skipped == 0 ? "passed" : "blocked";
         var summary = new Summary(status, status == "passed" ? 0 : status == "failed" ? 1 : 2, denominator, passed + failed, passed, failed, blocked, skipped, manifest?.BorrowCount ?? 0, manifest?.DropCount ?? 0);
-        var report = new Report(profile == ProfileV2Name ? 2 : 1, "p1-source-borrow-drop-differential", profile, DateTimeOffset.UtcNow, relativeManifestPath, manifestSha, manifestBytes, manifest is not null, manifestError, oracle, rustSharp, CurrentHost(), effectiveTimeout.TotalSeconds, effectiveDeadline.TotalSeconds, summary, cases, startedAtUtc, DateTimeOffset.UtcNow, harnessClock.Elapsed.TotalMilliseconds, cancellation.IsCancellationRequested, cleanupDiagnostic, harnessError);
+        DateTimeOffset finishedAtUtc = DateTimeOffset.UtcNow;
+        HostReport host = CurrentHost();
+        string compilerPath = Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll");
+        var report = new Report(profile == ProfileV2Name ? 2 : 1, "p1-source-borrow-drop-differential", profile, finishedAtUtc, relativeManifestPath, manifestSha, manifestBytes, manifest is not null, manifestError, oracle, rustSharp, host, effectiveTimeout.TotalSeconds, effectiveDeadline.TotalSeconds, summary, cases, startedAtUtc, finishedAtUtc, harnessClock.Elapsed.TotalMilliseconds, cancellation.IsCancellationRequested, cleanupDiagnostic, harnessError)
+        {
+            ManifestEvidence = new(relativeManifestPath, manifestSha, denominator, manifest is not null),
+            CompilerEvidence = new(compilerPath, ComputeSha256IfPresent(compilerPath), CompilerProfile),
+            PlatformEvidence = new(host.RuntimeIdentifier, host.RuntimeIdentifier),
+            ToolVersions = new(rustSharp.Version ?? "", oracle.Version ?? "", Environment.GetEnvironmentVariable("DOTNET_SDK_VERSION") ?? "unknown"),
+            ExecutionEvidence = new(startedAtUtc, finishedAtUtc, cancellation.IsCancellationRequested),
+            CleanupEvidence = new(cleanupDiagnostic is null, cleanupDiagnostic),
+        };
         await WriteReportAsync(fullReportPath, report).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(report, JsonOptions));
         return summary.ExitCode;
@@ -526,6 +586,12 @@ internal static class P1DifferentialProfileRunner
     }
 
     private static ToolReport Unavailable(string name, string executable, string requested, string diagnostic) => new(name, executable, requested, null, false, diagnostic, ProcessEvidence.Empty);
+
+    private static string ComputeSha256IfPresent(string path)
+    {
+        if (!File.Exists(path)) return "";
+        return Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+    }
     private static HostReport CurrentHost() => new(
         RuntimeInformation.OSDescription,
         RuntimeInformation.OSArchitecture.ToString(),

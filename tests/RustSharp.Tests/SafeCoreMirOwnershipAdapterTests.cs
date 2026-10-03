@@ -14,6 +14,7 @@ internal static class SafeCoreMirOwnershipAdapterTests
         new("typed MIR ownership adapter preserves returned parameter provenance", ParameterReferenceAsync),
         new("typed MIR ownership adapter accepts finite Copy tuple aggregates", CopyTupleAsync),
         new("typed MIR ownership adapter lowers non-Copy place reads as moves", NonCopyMoveAsync),
+        new("typed MIR ownership adapter rejects a second non-Copy source use", NonCopyUseAfterMoveAsync),
         new("typed MIR ownership adapter preserves projected MIR places", ProjectedPlaceAsync),
         new("typed MIR ownership adapter preserves projected borrow provenance", ProjectedBorrowAsync),
         new("typed MIR ownership evidence rejects projected source drift", ProjectedEvidenceSourceDriftAsync),
@@ -234,6 +235,51 @@ internal static class SafeCoreMirOwnershipAdapterTests
             "A non-Copy MIR Use must become an ownership move with source and destination evidence.");
         AssertEx.False(result.Ownership.Paths.Single().Trace.Any(trace => trace == "assign destination"),
             "A move must not be represented as a copy assignment.");
+        return Task.CompletedTask;
+    }
+
+    private static Task NonCopyUseAfterMoveAsync()
+    {
+        SafeCoreType marker = SafeCoreType.Adt("crate::Marker");
+        SafeCoreMirFunction function = new(
+            0,
+            "crate::move_then_use",
+            marker,
+            [
+                new SafeCoreMirLocal(0, "source", marker, SafeCoreMirLocalKind.Parameter, false, Source)
+                {
+                    IsUnitAdt = true,
+                    DestructorFunctionId = 7,
+                },
+                new SafeCoreMirLocal(1, "first", marker, SafeCoreMirLocalKind.Temporary, false, Source)
+                {
+                    IsUnitAdt = true,
+                    DestructorFunctionId = 7,
+                },
+                new SafeCoreMirLocal(2, "second", marker, SafeCoreMirLocalKind.Temporary, false, Source)
+                {
+                    IsUnitAdt = true,
+                    DestructorFunctionId = 7,
+                },
+            ],
+            [new SafeCoreMirBlock(
+                0,
+                [
+                    new SafeCoreMirStatement(1,
+                        SafeCoreMirRvalue.Use(SafeCoreMirOperand.Local(0, marker, Source), Source), Source),
+                    new SafeCoreMirStatement(2,
+                        SafeCoreMirRvalue.Use(SafeCoreMirOperand.Local(0, marker, Source), Source), Source),
+                ],
+                SafeCoreMirTerminator.Return(SafeCoreMirOperand.Local(1, marker, Source), Source),
+                Source)],
+            0,
+            Source);
+
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "A second non-Copy source use must remain a move/use-after-move error.");
+        AssertEx.True(result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.UseAfterMove),
+            string.Join(Environment.NewLine, result.Diagnostics));
         return Task.CompletedTask;
     }
 

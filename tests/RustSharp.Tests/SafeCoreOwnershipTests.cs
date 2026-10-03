@@ -26,6 +26,10 @@ internal static class SafeCoreOwnershipTests
         new("ownership CFG rejects projected Drop boundaries and repeats", ProjectedDropValidationAsync),
         new("ownership CFG permits concurrent shared reborrows", SharedReborrowAsync),
         new("ownership CFG can infer non-lexical borrow ends", InferredNllAsync),
+        new("ownership CFG rejects self moves without reviving the source", SelfMoveAsync),
+        new("ownership CFG reports moved values on branch join paths", BranchJoinMoveAsync),
+        new("ownership CFG ends dead-branch loans with inferred NLL", DeadBranchNllAsync),
+        new("ownership CFG observes cancellation before bounded work", CancellationAsync),
     ];
 
     private static Task NormalDropAsync()
@@ -577,6 +581,119 @@ internal static class SafeCoreOwnershipTests
         AssertEx.False(escapedResult.IsSuccessful, "Returning a borrowed reference must remain an escape error under inferred NLL.");
         AssertEx.True(escapedResult.Diagnostics.Any(diagnostic => diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.Escape),
             "The return operand must keep the borrow live until the terminator is checked.");
+        return Task.CompletedTask;
+    }
+
+    private static Task SelfMoveAsync()
+    {
+        SafeCoreOwnershipFunction function = Function(
+            [Local(0, "value")],
+            [Block(0, [SafeCoreOwnershipInstruction.Move(0, 0, Source(1))],
+                SafeCoreOwnershipTerminator.ReturnUnit(Source(2)))]);
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "A move cannot consume and initialize the same place.");
+        AssertEx.Equal(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath, result.Diagnostics.Single().Code);
+        return Task.CompletedTask;
+    }
+
+    private static Task BranchJoinMoveAsync()
+    {
+        SafeCoreType boolean = Type(SafeCoreSemanticTypeKind.Bool);
+        SafeCoreOwnershipFunction function = new(
+            "crate::join-move",
+            [
+                Local(0, "value"),
+                Local(1, "condition", boolean, SafeCoreOwnershipKind.Copy),
+                Local(2, "moved", initiallyInitialized: false),
+            ],
+            [new SafeCoreOwnershipScope(0, -1, Source(0))],
+            [
+                new SafeCoreOwnershipBlock(0, 0, [],
+                    SafeCoreOwnershipTerminator.Branch(1, 1, 2, Source(1)), Source(1)),
+                new SafeCoreOwnershipBlock(1, 0,
+                    [SafeCoreOwnershipInstruction.Move(0, 2, Source(2))],
+                    SafeCoreOwnershipTerminator.Goto(3, Source(3)), Source(2)),
+                new SafeCoreOwnershipBlock(2, 0, [],
+                    SafeCoreOwnershipTerminator.Goto(3, Source(4)), Source(4)),
+                new SafeCoreOwnershipBlock(3, 0,
+                    [SafeCoreOwnershipInstruction.Use(0, Source(5))],
+                    SafeCoreOwnershipTerminator.ReturnUnit(Source(6)), Source(5)),
+            ],
+            0,
+            SafeCorePanicStrategy.Unwind,
+            Source(0));
+
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(result.IsSuccessful, "A branch join must reject a value moved on one incoming path.");
+        AssertEx.True(result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.UseAfterMove && diagnostic.Source.Span.Start == 5),
+            string.Join(Environment.NewLine, result.Diagnostics));
+        return Task.CompletedTask;
+    }
+
+    private static Task DeadBranchNllAsync()
+    {
+        SafeCoreType boolean = Type(SafeCoreSemanticTypeKind.Bool);
+        SafeCoreType reference = SafeCoreType.Reference(Type(SafeCoreSemanticTypeKind.I32), mutable: false);
+        SafeCoreOwnershipFunction function = new(
+            "crate::dead-branch-nll",
+            [
+                Local(0, "owner", Type(SafeCoreSemanticTypeKind.I32), SafeCoreOwnershipKind.Move),
+                Local(1, "view", reference, SafeCoreOwnershipKind.Move, reference: true, initiallyInitialized: false),
+                Local(2, "condition", boolean, SafeCoreOwnershipKind.Copy),
+            ],
+            [new SafeCoreOwnershipScope(0, -1, Source(0))],
+            [
+                new SafeCoreOwnershipBlock(0, 0, [],
+                    SafeCoreOwnershipTerminator.Branch(2, 1, 2, Source(1)), Source(1)),
+                new SafeCoreOwnershipBlock(1, 0,
+                    [SafeCoreOwnershipInstruction.Borrow(0, 1, mutable: false, Source(2))],
+                    SafeCoreOwnershipTerminator.Goto(3, Source(3)), Source(2)),
+                new SafeCoreOwnershipBlock(2, 0, [],
+                    SafeCoreOwnershipTerminator.Goto(3, Source(4)), Source(4)),
+                new SafeCoreOwnershipBlock(3, 0,
+                    [SafeCoreOwnershipInstruction.Assign(0, Source(5))],
+                    SafeCoreOwnershipTerminator.ReturnUnit(Source(6)), Source(5)),
+            ],
+            0,
+            SafeCorePanicStrategy.Unwind,
+            Source(0));
+
+        SafeCoreOwnershipAnalysisResult lexical = SafeCoreOwnershipAnalysis.Analyze(new([function]));
+        AssertEx.False(lexical.IsSuccessful, "Without NLL, a lexical loan remains active at the join.");
+        AssertEx.True(lexical.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.BorrowConflict),
+            string.Join(Environment.NewLine, lexical.Diagnostics));
+
+        SafeCoreOwnershipAnalysisResult inferred = SafeCoreOwnershipAnalysis.Analyze(new([function]),
+            new SafeCoreOwnershipOptions { InferNonLexicalLifetimes = true });
+        AssertEx.True(inferred.IsSuccessful, string.Join(Environment.NewLine, inferred.Diagnostics));
+        AssertEx.True(inferred.Paths.Any(path => path.Trace.Any(trace => trace.StartsWith("nll_end", StringComparison.Ordinal))),
+            "The dead branch loan must have a deterministic inferred end trace.");
+        return Task.CompletedTask;
+    }
+
+    private static Task CancellationAsync()
+    {
+        SafeCoreOwnershipFunction function = Function(
+            [Local(0, "value")],
+            [Block(0, [SafeCoreOwnershipInstruction.Use(0, Source(1))],
+                SafeCoreOwnershipTerminator.ReturnUnit(Source(2)))]);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        bool observed = false;
+        try
+        {
+            SafeCoreOwnershipAnalysis.Analyze(new([function]),
+                new SafeCoreOwnershipOptions { CancellationToken = cancellation.Token });
+        }
+        catch (OperationCanceledException)
+        {
+            observed = true;
+        }
+
+        AssertEx.True(observed, "Ownership analysis must observe cancellation before any bounded work.");
         return Task.CompletedTask;
     }
 

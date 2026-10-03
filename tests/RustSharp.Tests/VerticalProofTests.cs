@@ -17,6 +17,9 @@ internal static class VerticalProofTests
         new("panic boundary unwinds DropScope deterministically", PanicUnwindAsync),
         new("panic boundary abort leaves DropScope untouched", PanicAbortAsync),
         new("DropScope continues after a destructor failure", DropFailureAsync),
+        new("generated drop glue preserves aggregate order and aborts on unwind failure", DropGlueAsync),
+        new("generated drop slots enforce move and replacement flags", DropSlotAsync),
+        new("P1 Drop contract freezes transitions and double-panic policy", DropContractAsync),
     ];
 
     private static Task GenericOptionAsync()
@@ -160,6 +163,74 @@ internal static class VerticalProofTests
         AssertEx.Equal("3,1", string.Join(',', order));
         AssertEx.Equal("first failure", failure.Message);
         AssertEx.True(scope.IsDisposed && scope.TrackedCount == 0, "A failed cleanup still consumes the scope.");
+        return Task.CompletedTask;
+    }
+
+    private static Task DropGlueAsync()
+    {
+        var trace = new List<string>();
+        RustDropCleanupReport normal = RustDropGlue.Run(
+            new Action?[]
+            {
+                () => trace.Add("field-a"),
+                () => trace.Add("field-b"),
+            },
+            () => trace.Add("outer"));
+        AssertEx.Equal(RustDropCleanupOutcome.Completed, normal.Outcome);
+        AssertEx.Equal("outer,field-a,field-b", string.Join(',', trace));
+
+        RustDropCleanupReport unwind = RustDropGlue.Run(
+            new Action?[]
+            {
+                () => throw new InvalidOperationException("drop panic"),
+                () => trace.Add("after-failure"),
+            },
+            duringUnwind: true);
+        AssertEx.Equal(RustDropCleanupOutcome.Aborted, unwind.Outcome);
+        AssertEx.Equal(1, unwind.Attempted);
+        AssertEx.True(unwind.FirstFailure is InvalidOperationException,
+            "Unwind cleanup must retain the first destructor failure.");
+        return Task.CompletedTask;
+    }
+
+    private static Task DropSlotAsync()
+    {
+        var trace = new List<string>();
+        using var slot = new RustDropSlot();
+        slot.Initialize(() => trace.Add("first"));
+        Action moved = slot.MoveOut();
+        AssertEx.True(slot.IsMoved && !slot.IsLive, "Move-out must clear the cleanup obligation.");
+        moved();
+        slot.Replace(() => trace.Add("second"));
+        slot.Dispose();
+        slot.Dispose();
+        AssertEx.Equal("first,second", string.Join(',', trace));
+        AssertEx.True(slot.IsDropped, "A disposed replacement must be terminal.");
+        return Task.CompletedTask;
+    }
+
+    private static Task DropContractAsync()
+    {
+        SafeCoreDropTransition initialized = SafeCoreMirDropContract.Apply(
+            SafeCoreDropPlaceState.Uninitialized, SafeCoreDropEvent.Initialize);
+        AssertEx.True(initialized.IsValid && initialized.State == SafeCoreDropPlaceState.Live,
+            "Initialization must enter the live state.");
+        SafeCoreDropTransition aborted = SafeCoreMirDropContract.Apply(
+            SafeCoreDropPlaceState.Live, SafeCoreDropEvent.PanicAbort);
+        AssertEx.True(aborted.IsValid && !aborted.ShouldDrop && !aborted.IsTerminal,
+            "Abort must preserve a live place without scheduling cleanup.");
+        SafeCoreDropTransition invalid = SafeCoreMirDropContract.Apply(
+            SafeCoreDropPlaceState.Dropped, SafeCoreDropEvent.Move);
+        AssertEx.False(invalid.IsValid, "A second move after drop must fail closed.");
+        SafeCoreDropFailureOutcome failure = SafeCoreMirDropContract.DestructorFailure(
+            duringUnwind: true,
+            new InvalidOperationException("panic"),
+            new InvalidOperationException("drop"));
+        AssertEx.True(failure.IsDoublePanic && failure.Action == SafeCoreDropFailureAction.Abort,
+            "Destructor failure during unwind must select the abort policy.");
+        AssertEx.True(SafeCoreMirDropContract.Snapshot().StartsWith(
+            SafeCoreMirDropContract.Profile + "\n", StringComparison.Ordinal),
+            "The transition snapshot must carry its versioned profile.");
         return Task.CompletedTask;
     }
 

@@ -857,6 +857,14 @@ public static class SafeCoreOwnershipAnalysis
             ? BuildNllLiveness(function, locals, step)
             : null;
         var work = new Stack<WorkItem>();
+        // A loop can revisit a block with exactly the same ownership facts.
+        // Treat that edge as a fixed point instead of expanding an equivalent
+        // path until the visit budget expires.  The key deliberately excludes
+        // trace/drop evidence: those are observations, while this set tracks
+        // only facts that can affect a later ownership decision.  Different
+        // move/loan states still travel independently and remain conservative
+        // at joins.
+        var seenStates = new Dictionary<int, HashSet<string>>();
         work.Push(new WorkItem(function.EntryBlockId, new PathState(function, step), 0));
         while (work.Count > 0)
         {
@@ -882,6 +890,24 @@ public static class SafeCoreOwnershipAnalysis
             }
 
             state.EnterBlock(block.ScopeId, scopes, locals, step, ReportEscape);
+            if (!seenStates.TryGetValue(block.Id, out HashSet<string>? blockStates))
+            {
+                blockStates = new HashSet<string>(StringComparer.Ordinal);
+                seenStates.Add(block.Id, blockStates);
+            }
+            bool repeatedState = !blockStates.Add(state.SemanticKey());
+            if (repeatedState && state.VisitCount(block.Id) > 1)
+            {
+                // A repeated state after visiting this block already is a
+                // genuine backedge (including multi-block cycles). A repeated
+                // conditional header has already explored its exit edge, so
+                // it is a converged loop fixed point; a repeated non-branch
+                // block has no such proof and remains a bounded-cycle failure.
+                if (block.Terminator.Kind != SafeCoreOwnershipTerminatorKind.Branch)
+                    throw new OwnershipLimitException();
+                continue;
+            }
+
             for (int index = 0; index < block.Instructions.Count; index++)
             {
                 step();
@@ -1285,6 +1311,91 @@ public static class SafeCoreOwnershipAnalysis
 
         public PathState Clone() => new(this);
 
+        /// <summary>
+        /// Return a bounded identity for ownership facts at a CFG point.
+        /// Runtime traces and drop order are intentionally omitted because
+        /// they describe the path already taken rather than future legality.
+        /// </summary>
+        public string SemanticKey()
+        {
+            var builder = new System.Text.StringBuilder();
+            builder.Append("v[");
+            foreach ((int id, ValueState value) in values.OrderBy(static pair => pair.Key))
+            {
+                _step();
+                builder.Append(id.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(value.Initialized ? '1' : '0')
+                    .Append(value.Available ? '1' : '0')
+                    .Append(value.Moved ? '1' : '0')
+                    .Append(value.Dropped ? '1' : '0')
+                    .Append(value.DropOwned ? '1' : '0')
+                    .Append(':').Append(value.MovedTo?.ToString(CultureInfo.InvariantCulture) ?? "-")
+                    .Append(';');
+            }
+
+            builder.Append("p[");
+            foreach ((string key, ValueState value) in projectedValues.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
+            {
+                _step();
+                builder.Append(key).Append(':')
+                    .Append(value.Initialized ? '1' : '0')
+                    .Append(value.Available ? '1' : '0')
+                    .Append(value.Moved ? '1' : '0')
+                    .Append(value.Dropped ? '1' : '0')
+                    .Append(value.DropOwned ? '1' : '0')
+                    .Append(';');
+            }
+
+            builder.Append("b[");
+            foreach ((int id, BorrowState borrow) in borrows.OrderBy(static pair => pair.Key))
+            {
+                _step();
+                builder.Append(id.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(borrow.OwnerId.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(PlaceKey(borrow.OwnerPlace)).Append(':')
+                    .Append(borrow.Mutable ? '1' : '0')
+                    .Append(borrow.Active ? '1' : '0')
+                    .Append(borrow.ParentReferenceId?.ToString(CultureInfo.InvariantCulture) ?? "-")
+                    .Append(borrow.Suspended ? '1' : '0')
+                    .Append(borrow.EscapeReported ? '1' : '0')
+                    .Append(borrow.External ? '1' : '0')
+                    .Append('|');
+                foreach (SafeCoreOwnershipPlace alternative in borrow.AlternativeOwners)
+                {
+                    _step();
+                    builder.Append(PlaceKey(alternative)).Append(',');
+                }
+                builder.Append('|');
+                foreach (int parent in borrow.AdditionalParents.OrderBy(static value => value))
+                {
+                    _step();
+                    builder.Append(parent.ToString(CultureInfo.InvariantCulture)).Append(',');
+                }
+                builder.Append(';');
+            }
+
+            builder.Append("s[");
+            foreach (int scope in activeScopes.OrderBy(static value => value))
+            {
+                _step();
+                builder.Append(scope.ToString(CultureInfo.InvariantCulture)).Append(',');
+            }
+
+            builder.Append("]q[");
+            foreach ((int id, bool value) in booleanValues.OrderBy(static pair => pair.Key))
+            {
+                _step();
+                builder.Append(id.ToString(CultureInfo.InvariantCulture)).Append(':').Append(value ? '1' : '0').Append(',');
+            }
+            builder.Append("]d[");
+            foreach (string drop in DropOrder)
+            {
+                _step();
+                builder.Append(drop.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(drop).Append(';');
+            }
+            return builder.Append(']').ToString();
+        }
+
         public void Visit(int blockId, int maximum, Action step)
         {
             step();
@@ -1292,6 +1403,8 @@ public static class SafeCoreOwnershipAnalysis
             if (++count > maximum) throw new OwnershipLimitException();
             visits[blockId] = count;
         }
+
+        public int VisitCount(int blockId) => visits.TryGetValue(blockId, out int count) ? count : 0;
 
         public void EnterBlock(int targetScope, IReadOnlyDictionary<int, SafeCoreOwnershipScope> scopes,
             IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals, Action step, Action<int, int> reportEscape)
@@ -2490,6 +2603,19 @@ public static class SafeCoreOwnershipAnalysis
             Action<string, string, string, int, int, SafeCoreMirSource> add, SafeCoreOwnershipFunction function,
             SafeCoreOwnershipBlock block, int index, SafeCoreMirSource source, bool projectedDestination = false)
         {
+            // A move must consume one place and initialize another one.  A
+            // forged/self-referential MIR fact cannot satisfy that contract:
+            // accepting `Move(x, x)` would first observe the old value and
+            // then write it back after marking the same source moved, which
+            // silently revives a moved local (and can also drop a live loan).
+            if (sourceId == destinationId)
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.InvalidMovePath,
+                    "A move source and destination must identify distinct ownership places.",
+                    function.Name, block.Id, index, source);
+                return false;
+            }
+
             if (!Use(sourceId, locals, add, function, block, index, source) ||
                 !EnsureLocalScope(destinationId, locals, add, function, block, index, source) ||
                 !values.TryGetValue(destinationId, out ValueState? destination) ||

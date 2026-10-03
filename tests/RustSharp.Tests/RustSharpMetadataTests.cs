@@ -26,6 +26,7 @@ internal static class RustSharpMetadataTests
         new("RustSharp metadata preserves repeated positional parameter contracts", RepeatedParameterContractsAsync),
         new("RustSharp metadata consumer rejects an unlinked ownership contract", RejectsUnlinkedCallContractAsync),
         new("RustSharp metadata consumer rejects MethodDef signature drift", ConsumerMethodContractAsync),
+        new("RustSharp metadata reconciles nominal aggregate layouts", ValueLayoutAsync),
     ];
 
     private static Task CanonicalAsync()
@@ -692,6 +693,35 @@ internal static class RustSharpMetadataTests
             catch (UnauthorizedAccessException) { }
         }
 
+        return Task.CompletedTask;
+    }
+
+    private static Task ValueLayoutAsync()
+    {
+        var pair = new RustSharpMetadataValueType("Pair", [
+            new RustSharpMetadataField("left", "I32"),
+            new RustSharpMetadataField("right", "Bool"),
+        ]);
+        var method = new ClrLirMethod("Main", ClrLirType.Void, [], [],
+            [new ClrLirBlock("entry", [new ClrLirReturn()])]);
+        RustSharpMetadataDocument document = RustSharpMetadataDocument.ForProgram(
+            "safe-core-mir-v1", [1, 2, 3], [method], valueTypes: [pair]);
+        RustSharpMetadataDocument reordered = new(
+            document.Profile, document.SourceSha256, document.Functions,
+            valueTypes: [pair],
+            callContracts: document.CallContracts);
+        AssertEx.Equal(document.Json, reordered.Json,
+            "Nominal value layouts must have deterministic JSON independent of optional argument ordering.");
+        AssertEx.Throws<ArgumentException>(() => _ = RustSharpMetadataDocument.ForProgram(
+            "safe-core-mir-v1", new byte[] { 1, 2, 3 }, [method],
+            valueTypes: [new RustSharpMetadataValueType("Pair", [
+                new RustSharpMetadataField("left", "I32"),
+                new RustSharpMetadataField("left", "Bool")])])) ;
+        RustSharpMetadataDocument parsed = RustSharpMetadataDocument.Parse(document.Json);
+        AssertEx.Equal(1, parsed.ValueTypes.Length);
+        AssertEx.True(parsed.ValueTypes[0].Fields!.Select(static field => field.Type)
+            .SequenceEqual(["I32", "Bool"]),
+            "Nominal field declaration order must survive parse and canonicalization.");
         return Task.CompletedTask;
     }
 

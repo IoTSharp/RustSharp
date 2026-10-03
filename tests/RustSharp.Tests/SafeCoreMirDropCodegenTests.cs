@@ -1,4 +1,6 @@
 using RustSharp.Compiler;
+using RustSharp.Runtime;
+using RustSharp.Semantics;
 
 namespace RustSharp.Tests;
 
@@ -14,6 +16,12 @@ internal static class SafeCoreMirDropCodegenTests
         new("generated MIR Drop runs exactly once in reverse order", ReverseOrderAsync),
         new("generated MIR Drop runs on an exception fault path", FaultPathAsync),
         new("generated MIR Drop rejects unsupported destructor failure stably", DestructorFailureBoundaryAsync),
+        new("P1 Drop contract freezes flags and failure transitions", DropContractAsync),
+        new("P1 Drop flags project bounded ownership paths", DropFlagProjectionAsync),
+        new("P1 Drop glue preserves aggregate order and double-panic stop", DropGlueAsync),
+        new("P1 Drop glue covers nested aggregates, return and temporaries", NestedAggregateReturnTemporaryAsync),
+        new("P1 generated aggregate glue and concrete temporary replacement", AggregateGlueAndConcreteSlotAsync),
+        new("P1 panic boundary exposes double panic and abort outcome", DoublePanicBoundaryAsync),
     ];
 
     private static async Task ReverseOrderAsync()
@@ -69,6 +77,177 @@ internal static class SafeCoreMirDropCodegenTests
         return Task.CompletedTask;
     }
 
+    private static Task DropContractAsync()
+    {
+        SafeCoreDropTransition initialized = SafeCoreMirDropContract.Apply(
+            SafeCoreDropPlaceState.Uninitialized, SafeCoreDropEvent.Initialize);
+        AssertEx.True(initialized.IsValid && initialized.State == SafeCoreDropPlaceState.Live &&
+            !initialized.ShouldDrop, "Initialization must publish one live drop flag.");
+
+        SafeCoreDropTransition moved = SafeCoreMirDropContract.Apply(
+            SafeCoreDropPlaceState.Live, SafeCoreDropEvent.Move);
+        AssertEx.True(moved.IsValid && moved.State == SafeCoreDropPlaceState.Moved &&
+            !moved.ShouldDrop && moved.IsTerminal,
+            "A whole-value move must consume the drop obligation.");
+
+        SafeCoreDropTransition unwound = SafeCoreMirDropContract.Apply(
+            SafeCoreDropPlaceState.Live, SafeCoreDropEvent.PanicUnwind);
+        AssertEx.True(unwound.IsValid && unwound.ShouldDrop &&
+            unwound.State == SafeCoreDropPlaceState.Dropped,
+            "Unwind must consume a live drop obligation exactly once.");
+
+        string snapshot = SafeCoreMirDropContract.Snapshot();
+        AssertEx.True(snapshot.StartsWith("safe-core-drop-contract-p1-v1\n", StringComparison.Ordinal) &&
+            snapshot.Contains("DROP-ABORT", StringComparison.Ordinal) &&
+            snapshot.Contains("failure normal=continue unwind=abort", StringComparison.Ordinal),
+            "The frozen transition table must have a stable machine-readable snapshot.");
+        return Task.CompletedTask;
+    }
+
+    private static Task DropFlagProjectionAsync()
+    {
+        SafeCoreMirPipelineResult pipeline = SafeCoreMirPipeline.Analyze(
+            "fn main() { let value: i32 = 7; }", "drop-flags.rs",
+            new SafeCoreMirPipelineOptions
+            {
+                RequireOwnershipEvidence = true,
+                RequireCleanupEvidence = true,
+                Timeout = TimeSpan.FromSeconds(10),
+            });
+        AssertEx.True(pipeline.IsSuccessful && pipeline.Ownership is not null,
+            "The drop-flag fixture must produce ownership evidence: " +
+            string.Join(Environment.NewLine, pipeline.Diagnostics));
+        SafeCoreMirDropFlagResult flags = SafeCoreMirDropFlagLowering.Lower(pipeline.Ownership!);
+        AssertEx.True(flags.IsSuccessful, string.Join(Environment.NewLine, flags.Diagnostics));
+        AssertEx.True(flags.Snapshot!.StartsWith("safe-core-mir-drop-flags-p1-v1\n", StringComparison.Ordinal),
+            "Drop flags must publish a versioned snapshot.");
+        AssertEx.True(flags.Paths.SelectMany(path => path.FinalFlags)
+            .Any(flag => flag.LocalName == "value"),
+            "Drop-flag evidence must retain source local identity.");
+        return Task.CompletedTask;
+    }
+
+    private static Task DropGlueAsync()
+    {
+        var trace = new List<string>();
+        RustDropCleanupReport normal = RustDropGlue.Run(
+            [
+                (Action)(() => trace.Add("field-0")),
+                (Action)(() => throw new InvalidOperationException("field failure")),
+                (Action)(() => trace.Add("field-2")),
+            ],
+            () => trace.Add("outer"));
+        AssertEx.Equal(RustDropCleanupOutcome.Failed, normal.Outcome);
+        AssertEx.Equal("outer,field-0,field-2", string.Join(',', trace));
+        AssertEx.Equal("field failure", normal.FirstFailure?.Message ?? string.Empty);
+
+        trace.Clear();
+        RustDropCleanupReport unwind = RustDropGlue.Run(
+            [
+                (Action)(() => trace.Add("field-0")),
+                (Action)(() => throw new InvalidOperationException("double panic")),
+                (Action)(() => trace.Add("field-2")),
+            ],
+            () => trace.Add("outer"), duringUnwind: true);
+        AssertEx.Equal(RustDropCleanupOutcome.Aborted, unwind.Outcome);
+        AssertEx.Equal("outer,field-0", string.Join(',', trace));
+        AssertEx.True(unwind.FirstFailure is not null && unwind.SecondFailure is null,
+            "Unwind cleanup must stop at the first destructor failure.");
+
+        var slotTrace = new List<string>();
+        var slot = new RustDropSlot();
+        slot.Initialize(() => slotTrace.Add("old"));
+        slot.Replace(() => slotTrace.Add("new"));
+        AssertEx.Equal("old", string.Join(',', slotTrace));
+        Action moved = slot.MoveOut();
+        moved();
+        slot.Dispose();
+        AssertEx.Equal("old,new", string.Join(',', slotTrace));
+        AssertEx.True(slot.IsMoved && !slot.IsLive, "Moving a slot must suppress later cleanup.");
+        return Task.CompletedTask;
+    }
+
+    private static Task DoublePanicBoundaryAsync()
+    {
+        var scope = new DropScope();
+        scope.Track(new ThrowingDisposable("cleanup failure"));
+        RustPanicReport report = RustPanicBoundary.Run(
+            () => RustPanicBoundary.Panic("original panic"), scope);
+        AssertEx.Equal(RustPanicOutcome.Aborted, report.Outcome);
+        AssertEx.True(report.IsDoublePanic && report.CleanupAttempted && !report.CleanupCompleted,
+            "A destructor failure during unwind must expose an abort/double-panic report.");
+        AssertEx.Equal("original panic", report.Panic?.Message ?? string.Empty);
+        AssertEx.Equal("cleanup failure", report.CleanupException?.Message ?? string.Empty);
+        AssertEx.True(scope.IsDisposed && scope.TrackedCount == 0,
+            "Double-panic cleanup must consume the scope once.");
+        return Task.CompletedTask;
+    }
+
+    private static Task AggregateGlueAndConcreteSlotAsync()
+    {
+        var trace = new List<string>();
+        using var nested = new RustDropAggregate(
+            [
+                new RecordingDisposable(() => trace.Add("nested-field-0")),
+                new RecordingDisposable(() => trace.Add("nested-field-1")),
+            ],
+            new RecordingDisposable(() => trace.Add("nested-outer")));
+        using var aggregate = new RustDropAggregate(
+            [nested, new RecordingDisposable(() => trace.Add("sibling"))],
+            new RecordingDisposable(() => trace.Add("outer")));
+
+        aggregate.Dispose();
+        AssertEx.Equal("outer,nested-outer,nested-field-0,nested-field-1,sibling", string.Join(',', trace));
+        AssertEx.True(aggregate.IsDisposed && nested.IsDisposed,
+            "A non-unit aggregate must consume nested cleanup obligations exactly once.");
+
+        var temporaryTrace = new List<string>();
+        var slot = new RustDropSlot();
+        slot.Initialize(new RecordingDisposable(() => temporaryTrace.Add("temporary")));
+        slot.Replace(new RecordingDisposable(() => temporaryTrace.Add("replacement")));
+        AssertEx.Equal("temporary", string.Join(',', temporaryTrace));
+        slot.Dispose();
+        slot.Dispose();
+        AssertEx.Equal("temporary,replacement", string.Join(',', temporaryTrace));
+        AssertEx.True(slot.IsDropped && !slot.IsLive,
+            "Concrete temporary replacement must leave only the replacement live value.");
+        return Task.CompletedTask;
+    }
+
+    private static Task NestedAggregateReturnTemporaryAsync()
+    {
+        var trace = new List<string>();
+        RustDropCleanupReport nested = RustDropGlue.Run(
+            [
+                (Action)(() => trace.Add("nested-field-0")),
+                (Action)(() => trace.Add("nested-field-1")),
+            ],
+            () => trace.Add("nested-outer"));
+        AssertEx.Equal(RustDropCleanupOutcome.Completed, nested.Outcome);
+        AssertEx.Equal("nested-outer,nested-field-0,nested-field-1", string.Join(',', trace));
+
+        trace.Clear();
+        var scope = new DropScope();
+        scope.Track(new RecordingDisposable(() => trace.Add("owner")));
+        RustPanicReport returned = RustPanicBoundary.Run(
+            () => trace.Add("return"), scope);
+        AssertEx.Equal(RustPanicOutcome.Returned, returned.Outcome);
+        AssertEx.Equal("return,owner", string.Join(',', trace));
+        AssertEx.True(returned.CleanupAttempted && returned.CleanupCompleted,
+            "An explicit return must clean remaining live owners.");
+
+        var temporaryTrace = new List<string>();
+        var temporary = new RustDropSlot();
+        temporary.Initialize(() => temporaryTrace.Add("temporary"));
+        Action moved = temporary.MoveOut();
+        moved();
+        temporary.Dispose();
+        AssertEx.Equal("temporary", string.Join(',', temporaryTrace));
+        AssertEx.True(temporary.IsMoved && !temporary.IsLive,
+            "Moving an expression temporary out must suppress scope cleanup.");
+        return Task.CompletedTask;
+    }
+
     private static async Task<BoundedProcessResult> CompileAndRunAsync(string source, string? expectedOutput)
     {
         string directory = Path.GetFullPath(Path.Combine(
@@ -102,4 +281,14 @@ internal static class SafeCoreMirDropCodegenTests
     }
 
     private static string Normalize(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal);
+
+    private sealed class ThrowingDisposable(string message) : IDisposable
+    {
+        public void Dispose() => throw new InvalidOperationException(message);
+    }
+
+    private sealed class RecordingDisposable(Action action) : IDisposable
+    {
+        public void Dispose() => action();
+    }
 }

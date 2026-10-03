@@ -32,8 +32,8 @@ internal static class Program
             Console.WriteLine("""
                 Usage: RustSharp.Conformance --profile <name> [--oracle rustc-1.98] [--report <path.json>] [--timeout <seconds>] [--deadline <seconds>]
                 Profiles: vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1, safe-core-generics-v1,
-                          safe-core-regression-v1, safe-core-regression-v2, safe-core-regression-v3, p1-exit-gate-v1, p1-differential-v1, p1-differential-v2,
-                          safe-core-lexing, safe-core-syntax, safe-core-name-resolution.
+                          safe-core-regression-v1, safe-core-regression-v2, safe-core-regression-v3, p1-exit-gate-v1, p1-differential-v1, p1-differential-v2, p1-differential-v3, p1-platform-v2,
+                          p1-coverage-v1, safe-core-lexing, safe-core-syntax, safe-core-name-resolution.
                 Type and generic profiles compare checks with rustc; the generic profile also compares executable output.
                 Both use a maximum of 30s/case and 180s overall.
                 safe-core-regression-v1 runs bounded compile-pass, compile-fail, run-pass and differential cases.
@@ -152,6 +152,74 @@ internal static class Program
             {
                 Console.Error.WriteLine(
                     $"conformance: {P1ExitGateProfileRunner.ProfileName} harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+        if (string.Equals(options.Profile, P1CoverageProfileRunner.ProfileName, StringComparison.Ordinal))
+        {
+            try
+            {
+                string coverageReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(coverageReportPath)!);
+                return await P1CoverageProfileRunner.RunAsync(
+                    repositoryRoot,
+                    coverageReportPath,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (
+                exception is IOException or UnauthorizedAccessException or ArgumentException or
+                NotSupportedException or OperationCanceledException or TimeoutException or JsonException)
+            {
+                Console.Error.WriteLine($"conformance: {P1CoverageProfileRunner.ProfileName} harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+        if (string.Equals(options.Profile, P1ExpandedDifferentialRunner.ProfileName, StringComparison.Ordinal))
+        {
+            try
+            {
+                string expandedReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(expandedReportPath)!);
+                return await P1ExpandedDifferentialRunner.RunAsync(
+                    repositoryRoot,
+                    expandedReportPath,
+                    options.Timeout,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or OperationCanceledException or JsonException)
+            {
+                Console.Error.WriteLine($"conformance: {P1ExpandedDifferentialRunner.ProfileName} harness error: {TrimDiagnostic(exception.Message)}");
+                return 2;
+            }
+        }
+        if (string.Equals(options.Profile, P1ExpandedPlatformRunner.ProfileName, StringComparison.Ordinal))
+        {
+            try
+            {
+                string platformReportPath = options.ReportPath is null
+                    ? Path.Combine(repositoryRoot, "artifacts", "conformance", options.Profile + ".json")
+                    : Path.GetFullPath(options.ReportPath, repositoryRoot);
+                Directory.CreateDirectory(Path.GetDirectoryName(platformReportPath)!);
+                return await P1ExpandedPlatformRunner.RunAsync(
+                    repositoryRoot,
+                    platformReportPath,
+                    options.Timeout,
+                    options.Deadline,
+                    startedAtUtc,
+                    harnessClock,
+                    RuntimeInformation.RuntimeIdentifier is "win-x64" or "linux-x64" ? RuntimeInformation.RuntimeIdentifier : OperatingSystem.IsWindows() ? "win-x64" : "linux-x64").ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or OperationCanceledException or JsonException)
+            {
+                Console.Error.WriteLine($"conformance: {P1ExpandedPlatformRunner.ProfileName} harness error: {TrimDiagnostic(exception.Message)}");
                 return 2;
             }
         }
@@ -677,8 +745,11 @@ internal static class Program
             not SafeCoreRegressionV2ProfileRunner.ProfileName and
             not SafeCoreRegressionV2ProfileRunner.ProfileV3Name and
             not P1ExitGateProfileRunner.ProfileName and
+            not P1CoverageProfileRunner.ProfileName and
             not P1DifferentialProfileRunner.ProfileName and
             not P1DifferentialProfileRunner.ProfileV2Name and
+            not P1ExpandedDifferentialRunner.ProfileName and
+            not P1ExpandedPlatformRunner.ProfileName and
             not SafeCoreGenericProfileRunner.ProfileName)
         {
             throw new ArgumentException(
@@ -687,7 +758,7 @@ internal static class Program
 
         bool inProcessAcceptanceProfile = profile is SafeCoreLexingProfileName or
             SafeCoreSyntaxProfileName or SafeCoreNameResolutionProfileName or
-            P1ExitGateProfileRunner.ProfileName;
+            P1ExitGateProfileRunner.ProfileName or P1CoverageProfileRunner.ProfileName;
         if (inProcessAcceptanceProfile && oracleSpecified)
         {
             throw new ArgumentException($"Profile '{profile}' is in-process acceptance only and does not accept --oracle.");

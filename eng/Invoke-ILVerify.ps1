@@ -352,7 +352,10 @@ function Get-ReferenceFiles {
                     break
                 }
 
-                [void] $files.Add([IO.Path]::GetFullPath([string] $enumerator.Current))
+                $candidate = [IO.Path]::GetFullPath([string] $enumerator.Current)
+                if (Test-ManagedAssembly -Path $candidate) {
+                    [void] $files.Add($candidate)
+                }
             }
         }
         finally {
@@ -396,6 +399,25 @@ function Get-ReferenceFiles {
     }
 
     return $unique
+}
+
+function Test-ManagedAssembly {
+    param([Parameter(Mandatory = $true)][string] $Path)
+
+    if (-not [IO.File]::Exists($Path)) { return $false }
+    $stream = $null
+    $reader = $null
+    try {
+        $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+        $reader = [System.Reflection.PortableExecutable.PEReader]::new($stream)
+        return $reader.HasMetadata
+    }
+    catch [System.IO.IOException] { return $false }
+    catch [System.BadImageFormatException] { return $false }
+    finally {
+        if ($null -ne $reader) { $reader.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
 }
 
 function Convert-ProcessEvidence {
@@ -526,7 +548,7 @@ try {
             }
         }
     }
-    if ([string]::IsNullOrWhiteSpace($ReferenceDirectory) -and @($ReferencePath).Count -eq 0) {
+    if ([string]::IsNullOrWhiteSpace($ReferenceDirectory)) {
         # Join each path component independently so the same verifier script
         # resolves the runtime pack on Windows and Unix runners.
         $ReferenceDirectory = Join-Path $dotnetRoot 'shared' 'Microsoft.NETCore.App' $RuntimeVersion

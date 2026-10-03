@@ -1,0 +1,371 @@
+{
+  "version": 1,
+  "suites": [
+    {
+      "profile": "p1-differential-v3",
+      "suiteVersion": 3,
+      "denominator": 32,
+      "backend": "rustc-1.98-vs-rustsharp-source",
+      "runtimeIdentifiers": [
+        "win-x64",
+        "linux-x64"
+      ],
+      "oracle": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+      "compilerSha256": "6715732e2e189ee993dcb30f1cb894eaa49161fd5fe87139a6f3d77a5cf828c1",
+      "manifestSha256": "17f88bbe4f8df983c01d7b7cc8f789af03ce6c0c5293dd3faffadf54a725dc34",
+      "cases": [
+        {
+          "id": "borrow-shared",
+          "source": "p1-v3-borrow-shared.rs",
+          "sourceSha256": "F62D9CC4D735A957C978B176ED5B9D5DD6332AFC9A3DAF0F54A00469824B4D0B",
+          "expectationSha256": "3F51F5EE011E981F3798A95C58523DB6015549E1ACAD9EEE91B6C0017226DB03"
+        },
+        {
+          "id": "borrow-mutable-reborrow",
+          "source": "p1-v3-borrow-mutable-reborrow.rs",
+          "sourceSha256": "ED7F9EEE9D8C5B8F3896FC998C0224DAA01D3D256DC6563E1624AF8E20F1CD4A",
+          "expectationSha256": "BC2DC4D97FB843E3EE6D85481A7740C1E048D945ADCC93310B29CA9A169399B4"
+        },
+        {
+          "id": "drop-return-order",
+          "source": "p1-v3-drop-return-order.rs",
+          "sourceSha256": "3E74A5D2F3E66B91BB2E48DC358F73357A7F78D91164C1D678F585F7A292823B",
+          "expectationSha256": "C76FAC2AC12E99C2BD4E5180747195EB5369844B4B2EB74AC4DCECB3F0F23C8B"
+        },
+        {
+          "id": "drop-early-return",
+          "source": "p1-v3-drop-early-return.rs",
+          "sourceSha256": "C8F26CF67A653F508D81A3E67F795376E94CB69320F0DBF72573169720A43B35",
+          "expectationSha256": "CC3325CDFDD21D1974C0B267CE364D422183032D49E3FFE48270FE28E8461650"
+        },
+        {
+          "id": "borrow-write-read",
+          "source": "p1-v3-borrow-write-read.rs",
+          "sourceSha256": "FFB43473759D0914803BC2C9316EE9FF5241773F573E6DEDB9B3C10CE4852EBE",
+          "expectationSha256": "D889352EB8F237AED8BF385BAA9192C4BB19DDE604E600D255EC143974DACD4F"
+        },
+        {
+          "id": "borrow-shared-after-update",
+          "source": "p1-v3-borrow-shared-after-update.rs",
+          "sourceSha256": "DD7261E5ECC27CADB2F6E0D6782320265D6F5EC69E248F44F5B111052059857C",
+          "expectationSha256": "EE1D7564DF0D60D5F7E4D0AAEBC17F48FD521045F2F6CA7EE78A67741CE464DA"
+        },
+        {
+          "id": "borrow-mutable-reborrow-chain",
+          "source": "p1-v3-borrow-mutable-reborrow-chain.rs",
+          "sourceSha256": "9E7A038F4B44885DA1E5EF4080E3086F191A04A22A6A9C13A7FA346D14CA29A1",
+          "expectationSha256": "C5EB24D4DF8AB5C8D662916ED3E411804BF15D56CF3B83928F008E7FF75E8AA9"
+        },
+        {
+          "id": "borrow-shared-reborrow",
+          "source": "p1-v3-borrow-shared-reborrow.rs",
+          "sourceSha256": "0D63A1BACFCD080EA18DF633B858244F8815580261D7BF3606F9A20D6462D738",
+          "expectationSha256": "059FF86717FCE1B3A8E6275F0EBD305D44A8C31C96791EAED327B604DC50D355"
+        },
+        {
+          "id": "borrow-fail-mut-alias",
+          "source": "p1-v3-borrow-fail-mut-alias.rs",
+          "sourceSha256": "C7DB3BD14180379DF6EE28532E2292EE51B634C306E0C23E89718098927C598C",
+          "expectationSha256": "1E5AA6B223611BA69219F058AF4AB8EE0431C6E16601B15374D267ADE79C6BE4"
+        },
+        {
+          "id": "borrow-fail-shared-write",
+          "source": "p1-v3-borrow-fail-shared-write.rs",
+          "sourceSha256": "20B7CBD6AC766006C227628B345831F4DE6C88977AFDDE326CA7A0449E85C60B",
+          "expectationSha256": "D6EC3AB51256401D102D5182950C249D6AEBE7C599BE903439E38B03FDEE5EE8"
+        },
+        {
+          "id": "borrow-fail-moved-mut-ref",
+          "source": "p1-v3-borrow-fail-moved-mut-ref.rs",
+          "sourceSha256": "D02E011EB47EF4029E937EF778205A0C8CFDB2D9868204BCA5DC8C6358C01F30",
+          "expectationSha256": "E9AC86A7DD67B38C34EE0C2EA54EC66DEB4449581CE09D15238169911EC025CD"
+        },
+        {
+          "id": "borrow-fail-escape",
+          "source": "p1-v3-borrow-fail-escape.rs",
+          "sourceSha256": "2153C62375959864E237649D36F4AB8945053EBDE92F0294EE671D90AE6656A7",
+          "expectationSha256": "BE69E5E25DF1811F6317527F029CCBB83F612073F3E02AA7167B0A2A6D3946F2"
+        },
+        {
+          "id": "drop-reverse-locals",
+          "source": "p1-v3-drop-reverse-locals.rs",
+          "sourceSha256": "9B94E34592B6BA47E896F6CBD2B40E576955A3E62332A77A3180F75F2AF83716",
+          "expectationSha256": "B79E2BB1B6D23527975A3B2AC78E6BC73E8141D5D141C6ADAC0B39FF9933A10F"
+        },
+        {
+          "id": "drop-nested-scopes",
+          "source": "p1-v3-drop-nested-scopes.rs",
+          "sourceSha256": "A66A2626915BAD7EE0AFA54DD66B371699CD5B21D137DEDBF9FB2267D49ACC9B",
+          "expectationSha256": "93815576A9EBDB38801E2BF2940E0D43B18633F7BF14743CF7DE0936A8E8FDD2"
+        },
+        {
+          "id": "drop-return-reverse",
+          "source": "p1-v3-drop-return-reverse.rs",
+          "sourceSha256": "B9D6320ECC98AD35E8DC5C5EAB25EC9B57FAB0CD7B252F8BE1D4E42673206BCD",
+          "expectationSha256": "9205AD3092FC7E8324C66740172689B5DE6EA6C8F159E311FE8A04C7C90A236F"
+        },
+        {
+          "id": "drop-branch-return",
+          "source": "p1-v3-drop-branch-return.rs",
+          "sourceSha256": "231EE6A6E3D14D2289CAA695E9986DB6A37E05DA48BC2B758219512A6FE59788",
+          "expectationSha256": "FA611F77CB16EA82FAC9E57A145B95BB67A4C2E9AC8F02A477CE23276588203E"
+        },
+        {
+          "id": "borrow-aggregate-copy",
+          "source": "p1-v3-borrow-aggregate-copy.rs",
+          "sourceSha256": "EFD21946A3B9C2A2EBCF4D22A2FB7C2CE1A55F1ACE343DFC0FE64AABCAFBAF1D",
+          "expectationSha256": "1484957FC82CE8817628B4302DF5EC7840236B47C8AEA70F96DFB7452A3A109F"
+        },
+        {
+          "id": "borrow-partial-move",
+          "source": "p1-v3-borrow-partial-move.rs",
+          "sourceSha256": "69DF9BAE9FA7A7C7E4D22E225B511BB713E12706C60D23969661DAF8268A8D67",
+          "expectationSha256": "10E055CA5B7F01D104F889AA918AD615E7247AC79F63D9FF29E552E8E8B3D3F3"
+        },
+        {
+          "id": "borrow-nll-branch",
+          "source": "p1-v3-borrow-nll-branch.rs",
+          "sourceSha256": "C577E74D41A782645728C5D6634C5B7B3EAC9E4067CB6A835B3969715A2B2BD3",
+          "expectationSha256": "4AB5EE52231CAC9925E2B13A96CDD05EFA4BB6B18860AF9AD2EF945E47E44234"
+        },
+        {
+          "id": "borrow-reborrow-escape",
+          "source": "p1-v3-borrow-reborrow-escape.rs",
+          "sourceSha256": "4311DBAFFC6950EEF769FA9AE66691FF13B6785FB9CA2A4AC2EA564CDE3373BD",
+          "expectationSha256": "86CF083FAF52B6DAF3598A8AC5E192161192B86BB19E30E68A5356B8218C7F59"
+        },
+        {
+          "id": "borrow-loop-join",
+          "source": "p1-v3-borrow-loop-join.rs",
+          "sourceSha256": "AC5071575BBBF8FBCD102EAFCAC4020F3E58FFA7ECF42F1C89EBAFE6B7BBE789",
+          "expectationSha256": "2CD59FD3F1B57CF99B22566FE5227A3B9160B0C9A2CB0720A88482A3255CDBEF"
+        },
+        {
+          "id": "borrow-index-projection",
+          "source": "p1-v3-borrow-index-projection.rs",
+          "sourceSha256": "CAA15701F147C96B2A84D8EE8BB2CCC7B35E32944721579A67606C6447959381",
+          "expectationSha256": "5DF1093384BDEE74191F94E30D0DA610AB4708CC84BEDEC607F542FA5C79E537"
+        },
+        {
+          "id": "borrow-deref-projection",
+          "source": "p1-v3-borrow-deref-projection.rs",
+          "sourceSha256": "0470BBDAA50E303B038719C8B1F69827C76308648CFD88170FD663E6FFD40EF6",
+          "expectationSha256": "4C6FCF866457B591AF7890AF1DD531869E3F210FC87FC71B42A494268ADAA2E8"
+        },
+        {
+          "id": "borrow-call-return",
+          "source": "p1-v3-borrow-call-return.rs",
+          "sourceSha256": "4F95E18EECC17DF9FBE50C1D4B89E7016F3081FFE4DF25A42E29440607B1B31E",
+          "expectationSha256": "8B2F6C90DB6652D3FA5EBCECECE918663914098EE094633434E3ED9999579D7B"
+        },
+        {
+          "id": "borrow-move-reinit",
+          "source": "p1-v3-borrow-move-reinit.rs",
+          "sourceSha256": "D373D8BF6E17A2182260FB5B2E52A51A22465AB783EFC2324BF2BECC77D3BEB0",
+          "expectationSha256": "5FE2F596BAD891DB046531FF461E22EE719ABD74E9E99B056FB2F5F28DC2B0FF"
+        },
+        {
+          "id": "borrow-budget-limit",
+          "source": "p1-v3-borrow-budget-limit.rs",
+          "sourceSha256": "548788444E456B5402B8561A17B7883A7C6FC22C5D6F873229C11F33892FEB20",
+          "expectationSha256": "6ED9F9AB3FB146D8C2BBF7E88A4872A79600C1079BD657A4235D84531AFD991C"
+        },
+        {
+          "id": "drop-aggregate-fields",
+          "source": "p1-v3-drop-aggregate-fields.rs",
+          "sourceSha256": "FEC135CCC24B9467753CCE09E326556A40DDD6F1825FB535DFF2FF3259E30AC0",
+          "expectationSha256": "A1405E397D320678BE7AFC37509A7E0F21F86212332492DE8071D738B52E4422"
+        },
+        {
+          "id": "drop-partial-move",
+          "source": "p1-v3-drop-partial-move.rs",
+          "sourceSha256": "B36F3A6627AEF2417C67E5B741D2F45A18841DA8734C173219DF5F49D139D95B",
+          "expectationSha256": "48664CDDBCDF1251224B3B43603AFD9B3B34FB14BB1D79E1F770A52A6B774340"
+        },
+        {
+          "id": "drop-assignment-replacement",
+          "source": "p1-v3-drop-assignment-replacement.rs",
+          "sourceSha256": "EFB67DA4477534A3C1981058E06544244C2F48132D408EA6FCFECCCFB34FDDDC",
+          "expectationSha256": "869BE6A345A78B58B56477146CDB842A240E8A664339A67EE0B17171FA77A52A"
+        },
+        {
+          "id": "drop-temporary-scope",
+          "source": "p1-v3-drop-temporary-scope.rs",
+          "sourceSha256": "442C14DFCC58756117E668196FD3048F15FBC39A52FEFAABB540A593CA66160D",
+          "expectationSha256": "6394DD3B2420006AACA1950E4A5238018D6D7245752F93E805AF5BB34666C6E6"
+        },
+        {
+          "id": "drop-unwind-nested",
+          "source": "p1-v3-drop-unwind-nested.rs",
+          "sourceSha256": "5FBE1DA48E19B23DE571FB27EDA836135927749948E5FA05E9F7C428BC689321",
+          "expectationSha256": "F2D607032DC8DE279D57B53D06C897E9B7912E747BC2D38E054D28053A9E0591"
+        },
+        {
+          "id": "drop-double-panic",
+          "source": "p1-v3-drop-double-panic.rs",
+          "sourceSha256": "5F5A61A20CE5590A6B287D1E6233DB49F95F955C53C94671B586D34A3A23FD42",
+          "expectationSha256": "FF9F6C6F1D6A8452573A39272FD1BB244855AC750D048D8CBCFD018008D3578F"
+        }
+      ]
+    },
+    {
+      "profile": "p1-platform-v2",
+      "suiteVersion": 2,
+      "denominator": 24,
+      "backend": "coreclr-ilverify-native-aot",
+      "runtimeIdentifiers": [
+        "win-x64",
+        "linux-x64"
+      ],
+      "oracle": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+      "compilerSha256": "fe07f030d15783d433bb7a502f1cfe94b727439bd0805c5c4e2e28e405ee6701",
+      "manifestSha256": "03768c502b3d3951f3e63499905751366153bb299e32d6bf134f95cc759be606",
+      "cases": [
+        {
+          "id": "borrow-shared",
+          "source": "p1-platform-v2-borrow-shared.rs",
+          "sourceSha256": "F62D9CC4D735A957C978B176ED5B9D5DD6332AFC9A3DAF0F54A00469824B4D0B",
+          "expectationSha256": "39E55D42AF1CC048510A67D346B4B2CED8BF1AC5C4C0771918E42DAFB252A8DB"
+        },
+        {
+          "id": "borrow-mutable-reborrow",
+          "source": "p1-platform-v2-borrow-mutable-reborrow.rs",
+          "sourceSha256": "ED7F9EEE9D8C5B8F3896FC998C0224DAA01D3D256DC6563E1624AF8E20F1CD4A",
+          "expectationSha256": "66E468F337E25958A4DB7A92AB787D74F1DCF7CD0ADF4958A2CF80A23B1E6ED8"
+        },
+        {
+          "id": "drop-return-order",
+          "source": "p1-platform-v2-drop-return-order.rs",
+          "sourceSha256": "3E74A5D2F3E66B91BB2E48DC358F73357A7F78D91164C1D678F585F7A292823B",
+          "expectationSha256": "64DD19A56D3092946138D296A447BD11732F21988DB3B8F609CEC2A615A80687"
+        },
+        {
+          "id": "drop-early-return",
+          "source": "p1-platform-v2-drop-early-return.rs",
+          "sourceSha256": "C8F26CF67A653F508D81A3E67F795376E94CB69320F0DBF72573169720A43B35",
+          "expectationSha256": "D43C52AC2D57591A6FF88A479ABD4E603EED416E4732E8C7462AF863C09C42A3"
+        },
+        {
+          "id": "borrow-write-read",
+          "source": "p1-platform-v2-borrow-write-read.rs",
+          "sourceSha256": "FFB43473759D0914803BC2C9316EE9FF5241773F573E6DEDB9B3C10CE4852EBE",
+          "expectationSha256": "AC42198D677C93969B9984B2AE8A53E40D4EFCF06E00DC70A808B86730EBBAA0"
+        },
+        {
+          "id": "borrow-shared-after-update",
+          "source": "p1-platform-v2-borrow-shared-after-update.rs",
+          "sourceSha256": "DD7261E5ECC27CADB2F6E0D6782320265D6F5EC69E248F44F5B111052059857C",
+          "expectationSha256": "A3AD8036130D6703EF8A93DEB5EC2A58A679163477183E608E4667F5A68E3FCB"
+        },
+        {
+          "id": "borrow-mutable-reborrow-chain",
+          "source": "p1-platform-v2-borrow-mutable-reborrow-chain.rs",
+          "sourceSha256": "9E7A038F4B44885DA1E5EF4080E3086F191A04A22A6A9C13A7FA346D14CA29A1",
+          "expectationSha256": "FE6DFF372B0E136B4012081469BC3CE734126177C508998DC7D99B052F5F8207"
+        },
+        {
+          "id": "borrow-shared-reborrow",
+          "source": "p1-platform-v2-borrow-shared-reborrow.rs",
+          "sourceSha256": "0D63A1BACFCD080EA18DF633B858244F8815580261D7BF3606F9A20D6462D738",
+          "expectationSha256": "26DC6FCB274EC4884BDE7CDBEDA3B47B0C55E24A3128B6F3B5A56B1539F4D81F"
+        },
+        {
+          "id": "drop-reverse-locals",
+          "source": "p1-platform-v2-drop-reverse-locals.rs",
+          "sourceSha256": "9B94E34592B6BA47E896F6CBD2B40E576955A3E62332A77A3180F75F2AF83716",
+          "expectationSha256": "0C75E1B8A0D875B42715CF17C78FC8BFD2F53605BC8D5F721ED9988F77380EBA"
+        },
+        {
+          "id": "drop-nested-scopes",
+          "source": "p1-platform-v2-drop-nested-scopes.rs",
+          "sourceSha256": "A66A2626915BAD7EE0AFA54DD66B371699CD5B21D137DEDBF9FB2267D49ACC9B",
+          "expectationSha256": "7C2E78098E4F44D1AEE6BF2748CF4B6DAB3BE3F2B454D7289341BF2A4F8F875F"
+        },
+        {
+          "id": "drop-return-reverse",
+          "source": "p1-platform-v2-drop-return-reverse.rs",
+          "sourceSha256": "B9D6320ECC98AD35E8DC5C5EAB25EC9B57FAB0CD7B252F8BE1D4E42673206BCD",
+          "expectationSha256": "4A495CD541597B20FFB46084F9CEE79B0077F5D9EA67461B7F2EDE0F8C3E1318"
+        },
+        {
+          "id": "drop-branch-return",
+          "source": "p1-platform-v2-drop-branch-return.rs",
+          "sourceSha256": "231EE6A6E3D14D2289CAA695E9986DB6A37E05DA48BC2B758219512A6FE59788",
+          "expectationSha256": "F1536A529BB88D9C3F7D67555F22AD6FA14ABD45DCF1BC47C59222531B56127C"
+        },
+        {
+          "id": "aggregate-struct-drop",
+          "source": "p1-platform-v2-aggregate-struct-drop.rs",
+          "sourceSha256": "4263B23CD5E56FE7F9CF8B5F6C86FE82F98DF3B08BF10C1A66ABE67AAD2EC25B",
+          "expectationSha256": "DBB29B266AF51A49AFEE8B8399E26D62DFFDA12A367E6558F7C0A1DE237F8116"
+        },
+        {
+          "id": "aggregate-enum-drop",
+          "source": "p1-platform-v2-aggregate-enum-drop.rs",
+          "sourceSha256": "2D57BADC22ADC1F5B52087E8757E8CB12AF227778AAFBE805F9A52677B859BA7",
+          "expectationSha256": "A5A4E537669CAA1D06072AB790BA450CD70474A27A1DB01B3BC008CD485B117E"
+        },
+        {
+          "id": "slice-unsize",
+          "source": "p1-platform-v2-slice-unsize.rs",
+          "sourceSha256": "EE499F620C124C98A78A4427AFA0E4641B634C48071902F463A25B59A9E5889D",
+          "expectationSha256": "E10DBC12418BB2F90B0811D31C6135C289533DF78D5E83B02D0D65D00C116BF8"
+        },
+        {
+          "id": "pattern-capture",
+          "source": "p1-platform-v2-pattern-capture.rs",
+          "sourceSha256": "74780FCCB4D01EEA1507193BF294EA400B1AB69B5019F53EFD27E30271B9FE48",
+          "expectationSha256": "09550ABB909FFC74D69235279C8EBA1B14E8431CC778B1DA928C4537B69C6774"
+        },
+        {
+          "id": "panic-unwind-generated",
+          "source": "p1-platform-v2-panic-unwind-generated.rs",
+          "sourceSha256": "7B9D8858426475720CF91686091CB4DEBB20485F2FDE60370F1773FDD2CD289E",
+          "expectationSha256": "C70D90875D45832BBC9354F2D912A2A6A9D70BBAF1C5BDAB219E5FB772D3E0E5"
+        },
+        {
+          "id": "panic-abort-generated",
+          "source": "p1-platform-v2-panic-abort-generated.rs",
+          "sourceSha256": "9C46CD91D67FB155C5199E91A443718DC6694C63F5907A99A918909A77FA888F",
+          "expectationSha256": "7A41AF4F2D4ED81C108F32F5CFFB09ED1FA8FC8A95E9A274DACE71D959F908D9"
+        },
+        {
+          "id": "generic-import-call",
+          "source": "p1-platform-v2-generic-import-call.rs",
+          "sourceSha256": "73CAE0A47C710B9ACDEC6F4C43AAF41401E00F684115C5948DA271C48653FC57",
+          "expectationSha256": "A91404938E61F16E9A48607F41AA7FA4DB3D0A725F761091DA6437BA580EB1A6"
+        },
+        {
+          "id": "byref-import-call",
+          "source": "p1-platform-v2-byref-import-call.rs",
+          "sourceSha256": "3449106D75A4ED56695A034512DCE1CB0FADD5EFE0CB86C6F341F1A2BFE55472",
+          "expectationSha256": "68214E154B75539DCD80088EF3D1D3F908D35947FA2526651493489A03AD6337"
+        },
+        {
+          "id": "metadata-contract",
+          "source": "p1-platform-v2-metadata-contract.rs",
+          "sourceSha256": "51B342EAF8BCA4CD04059C27A0A5BDADAEDBB2EBDAA206FEFBCC3351D0702129",
+          "expectationSha256": "81404199913C503CB689D960AF29C47A39541C8C42739203FC99041FD070203F"
+        },
+        {
+          "id": "mir-projection",
+          "source": "p1-platform-v2-mir-projection.rs",
+          "sourceSha256": "F77E9829B5D510D2931952449DD52F3D08BC798B859BF60327CBD7D3B0BD15F1",
+          "expectationSha256": "A62348C4DBD1D039384C661B81BCC894E300B2FA5296B2EAD197FCFC60DFF74A"
+        },
+        {
+          "id": "mir-family",
+          "source": "p1-platform-v2-mir-family.rs",
+          "sourceSha256": "7B45CEBD4EB4C4588B0AAC74EE4F2A29C560C709772CD640529C2E978155D8C2",
+          "expectationSha256": "DD3E14E67CFF2DDB417C0CBA390EAB7CBF12F1F2881A7F496DB35C487CEAE8D3"
+        },
+        {
+          "id": "source-package",
+          "source": "p1-platform-v2-source-package.rs",
+          "sourceSha256": "65BBDEA91B969B8084DE8A801C9164C29AA0357D674F40B75B54C1D293B4CC19",
+          "expectationSha256": "4857E80A24764E6F775BF1E194A85224572DD2E09930F31B7E12C792794AAB0C"
+        }
+      ]
+    }
+  ]
+}

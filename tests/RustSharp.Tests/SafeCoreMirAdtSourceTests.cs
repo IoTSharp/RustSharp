@@ -45,6 +45,11 @@ internal static class SafeCoreMirAdtSourceTests
         new("MIR v2 extending block tails retain the let scope", BlockTailTemporaryBorrowAsync),
         new("MIR v2 borrowing a block tail extends its temporary owner", BorrowBlockTemporaryAsync),
         new("MIR v2 temporary borrows may be consumed in the same statement", StatementTemporaryBorrowAsync),
+        new("MIR v2 non-lexical shared loans end after their last use", NonLexicalSharedLoanAsync),
+        new("MIR v2 mutable loans resume owner writes after scope exit", MutableLoanScopeExitAsync),
+        new("MIR v2 partial moves permit field reinitialization", PartialMoveReinitializationAsync),
+        new("MIR v2 loop body retains mutable borrow validity", LoopBorrowBodyAsync),
+        new("MIR v2 ownership diagnostics retain the moved-use source span", OwnershipDiagnosticSpanAsync),
         new("MIR v1 retains its named ADT rejection boundary", VersionBoundaryAsync),
     ];
 
@@ -198,6 +203,40 @@ internal static class SafeCoreMirAdtSourceTests
 
     private static Task BorrowBlockTemporaryAsync() => RunAsync(
         "fn make() -> i32 { 7 } fn main() { let reference = &{ make() }; println!(\"{}\", *reference); }", "7\n");
+
+    private static Task NonLexicalSharedLoanAsync() => RunAsync(
+        "fn main() { let mut value = 1; let view = &value; println!(\"{}\", *view); " +
+        "value = 2; println!(\"{}\", value); }", "1\n2\n");
+
+    private static Task MutableLoanScopeExitAsync() => RunAsync(
+        "fn main() { let mut value = 1; { let view = &mut value; *view = 2; } " +
+        "value = 3; println!(\"{}\", value); }", "3\n");
+
+    private static Task PartialMoveReinitializationAsync() => RunAsync(
+        "struct Pair { left: i32, right: i32 } fn main() { let mut pair = Pair { left: 1, right: 2 }; " +
+        "let moved = pair.left; pair.left = 7; println!(\"{}\", moved); println!(\"{}\", pair.left); " +
+        "println!(\"{}\", pair.right); }", "1\n7\n2\n");
+
+    private static Task LoopBorrowBodyAsync() => RunAsync(
+        "fn main() { let mut value = 0; loop { let view = &mut value; *view += 1; break; } " +
+        "println!(\"{}\", value); }", "1\n");
+
+    private static Task OwnershipDiagnosticSpanAsync()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        const string source = "struct Pair { left: i32, right: i32 } fn take(pair: Pair) {} " +
+            "fn main() { let pair = Pair { left: 1, right: 2 }; take(pair); println!(\"{}\", pair.left); }";
+        CompilationResult result = CompilerDriver.Check(source, "ownership-diagnostic.rs",
+            CompilationProfile.SafeCoreMirV2, deadline.Token);
+        AssertEx.False(result.Success, "A use after a non-Copy argument move must fail checking.");
+        Diagnostic diagnostic = result.Diagnostics.FirstOrDefault(static item =>
+            item.Code == SafeCoreOwnershipDiagnosticCodes.UseAfterMove)
+            ?? throw new InvalidOperationException(Format(result.Diagnostics));
+        int expectedStart = source.IndexOf("pair.left", StringComparison.Ordinal);
+        AssertEx.Equal(expectedStart, diagnostic.Span.Start);
+        AssertEx.Equal("pair.left", source.Substring(diagnostic.Span.Start, diagnostic.Span.Length));
+        return Task.CompletedTask;
+    }
 
     private static Task MoveAsync() => RejectAsync(
         "struct Pair { left: i32, right: i32 } fn take(pair: Pair) {} fn main() { let pair = Pair { left: 1, right: 2 }; " +

@@ -1,0 +1,123 @@
+name: P1 expanded evidence (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  expanded:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            runner: windows-2025
+            rid: win-x64
+          - name: linux-x64
+            runner: ubuntu-24.04
+            rid: linux-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.400
+            10.0.401
+      - name: Install rustc 1.98 oracle
+        shell: pwsh
+        run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Restore and build
+        shell: pwsh
+        run: |
+          dotnet restore RustSharp.slnx
+          dotnet build RustSharp.slnx -c Release --no-restore -m:1
+      - name: Restore ILVerify tool
+        shell: pwsh
+        run: dotnet tool restore --tool-manifest .config/dotnet-tools.json
+      - name: Install Linux Native AOT prerequisites
+        if: matrix.name == 'linux-x64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y clang zlib1g-dev
+      - name: Run expanded differential and platform reports
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reportRoot = 'artifacts/p1-expanded/${{ matrix.name }}'
+          New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
+          $assembly = 'tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll'
+          $diff = Join-Path $reportRoot 'p1-differential-v3.json'
+          $platform = Join-Path $reportRoot 'p1-platform-v2.json'
+          & dotnet $assembly --profile p1-differential-v3 --oracle rustc-1.98 --timeout 30 --deadline 900 --report $diff
+          $diffCode = $LASTEXITCODE
+          & dotnet $assembly --profile p1-platform-v2 --timeout 30 --deadline 900 --report $platform
+          $platformCode = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath $diff -PathType Leaf)) { throw "Missing differential report (exit $diffCode)." }
+          if (-not (Test-Path -LiteralPath $platform -PathType Leaf)) { throw "Missing platform report (exit $platformCode)." }
+          if ($diffCode -ne 0 -or $platformCode -ne 0) { Write-Warning "Expanded evidence is blocked or failed; reports were preserved." }
+      - name: Upload expanded reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-expanded-${{ matrix.name }}
+          path: artifacts/p1-expanded/${{ matrix.name }}
+          if-no-files-found: error
+
+  candidate-gate:
+    if: always()
+    needs: expanded
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.400
+      - name: Download paired expanded reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p1-expanded-*
+          path: artifacts/p1-expanded-download
+      - name: Run candidate SHA aggregate
+        shell: pwsh
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path artifacts/p1-expanded/windows-x64, artifacts/p1-expanded/linux-x64 | Out-Null
+          Copy-Item -Path artifacts/p1-expanded-download/p1-expanded-windows-x64/* -Destination artifacts/p1-expanded/windows-x64 -Recurse -Force
+          Copy-Item -Path artifacts/p1-expanded-download/p1-expanded-linux-x64/* -Destination artifacts/p1-expanded/linux-x64 -Recurse -Force
+          & pwsh -NoLogo -NoProfile -File eng/Test-P1ExpandedExitGate.ps1 `
+            -DifferentialWindowsReport artifacts/p1-expanded/windows-x64/p1-differential-v3.json `
+            -DifferentialLinuxReport artifacts/p1-expanded/linux-x64/p1-differential-v3.json `
+            -PlatformWindowsReport artifacts/p1-expanded/windows-x64/p1-platform-v2.json `
+            -PlatformLinuxReport artifacts/p1-expanded/linux-x64/p1-platform-v2.json `
+            -CandidateSha $env:GITHUB_SHA `
+            -EvidencePath artifacts/p1-expanded/p1-expanded-exit-gate.json
+          $expandedCode = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath artifacts/p1-expanded/p1-expanded-exit-gate.json -PathType Leaf)) { throw "Expanded exit gate did not publish a report (exit $expandedCode)." }
+          New-Item -ItemType Directory -Force -Path artifacts/p1-candidate | Out-Null
+          & pwsh -NoLogo -NoProfile -File eng/Test-P1CandidateGate.ps1 `
+            -CandidateSha $env:GITHUB_SHA `
+            -ExpandedWindowsDifferentialReport artifacts/p1-expanded/windows-x64/p1-differential-v3.json `
+            -ExpandedLinuxDifferentialReport artifacts/p1-expanded/linux-x64/p1-differential-v3.json `
+            -ExpandedWindowsPlatformReport artifacts/p1-expanded/windows-x64/p1-platform-v2.json `
+            -ExpandedLinuxPlatformReport artifacts/p1-expanded/linux-x64/p1-platform-v2.json `
+            -EvidencePath artifacts/p1-candidate/p1-candidate-gate.json
+          $code = $LASTEXITCODE
+          if (-not (Test-Path -LiteralPath artifacts/p1-candidate/p1-candidate-gate.json -PathType Leaf)) { throw "Candidate gate did not publish a report (exit $code)." }
+          if ($code -ne 0) { Write-Warning "Candidate gate is blocked or failed; preserving the report." }
+      - name: Upload candidate aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-candidate-gate
+          path: artifacts/p1-candidate
+          if-no-files-found: error

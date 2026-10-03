@@ -15,6 +15,7 @@ internal static class P1ExitGateTests
     [
         new("P1 exit gate manifest fixes its five probe denominator", ManifestAsync),
         new("P1 exit gate emits a bounded reproducible report", ReportAsync),
+        new("P1 coverage manifest fixes every requirement and category", CoverageManifestAsync),
     ];
 
     private static Task ManifestAsync()
@@ -139,6 +140,43 @@ internal static class P1ExitGateTests
         }
     }
 
+    private static async Task CoverageManifestAsync()
+    {
+        string root = RepositoryRoot();
+        string path = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures",
+            P1CoverageProfileRunner.ManifestFileName);
+        P1CoverageProfileRunner.Manifest manifest = P1CoverageProfileRunner.ParseManifest(
+            File.ReadAllText(path), root);
+        AssertEx.Equal(P1CoverageProfileRunner.RequirementDenominator, manifest.Denominator);
+        AssertEx.Equal(40, manifest.Requirements.Count);
+        AssertEx.Equal(160, manifest.Cases.Count);
+        AssertEx.True(manifest.Cases.All(item => item.Backends.Count >= 1),
+            "Every frozen coverage case must name at least one required backend.");
+
+        string reportPath = Path.Combine(Path.GetTempPath(),
+            "rustsharp-p1-coverage-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            int exitCode = await P1CoverageProfileRunner.RunAsync(
+                root,
+                reportPath,
+                TimeSpan.FromSeconds(30),
+                DateTimeOffset.UtcNow,
+                Stopwatch.StartNew()).ConfigureAwait(false);
+            AssertEx.Equal(0, exitCode);
+            using JsonDocument report = JsonDocument.Parse(File.ReadAllText(reportPath));
+            AssertEx.Equal("passed", AssertEx.NotNull(
+                report.RootElement.GetProperty("status").GetString(),
+                "Coverage report status is required."));
+            AssertEx.Equal(40, report.RootElement.GetProperty("summary").GetProperty("denominator").GetInt32());
+            AssertEx.Equal(160, report.RootElement.GetProperty("summary").GetProperty("caseDenominator").GetInt32());
+        }
+        finally
+        {
+            TryDeleteFile(reportPath);
+        }
+    }
+
     private static async Task VerifySourceMirBackendRuntimeAsync()
     {
         const string source =
@@ -214,6 +252,20 @@ internal static class P1ExitGateTests
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
             if (!Directory.Exists(path)) return;
+            Thread.Sleep(50);
+        }
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        var clock = Stopwatch.StartNew();
+        for (int attempt = 0; attempt < 20 && clock.Elapsed < TimeSpan.FromSeconds(2); attempt++)
+        {
+            if (!File.Exists(path)) return;
+            try { File.Delete(path); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            if (!File.Exists(path)) return;
             Thread.Sleep(50);
         }
     }

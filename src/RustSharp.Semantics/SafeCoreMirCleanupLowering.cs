@@ -356,8 +356,21 @@ public static class SafeCoreMirCleanupLowering
 
             if (TryParseLocalEvent(trace, "drop ", localsByName, out SafeCoreOwnershipLocal? drop) && drop is not null)
             {
+                if (!drop.HasDrop)
+                {
+                    AddDiagnostic(diagnostics, InvalidEvidence,
+                        $"Cleanup drop evidence references non-droppable local '{drop.Name}'.",
+                        drop.Source, options);
+                    return null;
+                }
+                if (!observedDrops.Add(drop.Name))
+                {
+                    AddDiagnostic(diagnostics, InvalidEvidence,
+                        $"Cleanup drop evidence repeats local '{drop.Name}'.",
+                        drop.Source, options);
+                    return null;
+                }
                 actions.Add(SafeCoreMirCleanupAction.Drop(drop.Id, drop.Name, drop.Source));
-                observedDrops.Add(drop.Name);
                 continue;
             }
 
@@ -417,14 +430,28 @@ public static class SafeCoreMirCleanupLowering
         // DropOrder is a compact, stable ownership fact. Older ownership
         // producers may omit individual `drop` trace entries, so materialize
         // any missing drops immediately before the terminal boundary.
+        var dropOrderSeen = new HashSet<string>(StringComparer.Ordinal);
         foreach (string dropName in path.DropOrder)
         {
             Step(options, clock, ref operations);
+            if (!dropOrderSeen.Add(dropName))
+            {
+                AddDiagnostic(diagnostics, InvalidEvidence,
+                    $"Cleanup drop evidence repeats local '{dropName}'.", function.Source, options);
+                return null;
+            }
             if (observedDrops.Contains(dropName)) continue;
             if (!localsByName.TryGetValue(dropName, out SafeCoreOwnershipLocal? local))
             {
                 AddDiagnostic(diagnostics, Unsupported,
                     $"Cleanup drop evidence references unknown local '{dropName}'.", function.Source, options);
+                return null;
+            }
+            if (!local.HasDrop)
+            {
+                AddDiagnostic(diagnostics, InvalidEvidence,
+                    $"Cleanup drop evidence references non-droppable local '{local.Name}'.",
+                    local.Source, options);
                 return null;
             }
             if (actions.Count >= options.MaximumActionsPerPath)

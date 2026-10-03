@@ -1,0 +1,2424 @@
+{
+  "profile": "p1-coverage-v1",
+  "version": 1,
+  "ledger": "p1-exit-scope-v1",
+  "denominator": 40,
+  "limits": {
+    "maximumRequirements": 64,
+    "maximumCases": 512,
+    "maximumManifestBytes": 524288,
+    "maximumSourceBytes": 1048576
+  },
+  "requirements": [
+    {
+      "id": "P1-REQ-001",
+      "classification": "check-only",
+      "leaf": "P1-001"
+    },
+    {
+      "id": "P1-REQ-002",
+      "classification": "executable",
+      "leaf": "P1-002"
+    },
+    {
+      "id": "P1-REQ-003",
+      "classification": "check-only",
+      "leaf": "P1-003"
+    },
+    {
+      "id": "P1-REQ-004",
+      "classification": "executable",
+      "leaf": "P1-004"
+    },
+    {
+      "id": "P1-REQ-005",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-006",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-007",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-008",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-009",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-010",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-011",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-012",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-013",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-014",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-015",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-016",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-017",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-018",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-019",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-020",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-021",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-022",
+      "classification": "executable",
+      "leaf": "P1-06"
+    },
+    {
+      "id": "P1-REQ-023",
+      "classification": "executable",
+      "leaf": "P1-07/P1-08"
+    },
+    {
+      "id": "P1-REQ-024",
+      "classification": "executable",
+      "leaf": "P1-07/P1-08"
+    },
+    {
+      "id": "P1-REQ-025",
+      "classification": "executable",
+      "leaf": "P1-07/P1-08"
+    },
+    {
+      "id": "P1-REQ-026",
+      "classification": "executable",
+      "leaf": "P1-07/P1-08"
+    },
+    {
+      "id": "P1-REQ-027",
+      "classification": "executable",
+      "leaf": "P1-07/P1-08"
+    },
+    {
+      "id": "P1-REQ-028",
+      "classification": "executable",
+      "leaf": "P1-07/P1-08"
+    },
+    {
+      "id": "P1-REQ-029",
+      "classification": "executable",
+      "leaf": "P1-07/P1-08"
+    },
+    {
+      "id": "P1-REQ-030",
+      "classification": "executable",
+      "leaf": "P1-09/P1-10"
+    },
+    {
+      "id": "P1-REQ-031",
+      "classification": "executable",
+      "leaf": "P1-09/P1-10"
+    },
+    {
+      "id": "P1-REQ-032",
+      "classification": "executable",
+      "leaf": "P1-09/P1-10"
+    },
+    {
+      "id": "P1-REQ-033",
+      "classification": "executable",
+      "leaf": "P1-09/P1-10"
+    },
+    {
+      "id": "P1-REQ-034",
+      "classification": "executable",
+      "leaf": "P1-09/P1-10"
+    },
+    {
+      "id": "P1-REQ-035",
+      "classification": "check-only",
+      "leaf": "P1-04/P1-06"
+    },
+    {
+      "id": "P1-REQ-036",
+      "classification": "excluded",
+      "leaf": "P1-04/P1-06"
+    },
+    {
+      "id": "P1-REQ-037",
+      "classification": "excluded",
+      "leaf": "P1-04/P1-06"
+    },
+    {
+      "id": "P1-REQ-038",
+      "classification": "excluded",
+      "leaf": "P1-04/P1-06"
+    },
+    {
+      "id": "P1-REQ-039",
+      "classification": "excluded",
+      "leaf": "P1-04/P1-06"
+    },
+    {
+      "id": "P1-REQ-040",
+      "classification": "excluded",
+      "leaf": "P1-04/P1-06"
+    }
+  ],
+  "cases": [
+    {
+      "id": "p1-req-001-positive",
+      "requirementId": "P1-REQ-001",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-lexing-empty-input.rs",
+      "sourceSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-001-negative",
+      "requirementId": "P1-REQ-001",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-lexing-empty-input.rs",
+      "sourceSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-001-boundary",
+      "requirementId": "P1-REQ-001",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-lexing-empty-input.rs",
+      "sourceSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-001-budget",
+      "requirementId": "P1-REQ-001",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-lexing-empty-input.rs",
+      "sourceSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-002-positive",
+      "requirementId": "P1-REQ-002",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-items.rs",
+      "sourceSha256": "60227011FF20BF1ACD05A1001652847413A31F8B8280154EDC82CC98C5E187D6",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-002-negative",
+      "requirementId": "P1-REQ-002",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-items.rs",
+      "sourceSha256": "60227011FF20BF1ACD05A1001652847413A31F8B8280154EDC82CC98C5E187D6",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-002-boundary",
+      "requirementId": "P1-REQ-002",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-items.rs",
+      "sourceSha256": "60227011FF20BF1ACD05A1001652847413A31F8B8280154EDC82CC98C5E187D6",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-002-budget",
+      "requirementId": "P1-REQ-002",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-items.rs",
+      "sourceSha256": "60227011FF20BF1ACD05A1001652847413A31F8B8280154EDC82CC98C5E187D6",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-003-positive",
+      "requirementId": "P1-REQ-003",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/primitives-type-error.rs",
+      "sourceSha256": "1EC530393CE9E7C647ABAFDCA14773311A512A9FE86BED8158DE3948329EC38D",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-003-negative",
+      "requirementId": "P1-REQ-003",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/primitives-type-error.rs",
+      "sourceSha256": "1EC530393CE9E7C647ABAFDCA14773311A512A9FE86BED8158DE3948329EC38D",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-003-boundary",
+      "requirementId": "P1-REQ-003",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/primitives-type-error.rs",
+      "sourceSha256": "1EC530393CE9E7C647ABAFDCA14773311A512A9FE86BED8158DE3948329EC38D",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-003-budget",
+      "requirementId": "P1-REQ-003",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/primitives-type-error.rs",
+      "sourceSha256": "1EC530393CE9E7C647ABAFDCA14773311A512A9FE86BED8158DE3948329EC38D",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-004-positive",
+      "requirementId": "P1-REQ-004",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/inferred-identity.rs",
+      "sourceSha256": "547BFDDD10BFC55F0D63DAA796B03FCF4B0747E155BA67E812A6072CF044F876",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-004-negative",
+      "requirementId": "P1-REQ-004",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/inferred-identity.rs",
+      "sourceSha256": "547BFDDD10BFC55F0D63DAA796B03FCF4B0747E155BA67E812A6072CF044F876",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-004-boundary",
+      "requirementId": "P1-REQ-004",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/inferred-identity.rs",
+      "sourceSha256": "547BFDDD10BFC55F0D63DAA796B03FCF4B0747E155BA67E812A6072CF044F876",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-004-budget",
+      "requirementId": "P1-REQ-004",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/inferred-identity.rs",
+      "sourceSha256": "547BFDDD10BFC55F0D63DAA796B03FCF4B0747E155BA67E812A6072CF044F876",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-005-positive",
+      "requirementId": "P1-REQ-005",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-005-negative",
+      "requirementId": "P1-REQ-005",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-005-boundary",
+      "requirementId": "P1-REQ-005",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-005-budget",
+      "requirementId": "P1-REQ-005",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-006-positive",
+      "requirementId": "P1-REQ-006",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-006-negative",
+      "requirementId": "P1-REQ-006",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-006-boundary",
+      "requirementId": "P1-REQ-006",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-006-budget",
+      "requirementId": "P1-REQ-006",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-007-positive",
+      "requirementId": "P1-REQ-007",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-007-negative",
+      "requirementId": "P1-REQ-007",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-007-boundary",
+      "requirementId": "P1-REQ-007",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-007-budget",
+      "requirementId": "P1-REQ-007",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-008-positive",
+      "requirementId": "P1-REQ-008",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-008-negative",
+      "requirementId": "P1-REQ-008",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-008-boundary",
+      "requirementId": "P1-REQ-008",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-008-budget",
+      "requirementId": "P1-REQ-008",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-009-positive",
+      "requirementId": "P1-REQ-009",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-009-negative",
+      "requirementId": "P1-REQ-009",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-009-boundary",
+      "requirementId": "P1-REQ-009",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-009-budget",
+      "requirementId": "P1-REQ-009",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-010-positive",
+      "requirementId": "P1-REQ-010",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-010-negative",
+      "requirementId": "P1-REQ-010",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-010-boundary",
+      "requirementId": "P1-REQ-010",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-010-budget",
+      "requirementId": "P1-REQ-010",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-011-positive",
+      "requirementId": "P1-REQ-011",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-011-negative",
+      "requirementId": "P1-REQ-011",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-011-boundary",
+      "requirementId": "P1-REQ-011",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-011-budget",
+      "requirementId": "P1-REQ-011",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-012-positive",
+      "requirementId": "P1-REQ-012",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-012-negative",
+      "requirementId": "P1-REQ-012",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-012-boundary",
+      "requirementId": "P1-REQ-012",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-012-budget",
+      "requirementId": "P1-REQ-012",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-013-positive",
+      "requirementId": "P1-REQ-013",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-013-negative",
+      "requirementId": "P1-REQ-013",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-013-boundary",
+      "requirementId": "P1-REQ-013",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-013-budget",
+      "requirementId": "P1-REQ-013",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-014-positive",
+      "requirementId": "P1-REQ-014",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-014-negative",
+      "requirementId": "P1-REQ-014",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-014-boundary",
+      "requirementId": "P1-REQ-014",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-014-budget",
+      "requirementId": "P1-REQ-014",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-015-positive",
+      "requirementId": "P1-REQ-015",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/const-parameter.rs",
+      "sourceSha256": "DFC173457C91851CA1D2BC6738920E19F2D66B6D65A044FE52667441DEC15B5F",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-015-negative",
+      "requirementId": "P1-REQ-015",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/const-parameter.rs",
+      "sourceSha256": "DFC173457C91851CA1D2BC6738920E19F2D66B6D65A044FE52667441DEC15B5F",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-015-boundary",
+      "requirementId": "P1-REQ-015",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/const-parameter.rs",
+      "sourceSha256": "DFC173457C91851CA1D2BC6738920E19F2D66B6D65A044FE52667441DEC15B5F",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-015-budget",
+      "requirementId": "P1-REQ-015",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/const-parameter.rs",
+      "sourceSha256": "DFC173457C91851CA1D2BC6738920E19F2D66B6D65A044FE52667441DEC15B5F",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-016-positive",
+      "requirementId": "P1-REQ-016",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-016-negative",
+      "requirementId": "P1-REQ-016",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-016-boundary",
+      "requirementId": "P1-REQ-016",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-016-budget",
+      "requirementId": "P1-REQ-016",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-017-positive",
+      "requirementId": "P1-REQ-017",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-017-negative",
+      "requirementId": "P1-REQ-017",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-017-boundary",
+      "requirementId": "P1-REQ-017",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-017-budget",
+      "requirementId": "P1-REQ-017",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-018-positive",
+      "requirementId": "P1-REQ-018",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-018-negative",
+      "requirementId": "P1-REQ-018",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-018-boundary",
+      "requirementId": "P1-REQ-018",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-018-budget",
+      "requirementId": "P1-REQ-018",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-019-positive",
+      "requirementId": "P1-REQ-019",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-019-negative",
+      "requirementId": "P1-REQ-019",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-019-boundary",
+      "requirementId": "P1-REQ-019",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-019-budget",
+      "requirementId": "P1-REQ-019",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-020-positive",
+      "requirementId": "P1-REQ-020",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-020-negative",
+      "requirementId": "P1-REQ-020",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-020-boundary",
+      "requirementId": "P1-REQ-020",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-020-budget",
+      "requirementId": "P1-REQ-020",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-021-positive",
+      "requirementId": "P1-REQ-021",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-021-negative",
+      "requirementId": "P1-REQ-021",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-021-boundary",
+      "requirementId": "P1-REQ-021",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-021-budget",
+      "requirementId": "P1-REQ-021",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-022-positive",
+      "requirementId": "P1-REQ-022",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-022-negative",
+      "requirementId": "P1-REQ-022",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-022-boundary",
+      "requirementId": "P1-REQ-022",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-022-budget",
+      "requirementId": "P1-REQ-022",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-023-positive",
+      "requirementId": "P1-REQ-023",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-mut-alias.rs",
+      "sourceSha256": "BDCE83DA7E736E5F18BD1ECCC1866C4BFC7E78A397DCE404F6A96F2B741FE69A",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-023-negative",
+      "requirementId": "P1-REQ-023",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-mut-alias.rs",
+      "sourceSha256": "BDCE83DA7E736E5F18BD1ECCC1866C4BFC7E78A397DCE404F6A96F2B741FE69A",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-023-boundary",
+      "requirementId": "P1-REQ-023",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-mut-alias.rs",
+      "sourceSha256": "BDCE83DA7E736E5F18BD1ECCC1866C4BFC7E78A397DCE404F6A96F2B741FE69A",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-023-budget",
+      "requirementId": "P1-REQ-023",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-mut-alias.rs",
+      "sourceSha256": "BDCE83DA7E736E5F18BD1ECCC1866C4BFC7E78A397DCE404F6A96F2B741FE69A",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-024-positive",
+      "requirementId": "P1-REQ-024",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-escape.rs",
+      "sourceSha256": "8B8285C34896C1D9F120EADFF90AD878FEC3FBE9A88FF65297ED5AAF6982574E",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-024-negative",
+      "requirementId": "P1-REQ-024",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-escape.rs",
+      "sourceSha256": "8B8285C34896C1D9F120EADFF90AD878FEC3FBE9A88FF65297ED5AAF6982574E",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-024-boundary",
+      "requirementId": "P1-REQ-024",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-escape.rs",
+      "sourceSha256": "8B8285C34896C1D9F120EADFF90AD878FEC3FBE9A88FF65297ED5AAF6982574E",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-024-budget",
+      "requirementId": "P1-REQ-024",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-escape.rs",
+      "sourceSha256": "8B8285C34896C1D9F120EADFF90AD878FEC3FBE9A88FF65297ED5AAF6982574E",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-025-positive",
+      "requirementId": "P1-REQ-025",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-shared-write.rs",
+      "sourceSha256": "881D4B236AC9FF762A9BCD15272D097C6627882F384C5500FD6F3394CE126FB4",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-025-negative",
+      "requirementId": "P1-REQ-025",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-shared-write.rs",
+      "sourceSha256": "881D4B236AC9FF762A9BCD15272D097C6627882F384C5500FD6F3394CE126FB4",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-025-boundary",
+      "requirementId": "P1-REQ-025",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-shared-write.rs",
+      "sourceSha256": "881D4B236AC9FF762A9BCD15272D097C6627882F384C5500FD6F3394CE126FB4",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-025-budget",
+      "requirementId": "P1-REQ-025",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-borrow-fail-shared-write.rs",
+      "sourceSha256": "881D4B236AC9FF762A9BCD15272D097C6627882F384C5500FD6F3394CE126FB4",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-026-positive",
+      "requirementId": "P1-REQ-026",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-reverse-locals.rs",
+      "sourceSha256": "A0A19491653F2474BB2B42A2E7DC5B4B0E7C120F071342B40D6DFD84A4590064",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-026-negative",
+      "requirementId": "P1-REQ-026",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-reverse-locals.rs",
+      "sourceSha256": "A0A19491653F2474BB2B42A2E7DC5B4B0E7C120F071342B40D6DFD84A4590064",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-026-boundary",
+      "requirementId": "P1-REQ-026",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-reverse-locals.rs",
+      "sourceSha256": "A0A19491653F2474BB2B42A2E7DC5B4B0E7C120F071342B40D6DFD84A4590064",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-026-budget",
+      "requirementId": "P1-REQ-026",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-reverse-locals.rs",
+      "sourceSha256": "A0A19491653F2474BB2B42A2E7DC5B4B0E7C120F071342B40D6DFD84A4590064",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-027-positive",
+      "requirementId": "P1-REQ-027",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-return-reverse.rs",
+      "sourceSha256": "9F84575702F2E30857E630E111B043D325A1F39ABE15B857E5D8771CCD954617",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-027-negative",
+      "requirementId": "P1-REQ-027",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-return-reverse.rs",
+      "sourceSha256": "9F84575702F2E30857E630E111B043D325A1F39ABE15B857E5D8771CCD954617",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-027-boundary",
+      "requirementId": "P1-REQ-027",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-return-reverse.rs",
+      "sourceSha256": "9F84575702F2E30857E630E111B043D325A1F39ABE15B857E5D8771CCD954617",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-027-budget",
+      "requirementId": "P1-REQ-027",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-return-reverse.rs",
+      "sourceSha256": "9F84575702F2E30857E630E111B043D325A1F39ABE15B857E5D8771CCD954617",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-028-positive",
+      "requirementId": "P1-REQ-028",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-nested-scopes.rs",
+      "sourceSha256": "5968BB5FC4C42FA7BBD32090947FA8E8FEDB89EFD6D5B3EB3E6D4982F1B018FC",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-028-negative",
+      "requirementId": "P1-REQ-028",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-nested-scopes.rs",
+      "sourceSha256": "5968BB5FC4C42FA7BBD32090947FA8E8FEDB89EFD6D5B3EB3E6D4982F1B018FC",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-028-boundary",
+      "requirementId": "P1-REQ-028",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-nested-scopes.rs",
+      "sourceSha256": "5968BB5FC4C42FA7BBD32090947FA8E8FEDB89EFD6D5B3EB3E6D4982F1B018FC",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-028-budget",
+      "requirementId": "P1-REQ-028",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-nested-scopes.rs",
+      "sourceSha256": "5968BB5FC4C42FA7BBD32090947FA8E8FEDB89EFD6D5B3EB3E6D4982F1B018FC",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-029-positive",
+      "requirementId": "P1-REQ-029",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-branch-return.rs",
+      "sourceSha256": "1E8F9CEFCA9C6A985524F9DB1F70F53863EC320095BAC56D6C69743C76E8DFFE",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-029-negative",
+      "requirementId": "P1-REQ-029",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-branch-return.rs",
+      "sourceSha256": "1E8F9CEFCA9C6A985524F9DB1F70F53863EC320095BAC56D6C69743C76E8DFFE",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-029-boundary",
+      "requirementId": "P1-REQ-029",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-branch-return.rs",
+      "sourceSha256": "1E8F9CEFCA9C6A985524F9DB1F70F53863EC320095BAC56D6C69743C76E8DFFE",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-029-budget",
+      "requirementId": "P1-REQ-029",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-v2-drop-branch-return.rs",
+      "sourceSha256": "1E8F9CEFCA9C6A985524F9DB1F70F53863EC320095BAC56D6C69743C76E8DFFE",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-030-positive",
+      "requirementId": "P1-REQ-030",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-030-negative",
+      "requirementId": "P1-REQ-030",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-030-boundary",
+      "requirementId": "P1-REQ-030",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-030-budget",
+      "requirementId": "P1-REQ-030",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-031-positive",
+      "requirementId": "P1-REQ-031",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-031-negative",
+      "requirementId": "P1-REQ-031",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-031-boundary",
+      "requirementId": "P1-REQ-031",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-031-budget",
+      "requirementId": "P1-REQ-031",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-032-positive",
+      "requirementId": "P1-REQ-032",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-032-negative",
+      "requirementId": "P1-REQ-032",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-032-boundary",
+      "requirementId": "P1-REQ-032",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-032-budget",
+      "requirementId": "P1-REQ-032",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-places.rs",
+      "sourceSha256": "05BCF172AF3FBC7B6A5E15B489A16992543B9152E38A46641A3940374DA56FBA",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-033-positive",
+      "requirementId": "P1-REQ-033",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-033-negative",
+      "requirementId": "P1-REQ-033",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-033-boundary",
+      "requirementId": "P1-REQ-033",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-033-budget",
+      "requirementId": "P1-REQ-033",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-034-positive",
+      "requirementId": "P1-REQ-034",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-034-negative",
+      "requirementId": "P1-REQ-034",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-034-boundary",
+      "requirementId": "P1-REQ-034",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-034-budget",
+      "requirementId": "P1-REQ-034",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": [
+        "harness",
+        "coreclr",
+        "ilverify",
+        "windows-x64-aot",
+        "linux-x64-aot"
+      ]
+    },
+    {
+      "id": "p1-req-035-positive",
+      "requirementId": "P1-REQ-035",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-unsupported.rs",
+      "sourceSha256": "5FB313D176DED4670DE36DE249EF90685314BD3613780B8A8F2A0952AE2076D6",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-035-negative",
+      "requirementId": "P1-REQ-035",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-unsupported.rs",
+      "sourceSha256": "5FB313D176DED4670DE36DE249EF90685314BD3613780B8A8F2A0952AE2076D6",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-035-boundary",
+      "requirementId": "P1-REQ-035",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-unsupported.rs",
+      "sourceSha256": "5FB313D176DED4670DE36DE249EF90685314BD3613780B8A8F2A0952AE2076D6",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-035-budget",
+      "requirementId": "P1-REQ-035",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/safe-core-unsupported.rs",
+      "sourceSha256": "5FB313D176DED4670DE36DE249EF90685314BD3613780B8A8F2A0952AE2076D6",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-036-positive",
+      "requirementId": "P1-REQ-036",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-036-negative",
+      "requirementId": "P1-REQ-036",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-036-boundary",
+      "requirementId": "P1-REQ-036",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-036-budget",
+      "requirementId": "P1-REQ-036",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-037-positive",
+      "requirementId": "P1-REQ-037",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-lifetime.rs",
+      "sourceSha256": "49A93262553E445AE9AA0F003A77C055535FB51CBDDDE1C045847B72B7C6FE62",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-037-negative",
+      "requirementId": "P1-REQ-037",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-lifetime.rs",
+      "sourceSha256": "49A93262553E445AE9AA0F003A77C055535FB51CBDDDE1C045847B72B7C6FE62",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-037-boundary",
+      "requirementId": "P1-REQ-037",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-lifetime.rs",
+      "sourceSha256": "49A93262553E445AE9AA0F003A77C055535FB51CBDDDE1C045847B72B7C6FE62",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-037-budget",
+      "requirementId": "P1-REQ-037",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-lifetime.rs",
+      "sourceSha256": "49A93262553E445AE9AA0F003A77C055535FB51CBDDDE1C045847B72B7C6FE62",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-038-positive",
+      "requirementId": "P1-REQ-038",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/associated-item.rs",
+      "sourceSha256": "3975E8B2DF8BB1539F93B031FEB202121EAE25F7DEEA4FABABCA473CFEBB66C7",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-038-negative",
+      "requirementId": "P1-REQ-038",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/associated-item.rs",
+      "sourceSha256": "3975E8B2DF8BB1539F93B031FEB202121EAE25F7DEEA4FABABCA473CFEBB66C7",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-038-boundary",
+      "requirementId": "P1-REQ-038",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/associated-item.rs",
+      "sourceSha256": "3975E8B2DF8BB1539F93B031FEB202121EAE25F7DEEA4FABABCA473CFEBB66C7",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-038-budget",
+      "requirementId": "P1-REQ-038",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/generics/associated-item.rs",
+      "sourceSha256": "3975E8B2DF8BB1539F93B031FEB202121EAE25F7DEEA4FABABCA473CFEBB66C7",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-039-positive",
+      "requirementId": "P1-REQ-039",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-excluded-async.rs",
+      "sourceSha256": "314B8EB28873CB98967702FF83FE554FF3EC935593177CF41AF33FA30C11A36B",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-039-negative",
+      "requirementId": "P1-REQ-039",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-excluded-async.rs",
+      "sourceSha256": "314B8EB28873CB98967702FF83FE554FF3EC935593177CF41AF33FA30C11A36B",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-039-boundary",
+      "requirementId": "P1-REQ-039",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-excluded-async.rs",
+      "sourceSha256": "314B8EB28873CB98967702FF83FE554FF3EC935593177CF41AF33FA30C11A36B",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-039-budget",
+      "requirementId": "P1-REQ-039",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/syntax-excluded-async.rs",
+      "sourceSha256": "314B8EB28873CB98967702FF83FE554FF3EC935593177CF41AF33FA30C11A36B",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-040-positive",
+      "requirementId": "P1-REQ-040",
+      "category": "positive",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-040-negative",
+      "requirementId": "P1-REQ-040",
+      "category": "negative",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "diagnostic",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-040-boundary",
+      "requirementId": "P1-REQ-040",
+      "category": "boundary",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": ["harness"]
+    },
+    {
+      "id": "p1-req-040-budget",
+      "requirementId": "P1-REQ-040",
+      "category": "budget",
+      "source": "tools/RustSharp.Conformance/fixtures/p1-regression-v3-mir-families.rs",
+      "sourceSha256": "8D2C380CF7DBE37BD4AF36CB4B82173E07B08A3A293C9C4BC5A3F312C000A473",
+      "expectation": "pass",
+      "backends": ["harness"]
+    }
+  ]
+}

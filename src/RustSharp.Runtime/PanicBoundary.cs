@@ -39,6 +39,14 @@ public sealed record RustPanicReport(
 {
     public bool IsSuccessful => Outcome == RustPanicOutcome.Returned &&
         Panic is null && CleanupCompleted;
+
+    /// <summary>
+    /// True when a destructor failed while an existing panic was unwinding.
+    /// Both failures remain observable through <see cref="Panic"/> and
+    /// <see cref="CleanupException"/>; the host may terminate the process.
+    /// </summary>
+    public bool IsDoublePanic => Outcome == RustPanicOutcome.Aborted &&
+        Panic is not null && CleanupException is not null;
 }
 
 public static class RustPanicBoundary
@@ -84,6 +92,18 @@ public static class RustPanicBoundary
         return ReturnReport(scope);
     }
 
+    /// <summary>Runs a value-producing body with the default unwind policy.</summary>
+    public static RustPanicReport Run<T>(Func<T> body, out T? result) =>
+        Run(body, scope: null, strategy: RustPanicStrategy.Unwind, out result);
+
+    /// <summary>Runs a value-producing body with a tracked cleanup scope.</summary>
+    public static RustPanicReport Run<T>(Func<T> body, DropScope? scope, out T? result) =>
+        Run(body, scope, RustPanicStrategy.Unwind, out result);
+
+    /// <summary>Runs a value-producing body with an explicit panic policy.</summary>
+    public static RustPanicReport Run<T>(Func<T> body, RustPanicStrategy strategy, out T? result) =>
+        Run(body, scope: null, strategy, out result);
+
     /// <summary>Raises an explicit panic that can be captured by the boundary.</summary>
     public static void Panic(string? message = null) => throw new RustPanicException(message);
 
@@ -99,12 +119,18 @@ public static class RustPanicBoundary
         if (scope is null) return new(RustPanicOutcome.Unwound, panic, null, false, true);
         try
         {
-            scope.Dispose();
-            return new(RustPanicOutcome.Unwound, panic, null, true, true);
+            RustDropCleanupReport cleanup = scope.Cleanup(duringUnwind: true);
+            if (cleanup.FirstFailure is null)
+                return new(RustPanicOutcome.Unwound, panic, null, true, true);
+
+            // A destructor panic during unwinding is a double panic.  Keep the
+            // original panic and destructor failure in the report and expose
+            // the abort outcome without calling FailFast in the library.
+            return new(RustPanicOutcome.Aborted, panic, cleanup.FirstFailure, true, false);
         }
         catch (Exception cleanupException)
         {
-            return new(RustPanicOutcome.Unwound, panic, cleanupException, true, false);
+            return new(RustPanicOutcome.Aborted, panic, cleanupException, true, false);
         }
     }
 
@@ -113,8 +139,9 @@ public static class RustPanicBoundary
         if (scope is null) return new(RustPanicOutcome.Returned, null, null, false, true);
         try
         {
-            scope.Dispose();
-            return new(RustPanicOutcome.Returned, null, null, true, true);
+            RustDropCleanupReport cleanup = scope.Cleanup(duringUnwind: false);
+            return new(RustPanicOutcome.Returned, null, cleanup.FirstFailure, true,
+                cleanup.FirstFailure is null);
         }
         catch (Exception cleanupException)
         {

@@ -1222,6 +1222,11 @@ public sealed class CompilerDriver
             _ => null,
         };
 
+        // Normalize and sort paths before importing. The caller may provide
+        // equivalent references in any order; crate scope and alias
+        // assignment must remain stable so the emitted PE/PDB and metadata
+        // bytes are reproducible across independent builds.
+        var normalizedReferences = new List<string>();
         int count = 0;
         foreach (string reference in metadataReferences)
         {
@@ -1258,6 +1263,13 @@ public sealed class CompilerDriver
                 continue;
             }
 
+            normalizedReferences.Add(fullPath);
+        }
+
+        foreach (string fullPath in normalizedReferences.Order(StringComparer.Ordinal))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
                 fullPath, expectedProfile, requiredFunctions);
             foreach (string message in imported.Diagnostics)
@@ -1281,9 +1293,14 @@ public sealed class CompilerDriver
             string alias = MetadataAlias(assemblyName);
             string fileAlias = MetadataAlias(Path.GetFileNameWithoutExtension(fullPath));
             Guid moduleVersionId = imported.ModuleVersionId ?? Guid.Empty;
-            string scopePath = "crate::__rsc_ext_" + Convert.ToHexString(
-                SHA256.HashData(Encoding.UTF8.GetBytes(fullPath + "\0" + moduleVersionId.ToString("D"))))[..32];
             string identity = "metadata:" + assemblyName + "@" + moduleVersionId.ToString("D");
+            // Scope identity is derived from producer identity rather than its
+            // checkout path. This keeps source-package HIR and generic
+            // metadata stable when the same producer is built in another
+            // workspace directory, while the full path remains available on
+            // the external export for diagnostics and PE resolution.
+            string scopePath = "crate::__rsc_ext_" + Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(identity)))[..32];
             var exports = ImmutableArray.CreateBuilder<SafeCoreExternalFunction>(imported.Document.Functions.Length);
             foreach (RustSharpMetadataFunction function in imported.Document.Functions)
             {

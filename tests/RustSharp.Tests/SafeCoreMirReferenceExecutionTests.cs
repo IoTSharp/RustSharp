@@ -13,6 +13,8 @@ internal static class SafeCoreMirReferenceExecutionTests
         new("MIR v2 shared reborrow ends before parent write", SharedReborrowAsync),
         new("MIR v2 shared reference copies retain the owner loan", SharedCopyAsync),
         new("MIR v2 shared reference copies block owner writes", SharedCopyOwnerWriteAsync),
+        new("MIR v2 moves mutable reference sources exactly once", MutableReferenceMoveAsync),
+        new("MIR v2 rejects use after moving a mutable reference", MutableReferenceUseAfterMoveAsync),
         new("MIR v2 rejects two live exclusive borrows", ConflictingBorrowAsync),
         new("MIR v2 rejects owner writes while a shared borrow is live", OwnerWriteAsync),
         new("MIR v2 rejects references escaping an owner block", EscapeAsync),
@@ -39,6 +41,14 @@ internal static class SafeCoreMirReferenceExecutionTests
     private static Task SharedCopyOwnerWriteAsync() => RejectAsync(
         "fn main() { let mut value = 7; let first = &value; let second = first; value = 9; println!(\"{}\", *second); }",
         SafeCoreOwnershipDiagnosticCodes.BorrowConflict);
+
+    private static Task MutableReferenceMoveAsync() => RunAsync(
+        "fn main() { let mut value = 7; let first = &mut value; let second = first; *second = 12; println!(\"{}\", value); }",
+        "12\n");
+
+    private static Task MutableReferenceUseAfterMoveAsync() => RejectAsync(
+        "fn main() { let mut value = 7; let first = &mut value; let second = first; println!(\"{}\", *first); println!(\"{}\", *second); }",
+        SafeCoreOwnershipDiagnosticCodes.UseAfterMove);
 
     private static Task ConflictingBorrowAsync() => RejectAsync(
         "fn main() { let mut value = 7; let first = &mut value; let second = &mut value; println!(\"{}\", *first); println!(\"{}\", *second); }",
