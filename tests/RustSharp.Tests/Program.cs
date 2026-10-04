@@ -43,7 +43,8 @@ internal static class Program
         tests = [.. tests, .. P1EvidenceBindingTests.All];
         tests = [.. tests, .. P1SourcePackageContractTests.All, .. P1GeneratedUnwindEvidenceTests.All];
         tests = [.. tests, .. P1ExpandedSuiteTests.All];
-        tests = [.. tests, .. P1ExpandedPlatformEvidenceTests.All, .. P1ExpandedOwnershipEvidenceTests.All];
+        tests = [.. tests, .. P1ExpandedPlatformEvidenceTests.All, .. P1ExpandedOwnershipEvidenceTests.All,
+            .. P1PlatformBindingContractTests.All, .. P1NestedDropUnwindTests.All];
         tests = [.. tests, .. P1OwnershipResourceContractTests.All];
         if (args.Length != 0)
         {

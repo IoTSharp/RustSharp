@@ -102,10 +102,28 @@ public static class RustDropGlue
         for (int index = 0; index < fields.Count; index++)
         {
             IDisposable? field = fields[index];
-            actions[index] = field is null ? null : field.Dispose;
+            actions[index] = field is null ? null : CreateAction(field, duringUnwind);
         }
 
-        return Run(actions, outerDestructor is null ? null : outerDestructor.Dispose, duringUnwind);
+        return Run(actions, outerDestructor is null ? null : CreateAction(outerDestructor, duringUnwind), duringUnwind);
+    }
+
+    private static Action CreateAction(IDisposable value, bool duringUnwind)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        if (value is not RustDropAggregate aggregate)
+            return value.Dispose;
+
+        // IDisposable has no unwind-mode parameter.  Preserve the mode when
+        // recursive generated glue reaches a nested aggregate; otherwise a
+        // child would continue after its first destructor failure even though
+        // the parent is already unwinding and must abort immediately.
+        return () =>
+        {
+            RustDropCleanupReport report = aggregate.Cleanup(duringUnwind);
+            if (report.FirstFailure is not null)
+                throw report.FirstFailure;
+        };
     }
 
     private static IEnumerable<Action?> Enumerate(Action? outer, Action?[] fields)

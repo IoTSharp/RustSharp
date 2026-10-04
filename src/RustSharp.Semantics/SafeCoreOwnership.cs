@@ -1856,7 +1856,13 @@ public static class SafeCoreOwnershipAnalysis
                     add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A mutable reborrow requires a mutable parent reference.", function.Name, block.Id, index, source);
                     return false;
                 }
-                if ((parentBorrow.Suspended || mutable && HasActiveChild(ownerPlace.LocalId)) &&
+                // A mutable parent is suspended for direct use while any
+                // child loan is active, but it may still create concurrent
+                // shared reborrows.  Reject only a new mutable child while
+                // the parent is suspended; the overlap check below still
+                // rejects a shared child when an existing mutable child owns
+                // the same place.
+                if ((mutable && (parentBorrow.Suspended || HasActiveChild(ownerPlace.LocalId))) &&
                     (ownerPlace.IsRoot || ownerPlace.Projections.Count == 1))
                 {
                     add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "A reference cannot be reborrowed while another reborrow is active.", function.Name, block.Id, index, source);
