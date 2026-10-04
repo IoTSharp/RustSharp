@@ -57,6 +57,15 @@ public static class RustDropGlue
         Exception? second = null;
         int attempted = 0;
         int completed = 0;
+
+        void RecordFailure(Exception failure)
+        {
+            if (first is null)
+                first = failure;
+            else
+                second ??= failure;
+        }
+
         foreach (Action? action in Enumerate(outerDestructor, snapshot))
         {
             if (action is null) continue;
@@ -68,13 +77,16 @@ public static class RustDropGlue
             }
             catch (Exception exception)
             {
-                if (first is null)
+                if (exception is RustNestedCleanupException nested)
                 {
-                    first = exception;
+                    if (nested.Report.FirstFailure is not null)
+                        RecordFailure(nested.Report.FirstFailure);
+                    if (nested.Report.SecondFailure is not null)
+                        RecordFailure(nested.Report.SecondFailure);
                 }
                 else
                 {
-                    second ??= exception;
+                    RecordFailure(exception);
                 }
 
                 // Rust aborts a process when a destructor panics while an
@@ -122,8 +134,14 @@ public static class RustDropGlue
         {
             RustDropCleanupReport report = aggregate.Cleanup(duringUnwind);
             if (report.FirstFailure is not null)
-                throw report.FirstFailure;
+                throw new RustNestedCleanupException(report);
         };
+    }
+
+    private sealed class RustNestedCleanupException(RustDropCleanupReport report) : Exception(
+        report.FirstFailure?.Message, report.FirstFailure)
+    {
+        public RustDropCleanupReport Report { get; } = report;
     }
 
     private static IEnumerable<Action?> Enumerate(Action? outer, Action?[] fields)

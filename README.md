@@ -119,7 +119,7 @@ contracts now have metadata and manually constructed CLR LIR producer/consumer
 CoreCLR tests; full source-level cross-package ownership contracts and evidence
 for these additions on ILVerify and both Native AOT platforms remain open.
 
-The 2026-10-04 local Release build has zero errors/warnings, and the executable harness passes 765/765 with zero failures/skips using the installed SDK 10.0.401; the repository pin remains 10.0.400. This run includes the shared platform-binding contract cases, the recursive aggregate Drop unwind regression, and the mutable-parent shared-reborrow regression. Logs are retained under `artifacts/p1-next-session`. The [follow-up audit](docs/p1-evidence-audit.md) records ownership resource, source package metadata and platform evidence binding improvements. These results do not close the complete P1 exit gate.
+The 2026-10-04 local Release build has zero errors/warnings, and the executable harness passes 768/768 with zero failures/skips using the installed SDK 10.0.401; the repository pin remains 10.0.400. This run includes the shared platform-binding contract cases, nested projected reborrow cases, recursive aggregate Drop unwind and two-failure propagation regressions, and the mutable-parent shared-reborrow regression. Logs are retained under `artifacts/p1-next-session`. The [follow-up audit](docs/p1-evidence-audit.md) records ownership resource, source package metadata and platform evidence binding improvements. These results do not close the complete P1 exit gate.
 
 The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
 skips. The historical `safe-core-regression-v2` report passes 24/24 with one

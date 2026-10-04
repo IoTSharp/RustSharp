@@ -12,6 +12,8 @@ internal static class SafeCoreMirReferenceExecutionTests
         new("MIR v2 mutable reborrow resumes its parent", MutableReborrowAsync),
         new("MIR v2 shared reborrow ends before parent write", SharedReborrowAsync),
         new("MIR v2 mutable parents permit concurrent shared reborrows", SharedChildrenFromMutableParentAsync),
+        new("MIR v2 nested projected reborrow resumes its parent", NestedProjectedReborrowAsync),
+        new("MIR v2 nested projected loan blocks a parent write", NestedProjectedBorrowConflictAsync),
         new("MIR v2 shared reference copies retain the owner loan", SharedCopyAsync),
         new("MIR v2 shared reference copies block owner writes", SharedCopyOwnerWriteAsync),
         new("MIR v2 moves mutable reference sources exactly once", MutableReferenceMoveAsync),
@@ -39,6 +41,19 @@ internal static class SafeCoreMirReferenceExecutionTests
         "fn main() { let mut value = 7; let parent = &mut value; let left = &*parent; " +
         "let right = &*parent; println!(\"{}\", *left); println!(\"{}\", *right); }",
         "7\n7\n");
+
+    private static Task NestedProjectedReborrowAsync() => RunAsync(
+        "struct Inner { value: i32 } struct Outer { inner: Inner } fn main() { " +
+        "let mut outer = Outer { inner: Inner { value: 7 } }; let parent = &mut outer; " +
+        "{ let child = &mut parent.inner.value; *child = 13; println!(\"{}\", *child); } " +
+        "println!(\"{}\", parent.inner.value); println!(\"{}\", outer.inner.value); }",
+        "13\n13\n13\n");
+
+    private static Task NestedProjectedBorrowConflictAsync() => RejectAsync(
+        "struct Inner { value: i32 } struct Outer { inner: Inner } fn main() { " +
+        "let mut outer = Outer { inner: Inner { value: 7 } }; let parent = &mut outer; " +
+        "let child = &parent.inner.value; parent.inner.value = 13; println!(\"{}\", *child); }",
+        SafeCoreOwnershipDiagnosticCodes.BorrowConflict);
 
     private static Task SharedCopyAsync() => RunAsync(
         "fn main() { let value = 7; let first = &value; let second = first; println!(\"{}\", *first); println!(\"{}\", *second); }",

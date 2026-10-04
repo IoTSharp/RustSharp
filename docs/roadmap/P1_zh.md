@@ -122,7 +122,7 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | P1-07.03 | 🚧 进行中 | 部分移动、重新初始化与 Drop 所有权 | P1-07.02 | 移动一个字段保留兄弟字段、禁止整体使用且允许合法重新初始化；拒绝从 Drop 所有者非法部分移动。 | `SafeCoreMirAdtSourceTests` 覆盖部分移动/重新初始化；数组及完整 Drop 所有者源码语料仍开放 |
 | P1-07.04 | 🚧 进行中 | NLL 使用/定义活跃性 | P1-07.01 | 借用在最后可达使用后结束，含临时值和死分支；词法重叠但活跃区间不重叠的借用合法。 | `SafeCoreMirAdtSourceTests` 覆盖源码 NLL 与有界分支活跃性；临时值/循环语料仍开放 |
 | P1-07.05 | 🚧 进行中 | 共享/可变借用冲突与所有者写入 | P1-07.04, P1-07.01 | 读/写/移动冲突按投影别名而非仅局部 ID 判定；共享读取合法，重叠独占访问被拒绝。 | `SafeCoreMirReferenceExecutionTests`；计划投影别名负例 |
-| P1-07.06 | 🚧 进行中 | 再借用暂停、恢复与失效 | P1-07.05 | 父引用仅在子借用结束后恢复；可变/共享链正确拒绝父使用及失效子引用复用。 | `SafeCoreMirReferenceExecutionTests` 现已覆盖可变父引用产生并发共享再借用，同时保留对可变子借用冲突的拒绝；嵌套投影再借用和生命周期边界夹具仍待完成。 |
+| P1-07.06 | 🚧 进行中 | 再借用暂停、恢复与失效 | P1-07.05 | 父引用仅在子借用结束后恢复；可变/共享链正确拒绝父使用及失效子引用复用。 | `SafeCoreMirReferenceExecutionTests` 现已覆盖可变父引用产生并发共享再借用、结束后恢复父引用的嵌套投影可变再借用，以及嵌套投影共享借用存活时拒绝父写入；更广泛的生命周期边界夹具仍待完成。 |
 | P1-07.07 | 🚧 进行中 | 参数/返回来源与逃逸 | P1-07.06, P1-06.05 | 本地函数保持声明的输入到输出生命周期关系；栈所有者、分支局部值、捕获逃逸在源码位置被拒绝。 | `SafeCoreMirReferenceProvenanceTests`、`SafeCoreMirAdtSourceTests`：投影引用返回、重复可变引用调用、CFG 来源并集、调用方借用冲突及局部/分支作用域逃逸；其余生命周期类别仍未完成。 |
 | P1-07.08 | 🚧 进行中 | 分支合流与循环不动点 | P1-07.03, P1-07.04, P1-07.06 | move/init/loan 状态在 if/match/回边、break、continue 合流时保守；工作量耗尽不能接受不完整分析。 | `SafeCoreMirAdtSourceTests` 覆盖有界循环/分支合流；完整回边预算语料仍开放 |
 | P1-07.09 | 🚧 进行中 | MIR/所有权证据双向完整性 | P1-07.07, P1-07.08 | 每个 place、借用来源、生命周期边和调用效果均有匹配 MIR 证据；缺失、额外、替换、陈旧事实均失败。 | `SafeCoreMirOwnershipAdapterTests`、`SafeCoreMirReferenceProvenanceTests`：MIR/来源关联及缺失/替换/逃逸来源负例；全部类别的证据覆盖仍未完成。 |
@@ -144,7 +144,7 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | P1-08.06 | 🚧 进行中 | 显式/提前 return 清理 | P1-08.05 | return 操作数在清理前仅求值一次；返回/移出值存活，其他活动所有者恰好清理一次。 | 已有 unit return 差分；计划聚合/操作数失败扩展 |
 | P1-08.07 | ✅ 已完成 | unit Drop fault 清理基础 | P1-08.04 | 生成的溢出 fault 执行受支持 unit 析构器后传播原始异常。 | `SafeCoreMirDropCodegenTests.FaultPathAsync`; E6 |
 | P1-08.08 | 🚧 进行中 | 跨生成的嵌套作用域与调用展开 | P1-08.03, P1-08.06 | 主体、参数或嵌套调用 panic 时活动所有者仅展开一次；不重复清理已移出值或已完成清理。 | `P1GeneratedUnwindEvidenceTests` 覆盖嵌套调用、return 及参数溢出清理；生成 PE/rustc 差分跟踪仍开放 |
-| P1-08.09 | 🚧 进行中 | 析构失败后的继续清理与双重 panic | P1-08.08 | 正常清理首次失败执行已固定的后续清理策略；展开中失败执行已固定的 abort 规则，不能吞掉任一失败。 | `RustDropGlue`、`RustPanicBoundary` 和 `SafeCoreMirDropCodegenTests` 覆盖继续清理、双重 panic 报告及 abort 选择；子进程退出证据仍待完成。 |
+| P1-08.09 | 🚧 进行中 | 析构失败后的继续清理与双重 panic | P1-08.08 | 正常清理首次失败执行已固定的后续清理策略；展开中失败执行已固定的 abort 规则，不能吞掉任一失败。 | `RustDropGlue`、`RustPanicBoundary`、`SafeCoreMirDropCodegenTests` 和 `P1NestedDropUnwindTests` 覆盖继续清理、嵌套双失败传播、双重 panic 报告及 abort 选择；子进程退出证据仍待完成。 |
 | P1-08.10 | 🚧 进行中 | 生成程序的 abort 行为 | P1-08.01, P1-08.03 | abort 在声明边界终止且不做展开 Drop；跟踪、退出类别及后续用户效果缺失符合契约。 | `RustPanicBoundary` 和 `SafeCoreMirDropCodegenTests` 覆盖有界 abort 结果及未触碰的作用域；独立生成进程证据仍待完成。 |
 | P1-08.11 | 🚧 进行中 | 生成的本地 panic 边界与可复用调用接口 | P1-08.09, P1-08.10 | 生成的本地调用使用声明 panic 策略；returned/unwound/aborted 与发射行为一致。向 P1-09.06 发布已检查的 panic 接口；源码导入调用集成在该项及 P1-09.09 验收。 | 计划编译器与 `RustPanicBoundary` 的集成及契约负向夹具 |
 | P1-08.12 | ⏳ 计划中 | 固定 rustc 1.98 Drop 差分 | P1-08.11, P1-10.05 | 正常/return/unwind/abort、含字段所有者、部分移动和析构失败均比较生成程序跟踪/退出；未解释差异/跳过为零。 | 计划 `p1-differential-v3` 的 Drop 部分；Rust# 与 rustc 进程记录 |

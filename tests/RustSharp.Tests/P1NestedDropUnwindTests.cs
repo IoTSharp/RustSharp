@@ -12,6 +12,7 @@ internal static class P1NestedDropUnwindTests
     public static IReadOnlyList<TestCase> All { get; } =
     [
         new("P1 nested aggregate Drop propagates unwind failure", VerifyNestedAggregateUnwindPropagationAsync),
+        new("P1 nested aggregate Drop preserves two normal failures", VerifyNestedAggregateNormalFailuresAsync),
     ];
 
     private static Task VerifyNestedAggregateUnwindPropagationAsync()
@@ -71,6 +72,48 @@ internal static class P1NestedDropUnwindTests
         Require(string.Join(',', normalTrace) ==
             "parent-outer,child-outer,child-field-0,child-failure,child-field-2,parent-sibling",
             "Normal cleanup must continue through nested and parent siblings.");
+    }
+
+    private static Task VerifyNestedAggregateNormalFailuresAsync()
+    {
+        VerifyNestedAggregateNormalFailures();
+        return Task.CompletedTask;
+    }
+
+    public static void VerifyNestedAggregateNormalFailures()
+    {
+        var trace = new List<string>();
+        var child = new RustDropAggregate(
+            [
+                new RecordingDisposable(() =>
+                {
+                    trace.Add("child-first");
+                    throw new InvalidOperationException("child-first");
+                }),
+                new RecordingDisposable(() =>
+                {
+                    trace.Add("child-second");
+                    throw new InvalidOperationException("child-second");
+                }),
+            ],
+            new RecordingDisposable(() => trace.Add("child-outer")));
+        var parent = new RustDropAggregate(
+            [
+                child,
+                new RecordingDisposable(() => trace.Add("parent-sibling")),
+            ],
+            new RecordingDisposable(() => trace.Add("parent-outer")));
+
+        RustDropCleanupReport report = parent.Cleanup();
+        Require(report.Outcome == RustDropCleanupOutcome.Failed,
+            "Normal cleanup must remain failed after nested destructor failures.");
+        Require(report.FirstFailure?.Message == "child-first" && report.SecondFailure?.Message == "child-second",
+            "Nested normal cleanup must preserve both child failures in order.");
+        Require(report.Attempted == 3 && report.Completed == 2,
+            "Parent cleanup must count the nested aggregate and its sibling exactly once.");
+        Require(string.Join(',', trace) ==
+            "parent-outer,child-outer,child-first,child-second,parent-sibling",
+            "Normal nested cleanup must continue after both child failures.");
     }
 
     private static void Require(bool condition, string message)
