@@ -2,7 +2,7 @@ namespace RustSharp.Tests;
 
 internal static class Program
 {
-    private const int MaximumTestCount = 768;
+    private const int MaximumTestCount = 896;
 
     public static async Task<int> Main(string[] args)
     {
@@ -46,6 +46,7 @@ internal static class Program
         tests = [.. tests, .. P1ExpandedPlatformEvidenceTests.All, .. P1ExpandedOwnershipEvidenceTests.All,
             .. P1PlatformBindingContractTests.All, .. P1NestedDropUnwindTests.All];
         tests = [.. tests, .. P1OwnershipResourceContractTests.All];
+        tests = [.. tests, .. P1OwnershipDiagnosticGoldenTests.All];
         if (args.Length != 0)
         {
             if (args.Length != 2 || args[0] != "--filter" || args[1].Length is 0 or > 256)

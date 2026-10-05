@@ -10,7 +10,8 @@ internal static class P1ExpandedOwnershipEvidenceTests
         new("P1 expanded ownership diagnostics accept exact semantic rejection", ExactDiagnosticAsync),
         new("P1 expanded ownership diagnostics reject unsupported lowering", UnsupportedDiagnosticAsync),
         new("P1 expanded ownership diagnostics reject incomplete process evidence", IncompleteProcessAsync),
-        new("P1 expanded ownership evidence identifies every frozen placeholder", PlaceholderScopeAsync),
+        new("P1 expanded Drop runtime failures require matching traces", RuntimeFailureAsync),
+        new("P1 expanded Drop corpus contains executable semantic sources", PlaceholderScopeAsync),
     ];
 
     private static Task ExactDiagnosticAsync()
@@ -41,17 +42,43 @@ internal static class P1ExpandedOwnershipEvidenceTests
         return Task.CompletedTask;
     }
 
+    private static Task RuntimeFailureAsync()
+    {
+        BoundedProcessResult failure = Failure(string.Empty) with
+        {
+            ExitCode = 101,
+            StandardOutput = "body\ninner-drop\nouter-drop\n",
+        };
+        AssertEx.True(P1ExpandedDifferentialRunner.MatchesRuntimeFailure(failure, "body\ninner-drop\nouter-drop\n"),
+            "A bounded nonzero runtime with the exact Drop trace must satisfy a runtime-failure case.");
+        AssertEx.False(P1ExpandedDifferentialRunner.MatchesRuntimeFailure(failure with { ExitCode = 0 }, "body\ninner-drop\nouter-drop\n"),
+            "A zero exit cannot satisfy a panic differential.");
+        AssertEx.False(P1ExpandedDifferentialRunner.MatchesRuntimeFailure(failure with { StandardOutput = "body\nouter-drop\n" }, "body\ninner-drop\nouter-drop\n"),
+            "A reordered or incomplete Drop trace cannot satisfy a panic differential.");
+        AssertEx.False(P1ExpandedDifferentialRunner.MatchesRuntimeFailure(failure with { StandardOutputTruncated = true }, "body\ninner-drop\nouter-drop\n"),
+            "Truncated runtime evidence cannot satisfy a panic differential.");
+        return Task.CompletedTask;
+    }
+
     private static Task PlaceholderScopeAsync()
     {
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
         P1ExpandedSuiteValidator.ExpandedManifest manifest = P1ExpandedSuiteValidator.ParseManifest(File.ReadAllText(Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", P1ExpandedSuiteValidator.ManifestFileName)), root);
         P1ExpandedSuiteValidator.SuiteSpec suite = manifest.Suites.Single(static item => item.Profile == P1ExpandedDifferentialRunner.ProfileName);
-        AssertEx.Equal(16, suite.Cases.Count(static item => P1ExpandedDifferentialRunner.IsPlaceholderCase(item.Id)));
-        foreach (P1ExpandedSuiteValidator.CaseSpec fixture in suite.Cases)
+        AssertEx.Equal(0, suite.Cases.Count(static item => P1ExpandedDifferentialRunner.IsPlaceholderCase(item.Id)));
+        AssertEx.True(suite.Cases.All(static item => !P1ExpandedDifferentialRunner.IsPlaceholderCase(item.Id)),
+            "Every frozen differential case must carry an executable semantic scope.");
+        string fixtureRoot = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures");
+        string[] dropIds = [
+            "drop-aggregate-fields", "drop-partial-move", "drop-assignment-replacement",
+            "drop-temporary-scope", "drop-unwind-nested", "drop-double-panic",
+        ];
+        foreach (string id in dropIds)
         {
-            string source = File.ReadAllText(Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", fixture.Source)).Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
-            bool printlnOnly = source == $"// frozen P1 fixture: {fixture.Id}\nfn main() {{ println!(\"{fixture.Id}\"); }}";
-            AssertEx.Equal(printlnOnly, P1ExpandedDifferentialRunner.IsPlaceholderCase(fixture.Id), $"The coverage classification for {fixture.Id} must describe its actual source.");
+            P1ExpandedSuiteValidator.CaseSpec fixture = suite.Cases.Single(item => item.Id == id);
+            string source = File.ReadAllText(Path.Combine(fixtureRoot, fixture.Source));
+            AssertEx.True(source.Contains("impl Drop", StringComparison.Ordinal), $"{id} must declare an executable Drop body.");
+            AssertEx.False(source.Contains($"println!(\"{id}\")", StringComparison.Ordinal), $"{id} must not be a label-only source.");
         }
         return Task.CompletedTask;
     }

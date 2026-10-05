@@ -1,4 +1,4 @@
-// P1 platform: replacement cleanup consumes the old value once.
+// P1 Drop differential: assignment drops the old owner before replacing it.
 struct Marker;
 impl Drop for Marker { fn drop(&mut self) { println!("drop"); } }
 fn main() {

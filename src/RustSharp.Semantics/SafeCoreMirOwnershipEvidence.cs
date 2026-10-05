@@ -97,10 +97,12 @@ public static partial class SafeCoreMirOwnershipAdapter
             if (!provenance.IsSuccessful)
                 return new(null, null, validation, diagnostics.AsReadOnly(), provenance.IsTruncated);
 
-            Correlate(mir, evidence.Program, provenance, diagnostics, options, clock, ref operations);
+            SafeCoreOwnershipFunction?[] expectedFunctions = Correlate(
+                mir, evidence.Program, provenance, diagnostics, options, clock, ref operations);
             if (diagnostics.Count != 0)
                 return new(null, null, validation, diagnostics.AsReadOnly(), false);
-            CorrelateReferenceEffects(mir, evidence.Program, provenance, diagnostics, options, clock, ref operations);
+            CorrelateReferenceEffects(mir, evidence.Program, expectedFunctions,
+                diagnostics, options, clock, ref operations);
             if (diagnostics.Count != 0)
                 return new(null, null, validation, diagnostics.AsReadOnly(), false);
 
@@ -133,7 +135,7 @@ public static partial class SafeCoreMirOwnershipAdapter
         }
     }
 
-    private static void Correlate(
+    private static SafeCoreOwnershipFunction?[] Correlate(
         SafeCoreMirProgram mir,
         SafeCoreOwnershipProgram ownership,
         SafeCoreMirReferenceProvenanceResult provenance,
@@ -147,9 +149,10 @@ public static partial class SafeCoreMirOwnershipAdapter
             AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(MissingEvidence,
                 $"Typed MIR has {mir.Functions.Count} functions but ownership evidence has {ownership.Functions.Count}.",
                 mir.Functions.Count > 0 ? mir.Functions[0].Source : null), options);
-            return;
+            return new SafeCoreOwnershipFunction?[mir.Functions.Count];
         }
 
+        var expectedFunctions = new SafeCoreOwnershipFunction?[mir.Functions.Count];
         for (int functionIndex = 0; functionIndex < mir.Functions.Count; functionIndex++)
         {
             StepEvidence(options, clock, ref operations);
@@ -178,8 +181,13 @@ public static partial class SafeCoreMirOwnershipAdapter
                     throw new EvidenceLimitException();
             }
             bool referenceFunction = mirFunction.Locals.Any(local => ContainsReference(local.Type, mir, 0));
-            SafeCoreOwnershipFunction? expectedFunction = referenceFunction
-                ? AdaptFunction(mir, provenance, mirFunction, options, clock, ref operations, diagnostics) : null;
+            // Build the expected ownership lowering for every function.  A
+            // scalar MIR function still has move/copy/assignment effects that
+            // must be correlated; restricting this to reference-bearing
+            // functions allowed fabricated scalar Move/Borrow/Consume facts.
+            SafeCoreOwnershipFunction? expectedFunction = AdaptFunction(
+                mir, provenance, mirFunction, options, clock, ref operations, diagnostics);
+            expectedFunctions[functionIndex] = expectedFunction;
             if (!string.Equals(mirFunction.Name, ownershipFunction.Name, StringComparison.Ordinal))
             {
                 AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
@@ -232,7 +240,8 @@ public static partial class SafeCoreMirOwnershipAdapter
                 if (!string.Equals(mirLocal.Name, ownershipLocal.Name, StringComparison.Ordinal) ||
                     mirLocal.Type != ownershipLocal.Type || ownershipLocal.Kind != expectedKind ||
                     ownershipLocal.HasDrop != expectedDrop || ownershipLocal.IsReference != (mirLocal.Type.Kind == SafeCoreSemanticTypeKind.Reference) ||
-                    ownershipLocal.InitiallyInitialized != (mirLocal.Kind == SafeCoreMirLocalKind.Parameter) || ownershipLocal.StoragePlace is not null || ownershipLocal.IsOptionalEnumPayload)
+                    ownershipLocal.InitiallyInitialized != (mirLocal.Kind == SafeCoreMirLocalKind.Parameter) ||
+                    ownershipLocal.ScopeId != 0 || ownershipLocal.StoragePlace is not null || ownershipLocal.IsOptionalEnumPayload)
                 {
                     AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
                         $"Ownership fact for local {mirLocal.Id} does not match its typed-MIR name, type, move kind, or Drop contract.",
@@ -260,6 +269,24 @@ public static partial class SafeCoreMirOwnershipAdapter
                         AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(MissingEvidence,
                             "Ownership evidence omits a derived reference storage slot.", expectedFunction.Locals[localId].Source), options);
                 }
+            if (expectedFunction is not null)
+            {
+                if (ownershipFunction.Scopes.Count != expectedFunction.Scopes.Count)
+                    AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                        $"Ownership function '{mirFunction.Name}' changes the typed-MIR ownership scope arena.",
+                        ownershipFunction.Source), options);
+                foreach (SafeCoreOwnershipScope expectedScope in expectedFunction.Scopes)
+                {
+                    StepEvidence(options, clock, ref operations);
+                    SafeCoreOwnershipScope? actualScope = ownershipFunction.Scopes
+                        .SingleOrDefault(candidate => candidate.Id == expectedScope.Id);
+                    if (actualScope is null || actualScope.ParentId != expectedScope.ParentId ||
+                        !SameSource(expectedScope.Source, actualScope.Source))
+                        AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                            $"Ownership scope {expectedScope.Id} does not match the typed-MIR scope contract.",
+                            actualScope?.Source ?? ownershipFunction.Source), options);
+                }
+            }
 
             // Correlate blocks in both directions.  Ownership evidence may
             // contain an extra fact (which is diagnosed below), but it must
@@ -289,6 +316,16 @@ public static partial class SafeCoreMirOwnershipAdapter
 
                 RequireSameSource(mirBlock.Source, ownershipBlock.Source, diagnostics, options,
                     $"Ownership block {ownershipBlock.Id} has different source evidence.");
+                if (expectedFunction is not null)
+                {
+                    SafeCoreOwnershipBlock expectedBlock = expectedFunction.Blocks.Single(candidate => candidate.Id == ownershipBlock.Id);
+                    if (ownershipBlock.ScopeId != expectedBlock.ScopeId)
+                        AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                            $"Ownership block {ownershipBlock.Id} invents a scope not present in typed MIR.",
+                            ownershipBlock.Source), options);
+                }
+                RequireSameSource(mirBlock.Terminator.Source, ownershipBlock.Terminator.Source, diagnostics, options,
+                    $"Ownership block {ownershipBlock.Id} terminator has different source evidence.");
 
                 // Every ownership effect must be anchored to an actual MIR
                 // statement or terminator source in this block. This keeps
@@ -356,10 +393,12 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
             }
         }
+
+        return expectedFunctions;
     }
 
     private static void CorrelateReferenceEffects(SafeCoreMirProgram mir, SafeCoreOwnershipProgram evidence,
-        SafeCoreMirReferenceProvenanceResult provenance, List<Diagnostic> diagnostics,
+        SafeCoreOwnershipFunction?[] expectedFunctions, List<Diagnostic> diagnostics,
         SafeCoreMirOwnershipOptions options, Stopwatch clock, ref int operations)
     {
         try
@@ -367,22 +406,17 @@ public static partial class SafeCoreMirOwnershipAdapter
             for (int functionIndex = 0; functionIndex < mir.Functions.Count; functionIndex++)
             {
                 StepEvidence(options, clock, ref operations);
-                SafeCoreMirFunction function = mir.Functions[functionIndex];
-                if (!function.Locals.Any(local => ContainsReference(local.Type, mir, 0))) continue;
-                SafeCoreOwnershipFunction? expected = AdaptFunction(mir, provenance, function, options, clock, ref operations, diagnostics);
+                SafeCoreOwnershipFunction? expected = expectedFunctions[functionIndex];
                 if (expected is null) continue;
-                if (evidence.Functions[functionIndex].Scopes.Count != 1 ||
-                    evidence.Functions[functionIndex].Locals.Any(local => local.ScopeId != 0))
-                    AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
-                        "Reference evidence cannot replace typed-MIR storage scopes with invented ownership scopes.", function.Source), options);
+                SafeCoreOwnershipFunction actualFunction = evidence.Functions[functionIndex];
                 foreach (SafeCoreOwnershipBlock block in expected.Blocks)
                 {
                     StepEvidence(options, clock, ref operations);
-                    SafeCoreOwnershipBlock actual = evidence.Functions[functionIndex].Blocks.Single(candidate => candidate.Id == block.Id);
+                    SafeCoreOwnershipBlock actual = actualFunction.Blocks.Single(candidate => candidate.Id == block.Id);
                     SafeCoreOwnershipInstruction[] effects = block.Instructions.ToArray();
-                    if (effects.Length != actual.Instructions.Count || actual.ScopeId != 0)
+                    if (effects.Length != actual.Instructions.Count || actual.ScopeId != block.ScopeId)
                         AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
-                            "Explicit reference evidence must retain the exact typed-MIR ownership effects and their order.", block.Source), options);
+                            "Explicit evidence must retain the exact typed-MIR ownership effects, scope, and order.", block.Source), options);
                     for (int effectIndex = 0; effectIndex < Math.Min(effects.Length, actual.Instructions.Count); effectIndex++)
                     {
                         StepEvidence(options, clock, ref operations);
@@ -401,9 +435,10 @@ public static partial class SafeCoreMirOwnershipAdapter
                             "Explicit evidence omits or changes a typed-MIR reference ownership effect.", effect.Source), options);
                     }
                     if ((block.Terminator.Kind != actual.Terminator.Kind || block.Terminator.LocalId != actual.Terminator.LocalId ||
-                         block.Terminator.TargetBlockId != actual.Terminator.TargetBlockId || block.Terminator.FalseTargetBlockId != actual.Terminator.FalseTargetBlockId))
+                         block.Terminator.TargetBlockId != actual.Terminator.TargetBlockId || block.Terminator.FalseTargetBlockId != actual.Terminator.FalseTargetBlockId ||
+                         !SameSource(block.Terminator.Source, actual.Terminator.Source)))
                         AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
-                            "Explicit reference evidence changes the typed-MIR control-flow or return contract.", block.Source), options);
+                            "Explicit evidence changes the typed-MIR control-flow, return, or terminator source contract.", block.Source), options);
                 }
             }
         }

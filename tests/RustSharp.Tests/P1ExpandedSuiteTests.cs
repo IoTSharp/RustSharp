@@ -5,7 +5,7 @@ namespace RustSharp.Tests;
 
 internal static class P1ExpandedSuiteTests
 {
-    private const string ManifestName = "p1-expanded-suites-v1-manifest.json";
+    private const string ManifestName = "p1-expanded-suites-v2-manifest.json";
 
     public static IReadOnlyList<TestCase> All { get; } =
     [
@@ -14,6 +14,10 @@ internal static class P1ExpandedSuiteTests
         new("P1 expanded evidence rejects duplicate case IDs", RejectsDuplicateCaseAsync),
         new("P1 expanded evidence rejects missing hashes", RejectsMissingHashAsync),
         new("P1 expanded evidence rejects skipped and altered denominators", RejectsSkipAndDenominatorAsync),
+        new("P1 expanded evidence requires semantic closure fields", RejectsMissingSemanticClosureAsync),
+        new("P1 expanded evidence rejects placeholder closure claims", RejectsPlaceholderClaimAsync),
+        new("P1 expanded platform evidence requires process envelopes", RejectsMissingPlatformProcessAsync),
+        new("P1 expanded platform evidence rejects empty process envelopes", RejectsEmptyPlatformProcessAsync),
         new("P1 expanded evidence rejects over-bound reports", RejectsOverBoundReportAsync),
     ];
 
@@ -25,6 +29,8 @@ internal static class P1ExpandedSuiteTests
         P1ExpandedSuiteValidator.SuiteSpec platform = manifest.Suites.Single(static suite => suite.Profile == P1ExpandedSuiteValidator.PlatformProfile);
         AssertEx.Equal(P1ExpandedSuiteValidator.DifferentialDenominator, differential.Denominator);
         AssertEx.Equal(P1ExpandedSuiteValidator.PlatformDenominator, platform.Denominator);
+        AssertEx.Equal(4, differential.Version);
+        AssertEx.Equal(2, platform.Version);
         AssertEx.Equal(20, differential.Cases.Count(static item => item.Id.StartsWith("borrow-", StringComparison.Ordinal)));
         AssertEx.Equal(12, differential.Cases.Count(static item => item.Id.StartsWith("drop-", StringComparison.Ordinal)));
         AssertEx.Equal(2, differential.RuntimeIdentifiers.Count);
@@ -80,6 +86,54 @@ internal static class P1ExpandedSuiteTests
         return Task.CompletedTask;
     }
 
+    private static Task RejectsMissingSemanticClosureAsync()
+    {
+        P1ExpandedSuiteValidator.SuiteSpec suite = ReadManifest().Suites.Single(static item => item.Profile == P1ExpandedSuiteValidator.DifferentialProfile);
+        JsonObject report = BuildReport(suite);
+        report.Remove("semanticClosureEligible");
+        P1ExpandedSuiteValidator.ValidationResult result = P1ExpandedSuiteValidator.ValidateReport(report.ToJsonString(), suite);
+        AssertEx.False(result.Valid, "A report without semantic closure eligibility must fail the expanded evidence gate.");
+        AssertEx.True(result.Errors.Any(static error => error.Contains("semanticClosureEligible", StringComparison.Ordinal)), "The missing semantic closure diagnostic must be retained.");
+        return Task.CompletedTask;
+    }
+
+    private static Task RejectsPlaceholderClaimAsync()
+    {
+        P1ExpandedSuiteValidator.SuiteSpec suite = ReadManifest().Suites.Single(static item => item.Profile == P1ExpandedSuiteValidator.DifferentialProfile);
+        JsonObject report = BuildReport(suite);
+        report["semanticClosureEligible"] = false;
+        JsonObject placeholder = report["cases"]!.AsArray()
+            .Single(item => item!["id"]!.GetValue<string>() == "drop-aggregate-fields")!.AsObject();
+        placeholder["semanticClosureEligible"] = false;
+        placeholder["semanticCoverage"] = "placeholder";
+        P1ExpandedSuiteValidator.ValidationResult result = P1ExpandedSuiteValidator.ValidateReport(report.ToJsonString(), suite);
+        AssertEx.False(result.Valid, "A semantically incomplete suite must not claim expanded closure.");
+        AssertEx.True(result.Errors.Any(static error => error.Contains("semanticClosureEligible", StringComparison.OrdinalIgnoreCase)), "The semantic closure diagnostic must be retained.");
+        return Task.CompletedTask;
+    }
+
+    private static Task RejectsMissingPlatformProcessAsync()
+    {
+        P1ExpandedSuiteValidator.SuiteSpec suite = ReadManifest().Suites.Single(static item => item.Profile == P1ExpandedSuiteValidator.PlatformProfile);
+        JsonObject report = BuildReport(suite);
+        report["cases"]!.AsArray()[0]!.AsObject().Remove("nativeAot");
+        P1ExpandedSuiteValidator.ValidationResult result = P1ExpandedSuiteValidator.ValidateReport(report.ToJsonString(), suite);
+        AssertEx.False(result.Valid, "A platform case without Native AOT evidence must fail the expanded evidence gate.");
+        AssertEx.True(result.Errors.Any(static error => error.Contains("nativeAot", StringComparison.Ordinal)), "The missing Native AOT diagnostic must be retained.");
+        return Task.CompletedTask;
+    }
+
+    private static Task RejectsEmptyPlatformProcessAsync()
+    {
+        P1ExpandedSuiteValidator.SuiteSpec suite = ReadManifest().Suites.Single(static item => item.Profile == P1ExpandedSuiteValidator.PlatformProfile);
+        JsonObject report = BuildReport(suite);
+        report["cases"]!.AsArray()[0]!.AsObject()["nativeAot"] = new JsonObject();
+        P1ExpandedSuiteValidator.ValidationResult result = P1ExpandedSuiteValidator.ValidateReport(report.ToJsonString(), suite);
+        AssertEx.False(result.Valid, "An empty platform process envelope must fail the expanded evidence gate.");
+        AssertEx.True(result.Errors.Any(static error => error.Contains("empty", StringComparison.OrdinalIgnoreCase)), "The empty evidence diagnostic must be retained.");
+        return Task.CompletedTask;
+    }
+
     private static Task RejectsOverBoundReportAsync()
     {
         P1ExpandedSuiteValidator.SuiteSpec suite = ReadManifest().Suites[0];
@@ -100,28 +154,61 @@ internal static class P1ExpandedSuiteTests
         var cases = new JsonArray();
         foreach (P1ExpandedSuiteValidator.CaseSpec fixture in suite.Cases)
         {
-            cases.Add((JsonNode)new JsonObject
+            bool semanticEligible = suite.Profile == P1ExpandedSuiteValidator.DifferentialProfile
+                ? !P1ExpandedDifferentialRunner.IsPlaceholderCase(fixture.Id)
+                : P1ExpandedPlatformRunner.IsSemanticClosureEligible(fixture.Id);
+            var item = new JsonObject
             {
                 ["id"] = fixture.Id,
                 ["status"] = "passed",
                 ["sourceSha256"] = fixture.SourceSha256,
                 ["expectationSha256"] = fixture.ExpectationSha256,
-            });
+                ["semanticClosureEligible"] = semanticEligible,
+                ["semanticCoverage"] = semanticEligible ? "ownership-drop-scenario" : "placeholder",
+            };
+            if (suite.Profile == P1ExpandedSuiteValidator.PlatformProfile)
+            {
+                item["coreClrCompile"] = new JsonObject { ["evidence"] = "synthetic" };
+                item["coreClrRun"] = new JsonObject { ["evidence"] = "synthetic" };
+                item["ilVerify"] = new JsonObject { ["evidence"] = "synthetic" };
+                item["nativeAot"] = new JsonObject { ["evidence"] = "synthetic" };
+            }
+            cases.Add((JsonNode)item);
         }
-        return new JsonObject
+        bool semanticEligibleForSuite = suite.Cases.All(fixture => suite.Profile == P1ExpandedSuiteValidator.DifferentialProfile
+            ? !P1ExpandedDifferentialRunner.IsPlaceholderCase(fixture.Id)
+            : P1ExpandedPlatformRunner.IsSemanticClosureEligible(fixture.Id));
+        var report = new JsonObject
         {
             ["profile"] = suite.Profile,
             ["backend"] = suite.Backend,
             ["compilerSha256"] = suite.CompilerSha256,
-            ["manifest"] = new JsonObject { ["version"] = P1ExpandedSuiteValidator.ManifestVersion, ["sha256"] = suite.ManifestSha256, ["denominator"] = suite.Denominator, ["validated"] = true },
+            ["declaredCompilerSha256"] = suite.CompilerSha256,
+            ["compiler"] = new JsonObject { ["declaredSha256"] = suite.CompilerSha256 },
+            ["manifest"] = new JsonObject { ["version"] = P1ExpandedSuiteValidator.ManifestVersion, ["sha256"] = suite.ManifestSha256, ["declaredSha256"] = suite.ManifestSha256, ["denominator"] = suite.Denominator, ["validated"] = true },
             ["platform"] = new JsonObject { ["runtimeIdentifier"] = suite.RuntimeIdentifiers[0], ["backend"] = suite.Backend, ["oracle"] = suite.Oracle },
             ["toolVersions"] = new JsonObject { ["dotnet"] = "10.0.401", ["sdkVersion"] = "10.0.401", ["rustc"] = suite.Oracle },
             ["oracle"] = new JsonObject { ["version"] = suite.Oracle },
+            ["semanticClosureEligible"] = semanticEligibleForSuite,
             ["summary"] = new JsonObject { ["status"] = "passed", ["denominator"] = suite.Denominator, ["executed"] = suite.Denominator, ["passed"] = suite.Denominator, ["failed"] = 0, ["blocked"] = 0, ["skipped"] = 0 },
             ["cases"] = cases,
             ["execution"] = new JsonObject { ["startedAtUtc"] = "2026-10-02T00:00:00Z", ["finishedAtUtc"] = "2026-10-02T00:00:01Z", ["deadlineExpired"] = false },
             ["cleanup"] = new JsonObject { ["completed"] = true, ["diagnostic"] = null },
         };
+        if (suite.Profile == P1ExpandedSuiteValidator.DifferentialProfile)
+        {
+            P1ExpandedSuiteValidator.CaseSpec[] borrowCases = suite.Cases.Where(static fixture =>
+                fixture.Id.StartsWith("borrow-", StringComparison.Ordinal)).ToArray();
+            bool borrowEligible = borrowCases.All(fixture => !P1ExpandedDifferentialRunner.IsPlaceholderCase(fixture.Id));
+            report["borrowSemanticClosureEligible"] = borrowEligible;
+            report["borrowSemanticClosure"] = new JsonObject
+            {
+                ["eligible"] = borrowEligible,
+                ["eligibleCases"] = borrowCases.Count(fixture => !P1ExpandedDifferentialRunner.IsPlaceholderCase(fixture.Id)),
+                ["placeholderCases"] = borrowCases.Count(fixture => P1ExpandedDifferentialRunner.IsPlaceholderCase(fixture.Id)),
+            };
+        }
+        return report;
     }
 
     private static string RepositoryRoot() => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));

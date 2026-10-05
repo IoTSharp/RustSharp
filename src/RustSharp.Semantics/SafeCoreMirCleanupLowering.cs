@@ -336,6 +336,8 @@ public static class SafeCoreMirCleanupLowering
 
         var actions = new List<SafeCoreMirCleanupAction>(Math.Min(path.Trace.Length, options.MaximumActionsPerPath));
         var observedDrops = new HashSet<string>(StringComparer.Ordinal);
+        var dropGenerations = new Dictionary<string, int>(StringComparer.Ordinal);
+        var observedDropKeys = new Dictionary<string, Queue<string>>(StringComparer.Ordinal);
         bool hasScopeExit = false;
         bool hasBoundary = false;
         for (int traceIndex = 0; traceIndex < path.Trace.Length; traceIndex++)
@@ -354,6 +356,13 @@ public static class SafeCoreMirCleanupLowering
                 continue;
             }
 
+            if (TryParseLocalEvent(trace, "assign ", localsByName, out SafeCoreOwnershipLocal? assigned) && assigned is not null)
+            {
+                dropGenerations[assigned.Name] = dropGenerations.TryGetValue(assigned.Name, out int generation)
+                    ? generation + 1 : 1;
+                continue;
+            }
+
             if (TryParseLocalEvent(trace, "drop ", localsByName, out SafeCoreOwnershipLocal? drop) && drop is not null)
             {
                 if (!drop.HasDrop)
@@ -363,13 +372,18 @@ public static class SafeCoreMirCleanupLowering
                         drop.Source, options);
                     return null;
                 }
-                if (!observedDrops.Add(drop.Name))
+                int generation = dropGenerations.TryGetValue(drop.Name, out int currentGeneration) ? currentGeneration : 0;
+                string dropKey = drop.Name + "\u001f" + generation.ToString(CultureInfo.InvariantCulture);
+                if (!observedDrops.Add(dropKey))
                 {
                     AddDiagnostic(diagnostics, InvalidEvidence,
                         $"Cleanup drop evidence repeats local '{drop.Name}'.",
                         drop.Source, options);
                     return null;
                 }
+                if (!observedDropKeys.TryGetValue(drop.Name, out Queue<string>? keys))
+                    observedDropKeys[drop.Name] = keys = new Queue<string>();
+                keys.Enqueue(dropKey);
                 actions.Add(SafeCoreMirCleanupAction.Drop(drop.Id, drop.Name, drop.Source));
                 continue;
             }
@@ -431,16 +445,30 @@ public static class SafeCoreMirCleanupLowering
         // producers may omit individual `drop` trace entries, so materialize
         // any missing drops immediately before the terminal boundary.
         var dropOrderSeen = new HashSet<string>(StringComparer.Ordinal);
+        var materializedGenerations = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (string dropName in path.DropOrder)
         {
             Step(options, clock, ref operations);
-            if (!dropOrderSeen.Add(dropName))
+            string dropKey;
+            bool alreadyObserved = observedDropKeys.TryGetValue(dropName, out Queue<string>? observedKeys) && observedKeys.Count > 0;
+            if (alreadyObserved)
+            {
+                dropKey = observedKeys!.Dequeue();
+            }
+            else
+            {
+                int generation = materializedGenerations.TryGetValue(dropName, out int currentGeneration)
+                    ? currentGeneration + 1 : 0;
+                materializedGenerations[dropName] = generation;
+                dropKey = dropName + "\u001f" + generation.ToString(CultureInfo.InvariantCulture);
+            }
+            if (!dropOrderSeen.Add(dropKey))
             {
                 AddDiagnostic(diagnostics, InvalidEvidence,
                     $"Cleanup drop evidence repeats local '{dropName}'.", function.Source, options);
                 return null;
             }
-            if (observedDrops.Contains(dropName)) continue;
+            if (alreadyObserved) continue;
             if (!localsByName.TryGetValue(dropName, out SafeCoreOwnershipLocal? local))
             {
                 AddDiagnostic(diagnostics, Unsupported,

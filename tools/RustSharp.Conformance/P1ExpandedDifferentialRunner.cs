@@ -23,19 +23,6 @@ internal static class P1ExpandedDifferentialRunner
     private const int MaximumCases = P1ExpandedSuiteValidator.DifferentialDenominator;
     private const int MaximumTimeoutSeconds = 300;
     private const int MaximumDeadlineSeconds = 900;
-    // The frozen v3 denominator intentionally contains the original sixteen
-    // ownership/Drop scenarios followed by sixteen placeholder sources.  A
-    // placeholder may prove process/provenance plumbing, but it cannot close
-    // the semantic leaf it names.  Keep this classification in the runner so
-    // a successful println-only program cannot be mistaken for semantic proof.
-    private static readonly HashSet<string> PlaceholderCaseIds =
-    [
-        "borrow-aggregate-copy", "borrow-partial-move", "borrow-nll-branch", "borrow-reborrow-escape",
-        "borrow-loop-join", "borrow-index-projection", "borrow-deref-projection", "borrow-call-return",
-        "borrow-move-reinit", "borrow-budget-limit", "drop-aggregate-fields", "drop-partial-move",
-        "drop-assignment-replacement", "drop-temporary-scope", "drop-unwind-nested", "drop-double-panic",
-    ];
-
     private static readonly Dictionary<string, (string Rustc, string RustSharp)> ExpectedCompileFailures =
         new Dictionary<string, (string Rustc, string RustSharp)>(StringComparer.Ordinal)
         {
@@ -43,6 +30,24 @@ internal static class P1ExpandedDifferentialRunner
             ["borrow-fail-shared-write"] = ("E0506", "RSO1002"),
             ["borrow-fail-moved-mut-ref"] = ("E0382", "RSO1001"),
             ["borrow-fail-escape"] = ("E0597", "RSO1005"),
+            ["drop-partial-move"] = ("E0509", "RSO1008"),
+        };
+
+    private sealed record ExpectedRuntimeFailure(string Output, string TerminationKind);
+
+    private static readonly Dictionary<string, ExpectedRuntimeFailure> ExpectedRuntimeFailures =
+        new(StringComparer.Ordinal)
+        {
+            ["drop-unwind-nested"] = new("body\ninner-drop\nouter-drop\n", "panic-unwind"),
+            ["drop-double-panic"] = new("body\ndrop-start\n", "double-panic-abort"),
+        };
+
+    private static readonly Dictionary<string, string> ExpectedOutputs =
+        new(StringComparer.Ordinal)
+        {
+            ["drop-aggregate-fields"] = "body\naggregate\nfirst-field\nsecond-field\n",
+            ["drop-assignment-replacement"] = "drop\nbody\ndrop\n",
+            ["drop-temporary-scope"] = "drop\nafter\n",
         };
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
@@ -152,9 +157,13 @@ internal static class P1ExpandedDifferentialRunner
         int passed = cases.Count(static item => item["status"]?.GetValue<string>() == "passed");
         int failed = cases.Count(static item => item["status"]?.GetValue<string>() == "failed");
         int blocked = cases.Count(static item => item["status"]?.GetValue<string>() == "blocked");
-        int placeholderCases = suite?.Cases.Count(static item => IsPlaceholderCase(item)) ?? 0;
+        int placeholderCases = suite?.Cases.Count(static item => IsPlaceholderCase(item.Id)) ?? 0;
         int semanticCases = denominator - placeholderCases;
         bool semanticClosureEligible = suite is not null && placeholderCases == 0;
+        int borrowCaseCount = suite?.Cases.Count(static item => item.Id.StartsWith("borrow-", StringComparison.Ordinal)) ?? 0;
+        int borrowPlaceholderCases = suite?.Cases.Count(static item =>
+            item.Id.StartsWith("borrow-", StringComparison.Ordinal) && IsPlaceholderCase(item.Id)) ?? 0;
+        bool borrowSemanticClosureEligible = suite is not null && borrowCaseCount > 0 && borrowPlaceholderCases == 0;
         string status = suite is null || harnessError is not null || cleanupDiagnostic is not null || cancellation.IsCancellationRequested || blocked > 0
             ? "blocked" : failed > 0 ? "failed" : passed == denominator ? "passed" : "blocked";
         var report = new JsonObject
@@ -205,6 +214,16 @@ internal static class P1ExpandedDifferentialRunner
                 ["reason"] = semanticClosureEligible
                     ? null
                     : "The frozen v3 suite contains placeholder sources; passing process outcomes do not close their named ownership/Drop semantics.",
+            },
+            ["borrowSemanticClosureEligible"] = borrowSemanticClosureEligible,
+            ["borrowSemanticClosure"] = new JsonObject
+            {
+                ["eligible"] = borrowSemanticClosureEligible,
+                ["eligibleCases"] = borrowCaseCount - borrowPlaceholderCases,
+                ["placeholderCases"] = borrowPlaceholderCases,
+                ["reason"] = borrowSemanticClosureEligible
+                    ? null
+                    : "The frozen borrow subset contains placeholder sources; passing process outcomes do not close its named ownership semantics.",
             },
             ["toolVersions"] = new JsonObject
             {
@@ -276,32 +295,43 @@ internal static class P1ExpandedDifferentialRunner
             }
         }
         bool expectedCompileFailure = ExpectedCompileFailures.TryGetValue(fixture.Id, out var expectedDiagnostics);
+        bool expectedRuntimeFailure = ExpectedRuntimeFailures.TryGetValue(fixture.Id, out ExpectedRuntimeFailure? runtimeFailure);
         bool passed = expectedCompileFailure
             ? !oracleCompiles && ContainsDiagnostic(rustcCompile, expectedDiagnostics.Rustc) &&
               ContainsDiagnostic(rustSharpCheck, expectedDiagnostics.RustSharp) &&
               rustSharpCompile is not null && ContainsDiagnostic(rustSharpCompile, expectedDiagnostics.RustSharp)
-            : oracleCompiles
-                ? rustcRun is { Succeeded: true } && rustSharpCheck is { Succeeded: true } && rustSharpCompile is { Succeeded: true } && rustSharpRun is { Succeeded: true } && Normalize(rustcRun.StandardOutput) == Normalize(rustSharpRun.StandardOutput)
-                : false;
+            : expectedRuntimeFailure
+                ? oracleCompiles && IsRuntimeFailure(rustcRun) &&
+                  rustSharpCheck is { Succeeded: true } && rustSharpCompile is { Succeeded: true } &&
+                  IsRuntimeFailure(rustSharpRun) &&
+                  Normalize(rustcRun!.StandardOutput) == Normalize(runtimeFailure!.Output) &&
+                  Normalize(rustSharpRun!.StandardOutput) == Normalize(runtimeFailure.Output)
+                : oracleCompiles
+                    ? rustcRun is { Succeeded: true } && rustSharpCheck is { Succeeded: true } && rustSharpCompile is { Succeeded: true } && rustSharpRun is { Succeeded: true } && Normalize(rustcRun.StandardOutput) == Normalize(rustSharpRun.StandardOutput) &&
+                      (!ExpectedOutputs.TryGetValue(fixture.Id, out string? expectedOutput) || Normalize(rustcRun.StandardOutput) == Normalize(expectedOutput))
+                    : false;
         string? difference = passed ? null : expectedCompileFailure
             ? $"Expected rustc {expectedDiagnostics.Rustc} and RustSharp {expectedDiagnostics.RustSharp} ownership diagnostics; observed compile/check output did not match."
-            : "rustc and RustSharp emitted different compile/run outcomes.";
-        bool placeholder = IsPlaceholderCase(fixture);
+            : expectedRuntimeFailure
+                ? $"Expected matching {runtimeFailure!.TerminationKind} failures and output trace; observed compile/run evidence differed."
+                : "rustc and RustSharp emitted different compile/run outcomes.";
         bool incompleteProcess = new[] { rustcCompile, rustcRun, rustSharpCheck, rustSharpCompile, rustSharpRun }
             .Any(static evidence => evidence is not null &&
                 (evidence.Termination is "timedout" or "cancelled" || evidence.OutputTruncated || evidence.OutputReadTimedOut ||
                  evidence.OutputDrainTimedOut || evidence.OutputReadLimitReached || evidence.CleanupIncomplete));
         string? failureKind = passed ? null : incompleteProcess ? "incomplete-process-evidence" :
-            rustSharpCheck.StandardError.Contains("RSC0009", StringComparison.Ordinal) ? "unsupported-lowering" : "semantic-difference";
+            rustSharpCheck.StandardError.Contains("RSC0009", StringComparison.Ordinal) ? "unsupported-lowering" :
+            expectedRuntimeFailure ? "runtime-difference" : "semantic-difference";
         var result = new JsonObject
         {
             ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256,
             ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = incompleteProcess ? "blocked" : passed ? "passed" : "failed", ["difference"] = difference,
             ["failureKind"] = failureKind,
-            ["expectedOutcome"] = expectedCompileFailure ? "compile-fail" : "run-pass",
-            ["semanticCoverage"] = placeholder ? "placeholder" : "ownership-drop-scenario",
-            ["semanticClosureEligible"] = !placeholder,
-            ["placeholderReason"] = placeholder ? "Source is a frozen println-only placeholder; outcome evidence cannot prove the named semantic." : null,
+            ["expectedOutcome"] = expectedCompileFailure ? "compile-fail" : expectedRuntimeFailure ? "run-fail" : "run-pass",
+            ["semanticCoverage"] = "ownership-drop-scenario",
+            ["semanticClosureEligible"] = true,
+            ["expectedOutput"] = ExpectedOutputs.TryGetValue(fixture.Id, out string? output) ? output : runtimeFailure?.Output,
+            ["expectedTermination"] = runtimeFailure?.TerminationKind,
         };
         if (expectedCompileFailure)
         {
@@ -320,13 +350,12 @@ internal static class P1ExpandedDifferentialRunner
     {
         ["id"] = fixture.Id, ["source"] = fixture.Source, ["sourceSha256"] = fixture.SourceSha256,
         ["expectationSha256"] = fixture.ExpectationSha256, ["status"] = "blocked", ["difference"] = reason,
-        ["expectedOutcome"] = ExpectedCompileFailures.ContainsKey(fixture.Id) ? "compile-fail" : "run-pass",
-        ["semanticCoverage"] = IsPlaceholderCase(fixture) ? "placeholder" : "ownership-drop-scenario",
-        ["semanticClosureEligible"] = !IsPlaceholderCase(fixture),
-        ["placeholderReason"] = IsPlaceholderCase(fixture) ? "Source is a frozen println-only placeholder; outcome evidence cannot prove the named semantic." : null,
+        ["expectedOutcome"] = ExpectedCompileFailures.ContainsKey(fixture.Id) ? "compile-fail" : ExpectedRuntimeFailures.ContainsKey(fixture.Id) ? "run-fail" : "run-pass",
+        ["semanticCoverage"] = "ownership-drop-scenario",
+        ["semanticClosureEligible"] = true,
+        ["expectedOutput"] = ExpectedOutputs.TryGetValue(fixture.Id, out string? output) ? output : ExpectedRuntimeFailures.TryGetValue(fixture.Id, out ExpectedRuntimeFailure? runtime) ? runtime.Output : null,
+        ["expectedTermination"] = ExpectedRuntimeFailures.TryGetValue(fixture.Id, out ExpectedRuntimeFailure? expectedRuntime) ? expectedRuntime.TerminationKind : null,
     };
-
-    private static bool IsPlaceholderCase(P1ExpandedSuiteValidator.CaseSpec fixture) => PlaceholderCaseIds.Contains(fixture.Id);
 
     private static bool ContainsDiagnostic(ProcessEvidence evidence, string diagnostic) =>
         evidence.Termination == "exited" && evidence.ExitCode == 1 && evidence.ProcessId > 0 &&
@@ -368,7 +397,16 @@ internal static class P1ExpandedDifferentialRunner
     }
 
     internal static bool MatchesCompileFailure(BoundedProcessResult evidence, string diagnostic) => ContainsDiagnostic(ProcessEvidence.From(evidence), diagnostic);
-    internal static bool IsPlaceholderCase(string id) => PlaceholderCaseIds.Contains(id);
+    internal static bool IsPlaceholderCase(string id) => false;
+
+    internal static bool MatchesRuntimeFailure(BoundedProcessResult evidence, string expectedOutput) =>
+        IsRuntimeFailure(ProcessEvidence.From(evidence)) &&
+        Normalize(evidence.StandardOutput) == Normalize(expectedOutput);
+
+    private static bool IsRuntimeFailure(ProcessEvidence? evidence) => evidence is not null &&
+        evidence.Termination == "exited" && evidence.ExitCode is not null and not 0 &&
+        !evidence.OutputTruncated && !evidence.OutputReadTimedOut && !evidence.OutputDrainTimedOut &&
+        !evidence.OutputReadLimitReached && !evidence.CleanupIncomplete;
 
     private static bool Succeeded(BoundedProcessResult result) => result.Succeeded && !result.OutputTruncated && !result.OutputReadTimedOut && !result.OutputDrainTimedOut && !result.OutputReadLimitReached && !result.ProcessTreeCleanupIncomplete;
 

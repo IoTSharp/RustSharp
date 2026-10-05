@@ -291,6 +291,14 @@ public static partial class SafeCoreMirLowering
             if (_current is null || right is null) return null;
             (SafeCoreMirPlace place, SafeCoreType type) = ResolvePlace(target, depth + 1);
             if (_current is null || right is null) return null;
+            if (operation == "=" && place.IsRoot &&
+                _dropInitialized.Contains(place.LocalId) &&
+                _locals[place.LocalId].DestructorFunctionId is int destructor)
+            {
+                SafeCoreHirNode method = _functionNodes[destructor];
+                EmitDestructorCall(destructor, method, Source(target), place.LocalId);
+                _dropInitialized.Remove(place.LocalId);
+            }
             if (operation != "=")
                 right = Emit(SafeCoreMirRvalue.Binary(operation[..^1], SafeCoreMirOperand.PlaceValue(place, type, Source(target)),
                     right, type, Source(node)), type, node);
@@ -298,6 +306,7 @@ public static partial class SafeCoreMirLowering
             {
                 DestinationPlace = place.IsRoot ? null : place,
             });
+            if (place.IsRoot && RequiresDrop(type)) _dropInitialized.Add(place.LocalId);
             return Unit(node);
         }
     }

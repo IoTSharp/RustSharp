@@ -42,6 +42,8 @@ internal static class CommandLineParser
         string? runtimeIdentifier = null;
         var timeoutSeconds = 600;
         var profile = RustSharp.Compiler.CompilationProfile.VerticalSlice;
+        var metadataReferences = new List<string>();
+        var requiredFunctions = new List<string>();
 
         for (var index = 1; index < arguments.Length; index++)
         {
@@ -88,6 +90,22 @@ internal static class CommandLineParser
 
                     break;
 
+                case "--reference":
+                    if (!TryTakeValue(arguments, ref index, out var reference) || metadataReferences.Count >= 32)
+                    {
+                        return Failure("Option '--reference' requires a path and accepts at most 32 references.");
+                    }
+                    metadataReferences.Add(reference!);
+                    break;
+
+                case "--require":
+                    if (!TryTakeValue(arguments, ref index, out var required) || requiredFunctions.Count >= 256)
+                    {
+                        return Failure("Option '--require' requires a function ID and accepts at most 256 functions.");
+                    }
+                    requiredFunctions.Add(required!);
+                    break;
+
                 default:
                     if (argument.StartsWith('-'))
                     {
@@ -125,7 +143,9 @@ internal static class CommandLineParser
             outputPath,
             runtimeIdentifier,
             timeoutSeconds,
-            profile));
+            profile,
+            metadataReferences.AsReadOnly(),
+            requiredFunctions.AsReadOnly()));
     }
 
     private static bool TryTakeValue(

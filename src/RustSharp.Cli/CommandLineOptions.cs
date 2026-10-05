@@ -16,7 +16,9 @@ internal sealed record CommandLineOptions(
     string? OutputPath = null,
     string? RuntimeIdentifier = null,
     int TimeoutSeconds = 600,
-    RustSharp.Compiler.CompilationProfile Profile = RustSharp.Compiler.CompilationProfile.VerticalSlice);
+    RustSharp.Compiler.CompilationProfile Profile = RustSharp.Compiler.CompilationProfile.VerticalSlice,
+    IReadOnlyList<string>? MetadataReferences = null,
+    IReadOnlyList<string>? RequiredFunctions = null);
 
 internal sealed record CommandLineParseResult(
     CommandLineOptions? Options,

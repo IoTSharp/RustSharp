@@ -909,7 +909,7 @@ public static class RustSharpMetadataConsumer
                 "copy" => type is "I32" or "Bool",
                 "move" => type.StartsWith("Value(", StringComparison.Ordinal),
                 "borrow:shared" or "borrow:mut" or "borrow:mutable" =>
-                    type.StartsWith('&'),
+                    type.StartsWith('&') || type == "Any",
                 "unit" => isReturn && type == "Void",
                 _ => false,
             };
@@ -926,7 +926,7 @@ public static class RustSharpMetadataConsumer
             // token scan is sufficient here and avoids accepting arbitrary
             // nested syntax as a contract-bearing type.
             return signature.Contains("Value(", StringComparison.Ordinal) ||
-                signature.Contains('&');
+                signature.Contains('&') || signature.Contains("Any", StringComparison.Ordinal);
         }
     }
 

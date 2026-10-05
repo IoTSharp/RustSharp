@@ -287,10 +287,16 @@ public static partial class SafeCoreMirOwnershipAdapter
                 bool referenceCoercion = value.Kind == SafeCoreMirRvalueKind.Coerce &&
                     value.Type.Kind == SafeCoreSemanticTypeKind.Reference && value.Operands.Count == 1 &&
                     value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.Reference;
+                SafeCoreMirLocal destinationLocal = function.Locals[statement.DestinationLocalId];
+                bool zeroFieldDropValue = destinationLocal.DestructorFunctionId.HasValue &&
+                    destinationLocal.Type.Kind == SafeCoreSemanticTypeKind.Adt && value.Kind == SafeCoreMirRvalueKind.Use &&
+                    value.Operands.Count == 1 && value.Operands[0].Kind == SafeCoreMirOperandKind.Constant &&
+                    value.Operands[0].Value == "()";
                 if (!IsSupportedOwnedType(value.Type, program) && !unsizingCoercion && !nonCopyMove && value.Kind != SafeCoreMirRvalueKind.Unary &&
                     value.Kind != SafeCoreMirRvalueKind.Write && !referenceAssignment &&
                     !(function.Locals[statement.DestinationLocalId].IsUnitAdt && value.Kind == SafeCoreMirRvalueKind.Use &&
-                        value.Operands[0].Kind == SafeCoreMirOperandKind.Constant && value.Operands[0].Value == "()"))
+                        value.Operands[0].Kind == SafeCoreMirOperandKind.Constant && value.Operands[0].Value == "()") &&
+                    !zeroFieldDropValue)
                 {
                     AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                         "Only structural Copy rvalues are supported by the typed-MIR ownership bridge.", value.Source), options);
@@ -545,8 +551,11 @@ public static partial class SafeCoreMirOwnershipAdapter
                             else valid = false;
                             break;
                         case SafeCoreMirOperandKind.Constant:
+                            SafeCoreMirLocal constantDestinationLocal = function.Locals[statement.DestinationLocalId];
+                            bool zeroFieldDropConstant = constantDestinationLocal.DestructorFunctionId.HasValue &&
+                                constantDestinationLocal.Type.Kind == SafeCoreSemanticTypeKind.Adt && operand.Value == "()";
                             if (!IsStructuralCopy(operand.Type) &&
-                                !(function.Locals[statement.DestinationLocalId].IsUnitAdt && operand.Value == "()"))
+                                !(constantDestinationLocal.IsUnitAdt && operand.Value == "()") && !zeroFieldDropConstant)
                             {
                                 AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                                     "A non-Copy constant has no ownership bridge representation.", operand.Source), options);

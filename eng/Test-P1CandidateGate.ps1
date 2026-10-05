@@ -99,7 +99,7 @@ function Test-Summary {
 
 function Test-ExpandedManifest {
     param([Parameter(Mandatory = $true)][object] $Document, [Parameter(Mandatory = $true)][string] $Profile)
-    $manifestPath = Join-Path $root 'tools/RustSharp.Conformance/fixtures/p1-expanded-suites-v1-manifest.json'
+    $manifestPath = Join-Path $root 'tools/RustSharp.Conformance/fixtures/p1-expanded-suites-v2-manifest.json'
     if (-not [IO.File]::Exists($manifestPath)) { return @('blocked: expanded suite manifest is missing.') }
     try {
         $manifestBytes = [IO.File]::ReadAllBytes($manifestPath)

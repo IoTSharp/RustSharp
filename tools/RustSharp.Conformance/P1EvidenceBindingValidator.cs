@@ -30,7 +30,8 @@ internal static class P1EvidenceBindingValidator
         string CompilerSha256,
         string OracleVersionPrefix = "rustc 1.98.0 (",
         string? CandidateSha = null,
-        IReadOnlyList<CaseBinding>? CaseBindings = null);
+        IReadOnlyList<CaseBinding>? CaseBindings = null,
+        bool RequireSemanticClosure = false);
 
     internal sealed record ValidationResult(
         bool Valid,
@@ -257,7 +258,7 @@ internal static class P1EvidenceBindingValidator
 
     private static void ValidatePlatformExecution(JsonElement root, BindingExpectation expected, List<string> errors, Stopwatch clock, CancellationToken cancellationToken)
     {
-        RequireBoolean(root, "semanticClosureEligible", false, "report", errors);
+        RequireBoolean(root, "semanticClosureEligible", expected.RequireSemanticClosure, "report", errors);
         if (expected.RuntimeIdentifier is not ("win-x64" or "linux-x64")) errors.Add("Platform runtime identifier must identify a supported native x64 host.");
         if (TryObject(root, "platform", out JsonElement platform, errors))
         {

@@ -23,6 +23,8 @@ internal static class SafeCoreMirOwnershipAdapterTests
         new("typed MIR ownership evidence rejects source drift", EvidenceMismatchAsync),
         new("typed MIR ownership evidence rejects extra local facts", ExtraLocalEvidenceAsync),
         new("typed MIR ownership evidence rejects missing blocks", MissingBlockEvidenceAsync),
+        new("typed MIR ownership evidence rejects scalar move spoof", ScalarMoveSpoofAsync),
+        new("typed MIR ownership evidence rejects scalar terminator scope and source drift", ScalarTerminatorDriftAsync),
         new("typed MIR ownership evidence carries forward its operation budget", EvidenceOperationBudgetAsync),
     ];
 
@@ -630,5 +632,80 @@ internal static class SafeCoreMirOwnershipAdapterTests
                 diagnostic.Code == SafeCoreMirOwnershipAdapter.LimitReached),
             "Exhausting the shared budget must retain the stable limit diagnostic.");
         return Task.CompletedTask;
+    }
+
+    private static Task ScalarMoveSpoofAsync()
+    {
+        (SafeCoreMirProgram mir, SafeCoreOwnershipFunction ownership) = ScalarEvidenceFixture();
+        SafeCoreOwnershipBlock block = ownership.Blocks[0];
+        var spoofed = new SafeCoreOwnershipBlock(block.Id, block.ScopeId,
+            [SafeCoreOwnershipInstruction.Move(0, 1, Source), block.Instructions[1]],
+            block.Terminator, block.Source);
+        SafeCoreOwnershipFunction function = new(ownership.Name, ownership.Locals, ownership.Scopes,
+            [spoofed], ownership.EntryBlockId, ownership.PanicStrategy, ownership.Source);
+
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(mir,
+            new SafeCoreOwnershipProgram([function]));
+        AssertEx.False(result.IsSuccessful, "Scalar ownership effects must not be replaceable by a fabricated move.");
+        AssertEx.True(result.Ownership is null, "Mismatched scalar evidence must not reach ownership analysis.");
+        AssertEx.True(result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreMirOwnershipAdapter.EvidenceMismatch),
+            "A scalar Use-to-Move substitution must report RSM3004.");
+        return Task.CompletedTask;
+    }
+
+    private static Task ScalarTerminatorDriftAsync()
+    {
+        (SafeCoreMirProgram mir, SafeCoreOwnershipFunction ownership) = ScalarEvidenceFixture();
+        SafeCoreMirSource drifted = new("other.rs", Source.Span, Source.HirNodeId, Source.SourceLength);
+        SafeCoreOwnershipBlock block = ownership.Blocks[0];
+        var spoofed = new SafeCoreOwnershipBlock(block.Id, 1, block.Instructions,
+            SafeCoreOwnershipTerminator.Return(1, drifted), block.Source);
+        SafeCoreOwnershipFunction function = new(ownership.Name, ownership.Locals,
+            [new SafeCoreOwnershipScope(0, -1, Source), new SafeCoreOwnershipScope(1, 0, Source)],
+            [spoofed], ownership.EntryBlockId, ownership.PanicStrategy, ownership.Source);
+
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(mir,
+            new SafeCoreOwnershipProgram([function]));
+        AssertEx.False(result.IsSuccessful, "Scalar terminator scope/source drift must be rejected.");
+        AssertEx.True(result.Ownership is null, "Scope/source drift must not reach ownership analysis.");
+        AssertEx.True(result.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreMirOwnershipAdapter.EvidenceMismatch),
+            "Terminator scope/source drift must report RSM3004.");
+        return Task.CompletedTask;
+    }
+
+    private static (SafeCoreMirProgram Mir, SafeCoreOwnershipFunction Ownership) ScalarEvidenceFixture()
+    {
+        SafeCoreMirStatement assignment = new(1,
+            SafeCoreMirRvalue.Use(SafeCoreMirOperand.Local(0, Integer, Source), Source), Source);
+        SafeCoreMirFunction mirFunction = new(
+            0,
+            "crate::scalar-evidence",
+            Integer,
+            [
+                new SafeCoreMirLocal(0, "input", Integer, SafeCoreMirLocalKind.Parameter, false, Source),
+                new SafeCoreMirLocal(1, "copy", Integer, SafeCoreMirLocalKind.Temporary, false, Source),
+            ],
+            [new SafeCoreMirBlock(0, [assignment],
+                SafeCoreMirTerminator.Return(SafeCoreMirOperand.Local(1, Integer, Source), Source), Source)],
+            0,
+            Source);
+        SafeCoreOwnershipFunction ownership = new(
+            "crate::scalar-evidence",
+            [
+                new SafeCoreOwnershipLocal(0, "input", Integer, SafeCoreOwnershipKind.Copy,
+                    HasDrop: false, ScopeId: 0, IsReference: false, InitiallyInitialized: true, Source),
+                new SafeCoreOwnershipLocal(1, "copy", Integer, SafeCoreOwnershipKind.Copy,
+                    HasDrop: false, ScopeId: 0, IsReference: false, InitiallyInitialized: false, Source),
+            ],
+            [new SafeCoreOwnershipScope(0, -1, Source)],
+            [new SafeCoreOwnershipBlock(0, 0,
+                [SafeCoreOwnershipInstruction.Use(0, Source), SafeCoreOwnershipInstruction.Assign(1, Source)],
+                SafeCoreOwnershipTerminator.Return(1, Source), Source)],
+            0,
+            SafeCorePanicStrategy.Unwind,
+            Source);
+        return (new SafeCoreMirProgram([mirFunction]), ownership);
     }
 }

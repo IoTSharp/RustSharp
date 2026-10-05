@@ -120,6 +120,7 @@ public static partial class SafeCoreMirLowering
         private readonly Dictionary<string, int> _dropFunctions = new(StringComparer.Ordinal);
         private readonly HashSet<int> _destructorNodes = [];
         private readonly List<List<int>> _dropScopes = [];
+        private readonly HashSet<int> _dropInitialized = [];
         private readonly List<BlockBuilder> _blocks = [];
         private readonly List<LoopContext> _loops = [];
         private BlockBuilder? _current;
@@ -246,7 +247,7 @@ public static partial class SafeCoreMirLowering
         {
             _locals.Clear(); _bindings.Clear(); _storageScopes.Clear(); _temporaryScopes.Clear(); _extendedTemporaryScopes.Clear();
             _blocks.Clear(); _loops.Clear();
-            _closures.Clear(); _closureReturns.Clear(); _dropScopes.Clear(); _capturePlaces.Clear();
+            _closures.Clear(); _closureReturns.Clear(); _dropScopes.Clear(); _dropInitialized.Clear(); _capturePlaces.Clear();
             _captureProjections.Clear();
             _patternChoices = null; _patternDestinations = null; _guardBindingPreview = false;
             SafeCoreType signature = Type(node);
@@ -284,6 +285,10 @@ public static partial class SafeCoreMirLowering
             SafeCoreMirOperand? body = Expr(Child(node, node.ChildIds.Count - 1), 0);
             if (_current is not null)
             {
+                if (isDestructor && signature.ParameterTypes.Count == 1 &&
+                    signature.ParameterTypes[0].Kind == K.Reference &&
+                    signature.ParameterTypes[0].ElementType is { } droppedType)
+                    EmitAggregateFieldDrops(droppedType, Source(node), 0);
                 EmitDropBodies(node);
                 End(SafeCoreMirTerminator.Return(signature.ReturnType.Kind == K.Unit ? null : body, Source(node)));
             }
@@ -912,15 +917,70 @@ public static partial class SafeCoreMirLowering
             for (int index = drops.Count - 1; index >= 0; index--)
             {
                 SafeCoreMirLocal local = _locals[drops[index]];
-                SafeCoreHirNode method = _functionNodes[local.DestructorFunctionId!.Value];
-                Step(method, 0);
-                SafeCoreType signature = SafeCoreType.Function([], SafeCoreType.Primitive(K.Unit), Type(method).Name);
-                BlockBuilder continuation = Block(method);
-                End(new SafeCoreMirTerminator(SafeCoreMirTerminatorKind.Call,
-                    SafeCoreMirOperand.Function(local.DestructorFunctionId.Value, signature, Source(method)),
-                    [], null, continuation.Id, -1, local.Source, cancellation) { DropLocalId = local.Id });
-                _current = continuation;
+                if (local.DestructorFunctionId is int destructor)
+                {
+                    SafeCoreHirNode method = _functionNodes[destructor];
+                    EmitDestructorCall(destructor, method, local.Source, local.Id);
+                }
+                else
+                {
+                    EmitAggregateFieldDrops(local.Type, local.Source, 0);
+                }
             }
+        }
+
+        private void EmitDestructorCall(int functionId, SafeCoreHirNode method,
+            SafeCoreMirSource source, int? dropLocalId)
+        {
+            Step(method, 0);
+            SafeCoreType signature = SafeCoreType.Function([], SafeCoreType.Primitive(K.Unit), Type(method).Name);
+            BlockBuilder continuation = Block(method);
+            End(new SafeCoreMirTerminator(SafeCoreMirTerminatorKind.Call,
+                SafeCoreMirOperand.Function(functionId, signature, Source(method)),
+                [], null, continuation.Id, -1, source, cancellation) { DropLocalId = dropLocalId });
+            _current = continuation;
+        }
+
+        private void EmitAggregateFieldDrops(SafeCoreType type, SafeCoreMirSource source, int depth)
+        {
+            if (depth > options.MaximumNestingDepth) Limit(input.Hir.Root!);
+            if (type.Kind == K.Adt && type.Name is { } name && _adtLayouts.TryGetValue(name, out SafeCoreMirAdtLayout? layout))
+            {
+                foreach (SafeCoreMirAdtField field in layout.Fields)
+                    EmitTypeDrop(field.Type, source, depth + 1);
+                return;
+            }
+            if (type.Kind is K.Tuple or K.Array)
+                foreach (SafeCoreType element in type.Elements)
+                    EmitTypeDrop(element, source, depth + 1);
+        }
+
+        private void EmitTypeDrop(SafeCoreType type, SafeCoreMirSource source, int depth)
+        {
+            if (depth > options.MaximumNestingDepth) Limit(input.Hir.Root!);
+            if (type.Name is { } name && _dropFunctions.TryGetValue(name, out int destructor))
+            {
+                EmitDestructorCall(destructor, _functionNodes[destructor], source, null);
+                return;
+            }
+            if (type.Kind == K.Adt && type.Name is { } adt && _adtLayouts.TryGetValue(adt, out SafeCoreMirAdtLayout? layout))
+            {
+                foreach (SafeCoreMirAdtField field in layout.Fields)
+                    EmitTypeDrop(field.Type, source, depth + 1);
+                return;
+            }
+            if (type.Kind is K.Tuple or K.Array)
+                foreach (SafeCoreType element in type.Elements)
+                    EmitTypeDrop(element, source, depth + 1);
+        }
+
+        private bool RequiresDrop(SafeCoreType type, int depth = 0)
+        {
+            if (depth > options.MaximumNestingDepth) Limit(input.Hir.Root!);
+            if (type.Name is { } name && _dropFunctions.ContainsKey(name)) return true;
+            if (type.Kind == K.Adt && type.Name is { } adt && _adtLayouts.TryGetValue(adt, out SafeCoreMirAdtLayout? layout))
+                return layout.Fields.Any(field => RequiresDrop(field.Type, depth + 1));
+            return type.Kind is K.Tuple or K.Array && type.Elements.Any(element => RequiresDrop(element, depth + 1));
         }
 
         private void ValidateDropImplementation(SafeCoreHirNode implementation, int depth)
@@ -938,7 +998,7 @@ public static partial class SafeCoreMirLowering
             SafeCoreType signature = Type(method);
             if (signature.Kind != K.Function || signature.ParameterTypes.Count != 1 ||
                 signature.ParameterTypes[0].Kind != K.Reference || !signature.ParameterTypes[0].IsMutable ||
-                !IsUnitAdt(signature.ParameterTypes[0].ElementType) || signature.ReturnType.Kind != K.Unit ||
+                signature.ParameterTypes[0].ElementType is null || signature.ReturnType.Kind != K.Unit ||
                 method.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ConstFunction)) Unsupported(method);
             SafeCoreHirNode body = Child(method, method.ChildIds.Count - 1);
             ValidateDropBody(body, depth + 1);
@@ -952,10 +1012,20 @@ public static partial class SafeCoreMirLowering
             Step(node, depth);
             if (node.Kind == N.PrintExpression)
             {
-                if (node.ChildIds.Count != 1 || Child(node, 0).Kind != N.LiteralExpression) Unsupported(node);
+                if (node.ChildIds.Count is < 1 or > 2 || Child(node, 0).Kind != N.LiteralExpression)
+                    Unsupported(node);
+                if (node.ChildIds.Count == 2)
+                {
+                    SafeCoreHirNode format = Child(node, 0);
+                    if (format.Value is null || !SyntaxTree.TryDecodeStringLiteral(format.Value, out string text) ||
+                        !string.Equals(text, "{}", StringComparison.Ordinal))
+                        Unsupported(format);
+                    ValidateDropBody(Child(node, 1), depth + 1);
+                }
                 return;
             }
-            if (node.Kind is not (N.Block or N.BlockExpression or N.ExpressionStatement)) Unsupported(node);
+            if (node.Kind is not (N.Block or N.BlockExpression or N.ExpressionStatement or N.LetStatement or
+                N.LiteralExpression or N.BinaryExpression or N.UnaryExpression or N.NameExpression or N.CallExpression)) Unsupported(node);
             for (int index = 0; index < node.ChildIds.Count; index++) ValidateDropBody(Child(node, index), depth + 1);
         }
 

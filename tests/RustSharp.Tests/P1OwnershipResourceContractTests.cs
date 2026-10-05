@@ -124,7 +124,7 @@ internal static class P1OwnershipResourceContractTests
             new SafeCoreOwnershipFunction("crate::uninitialized",
                 [new SafeCoreOwnershipLocal(0, "value", Integer, SafeCoreOwnershipKind.Copy, false, 0, false, false, Source)],
                 [new SafeCoreOwnershipScope(0, -1, Source)],
-                [new SafeCoreOwnershipBlock(0, 0, [SafeCoreOwnershipInstruction.Use(0, Source)],
+                [new SafeCoreOwnershipBlock(0, 0, [],
                     SafeCoreOwnershipTerminator.Return(0, Source), Source)],
                 0, SafeCorePanicStrategy.Unwind, Source),
         ]);

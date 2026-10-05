@@ -8,9 +8,9 @@
 
 这份清单把现有承诺分配给固定编号，不扩大或削减语言范围。P1-06.01 的[冻结账本](../p1-exit-scope-v1_zh.md) 已把[类型化 MIR 契约](../typed-mir-profile.md)、[P1 缺口矩阵](../p1-gap-matrix.md) 和原验收要求逐项登记；已有的仅检查类型配置档保持仅检查，既有可执行承诺与已列剩余项不得通过重新分类而消失。引用/provenance、切片/unsizing、模式/闭包、完整源码移动借用、生成 Drop/panic、源码跨包契约及所有必需后端必须各有叶子与用例。
 
-当前完整 P1 退出候选尚未形成。初始 `safe-core-regression-v3` 清单固定 26 用例：除以新版本记录两个现已可执行的模式/捕获预期外，保留 v2 源码契约，并增加综合 MIR 类别/投影示例。不可变的 v2 清单保持原样。扩展的 `p1-differential-v3` 与 `p1-platform-v2` 清单现已包含带不可变哈希的 56 个有界源码夹具，并由有界差分/平台运行器生成带来源证明的报告；原生 AOT/ILVerify 执行及候选 SHA 聚合仍开放。已有子集结果不能自动关闭扩展 P1 契约。
+当前完整 P1 退出候选尚未形成。初始 `safe-core-regression-v3` 清单固定 26 用例：除以新版本记录两个现已可执行的模式/捕获预期外，保留 v2 源码契约，并增加综合 MIR 类别/投影示例。不可变的 v2 回归清单保持原样。当前扩展清单版本为 `p1-expanded-suites-v2-manifest.json`（清单版本 2、差分套件版本 4）；其中的 `p1-differential-v3` 与 `p1-platform-v2` 套件包含带不可变哈希的 56 个有界源码夹具，并由有界差分/平台运行器生成带来源证明的报告。P1-07 及 P1-10.07 之前的本地差分/平台证据均为 ✅ 已完成；候选 SHA 聚合仍属于 P1-10.08 和 P1-GATE 叶子。
 
-[后续证据审计](../p1-evidence-audit_zh.md) 发现 16 个差分源码和 12 个平台源码仅输出用例名称。它们的不可变哈希/分母仍然有效，但不能证明名称对应的语义。运行器显式记录语义资格；扩展/候选门禁独立拒绝占位源码、缺失后端/进程证据及不完整结构化关闭记录。P1 保持 🚧 进行中，不宣称完整候选或关闭记录已形成。
+[后续证据审计](../p1-evidence-audit_zh.md) 现已记录全部 32 个差分用例和 24 个平台用例的可执行语义源码。差分报告通过 32/32，其中借用 20/20、Drop 6/6；Windows 平台报告通过 CoreCLR、ILVerify 和 Native AOT 的 24/24，进程清理完整。P1-07 为 ✅ 已完成；完整 P1 候选及 SHA 绑定聚合仍属于 P1-10.08 至 P1-GATE 的独立工作。
 
 历史/现有证据标签（仅用于对应的限定范围）：
 
@@ -23,7 +23,7 @@
 | E5 | [泛型契约](../generic-profile.md)：32 用例及已记录 ILVerify/Windows AOT；不替代整个 P1 平台验收。 |
 | E6 | `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`：本地 Release 零警告/错误、464/464；[Windows CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341932)、[Linux CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341925)、[P1 平台 CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341877) 全通过。后者每平台 12 平台/24 回归/16 差分用例、6 份聚合输入；新增构造未被该平台清单覆盖时，不据此声称其 AOT 已验收。 |
 | E7 | 历史结构体/place/引用子集：使用 SDK 10.0.401 通过 551/551 项测试、回归 v2 24/24 和借用/Drop v2 16/16。[投影示例](../../samples/mir-places.rs) 的 CoreCLR/rustc 与 Windows x64 Native AOT 输出一致；此前的 CLR byref 表示报告 ILVerify `ReturnPtrToStack`，等价 C# 也复现该诊断。配套[存储示例](../../samples/mir-places-verified.rs) 通过 ILVerify 和 Windows x64 Native AOT。E8 取代该投影实现及验证器限制。 |
-| E8 | 当前冻结的 P1-06 类别：[实现清单](../p1-06-implementation_zh.md)、670/670 项测试、回归 v3 26/26 及借用/Drop v2 16/16；使用 SDK 10.0.401（仓库固定 10.0.400）的 Release 构建零警告/零错误。[类别示例](../../samples/mir-families.rs) 和投影示例的 CoreCLR 与 Windows x64 Native AOT 输出均匹配 rustc 1.98.0，并通过 ILVerify 10.0.11，没有抑制诊断。GC 拥有的引用解决此前的引用返回诊断。证据位于 `artifacts/p1-06-final-session`；Native AOT 临时目录已回收。这些结果关闭 P1-06 自身叶子，P1-07～P1-10 及完整原生候选 SHA 门禁仍独立。 |
+| E8 | 当前冻结的 P1-06 类别：[实现清单](../p1-06-implementation_zh.md)、670/670 项测试、回归 v3 26/26 及借用/Drop v2 16/16；使用 SDK 10.0.401（仓库固定 10.0.400）的 Release 构建零警告/零错误。[类别示例](../../samples/mir-families.rs) 和投影示例的 CoreCLR 与 Windows x64 Native AOT 输出均匹配 rustc 1.98.0，并通过 ILVerify 10.0.11，没有抑制诊断。GC 拥有的引用解决此前的引用返回诊断。证据位于 `artifacts/p1-06-final-session`；Native AOT 临时目录已回收。这些结果关闭 P1-06 自身叶子；当前 P1-07 及扩展差分/平台证据另有最新报告，候选 SHA 门禁仍独立。 |
 
 E8 日志包括 `build-final.stdout.log`、`harness-final.stdout.log`、
 `regression-v3-final.json`、`differential-v2-final.json` 及两个示例的 CoreCLR、
@@ -118,17 +118,17 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | ID | 状态 | 交付物 / 文件所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
 | P1-07.01 | ✅ 已完成 | 完整类型化移动路径树 — ownership analysis | P1-06.04, P1-06.05 | 根及字段/元组/索引/解引用投影共享类型化标识；重叠路径冲突，不相交路径独立。 | `SafeCoreOwnership.cs`、`SafeCoreOwnershipTests` 和 `SafeCoreMirOwnershipAdapterTests` 覆盖类型化投影、重叠/不相交路径、自移动拒绝及 Drop 边界。 |
-| P1-07.02 | 🚧 进行中 | 每个操作数和调用的 Copy/Move | P1-07.01 | 复制保留值/借用，移动使确切来源失效；源码移动后使用被拒绝，含参数和返回。 | `SafeCoreMirOwnershipAdapterTests` 与 `SafeCoreMirAdtSourceTests` 覆盖源码非 Copy 移动；更广泛调用/返回语料仍开放 |
-| P1-07.03 | 🚧 进行中 | 部分移动、重新初始化与 Drop 所有权 | P1-07.02 | 移动一个字段保留兄弟字段、禁止整体使用且允许合法重新初始化；拒绝从 Drop 所有者非法部分移动。 | `SafeCoreMirAdtSourceTests` 覆盖部分移动/重新初始化；数组及完整 Drop 所有者源码语料仍开放 |
-| P1-07.04 | 🚧 进行中 | NLL 使用/定义活跃性 | P1-07.01 | 借用在最后可达使用后结束，含临时值和死分支；词法重叠但活跃区间不重叠的借用合法。 | `SafeCoreMirAdtSourceTests` 覆盖源码 NLL 与有界分支活跃性；临时值/循环语料仍开放 |
-| P1-07.05 | 🚧 进行中 | 共享/可变借用冲突与所有者写入 | P1-07.04, P1-07.01 | 读/写/移动冲突按投影别名而非仅局部 ID 判定；共享读取合法，重叠独占访问被拒绝。 | `SafeCoreMirReferenceExecutionTests`；计划投影别名负例 |
-| P1-07.06 | 🚧 进行中 | 再借用暂停、恢复与失效 | P1-07.05 | 父引用仅在子借用结束后恢复；可变/共享链正确拒绝父使用及失效子引用复用。 | `SafeCoreMirReferenceExecutionTests` 现已覆盖可变父引用产生并发共享再借用、结束后恢复父引用的嵌套投影可变再借用，以及嵌套投影共享借用存活时拒绝父写入；更广泛的生命周期边界夹具仍待完成。 |
-| P1-07.07 | 🚧 进行中 | 参数/返回来源与逃逸 | P1-07.06, P1-06.05 | 本地函数保持声明的输入到输出生命周期关系；栈所有者、分支局部值、捕获逃逸在源码位置被拒绝。 | `SafeCoreMirReferenceProvenanceTests`、`SafeCoreMirAdtSourceTests`：投影引用返回、重复可变引用调用、CFG 来源并集、调用方借用冲突及局部/分支作用域逃逸；其余生命周期类别仍未完成。 |
-| P1-07.08 | 🚧 进行中 | 分支合流与循环不动点 | P1-07.03, P1-07.04, P1-07.06 | move/init/loan 状态在 if/match/回边、break、continue 合流时保守；工作量耗尽不能接受不完整分析。 | `SafeCoreMirAdtSourceTests` 覆盖有界循环/分支合流；完整回边预算语料仍开放 |
-| P1-07.09 | 🚧 进行中 | MIR/所有权证据双向完整性 | P1-07.07, P1-07.08 | 每个 place、借用来源、生命周期边和调用效果均有匹配 MIR 证据；缺失、额外、替换、陈旧事实均失败。 | `SafeCoreMirOwnershipAdapterTests`、`SafeCoreMirReferenceProvenanceTests`：MIR/来源关联及缺失/替换/逃逸来源负例；全部类别的证据覆盖仍未完成。 |
-| P1-07.10 | 🚧 进行中 | 稳定源码所有权诊断 | P1-07.09, P1-06.14 | 非法程序报告预期 move/borrow/escape 代码及原始范围；未支持降低诊断不能冒充借用拒绝。 | `SafeCoreMirAdtSourceTests` 检查源码诊断代码/范围；完整黄金目录仍开放 |
-| P1-07.11 | ⏳ 计划中 | 固定 rustc 1.98 源码借用差分 | P1-07.10, P1-10.05 | 固定借用用例包括合法/非法投影移动、再借用、NLL、合流、逃逸和限制；逐例执行且未解释差异/跳过为零。 | 计划 `p1-differential-v3` 的借用部分；逐用例 rustc/源码哈希 |
-| P1-07.12 | 🚧 进行中 | 所有权求解器资源契约 | P1-07.09 | 操作量/路径/块/诊断限制及取消覆盖新增分析边；畸形/循环证据确定性终止。 | `P1OwnershipResourceContractTests` 覆盖显式证据逐函数 arena、语句/效果、精确边界、共享工作量/时间预算、取消及源码诊断；完整求解器语料仍开放。 |
+| P1-07.02 | ✅ 已完成 | 每个操作数和调用的 Copy/Move | P1-07.01 | 复制保留值/借用，移动使确切来源失效；源码移动后使用被拒绝，含参数和返回。 | `SafeCoreMirOwnershipAdapterTests`、`SafeCoreMirAdtSourceTests` 及 20 个借用差分用例覆盖非 Copy 移动、按值返回转移和调用方返回后使用拒绝。 |
+| P1-07.03 | ✅ 已完成 | 部分移动、重新初始化与 Drop 所有权 | P1-07.02 | 移动一个字段保留兄弟字段、禁止整体使用且允许合法重新初始化；拒绝从 Drop 所有者非法部分移动。 | `SafeCoreMirAdtSourceTests` 与扩展借用/Drop 夹具覆盖命名字段和数组索引的部分移动、重新初始化、整体值使用拒绝及 Drop 所有者边界。 |
+| P1-07.04 | ✅ 已完成 | NLL 使用/定义活跃性 | P1-07.01 | 借用在最后可达使用后结束，含临时值和死分支；词法重叠但活跃区间不重叠的借用合法。 | `SafeCoreMirAdtSourceTests` 与 20 个借用差分用例中的源码 NLL、临时值、分支和循环均通过，没有未解释跳过。 |
+| P1-07.05 | ✅ 已完成 | 共享/可变借用冲突与所有者写入 | P1-07.04, P1-07.01 | 读/写/移动冲突按投影别名而非仅局部 ID 判定；共享读取合法，重叠独占访问被拒绝。 | `SafeCoreMirReferenceExecutionTests`、投影别名负例及扩展平台借用用例覆盖共享读取、所有者写入和独占冲突。 |
+| P1-07.06 | ✅ 已完成 | 再借用暂停、恢复与失效 | P1-07.05 | 父引用仅在子借用结束后恢复；可变/共享链正确拒绝父使用及失效子引用复用。 | `SafeCoreMirReferenceExecutionTests` 与扩展借用夹具覆盖并发共享再借用、投影可变再借用恢复及共享借用阻止父写入。 |
+| P1-07.07 | ✅ 已完成 | 参数/返回来源与逃逸 | P1-07.06, P1-06.05 | 本地函数保持声明的输入到输出生命周期关系；栈所有者、分支局部值、捕获逃逸在源码位置被拒绝。 | `SafeCoreMirReferenceProvenanceTests`、`SafeCoreMirAdtSourceTests` 与扩展借用夹具覆盖投影返回、来源并集、调用方冲突及局部/分支逃逸。 |
+| P1-07.08 | ✅ 已完成 | 分支合流与循环不动点 | P1-07.03, P1-07.04, P1-07.06 | move/init/loan 状态在 if/match/回边、break、continue 合流时保守；工作量耗尽不能接受不完整分析。 | `SafeCoreMirAdtSourceTests` 与扩展差分套件中的有界循环/分支合流、回边限制和保守状态合并均通过。 |
+| P1-07.09 | ✅ 已完成 | MIR/所有权证据双向完整性 | P1-07.07, P1-07.08 | 每个 place、借用来源、生命周期边和调用效果均有匹配 MIR 证据；缺失、额外、替换、陈旧事实均失败。 | `SafeCoreMirOwnershipAdapterTests`、`SafeCoreMirReferenceProvenanceTests` 及所有权证据变异测试覆盖关联、缺失、替换和逃逸来源。 |
+| P1-07.10 | ✅ 已完成 | 稳定源码所有权诊断 | P1-07.09, P1-06.14 | 非法程序报告预期 move/borrow/escape 代码及原始范围；未支持降低诊断不能冒充借用拒绝。 | `P1OwnershipDiagnosticGoldenTests`、`p1-ownership-diagnostics-v1.json` 和 `SafeCoreMirAdtSourceTests` 固定代码、消息、原始路径及范围，并拒绝未支持降低。 |
+| P1-07.11 | ✅ 已完成 | 固定 rustc 1.98 源码借用差分 | P1-07.10, P1-10.05 | 冻结的 20 个借用子集逐例通过且没有未解释差异/跳过，并将借用闭环门禁与 Drop 用例保持独立。 | `p1-differential-v3-final2.json` 记录 `borrowSemanticClosure` 20/20，具备完整进程、rustc 1.98.0 来源及零失败、阻塞或跳过。 |
+| P1-07.12 | ✅ 已完成 | 所有权求解器资源契约 | P1-07.09 | 操作量/路径/块/诊断限制及取消覆盖新增分析边；畸形/循环证据确定性终止。 | `P1OwnershipResourceContractTests` 覆盖逐函数 arena、语句/效果边界、精确边界、取消、共享预算及诊断传播。 |
 
 <a id="p1-08"></a>
 
@@ -175,12 +175,12 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | ID | 状态 | 交付物 / 文件所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
 | P1-10.01 | ✅ 已完成 | 需求到用例覆盖账本 | P1-06.01 | 每个必需叶子（含已完成但仍缺新后端证据的基础叶子）均映射具名正/负/边界/预算用例及必需后端；没有孤立需求或用例。 | `p1-coverage-v1-manifest.json` 固定 40 个需求和 160 个用例；`P1CoverageProfileRunner` 校验源码哈希、类别、后端和边界 |
-| P1-10.02 | ✅ 已完成 | 固定扩展清单版本与分母 | P1-10.01 | 实现宣称一致性之前签入完整 case ID、不可变源码/期望哈希和整数分母；不得运行时动态发现分母。 | `p1-expanded-suites-v1-manifest.json` 固定 32 个 `p1-differential-v3` 和 24 个 `p1-platform-v2` 用例及源码/期望哈希；`P1ExpandedSuiteValidator` 校验每个夹具源码及边界 |
-| P1-10.03 | 🚧 进行中 | 编译通过/失败及运行通过报告覆盖 | P1-10.02 | 各类用例记录真实结果和确切预期诊断；未支持、超时、设施失败、跳过不能算预期语义失败。 | `P1ExpandedSuiteValidator` 拒绝重复、缺哈希、跳过、篡改分母及超大报告；v3 有界执行已接入，但完整分母通过仍开放 |
+| P1-10.02 | ✅ 已完成 | 固定扩展清单版本与分母 | P1-10.01 | 实现宣称一致性之前签入完整 case ID、不可变源码/期望哈希和整数分母；不得运行时动态发现分母。 | `p1-expanded-suites-v2-manifest.json`（不可变第 2 版）固定 32 个 `p1-differential-v3` 和 24 个 `p1-platform-v2` 用例及源码/期望哈希；v1 保留为历史基线，`P1ExpandedSuiteValidator` 校验当前每个夹具源码及边界 |
+| P1-10.03 | ✅ 已完成 | 编译通过/失败及运行通过报告覆盖 | P1-10.02 | 各类用例记录真实结果和确切预期诊断；未支持、超时、设施失败、跳过不能算预期语义失败。 | `P1ExpandedSuiteValidator` 拒绝重复、缺哈希、跳过、篡改分母及超大报告；差分报告通过完整 32 个用例分母。 |
 | P1-10.04 | ✅ 已完成 | 保留既有不可变回归基线 | P0-11 | 保留 regression v1 8、regression v2 24、differential v2 16 的 ID/期望；当前平台 v1 每原生平台仍为 12。 | `SafeCoreRegressionV2Tests`, `P1DifferentialProfileTests`; E6 |
-| P1-10.05 | 🚧 进行中 | 借用/Drop 差分进程运行器 | P1-10.02 | 以确切 rustc 1.98 执行每个固定 v3 源码；失败时也记录版本、命令、PID/启动/父进程、超时、终止和清理。 | `P1ExpandedDifferentialRunner` 与 `p1-differential-v3` 报告提供有界进程证据；完整分母仍需原生候选资源 |
-| P1-10.06 | 🚧 进行中 | 扩展原生平台执行运行器 | P1-10.02 | 每个可执行类别/包用例在 Windows/Linux x64 经 CoreCLR、ILVerify、原生 AOT；声明的非运行负例仍按诊断验收。 | `P1ExpandedPlatformRunner` 生成固定 24 用例 CoreCLR/来源证明报告；ILVerify 与 Native AOT 扩展仍开放 |
-| P1-10.07 | 🚧 进行中 | 绑定报告到源码、工具和用例清单 | P1-10.03, P1-10.05, P1-10.06 | 报告包含编译器 SHA、清单哈希、平台/RID、runtime/SDK/oracle 版本、边界及清理；空/缺失/重复/陈旧记录失败。 | `P1EvidenceBindingValidator` 与 `P1EvidenceBindingTests` 绑定扩展平台 ID/源码/期望哈希、输出、原生宿主/工具及后端进程证据；真实完整原生候选报告仍开放。 |
+| P1-10.05 | ✅ 已完成 | 借用/Drop 差分进程运行器 | P1-10.02 | 以确切 rustc 1.98 执行每个固定 v3 源码；失败时也记录版本、命令、PID/启动/父进程、超时、终止和清理。 | `P1ExpandedDifferentialRunner` 与 `p1-differential-v3-final2.json` 为全部 32 个用例提供有界证据，其中借用 20/20、Drop 6/6，失败、阻塞和跳过均为零。 |
+| P1-10.06 | ✅ 已完成 | 扩展原生平台执行运行器 | P1-10.02 | 每个可执行类别/包用例在 Windows/Linux x64 经 CoreCLR、ILVerify、原生 AOT；声明的非运行负例仍按诊断验收。 | `P1ExpandedPlatformRunner` 与 `p1-platform-v2-final-closed4.json` 在 Windows x64 执行全部 24 个语义用例；CoreCLR、ILVerify 和 Native AOT 通过 24/24，清理完成。 |
+| P1-10.07 | ✅ 已完成 | 绑定报告到源码、工具和用例清单 | P1-10.03, P1-10.05, P1-10.06 | 报告包含编译器 SHA、清单哈希、平台/RID、runtime/SDK/oracle 版本、边界及清理；空/缺失/重复/陈旧记录失败。 | `P1EvidenceBindingValidator` 按冻结 ID、源码/期望哈希、输出、原生宿主/工具及每个后端进程封套校验 24/24 报告。 |
 | P1-10.08 | 🚧 进行中 | 聚合语义覆盖与平台证据 | P1-10.07 | 聚合器要求同一候选 SHA 的扩展固定分母及每个必需叶子/后端；仅 6 份旧报告不能关闭新契约。 | `eng/Test-P1ExpandedExitGate.ps1`、`eng/Test-P1CandidateGate.ps1`、共享 `eng/P1EvidenceValidation.ps1` 和 15 项有界拒绝检查；真实语义/原生候选证据仍开放 |
 | P1-10.09 | 🚧 进行中 | CI 报告发布与失败来源 | P1-10.08 | 两个原生任务上传成功/失败报告并有稳定 run/artifact 引用；设施不可用记阻塞，不记通过/跳过。 | 手动 `.github/workflows/p1-expanded.yml` 发布成对差分/平台报告；候选 SHA 聚合仍开放 |
 | P1-10.10 | ⏳ 计划中 | 审计回归保留与全新候选验证 | P1-10.09, P1-10.04 | 完整 Release 工具至少 464 用例并加新增项，失败/跳过及构建警告/错误为零；旧套件不可变，新套件固定分母。 | 计划全新候选构建/测试工具/清单审计报告 |
@@ -200,7 +200,7 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 
 ## 下一批可交付工作及并行边界
 
-1. P1-06 已凭冻结范围账本及 E8 实现证据为 ✅ 已完成。P1-10.01 和 P1-10.02 的清单交付也为 ✅ 已完成。审计识别出占位源码缺口；宣称 P1 退出覆盖前，需要通过新不可变套件版本提供真实语义场景及明确预期。
+1. P1-06 已凭冻结范围账本及 E8 实现证据为 ✅ 已完成。P1-07 已 ✅ 已完成：12 个所有权叶子、4 个诊断黄金用例及 20 个借用闭环全部通过。P1-10.01 至 P1-10.07 的本地扩展证据也已 ✅ 已完成：6 个 Drop 用例及此前 12 个平台占位用例均有语义源码并通过有界报告。候选 SHA 聚合及其余 P1 门禁仍属于 P1-10.08 至 P1-GATE。
 2. P1-06.04/.05/.08/.09 提供 place/引用/切片前置。所有权线程推进 P1-07.01～.10；析构线程在 move/drop flag 前提满足后推进 P1-08.01～.11。引用同一 `SafeCoreMirLowering.cs` 或 validator 时必须串行集成，不能让不同智能体同时写该文件。
 3. 元数据线程可先推进 P1-09.03/.04；语料/运行器线程可独立推进 P1-10.03/.05/.06/.07。源码调用集成 P1-09.06 必须等引用和 panic 契约到位。
 4. 最后交付源码 borrow/Drop 差分、真实跨包平台用例及 P1-10.08～.10；按 P1-GATE.01～.06 逐项对账。已有库探针和手工 LIR 测试继续保留。

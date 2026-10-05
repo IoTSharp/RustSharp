@@ -6,6 +6,13 @@ function Get-P1Property($Object, [string] $Name) {
     return $Object.PSObject.Properties[$Name].Value
 }
 
+function Test-P1LabelPlaceholder([string] $Source, [string] $Id) {
+    $normalized = $Source.Replace("`r`n", "`n").Trim()
+    $quote = [char]34
+    $expected = '// frozen P1 fixture: ' + $Id + "`nfn main() { println!(" + $quote + $Id + $quote + "); }"
+    return $normalized -ceq $expected
+}
+
 function Test-P1ProcessEvidence($Process, [string] $Label, [Collections.Generic.List[string]] $Errors, [switch] $Successful) {
     if ($null -eq $Process) { $Errors.Add("$Label process evidence is missing."); return }
     foreach ($name in @('commandLine', 'startedAtUtc')) {
@@ -59,7 +66,7 @@ function Test-P1ExpandedEvidence {
         }
         if ((Get-P1Property $execution 'deadlineExpired') -cne $false) { $errors.Add('Execution deadline state is missing or expired.') }
 
-        $manifestPath = Join-Path $Root 'tools/RustSharp.Conformance/fixtures/p1-expanded-suites-v1-manifest.json'
+        $manifestPath = Join-Path $Root 'tools/RustSharp.Conformance/fixtures/p1-expanded-suites-v2-manifest.json'
         $info = [IO.FileInfo]::new($manifestPath)
         if (-not $info.Exists -or $info.Length -gt 256KB) { return @('blocked: expanded manifest is missing or oversized.') }
         $bytes = [IO.File]::ReadAllBytes($manifestPath)
@@ -93,7 +100,7 @@ function Test-P1ExpandedEvidence {
             if (-not $sourceInfo.Exists -or $sourceInfo.Length -gt 256KB) { $errors.Add("Case '$id' source is missing or oversized.") }
             else {
                 if ((Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash -cne $expected[$id].sourceSha256) { $errors.Add("Case '$id' source file hash differs from the frozen manifest.") }
-                if ([IO.File]::ReadAllText($sourcePath) -match '^// frozen P1 fixture:') { $errors.Add("blocked: case '$id' is a frozen label-only placeholder.") }
+                if (Test-P1LabelPlaceholder ([IO.File]::ReadAllText($sourcePath)) $id) { $errors.Add("blocked: case '$id' is a frozen label-only placeholder.") }
             }
             if ($Profile -ceq 'p1-platform-v2') {
                 Test-P1ProcessEvidence (Get-P1Property $case 'coreClrCompile') "$id compile" $errors -Successful

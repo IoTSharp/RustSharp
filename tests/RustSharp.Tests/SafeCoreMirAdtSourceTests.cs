@@ -17,6 +17,10 @@ internal static class SafeCoreMirAdtSourceTests
         new("MIR v2 struct updates preserve omitted fields", UpdateAsync),
         new("MIR v2 struct and tuple struct binding patterns project fields", PatternAsync),
         new("MIR v2 consuming an ADT prevents later owner reads", MoveAsync),
+        new("MIR v2 returning a non-Copy ADT transfers ownership", ReturnMoveAsync),
+        new("MIR v2 rejects use after a returned ADT move", ReturnMoveUseAfterMoveAsync),
+        new("MIR v2 indexed array partial moves permit reinitialization", ArrayPartialMoveReinitializationAsync),
+        new("MIR v2 indexed array partial moves reject whole-value use", ArrayPartialMoveUseAfterMoveAsync),
         new("MIR v2 projected mutable borrow conflicts are rejected", BorrowConflictAsync),
         new("MIR v2 nominal layout evidence is deterministic", LayoutEvidenceAsync),
         new("MIR v2 nominal array fields retain resolved constant lengths", ConstantLengthAsync),
@@ -213,8 +217,9 @@ internal static class SafeCoreMirAdtSourceTests
         "value = 3; println!(\"{}\", value); }", "3\n");
 
     private static Task PartialMoveReinitializationAsync() => RunAsync(
-        "struct Pair { left: i32, right: i32 } fn main() { let mut pair = Pair { left: 1, right: 2 }; " +
-        "let moved = pair.left; pair.left = 7; println!(\"{}\", moved); println!(\"{}\", pair.left); " +
+        "struct Leaf { value: i32 } struct Pair { left: Leaf, right: i32 } fn main() { " +
+        "let mut pair = Pair { left: Leaf { value: 1 }, right: 2 }; let moved = pair.left; " +
+        "pair.left = Leaf { value: 7 }; println!(\"{}\", moved.value); println!(\"{}\", pair.left.value); " +
         "println!(\"{}\", pair.right); }", "1\n7\n2\n");
 
     private static Task LoopBorrowBodyAsync() => RunAsync(
@@ -241,6 +246,28 @@ internal static class SafeCoreMirAdtSourceTests
     private static Task MoveAsync() => RejectAsync(
         "struct Pair { left: i32, right: i32 } fn take(pair: Pair) {} fn main() { let pair = Pair { left: 1, right: 2 }; " +
         "take(pair); println!(\"{}\", pair.left); }", SafeCoreOwnershipDiagnosticCodes.UseAfterMove);
+
+    private static Task ReturnMoveAsync() => RunAsync(
+        "struct Pair { left: i32, right: i32 } fn forward(pair: Pair) -> Pair { pair } " +
+        "fn main() { let pair = Pair { left: 1, right: 2 }; let moved = forward(pair); " +
+        "println!(\"{}\", moved.left); println!(\"{}\", moved.right); }", "1\n2\n");
+
+    private static Task ReturnMoveUseAfterMoveAsync() => RejectAsync(
+        "struct Pair { left: i32, right: i32 } fn forward(pair: Pair) -> Pair { pair } " +
+        "fn main() { let pair = Pair { left: 1, right: 2 }; let moved = forward(pair); " +
+        "println!(\"{}\", pair.left); println!(\"{}\", moved.right); }", SafeCoreOwnershipDiagnosticCodes.UseAfterMove);
+
+    private static Task ArrayPartialMoveReinitializationAsync() => RunAsync(
+        "struct Leaf { value: i32 } struct Pair { left: Leaf, right: i32 } fn main() { " +
+        "let mut values = [Pair { left: Leaf { value: 1 }, right: 2 }, Pair { left: Leaf { value: 3 }, right: 4 }]; " +
+        "let moved = values[0].left; values[0].left = Leaf { value: 7 }; " +
+        "println!(\"{}\", moved.value); println!(\"{}\", values[0].left.value); println!(\"{}\", values[1].right); }", "1\n7\n4\n");
+
+    private static Task ArrayPartialMoveUseAfterMoveAsync() => RejectAsync(
+        "struct Leaf { value: i32 } struct Pair { left: Leaf, right: i32 } fn take(pair: Pair) {} fn main() { " +
+        "let values = [Pair { left: Leaf { value: 1 }, right: 2 }, Pair { left: Leaf { value: 3 }, right: 4 }]; " +
+        "let moved = values[0].left; take(values[0]); println!(\"{}\", moved.value); }",
+        SafeCoreOwnershipDiagnosticCodes.UseAfterMove);
 
     private static Task BorrowConflictAsync() => RejectAsync(
         "struct Pair { left: i32, right: i32 } fn main() { let mut pair = Pair { left: 1, right: 2 }; " +

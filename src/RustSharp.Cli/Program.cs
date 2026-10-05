@@ -55,7 +55,18 @@ internal static class Program
 
     private static int Check(CommandLineOptions options, CancellationToken cancellationToken)
     {
-        var result = CompilerDriver.CheckFile(options.SourcePath!, options.Profile, cancellationToken);
+        CompilationResult result;
+        if (options.MetadataReferences is { Count: > 0 })
+        {
+            string sourcePath = Path.GetFullPath(options.SourcePath!);
+            string source = File.ReadAllText(sourcePath);
+            result = CompilerDriver.CheckWithMetadataReferences(source, sourcePath, options.Profile,
+                options.MetadataReferences, options.RequiredFunctions, cancellationToken);
+        }
+        else
+        {
+            result = CompilerDriver.CheckFile(options.SourcePath!, options.Profile, cancellationToken);
+        }
         if (!result.Success)
         {
             WriteDiagnostics(options.SourcePath!, result.Diagnostics);
@@ -74,7 +85,17 @@ internal static class Program
             ? Path.Combine(Environment.CurrentDirectory, assemblyName + ".dll")
             : Path.GetFullPath(options.OutputPath);
 
-        var result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
+        CompilationResult result;
+        if (options.MetadataReferences is { Count: > 0 })
+        {
+            string source = File.ReadAllText(sourcePath);
+            result = CompilerDriver.CompileWithMetadataReferences(source, sourcePath, outputPath,
+                assemblyName, options.Profile, options.MetadataReferences, options.RequiredFunctions, cancellationToken);
+        }
+        else
+        {
+            result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
+        }
         if (!result.Success)
         {
             WriteDiagnostics(sourcePath, result.Diagnostics);
@@ -100,7 +121,17 @@ internal static class Program
                 assemblyName + ".dll")
             : Path.GetFullPath(options.OutputPath);
 
-        var result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
+        CompilationResult result;
+        if (options.MetadataReferences is { Count: > 0 })
+        {
+            string source = File.ReadAllText(sourcePath);
+            result = CompilerDriver.CompileWithMetadataReferences(source, sourcePath, outputPath,
+                assemblyName, options.Profile, options.MetadataReferences, options.RequiredFunctions, cancellationToken);
+        }
+        else
+        {
+            result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
+        }
         if (!result.Success)
         {
             WriteDiagnostics(sourcePath, result.Diagnostics);
@@ -143,12 +174,23 @@ internal static class Program
             "managed",
             assemblyName + ".dll");
 
-        var compilation = CompilerDriver.CompileFile(
-            sourcePath,
-            managedAssemblyPath,
-            assemblyName,
-            options.Profile,
-            cancellationToken);
+        CompilationResult compilation;
+        if (options.MetadataReferences is { Count: > 0 })
+        {
+            string source = File.ReadAllText(sourcePath);
+            compilation = CompilerDriver.CompileWithMetadataReferences(source, sourcePath,
+                managedAssemblyPath, assemblyName, options.Profile, options.MetadataReferences,
+                options.RequiredFunctions, cancellationToken);
+        }
+        else
+        {
+            compilation = CompilerDriver.CompileFile(
+                sourcePath,
+                managedAssemblyPath,
+                assemblyName,
+                options.Profile,
+                cancellationToken);
+        }
         if (!compilation.Success)
         {
             WriteDiagnostics(sourcePath, compilation.Diagnostics);
@@ -214,6 +256,10 @@ internal static class Program
               --profile safe-core-generics-v1     (closed generic functions, value types and marker traits)
               --profile safe-core-mir-p1-v1       (bounded typed MIR, source mapping and ownership evidence)
               --profile safe-core-mir-p1-v2       (typed MIR v2 with structural-Copy repeated arrays)
+
+            Package options:
+              --reference <assembly.dll>          import a checked Rust# package (repeatable, max 32)
+              --require <function-id>              require an exported package function (repeatable, max 256)
 
             safe-core-types-v1 accepts check; build, compile, run and publish report RSC0009.
             """);

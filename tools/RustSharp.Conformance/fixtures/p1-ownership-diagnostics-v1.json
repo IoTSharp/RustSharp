@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "profile": "safe-core-mir-p1-v2",
+  "cases": [
+    {
+      "id": "borrow-fail-mut-alias",
+      "source": "p1-v3-borrow-fail-mut-alias.rs",
+      "sourceSha256": "C7DB3BD14180379DF6EE28532E2292EE51B634C306E0C23E89718098927C598C",
+      "code": "RSO1002",
+      "message": "Cannot read an owner while a mutable borrow is active.",
+      "spanStart": 118,
+      "spanLength": 10,
+      "spanText": "&mut value"
+    },
+    {
+      "id": "borrow-fail-shared-write",
+      "source": "p1-v3-borrow-fail-shared-write.rs",
+      "sourceSha256": "20B7CBD6AC766006C227628B345831F4DE6C88977AFDDE326CA7A0449E85C60B",
+      "code": "RSO1002",
+      "message": "Cannot assign to an owner while a borrow is active.",
+      "spanStart": 105,
+      "spanLength": 9,
+      "spanText": "value = 2"
+    },
+    {
+      "id": "borrow-fail-moved-mut-ref",
+      "source": "p1-v3-borrow-fail-moved-mut-ref.rs",
+      "sourceSha256": "D02E011EB47EF4029E937EF778205A0C8CFDB2D9868204BCA5DC8C6358C01F30",
+      "code": "RSO1001",
+      "message": "A projected reference requires a live initialized loan.",
+      "spanStart": 144,
+      "spanLength": 6,
+      "spanText": "*first"
+    },
+    {
+      "id": "borrow-fail-escape",
+      "source": "p1-v3-borrow-fail-escape.rs",
+      "sourceSha256": "2153C62375959864E237649D36F4AB8945053EBDE92F0294EE671D90AE6656A7",
+      "code": "RSO1005",
+      "message": "A reference is used after its storage scope ends.",
+      "spanStart": 124,
+      "spanLength": 8,
+      "spanText": "*escaped"
+    }
+  ]
+}

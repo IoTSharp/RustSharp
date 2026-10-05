@@ -9,6 +9,7 @@ internal static class P1ExpandedPlatformEvidenceTests
     [
         new("P1 platform output evidence rejects altered output and incomplete capture", RejectsInvalidOutputAsync),
         new("P1 platform placeholder IDs cannot close semantic coverage", RejectsPlaceholderClosureAsync),
+        new("P1 platform expanded corpus contains semantic sources for all additions", ExpandedCorpusSourcesAsync),
         new("P1 platform Native AOT uses emitted PE identity instead of output file name", PreservesAssemblyIdentityAsync),
     ];
 
@@ -27,9 +28,35 @@ internal static class P1ExpandedPlatformEvidenceTests
     private static Task RejectsPlaceholderClosureAsync()
     {
         AssertEx.True(P1ExpandedPlatformRunner.IsSemanticClosureEligible("drop-return-order"), "The bounded executable destructor fixture retains its own scope.");
-        AssertEx.False(P1ExpandedPlatformRunner.IsSemanticClosureEligible("source-package"), "A label-printing source cannot establish imported calls.");
-        AssertEx.False(P1ExpandedPlatformRunner.IsSemanticClosureEligible("panic-unwind-generated"), "A label-printing source cannot establish unwind behavior.");
+        AssertEx.True(P1ExpandedPlatformRunner.IsSemanticClosureEligible("source-package"), "The source-package producer/consumer contract is executable.");
+        AssertEx.True(P1ExpandedPlatformRunner.IsSemanticClosureEligible("panic-unwind-generated"), "The generated nested cleanup source carries real Drop behavior.");
+        AssertEx.True(P1ExpandedPlatformRunner.IsSemanticClosureEligible("aggregate-struct-drop"), "The aggregate source carries field and owner Drop behavior.");
+        AssertEx.True(P1ExpandedPlatformRunner.IsSemanticClosureEligible("aggregate-enum-drop"), "The enum source carries a real variant selection.");
         AssertEx.False(P1ExpandedPlatformRunner.IsSemanticClosureEligible("future-case"), "Unknown case identities cannot silently obtain closure eligibility.");
+        return Task.CompletedTask;
+    }
+
+    private static Task ExpandedCorpusSourcesAsync()
+    {
+        string root = RepositoryRoot();
+        string manifestPath = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures", P1ExpandedSuiteValidator.ManifestFileName);
+        P1ExpandedSuiteValidator.ExpandedManifest manifest = P1ExpandedSuiteValidator.ParseManifest(File.ReadAllText(manifestPath), root);
+        P1ExpandedSuiteValidator.SuiteSpec suite = manifest.Suites.Single(static item => item.Profile == P1ExpandedSuiteValidator.PlatformProfile);
+        string fixtureRoot = Path.Combine(root, "tools", "RustSharp.Conformance", "fixtures");
+        string[] expandedIds =
+        [
+            "aggregate-struct-drop", "aggregate-enum-drop", "slice-unsize", "pattern-capture",
+            "panic-unwind-generated", "panic-abort-generated", "generic-import-call", "byref-import-call",
+            "metadata-contract", "mir-projection", "mir-family", "source-package",
+        ];
+        foreach (string id in expandedIds)
+        {
+            P1ExpandedSuiteValidator.CaseSpec fixture = suite.Cases.Single(item => item.Id == id);
+            string source = File.ReadAllText(Path.Combine(fixtureRoot, fixture.Source));
+            AssertEx.True(P1ExpandedPlatformRunner.IsSemanticClosureEligible(id), $"{id} must be eligible for semantic closure.");
+            AssertEx.False(source.Contains($"println!(\"{id}\")", StringComparison.Ordinal), $"{id} must not be a label-only source.");
+            AssertEx.True(source.Trim().Split('\n').Length > 2, $"{id} must carry a real multi-statement semantic fixture.");
+        }
         return Task.CompletedTask;
     }
 
@@ -50,4 +77,6 @@ internal static class P1ExpandedPlatformEvidenceTests
         finally { Directory.Delete(directory, true); }
         return Task.CompletedTask;
     }
+
+    private static string RepositoryRoot() => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 }

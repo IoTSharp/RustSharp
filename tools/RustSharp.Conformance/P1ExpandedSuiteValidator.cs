@@ -12,8 +12,8 @@ namespace RustSharp.Conformance;
 /// </summary>
 internal static class P1ExpandedSuiteValidator
 {
-    internal const string ManifestFileName = "p1-expanded-suites-v1-manifest.json";
-    internal const int ManifestVersion = 1;
+    internal const string ManifestFileName = "p1-expanded-suites-v2-manifest.json";
+    internal const int ManifestVersion = 2;
     internal const int MaximumManifestBytes = 256 * 1024;
     internal const int MaximumReportBytes = 16 * 1024 * 1024;
     internal const int MaximumSuites = 2;
@@ -146,7 +146,7 @@ internal static class P1ExpandedSuiteValidator
         var profiles = new HashSet<string>(StringComparer.Ordinal);
         foreach (SuiteSpec suite in manifest.Suites)
         {
-            if (!profiles.Add(suite.Profile) || suite.Version != (suite.Profile == DifferentialProfile ? 3 : suite.Profile == PlatformProfile ? 2 : 0))
+            if (!profiles.Add(suite.Profile) || suite.Version != (suite.Profile == DifferentialProfile ? 4 : suite.Profile == PlatformProfile ? 2 : 0))
                 throw new ArgumentException("P1 expanded suite profile/version is invalid or duplicated.", nameof(manifest));
             bool differential = suite.Profile == DifferentialProfile;
             int expectedDenominator = differential ? DifferentialDenominator : PlatformDenominator;
@@ -203,7 +203,11 @@ internal static class P1ExpandedSuiteValidator
             using JsonDocument document = JsonDocument.Parse(bytes, new JsonDocumentOptions { MaxDepth = MaximumJsonDepth, AllowTrailingCommas = false, CommentHandling = JsonCommentHandling.Disallow });
             JsonElement root = document.RootElement;
             RequireString(root, "profile", suite.Profile, errors);
-            RequireHash(root, "compilerSha256", suite.CompilerSha256, "report", errors);
+            RequireSha256(root, "compilerSha256", "report", errors);
+            if (root.TryGetProperty("declaredCompilerSha256", out JsonElement declaredCompiler))
+                RequireHash(root, "declaredCompilerSha256", suite.CompilerSha256, "report", errors);
+            if (root.TryGetProperty("compiler", out JsonElement compiler) && compiler.ValueKind == JsonValueKind.Object && compiler.TryGetProperty("declaredSha256", out _))
+                RequireHash(compiler, "declaredSha256", suite.CompilerSha256, "compiler", errors);
             RequireString(root, "backend", suite.Backend, errors);
             if (!root.TryGetProperty("toolVersions", out JsonElement tools) || tools.ValueKind != JsonValueKind.Object)
                 errors.Add("Report toolVersions provenance is missing.");
@@ -227,7 +231,9 @@ internal static class P1ExpandedSuiteValidator
                 errors.Add("Report manifest provenance is missing.");
             else
             {
-                RequireHash(manifest, "sha256", suite.ManifestSha256, "manifest", errors);
+                RequireSha256(manifest, "sha256", "manifest", errors);
+                if (manifest.TryGetProperty("declaredSha256", out _))
+                    RequireHash(manifest, "declaredSha256", suite.ManifestSha256, "manifest", errors);
                 RequireInt(manifest, "version", ManifestVersion, "manifest", errors);
                 RequireInt(manifest, "denominator", suite.Denominator, "manifest", errors);
                 RequireBoolean(manifest, "validated", true, "manifest", errors);
@@ -235,6 +241,7 @@ internal static class P1ExpandedSuiteValidator
             if (!root.TryGetProperty("oracle", out JsonElement oracle) || oracle.ValueKind != JsonValueKind.Object)
                 errors.Add("Report oracle provenance is missing.");
             else RequireString(oracle, "version", suite.Oracle, errors, "oracle");
+            ValidateSemanticClosure(root, suite, errors);
             ValidateSummaryAndCases(root, suite, errors);
             if (!root.TryGetProperty("execution", out JsonElement execution) || execution.ValueKind != JsonValueKind.Object)
                 errors.Add("Report execution provenance is missing.");
@@ -245,6 +252,87 @@ internal static class P1ExpandedSuiteValidator
         }
         catch (JsonException exception) { errors.Add("Expanded report is not valid JSON: " + exception.Message); }
         return errors.Count == 0 ? ValidationResult.Pass() : ValidationResult.Fail(errors);
+    }
+
+    private static void ValidateSemanticClosure(JsonElement root, SuiteSpec suite, List<string> errors)
+    {
+        bool expectedEligible = suite.Cases.All(fixture => ExpectedSemanticEligibility(suite, fixture.Id));
+        if (!root.TryGetProperty("semanticClosureEligible", out JsonElement eligible) ||
+            eligible.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+        {
+            errors.Add("Report semanticClosureEligible is missing or not a boolean.");
+        }
+        else if (eligible.GetBoolean() != expectedEligible)
+        {
+            string reason = expectedEligible
+                ? "for the frozen suite"
+                : "because the frozen suite still contains placeholder semantic cases";
+            errors.Add($"Report semanticClosureEligible must be {expectedEligible.ToString().ToLowerInvariant()} {reason}.");
+        }
+
+        if (root.TryGetProperty("semanticClosure", out JsonElement closure))
+        {
+            if (closure.ValueKind != JsonValueKind.Object)
+            {
+                errors.Add("Report semanticClosure must be an object when present.");
+            }
+            else
+            {
+                RequireBoolean(closure, "eligible", expectedEligible, "semanticClosure", errors);
+                RequireInt(closure, "eligibleCases", suite.Cases.Count(fixture => ExpectedSemanticEligibility(suite, fixture.Id)), "semanticClosure", errors);
+                RequireInt(closure, "placeholderCases", suite.Cases.Count(fixture => !ExpectedSemanticEligibility(suite, fixture.Id)), "semanticClosure", errors);
+            }
+        }
+
+        if (root.TryGetProperty("coverageLimitations", out JsonElement limitations))
+        {
+            if (limitations.ValueKind != JsonValueKind.Array)
+            {
+                errors.Add("Report coverageLimitations must be an array when present.");
+            }
+            else
+            {
+                string[] expected = suite.Cases.Where(fixture => !ExpectedSemanticEligibility(suite, fixture.Id)).Select(static fixture => fixture.Id).ToArray();
+                string[] actual = limitations.EnumerateArray().Where(static value => value.ValueKind == JsonValueKind.String).Select(static value => value.GetString()!).ToArray();
+                if (actual.Length != limitations.GetArrayLength() || !actual.SequenceEqual(expected, StringComparer.Ordinal))
+                    errors.Add("Report coverageLimitations does not match the frozen semantic placeholder IDs.");
+            }
+        }
+
+        // The expanded differential suite also carries Drop cases.  Keep a
+        // separate borrow-only closure gate so the executable P1-07 borrow
+        // corpus can be evaluated while the still-open Drop placeholders
+        // remain visible in the suite-level gate above.
+        if (suite.Profile == DifferentialProfile)
+        {
+            CaseSpec[] borrowCases = suite.Cases.Where(static fixture =>
+                fixture.Id.StartsWith("borrow-", StringComparison.Ordinal)).ToArray();
+            bool borrowExpected = borrowCases.Length > 0 && borrowCases.All(fixture =>
+                ExpectedSemanticEligibility(suite, fixture.Id));
+            if (!root.TryGetProperty("borrowSemanticClosureEligible", out JsonElement borrowEligible) ||
+                borrowEligible.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            {
+                errors.Add("Report borrowSemanticClosureEligible is missing or not a boolean.");
+            }
+            else if (borrowEligible.GetBoolean() != borrowExpected)
+            {
+                errors.Add($"Report borrowSemanticClosureEligible must be {borrowExpected.ToString().ToLowerInvariant()} for the frozen borrow subset.");
+            }
+
+            if (!root.TryGetProperty("borrowSemanticClosure", out JsonElement borrowClosure) ||
+                borrowClosure.ValueKind != JsonValueKind.Object)
+            {
+                errors.Add("Report borrowSemanticClosure is missing or not an object.");
+            }
+            else
+            {
+                RequireBoolean(borrowClosure, "eligible", borrowExpected, "borrowSemanticClosure", errors);
+                RequireInt(borrowClosure, "eligibleCases", borrowCases.Count(fixture =>
+                    ExpectedSemanticEligibility(suite, fixture.Id)), "borrowSemanticClosure", errors);
+                RequireInt(borrowClosure, "placeholderCases", borrowCases.Count(fixture =>
+                    !ExpectedSemanticEligibility(suite, fixture.Id)), "borrowSemanticClosure", errors);
+            }
+        }
     }
 
     private static void ValidateSummaryAndCases(JsonElement root, SuiteSpec suite, List<string> errors)
@@ -280,8 +368,41 @@ internal static class P1ExpandedSuiteValidator
             RequireString(item, "status", "passed", errors, "case");
             RequireHash(item, "sourceSha256", fixture.SourceSha256, "case", errors);
             RequireHash(item, "expectationSha256", fixture.ExpectationSha256, "case", errors);
+            bool expectedEligible = ExpectedSemanticEligibility(suite, fixture.Id);
+            if (!item.TryGetProperty("semanticClosureEligible", out JsonElement eligible) ||
+                eligible.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                errors.Add($"Case '{fixture.Id}' semanticClosureEligible is missing or not a boolean.");
+            else if (eligible.GetBoolean() != expectedEligible)
+            {
+                string reason = expectedEligible ? "" : "; placeholder semantic coverage cannot claim closure";
+                errors.Add($"Case '{fixture.Id}' semanticClosureEligible must be {expectedEligible.ToString().ToLowerInvariant()}{reason}.");
+            }
+            string expectedCoverage = expectedEligible ? "ownership-drop-scenario" : "placeholder";
+            RequireString(item, "semanticCoverage", expectedCoverage, errors, $"case '{fixture.Id}'");
+            if (suite.Profile == PlatformProfile)
+            {
+                RequireObject(item, "coreClrCompile", $"case '{fixture.Id}'", errors);
+                RequireObject(item, "coreClrRun", $"case '{fixture.Id}'", errors);
+                RequireObject(item, "ilVerify", $"case '{fixture.Id}'", errors);
+                RequireObject(item, "nativeAot", $"case '{fixture.Id}'", errors);
+            }
         }
         if (seen.Count != suite.Denominator) errors.Add("Report case IDs are incomplete.");
+    }
+
+    private static bool ExpectedSemanticEligibility(SuiteSpec suite, string id) => suite.Profile switch
+    {
+        DifferentialProfile => !P1ExpandedDifferentialRunner.IsPlaceholderCase(id),
+        PlatformProfile => P1ExpandedPlatformRunner.IsSemanticClosureEligible(id),
+        _ => false,
+    };
+
+    private static void RequireObject(JsonElement parent, string name, string scope, List<string> errors)
+    {
+        if (!parent.TryGetProperty(name, out JsonElement value) || value.ValueKind != JsonValueKind.Object)
+            errors.Add($"{scope}.{name} evidence is missing.");
+        else if (!value.EnumerateObject().Any())
+            errors.Add($"{scope}.{name} evidence is empty.");
     }
 
     private static void RequireHash(JsonElement parent, string name, string expected, string scope, List<string> errors)
@@ -289,6 +410,12 @@ internal static class P1ExpandedSuiteValidator
         string? actual = OptionalString(parent, name);
         if (!IsSha256(actual)) errors.Add($"{scope}.{name} must be a 64-character SHA-256 hash.");
         else if (!actual!.Equals(expected, StringComparison.OrdinalIgnoreCase)) errors.Add($"{scope}.{name} does not match the frozen hash.");
+    }
+
+    private static void RequireSha256(JsonElement parent, string name, string scope, List<string> errors)
+    {
+        if (!IsSha256(OptionalString(parent, name)))
+            errors.Add($"{scope}.{name} must be a 64-character SHA-256 hash.");
     }
 
     private static void RequireString(JsonElement parent, string name, string expected, List<string> errors, string scope = "report")

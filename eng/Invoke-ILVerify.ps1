@@ -10,6 +10,9 @@ param(
     [string[]] $ReferencePath = @(),
 
     [Parameter()]
+    [string] $AdditionalReferencePath,
+
+    [Parameter()]
     [string] $SystemModule = 'System.Private.CoreLib',
 
     [Parameter()]
@@ -27,7 +30,10 @@ param(
     [int] $TimeoutSeconds = 120,
 
     [Parameter()]
-    [switch] $Restore
+    [switch] $Restore,
+
+    [Parameter()]
+    [string] $ToolWorkingDirectory
 )
 
 Set-StrictMode -Version 3.0
@@ -59,6 +65,8 @@ $referenceDirectoryFullPath = $null
 $referenceFiles = @()
 $systemModulePathFull = $null
 $manifestFullPath = $null
+$toolManifestForExecution = $null
+$toolWorkingDirectoryFullPath = $null
 $startedAt = [DateTimeOffset]::UtcNow
 $succeeded = $false
 
@@ -570,7 +578,14 @@ try {
         $SystemModulePath = Join-Path $referenceDirectoryFullPath ($SystemModule + '.dll')
     }
     $systemModulePathFull = Resolve-FullPath $SystemModulePath 'SystemModulePath'
-    $referenceFiles = @(Get-ReferenceFiles $referenceDirectoryFullPath $ReferencePath $systemModulePathFull)
+    $additionalReferencePaths = @()
+    if (-not [string]::IsNullOrWhiteSpace($AdditionalReferencePath)) {
+        $additionalReferencePaths = @($AdditionalReferencePath -split ';')
+        if (@($additionalReferencePaths | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
+            throw 'AdditionalReferencePath must contain only non-empty semicolon-separated paths.'
+        }
+    }
+    $referenceFiles = @(Get-ReferenceFiles $referenceDirectoryFullPath (@($ReferencePath) + @($additionalReferencePaths)) $systemModulePathFull)
 
     $sha256 = [Security.Cryptography.SHA256]::Create()
     try {
@@ -587,12 +602,28 @@ try {
     }
 
     $repositoryRoot = Resolve-FullPath (Join-Path $PSScriptRoot '..') 'Repository root'
+    if ([string]::IsNullOrWhiteSpace($ToolWorkingDirectory)) {
+        $toolWorkingDirectoryFullPath = $repositoryRoot
+        $toolManifestForExecution = $manifestFullPath
+    }
+    else {
+        $toolWorkingDirectoryFullPath = Resolve-FullPath $ToolWorkingDirectory 'ToolWorkingDirectory'
+        if (-not (Test-Path -LiteralPath $toolWorkingDirectoryFullPath -PathType Container)) {
+            throw "ToolWorkingDirectory does not exist: '$toolWorkingDirectoryFullPath'."
+        }
+        $toolManifestForExecution = Join-Path $toolWorkingDirectoryFullPath '.config/dotnet-tools.json'
+        if (-not (Test-Path -LiteralPath $toolManifestForExecution -PathType Leaf)) {
+            $toolConfigDirectory = Split-Path -Parent $toolManifestForExecution
+            [IO.Directory]::CreateDirectory($toolConfigDirectory) | Out-Null
+            Copy-Item -LiteralPath $manifestFullPath -Destination $toolManifestForExecution -Force
+        }
+    }
     [Console]::add_CancelKeyPress($cancelHandler)
     if ($Restore) {
         $restoreArguments = @(
-            'tool', 'restore', '--tool-manifest', $manifestFullPath, '--disable-parallel'
+            'tool', 'restore', '--tool-manifest', $toolManifestForExecution, '--disable-parallel'
         )
-        $restoreResult = Invoke-BoundedProcess -FileName $dotnetPath -Arguments $restoreArguments -WorkingDirectory $repositoryRoot -TimeoutMilliseconds ($TimeoutSeconds * 1000)
+        $restoreResult = Invoke-BoundedProcess -FileName $dotnetPath -Arguments $restoreArguments -WorkingDirectory $toolWorkingDirectoryFullPath -TimeoutMilliseconds ($TimeoutSeconds * 1000)
         if ($restoreResult.Termination -ne 'Exited' -or
             $restoreResult.ExitCode -ne 0 -or
             $restoreResult.ProcessTreeCleanupIncomplete -or
@@ -616,7 +647,7 @@ try {
     [void] $verifyArguments.Add($assemblyFullPath)
 
     $allVerifyArguments = @('tool', 'run', 'ilverify', '--') + $verifyArguments.ToArray()
-    $verifyResult = Invoke-BoundedProcess -FileName $dotnetPath -Arguments $allVerifyArguments -WorkingDirectory $repositoryRoot -TimeoutMilliseconds ($TimeoutSeconds * 1000)
+    $verifyResult = Invoke-BoundedProcess -FileName $dotnetPath -Arguments $allVerifyArguments -WorkingDirectory $toolWorkingDirectoryFullPath -TimeoutMilliseconds ($TimeoutSeconds * 1000)
     $succeeded = $verifyResult.Termination -eq 'Exited' -and
         $verifyResult.ExitCode -eq 0 -and
         -not $verifyResult.ProcessTreeCleanupIncomplete -and
@@ -651,7 +682,7 @@ finally {
             PackageId = $toolPackageId
             Version = $toolVersion
             Command = 'ilverify'
-            ManifestPath = $manifestFullPath
+            ManifestPath = $toolManifestForExecution
             RestoreRequested = [bool] $Restore
         }
         Environment = [ordered] @{
@@ -667,6 +698,7 @@ finally {
             SystemModulePath = $systemModulePathFull
             ReferenceDirectory = $referenceDirectoryFullPath
             ReferenceFiles = @($referenceFiles)
+            AdditionalReferencePath = @($additionalReferencePaths)
             RuntimeVersion = $RuntimeVersion
             TimeoutSeconds = $TimeoutSeconds
         }

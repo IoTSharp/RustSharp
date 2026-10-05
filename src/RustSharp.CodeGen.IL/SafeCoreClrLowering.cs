@@ -432,7 +432,7 @@ public static class SafeCoreClrLowering
                 if (string.IsNullOrWhiteSpace(contract))
                     throw new InvalidOperationException("Imported function has an empty ownership parameter contract.");
                 bool byReference = parameters[index].Kind == ClrLirTypeKind.ByReference;
-                if (contract is "borrow:shared" or "borrow:mut" && !byReference)
+                if (contract is ("borrow:shared" or "borrow:mut") && !byReference && parameters[index] != ClrLirType.Any)
                 {
                     throw new InvalidOperationException(
                         "Imported function ownership contract requires a by-reference parameter.");
@@ -441,8 +441,8 @@ public static class SafeCoreClrLowering
 
             if (function.CallReturnContract is { Length: > 0 } result)
             {
-                if (result is "borrow:shared" or "borrow:mut" &&
-                    returnType.Kind != ClrLirTypeKind.ByReference)
+                if (result is ("borrow:shared" or "borrow:mut") &&
+                    returnType.Kind != ClrLirTypeKind.ByReference && returnType != ClrLirType.Any)
                 {
                     throw new InvalidOperationException(
                         "Imported function ownership contract requires a by-reference return.");

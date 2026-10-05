@@ -10,7 +10,8 @@ public sealed record NativeAotPublishRequest(
     string RuntimeIdentifier,
     string OutputDirectory,
     TimeSpan Timeout,
-    Action<BoundedProcessStarted>? OnProcessStarted = null);
+    Action<BoundedProcessStarted>? OnProcessStarted = null,
+    IReadOnlyList<string>? AdditionalAssemblyPaths = null);
 
 public sealed record NativeAotPublishResult(
     string HostDirectory,
@@ -41,6 +42,7 @@ public sealed class NativeAotPublisher
     private const string HostProjectFileName = "RustSharp.NativeAotHost.csproj";
     private const string HostSourceFileName = "Program.cs";
     private const int MaximumRuntimeIdentifierLength = 64;
+    private const int MaximumAdditionalAssemblyReferences = 32;
     private const int MaximumCleanupAttempts = 8;
 
     private static readonly UTF8Encoding Utf8WithoutByteOrderMark = new(encoderShouldEmitUTF8Identifier: false);
@@ -129,11 +131,37 @@ public sealed class NativeAotPublisher
             bool requiresRuntime = File.Exists(runtimeDependency);
             if (requiresRuntime) File.Copy(runtimeDependency, Path.Combine(hostDirectory, "RustSharp.Runtime.dll"), overwrite: false);
 
+            IReadOnlyList<NativeAotAssemblyReference> additionalReferences =
+                ResolveAdditionalAssemblyReferences(request.AdditionalAssemblyPaths, generatedAssemblyPath);
+            foreach (NativeAotAssemblyReference reference in additionalReferences)
+            {
+                File.Copy(reference.SourcePath, Path.Combine(hostDirectory, reference.FileName), overwrite: false);
+
+                // Producer assemblies emitted by RustSharp may carry a
+                // reference to the shared runtime. Keep that dependency in
+                // the disposable host alongside the producer so Native AOT
+                // can resolve the complete metadata closure.
+                string producerRuntime = Path.Combine(
+                    Path.GetDirectoryName(reference.SourcePath)!,
+                    "RustSharp.Runtime.dll");
+                if (File.Exists(producerRuntime))
+                {
+                    string hostRuntime = Path.Combine(hostDirectory, "RustSharp.Runtime.dll");
+                    if (!File.Exists(hostRuntime))
+                    {
+                        File.Copy(producerRuntime, hostRuntime, overwrite: false);
+                        requiresRuntime = true;
+                    }
+                }
+            }
+
             var hostSource = CreateHostSource();
             var hostProject = CreateHostProject(
                 request.AssemblyName,
                 hostAssemblyName,
-                hostAssemblyFileName, requiresRuntime);
+                hostAssemblyFileName,
+                requiresRuntime,
+                additionalReferences);
 
             await File.WriteAllTextAsync(
                 hostSourcePath,
@@ -249,8 +277,23 @@ public sealed class NativeAotPublisher
     private static string CreateHostProject(
         string generatedAssemblyName,
         string hostAssemblyName,
-        string generatedAssemblyFileName, bool requiresRuntime)
+        string generatedAssemblyFileName,
+        bool requiresRuntime,
+        IReadOnlyList<NativeAotAssemblyReference> additionalReferences)
     {
+        var itemGroup = new List<object?>
+        {
+            new XElement("Compile", new XAttribute("Include", HostSourceFileName)),
+            CreateReferenceElement(generatedAssemblyName, generatedAssemblyFileName),
+        };
+        foreach (NativeAotAssemblyReference reference in additionalReferences)
+        {
+            // Imported Rust# producers also expose RustSharp.Generated.Program;
+            // keep their CLR reference outside the host's global alias so the
+            // generated consumer entry point remains unambiguous.
+            itemGroup.Add(CreateReferenceElement(reference.AssemblyName, reference.FileName, "producer"));
+        }
+
         var document = new XDocument(
             new XElement(
                 "Project",
@@ -272,12 +315,7 @@ public sealed class NativeAotPublisher
                     new XElement("ImportDirectoryBuildTargets", "false")),
                 new XElement(
                     "ItemGroup",
-                    new XElement("Compile", new XAttribute("Include", HostSourceFileName)),
-                    new XElement(
-                        "Reference",
-                        new XAttribute("Include", generatedAssemblyName),
-                        new XElement("HintPath", generatedAssemblyFileName),
-                        new XElement("Private", "true")))));
+                    itemGroup)));
 
         if (requiresRuntime)
             document.Root!.Add(new XElement("ItemGroup", new XElement("Reference",
@@ -285,6 +323,101 @@ public sealed class NativeAotPublisher
                 new XElement("HintPath", "RustSharp.Runtime.dll"), new XElement("Private", "true"))));
         return document.ToString(SaveOptions.DisableFormatting);
     }
+
+    private static XElement CreateReferenceElement(string assemblyName, string fileName, string? aliases = null)
+    {
+        var reference = new XElement(
+            "Reference",
+            new XAttribute("Include", assemblyName),
+            new XElement("HintPath", fileName),
+            new XElement("Private", "true"));
+        if (!string.IsNullOrWhiteSpace(aliases))
+            reference.Add(new XElement("Aliases", aliases));
+        return reference;
+    }
+
+    private static IReadOnlyList<NativeAotAssemblyReference> ResolveAdditionalAssemblyReferences(
+        IReadOnlyList<string>? paths,
+        string generatedAssemblyPath)
+    {
+        if (paths is null || paths.Count == 0)
+            return Array.Empty<NativeAotAssemblyReference>();
+        if (paths.Count > MaximumAdditionalAssemblyReferences)
+        {
+            throw new ArgumentException(
+                $"Native AOT accepts at most {MaximumAdditionalAssemblyReferences} additional assembly references.",
+                nameof(paths));
+        }
+
+        var references = new List<NativeAotAssemblyReference>(paths.Count);
+        var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        string generatedFullPath = Path.GetFullPath(generatedAssemblyPath);
+
+        foreach (string path in paths)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(path);
+            string fullPath = Path.GetFullPath(path);
+            if (!File.Exists(fullPath))
+            {
+                throw new FileNotFoundException(
+                    "An additional Native AOT assembly reference was not found.",
+                    fullPath);
+            }
+
+            if (string.Equals(fullPath, generatedFullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    "An additional Native AOT assembly reference cannot be the generated assembly itself.",
+                    nameof(paths));
+            }
+
+            string fileName = Path.GetFileName(fullPath);
+            if (string.IsNullOrWhiteSpace(fileName) ||
+                !string.Equals(Path.GetExtension(fileName), ".dll", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    "Additional Native AOT assembly references must be DLL files.",
+                    nameof(paths));
+            }
+
+            if (!seenPaths.Add(fullPath))
+            {
+                throw new ArgumentException(
+                    "Duplicate additional Native AOT assembly reference path.",
+                    nameof(paths));
+            }
+
+            string assemblyName;
+            try
+            {
+                assemblyName = System.Reflection.AssemblyName.GetAssemblyName(fullPath).Name
+                    ?? throw new BadImageFormatException("The assembly has no CLR identity.");
+            }
+            catch (Exception exception) when (exception is BadImageFormatException or FileLoadException)
+            {
+                throw new InvalidDataException(
+                    $"The additional Native AOT assembly reference '{fullPath}' is not a valid managed assembly.",
+                    exception);
+            }
+
+            if (!seenNames.Add(assemblyName))
+            {
+                throw new ArgumentException(
+                    "Additional Native AOT assembly references must have unique CLR assembly names.",
+                    nameof(paths));
+            }
+
+            references.Add(new NativeAotAssemblyReference(fullPath, fileName, assemblyName));
+        }
+
+        return references;
+    }
+
+    private sealed record NativeAotAssemblyReference(
+        string SourcePath,
+        string FileName,
+        string AssemblyName);
 
     private static void ValidateSimpleName(string value, string parameterName)
     {

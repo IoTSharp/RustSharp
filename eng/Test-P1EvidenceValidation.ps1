@@ -12,7 +12,7 @@ function Assert-Rejected($Errors, [string] $Pattern) {
     if ($script:checks -gt 16 -or $watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { throw 'Evidence test budget exhausted.' }
     if (@($Errors | Where-Object { $_ -match $Pattern }).Count -eq 0) { throw "Expected rejection: $Pattern; observed: $($Errors -join '; ')" }
 }
-$manifestBytes = [IO.File]::ReadAllBytes((Join-Path $root 'tools/RustSharp.Conformance/fixtures/p1-expanded-suites-v1-manifest.json'))
+$manifestBytes = [IO.File]::ReadAllBytes((Join-Path $root 'tools/RustSharp.Conformance/fixtures/p1-expanded-suites-v2-manifest.json'))
 $manifest = [Text.Encoding]::UTF8.GetString($manifestBytes) | ConvertFrom-Json
 $suite = @($manifest.suites | Where-Object profile -EQ 'p1-platform-v2')[0]
 $candidate = 'a' * 40
@@ -21,7 +21,7 @@ $process = [ordered]@{ commandLine='synthetic test only'; processId=1; parentPro
 $rows = @(foreach ($fixture in $suite.cases) {
     [ordered]@{ id=$fixture.id; sourceSha256=$fixture.sourceSha256; expectationSha256=$fixture.expectationSha256; status='passed'; semanticClosureEligible=$true; coreClrCompile=$process; coreClrRun=$process; ilVerify=[ordered]@{ status='passed'; succeeded=$true; process=$process }; nativeAot=[ordered]@{ status='passed'; succeeded=$true; outputMatches=$true; hostCleanupIncomplete=$false; publish=$process; run=$process } }
 })
-$template = [ordered]@{ candidateSha=$candidate; evidenceKind='p1-platform-coreclr-ilverify-native-aot'; profile='p1-platform-v2'; semanticClosureEligible=$true; compilerSha256=$compilerHash; compiler=[ordered]@{ sha256=$compilerHash }; platform=[ordered]@{ runtimeIdentifier='win-x64'; oracle='rustc 1.98.0 (synthetic)'; sdk='10.0.401'; runtime='10.0.12' }; manifest=[ordered]@{ version=1; denominator=24; validated=$true; sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($manifestBytes)) }; summary=[ordered]@{ status='passed'; denominator=24; executed=24; passed=24; failed=0; blocked=0; skipped=0 }; execution=[ordered]@{ startedAtUtc='2026-10-03T00:00:00Z'; finishedAtUtc='2026-10-03T00:00:01Z'; deadlineExpired=$false }; cleanup=[ordered]@{ completed=$true }; cases=$rows }
+$template = [ordered]@{ candidateSha=$candidate; evidenceKind='p1-platform-coreclr-ilverify-native-aot'; profile='p1-platform-v2'; semanticClosureEligible=$true; compilerSha256=$compilerHash; compiler=[ordered]@{ sha256=$compilerHash }; platform=[ordered]@{ runtimeIdentifier='win-x64'; oracle='rustc 1.98.0 (synthetic)'; sdk='10.0.401'; runtime='10.0.12' }; manifest=[ordered]@{ version=2; denominator=24; validated=$true; sha256=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($manifestBytes)) }; summary=[ordered]@{ status='passed'; denominator=24; executed=24; passed=24; failed=0; blocked=0; skipped=0 }; execution=[ordered]@{ startedAtUtc='2026-10-03T00:00:00Z'; finishedAtUtc='2026-10-03T00:00:01Z'; deadlineExpired=$false }; cleanup=[ordered]@{ completed=$true }; cases=$rows }
 function New-Report { return ($template | ConvertTo-Json -Depth 16 | ConvertFrom-Json) }
 function Validate($Report) { return @(Test-P1ExpandedEvidence $Report $root 'p1-platform-v2' 'win-x64' $candidate) }
 $report = New-Report
@@ -29,8 +29,9 @@ $report.platform | Add-Member -NotePropertyMembers @{ observedRuntimeIdentifier=
 $template.platform.observedRuntimeIdentifier = 'win-x64'
 $template.platform.nativeExecution = $true
 $template.platform.architecture = 'X64'
-Assert-Rejected (Validate $report) 'frozen label-only placeholder'
-if (@((Validate $report) | Where-Object { $_ -notmatch 'frozen label-only placeholder' }).Count -ne 0) { throw 'The intact synthetic envelope should fail only its actual placeholder sources.' }
+$report.cases[0].semanticClosureEligible = $false
+Assert-Rejected (Validate $report) 'blocked: case.*lacks semantic coverage'
+$report = New-Report
 $report.semanticClosureEligible = $false
 Assert-Rejected (Validate $report) 'not eligible for semantic closure'
 $report = New-Report; $report.cases[0].nativeAot = $null

@@ -596,9 +596,8 @@ public sealed class CompilerDriver
         foreach (ClrLirMethod method in program.Methods)
         {
             CheckBudget();
-            if (method.IsCompilerGenerated ||
-                method.ReturnType.Kind is not (ClrLirTypeKind.Void or ClrLirTypeKind.I32 or ClrLirTypeKind.Bool) ||
-                method.Parameters.Any(static type => type.Kind is not (ClrLirTypeKind.I32 or ClrLirTypeKind.Bool)))
+            if (method.IsCompilerGenerated || !IsContractType(method.ReturnType, allowVoid: true) ||
+                method.Parameters.Any(static type => !IsContractType(type, allowVoid: false)))
                 continue;
 
             string identity = method.SourceQualifiedName ?? method.Name;
@@ -611,11 +610,13 @@ public sealed class CompilerDriver
             // Generic instances may share the declaration's source identity.
             // Bind each contract to its actual emitted method first; metadata
             // linking retains a source alias only when it names one method.
+            bool scalar = method.Parameters.All(static type => type.Kind is ClrLirTypeKind.I32 or ClrLirTypeKind.Bool) &&
+                method.ReturnType.Kind is ClrLirTypeKind.Void or ClrLirTypeKind.I32 or ClrLirTypeKind.Bool;
             yield return new RustSharpMetadataCallContract(method.Name, ownership?.PanicStrategy ?? "unwind",
-                method.Parameters.Select(static _ => "copy").ToArray(),
-                method.ReturnType == ClrLirType.Void ? "unit" : "copy")
+                method.Parameters.Select(static type => ContractTerm(type, isReturn: false)).ToArray(),
+                method.ReturnType.Kind == ClrLirTypeKind.Void ? "unit" : ContractTerm(method.ReturnType, isReturn: true))
             {
-                Schema = RustSharpMetadataCallContract.ScalarSchema,
+                Schema = scalar ? RustSharpMetadataCallContract.ScalarSchema : null,
             };
         }
 
@@ -636,6 +637,22 @@ public sealed class CompilerDriver
                 clock.Elapsed > TimeSpan.FromSeconds(5))
                 throw new TimeoutException("Source call metadata exceeded its bounded generation budget.");
         }
+
+        static bool IsContractType(ClrLirType type, bool allowVoid) =>
+            type.Kind is ClrLirTypeKind.I32 or ClrLirTypeKind.Bool ||
+            (allowVoid && type.Kind == ClrLirTypeKind.Void) ||
+            type == ClrLirType.Any ||
+            type.Kind == ClrLirTypeKind.ByReference && (type.Name == "I32" || type.Name == "Bool");
+
+        static string ContractTerm(ClrLirType type, bool isReturn) => type.Kind switch
+        {
+            ClrLirTypeKind.I32 or ClrLirTypeKind.Bool => "copy",
+            ClrLirTypeKind.ByReference when type.IsMutable => "borrow:mut",
+            ClrLirTypeKind.ByReference => "borrow:shared",
+            ClrLirTypeKind.Any => "borrow:shared",
+            ClrLirTypeKind.Void when isReturn => "unit",
+            _ => throw new InvalidOperationException("The source call contract type is outside the bounded ABI."),
+        };
     }
 
     private static SafeCoreClrResult AttachMirEvidence(
@@ -1353,7 +1370,31 @@ public sealed class CompilerDriver
             foreach (RustSharpMetadataFunction function in imported.Document.Functions)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                // MIR value types are represented by an opaque `Value(...)`
+                // signature in the producer metadata.  The source consumer
+                // cannot project fields from such a returned aggregate yet;
+                // reject the import at the metadata boundary with the stable
+                // name-resolution diagnostic instead of allowing type
+                // analysis to fail later with a generic lowering error.
+                if (profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2 &&
+                    function.Signature.Contains("Value(", StringComparison.Ordinal))
+                {
+                    diagnostics.Add(new Diagnostic(
+                        SafeCoreNameResolutionDiagnosticCodes.UnresolvedName,
+                        "Source aggregate imports are not supported by this profile.",
+                        new TextSpan(0, 0))
+                    { SourcePath = fullPath });
+                }
+                // MIR-backed producers retain an internal `#value` suffix on
+                // their emitted source identity.  That suffix distinguishes
+                // the lowered body inside the producer, but it is not a Rust
+                // path component and therefore cannot be exposed as an
+                // external source symbol. Keep the CLR method name and
+                // metadata contract lookup intact while presenting the
+                // source alias that consumers can actually import.
                 string sourceName = function.SourceQualifiedName ?? function.Name;
+                if (sourceName.EndsWith("#value", StringComparison.Ordinal))
+                    sourceName = sourceName[..^"#value".Length];
                 exports.Add(new SafeCoreExternalFunction(
                     sourceName,
                     function.Name,

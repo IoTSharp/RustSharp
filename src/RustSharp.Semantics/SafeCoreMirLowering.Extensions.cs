@@ -94,17 +94,17 @@ public static partial class SafeCoreMirLowering
             if (pattern.Kind == N.WildcardPattern) return Unit(node);
             if (pattern.DeclaredSymbol is null || pattern.Name is null) Invalid(pattern);
             SafeCoreType type = Type(pattern);
-            if (type.Kind == K.Adt && _dropFunctions.ContainsKey(type.Name!) &&
-                (value.Kind != SafeCoreMirOperandKind.Constant || value.Value != "()" ||
-                 _loops.Count != 0 || _closureReturns.Count != 0 || _dropScopes.Count == 0)) Unsupported(initializer);
             int local = Local(pattern.Name, type, SafeCoreMirLocalKind.User,
                 pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
             if (node.ChildIds.Count > 1 && HasStaticLifetime(Child(node, 1)))
                 _locals[local] = _locals[local] with { RequiresStaticLifetime = true };
             if (!_bindings.TryAdd(pattern.DeclaredSymbol!, local)) Invalid(pattern);
             Assign(local, value, node);
-            if (type.Kind == K.Adt && _dropFunctions.ContainsKey(type.Name!))
+            if (RequiresDrop(type))
+            {
                 _dropScopes[^1].Add(local);
+                _dropInitialized.Add(local);
+            }
             if (initializer.Kind == N.ClosureExpression && type.Kind == K.Closure)
             {
                 _closures[pattern.DeclaredSymbol!] = CreateClosureBinding(initializer);
