@@ -176,6 +176,8 @@ public sealed record ClrLirValueType
     public ClrLirType Type => ClrLirType.Value(Name);
     /// <summary>Emit typed, reflection-free field accessors for GC-owned MIR references.</summary>
     public bool ImplementsMirValue { get; init; }
+    public string? ExternalAssemblyName { get; init; }
+    public string? ExternalClrName { get; init; }
 }
 
 public sealed record ClrLirLocal

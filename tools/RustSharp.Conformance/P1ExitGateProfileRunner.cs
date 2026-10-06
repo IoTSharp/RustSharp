@@ -708,7 +708,7 @@ internal static class P1ExitGateProfileRunner
         RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
             outputPath,
             "safe-core-primitives-v1",
-            ["Main"]);
+            ["Main"], cancellationToken: cancellationToken);
         Require(imported.IsSuccessful,
             "metadata consumer rejected the producer: " + string.Join("; ", imported.Diagnostics));
         RustSharpMetadataDocument document = imported.Document ??
@@ -748,7 +748,7 @@ internal static class P1ExitGateProfileRunner
         RustSharpMetadataImportResult consumerImported = RustSharpMetadataConsumer.ReadAssembly(
             consumerOutputPath,
             "safe-core-primitives-v1",
-            ["Main"]);
+            ["Main"], cancellationToken: cancellationToken);
         Require(consumerImported.IsSuccessful,
             "compiled consumer metadata could not be read: " +
             string.Join("; ", consumerImported.Diagnostics));

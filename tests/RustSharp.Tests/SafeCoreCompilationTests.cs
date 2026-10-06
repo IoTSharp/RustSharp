@@ -29,7 +29,85 @@ internal static class SafeCoreCompilationTests
         new("safe-core checked overflow fails execution", ChecksOverflowAsync),
         new("CLR LIR validates binary operands and argument indices", ValidatesNewInstructionsAsync),
         new("safe-core integer display is independent of culture", DisplaysInvariantlyAsync),
+        new("P1-09 primitive emission retains mandatory MIR ownership and cleanup evidence", PrimitiveMirRouteAsync),
+        new("P1-09 primitive route preserves rejection before output", PrimitiveMirRejectionAsync),
     ];
+
+    private static async Task PrimitiveMirRouteAsync()
+    {
+        const string source = "pub fn add(value: i32) -> i32 { value + 1 } " +
+            "fn main() { let value = add(41); println!(\"{}\", value); }";
+        string directory = NewDirectory();
+        try
+        {
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            string sourcePath = Path.Combine(directory, "primitive-route.rs");
+            string output = Path.Combine(directory, "program.dll");
+            CompilationResult checkedResult = CompilerDriver.Check(source, sourcePath, Profile, deadline.Token);
+            AssertEx.True(checkedResult.Success && checkedResult.Output is null,
+                "The primitive check must accept the source without publishing artifacts.");
+            CompilationResult compiled = CompilerDriver.Compile(source, sourcePath, output,
+                "PrimitiveMirRoute", Profile, deadline.Token);
+            AssertEx.True(compiled.Success, string.Join("; ", compiled.Diagnostics));
+            RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(output,
+                SafeCoreTypeChecking.Profile, ["crate::add"]);
+            AssertEx.True(imported.IsSuccessful, string.Join("; ", imported.Diagnostics));
+            RustSharpMetadataDocument metadata = imported.Document!;
+            AssertEx.True(metadata.MirSnapshot is { Length: > 0 } && metadata.CleanupSnapshot is { Length: > 0 },
+                "Primitive PE metadata must carry validated MIR and cleanup evidence.");
+            AssertEx.Equal(2, metadata.Ownership.Length,
+                "Both source bodies must retain mandatory ownership evidence.");
+            AssertEx.True(metadata.Ownership.All(static function => function.PanicStrategy == "unwind"),
+                "Primitive source bodies must retain the declared unwind policy.");
+            RustSharpMetadataFunction exported = metadata.Functions.Single(static function =>
+                function.SourceQualifiedName == "crate::add");
+            AssertEx.True(exported.IsPublic && exported.Signature == "I32->I32",
+                "The primitive v1 public source identity and scalar signature must remain stable.");
+            RustSharpMetadataCallContract contract = metadata.CallContracts.Single(static value => value.FunctionId == "crate::add");
+            AssertEx.Equal(RustSharpMetadataCallContract.ScalarSchema, contract.Schema!);
+            AssertEx.True(contract.ParameterContracts!.SequenceEqual(["copy"]) && contract.ReturnContract == "copy",
+                "The scalar import ABI must retain every Copy parameter and return term.");
+            BoundedProcessResult run = await new BoundedProcessRunner().RunAsync(
+                new("dotnet", [output], directory, TimeSpan.FromSeconds(5)), deadline.Token).ConfigureAwait(false);
+            AssertEx.True(run.Succeeded && !run.ProcessTreeCleanupIncomplete && !run.OutputTruncated, run.StandardError);
+            AssertEx.Equal("42\n", run.StandardOutput.Replace("\r\n", "\n", StringComparison.Ordinal));
+        }
+        finally { DeleteOwnedDirectory(directory); }
+    }
+
+    private static Task PrimitiveMirRejectionAsync()
+    {
+        string directory = NewDirectory();
+        try
+        {
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            (string Source, string Code)[] cases =
+            [
+                ("fn main() { let value = (1, 2); }", "RST1001"),
+                ("fn main() { let value: bool = 1; }", "RST1002"),
+                ("fn main() { let value = 1; value = 2; }", "RST1003"),
+            ];
+            AssertEx.True(cases.Length <= 3, "The primitive route rejection denominator is fixed.");
+            for (int index = 0; index < cases.Length; index++)
+            {
+                deadline.Token.ThrowIfCancellationRequested();
+                (string source, string code) = cases[index];
+                string sourcePath = Path.Combine(directory, "rejected.rs");
+                string output = Path.Combine(directory, "case-" + index + ".dll");
+                CompilationResult checkedResult = CompilerDriver.Check(source, sourcePath, Profile, deadline.Token);
+                CompilationResult compiled = CompilerDriver.Compile(source, sourcePath, output,
+                    profile: Profile, cancellationToken: deadline.Token);
+                AssertEx.False(checkedResult.Success || compiled.Success,
+                    "Invalid primitive source must reject consistently in check and compile.");
+                AssertEx.Equal(code, checkedResult.Diagnostics[0].Code);
+                AssertEx.Equal(code, compiled.Diagnostics[0].Code);
+            }
+            AssertEx.Equal(0, Directory.GetFiles(directory).Length,
+                "Rejected source must not leave PE, PDB, runtime or transaction output.");
+        }
+        finally { DeleteOwnedDirectory(directory); }
+        return Task.CompletedTask;
+    }
 
     private static Task RunsCoreAsync() => RunAsync("""
         mod math { pub fn adjust(value: i32, enabled: bool) -> i32 {

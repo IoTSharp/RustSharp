@@ -48,7 +48,7 @@ public static partial class SafeCoreMirLowering
             SafeCoreHirNode anchor = input.Hir.GetNode(source.HirNodeId);
             Step(anchor, depth);
             if (type.Name is { } name && _dropFunctions.TryGetValue(name, out int destructor))
-                EmitDestructorCall(destructor, _functionNodes[destructor], source,
+                EmitDestructorCall(destructor, source,
                     place.IsRoot ? place.LocalId : null, place);
             else
                 EmitAggregateFieldDrops(type, source, place, depth + 1);

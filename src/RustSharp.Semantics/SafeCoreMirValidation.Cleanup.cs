@@ -139,7 +139,7 @@ public static partial class SafeCoreMirValidation
                 }
                 else if (terminator.Kind == SafeCoreMirTerminatorKind.Call &&
                     terminator.Operand is { Kind: SafeCoreMirOperandKind.Function } target &&
-                    target.Id >= 0 && target.Id < program.Functions.Count && program.Functions[target.Id].IsDestructor)
+                    program.IsDestructorFunction(target.Id))
                 {
                     SafeCoreMirBlock? saved = _block;
                     try { _block = block; if (!HasMatchingDropReceiver(terminator, terminator.DropLocalId)) return false; }

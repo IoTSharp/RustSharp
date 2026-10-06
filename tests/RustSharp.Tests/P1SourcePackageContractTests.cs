@@ -19,7 +19,7 @@ internal static class P1SourcePackageContractTests
     [
         new("P1-09 rejects stale producer aggregate layout metadata", RejectsStaleAggregateMetadataAsync),
         new("P1-09 rejects reference exports without ownership contracts", RejectsReferenceExportWithoutContractAsync),
-        new("P1-09 rejects unsupported source aggregate imports before emission", RejectsUnsupportedSourceAggregateImportAsync),
+        new("P1-09 reconstructs source aggregate imports before emission", RejectsUnsupportedSourceAggregateImportAsync),
         new("P1-09 emits identical consumer artifacts for reordered metadata references", ReorderedMetadataReferencesAreDeterministicAsync),
         new("P1-09 executes deterministic scalar source packages with positional Copy contracts", ScalarSourcePackagesAsync),
         new("P1-09 keeps generic source specialization call contracts distinct", GenericSourceContractsAsync),
@@ -544,14 +544,9 @@ internal static class P1SourcePackageContractTests
                 CompilationProfile.SafeCoreMirV2,
                 [producerOutputPath],
                 ["crate::make_pair"]);
-            AssertEx.False(consumer.Success,
-                "Unsupported source aggregate imports must fail before CLR emission.");
-            AssertEx.False(File.Exists(consumerOutputPath),
-                "A rejected source aggregate import must not publish a consumer assembly.");
-            AssertEx.True(consumer.Diagnostics.Any(diagnostic =>
-                    string.Equals(diagnostic.Code, "RSN1003", StringComparison.Ordinal)),
-                "The source import rejection must carry a stable compiler diagnostic: " +
+            AssertEx.True(consumer.Success, "The source aggregate layout must reconstruct before emission: " +
                 string.Join("; ", consumer.Diagnostics));
+            AssertEx.True(File.Exists(consumerOutputPath), "The accepted source package must publish its consumer PE.");
         }
         finally
         {

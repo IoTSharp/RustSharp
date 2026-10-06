@@ -44,7 +44,7 @@ their manifests, fixed denominators and actual evidence exist.
 | Unified emission, source imports, metadata and cross-package execution / 统一发射、源码导入、元数据及跨包执行 | P1-09.01–P1-09.10 |
 | Immutable suites, provenance, CI and full exit evidence / 不可变套件、来源证明、CI 及完整退出证据 | P1-10.01–P1-10.10, P1-GATE.01–P1-GATE.06 |
 
-The latest implementation baseline is `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`:
+The historical audit implementation baseline is `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`:
 [Windows CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341932),
 [Linux CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341925) and
 [P1 platform CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341877)
@@ -52,13 +52,16 @@ passed the existing suites. The local harness was 464/464; the platform workflow
 recorded 12/12 platform, 24/24 regression and 16/16 rustc 1.98 differential cases
 per native x64 platform, with 6/6 aggregate inputs. These are evidence for that
 SHA and those manifests, not completion of the expanded P1 contract. This
-roadmap-only change does not claim a new compiler build or runtime result.
+historical roadmap-only change did not claim a new compiler build or runtime result.
+The current P1-09 implementation and its evidence are recorded separately in
+[English](p1-09-implementation.md) and [Chinese](p1-09-implementation_zh.md).
 
-最新实现基线是 `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`：上述 Windows、Linux
+历史审计的实现基线是 `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`：上述 Windows、Linux
 及 P1 平台 CI 已通过既有套件。本地完整工具为 464/464；平台工作流在每个原生 x64
 平台记录 12/12 平台、24/24 回归和 16/16 rustc 1.98 差分用例，聚合输入为 6/6。
-这些只证明对应 SHA 和清单的范围，不代表扩展后的 P1 契约完成。本次仅路线图变更
-不声称产生新的编译器构建或运行时结果。
+这些只证明对应 SHA 和清单的范围，不代表扩展后的 P1 契约完成。该历史路线图变更
+不声称产生新的编译器构建或运行时结果。当前 P1-09 实现及证据分别记录于上述
+[英文](p1-09-implementation.md)与[中文](p1-09-implementation_zh.md)文档。
 
 ## Evidence boundaries / 证据边界
 
@@ -66,7 +69,7 @@ roadmap-only change does not claim a new compiler build or runtime result.
 | --- | --- | --- |
 | `safe-core-regression-v1` | 8/8; zero failures/skips in `artifacts/p1-10/safe-core-regression-v1.json` | Version 1 has one compile-pass, two compile-fail, two run-pass and three differential cases. It does not cover the full P1-06–P1-10 requirements. |
 | Historical shared-tree Release build and test harness | Release build: zero errors/warnings; 464/464 tests passed, zero failures/skips | Built with the explicit .NET SDK 10.0.401 MSBuild path on Windows x64; logs: `artifacts/p1-commit-session/build-final.stdout.log` and `artifacts/p1-commit-session/harness-final.stdout.log`. The earlier 452/452 harness and separate 24/24 `safe-core-regression-v2` report are also historical evidence; none closes the full P1 exit gate. |
-| Current P1-06 Release build and test harness | Release build: zero errors/warnings; 670/670 tests passed, zero failures/skips | Explicit installed SDK 10.0.401 on Windows x64; repository pin remains 10.0.400. Logs: `artifacts/p1-06-final-session/build-final.stdout.log` and `artifacts/p1-06-final-session/harness-final.stdout.log`. 当前构建及测试证据不替代完整 P1 平台门禁。 |
+| Historical P1-06 Release build and test harness | Release build: zero errors/warnings; 670/670 tests passed, zero failures/skips | Explicit installed SDK 10.0.401 on Windows x64; repository pin remains 10.0.400. Logs: `artifacts/p1-06-final-session/build-final.stdout.log` and `artifacts/p1-06-final-session/harness-final.stdout.log`. 该历史构建及测试证据不替代完整 P1 平台门禁。 |
 | `p1-exit-gate-v1` | 5/5; `nativeAot: false`, `crossPlatform: false` | In-process typed-MIR, ownership, Drop, panic and metadata probes only. The name does not make this the complete P1 exit gate. |
 | `p1-differential-v1` | Fixed 4 cases: 2 borrow, 2 Drop | This first denominator lacks negative borrow cases, projected moves, join/escape cases, multiple destructors, unwind, abort and destructor failure. Even a 4/4 result cannot close P1. The retained initial reports record 0/4 RustSharp passes and zero skips; subsequent reports must identify their own source/build provenance. |
 | Fresh `p1-differential-v2` | 16/16 passed; zero failures/blocked/skipped in `artifacts/p1-10/p1-differential-v2-current4.json` | The fixed 10-borrow/6-Drop denominator executes all cases against rustc 1.98.0, including the original uninitialized escape fixture; the report records process provenance and cleanup. |
@@ -85,10 +88,15 @@ Leaf completion follows the paired P1 roadmap. Test source links establish what
 is tested, not that the current working tree has passed a fresh build. Local
 reports belong to their recorded source/tool/platform and must not be silently
 promoted to a later commit.
+The unchanged P1-06/P1-07/P1-08 rows below retain their audit-time evidence limits;
+their accepted later delivery is recorded by the linked phase roadmap and
+implementation inventories. The two P1-09 rows reflect the current source-package work.
 
 下表分别列明实现与完整必需后端证据。叶子完成状态以双语 P1 路线图为准。测试源码链接
 说明测试范围，不代表当前工作树已通过全新构建。本地报告仅属于各自记录的源码、工具
 和平台，不能静默沿用为后续提交证据。
+下方未修改的 P1-06/P1-07/P1-08 行保留审计当时的证据限制；其后已验收的交付由链接的
+阶段路线图及实现清单记录。两行 P1-09 反映当前源码包工作。
 
 | ID / requirement | Implementation | Tests | Local evidence and remaining work | CI evidence needed |
 | --- | --- | --- | --- | --- |
@@ -102,8 +110,8 @@ promoted to a later commit.
 | P1-08: source/MIR destructor lowering | The current source path discovers a bounded unit `impl Drop` body and emits explicit MIR destructor calls and ownership Drop facts. [Cleanup lowering](../src/RustSharp.Semantics/SafeCoreMirCleanupLowering.cs) also persists cleanup evidence. | [Cleanup tests](../tests/RustSharp.Tests/SafeCoreMirCleanupTests.cs) and two initial Drop fixtures | Extend explicit drop actions and flags to field-owning aggregates, initialization, moves and every scope. Unsupported destructor statements must produce diagnostics. | Generated assemblies must demonstrate one cleanup per initialized live value. |
 | P1-08: normal/return/unwind/abort, exactly once and reverse order | Normal/return unit cleanup emits explicit calls; generated fault cleanup now has CoreCLR regressions. Runtime helpers separately model the broader outcomes. | [Exit-gate probes](../tests/RustSharp.Tests/P1ExitGateTests.cs), cleanup library tests | Add nested scopes, multiple values, early transfer, branches/loops, moved/uninitialized values and double-panic cases. Complete emitted unwind/failure continuation and define abort behavior at the panic boundary. | CoreCLR and Windows/Linux x64 AOT trace/exit comparison with rustc. |
 | P1-08: destructor failure and panic boundary | `RustPanicBoundary` and runtime cleanup helpers expose deterministic outcomes. | Runtime/library failure-path tests | Connect emitted destructors and exceptions to the declared continuation policy. Do not infer emitted behavior from library simulation. | Real generated panic/destructor-failure fixtures and process cleanup evidence. |
-| P1-09: all supported constructs through CLR LIR | [CompilerDriver](../src/RustSharp.Compiler/CompilerDriver.cs) and MIR CLR lowering share the production emitter for supported values. | Compiler, MIR runtime and deterministic PE/PDB tests | Complete the lowering families above without silent fallbacks. Primitive AOT success covers only the sample's constructs. | Every supported lowering family needs CoreCLR, ILVerify and AOT coverage. |
-| P1-09: imported signatures and ownership contracts | [Metadata consumer](../src/RustSharp.CodeGen.IL/RustSharpMetadata.cs) reconciles MethodDef signatures/static/visibility; source-imported calls remain bounded scalar calls, while aggregate/byref signatures and call-contract metadata have additional CLR LIR support. | [Metadata tests](../tests/RustSharp.Tests/RustSharpMetadataTests.cs), generic package tests | Metadata and manually constructed CLR LIR producer/consumer CoreCLR tests cover aggregate/byref signatures and call contracts. Full source consumer synthesis, reference/lifetime/ownership contracts and platform MemberRef evidence remain open. | Real separately compiled producer/consumer cases through CoreCLR, ILVerify and both x64 AOT backends. |
+| P1-09: all supported constructs through CLR LIR / 所有支持类别经过 CLR LIR | Validated primitive/MIR CLR LIR routing and validated generic specialization enforce checked ownership/cleanup before emission; source package imports carry reconciled Rust# metadata. / 经过验证的 primitive/MIR CLR LIR 路线及泛型特化在发射前强制所有权/清理检查；源码包导入携带已对账 Rust# 元数据。 | [P1-09 implementation](p1-09-implementation.md) / [P1-09 实现](p1-09-implementation_zh.md), closure-9 build/tests | Closure-9 Release 0/0 warnings/errors, focused 84/84 and full 964/964; Windows and Ubuntu WSL source-package reports each pass 19/19 with 39/39 original PEs and raw audits. / Closure-9 Release 零警告/错误、关键84/84、完整964/964；Windows 与 Ubuntu WSL 源码包报告各通过19/19及39/39原始PE并经原始审计。 | Candidate-SHA aggregation/publication remains P1-10/P1-GATE. / 候选 SHA 聚合/发布仍归 P1-10/P1-GATE。 |
+| P1-09: imported signatures and ownership contracts / 导入签名及所有权契约 | Metadata reconciliation covers actual public static MethodDefs, source nominal/structural owners, positional reference/lifetime/panic terms and producer Drop helpers. / 元数据对账覆盖真实公开 static MethodDef、源码名义/结构 owner、按位置引用/生命周期/panic 条款及 producer Drop 辅助方法。 | Source type/owner/execution/three-package tests, frozen nineteen-case manifest and platform raw audits. / 源码类型/owner/执行/三包测试、固定十九项清单及平台原始审计。 | Current reports use manifest SHA `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`; Windows/Ubuntu each 19/19 CoreCLR+Native AOT and 39/39 original-PE ILVerify, zero warnings/failed/blocked/not-executed, independent builds equal and cleanup complete. / 当前报告使用清单 SHA `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`；Windows/Ubuntu 均19/19 CoreCLR+Native AOT及39/39原始PE ILVerify，警告/失败/阻塞/未执行为零，独立构建相同且清理完成。 | Final pushed-SHA CI and P1-GATE remain separate. / 最终推送 SHA CI 与 P1-GATE 仍为独立门禁。 |
 | P1-10: immutable versioned fixed denominators | Regression v1 remains 8 cases; immutable regression v2 retains 24 cases; regression v3 fixes 26 cases with two versioned success expectations and two added source samples. Differential v2 remains 16 borrow/Drop cases and library gate v1 remains 5. | Manifest validation tests retain rejected/invalid-contract coverage; v3 tests enforce the immutable v2 hash and every preserved expectation. | The historical v2 report passes 24/24; expanded requirement coverage, platform execution and final-SHA aggregation remain required. | Upload every report, including failures, with stable run/artifact provenance. |
 | P1-10: complete P1 exit aggregator | [Test-P1ExitGate.ps1](../eng/Test-P1ExitGate.ps1) validates paired Windows/Linux platform reports, paired p1-differential-v2 reports and explicitly selected paired regression v2/v3 reports. | [P1 differential tests](../tests/RustSharp.Tests/P1DifferentialProfileTests.cs), [v2 regression tests](../tests/RustSharp.Tests/SafeCoreRegressionV2Tests.cs), [v3 regression tests](../tests/RustSharp.Tests/SafeCoreRegressionV3Tests.cs), [platform runner](../eng/Invoke-P1PlatformEvidence.ps1) | The aggregator enforces 12 platform, 16 differential and selected 24/26 regression denominators, platform/RID identity, rustc 1.98, zero failures/blocked/skipped and bounded report reads. Historical [CI run 35848782833](https://github.com/IoTSharp/RustSharp/actions/runs/35848782833) passed its six inputs at `23279d93267a814c643baddc29c72918ff0fda0b`; it cannot validate additions or the current final SHA. Full P1 remains 🚧 In progress. | `.github/workflows/p1-platform.yml` runs regression v3 in both native x64 jobs, uploads each report and validates six aggregate inputs; the expanded complete P1 gate remains separate. |
 

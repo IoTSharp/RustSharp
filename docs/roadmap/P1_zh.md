@@ -8,11 +8,11 @@
 
 这份清单把现有承诺分配给固定编号，不扩大或削减语言范围。P1-06.01 的[冻结账本](../p1-exit-scope-v1_zh.md) 已把[类型化 MIR 契约](../typed-mir-profile.md)、[P1 缺口矩阵](../p1-gap-matrix.md) 和原验收要求逐项登记；已有的仅检查类型配置档保持仅检查，既有可执行承诺与已列剩余项不得通过重新分类而消失。引用/provenance、切片/unsizing、模式/闭包、完整源码移动借用、生成 Drop/panic、源码跨包契约及所有必需后端必须各有叶子与用例。
 
-当前完整 P1 退出候选尚未形成。初始 `safe-core-regression-v3` 清单固定 26 用例：除以新版本记录两个现已可执行的模式/捕获预期外，保留 v2 源码契约，并增加综合 MIR 类别/投影示例。不可变的 v2 回归清单保持原样。当前扩展清单版本为 `p1-expanded-suites-v2-manifest.json`（清单版本 2、差分套件版本 4）；其中的 `p1-differential-v3` 与 `p1-platform-v2` 套件包含带不可变哈希的 56 个有界源码夹具，并由有界差分/平台运行器生成带来源证明的报告。P1-07 及 P1-10.07 之前的本地差分/平台证据均为 ✅ 已完成；候选 SHA 聚合仍属于 P1-10.08 和 P1-GATE 叶子。
+当前完整 P1 退出候选尚未形成。初始 `safe-core-regression-v3` 清单固定 26 用例：除以新版本记录两个现已可执行的模式/捕获预期外，保留 v2 源码契约，并增加综合 MIR 类别/投影示例。不可变的 v2 回归清单保持原样。当前扩展清单版本为 `p1-expanded-suites-v2-manifest.json`（清单版本 2、差分套件版本 4）；其中的 `p1-differential-v3` 与 `p1-platform-v2` 套件包含带不可变哈希的 56 个有界源码夹具，并由有界差分/平台运行器生成带来源证明的报告。P1-07 和 P1-09 均为 ✅ 已完成；P1-10.07 之前的本地差分/平台证据也均为 ✅ 已完成，而候选 SHA 聚合仍属于 P1-10.08 和 P1-GATE 叶子。
 
-[后续证据审计](../p1-evidence-audit_zh.md) 现已记录全部 32 个差分用例和 24 个平台用例的可执行语义源码。差分报告通过 32/32，其中借用 20/20、Drop 6/6；Windows 平台报告通过 CoreCLR、ILVerify 和 Native AOT 的 24/24，进程清理完整。P1-07 为 ✅ 已完成；完整 P1 候选及 SHA 绑定聚合仍属于 P1-10.08 至 P1-GATE 的独立工作。
+[后续证据审计](../p1-evidence-audit_zh.md) 现已记录全部 32 个差分用例和 24 个平台用例的可执行语义源码。差分报告通过 32/32，其中借用 20/20、Drop 6/6；Windows 平台报告通过 CoreCLR、ILVerify 和 Native AOT 的 24/24，进程清理完整。P1-07 和 P1-09 为 ✅ 已完成；完整 P1 候选及 SHA 绑定聚合仍属于 P1-10.08 至 P1-GATE 的独立工作。
 
-当前 [P1-08 实现记录](../p1-08-implementation_zh.md)的全部十四个叶子为 ✅ 已完成。E9 将零警告/零错误的 Release 构建及 894/894 回归绑定到 `p1-drop-closure-v3`：26 项 rustc 一致加两项冻结的正常清理契约差异、原始 PE ILVerify 30/30，以及每个平台 Windows/Ubuntu WSL 的 Native AOT 28/28 与 callable 7/7。接口包含两个原始 PE 产物；Linux 目标为 `linux-x64`，实际宿主为 `ubuntu.24.04-x64`。最终报告进程/临时宿主清理、历史父进程链限制与九个保留工作区对象分别披露。源码 `panic!` 仍不支持，256 个源码局部值限制仍受检查。P1-09 源码导入调用集成及 P1-10/候选发布门禁仍为独立工作。
+当前 [P1-08 实现记录](../p1-08-implementation_zh.md)的全部十四个叶子为 ✅ 已完成。E9 将零警告/零错误的 Release 构建及 894/894 回归绑定到 `p1-drop-closure-v3`：26 项 rustc 一致加两项冻结的正常清理契约差异、原始 PE ILVerify 30/30，以及每个平台 Windows/Ubuntu WSL 的 Native AOT 28/28 与 callable 7/7。接口包含两个原始 PE 产物；Linux 目标为 `linux-x64`，实际宿主为 `ubuntu.24.04-x64`。最终报告进程/临时宿主清理、历史父进程链限制与九个保留工作区对象分别披露。源码 `panic!` 仍不支持，256 个源码局部值限制仍受检查。P1-09 源码包集成基于当前本地证据已 ✅ 已完成；P1-10/候选发布门禁仍为独立 🚧 工作。
 
 历史/现有证据标签（仅用于对应的限定范围）：
 
@@ -26,7 +26,7 @@
 | E6 | `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`：本地 Release 零警告/错误、464/464；[Windows CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341932)、[Linux CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341925)、[P1 平台 CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341877) 全通过。后者每平台 12 平台/24 回归/16 差分用例、6 份聚合输入；新增构造未被该平台清单覆盖时，不据此声称其 AOT 已验收。 |
 | E7 | 历史结构体/place/引用子集：使用 SDK 10.0.401 通过 551/551 项测试、回归 v2 24/24 和借用/Drop v2 16/16。[投影示例](../../samples/mir-places.rs) 的 CoreCLR/rustc 与 Windows x64 Native AOT 输出一致；此前的 CLR byref 表示报告 ILVerify `ReturnPtrToStack`，等价 C# 也复现该诊断。配套[存储示例](../../samples/mir-places-verified.rs) 通过 ILVerify 和 Windows x64 Native AOT。E8 取代该投影实现及验证器限制。 |
 | E8 | 当前冻结的 P1-06 类别：[实现清单](../p1-06-implementation_zh.md)、670/670 项测试、回归 v3 26/26 及借用/Drop v2 16/16；使用 SDK 10.0.401（仓库固定 10.0.400）的 Release 构建零警告/零错误。[类别示例](../../samples/mir-families.rs) 和投影示例的 CoreCLR 与 Windows x64 Native AOT 输出均匹配 rustc 1.98.0，并通过 ILVerify 10.0.11，没有抑制诊断。GC 拥有的引用解决此前的引用返回诊断。证据位于 `artifacts/p1-06-final-session`；Native AOT 临时目录已回收。这些结果关闭 P1-06 自身叶子；当前 P1-07 及扩展差分/平台证据另有最新报告，候选 SHA 门禁仍独立。 |
-| E9 | [P1-08 当前实现与精确报告链接](../p1-08-implementation_zh.md)：Release 零警告/零错误、894/894 回归、28 差分用例 = 26 项 rustc 一致 + 两项冻结契约差异、原始 PE ILVerify 28/28 + callable 2/2。Windows 与 Ubuntu WSL 均通过 Native AOT 28/28 与 callable 7/7。Windows SDK 10.0.401、Ubuntu SDK 10.0.112、ILVerify 10.0.11；证据位于 `artifacts/p1-08-session` 与 `artifacts/p1-drop`。独立审计：227 个记录的直接启动均无同身份存活进程，68 个可丢弃目录不存在；不能独立重建完整历史后代链。自动审批以 `blocked by policy` 拒绝删除后，九个历史 `tmp` 对象保留；完整工作区临时对象清理为 false。P1-09 与候选 SHA 门禁仍开放。 |
+| E9 | [P1-08 当前实现与精确报告链接](../p1-08-implementation_zh.md)：Release 零警告/零错误、894/894 回归、28 差分用例 = 26 项 rustc 一致 + 两项冻结契约差异、原始 PE ILVerify 28/28 + callable 2/2。Windows 与 Ubuntu WSL 均通过 Native AOT 28/28 与 callable 7/7。Windows SDK 10.0.401、Ubuntu SDK 10.0.112、ILVerify 10.0.11；证据位于 `artifacts/p1-08-session` 与 `artifacts/p1-drop`。独立审计：227 个记录的直接启动均无同身份存活进程，68 个可丢弃目录不存在；不能独立重建完整历史后代链。自动审批以 `blocked by policy` 拒绝删除后，九个历史 `tmp` 对象保留；完整工作区临时对象清理为 false。P1-09 已在本地 ✅ 已完成；候选 SHA 门禁仍开放。 |
 
 E8 日志包括 `build-final.stdout.log`、`harness-final.stdout.log`、
 `regression-v3-final.json`、`differential-v2-final.json` 及两个示例的 CoreCLR、
@@ -160,17 +160,16 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 
 | ID | 状态 | 交付物 / 文件所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| P1-09.01 | 🚧 进行中 | 每个可执行类别统一 CLR LIR 发射路线 | P1-06.13 | 所有固定可执行类别走已验证 CLR LIR/PE；未支持 MIR 不回退到 primitive 或模拟执行。 | 计划编译器路径覆盖及输出前拒绝夹具 |
-| P1-09.02 | ✅ 已完成 | 标量导入签名与真实外部调用 | P1-05 | 标量 producer/consumer 经 AssemblyRef/TypeRef/MemberRef 执行；MethodDef static/可见性/签名漂移被拒绝。 | `RustSharpMetadataTests.CrossAssemblyCallAsync`; E6 |
-| P1-09.03 | 🚧 进行中 | 版本化导入所有权/生命周期/panic 模式 | P1-06.01, P1-07.01 | 参数位置、move/copy/borrow 效果、返回来源及 panic 策略往返不去重，不接受未知函数。 | `P1SourcePackageContractTests` 覆盖显式标量 schema、按位置 Copy/返回条款、缺失/未知 JSON 成员及歧义特化别名；源码引用/聚合契约仍开放。 |
-| P1-09.04 | 🚧 进行中 | 导入聚合布局与名义标识 | P1-09.03, P1-06.13 | 源码导入跨 producer 重建声明布局/标识；拒绝同名异布局及未支持泛型形状。 | `P1SourcePackageContractTests` 覆盖陈旧 producer 布局及源码聚合导入拒绝；成功源码包重建仍开放 |
-| P1-09.05 | 🚧 进行中 | 源码引用/切片签名与生命周期检查 | P1-09.04, P1-07.07, P1-06.08 | 源码 consumer HIR/类型分析理解支持的引用/切片/聚合签名；非法返回来源/借用效果被拒绝。 | 已有手工 LIR byref 测试；计划源码导入签名语料 |
-| P1-09.06 | 🚧 进行中 | 导入调用经过所有权感知的 MIR/LIR | P1-09.05, P1-08.11, P1-09.01 | 源码跨包调用按检查后的契约转移/复制/借用及展开；真实 MemberRef 签名一致。 | 计划导入调用的 MIR/所有权/PE 夹具 |
-| P1-09.07 | 🚧 进行中 | producer/consumer 元数据对账与限制 | P1-09.04, P1-09.05 | 对账 MethodDef/MemberRef 类型、程序集、可见性、static 和全部条款；拒绝畸形、重复、超限或缺失证据。 | `P1SourcePackageContractTests` 覆盖陈旧布局、畸形/缺失 schema 字段及精确 CLR 名与源码别名对账；完整聚合/引用及限制语料仍开放。 |
-| P1-09.08 | 🚧 进行中 | 确定性跨包制品 | P1-09.06, P1-09.07 | 相同固定源码/包输入产生相同有序元数据及 PE/PDB 字节；不能复用陈旧 producer 证据。 | 计划独立构建哈希及陈旧程序集负例 |
-| P1-09.09 | ⏳ 计划中 | 源码 producer/consumer CoreCLR 集成 | P1-09.08 | 分别编译真实源码包并执行聚合/引用/所有权/Drop 调用；仅手工 LIR 不能满足本行。 | 计划源码包夹具、输出/跟踪及包哈希 |
-| P1-09.10 | ⏳ 计划中 | 跨包 ILVerify 与双原生 x64 AOT 平台 | P1-09.09, P1-10.06 | 相同固定源码包通过 ILVerify，并在 Windows/Linux 原生 x64 AOT 执行，跟踪与 CoreCLR 一致且警告/跳过为零。 | 计划版本化 P1 平台套件中的包平台条目 |
-
+| P1-09.01 | ✅ 已完成 | 每个可执行类别统一 CLR LIR 发射路线 | P1-06.13 | 固定可执行类别经所有权检查后的 MIR 和经过验证的 CLR LIR/PE 降低；未支持 MIR 在输出前拒绝，经过验证的泛型特化继续走验证过的 CLR LIR 路线。 | `PrimitiveMirRouteAsync`、`PrimitiveMirRejectionAsync`、确定性 MIR/资源边界测试；closure-9 Release 构建及关键回归 84/84。 |
+| P1-09.02 | ✅ 已完成 | 标量导入签名与真实外部调用 | P1-05 | 标量 producer/consumer 通过真实 AssemblyRef/TypeRef/MemberRef 元数据执行；MethodDef 的 static、可见性和签名漂移被拒绝。 | `CrossAssemblyCallAsync`、固定标量平台用例及真实 MethodDef 漂移负例；源码包契约/执行测试。 |
+| P1-09.03 | ✅ 已完成 | 版本化导入所有权/生命周期/panic 模式 | P1-06.01, P1-07.01 | 按位置的源码参数类型、Copy/Move/Borrow 效果、返回来源、活动 enum payload 及 panic 策略往返时不去重，也不接受未知函数。 | `rustsharp-source-call-v1` 契约测试覆盖畸形、缺失、未知、重复、歧义条款及复合/引用来源。 |
+| P1-09.04 | ✅ 已完成 | 导入聚合布局与名义标识 | P1-09.03, P1-06.13 | 源码导入重建 struct/enum/tuple/unit 布局及标识；private、generic、同名异布局及错误 owner 形状被拒绝，三包重导出也保留所有者。 | 源码类型/元数据测试及三包 owner 套件覆盖名义/结构 owner 证明、构造器、wrapper 重导出和陈旧/冲突依赖。 |
+| P1-09.05 | ✅ 已完成 | 源码引用/切片签名与生命周期检查 | P1-09.04, P1-07.07, P1-06.08 | 源码 consumer 保留共享/可变引用、切片、复合/投影/static/enum 来源及生命周期条款；复用、冲突、static 和悬垂来源负例被拒绝。 | `P1SourceOriginTests`、引用/切片执行用例及经过验证的 MIR provenance 检查。 |
+| P1-09.06 | ✅ 已完成 | 导入调用经过所有权感知的 MIR/LIR | P1-09.05, P1-08.11, P1-09.01 | 源码跨包调用按检查后的契约转移、复制、借用和展开；真实 MemberRef 一致；聚合部分移动、caller 清理、abort 和双 panic 行为得以保留。 | `P1SourcePackageExecutionTests`、生成的 producer Drop 辅助方法、展开/abort/双 panic/部分移动用例及真实 PE 元数据检查。 |
+| P1-09.07 | ✅ 已完成 | producer/consumer 元数据对账与限制 | P1-09.04, P1-09.05 | 对账 MethodDef/MemberRef 类型、程序集、可见性、static、owner、源码哈希及全部条款；畸形、重复、超限、陈旧和缺失证据被拒绝。 | `P1SourcePackageContractTests`、`P1SourceTypeMetadataTests`、真实 PE 篡改负例，包括 IL/JSON 不变但 MemberRef 和 `#US` 漂移。 |
+| P1-09.08 | ✅ 已完成 | 确定性跨包制品 | P1-09.06, P1-09.07 | 等价的固定源码/包输入产生相同的有序元数据及 PE/PDB 字节；陈旧方法体、引用、用户字符串和 owner 输入不能复用。 | `ReorderedMetadataReferencesAreDeterministicAsync`；两平台十九项报告均保留并核对每个包的两次独立构建制品相同。 |
+| P1-09.09 | ✅ 已完成 | 源码 producer/consumer CoreCLR 集成 | P1-09.08 | 十九个固定源码包用例分别编译并经 CoreCLR 执行，确切 stdout 与 success/unwind/abort/double-panic 分类结果一致。 | [P1-09 实现清单](../p1-09-implementation_zh.md)；closure-9 Windows 与 Ubuntu 报告通过 19/19。 |
+| P1-09.10 | ✅ 已完成 | 跨包 ILVerify 与双原生 x64 AOT 平台 | P1-09.09, P1-10.06 | 同一固定源码包在 Windows/Linux 通过新生成原始 PE ILVerify 和原生 x64 AOT；跟踪与 CoreCLR 等价，警告/失败/阻塞/未执行为零，截止时间和清理均有界通过。 | [Windows 报告](../../artifacts/p1-source-package/p1-09-win-x64.json)与[Ubuntu 报告](../../artifacts/p1-source-package/p1-09-linux-x64.json)：各通过 19/19 用例及 39/39 原始 PE。 |
 <a id="p1-10"></a>
 
 ## P1-10: 版本化套件与证据聚合
@@ -203,9 +202,9 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 
 ## 下一批可交付工作及并行边界
 
-1. P1-06 已凭冻结范围账本及 E8 实现证据为 ✅ 已完成。P1-07 已 ✅ 已完成：12 个所有权叶子、4 个诊断黄金用例及 20 个借用闭环全部通过。P1-08 的十四个叶子及 E9 生成程序/后端证据均为 ✅ 已完成。P1-10.01 至 P1-10.07 的本地扩展证据也已 ✅ 已完成：6 个 Drop 用例及此前 12 个平台占位用例均有语义源码并通过有界报告。候选 SHA 聚合及其余 P1 门禁仍属于 P1-10.08 至 P1-GATE。
+1. P1-06 已凭冻结范围账本及 E8 实现证据为 ✅ 已完成。P1-07 已 ✅ 已完成：12 个所有权叶子、4 个诊断黄金用例及 20 个借用闭环全部通过。P1-08 的十四个叶子及 E9 生成程序/后端证据均为 ✅ 已完成。P1-09 的十九项源码包证据已 ✅ 已完成。P1-10.01 至 P1-10.07 的本地扩展证据也已 ✅ 已完成；候选 SHA 聚合及其余 P1 门禁仍属于 P1-10.08 至 P1-GATE。
 2. P1-06.04/.05/.08/.09 提供 place/引用/切片前置。P1-07 的所有权与 P1-08 的本地析构/panic 交付均为 ✅ 已完成。后续修改同一 `SafeCoreMirLowering.cs` 或 validator 时必须串行集成，不能让不同智能体同时写该文件。
-3. 元数据线程可先推进 P1-09.03/.04；语料/运行器线程可独立推进 P1-10.03/.05/.06/.07。源码调用集成 P1-09.06 必须等引用和 panic 契约到位。
-4. 最后交付源码导入调用契约、真实跨包平台用例及 P1-10.08～.10；按 P1-GATE.01～.06 逐项对账。已有库探针和手工 LIR 测试继续保留。
+3. P1-09.01 至 .10 基于当前本地源码包证据均为 ✅ 已完成。P1-10.08 至 .10 及候选 SHA 门禁仍为独立工作。
+4. 在 P1-10.08～.10 完成后，于推送候选 SHA 对账 P1-GATE.01～.06；已有库探针和手工 LIR 测试继续保留。
 
 表中父 ID 表示该组全部必需实施叶子完成；P1-GATE 表示六个门禁叶子的合取。单个叶子不依赖自己的父任务或 P1-GATE。与父表粗粒度依赖相比，P1-07 的起点精确为 P1-06.04/.05，P1-08 的起点精确为已固定 place/Drop 契约，因此可以实现并行开发而不制造循环等待。

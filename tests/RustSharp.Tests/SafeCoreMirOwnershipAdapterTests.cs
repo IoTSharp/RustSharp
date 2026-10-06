@@ -1,5 +1,7 @@
 using RustSharp.Semantics;
 using RustSharp.Syntax;
+using RustSharp.CodeGen.IL;
+using RustSharp.Compiler;
 
 namespace RustSharp.Tests;
 
@@ -15,6 +17,12 @@ internal static class SafeCoreMirOwnershipAdapterTests
         new("typed MIR ownership adapter accepts finite Copy tuple aggregates", CopyTupleAsync),
         new("typed MIR ownership adapter lowers non-Copy place reads as moves", NonCopyMoveAsync),
         new("typed MIR ownership adapter rejects a second non-Copy source use", NonCopyUseAfterMoveAsync),
+        new("P1-09 typed MIR non-Copy Field retains projected move and sibling Drop", NonCopyFieldMoveAsync),
+        new("P1-09 typed MIR non-Copy Field rejects a second projected move", NonCopyFieldUseAfterMoveAsync),
+        new("P1-09 typed MIR non-Copy Field executes distinct resource Drop exactly once", NonCopyFieldRuntimeAsync),
+        new("P1-09 aggregate parameter tail and early returns Drop only the unmoved sibling", AggregateParameterReturnsAsync),
+        new("P1-09 aggregate parameter unwind Drops moved destination and sibling once", AggregateParameterUnwindAsync),
+        new("P1-09 typed MIR Field moves mutable loans and preserves shared reference copies", FieldReferenceKindsAsync),
         new("ownership preserves a shared-reference self-copy loan", SelfReferenceCopyAsync),
         new("typed MIR ownership adapter preserves projected MIR places", ProjectedPlaceAsync),
         new("typed MIR ownership adapter preserves projected borrow provenance", ProjectedBorrowAsync),
@@ -317,6 +325,224 @@ internal static class SafeCoreMirOwnershipAdapterTests
         AssertEx.True(result.Paths.Single().Trace.Any(trace => trace.Contains("(no-op)", StringComparison.Ordinal)),
             "A shared-reference self-copy must preserve its active loan as a no-op.");
         return Task.CompletedTask;
+    }
+
+    private static Task NonCopyFieldMoveAsync()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        (SafeCoreMirProgram original, SafeCoreMirProgram projected, string functionName, int ownerId) =
+            NonCopyFieldProgram(duplicateRead: false, deadline.Token);
+        SafeCoreMirOwnershipResult baseline = SafeCoreMirOwnershipAdapter.Analyze(original,
+            new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = deadline.Token });
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(projected,
+            new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = deadline.Token });
+        AssertEx.True(baseline.IsSuccessful && result.IsSuccessful,
+            string.Join(Environment.NewLine, baseline.Diagnostics.Concat(result.Diagnostics)));
+        SafeCoreOwnershipInstruction[] moves = result.Program!.Functions.Single(function => function.Name == functionName)
+            .Blocks.SelectMany(block => block.Instructions).Where(instruction => instruction.Kind == SafeCoreOwnershipInstructionKind.Move).ToArray();
+        AssertEx.True(moves.Any(instruction => instruction.Place is { } place && place.LocalId == ownerId &&
+            place.Projections.SequenceEqual([SafeCoreOwnershipProjection.TupleIndex(0)])),
+            "A non-Copy Field read must move the exact tuple projection into its destination.");
+        SafeCoreOwnershipPath path = result.Ownership!.Paths.Single(value => value.FunctionName == functionName);
+        SafeCoreOwnershipPath baselinePath = baseline.Ownership!.Paths.Single(value => value.FunctionName == functionName);
+        AssertEx.Equal(string.Join('|', baselinePath.DropOrder), string.Join('|', path.DropOrder));
+        AssertEx.Equal(2, path.DropOrder.Length);
+        AssertEx.True(path.DropOrder.Contains("pair.tuple[1]") && !path.DropOrder.Contains("pair.tuple[0]"),
+            "The unmoved sibling must Drop once, while the moved first field belongs only to its destination.");
+        SafeCoreMirCleanupResult cleanup = SafeCoreMirCleanupLowering.Lower(projected, result,
+            new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = deadline.Token });
+        AssertEx.True(cleanup.IsSuccessful, string.Join(Environment.NewLine, cleanup.Diagnostics));
+        AssertEx.Equal(2, cleanup.Functions.Single(function => function.Name == functionName).Paths.Single().Actions.Count(
+            action => action.Kind == SafeCoreMirCleanupActionKind.Drop));
+        return Task.CompletedTask;
+    }
+
+    private static Task NonCopyFieldUseAfterMoveAsync()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var (_, projected, _, _) = NonCopyFieldProgram(duplicateRead: true, deadline.Token);
+        SafeCoreMirOwnershipResult result = SafeCoreMirOwnershipAdapter.Analyze(projected,
+            new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = deadline.Token });
+        AssertEx.False(result.IsSuccessful, "A second ownership-bearing Field read must not reuse the moved tuple projection.");
+        AssertEx.True(result.Diagnostics.Any(diagnostic => diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.UseAfterMove),
+            string.Join(Environment.NewLine, result.Diagnostics));
+        return Task.CompletedTask;
+    }
+
+    private static (SafeCoreMirProgram Original, SafeCoreMirProgram Projected, string FunctionName, int OwnerId)
+        NonCopyFieldProgram(bool duplicateRead, CancellationToken cancellationToken, bool hasPayload = false, string? sourceOverride = null)
+    {
+        string source = sourceOverride ?? (hasPayload ? FieldPayloadSource : "struct Marker; impl Drop for Marker { fn drop(&mut self) {} } " +
+            "fn project(pair: (Marker, Marker)) { let first = pair.0; } fn main() {}");
+        SafeCoreMirPipelineResult proof = SafeCoreMirPipeline.Analyze(source, "noncopy-field-adapter.rs",
+            new() { EnableP1Extensions = true, RequireOwnershipEvidence = true, RequireCleanupEvidence = true,
+                Timeout = TimeSpan.FromSeconds(5), CancellationToken = cancellationToken });
+        AssertEx.True(proof.IsSuccessful, string.Join(Environment.NewLine, proof.Diagnostics));
+        SafeCoreMirProgram original = proof.Mir!.Program!;
+        AssertEx.True(original.Functions.Count <= 4, "The Field regression has a fixed function inspection budget.");
+        SafeCoreMirFunction function = original.Functions.Single(value => value.Name.EndsWith("::project", StringComparison.Ordinal) ||
+            value.Name.EndsWith("::project#value", StringComparison.Ordinal));
+        SafeCoreMirLocal owner = function.Locals.Single(local => local.Kind == SafeCoreMirLocalKind.Parameter);
+        AssertEx.True(function.Blocks.Count <= 64 && function.Blocks.All(block => block.Statements.Count <= 128),
+            "The Field regression has fixed block and statement inspection budgets.");
+        int replacements = 0;
+        SafeCoreMirBlock[] blocks = function.Blocks.Select(block =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var statements = new List<SafeCoreMirStatement>();
+            foreach (SafeCoreMirStatement statement in block.Statements)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (statement.Value.Kind != SafeCoreMirRvalueKind.Use || statement.Value.Operands.Count != 1 ||
+                    statement.Value.Operands[0].Place is not { } place || place.LocalId != owner.Id ||
+                    !place.Projections.SequenceEqual([SafeCoreMirProjection.TupleIndex(0)]))
+                {
+                    statements.Add(statement);
+                    continue;
+                }
+                replacements++;
+                SafeCoreMirStatement field = statement with { Value = SafeCoreMirRvalue.Field(
+                    SafeCoreMirOperand.Local(owner.Id, owner.Type, statement.Value.Operands[0].Source), 0,
+                    statement.Value.Type, statement.Value.Source) };
+                statements.Add(field);
+                if (duplicateRead) statements.Add(field);
+            }
+            return new SafeCoreMirBlock(block.Id, statements, block.Terminator, block.Source, cancellationToken);
+        }).ToArray();
+        AssertEx.Equal(1, replacements);
+        SafeCoreMirFunction changed = new(function.Id, function.Name, function.ReturnType, function.Locals, blocks,
+            function.EntryBlockId, function.Source, function.IsPublic, cancellationToken)
+        { ReturnsStaticReference = function.ReturnsStaticReference, IsDestructor = function.IsDestructor };
+        SafeCoreMirProgram projected = new(original.Functions.Select(value => value.Id == function.Id ? changed : value).ToArray(),
+            original.AdtLayouts, original.ExternalFunctions, cancellationToken)
+        { ImportedStructuralTypes = original.ImportedStructuralTypes };
+        return (original, projected, function.Name, owner.Id);
+    }
+
+    private const string FieldPayloadSource = "struct Marker { value: i32 } " +
+        "impl Drop for Marker { fn drop(&mut self) { println!(\"{}\", self.value); } } " +
+        "fn project(pair: (Marker, Marker)) { let first = pair.0; println!(\"body\"); } " +
+        "fn main() { project((Marker { value: 1 }, Marker { value: 2 })); }";
+
+    private const string ParameterResource = "struct Resource { value: i32 } " +
+        "impl Drop for Resource { fn drop(&mut self) { println!(\"{}\", self.value); } } ";
+
+    private static Task FieldReferenceKindsAsync()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+        foreach (bool mutable in new[] { false, true })
+        {
+            deadline.Token.ThrowIfCancellationRequested();
+            string source = "fn project(pair: (" + (mutable ? "&mut i32" : "&i32") + ", &i32)) { let first = pair.0; " +
+                "println!(\"{}\", *first); println!(\"{}\", *pair.1); } fn main() {}";
+            var (_, projected, functionName, ownerId) = NonCopyFieldProgram(false, deadline.Token, sourceOverride: source);
+            SafeCoreMirOwnershipResult once = SafeCoreMirOwnershipAdapter.Analyze(projected,
+                new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = deadline.Token });
+            AssertEx.True(once.IsSuccessful, string.Join(Environment.NewLine, once.Diagnostics));
+            SafeCoreOwnershipFunction function = once.Program!.Functions.Single(value => value.Name == functionName);
+            SafeCoreOwnershipLocal slot = function.Locals.Single(local => local.StoragePlace is { } place && place.LocalId == ownerId &&
+                place.Projections.SequenceEqual([SafeCoreOwnershipProjection.TupleIndex(0)]));
+            AssertEx.Equal(mutable, function.Blocks.SelectMany(block => block.Instructions).Any(instruction =>
+                instruction.Kind == SafeCoreOwnershipInstructionKind.Move && instruction.LocalId == slot.Id));
+            var (_, repeated, _, _) = NonCopyFieldProgram(true, deadline.Token, sourceOverride: source);
+            SafeCoreMirOwnershipResult twice = SafeCoreMirOwnershipAdapter.Analyze(repeated,
+                new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = deadline.Token });
+            if (mutable) AssertEx.True(!twice.IsSuccessful && twice.Diagnostics.Any(diagnostic =>
+                diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.UseAfterMove), string.Join(Environment.NewLine, twice.Diagnostics));
+            else AssertEx.True(twice.IsSuccessful, "The same shared reference Field may be copied again: " + string.Join(Environment.NewLine, twice.Diagnostics));
+        }
+        return Task.CompletedTask;
+    }
+
+    private static async Task NonCopyFieldRuntimeAsync()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        var (_, projected, _, _) = NonCopyFieldProgram(false, deadline.Token, hasPayload: true);
+        SafeCoreMirOwnershipResult ownership = SafeCoreMirOwnershipAdapter.Analyze(projected,
+            new() { Timeout = TimeSpan.FromSeconds(5), CancellationToken = deadline.Token });
+        AssertEx.True(ownership.IsSuccessful, string.Join(Environment.NewLine, ownership.Diagnostics));
+        SafeCoreClrResult lowered = SafeCoreMirClrLowering.Lower(projected, deadline.Token);
+        AssertEx.True(lowered.IsSuccessful, string.Join(Environment.NewLine, lowered.Diagnostics));
+        GeneratedAssembly assembly = ClrLirAssemblyEmitter.EmitProgram(lowered, "NonCopyFieldRuntime", FieldPayloadSource,
+            "noncopy-field-adapter.rs", "NonCopyFieldRuntime.pdb", cancellationToken: deadline.Token);
+        string directory = NewFieldDirectory();
+        try
+        {
+            string output = Path.Combine(directory, "NonCopyFieldRuntime.dll");
+            File.WriteAllBytes(output, assembly.PeImage);
+            File.WriteAllText(Path.ChangeExtension(output, ".runtimeconfig.json"), assembly.RuntimeConfigJson);
+            if (assembly.PdbImage is { } pdb) File.WriteAllBytes(Path.ChangeExtension(output, ".pdb"), pdb);
+            if (assembly.RequiresMirRuntime) File.Copy(Path.Combine(AppContext.BaseDirectory, "RustSharp.Runtime.dll"),
+                Path.Combine(directory, "RustSharp.Runtime.dll"));
+            await RunFieldAssemblyAsync(output, directory, "body\n1\n2\n", false, deadline.Token).ConfigureAwait(false);
+        }
+        finally { DeleteFieldDirectory(directory); }
+    }
+
+    private static async Task AggregateParameterReturnsAsync()
+    {
+        string[] bodies = ["pair.0", "let first = pair.0; return first;"];
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(35));
+        foreach (string body in bodies)
+        {
+            deadline.Token.ThrowIfCancellationRequested();
+            string source = ParameterResource + "fn project(pair: (Resource, Resource)) -> Resource { " + body + " } " +
+                "fn main() { let first = project((Resource { value: 1 }, Resource { value: 2 })); println!(\"returned\"); }";
+            await CompileFieldSourceAsync(source, "2\nreturned\n1\n", false, deadline.Token).ConfigureAwait(false);
+        }
+    }
+
+    private static Task AggregateParameterUnwindAsync() => CompileFieldSourceAsync(ParameterResource +
+        "fn project(pair: (Resource, Resource)) { let first = pair.0; let maximum = 2147483647; let failed = maximum + 1; } " +
+        "fn main() { println!(\"start\"); project((Resource { value: 1 }, Resource { value: 2 })); }",
+        "start\n1\n2\n", true, CancellationToken.None);
+
+    private static async Task CompileFieldSourceAsync(string source, string expected, bool unwinds, CancellationToken cancellationToken)
+    {
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(TimeSpan.FromSeconds(20));
+        string directory = NewFieldDirectory();
+        try
+        {
+            string output = Path.Combine(directory, "ParameterDropRuntime.dll");
+            CompilationResult compiled = CompilerDriver.Compile(source, Path.Combine(directory, "program.rs"), output,
+                "ParameterDropRuntime", CompilationProfile.SafeCoreMirV2, deadline.Token);
+            AssertEx.True(compiled.Success, string.Join(Environment.NewLine, compiled.Diagnostics));
+            await RunFieldAssemblyAsync(output, directory, expected, unwinds, deadline.Token).ConfigureAwait(false);
+        }
+        finally { DeleteFieldDirectory(directory); }
+    }
+
+    private static async Task RunFieldAssemblyAsync(string output, string directory, string expected, bool unwinds,
+        CancellationToken cancellationToken)
+    {
+        BoundedProcessResult run = await new BoundedProcessRunner().RunAsync(new("dotnet", [output], directory,
+            TimeSpan.FromSeconds(5), started => Console.WriteLine("P1-09 parameter/Field Drop runtime PID=" + started.ProcessId +
+                "; parent=" + started.ParentProcessId + "; started=" + started.StartedAt.ToString("O") + "; command=" + started.CommandLine)),
+            cancellationToken).ConfigureAwait(false);
+        AssertEx.True(run.Termination == BoundedProcessTermination.Exited &&
+            (unwinds ? run.ExitCode is not null and not 0 : run.ExitCode == 0) &&
+            !run.OutputTruncated && !run.OutputReadTimedOut && !run.ProcessTreeCleanupIncomplete, run.StandardError);
+        if (unwinds) AssertEx.True(run.StandardError.Contains("OverflowException", StringComparison.Ordinal) &&
+            !run.StandardError.Contains("RustSharp panic abort:", StringComparison.Ordinal), run.StandardError);
+        AssertEx.Equal(expected, run.StandardOutput.Replace("\r\n", "\n", StringComparison.Ordinal));
+    }
+
+    private static string NewFieldDirectory()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "rustsharp-p1-field-drop-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        return directory;
+    }
+
+    private static void DeleteFieldDirectory(string directory)
+    {
+        string resolved = Path.GetFullPath(directory);
+        AssertEx.True(Path.GetDirectoryName(resolved) == Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.GetTempPath())) &&
+            Path.GetFileName(resolved).StartsWith("rustsharp-p1-field-drop-", StringComparison.Ordinal),
+            "Cleanup must target the exact task-owned Field Drop fixture directory.");
+        if (Directory.Exists(resolved)) Directory.Delete(resolved, recursive: true);
+        AssertEx.False(Directory.Exists(resolved), "The Field Drop fixture must reclaim its task-owned directory.");
     }
 
     private static Task ProjectedPlaceAsync()

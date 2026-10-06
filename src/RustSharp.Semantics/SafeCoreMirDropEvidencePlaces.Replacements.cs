@@ -29,7 +29,7 @@ internal static partial class SafeCoreMirDropEvidencePlaces
         SafeCoreMirTerminator call = block.Terminator;
         if (call.Kind != SafeCoreMirTerminatorKind.Call || call.DropLocalId is not null || call.DestinationLocalId is not null ||
             call.Operand is not { Kind: SafeCoreMirOperandKind.Function } target ||
-            target.Id < 0 || target.Id >= mir.Functions.Count || !mir.Functions[target.Id].IsDestructor ||
+            !mir.IsDestructorFunction(target.Id) ||
             call.Arguments.Count != 1 || call.Arguments[0] is not { Kind: SafeCoreMirOperandKind.Local } receiver ||
             receiver.Id < 0 || receiver.Id >= function.Locals.Count ||
             function.Locals[receiver.Id].Kind != SafeCoreMirLocalKind.Temporary ||

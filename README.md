@@ -83,15 +83,14 @@ subset and fixed 32-case rustc corpus, including eight execution comparisons
 and five explicit profile-boundary rejections.
 The recorded 2026-09-19 profile gate passes 350/350 regressions and 32/32 fixed
 cases, with ILVerify plus Windows x64 Native AOT for both standalone and local
-Cargo package samples. After the P1-05 merge, the executable harness registers
+Cargo package samples. In the recorded run after the P1-05 merge, the executable harness registers
 and passes 377/377 tests; this supplemental run used the installed 10.0.401 SDK
 through explicit MSBuild and does not replace the recorded 10.0.400 AOT
 evidence.
 
 P1-06 is ✅ Complete for its frozen typed-MIR contract; P1-07 is ✅ Complete for
 the source ownership and lifetime scope; P1-08 is ✅ Complete for generated
-Drop/panic. P1-09, P1-10 and the P1
-stage remain 🚧 In progress. The opt-in
+Drop/panic. P1-09 is ✅ Complete on current local evidence; P1-10 and the P1 stage remain 🚧 In progress. The opt-in
 `safe-core-mir-p1-v2` profile adds structural-`Copy` repeated arrays, named and
 enum layouts, nested references and reference-bearing aggregates, checked constants
 and promotion, patterns and captured closures to source-mapped HIR → typed MIR → CLR LIR emission. The v1
@@ -111,7 +110,7 @@ records checked destructor receivers, typed and shared drop flags, aggregate and
 temporary cleanup, unwind/abort strategies and the reusable panic interface.
 Its fixed acceptance inventories contain 28 source differential cases with two
 explicit normal-cleanup contract differences, plus seven direct-call interface
-cases over two original PE artifacts on CoreCLR and Native AOT. The final Release
+cases over two original PE artifacts on CoreCLR and Native AOT. The recorded P1-08 Release
 build has zero warnings/errors and 894/894 regressions pass. The differential
 records 26 rustc matches and two frozen contract differences; ILVerify passes
 30/30 original PEs. Windows and Ubuntu WSL each pass Native AOT 28/28 and callable
@@ -138,8 +137,7 @@ harness passes 784/784 with zero failures/skips using the installed SDK 10.0.401
 the repository pin remains 10.0.400. Logs are retained under
 `artifacts/p1-next-session`. The [follow-up audit](docs/p1-evidence-audit.md)
 records ownership diagnostics, Drop closure, source package metadata and
-platform evidence binding. P1-09 source imported contracts, the remaining P1-10 evidence and candidate-SHA
-aggregate, and P1-GATE publication work remain 🚧 In progress.
+platform evidence binding. P1-09 source-package contracts are ✅ Complete on current local evidence: closure-9 Release 0/0 warnings/errors, focused 84/84 and full 964/964; the frozen manifest (`BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`) passes 19/19 with 39/39 original PEs on Windows and Ubuntu WSL Native AOT/CoreCLR. The separate P1-10 candidate-SHA aggregate and P1-GATE publication work remain 🚧 In progress.
 
 The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
 skips. The historical `safe-core-regression-v2` report passes 24/24 with one

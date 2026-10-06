@@ -165,6 +165,13 @@ internal static partial class SafeCoreMirDropEvidencePlaces
                 function.Locals[0].Type.Kind == SafeCoreSemanticTypeKind.Reference &&
                 function.Locals[0].Type.ElementType == type) return true;
         }
+        foreach (SafeCoreMirExternalFunction function in mir.ExternalFunctions)
+        {
+            Step(clock, timeout, maximumOperations, ref operations, cancellationToken);
+            if (function.IsDestructor && function.Signature.ParameterTypes.Count == 1 &&
+                function.Signature.ParameterTypes[0].Kind == SafeCoreSemanticTypeKind.Reference &&
+                function.Signature.ParameterTypes[0].ElementType == type) return true;
+        }
         if (type.Kind == SafeCoreSemanticTypeKind.Adt)
         {
             foreach (SafeCoreMirAdtLayout layout in mir.AdtLayouts)

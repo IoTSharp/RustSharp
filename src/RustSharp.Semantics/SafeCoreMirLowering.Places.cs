@@ -109,6 +109,17 @@ public static partial class SafeCoreMirLowering
 
         private void CollectAdtLayouts()
         {
+            foreach (SafeCoreMirAdtLayout imported in input.ImportedLayouts)
+            {
+                Step(input.Hir.Root!, 0);
+                if (!_adtLayouts.TryAdd(imported.Type.Name!, imported)) Invalid(input.Hir.Root!);
+                if (imported.IsUnitStruct) _unitAdts.Add(imported.Type.Name!);
+                for (int variantIndex = 0; variantIndex < imported.Variants.Count; variantIndex++)
+                {
+                    Step(input.Hir.Root!, 0);
+                    if (!_enumVariants.TryAdd(imported.Variants[variantIndex].Name, (imported, variantIndex))) Invalid(input.Hir.Root!);
+                }
+            }
             for (int index = 0; index < input.Hir.Nodes.Count; index++)
             {
                 SafeCoreHirNode node = input.Hir.Nodes[index];
@@ -127,7 +138,8 @@ public static partial class SafeCoreMirLowering
                     fields.Add(new(name, Type(field), Source(field)) { RequiresStaticLifetime = Type(field).Kind == K.Reference });
                 }
                 if (type.Kind != K.Adt || type.Name is null ||
-                    !_adtLayouts.TryAdd(type.Name, new(type, fields, Source(node), cancellationToken: cancellation))) Invalid(node);
+                    !_adtLayouts.TryAdd(type.Name, new(type, fields, Source(node), cancellationToken: cancellation)
+                    { IsUnitStruct = node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct) })) Invalid(node);
                 if (node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct)) _unitAdts.Add(type.Name);
             }
         }

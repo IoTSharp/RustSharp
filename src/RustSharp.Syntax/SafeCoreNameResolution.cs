@@ -175,6 +175,7 @@ public static class SafeCoreNameResolution
         private readonly Dictionary<SymbolBuilder, SafeCoreTypeAliasSyntax> _aliasDefinitions = new(ReferenceComparer<SymbolBuilder>.Instance);
         private readonly HashSet<SymbolBuilder> _aliasMemberStack = new(ReferenceComparer<SymbolBuilder>.Instance);
         private readonly List<ScopeBuilder> _scopes = [];
+        private readonly Dictionary<ScopeBuilder, SafeCoreCrate> _crateScopeOwners = [];
         private readonly List<SymbolBuilder> _symbols = [];
         private readonly List<SymbolBuilder> _imports = [];
         private readonly List<GlobImport> _globImports = [];
@@ -355,6 +356,8 @@ public static class SafeCoreNameResolution
             VisibilityScopePath = symbol.VisibilityScopePath,
             IsAnonymousImport = symbol.IsAnonymousImport,
             ExternalFunction = symbol.ExternalFunction ?? symbol.ResolvedImportTarget?.ExternalFunction,
+            ExternalType = symbol.ExternalType ?? symbol.ResolvedImportTarget?.ExternalType,
+            ExternalEnumVariant = symbol.ExternalEnumVariant ?? symbol.ResolvedImportTarget?.ExternalEnumVariant,
         };
 
         private void AddExternalCrates()
@@ -364,7 +367,8 @@ public static class SafeCoreNameResolution
             // exports; leaving the former untouched preserves package imports
             // and avoids duplicate crate symbols.
             SafeCoreCrate[] externalCrates = _options.Crates
-                .Where(static crate => !crate.Exports.IsDefault && !crate.Exports.IsEmpty)
+                .Where(static crate => !crate.Exports.IsDefault && !crate.Exports.IsEmpty ||
+                    !crate.TypeExports.IsDefault && !crate.TypeExports.IsEmpty)
                 .ToArray();
             if (externalCrates.Length == 0) return;
 
@@ -377,14 +381,25 @@ public static class SafeCoreNameResolution
             // only when a corresponding synthetic/real owner scope exists.
             foreach (SafeCoreCrate crate in _options.Crates)
             {
-                if (crate.ScopePath == "crate") continue;
-                ScopeBuilder? scope = FindScope(crate.ScopePath);
+                if (crate.ScopePath == "crate")
+                {
+                    _crateScopeOwners[_root!] = crate;
+                    continue;
+                }
+                bool metadataCrate = !crate.Exports.IsDefaultOrEmpty || !crate.TypeExports.IsDefaultOrEmpty;
+                // Metadata scopes own foreign declarations independently of
+                // identically named source modules in the consumer.
+                ScopeBuilder? scope = metadataCrate ? null : FindScope(crate.ScopePath);
                 if (scope is null)
                 {
                     scope = CreateScope(_root, crate.ScopePath, crate.ScopePath);
                 }
 
-                if (scope is not null) scopes[crate.ScopePath] = scope;
+                if (scope is not null)
+                {
+                    scopes[crate.ScopePath] = scope;
+                    _crateScopeOwners[scope] = crate;
+                }
             }
 
             foreach (SafeCoreCrate crate in _options.Crates)
@@ -414,14 +429,15 @@ public static class SafeCoreNameResolution
 
             foreach (SafeCoreCrate crate in externalCrates)
             {
-                if (!scopes.TryGetValue(crate.ScopePath, out ScopeBuilder? scope) ||
-                    crate.Exports.IsDefault || crate.Exports.IsEmpty) continue;
-                foreach (SafeCoreExternalFunction export in crate.Exports)
+                if (!scopes.TryGetValue(crate.ScopePath, out ScopeBuilder? scope)) continue;
+                foreach (SafeCoreExternalFunction export in crate.Exports.IsDefault ? [] : crate.Exports)
                 {
                     if (!export.IsPublic && export.SourceName.Length == 0) continue;
-                    if (scope.ByName.ContainsKey(CanonicalizeIdentifier(export.SourceName))) continue;
+                    ScopeBuilder? owner = ExportOwner(scope, export.SourceQualifiedName);
+                    if (owner is null) return;
+                    if (owner.ByName.ContainsKey(CanonicalizeIdentifier(export.SourceName))) continue;
                     SymbolBuilder? function = AddSymbol(
-                        scope,
+                        owner,
                         export.SourceName,
                         SafeCoreSymbolKind.Function,
                         SafeCoreSymbolNamespace.Value,
@@ -432,6 +448,69 @@ public static class SafeCoreNameResolution
                         allowShadowing: true);
                     if (function is not null) function.ExternalFunction = export;
                 }
+                foreach (SafeCoreExternalType export in crate.TypeExports.IsDefault ? [] : crate.TypeExports)
+                {
+                    if (!Step(new TextSpan(0, 0))) return;
+                    ScopeBuilder? owner = ExportOwner(scope, export.SourceQualifiedName);
+                    if (owner is null) return;
+                    SymbolBuilder? type = AddSymbol(owner, export.SourceName,
+                        export.Kind == SafeCoreExternalTypeKind.Enum ? SafeCoreSymbolKind.Enum : SafeCoreSymbolKind.Struct,
+                        export.Kind is SafeCoreExternalTypeKind.NamedStruct or SafeCoreExternalTypeKind.Enum
+                            ? SafeCoreSymbolNamespace.Type : SafeCoreSymbolNamespace.Both,
+                        export.IsPublic, new TextSpan(0, 0), isImport: false, targetPath: null, allowShadowing: true);
+                    if (type is null) continue;
+                    type.ExternalType = export;
+                    if (export.Kind != SafeCoreExternalTypeKind.Enum) continue;
+                    ScopeBuilder? itemScope = CreateScope(owner, type.QualifiedName, owner.ModulePath);
+                    if (itemScope is null) return;
+                    type.MemberScope = itemScope;
+                    foreach (SafeCoreExternalVariant variant in export.Layout.Variants.IsDefault ? [] : export.Layout.Variants)
+                    {
+                        if (!Step(new TextSpan(0, 0))) return;
+                        SymbolBuilder? variantSymbol = AddSymbol(itemScope, variant.SourceName, SafeCoreSymbolKind.EnumVariant,
+                            SafeCoreSymbolNamespace.Value, isPublic: true, new TextSpan(0, 0), isImport: false, targetPath: null);
+                        if (variantSymbol is null) continue;
+                        variantSymbol.ExternalEnumVariant = new(export, variant);
+                        variantSymbol.VisibilityScopePath = type.VisibilityScopePath;
+                    }
+                }
+            }
+
+            ScopeBuilder? ExportOwner(ScopeBuilder root, string qualifiedName)
+            {
+                string[] path = qualifiedName.Split("::", StringSplitOptions.None);
+                if (path.Length > _options.MaximumPathSegments || qualifiedName.Length > _options.MaximumPathLength)
+                {
+                    AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.LimitReached,
+                        "The imported source export path exceeds its configured bounds.", new TextSpan(0, 0));
+                    return null;
+                }
+                ScopeBuilder owner = root;
+                for (int index = path[0] == "crate" ? 1 : 0; index < path.Length - 1; index++)
+                {
+                    if (!Step(new TextSpan(0, 0))) return null;
+                    string name = CanonicalizeIdentifier(path[index]);
+                    if (owner.ByName.TryGetValue(name, out List<SymbolBuilder>? existing))
+                    {
+                        SymbolBuilder? module = existing.FirstOrDefault(static symbol => symbol.Kind == SafeCoreSymbolKind.Module);
+                        if (module?.MemberScope is not { } member)
+                        {
+                            AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.DuplicateSymbol,
+                                "An imported source module path conflicts with an existing export.", new TextSpan(0, 0));
+                            return null;
+                        }
+                        owner = member;
+                        continue;
+                    }
+                    SymbolBuilder? declared = AddSymbol(owner, name, SafeCoreSymbolKind.Module, SafeCoreSymbolNamespace.Both,
+                        isPublic: true, new TextSpan(0, 0), isImport: false, targetPath: null);
+                    if (declared is null) return null;
+                    ScopeBuilder? child = CreateScope(owner, declared.QualifiedName, declared.QualifiedName);
+                    if (child is null) return null;
+                    declared.MemberScope = child;
+                    owner = child;
+                }
+                return owner;
             }
         }
 
@@ -2986,13 +3065,13 @@ public static class SafeCoreNameResolution
                 if (scope == FindCrateScope(context)) break;
             }
 
-            SafeCoreCrate? crate = CrateFor(context.Path);
+            SafeCoreCrate? crate = CrateFor(context);
             if ((expectedNamespace is null or SafeCoreSymbolNamespace.Type) &&
                 crate is not null && crate.Dependencies.TryGetValue(segment, out string? target))
             {
-                SymbolBuilder? dependency = _symbols.FirstOrDefault(symbol =>
-                    symbol.Kind == SafeCoreSymbolKind.Module &&
-                    (symbol.QualifiedName == target || symbol.ExternalCrateScopePath == target));
+                SymbolBuilder? dependency = _symbols.FirstOrDefault(symbol => symbol.Kind == SafeCoreSymbolKind.Module &&
+                    symbol.ExternalCrateScopePath == target) ?? _symbols.FirstOrDefault(symbol =>
+                    symbol.Kind == SafeCoreSymbolKind.Module && symbol.QualifiedName == target);
                 if (dependency is not null)
                 {
                     result = new(SafeCoreNameResolutionStatus.Resolved, dependency, [dependency]);
@@ -3036,7 +3115,7 @@ public static class SafeCoreNameResolution
                 if (IsCrateModule(symbol)) continue;
                 // A single-segment import of an extern crate must not resolve itself.
                 if (_activeImports.Contains(symbol) && symbol.TargetPath == canonicalName &&
-                    CrateFor(requester.Path)?.Dependencies.ContainsKey(canonicalName) == true) continue;
+                    CrateFor(requester)?.Dependencies.ContainsKey(canonicalName) == true) continue;
 
                 // Resolve only the requested namespace, so a type dependency
                 // does not create a spurious cycle in the value dependency.
@@ -3134,32 +3213,45 @@ public static class SafeCoreNameResolution
         private bool IsAccessible(SymbolBuilder symbol, ScopeBuilder requester)
         {
             if (IsCrateModule(symbol)) return false;
-            if (symbol.VisibilityScopePath is not null && CrateFor(symbol.DeclaringScope.Path)?.ScopePath != CrateFor(requester.Path)?.ScopePath)
+            if (symbol.VisibilityScopePath is not null && CrateFor(symbol.DeclaringScope)?.ScopePath != CrateFor(requester)?.ScopePath)
                 return false;
             return VisibilityContains(symbol.VisibilityScopePath, requester.ModulePath);
         }
 
         private bool IsCrateModule(SymbolBuilder symbol) => symbol.Kind == SafeCoreSymbolKind.Module &&
             (symbol.ExternalCrateScopePath is not null ||
-             _options.Crates.Any(crate => crate.ScopePath == symbol.QualifiedName));
+             symbol.MemberScope is { } members && _crateScopeOwners.ContainsKey(members) ||
+             _crateScopeOwners.Count == 0 && _options.Crates.Any(crate => crate.ScopePath == symbol.QualifiedName));
 
-        private SafeCoreCrate? CrateFor(string path)
+        private SafeCoreCrate? CrateFor(ScopeBuilder context)
         {
+            int depth = 0;
+            for (ScopeBuilder? current = context; current is not null && depth < _options.MaximumScopes; current = current.Parent, depth++)
+            {
+                if (!Step(context.Span)) return null;
+                if (_crateScopeOwners.TryGetValue(current, out SafeCoreCrate? owner)) return owner;
+            }
+            // Source-only crate configurations predate metadata scope owners.
+            string path = context.Path;
             SafeCoreCrate? result = null;
             foreach (SafeCoreCrate crate in _options.Crates)
+            {
+                if (!Step(context.Span)) return null;
                 if ((result is null || result.ScopePath.Length < crate.ScopePath.Length) &&
                     (path == crate.ScopePath || path.StartsWith(crate.ScopePath + "::", StringComparison.Ordinal))) result = crate;
+            }
             return result;
         }
 
         private ScopeBuilder FindCrateScope(ScopeBuilder context)
         {
             if (_options.Crates.IsEmpty) return _root!;
-            string path = CrateFor(context.Path)?.ScopePath ?? "crate";
+            SafeCoreCrate? owner = CrateFor(context);
             for (ScopeBuilder? current = context; current is not null; current = current.Parent)
             {
                 if (!Step(context.Span)) break;
-                if (current.Path == path) return current;
+                if (_crateScopeOwners.TryGetValue(current, out SafeCoreCrate? currentOwner) && currentOwner == owner ||
+                    _crateScopeOwners.Count == 0 && current.Path == (owner?.ScopePath ?? "crate")) return current;
             }
             return _root!;
         }
@@ -3780,6 +3872,8 @@ public static class SafeCoreNameResolution
             public bool IsActiveGlobImport { get; set; }
             public string? ExternalCrateScopePath { get; set; }
             public SafeCoreExternalFunction? ExternalFunction { get; set; }
+            public SafeCoreExternalType? ExternalType { get; set; }
+            public SafeCoreExternalEnumVariant? ExternalEnumVariant { get; set; }
             public bool IsImport { get; }
             public string? TargetPath { get; }
             public TextSpan Span { get; }

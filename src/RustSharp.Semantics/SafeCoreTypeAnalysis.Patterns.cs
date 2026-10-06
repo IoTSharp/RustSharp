@@ -83,6 +83,7 @@ public static partial class SafeCoreTypeAnalysis
         private Coverage BindPatternCore(SafeCoreHirNode pattern, SafeCoreType type, BindingMode mode, int depth)
         {
             Step(pattern, depth);
+            ExternalNameVisible(pattern);
             _types[pattern.Id] = type;
             type = _inference.Resolve(type);
             if (pattern.Kind == N.TuplePattern && pattern.ChildIds.Count == 1 &&
@@ -218,7 +219,9 @@ public static partial class SafeCoreTypeAnalysis
                 string key = Key(symbol);
                 _constructors.TryGetValue(key, out shape);
                 if (shape is null && _namedTypes.TryGetValue(key, out SafeCoreType? alias) && alias.Kind == K.Adt &&
-                    _adts.TryGetValue(alias.Name!, out List<AdtShape>? shapes) && _declarations[alias.Name!].Kind == N.Struct)
+                    _adts.TryGetValue(alias.Name!, out List<AdtShape>? shapes) &&
+                    (_importedLayouts.TryGetValue(alias.Name!, out SafeCoreMirAdtLayout? imported) && imported.Variants.Count == 0 ||
+                        _declarations.TryGetValue(alias.Name!, out SafeCoreHirNode? declaration) && declaration.Kind == N.Struct))
                     shape = shapes[0];
             }
             if (shape is null) Fail(pattern, "RST2002", "Pattern path does not name an ADT constructor.");
@@ -246,7 +249,7 @@ public static partial class SafeCoreTypeAnalysis
             foreach (Field field in shape.Fields)
             {
                 Step(field.Node, depth);
-                Visible(field.Node.DeclaredSymbol ?? shape.Node.DeclaredSymbol!, field.Node, pattern);
+                VisibleField(field, shape.Node.DeclaredSymbol!, pattern);
             }
             return new(CoverageKind.Constructor,
                 PositionalPattern(pattern, shape.Fields.Select(static field => field.Type).ToArray(), mode, depth + 1),
@@ -263,7 +266,7 @@ public static partial class SafeCoreTypeAnalysis
                 string name = Canonical(field.Name!);
                 if (!fields.TryAdd(name, field)) Fail(field, "RST2012", "A field appears more than once in a struct pattern.");
                 Field declared = FindField(shape, field.Name!, field);
-                Visible(declared.Node.DeclaredSymbol ?? shape.Node.DeclaredSymbol!, declared.Node, field);
+                VisibleField(declared, shape.Node.DeclaredSymbol!, field);
             }
             bool rest = pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.HasRest);
             if (!rest && fields.Count != shape.Fields.Count) Fail(pattern, "RST2012", "A struct pattern must name every field or contain a rest pattern.");

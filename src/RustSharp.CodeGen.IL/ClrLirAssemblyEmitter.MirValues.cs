@@ -11,7 +11,7 @@ public static partial class ClrLirAssemblyEmitter
     // No reflection, dynamic code, unmanaged pointers or byref fields are used.
     private static void EmitMirValueAccessors(MetadataBuilder metadata, MethodBodyStreamEncoder bodies,
         ClrLirValueType layout, TypeDefinitionHandle type, MethodDefinitionHandle constructor,
-        ImmutableArray<FieldDefinitionHandle> fields, Dictionary<string, TypeDefinitionHandle> valueTypes,
+        ImmutableArray<FieldDefinitionHandle> fields, Dictionary<string, EntityHandle> valueTypes,
         Action checkBudget)
     {
         AssemblyReferenceHandle runtime = metadata.AddAssemblyReference(metadata.GetOrAddString("RustSharp.Runtime"),

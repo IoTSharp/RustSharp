@@ -1,5 +1,6 @@
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
@@ -65,19 +66,28 @@ internal static class RustSharpMetadataTests
         AssertEx.Throws<ArgumentException>(() => _ = new RustSharpMetadataDocument("profile", new string('b', 129)));
 
         int yielded = 0;
-        IEnumerable<RustSharpMetadataFunction> UnboundedFunctions()
+        using var generatorDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        IEnumerable<RustSharpMetadataFunction> OverLimitFunctions(int maximumItems)
         {
-            while (true)
+            var clock = Stopwatch.StartNew();
+            for (int index = 0; index < maximumItems && clock.Elapsed < TimeSpan.FromSeconds(5); index++)
             {
+                generatorDeadline.Token.ThrowIfCancellationRequested();
                 yielded++;
-                yield return new RustSharpMetadataFunction("f", "() -> ()");
+                // Distinct valid names ensure a duplicate-function rejection
+                // cannot masquerade as collection budget enforcement.
+                yield return new RustSharpMetadataFunction("f" + index.ToString(System.Globalization.CultureInfo.InvariantCulture), "() -> ()");
             }
+            if (clock.Elapsed >= TimeSpan.FromSeconds(5))
+                throw new TimeoutException("The adversarial metadata collection exceeded its five second budget.");
         }
 
+        AssertEx.Equal(2, OverLimitFunctions(2).Count(), "The bounded adversarial iterator must first pass its tiny trial.");
+        yielded = 0;
         AssertEx.Throws<ArgumentException>(() => _ = new RustSharpMetadataDocument(
-            "profile", new string('c', 64), functions: UnboundedFunctions()));
-        AssertEx.True(yielded <= RustSharpMetadataDocument.MaximumFunctions + 1,
-            "Metadata collection enumeration must stop at its configured bound.");
+            "profile", new string('c', 64), functions: OverLimitFunctions(RustSharpMetadataDocument.MaximumFunctions + 2)));
+        AssertEx.Equal(RustSharpMetadataDocument.MaximumFunctions + 1, yielded,
+            "Metadata collection enumeration must reject at its exact bound before exhausting the adversarial iterator.");
         return Task.CompletedTask;
     }
 
@@ -92,22 +102,41 @@ internal static class RustSharpMetadataTests
         RustSharpMetadataDocument document = RustSharpMetadataDocument.ForProgram(
             "safe-core-ownership-v1", [1, 2, 3], [method],
             [new RustSharpMetadataGenericInstance("crate::id", "i32")], ["Copy"]);
+        string inputJson = document.Json;
         GeneratedAssembly generated = ClrLirAssemblyEmitter.Emit(method, "MetadataProbe", document);
         using var reader = new PEReader(new MemoryStream(generated.PeImage, writable: false));
         MetadataReader metadata = reader.GetMetadataReader();
         string json = AssertEx.NotNull(
             RustSharpMetadataReader.FindJson(metadata),
             "The generated PE must carry RustSharp metadata.");
-        AssertEx.Equal(document.Json, json, "The embedded metadata must round-trip byte-for-byte.");
         string generatedJson = AssertEx.NotNull(
             generated.RustSharpMetadataJson,
             "The emitter result must expose the embedded RustSharp metadata.");
-        AssertEx.Equal(document.Json, generatedJson);
+        AssertEx.Equal(generatedJson, json, "The finalized embedded metadata must match the emitter result byte-for-byte.");
+        RustSharpMetadataDocument finalized = RustSharpMetadataDocument.Parse(json);
+        AssertEx.Equal(json, finalized.Json, "The finalized metadata must retain its canonical JSON byte round trip.");
+        AssertEx.Equal(document.Profile, finalized.Profile);
+        AssertEx.Equal(document.SourceSha256, finalized.SourceSha256);
+        AssertEx.True(document.Functions.SequenceEqual(finalized.Functions) &&
+            document.GenericInstances.SequenceEqual(finalized.GenericInstances) &&
+            document.TraitImplementations.SequenceEqual(finalized.TraitImplementations),
+            "Final body evidence must preserve the supplied function, generic and trait facts.");
+        var preserved = new RustSharpMetadataDocument(finalized.Profile, finalized.SourceSha256,
+            finalized.Functions, finalized.GenericInstances, finalized.TraitImplementations, finalized.MirSnapshot,
+            finalized.Ownership, finalized.CleanupSnapshot, finalized.CallContracts, finalized.ValueTypes, finalized.SourceValueTypes);
+        AssertEx.Equal(inputJson, preserved.Json, "Removing only final body stamps must recover every supplied metadata field byte-for-byte.");
+        using var bodyDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        AssertEx.True(!finalized.EmittedMethodBodies.IsEmpty &&
+            finalized.EmittedMethodBodies.SequenceEqual(RustSharpMetadataMethodBodies.Capture(generated.PeImage, bodyDeadline.Token)),
+            "Final method body stamps must match fresh fingerprints from the actual emitted PE.");
+        AssertEx.Equal(inputJson, document.Json, "Emission must leave the input document's JSON unchanged.");
+        AssertEx.True(document.EmittedMethodBodies.IsEmpty, "Emission must leave the input document's body evidence unchanged.");
         CustomAttribute attribute = metadata.GetCustomAttribute(metadata.CustomAttributes.Single());
         CustomAttributeValue<string> decoded = attribute.DecodeValue(new AttributeTypes());
         AssertEx.Equal(2, decoded.FixedArguments.Length);
         AssertEx.Equal(RustSharpMetadataReader.AttributeKey, (string)decoded.FixedArguments[0].Value!);
-        AssertEx.Equal(document.Json, (string)decoded.FixedArguments[1].Value!);
+        AssertEx.Equal(generatedJson, (string)decoded.FixedArguments[1].Value!,
+            "Standard CLR custom-attribute decoding must reproduce the finalized JSON byte-for-byte.");
         AssertEx.Equal(0, decoded.NamedArguments.Length,
             "Standard CLR attribute decoding must consume the required zero named-argument count.");
         return Task.CompletedTask;

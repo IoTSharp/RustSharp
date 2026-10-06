@@ -38,6 +38,13 @@ public static class SafeCoreMirFormatting
         {
             bool extended = UsesExtendedFormat(program);
             Add(UsesFamilyFormat(program) ? "safe-core-mir-v3\n" : extended ? "safe-core-mir-v2\n" : "safe-core-mir-v1\n");
+            foreach (SafeCoreMirImportedStructuralType imported in program.ImportedStructuralTypes)
+            {
+                Step();
+                Add($"extern aggregate {Escape(imported.Type.ToString())} from {Escape(imported.AssemblyName)}::{Escape(imported.ClrName)} ");
+                Source(imported.Source);
+                Add("\n");
+            }
             for (int layoutIndex = 0; layoutIndex < program.AdtLayouts.Count; layoutIndex++)
             {
                 Step();
@@ -63,6 +70,24 @@ public static class SafeCoreMirFormatting
                     Add("\n");
                 }
                 Add("}\n");
+            }
+            for (int index = 0; index < program.ExternalFunctions.Count; index++)
+            {
+                Step();
+                SafeCoreMirExternalFunction external = program.ExternalFunctions[index];
+                Add(FormattableString.Invariant($"extern fn @{external.Id} {Escape(external.ExternalFunction.SourceQualifiedName)}: {external.Signature} from {Escape(external.ExternalFunction.AssemblyName)} "));
+                if (external.IsDestructor) Add("destructor ");
+                if (external.ExternalFunction.SourceSchema is { } schema)
+                    Add($"schema={Escape(schema)} ");
+                if (external.ExternalFunction.CallPanicStrategy is { } panic)
+                    Add($"panic={Escape(panic)} ");
+                for (int originIndex = 0; originIndex < external.ExternalFunction.ReturnOrigins.Length; originIndex++)
+                {
+                    Step();
+                    Add($"origin={Escape(external.ExternalFunction.ReturnOrigins[originIndex])} ");
+                }
+                Source(external.Source);
+                Add("\n");
             }
             for (int index = 0; index < program.Functions.Count; index++)
             {
@@ -163,7 +188,7 @@ public static class SafeCoreMirFormatting
 
         private bool UsesExtendedFormat(SafeCoreMirProgram program)
         {
-            if (program.AdtLayouts.Count != 0) return true;
+            if (program.AdtLayouts.Count != 0 || program.ExternalFunctions.Count != 0) return true;
             foreach (SafeCoreMirFunction function in program.Functions)
             {
                 Step();

@@ -8,21 +8,23 @@ public static partial class SafeCoreMirClrLowering
     {
         internal bool IsDestructorFunction(int id)
         {
-            foreach (SafeCoreMirFunction candidate in program.Functions)
-            {
-                Step();
-                if (candidate.Id == id) return candidate.IsDestructor;
-            }
-            return false;
+            Step();
+            return program.IsDestructorFunction(id);
         }
 
-        internal SafeCoreMirFunction? DestructorFor(SafeCoreType type)
+        internal int? DestructorFor(SafeCoreType type)
         {
             foreach (SafeCoreMirFunction candidate in program.Functions)
             {
                 Step();
                 if (candidate.IsDestructor && candidate.Locals.Count > 0 &&
-                    candidate.Locals[0].Type.ElementType == type) return candidate;
+                    candidate.Locals[0].Type.ElementType == type) return candidate.Id;
+            }
+            foreach (SafeCoreMirExternalFunction candidate in program.ExternalFunctions)
+            {
+                Step();
+                if (candidate.IsDestructor && candidate.Signature.ParameterTypes.Count == 1 &&
+                    candidate.Signature.ParameterTypes[0].ElementType == type) return candidate.Id;
             }
             return null;
         }
@@ -86,7 +88,7 @@ public static partial class SafeCoreMirClrLowering
                 _dropCallFlags.Add(terminator, flag);
                 ClrLirType returnType = owner.ReturnType(callee.Type.ReturnType, terminator.Source);
                 ClrLirType[] parameters = callee.Type.ParameterTypes.Select(type => owner.StorageType(type, terminator.Source)).ToArray();
-                var site = new ClrLirCallSite(owner.MethodName(callee.Id, terminator.Source), returnType, parameters);
+                var site = owner.CallSite(callee.Id, returnType, parameters, terminator.Source);
                 ClrLirGuardedCleanup cleanup;
                 if (parameters.Length == 0) cleanup = new(site, flag);
                 else
@@ -135,7 +137,7 @@ public static partial class SafeCoreMirClrLowering
                 owner.Step();
                 if (depth > 128) Lowerer.Limit("Generated cleanup type recursion exceeded its bound.");
                 if (type.Kind == SafeCoreSemanticTypeKind.Reference) return;
-                SafeCoreMirFunction? destructor = skipOuter ? null : owner.DestructorFor(type);
+                int? destructor = skipOuter ? null : owner.DestructorFor(type);
                 if (destructor is not null)
                 {
                     string key = place.ToString();
@@ -145,7 +147,7 @@ public static partial class SafeCoreMirClrLowering
                         int flag = Temporary(ClrLirType.Bool, source);
                         byPlace.Add(key, flag);
                         _dropPlaces.Add((place, flag));
-                        var site = new ClrLirCallSite(owner.MethodName(destructor.Id, source), ClrLirType.Void, [ClrLirType.Any]);
+                        var site = owner.CallSite(destructor.Value, ClrLirType.Void, [ClrLirType.Any], source);
                         Block? saved = _current;
                         var reconstruction = new Block("cleanup_receiver");
                         _current = reconstruction;

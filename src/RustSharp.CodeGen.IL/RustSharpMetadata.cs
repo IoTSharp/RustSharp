@@ -36,6 +36,39 @@ public sealed record RustSharpMetadataValueType(
     string Name,
     IEnumerable<RustSharpMetadataField>? Fields = null);
 
+/// <summary>A source-visible struct field with its exact structural source type.</summary>
+public sealed record RustSharpMetadataSourceField(string Name, string Type, bool IsPublic = true)
+{
+    public bool RequiresStaticLifetime { get; init; }
+}
+
+/// <summary>One enum variant with its physical offset and ordered original payload fields.</summary>
+public sealed record RustSharpMetadataSourceVariant(
+    string Name,
+    int Discriminant,
+    int FieldOffset,
+    IEnumerable<RustSharpMetadataSourceField> Fields)
+{
+    public string ConstructorKind { get; init; } = "unit";
+}
+
+/// <summary>A closed source struct identity reconciled with an emitted CLR value layout.</summary>
+public sealed record RustSharpMetadataSourceValueType(
+    string Name,
+    string ClrName,
+    IEnumerable<RustSharpMetadataSourceField> Fields,
+    bool IsCopy,
+    string? DropFunctionId = null)
+{
+    public bool IsPublic { get; init; } = true;
+    public string ConstructorKind { get; init; } = "named";
+    /// <summary>Optional owner proof for a source identity re-exported by this package.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RustSharpMetadataSourceOwner? Owner { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<RustSharpMetadataSourceVariant>? Variants { get; init; }
+}
+
 /// <summary>A closed generic instance carried in Rust# assembly metadata.</summary>
 public sealed record RustSharpMetadataGenericInstance(string FunctionId, string Arguments);
 
@@ -63,9 +96,30 @@ public sealed record RustSharpMetadataCallContract(
     string? ReturnContract = null)
 {
     public const string ScalarSchema = "rustsharp-scalar-call-v1";
+    public const string SourceSchema = "rustsharp-source-call-v1";
 
-    /// <summary>An explicit schema for a complete source-generated scalar contract.</summary>
+    /// <summary>An explicit schema for complete source-generated call terms.</summary>
     public string? Schema { get; init; }
+
+    /// <summary>Ordered canonical source parameter types; CLR object signatures never substitute for these.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<string>? SourceParameterTypes { get; init; }
+
+    /// <summary>Parameter-position static lifetime requirements, independent of erased CLR signatures.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<bool>? SourceParameterStaticLifetimes { get; init; }
+
+    /// <summary>The canonical source return type.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? SourceReturnType { get; init; }
+
+    /// <summary>Ordered explicit return origins, including versioned composite projection paths.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<string>? ReturnOrigins { get; init; }
+
+    /// <summary>Possible active enum variants at each exact returned aggregate position.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<RustSharpMetadataSourceReturnVariant>? SourceReturnVariants { get; init; }
 }
 
 /// <summary>A bounded result returned when an independent assembly is imported.</summary>
@@ -78,6 +132,10 @@ public sealed record RustSharpMetadataImportResult(
 {
     /// <summary>The CLR AssemblyDef name, which may differ from the file name.</summary>
     public string? AssemblyName { get; init; }
+
+    /// <summary>Verified owner assembly paths used to resolve re-exported source layouts.</summary>
+    public IReadOnlyDictionary<string, string> ResolvedOwnerPaths { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
 
     public bool IsSuccessful => Document is not null && Diagnostics.Count == 0;
 }
@@ -111,7 +169,10 @@ public sealed partial record RustSharpMetadataDocument
         IEnumerable<RustSharpMetadataOwnershipFunction>? ownership = null,
         string? cleanupSnapshot = null,
         IEnumerable<RustSharpMetadataCallContract>? callContracts = null,
-        IEnumerable<RustSharpMetadataValueType>? valueTypes = null)
+        IEnumerable<RustSharpMetadataValueType>? valueTypes = null,
+        IEnumerable<RustSharpMetadataSourceValueType>? sourceValueTypes = null,
+        IEnumerable<RustSharpMetadataMethodBody>? emittedMethodBodies = null,
+        IEnumerable<RustSharpMetadataSourceStructuralType>? sourceStructuralTypes = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(profile);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceSha256);
@@ -130,6 +191,9 @@ public sealed partial record RustSharpMetadataDocument
         CleanupSnapshot = cleanupSnapshot is null ? null : LimitText(cleanupSnapshot, MaximumJsonCharacters);
         CallContracts = NormalizeCallContracts(callContracts);
         ValueTypes = NormalizeValueTypes(valueTypes);
+        SourceValueTypes = NormalizeSourceValueTypes(sourceValueTypes);
+        EmittedMethodBodies = NormalizeMethodBodies(emittedMethodBodies);
+        SourceStructuralTypes = NormalizeSourceStructuralTypes(sourceStructuralTypes).ToImmutableArray();
         Json = Serialize(this);
         if (Json.Length > MaximumJsonCharacters)
             throw new ArgumentException("Rust# metadata JSON exceeds its size limit.");
@@ -149,6 +213,27 @@ public sealed partial record RustSharpMetadataDocument
     public ImmutableArray<RustSharpMetadataCallContract> CallContracts { get; }
     /// <summary>Closed nominal layouts used by aggregate MemberRefs.</summary>
     public ImmutableArray<RustSharpMetadataValueType> ValueTypes { get; }
+    /// <summary>Source struct identities and ordered source fields.</summary>
+    [JsonIgnore]
+    public ImmutableArray<RustSharpMetadataSourceValueType> SourceValueTypes { get; }
+    [JsonInclude, JsonPropertyName("sourceValueTypes")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal ImmutableArray<RustSharpMetadataSourceValueType>? SerializedSourceValueTypes =>
+        SourceValueTypes.IsEmpty ? null : SourceValueTypes;
+    /// <summary>Actual CLR method body fingerprints required by complete source contracts.</summary>
+    [JsonIgnore]
+    public ImmutableArray<RustSharpMetadataMethodBody> EmittedMethodBodies { get; }
+    [JsonInclude, JsonPropertyName("emittedMethodBodies")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal ImmutableArray<RustSharpMetadataMethodBody>? SerializedEmittedMethodBodies =>
+        EmittedMethodBodies.IsEmpty ? null : EmittedMethodBodies;
+    /// <summary>Foreign structural shapes bound to the independent original producer's CLR layouts.</summary>
+    [JsonIgnore]
+    public ImmutableArray<RustSharpMetadataSourceStructuralType> SourceStructuralTypes { get; }
+    [JsonInclude, JsonPropertyName("sourceStructuralTypes")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal ImmutableArray<RustSharpMetadataSourceStructuralType>? SerializedSourceStructuralTypes =>
+        SourceStructuralTypes.IsEmpty ? null : SourceStructuralTypes;
     [JsonIgnore]
     public string Json { get; }
 
@@ -162,7 +247,9 @@ public sealed partial record RustSharpMetadataDocument
         IEnumerable<RustSharpMetadataOwnershipFunction>? ownership = null,
         string? cleanupSnapshot = null,
         IEnumerable<RustSharpMetadataCallContract>? callContracts = null,
-        IEnumerable<RustSharpMetadataValueType>? valueTypes = null)
+        IEnumerable<RustSharpMetadataValueType>? valueTypes = null,
+        IEnumerable<RustSharpMetadataSourceValueType>? sourceValueTypes = null,
+        IEnumerable<RustSharpMetadataSourceStructuralType>? sourceStructuralTypes = null)
     {
         ArgumentNullException.ThrowIfNull(methods);
         if (methods.Count > MaximumFunctions) throw new ArgumentException("Too many methods.", nameof(methods));
@@ -205,7 +292,7 @@ public sealed partial record RustSharpMetadataDocument
 
         return new(profile, Convert.ToHexString(SHA256.HashData(sourceBytes)), functions,
             genericInstances, traitImplementations, mirSnapshot, linkedOwnership, cleanupSnapshot, linkedContracts,
-            valueTypes);
+            valueTypes, sourceValueTypes, sourceStructuralTypes: sourceStructuralTypes);
 
         RustSharpMetadataFunction? ResolveTarget(string functionId)
         {
@@ -252,7 +339,7 @@ public sealed partial record RustSharpMetadataDocument
             throw new ArgumentException("Rust# metadata value layouts do not match emitted layouts.", nameof(valueTypes));
         return ValueTypes.Length == 0
             ? new(Profile, SourceSha256, Functions, GenericInstances, TraitImplementations, MirSnapshot,
-                Ownership, CleanupSnapshot, CallContracts, actual)
+                Ownership, CleanupSnapshot, CallContracts, actual, SourceValueTypes, EmittedMethodBodies, SourceStructuralTypes)
             : this;
     }
 
@@ -401,8 +488,11 @@ public sealed partial record RustSharpMetadataDocument
 
         var normalized = new List<RustSharpMetadataCallContract>(result.Length);
         var identities = new HashSet<string>(StringComparer.Ordinal);
+        var contractClock = Stopwatch.StartNew();
         foreach (RustSharpMetadataCallContract value in result)
         {
+            if (contractClock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new ArgumentException("Rust# call contracts exceeded their normalization time budget.", nameof(values));
             ArgumentException.ThrowIfNullOrWhiteSpace(value.FunctionId);
             ArgumentException.ThrowIfNullOrWhiteSpace(value.PanicStrategy);
             if (value.FunctionId.Length > 4096 || value.PanicStrategy.Length > 64 ||
@@ -431,6 +521,13 @@ public sealed partial record RustSharpMetadataDocument
             normalized.Add(new(value.FunctionId, value.PanicStrategy, parameters, returnContract)
             {
                 Schema = value.Schema,
+                SourceParameterTypes = NormalizeSourceTypes(value.SourceParameterTypes),
+                SourceParameterStaticLifetimes = value.SourceParameterStaticLifetimes is null ? null :
+                    Materialize(value.SourceParameterStaticLifetimes, MaximumCallTermsPerFunction, "source static lifetime requirements"),
+                SourceReturnType = value.SourceReturnType is null ? null :
+                    SafeCoreSourceTypeCodec.Format(SafeCoreSourceTypeCodec.Parse(value.SourceReturnType)),
+                ReturnOrigins = NormalizeOrigins(value.ReturnOrigins),
+                SourceReturnVariants = NormalizeReturnVariants(value.SourceReturnVariants),
             });
         }
 
@@ -446,6 +543,115 @@ public sealed partial record RustSharpMetadataDocument
             // argument indices must remain separate and in declaration order.
             return [.. result.Select(static term => term.Trim())];
         }
+
+        static string[]? NormalizeSourceTypes(IEnumerable<string>? types)
+        {
+            if (types is null) return null;
+            string[] result = Materialize(types, MaximumCallTermsPerFunction, "source parameter types");
+            var clock = Stopwatch.StartNew();
+            for (int index = 0; index < result.Length; index++)
+            {
+                if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                    throw new ArgumentException("Rust# source parameter types exceeded their normalization time budget.");
+                result[index] = SafeCoreSourceTypeCodec.Format(SafeCoreSourceTypeCodec.Parse(result[index]));
+            }
+            return result;
+        }
+
+        static string[]? NormalizeOrigins(IEnumerable<string>? origins)
+        {
+            if (origins is null) return null;
+            string[] result = Materialize(origins, MaximumCallTermsPerFunction, "return origins");
+            var clock = Stopwatch.StartNew();
+            foreach (string origin in result)
+            {
+                if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                    throw new ArgumentException("Rust# source return origins exceeded their normalization time budget.");
+                SafeCoreSourceOriginCodec.Parse(origin);
+            }
+            return result;
+        }
+    }
+
+    private static ImmutableArray<RustSharpMetadataSourceValueType> NormalizeSourceValueTypes(
+        IEnumerable<RustSharpMetadataSourceValueType>? values)
+    {
+        if (values is null) return [];
+        RustSharpMetadataSourceValueType[] result = Materialize(values, MaximumValueTypes, nameof(values));
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var clrNames = new HashSet<string>(StringComparer.Ordinal);
+        var normalized = new List<RustSharpMetadataSourceValueType>(result.Length);
+        var clock = Stopwatch.StartNew();
+        foreach (RustSharpMetadataSourceValueType value in result)
+        {
+            if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new ArgumentException("Rust# source layouts exceeded their time budget.", nameof(values));
+            if (value is null || SafeCoreSourceTypeCodec.Parse(value.Name).Kind != SafeCoreSemanticTypeKind.Adt ||
+                !names.Add(value.Name) || string.IsNullOrWhiteSpace(value.ClrName) || value.ClrName.Length > 1024 ||
+                value.ClrName.Contains('\0') || !clrNames.Add(value.ClrName) ||
+                value.DropFunctionId is { } drop && (string.IsNullOrWhiteSpace(drop) || drop.Length > 4096) ||
+                value.IsCopy && value.DropFunctionId is not null)
+                throw new ArgumentException("Rust# source layout identity or Copy/Drop terms are invalid.", nameof(values));
+            if (value.Owner is { } owner) ValidateSourceOwner(owner);
+            RustSharpMetadataSourceField[] fields = Materialize(value.Fields, MaximumFieldsPerValueType, "source fields");
+            if (value.ConstructorKind is not ("named" or "tuple" or "unit" or "enum") ||
+                value.ConstructorKind == "unit" && fields.Length != 0)
+                throw new ArgumentException("Rust# source constructor kind is invalid or contradicts its fields.", nameof(values));
+            var fieldNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (RustSharpMetadataSourceField field in fields)
+            {
+                if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                    throw new ArgumentException("Rust# source fields exceeded their time budget.", nameof(values));
+                if (field is null || string.IsNullOrWhiteSpace(field.Name) || field.Name.Length > 1024 ||
+                    field.Name.Contains('\0') || !fieldNames.Add(field.Name))
+                    throw new ArgumentException("Rust# source fields are invalid or duplicated.", nameof(values));
+                SafeCoreSourceTypeCodec.Parse(field.Type);
+            }
+            RustSharpMetadataSourceVariant[]? variants = null;
+            if (value.ConstructorKind == "enum")
+            {
+                variants = Materialize(value.Variants ?? [], MaximumFieldsPerValueType, "source enum variants");
+                if (variants.Length == 0 || fields.Length == 0 || fields[0].Name != "$tag" || fields[0].Type != "i32")
+                    throw new ArgumentException("Rust# enum source layouts require variants and an i32 tag.", nameof(values));
+                var variantNames = new HashSet<string>(StringComparer.Ordinal);
+                var discriminants = new HashSet<int>();
+                int offset = 1;
+                for (int variantIndex = 0; variantIndex < variants.Length; variantIndex++)
+                {
+                    if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                        throw new ArgumentException("Rust# source variants exceeded their time budget.", nameof(values));
+                    RustSharpMetadataSourceVariant variant = variants[variantIndex];
+                    if (variant is null || string.IsNullOrWhiteSpace(variant.Name) || variant.Name.Length > 4096 ||
+                        !variantNames.Add(variant.Name) || !discriminants.Add(variant.Discriminant) ||
+                        variant.FieldOffset != offset || variant.ConstructorKind is not ("named" or "tuple" or "unit"))
+                        throw new ArgumentException("Rust# source variant identity, constructor, discriminant or offset is invalid.", nameof(values));
+                    RustSharpMetadataSourceField[] payload = Materialize(variant.Fields, MaximumFieldsPerValueType, "source variant fields");
+                    if (variant.ConstructorKind == "unit" && payload.Length != 0 || offset + payload.Length > fields.Length)
+                        throw new ArgumentException("Rust# source variant fields contradict its constructor or physical layout.", nameof(values));
+                    for (int fieldIndex = 0; fieldIndex < payload.Length; fieldIndex++)
+                    {
+                        if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                            throw new ArgumentException("Rust# source variant fields exceeded their time budget.", nameof(values));
+                        RustSharpMetadataSourceField field = payload[fieldIndex];
+                        RustSharpMetadataSourceField physical = fields[offset + fieldIndex];
+                        if (field is null || physical.Name != "$v" + variantIndex.ToString(CultureInfo.InvariantCulture) + "$" + field.Name ||
+                            physical.Type != field.Type || physical.RequiresStaticLifetime != field.RequiresStaticLifetime ||
+                            variant.ConstructorKind == "tuple" && field.Name != fieldIndex.ToString(CultureInfo.InvariantCulture))
+                            throw new ArgumentException("Rust# source variant payload differs from its physical fields.", nameof(values));
+                        SafeCoreSourceTypeCodec.Parse(field.Type);
+                    }
+                    variants[variantIndex] = variant with { Fields = payload };
+                    offset += payload.Length;
+                }
+                if (offset != fields.Length)
+                    throw new ArgumentException("Rust# source enum variants do not account for every physical field.", nameof(values));
+            }
+            else if (value.Variants is not null)
+                throw new ArgumentException("Rust# non-enum source layouts cannot contain variant evidence.", nameof(values));
+            normalized.Add(value with { Fields = fields, Variants = variants });
+        }
+        return [.. normalized.OrderBy(static value => value.Name, StringComparer.Ordinal)];
+
     }
 
     private static ImmutableArray<RustSharpMetadataValueType> NormalizeValueTypes(
@@ -550,7 +756,10 @@ public sealed partial record RustSharpMetadataDocument
             parsed.Ownership,
             parsed.CleanupSnapshot,
             parsed.CallContracts,
-            parsed.ValueTypes);
+            parsed.ValueTypes,
+            parsed.SourceValueTypes,
+            parsed.EmittedMethodBodies,
+            parsed.SourceStructuralTypes);
         // Older v1 producers predate the ownership extension and therefore do
         // not contain an `ownership` property. Return the canonical document
         // while accepting that additive shape for cross-package compatibility.
@@ -576,6 +785,9 @@ public sealed partial record RustSharpMetadataDocument
         public string? CleanupSnapshot { get; set; }
         public RustSharpMetadataCallContract[]? CallContracts { get; set; }
         public RustSharpMetadataValueType[]? ValueTypes { get; set; }
+        public RustSharpMetadataSourceValueType[]? SourceValueTypes { get; set; }
+        public RustSharpMetadataMethodBody[]? EmittedMethodBodies { get; set; }
+        public RustSharpMetadataSourceStructuralType[]? SourceStructuralTypes { get; set; }
     }
 }
 
@@ -700,7 +912,7 @@ public static class RustSharpMetadataReader
 /// read-only contract: it validates profile/schema/linkage and never executes
 /// producer code or uses reflection-based discovery.
 /// </summary>
-public static class RustSharpMetadataConsumer
+public static partial class RustSharpMetadataConsumer
 {
     public const string MissingMetadata = "RSC0010";
     public const string InvalidMetadata = "RSC0011";
@@ -711,7 +923,16 @@ public static class RustSharpMetadataConsumer
     public static RustSharpMetadataImportResult ReadAssembly(
         string assemblyPath,
         string? expectedProfile = null,
-        IEnumerable<string>? requiredFunctions = null)
+        IEnumerable<string>? requiredFunctions = null,
+        IEnumerable<string>? dependencyPaths = null,
+        CancellationToken cancellationToken = default) =>
+        ReadAssemblyCore(assemblyPath, expectedProfile, requiredFunctions, new OwnerReadContext(dependencyPaths, cancellationToken));
+
+    private static RustSharpMetadataImportResult ReadAssemblyCore(
+        string assemblyPath,
+        string? expectedProfile,
+        IEnumerable<string>? requiredFunctions,
+        OwnerReadContext context)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
         string fullPath = Path.GetFullPath(assemblyPath);
@@ -720,8 +941,12 @@ public static class RustSharpMetadataConsumer
         string? generic = null;
         Guid? mvid = null;
         string? assemblyName = null;
+        var resolvedOwners = new Dictionary<string, string>(StringComparer.Ordinal);
+        bool entered = false;
         try
         {
+            context.Enter(fullPath);
+            entered = true;
             FileInfo info = new(fullPath);
             if (!info.Exists) throw new FileNotFoundException("Rust# producer assembly was not found.", fullPath);
             if (info.Length <= 0 || info.Length > MaximumAssemblyBytes)
@@ -741,16 +966,28 @@ public static class RustSharpMetadataConsumer
             {
                 if (expectedProfile is not null && !string.Equals(document.Profile, expectedProfile, StringComparison.Ordinal))
                     diagnostics.Add(ProfileMismatch + ": producer profile does not match the consumer profile.");
+                ResolveOwnerBindings(metadata, document, fullPath, assemblyName, context, resolvedOwners, diagnostics);
+                context.Check();
                 ValidateGeneratedFunctions(metadata, document, diagnostics);
+                context.Check();
+                RustSharpMetadataMethodBodies.Validate(pe, metadata, document, diagnostics, context.CancellationToken);
+                context.Check();
                 ValidateGeneratedValueTypes(metadata, document, diagnostics);
+                context.Check();
+                ValidateSourceValueTypes(document, diagnostics);
+                context.Check();
                 ValidateOwnershipContracts(document, diagnostics);
+                context.Check();
                 ValidateCallContracts(document, diagnostics);
+                context.Check();
                 ValidateRequiredFunctions(document, requiredFunctions, diagnostics);
+                context.Check();
             }
 
             ModuleDefinition module = metadata.GetModuleDefinition();
             mvid = metadata.GetGuid(module.Mvid);
             generic = TryReadGenericResource(pe, metadata, diagnostics);
+            context.Check();
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
             BadImageFormatException or InvalidDataException or ArgumentException or JsonException or
@@ -758,10 +995,15 @@ public static class RustSharpMetadataConsumer
         {
             diagnostics.Add(InvalidMetadata + ": " + Trim(exception.Message));
         }
+        finally
+        {
+            if (entered) context.Leave(fullPath);
+        }
 
         return new(fullPath, document, generic, mvid, diagnostics.AsReadOnly())
         {
             AssemblyName = assemblyName,
+            ResolvedOwnerPaths = resolvedOwners,
         };
     }
 
@@ -792,6 +1034,9 @@ public static class RustSharpMetadataConsumer
         var contracted = new HashSet<string>(StringComparer.Ordinal);
         var clock = Stopwatch.StartNew();
         var ownershipPanics = new Dictionary<string, string>(StringComparer.Ordinal);
+        SourceMirEvidence? sourceEvidence = document.CallContracts.Any(static contract =>
+            contract.Schema == RustSharpMetadataCallContract.SourceSchema)
+            ? ReadSourceMirEvidence(document.MirSnapshot) : null;
         foreach (RustSharpMetadataOwnershipFunction ownership in document.Ownership)
         {
             CheckBudget();
@@ -820,7 +1065,8 @@ public static class RustSharpMetadataConsumer
                 continue;
             }
 
-            if (contract.Schema is not null && contract.Schema != RustSharpMetadataCallContract.ScalarSchema)
+            bool sourceSchema = contract.Schema == RustSharpMetadataCallContract.SourceSchema;
+            if (contract.Schema is not null && contract.Schema != RustSharpMetadataCallContract.ScalarSchema && !sourceSchema)
                 AddContractDiagnostic(diagnostics, "call contract has an unsupported schema.");
 
             if (!string.Equals(contract.PanicStrategy, "unwind", StringComparison.Ordinal) &&
@@ -845,18 +1091,24 @@ public static class RustSharpMetadataConsumer
                 !string.Equals(source, function.Name, StringComparison.Ordinal) &&
                 parameters.All(static type => type is "I32" or "Bool") &&
                 returnType is "I32" or "Bool" or "Void";
-            if (sourceScalar && contract.Schema != RustSharpMetadataCallContract.ScalarSchema)
+            if (sourceScalar && contract.Schema != RustSharpMetadataCallContract.ScalarSchema && !sourceSchema)
                 AddContractDiagnostic(diagnostics, "source scalar call contract for '" +
                     Trim(contract.FunctionId) + "' requires its explicit scalar schema.");
             string[] terms = (contract.ParameterContracts ?? []).ToArray();
-            bool scalarSchema = sourceScalar || contract.Schema == RustSharpMetadataCallContract.ScalarSchema;
-            if ((terms.Length != 0 || scalarSchema) && terms.Length != parameters.Length)
+            bool scalarSchema = !sourceSchema && (sourceScalar || contract.Schema == RustSharpMetadataCallContract.ScalarSchema);
+            if ((terms.Length != 0 || scalarSchema || sourceSchema) && terms.Length != parameters.Length)
             {
                 AddContractDiagnostic(diagnostics,
                     "call contract for '" + Trim(contract.FunctionId) + "' does not cover every parameter.");
             }
 
-            for (int index = 0; index < Math.Min(terms.Length, parameters.Length); index++)
+            if (sourceSchema)
+                ValidateSourceCallContract(document, contract, function, parameters, returnType, terms, sourceEvidence!, diagnostics);
+            else if (contract.SourceParameterTypes is not null || contract.SourceParameterStaticLifetimes is not null ||
+                contract.SourceReturnType is not null || contract.ReturnOrigins is not null || contract.SourceReturnVariants is not null)
+                AddContractDiagnostic(diagnostics, "source call terms require their explicit source schema.");
+
+            for (int index = 0; !sourceSchema && index < Math.Min(terms.Length, parameters.Length); index++)
             {
                 if (!TermMatchesType(terms[index], parameters[index], isReturn: false, scalarSchema))
                     AddContractDiagnostic(diagnostics, "call contract parameter " +
@@ -864,9 +1116,9 @@ public static class RustSharpMetadataConsumer
                         "' is unsupported or contradicts its CLR signature.");
             }
 
-            if ((contract.ReturnContract is null && scalarSchema) ||
+            if (!sourceSchema && ((contract.ReturnContract is null && scalarSchema) ||
                 (contract.ReturnContract is { } result &&
-                    !TermMatchesType(result, returnType, isReturn: true, scalarSchema)))
+                    !TermMatchesType(result, returnType, isReturn: true, scalarSchema))))
                 AddContractDiagnostic(diagnostics, "call contract return for '" + Trim(contract.FunctionId) +
                     "' is missing, unsupported or contradicts its CLR signature.");
 
@@ -928,6 +1180,388 @@ public static class RustSharpMetadataConsumer
             return signature.Contains("Value(", StringComparison.Ordinal) ||
                 signature.Contains('&') || signature.Contains("Any", StringComparison.Ordinal);
         }
+    }
+
+    private static void ValidateSourceCallContract(
+        RustSharpMetadataDocument document,
+        RustSharpMetadataCallContract contract,
+        RustSharpMetadataFunction function,
+        string[] clrParameters,
+        string clrReturn,
+        string[] terms,
+        SourceMirEvidence sourceEvidence,
+        List<string> diagnostics)
+    {
+        if (contract.SourceParameterTypes is null || contract.SourceParameterStaticLifetimes is null || contract.SourceReturnType is null ||
+            contract.ReturnOrigins is null || contract.ReturnContract is null)
+        {
+            AddContractDiagnostic(diagnostics, "source call contract is missing required source types, return terms or origins.");
+            return;
+        }
+        SafeCoreType[] parameters = [.. contract.SourceParameterTypes.Select(static type => SafeCoreSourceTypeCodec.Parse(type))];
+        bool[] staticLifetimes = contract.SourceParameterStaticLifetimes.ToArray();
+        SafeCoreType result = SafeCoreSourceTypeCodec.Parse(contract.SourceReturnType);
+        SourceMirFunction[] sourceFunctions = sourceEvidence.Functions.Where(value =>
+            value.Name == function.SourceQualifiedName || value.Name == function.SourceQualifiedName + "#value" ||
+            value.Name + "#value" == function.SourceQualifiedName).Take(2).ToArray();
+        if (sourceFunctions.Length != 1 || sourceFunctions[0].ReturnType != contract.SourceReturnType ||
+            !sourceFunctions[0].ParameterTypes.SequenceEqual(contract.SourceParameterTypes) ||
+            !sourceFunctions[0].ParameterStaticLifetimes.SequenceEqual(staticLifetimes))
+            AddContractDiagnostic(diagnostics, "source call signature contradicts its independent emitted MIR snapshot.");
+        if (staticLifetimes.Length != parameters.Length)
+            AddContractDiagnostic(diagnostics, "source call static lifetime terms do not cover every parameter.");
+        foreach (SafeCoreType parameter in parameters) ValidateSourceTypeEvidence(document, parameter, 0);
+        ValidateSourceTypeEvidence(document, result, 0);
+        string[] origins = contract.ReturnOrigins.ToArray();
+        if (parameters.Length != clrParameters.Length)
+            AddContractDiagnostic(diagnostics, "source call parameter types do not cover the CLR signature.");
+        var clock = Stopwatch.StartNew();
+        for (int index = 0; index < Math.Min(parameters.Length, clrParameters.Length); index++)
+        {
+            if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new InvalidDataException("Source call validation exceeded its time budget.");
+            if (SourceClrType(document, parameters[index], isReturn: false) != clrParameters[index])
+                AddContractDiagnostic(diagnostics, "source call parameter type contradicts its CLR signature.");
+            if (index < terms.Length && !SourceTermMatches(document, terms[index], parameters[index], isReturn: false))
+                AddContractDiagnostic(diagnostics, "source call parameter ownership term contradicts its source type.");
+        }
+        if (SourceClrType(document, result, isReturn: true) != clrReturn)
+            AddContractDiagnostic(diagnostics, "source call return type contradicts its CLR signature.");
+        if (!SourceTermMatches(document, contract.ReturnContract, result, isReturn: true))
+            AddContractDiagnostic(diagnostics, "source call return ownership term contradicts its source type.");
+        RustSharpMetadataSourceReturnVariant[] returnedVariants = contract.SourceReturnVariants?.ToArray() ?? [];
+        if (sourceFunctions.Length == 1 && !sourceFunctions[0].ReturnVariants.Select(FormatVariant).SequenceEqual(returnedVariants.Select(FormatVariant)))
+            AddContractDiagnostic(diagnostics, "Source returned enum variants contradict their independent emitted MIR snapshot.");
+        var reachedVariants = new HashSet<int>();
+        foreach (string error in SafeCoreSourceOriginCodec.ValidateContract(parameters, result, origins, Fields,
+            parameterStaticLifetimes: staticLifetimes, staticFields: StaticFields, returnedFields: ReturnedFields))
+        {
+            if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new InvalidDataException("Source return origin validation exceeded its time budget.");
+            AddContractDiagnostic(diagnostics, error);
+        }
+        if (reachedVariants.Count != returnedVariants.Length)
+            AddContractDiagnostic(diagnostics, "Source return variant evidence names a missing or inactive enum value slot.");
+
+        IReadOnlyList<(string Name, SafeCoreType Type)> Fields(SafeCoreType type)
+        {
+            RustSharpMetadataSourceValueType? layout = document.SourceValueTypes.FirstOrDefault(value => value.Name == type.Name);
+            if (layout is null) throw new ArgumentException("Source nominal origins require a declared source value layout.");
+            return layout.Fields.Select(static field => (field.Name, SafeCoreSourceTypeCodec.Parse(field.Type))).ToArray();
+        }
+
+        IReadOnlyList<(string Name, bool RequiresStaticLifetime)> StaticFields(SafeCoreType type)
+        {
+            RustSharpMetadataSourceValueType? layout = document.SourceValueTypes.FirstOrDefault(value => value.Name == type.Name);
+            if (layout is null) throw new ArgumentException("Static source field origins require a declared source value layout.");
+            return layout.Fields.Select(static field => (field.Name, field.RequiresStaticLifetime)).ToArray();
+        }
+
+        IReadOnlyList<(string Name, SafeCoreType Type)>? ReturnedFields(SafeCoreType type, IReadOnlyList<SafeCoreMirProjection> path)
+        {
+            if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new InvalidDataException("Source return enum evidence exceeded its time budget.");
+            RustSharpMetadataSourceValueType? layout = document.SourceValueTypes.FirstOrDefault(value => value.Name == type.Name);
+            if (layout?.ConstructorKind != "enum") return null;
+            string[] encodedPath = path.Select(static projection => SafeCoreSourceOriginCodec.FormatProjection(projection)).ToArray();
+            RustSharpMetadataSourceVariant[] variants = layout.Variants!.ToArray();
+            RustSharpMetadataSourceField[] physical = layout.Fields.ToArray();
+            var selected = new HashSet<string>(StringComparer.Ordinal);
+            for (int index = 0; index < returnedVariants.Length; index++)
+            {
+                if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                    throw new InvalidDataException("Source return enum variant count exceeded its time budget.");
+                RustSharpMetadataSourceReturnVariant evidence = returnedVariants[index];
+                if (!evidence.ValuePath.SequenceEqual(encodedPath)) continue;
+                reachedVariants.Add(index);
+                RustSharpMetadataSourceVariant? variant = variants.FirstOrDefault(value => value.Name == evidence.VariantName);
+                if (variant is null) throw new ArgumentException("Source returned enum evidence selects an undeclared variant.");
+                int count = variant.Fields.Count();
+                for (int field = 0; field < count; field++) selected.Add(physical[variant.FieldOffset + field].Name);
+            }
+            if (!returnedVariants.Any(value => value.ValuePath.SequenceEqual(encodedPath)))
+                throw new ArgumentException("Source enum return slot is missing its possible active variant evidence.");
+            return physical.Where(value => selected.Contains(value.Name)).Select(static field =>
+                (field.Name, SafeCoreSourceTypeCodec.Parse(field.Type))).ToArray();
+        }
+
+        static string FormatVariant(RustSharpMetadataSourceReturnVariant value) => SafeCoreSourceOriginCodec.FormatReturnedVariant(
+            value.ValuePath.Select(static projection => SafeCoreSourceOriginCodec.ParseProjection(projection)).ToArray(), value.VariantName);
+    }
+
+    private static bool SourceTermMatches(RustSharpMetadataDocument document, string term, SafeCoreType type, bool isReturn) =>
+        type.Kind switch
+        {
+            SafeCoreSemanticTypeKind.Unit => term == (isReturn ? "unit" : "copy"),
+            SafeCoreSemanticTypeKind.Bool or SafeCoreSemanticTypeKind.I32 or SafeCoreSemanticTypeKind.Usize => term == "copy",
+            SafeCoreSemanticTypeKind.Reference => term == (type.IsMutable ? "borrow:mut" : "borrow:shared"),
+            SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Adt =>
+                term == (SourceIsCopy(document, type, 0) ? "copy" : "move"),
+            _ => false,
+        };
+
+    private static void ValidateSourceTypeEvidence(RustSharpMetadataDocument document, SafeCoreType type, int depth,
+        Stopwatch? clock = null)
+    {
+        clock ??= Stopwatch.StartNew();
+        if (depth >= SafeCoreSourceTypeCodec.MaximumDepth || clock.Elapsed > TimeSpan.FromSeconds(5))
+            throw new InvalidDataException("Source signature evidence exceeded its depth budget.");
+        if (type.Kind == SafeCoreSemanticTypeKind.Adt && !document.SourceValueTypes.Any(value => value.Name == type.Name))
+            throw new InvalidDataException("Source nominal signature has no declared source layout.");
+        if (type.Kind == SafeCoreSemanticTypeKind.Array && type.Length > RustSharpMetadataDocument.MaximumFieldsPerValueType)
+            throw new InvalidDataException("Source array signature exceeds its field budget.");
+        foreach (SafeCoreType child in type.Elements) ValidateSourceTypeEvidence(document, child, depth + 1, clock);
+    }
+
+    private static bool SourceIsCopy(RustSharpMetadataDocument document, SafeCoreType type, int depth,
+        Stopwatch? clock = null)
+    {
+        clock ??= Stopwatch.StartNew();
+        if (depth >= SafeCoreSourceTypeCodec.MaximumDepth || clock.Elapsed > TimeSpan.FromSeconds(5))
+            throw new InvalidDataException("Source Copy evidence exceeds its depth budget.");
+        return type.Kind switch
+        {
+            SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Bool or SafeCoreSemanticTypeKind.I32 or
+                SafeCoreSemanticTypeKind.Usize => true,
+            SafeCoreSemanticTypeKind.Reference => !type.IsMutable,
+            SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array =>
+                type.Elements.All(element => SourceIsCopy(document, element, depth + 1, clock)),
+            SafeCoreSemanticTypeKind.Adt => document.SourceValueTypes.FirstOrDefault(value => value.Name == type.Name)?.IsCopy == true,
+            _ => false,
+        };
+    }
+
+
+    private static string SourceClrType(RustSharpMetadataDocument document, SafeCoreType type, bool isReturn)
+    {
+        if (isReturn && type.Kind == SafeCoreSemanticTypeKind.Unit) return "Void";
+        if (type.Kind is SafeCoreSemanticTypeKind.I32 or SafeCoreSemanticTypeKind.Usize) return "I32";
+        if (type.Kind == SafeCoreSemanticTypeKind.Bool) return "Bool";
+        if (type.Kind == SafeCoreSemanticTypeKind.Reference) return "Any";
+        if (type.Kind == SafeCoreSemanticTypeKind.Adt)
+        {
+            RustSharpMetadataSourceValueType? layout = document.SourceValueTypes.FirstOrDefault(value => value.Name == type.Name);
+            if (layout is null) throw new InvalidDataException("Source nominal signature has no declared source layout.");
+            return "Value(" + layout.ClrName + ")";
+        }
+        if (type.Kind is SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array)
+        {
+            if (type.Kind == SafeCoreSemanticTypeKind.Array && type.Length > RustSharpMetadataDocument.MaximumFieldsPerValueType)
+                throw new InvalidDataException("Source array layout exceeds its field budget.");
+            RustSharpMetadataSourceStructuralType? imported = document.SourceStructuralTypes.FirstOrDefault(value => value.Type == type.ToString());
+            if (imported is not null) return "Value(" + imported.ClrName + ")";
+            string name = "mir_value_" + Convert.ToHexString(SHA256.HashData(
+                Encoding.UTF8.GetBytes(type.Kind + "|" + type))).ToLowerInvariant()[..24];
+            if (!document.ValueTypes.Any(value => value.Name == name))
+                throw new InvalidDataException("Source structural signature has no emitted CLR layout.");
+            return "Value(" + name + ")";
+        }
+        throw new InvalidDataException("Unsupported source signature shape.");
+    }
+
+    private static void ValidateSourceValueTypes(RustSharpMetadataDocument document, List<string> diagnostics)
+    {
+        var clock = Stopwatch.StartNew();
+        SourceMirEvidence? evidence = document.SourceValueTypes.IsEmpty ? null : ReadSourceMirEvidence(document.MirSnapshot);
+        foreach (RustSharpMetadataSourceValueType source in document.SourceValueTypes)
+        {
+            if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new InvalidDataException("Source layouts exceeded their reconciliation time budget.");
+            RustSharpMetadataValueType? clr = document.ValueTypes.FirstOrDefault(value => value.Name == source.ClrName);
+            RustSharpMetadataSourceField[] fields = source.Fields.ToArray();
+            SourceMirLayout[] sourceLayouts = evidence!.Layouts.Where(value => value.Name == source.Name).Take(2).ToArray();
+            if (sourceLayouts.Length != 1 || sourceLayouts[0].IsCopy != source.IsCopy ||
+                sourceLayouts[0].Fields.Count != fields.Length ||
+                sourceLayouts[0].Variants.Count != (source.Variants?.Count() ?? 0))
+                AddContractDiagnostic(diagnostics, "source layout identity or Copy/variant/static terms contradict supported emitted MIR evidence.");
+            if (sourceLayouts.Length == 1)
+            {
+                RustSharpMetadataSourceVariant[] variants = source.Variants?.ToArray() ?? [];
+                for (int variantIndex = 0; variantIndex < Math.Min(variants.Length, sourceLayouts[0].Variants.Count); variantIndex++)
+                {
+                    if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                        throw new InvalidDataException("Source variants exceeded their reconciliation time budget.");
+                    SourceMirVariant actual = sourceLayouts[0].Variants[variantIndex];
+                    RustSharpMetadataSourceVariant variant = variants[variantIndex];
+                    if (actual.Name != variant.Name || actual.Discriminant != variant.Discriminant ||
+                        actual.Offset != variant.FieldOffset || actual.FieldCount != variant.Fields.Count())
+                        AddContractDiagnostic(diagnostics, "source enum variant order, identity, discriminant or offset contradicts its MIR snapshot.");
+                }
+            }
+            RustSharpMetadataField[] clrFields = clr?.Fields?.ToArray() ?? [];
+            if (source.Owner is not null) continue;
+            if (clr is null || fields.Length != clrFields.Length)
+            {
+                AddContractDiagnostic(diagnostics, "source value layout does not match an emitted CLR value layout.");
+                continue;
+            }
+            for (int index = 0; index < fields.Length; index++)
+            {
+                if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                    throw new InvalidDataException("Source fields exceeded their reconciliation time budget.");
+                SafeCoreType fieldType = SafeCoreSourceTypeCodec.Parse(fields[index].Type);
+                ValidateSourceTypeEvidence(document, fieldType, 0);
+                if (sourceLayouts.Length == 1 && index < sourceLayouts[0].Fields.Count &&
+                    (sourceLayouts[0].Fields[index].Name != fields[index].Name || sourceLayouts[0].Fields[index].Type != fields[index].Type ||
+                     sourceLayouts[0].Fields[index].RequiresStaticLifetime != fields[index].RequiresStaticLifetime))
+                    AddContractDiagnostic(diagnostics, "source field order or type contradicts its independent emitted MIR snapshot.");
+                if (fields[index].Name != clrFields[index].Name ||
+                    SourceClrType(document, fieldType, isReturn: false) != clrFields[index].Type)
+                    AddContractDiagnostic(diagnostics, "source field order or type contradicts its CLR layout.");
+                if (source.IsCopy && !SourceIsCopy(document, fieldType, 0))
+                    AddContractDiagnostic(diagnostics, "source Copy value contains a non-Copy field.");
+            }
+            if (source.DropFunctionId is { } destructor)
+            {
+                RustSharpMetadataFunction? function = FindFunction(document, destructor);
+                if (function is null || function.Signature != "Any->Void")
+                    AddContractDiagnostic(diagnostics, "source Drop method is missing or has an incompatible checked receiver signature.");
+            }
+        }
+    }
+
+    private sealed record SourceMirEvidence(List<SourceMirFunction> Functions, List<SourceMirLayout> Layouts);
+    private sealed record SourceMirFunction(string Name, string ReturnType, List<string> ParameterTypes, List<bool> ParameterStaticLifetimes)
+    {
+        public List<RustSharpMetadataSourceReturnVariant> ReturnVariants { get; } = [];
+    }
+    private sealed record SourceMirVariant(string Name, int Discriminant, int Offset, int FieldCount);
+    private sealed record SourceMirLayout(string Name, bool IsCopy, List<RustSharpMetadataSourceField> Fields)
+    {
+        public List<SourceMirVariant> Variants { get; } = [];
+    }
+
+    private static SourceMirEvidence ReadSourceMirEvidence(string? snapshot)
+    {
+        const int maximumLines = 32768;
+        if (snapshot is null || !(snapshot.StartsWith("safe-core-mir-v1\n", StringComparison.Ordinal) ||
+            snapshot.StartsWith("safe-core-mir-v2\n", StringComparison.Ordinal) ||
+            snapshot.StartsWith("safe-core-mir-v3\n", StringComparison.Ordinal)))
+            throw new InvalidDataException("Source package contracts require a supported independent MIR snapshot.");
+        string[] lines = snapshot.Split('\n', maximumLines + 1, StringSplitOptions.None);
+        if (lines.Length > maximumLines)
+            throw new InvalidDataException("Source package MIR snapshot exceeds its line budget.");
+        var result = new SourceMirEvidence([], []);
+        SourceMirFunction? function = null;
+        SourceMirLayout? layout = null;
+        var clock = Stopwatch.StartNew();
+        foreach (string line in lines)
+        {
+            if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new InvalidDataException("Source package MIR snapshot exceeded its parsing time budget.");
+            if (line.StartsWith("fn @", StringComparison.Ordinal))
+            {
+                if (result.Functions.Count >= RustSharpMetadataDocument.MaximumFunctions)
+                    throw new InvalidDataException("Source package MIR function count exceeds its bound.");
+                int nameStart = line.IndexOf(' ', 4) + 1;
+                int arrow = line.IndexOf(" -> ", StringComparison.Ordinal);
+                int entry = line.IndexOf(" entry bb", StringComparison.Ordinal);
+                if (nameStart <= 0 || arrow < nameStart || entry <= arrow)
+                    throw new InvalidDataException("Malformed source package MIR function evidence.");
+                function = new(line[nameStart..arrow], line[(arrow + 4)..entry], [], []);
+                result.Functions.Add(function);
+                layout = null;
+                continue;
+            }
+            if (function is not null && line.StartsWith("  return_variant ", StringComparison.Ordinal))
+            {
+                if (function.ReturnVariants.Count >= RustSharpMetadataDocument.MaximumCallTermsPerFunction)
+                    throw new InvalidDataException("Source MIR returned variant count exceeds its bound.");
+                function.ReturnVariants.Add(ParseSourceMirReturnedVariant(line["  return_variant ".Length..]));
+                continue;
+            }
+            if (line.StartsWith("adt ", StringComparison.Ordinal))
+            {
+                if (result.Layouts.Count >= RustSharpMetadataDocument.MaximumValueTypes)
+                    throw new InvalidDataException("Source package MIR layout count exceeds its bound.");
+                int copy = line.IndexOf(" copy ", StringComparison.Ordinal);
+                int move = line.IndexOf(" move ", StringComparison.Ordinal);
+                int end = copy >= 0 ? copy : move;
+                if (end < 4) throw new InvalidDataException("Malformed source package MIR layout evidence.");
+                layout = new(line[4..end], copy >= 0, []);
+                result.Layouts.Add(layout);
+                function = null;
+                continue;
+            }
+            if (function is not null && line.StartsWith("  let %", StringComparison.Ordinal))
+            {
+                int kindStart = line.IndexOf(' ', 7) + 1;
+                if (kindStart <= 0 || !line.AsSpan(kindStart).StartsWith("parameter ", StringComparison.Ordinal)) continue;
+                if (function.ParameterTypes.Count >= RustSharpMetadataDocument.MaximumCallTermsPerFunction)
+                    throw new InvalidDataException("Source package MIR parameter count exceeds its bound.");
+                int typeStart = line.IndexOf(": ", kindStart, StringComparison.Ordinal) + 2;
+                int sourceStart = line.LastIndexOf(" [", StringComparison.Ordinal);
+                if (typeStart <= 1 || sourceStart < typeStart)
+                    throw new InvalidDataException("Malformed source package MIR parameter type evidence.");
+                string type = line[typeStart..sourceStart];
+                function.ParameterStaticLifetimes.Add(type.Contains(" static_lifetime", StringComparison.Ordinal));
+                int flag = type.IndexOf(" drop=@", StringComparison.Ordinal);
+                if (flag >= 0) type = type[..flag];
+                foreach (string marker in new[] { " unit_adt", " promoted_constant", " static_lifetime" })
+                {
+                    if (type.EndsWith(marker, StringComparison.Ordinal)) type = type[..^marker.Length];
+                }
+                function.ParameterTypes.Add(type);
+                continue;
+            }
+            if (layout is not null && line.StartsWith("  field ", StringComparison.Ordinal))
+            {
+                if (layout.Fields.Count >= RustSharpMetadataDocument.MaximumFieldsPerValueType)
+                    throw new InvalidDataException("Source package MIR source field count exceeds its bound.");
+                int nameStart = line.IndexOf(' ', 8) + 1;
+                int colon = line.IndexOf(": ", nameStart, StringComparison.Ordinal);
+                int sourceStart = line.LastIndexOf(" [", StringComparison.Ordinal);
+                if (nameStart <= 0 || colon < nameStart || sourceStart < colon + 2)
+                    throw new InvalidDataException("Malformed source package MIR source field evidence.");
+                string type = line[(colon + 2)..sourceStart];
+                bool isStatic = type.EndsWith(" static_refs", StringComparison.Ordinal);
+                if (isStatic)
+                {
+                    type = type[..^" static_refs".Length];
+                }
+                layout.Fields.Add(new(line[nameStart..colon], type) { RequiresStaticLifetime = isStatic });
+                continue;
+            }
+            if (layout is not null && line.StartsWith("  variant ", StringComparison.Ordinal))
+            {
+                if (layout.Variants.Count >= RustSharpMetadataDocument.MaximumFieldsPerValueType)
+                    throw new InvalidDataException("Source MIR variant count exceeds its bound.");
+                int nameStart = line.IndexOf(' ', 10) + 1;
+                int tag = line.IndexOf(" tag=", StringComparison.Ordinal);
+                int offset = line.IndexOf(" offset=", StringComparison.Ordinal);
+                int fieldCount = line.IndexOf(" fields=", StringComparison.Ordinal);
+                int source = line.LastIndexOf(" [", StringComparison.Ordinal);
+                if (nameStart <= 0 || tag < nameStart || offset < tag || fieldCount < offset || source < fieldCount)
+                    throw new InvalidDataException("Malformed source MIR enum variant evidence.");
+                layout.Variants.Add(new(line[nameStart..tag],
+                    int.Parse(line.AsSpan(tag + 5, offset - tag - 5), CultureInfo.InvariantCulture),
+                    int.Parse(line.AsSpan(offset + 8, fieldCount - offset - 8), CultureInfo.InvariantCulture),
+                    int.Parse(line.AsSpan(fieldCount + 8, source - fieldCount - 8), CultureInfo.InvariantCulture)));
+            }
+            if (line == "}") { function = null; layout = null; }
+        }
+        return result;
+    }
+
+    private static RustSharpMetadataSourceReturnVariant ParseSourceMirReturnedVariant(string text)
+    {
+        if (text.Length > SafeCoreSourceOriginCodec.MaximumCharacters)
+            throw new InvalidDataException("Source MIR returned variant exceeds its character bound.");
+        RustSharpMetadataReader.ValidateNoDuplicateProperties(Encoding.UTF8.GetBytes(text));
+        using JsonDocument document = JsonDocument.Parse(text, new JsonDocumentOptions { MaxDepth = 4 });
+        JsonElement root = document.RootElement;
+        if (root.ValueKind != JsonValueKind.Object || root.EnumerateObject().Count() != 2 ||
+            !root.TryGetProperty("valuePath", out JsonElement path) || path.ValueKind != JsonValueKind.Array ||
+            path.GetArrayLength() > SafeCoreSourceOriginCodec.MaximumDepth ||
+            !root.TryGetProperty("variantName", out JsonElement name) || name.ValueKind != JsonValueKind.String)
+            throw new InvalidDataException("Source MIR returned variant has incomplete or unknown terms.");
+        string[] encoded = path.EnumerateArray().Select(static value => value.ValueKind == JsonValueKind.String
+            ? value.GetString()! : throw new InvalidDataException("Source MIR returned variant paths require explicit strings.")).ToArray();
+        string variantName = name.GetString()!;
+        string canonical = SafeCoreSourceOriginCodec.FormatReturnedVariant(encoded.Select(static value =>
+            SafeCoreSourceOriginCodec.ParseProjection(value)).ToArray(), variantName);
+        if (canonical != text) throw new InvalidDataException("Source MIR returned variant evidence is not canonical.");
+        return new(encoded, variantName);
     }
 
     private static void ValidateOwnershipContracts(
@@ -1305,7 +1939,21 @@ public static class RustSharpMetadataConsumer
         public string GetTypeFromReference(
             MetadataReader reader,
             TypeReferenceHandle handle,
-            byte rawTypeKind) => throw Unsupported("a type reference");
+            byte rawTypeKind)
+        {
+            TypeReference reference = reader.GetTypeReference(handle);
+            if (rawTypeKind != (byte)SignatureTypeKind.ValueType ||
+                reader.GetString(reference.Namespace) != "RustSharp.Generated.Values" ||
+                reference.ResolutionScope.Kind != HandleKind.AssemblyReference)
+                throw Unsupported("an unsupported external type reference");
+            AssemblyReference assembly = reader.GetAssemblyReference((AssemblyReferenceHandle)reference.ResolutionScope);
+            string assemblyName = reader.GetString(assembly.Name);
+            string typeName = reader.GetString(reference.Name);
+            if (string.IsNullOrWhiteSpace(assemblyName) || string.IsNullOrWhiteSpace(typeName) ||
+                assemblyName.Length > 1024 || typeName.Length > 1024 || assemblyName.Contains("::", StringComparison.Ordinal))
+                throw Unsupported("an invalid external value identity");
+            return "Value(" + assemblyName + "::" + typeName + ")";
+        }
 
         public string GetSZArrayType(string elementType) => throw Unsupported("an SZ array");
 

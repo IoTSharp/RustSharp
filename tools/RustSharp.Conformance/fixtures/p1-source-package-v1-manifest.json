@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "profile": "p1-source-packages-v1",
+  "denominator": 19,
+  "cases": [
+    {
+      "id": "scalar-positional-copy",
+      "compilerProfile": "safe-core-primitives-v1",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-scalar-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-scalar-consumer.rs",
+      "producerSha256": "02A9C51BE9C15CE7F4BFA07ABEB000C7FAD0653A2EC30ECC38F306392E05C2EF",
+      "consumerSha256": "BE5783D763C243D43371C2CE4F5A58D3415E158AB8F9DFDEA3EFDAD547A5C710",
+      "requiredFunctions": [
+        "crate::add"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "reference-shared-mutable-origin",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-reference-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-reference-consumer.rs",
+      "producerSha256": "4B7B1509349DC06553ACEC16F62704717A805EC70C0919D73901FEE0A05792AD",
+      "consumerSha256": "4C4E57A4919EF84212B501976CE4AA8F61853AD7F41FB5B6A533CF52D287FCDE",
+      "requiredFunctions": [
+        "crate::identity",
+        "crate::add"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "slice-owner-mutation-length",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-slice-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-slice-consumer.rs",
+      "producerSha256": "C5BFA8A191A15A0B0AA54A2C14533E67095FF8D963F2A45145D07C0D4629F8D4",
+      "consumerSha256": "426971B64125682D205E0B90AC5DF90619F61823C7449F14A332709793405C17",
+      "requiredFunctions": [
+        "crate::view",
+        "crate::add"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "aggregate-identity-projection-move",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-aggregate-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-aggregate-consumer.rs",
+      "producerSha256": "C33AE34109944ACD61DB50792DED984EB2FB329F6A301F4280CD11F3AB8AAECF",
+      "consumerSha256": "1A737E32AAD4A0095B9D65F0C7FE025AC70B29CC7CF3F60A74327A09ECABE84A",
+      "requiredFunctions": [
+        "crate::make",
+        "crate::consume"
+      ],
+      "requiredConsumerOwnerAssemblies": [
+        "SourceProducer"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "drop-ownership-transfer-exactly-once",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-drop-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-drop-consumer.rs",
+      "producerSha256": "C0440467470B52098E5F4EE0AD3A26BF98C9C04119D3AF640DCE1FF311528114",
+      "consumerSha256": "F1101D222E2E3309DBBAD538D2BFB9939EB52B12A2FF6082E0400FA159D962AC",
+      "requiredFunctions": [
+        "crate::make",
+        "crate::consume"
+      ],
+      "expectedOutput": "42\ndrop\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "imported-unwind-cleans-caller",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerPanicStrategy": "unwind",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs",
+      "producerSha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+      "consumerSha256": "0944D904EBA2286C88590619995C386B0664632F9B0F394CF81144C71DB39E40",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "expectedOutput": "drop\n",
+      "expectedOutcome": "unwound"
+    },
+    {
+      "id": "imported-abort-skips-caller-drop",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerPanicStrategy": "abort",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs",
+      "producerSha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+      "consumerSha256": "0944D904EBA2286C88590619995C386B0664632F9B0F394CF81144C71DB39E40",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "expectedOutput": "",
+      "expectedOutcome": "aborted"
+    },
+    {
+      "id": "tuple-array-producer-clr-layout",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-structural-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-structural-consumer.rs",
+      "producerSha256": "8573057AAA39AA82EFAC477BD62F17213D73B4B21C63F2D7DC6A3449845DF37B",
+      "consumerSha256": "BADB1FE33374F7CD38F4C3318BD178F4B1CFF68AB30840A070FCA6A235BBF1E9",
+      "requiredFunctions": [
+        "crate::pair",
+        "crate::sum",
+        "crate::array",
+        "crate::add"
+      ],
+      "expectedOutput": "true\n42\n42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "source-named-tuple-unit-constructors",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-constructors-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-constructors-consumer.rs",
+      "producerSha256": "7F1B7AD76A82ACA2F3EE8110B7EF6BE962B2CB87863D215E24E706388373C13D",
+      "consumerSha256": "12E23575D771835D56FC62EBFDAE4C5FD0B2B126C801B6B4ADD369FD948D22D9",
+      "requiredFunctions": [
+        "crate::read",
+        "crate::tuple",
+        "crate::unit"
+      ],
+      "expectedOutput": "42\n42\n42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "composite-return-reference-origins",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-composite-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-composite-consumer.rs",
+      "producerSha256": "754DD929BC71FF18C3A7FC90CD0E1DA434F5699B69F2F31D549A7F5F44494C22",
+      "consumerSha256": "670CD239D364B9C29624466EC4D9163D072132CE9FA468192C7E674C4E7930B4",
+      "requiredFunctions": [
+        "crate::pair"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "composite-parameter-reference-path",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-composite-parameter-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-composite-parameter-consumer.rs",
+      "producerSha256": "9121FA4EA1ED62641059F22626DF8A18941E0CCE3B6DE15F90F50C5C576B9921",
+      "consumerSha256": "5AB71A1C5E00DF284B55FB528383476C47E7474120FAF193E321225CCBB998EE",
+      "requiredFunctions": [
+        "crate::first"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "projected-return-reference-origin",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-projected-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-projected-consumer.rs",
+      "producerSha256": "41348AA80DA89A5270DE227DDCFD1BE3C7E29CCC76E5485CFEF5E2DE30148788",
+      "consumerSha256": "68F63952F2869309A9DA40B98F6D50C64888865754EE7606B2F1CE1BE4092106",
+      "requiredFunctions": [
+        "crate::first"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "static-parameter-promoted-reference",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-static-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-static-consumer.rs",
+      "producerSha256": "A9BDD9A8C5034AE8FEC21BD0BE20C581C1FE7D1B9CDCAC120402E592278E8801",
+      "consumerSha256": "2EDC81BC1AF1C550494A0FE19177C299D4652D90ED5AF846CFEAF594E26B0E7C",
+      "requiredFunctions": [
+        "crate::read"
+      ],
+      "expectedOutput": "42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "enum-variants-construct-match",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-enum-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-enum-consumer.rs",
+      "producerSha256": "EAF919DB0C6FF063055A7A956381D3ACA5A4C104D951CC8379DA851DE36D74FD",
+      "consumerSha256": "9EB440A372E530DCDA47BACB9E273D624D95D3A5A6B1F3C40A7D1945B5C54BC2",
+      "requiredFunctions": [
+        "crate::make",
+        "crate::read"
+      ],
+      "expectedOutput": "40\n42\n0\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "enum-active-static-reference-payload",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-enum-reference-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-enum-reference-consumer.rs",
+      "producerSha256": "F99D5C08FE2CA9BCF27D5B8B505ACF5F9A44B53D21721594BAE3FFBA072BAD8C",
+      "consumerSha256": "4DB34E5486F15536F191D94C1F62BB2392E62238B2BD5390756645562792793D",
+      "requiredFunctions": [
+        "crate::none",
+        "crate::some",
+        "crate::read"
+      ],
+      "expectedOutput": "0\n42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "imported-unwind-caller-double-panic",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerPanicStrategy": "unwind",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-double-panic-consumer.rs",
+      "producerSha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+      "consumerSha256": "680134BDC8EF64E5B710DC8C892774F9C9A2E4BCEFB41E67F5D3F4C05EC2C029",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "expectedOutput": "start\n",
+      "expectedOutcome": "double-panic"
+    },
+    {
+      "id": "three-package-tuple-array-unit-owner",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "wrapperAssembly": "SourceWrapper",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-wrapper-producer.rs",
+      "wrapperSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-wrapper.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-wrapper-consumer.rs",
+      "producerSha256": "6FFC72558B2F733CE70E1E1909B32FD4635A5E40624737777E99C6F197892651",
+      "wrapperSha256": "EF0A63280D968DD89291B5115BE655AF4E9C613840124760EBD98F697D435D55",
+      "consumerSha256": "9334EC5D4D298D54AB61D00A39233B784686B6FA8E78814CD7D8CA752A055B24",
+      "requiredFunctions": [
+        "crate::pair",
+        "crate::array",
+        "crate::unit"
+      ],
+      "requiredWrapperFunctions": [
+        "crate::make_pair",
+        "crate::make_array",
+        "crate::make_unit",
+        "crate::read_unit"
+      ],
+      "requiredWrapperOwnerAssemblies": [
+        "SourceProducer"
+      ],
+      "requiredConsumerOwnerAssemblies": [
+        "SourceProducer"
+      ],
+      "expectedOutput": "true\n40\n42\n42\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "owned-tuple-partial-move-caller-drop",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-consumer.rs",
+      "producerSha256": "89C4AE0FA907D3A2C883D34B9C045A956EF027A1C8BA46BB4B2F69075FEABB75",
+      "consumerSha256": "3918A45952CF26FC9396D5301AE976A418632515C2C55EE91506FB10CAC5C711",
+      "requiredFunctions": [
+        "crate::make",
+        "crate::project"
+      ],
+      "requiredConsumerDropTypes": [
+        "crate::Resource"
+      ],
+      "expectedOutput": "2\n1\n1\n",
+      "expectedOutcome": "success"
+    },
+    {
+      "id": "owned-tuple-partial-move-unwind",
+      "compilerProfile": "safe-core-mir-p1-v2",
+      "producerAssembly": "SourceProducer",
+      "consumerAssembly": "SourceConsumer",
+      "producerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-producer.rs",
+      "consumerSource": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-consumer.rs",
+      "producerSha256": "C5C25C63432C718A3CC365497596338DDF09A555F2EA894B3DC1EB3FE6301DFA",
+      "consumerSha256": "7F3E872959CFC23695EEA91ABE36FA5A4998231D15911ACB3BE2C64D2D4AC114",
+      "requiredFunctions": [
+        "crate::make",
+        "crate::fail"
+      ],
+      "expectedOutput": "1\n2\n",
+      "expectedOutcome": "unwound"
+    }
+  ]
+}

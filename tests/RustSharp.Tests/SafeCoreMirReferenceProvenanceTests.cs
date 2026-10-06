@@ -28,12 +28,98 @@ internal static class SafeCoreMirReferenceProvenanceTests
         new("MIR reference coercion creates a shared reborrow with the right provenance", SharedCoercionAsync),
         new("MIR provenance keeps dynamic reference writes on concrete array elements", DynamicReferenceWriteAsync),
         new("MIR provenance retains offset owners through reference subslices and calls", ReferenceSubsliceAsync),
+        new("MIR imported calls retain explicit parameter origins without invented bodies", ImportedOriginsAsync),
+        new("MIR imported reference calls reject absent incompatible and mutable static origins", InvalidImportedOriginsAsync),
     ];
 
     private static readonly SafeCoreMirSource Source = new("provenance.rs", new TextSpan(0, 1), 0, 1);
     private static readonly SafeCoreType Integer = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.I32);
     private static readonly SafeCoreType Boolean = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Bool);
     private static readonly SafeCoreType Reference = SafeCoreType.Reference(Integer, false);
+
+    private static SafeCoreMirProgram ImportedReferenceProgram(SafeCoreType parameterType,
+        SafeCoreType returnType, params string[] origins)
+    {
+        var external = new SafeCoreExternalFunction("dep::identity", "identity", "Any->Any", "dep", "dep.dll")
+        {
+            SourceSchema = "rustsharp-source-call-v1",
+            SourceParameterTypes = [SafeCoreSourceTypeCodec.Format(parameterType)],
+            SourceReturnType = SafeCoreSourceTypeCodec.Format(returnType),
+            ReturnOrigins = [.. origins],
+        };
+        var signature = SafeCoreType.Function([parameterType], returnType, "dep::identity");
+        SafeCoreMirFunction caller = new(0, "caller", returnType,
+            [Local(0, parameterType, true), Local(1, returnType)],
+            [Block(0, [], SafeCoreMirTerminator.Call(SafeCoreMirOperand.Function(1, signature, Source),
+                [Operand(0, parameterType)], 1, 1, Source)),
+             Block(1, [], SafeCoreMirTerminator.Return(Operand(1, returnType), Source))], 0, Source);
+        return new([caller], [], [new(1, external, signature, Source)]);
+    }
+
+    private static Task ImportedOriginsAsync()
+    {
+        SafeCoreMirProgram program = ImportedReferenceProgram(Reference, Reference, "parameter:0");
+        SafeCoreMirReferenceProvenanceResult provenance = SafeCoreMirReferenceProvenance.Analyze(program);
+        AssertEx.True(provenance.IsSuccessful, Format(provenance.Diagnostics));
+        AssertEx.Equal(1, program.Functions.Count);
+        AssertEx.Equal(1, program.ExternalFunctions.Count);
+        AssertEx.Equal(2, provenance.Functions.Count);
+        SafeCoreMirReferenceOrigin origin = provenance.Functions[0].ReturnOrigins.Single();
+        AssertEx.True(origin.IsParameter && origin.LocalId == 0, "Imported return evidence must retain the caller's parameter origin.");
+        AssertEx.True(SafeCoreMirOwnershipAdapter.Analyze(program).IsSuccessful, "Imported references require the same ownership checks as source calls.");
+
+        SafeCoreType slice = SafeCoreType.Reference(SafeCoreType.Slice(Integer), false);
+        SafeCoreMirReferenceProvenanceResult sliced = SafeCoreMirReferenceProvenance.Analyze(ImportedReferenceProgram(slice, slice, "parameter:0"));
+        AssertEx.True(sliced.IsSuccessful, Format(sliced.Diagnostics));
+        AssertEx.True(sliced.Functions[0].ReturnOrigins.Single().HasUnknownSliceOffset,
+            "An imported slice may shift its view while retaining the declared parameter owner.");
+
+        var pick = program.ExternalFunctions[0].ExternalFunction with
+        {
+            SourceQualifiedName = "dep::pick",
+            SourceParameterTypes = ["&i32", "&i32"],
+            ReturnOrigins = ["parameter:1"],
+        };
+        var pickSignature = SafeCoreType.Function([Reference, Reference], Reference, "dep::pick");
+        SafeCoreMirFunction caller = new(0, "pick_caller", Reference,
+            [Local(0, Reference, true), Local(1, Reference, true), Local(2, Reference)],
+            [Block(0, [], SafeCoreMirTerminator.Call(SafeCoreMirOperand.Function(1, pickSignature, Source),
+                [Operand(0, Reference), Operand(1, Reference)], 2, 1, Source)),
+             Block(1, [], SafeCoreMirTerminator.Return(Operand(2, Reference), Source))], 0, Source);
+        var selected = SafeCoreMirReferenceProvenance.Analyze(new([caller], [], [new(1, pick, pickSignature, Source)]));
+        AssertEx.True(selected.IsSuccessful, Format(selected.Diagnostics));
+        AssertEx.Equal(1, selected.Functions[0].ReturnOrigins.Single().LocalId);
+        return Task.CompletedTask;
+    }
+
+    private static Task InvalidImportedOriginsAsync()
+    {
+        SafeCoreType mutable = SafeCoreType.Reference(Integer, true);
+        var cases = new[]
+        {
+            ImportedReferenceProgram(Reference, Reference),
+            ImportedReferenceProgram(Reference, Reference, "parameter:1"),
+            ImportedReferenceProgram(Reference, Reference, "parameter:00"),
+            ImportedReferenceProgram(Reference, mutable, "parameter:0"),
+            ImportedReferenceProgram(mutable, mutable, "static"),
+            ImportedReferenceProgram(Reference, Reference, "parameter:0.field:value"),
+            ReplaceDescriptor(ImportedReferenceProgram(Reference, Reference, "parameter:0"), "bool"),
+        };
+        foreach (SafeCoreMirProgram program in cases)
+        {
+            SafeCoreMirReferenceProvenanceResult result = SafeCoreMirReferenceProvenance.Analyze(program);
+            AssertEx.False(result.IsSuccessful, "Imported reference calls must reject unsupported or unproven origins.");
+            AssertEx.Equal(0, result.Functions.Count);
+        }
+        return Task.CompletedTask;
+
+        static SafeCoreMirProgram ReplaceDescriptor(SafeCoreMirProgram program, string returnType)
+        {
+            SafeCoreMirExternalFunction external = program.ExternalFunctions[0];
+            return new(program.Functions, program.AdtLayouts,
+                [external with { ExternalFunction = external.ExternalFunction with { SourceReturnType = returnType } }]);
+        }
+    }
 
     private static Task FieldCallAsync()
     {

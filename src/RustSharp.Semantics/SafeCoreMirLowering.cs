@@ -113,6 +113,8 @@ public static partial class SafeCoreMirLowering
         private readonly Stopwatch _clock = Stopwatch.StartNew();
         private readonly List<SafeCoreHirNode> _functionNodes = [];
         private readonly Dictionary<string, int> _functions = new(StringComparer.Ordinal);
+        private readonly List<SafeCoreMirExternalFunction> _externalFunctions = [];
+        private readonly Dictionary<SafeCoreExternalFunction, int> _externalFunctionIds = [];
         private readonly List<SafeCoreMirLocal> _locals = [];
         private readonly Dictionary<SafeCoreSymbol, int> _bindings = [];
         private readonly List<SafeCoreMirSource> _storageScopes = [];
@@ -120,6 +122,7 @@ public static partial class SafeCoreMirLowering
         private readonly Dictionary<int, SafeCoreMirSource> _extendedTemporaryScopes = [];
         private readonly Dictionary<string, int> _dropFunctions = new(StringComparer.Ordinal);
         private readonly HashSet<int> _destructorNodes = [];
+        private readonly Dictionary<string, bool> _moduleExportability = new(StringComparer.Ordinal);
         private readonly List<List<int>> _dropScopes = [];
         private readonly HashSet<int> _dropInitialized = [];
         private SafeCoreType? _destructorReceiverType;
@@ -168,16 +171,24 @@ public static partial class SafeCoreMirLowering
 
         public SafeCoreMirProgram Run()
         {
+            foreach (SafeCoreHirNode node in input.Hir.Nodes)
+            {
+                Step(node, 0);
+                if (node.Kind == N.Module && node.DeclaredSymbol is { } symbol)
+                    _moduleExportability[symbol.QualifiedName] = symbol.IsPublic;
+            }
             if (options.EnableP1Extensions) CollectAdtLayouts();
             if (options.EnableP1Extensions) FindRuntimeConstFunctions();
             Collect(input.Hir.Root!, 0);
+            if (options.EnableP1Extensions) RegisterImportedDestructors();
             var functions = new List<SafeCoreMirFunction>(_functionNodes.Count);
             for (int index = 0; index < _functionNodes.Count; index++)
             {
                 Step(_functionNodes[index], 0);
                 functions.Add(Function(_functionNodes[index], index));
             }
-            return new(functions, _adtLayouts.Values.ToArray(), cancellation);
+            return new(functions, _adtLayouts.Values.ToArray(), _externalFunctions, cancellation)
+            { ImportedStructuralTypes = System.Array.AsReadOnly(input.ImportedStructuralTypes.ToArray()) };
         }
 
         private void Collect(SafeCoreHirNode node, int depth)
@@ -325,12 +336,28 @@ public static partial class SafeCoreMirLowering
                     block.Terminator ?? SafeCoreMirTerminator.Unreachable(block.Source), block.Source, cancellation));
             }
             return new(id, signature.Name!, signature.ReturnType, _locals.ToArray(), blocks, 0, Source(node),
-                node.DeclaredSymbol!.IsPublic, cancellation)
+                IsExternallyVisible(node), cancellation)
             {
                 ReturnsStaticReference = node.ChildIds.Select(input.Hir.GetNode).Any(HasStaticLifetime),
                 IsDestructor = isDestructor,
                 PanicStrategy = options.PanicStrategy,
             };
+        }
+
+        private bool IsExternallyVisible(SafeCoreHirNode node)
+        {
+            if (node.DeclaredSymbol is not { IsPublic: true } symbol) return false;
+            string owner = symbol.ScopePath;
+            for (int depth = 0; depth <= options.MaximumNestingDepth; depth++)
+            {
+                Step(node, depth);
+                if (_moduleExportability.TryGetValue(owner, out bool visible) && !visible) return false;
+                int separator = owner.LastIndexOf("::", StringComparison.Ordinal);
+                if (separator < 0) return true;
+                owner = owner[..separator];
+            }
+            Limit(node);
+            return false;
         }
 
         private SafeCoreMirOperand? Expr(SafeCoreHirNode node, int depth)
@@ -407,8 +434,19 @@ public static partial class SafeCoreMirLowering
                         if (options.EnableP1Extensions && TryEnumVariant(node, out SafeCoreMirAdtLayout enumLayout, out int variantIndex))
                             return ConstructEnum(node, enumLayout, variantIndex, depth);
                         if (node.ReferencedSymbol is { } constructor && IsUnitAdt(constructorType) &&
-                            SymbolKey(constructor) == constructorType.Name)
-                            return SafeCoreMirOperand.Constant(constructorType, "()", Source(node));
+                            (SymbolKey(constructor) == constructorType.Name || constructor.ExternalType?.Kind == SafeCoreExternalTypeKind.UnitStruct))
+                        {
+                            // Drop values are materialized by the existing
+                            // transfer and scope-cleanup paths. Keep their
+                            // bounded local inventory unchanged.
+                            if (RequiresDrop(constructorType))
+                                return SafeCoreMirOperand.Constant(constructorType, "()", Source(node));
+                            // A nominal unit constructor creates a fresh owned
+                            // value. Keep that initialization in a typed local
+                            // so a non-Copy result can move through return and
+                            // call edges without treating its representation as Copy.
+                            return Emit(SafeCoreMirRvalue.Adt([], constructorType, Source(node), cancellation), constructorType, node);
+                        }
                         Unsupported(node);
                     }
                     SafeCoreMirLocal local = _locals[binding];
@@ -628,7 +666,9 @@ public static partial class SafeCoreMirLowering
             if (options.EnableP1Extensions && TryEnumVariant(calleeNode, out SafeCoreMirAdtLayout enumLayout, out int variantIndex))
                 return ConstructEnum(node, enumLayout, variantIndex, depth);
             if (options.EnableP1Extensions && Type(node).Kind == K.Adt &&
-                calleeNode.ReferencedSymbol is { } constructor && _adtLayouts.ContainsKey(SymbolKey(constructor)))
+                calleeNode.ReferencedSymbol is { } constructor &&
+                (_adtLayouts.ContainsKey(SymbolKey(constructor)) || constructor.ExternalType?.Kind == SafeCoreExternalTypeKind.TupleStruct &&
+                    Type(node).Name is { } importedType && _adtLayouts.ContainsKey(importedType)))
                 return ConstructTupleAdt(node, depth);
             // A full array-to-slice view has a stable owner length. Keep
             // `.len()` explicit in MIR so the backend cannot silently treat a
@@ -647,9 +687,23 @@ public static partial class SafeCoreMirLowering
             if (options.EnableP1Extensions && Type(calleeNode).Kind == K.Closure)
                 return ClosureCall(node, calleeNode, depth);
             int function = -1;
-            if (calleeNode.Kind != N.NameExpression || calleeNode.ReferencedSymbol is null ||
-                !_functions.TryGetValue(SymbolKey(calleeNode.ReferencedSymbol), out function)) Unsupported(calleeNode);
-            SafeCoreType signature = Type(_functionNodes[function]);
+            if (calleeNode.Kind != N.NameExpression || calleeNode.ReferencedSymbol is null) Unsupported(calleeNode);
+            SafeCoreType signature;
+            if (calleeNode.ReferencedSymbol.ExternalFunction is { } external)
+            {
+                if (!options.EnableP1Extensions && external.SourceSchema is not null) Unsupported(calleeNode);
+                signature = Type(calleeNode);
+                if (signature.Kind != K.Function || !external.IsPublic) Invalid(calleeNode);
+                for (int index = 0; index < signature.ParameterTypes.Count; index++)
+                    ValueType(signature.ParameterTypes[index], calleeNode);
+                ValueType(signature.ReturnType, calleeNode, allowNever: true);
+                function = RegisterExternalFunction(external, signature, calleeNode, isDestructor: false);
+            }
+            else
+            {
+                if (!_functions.TryGetValue(SymbolKey(calleeNode.ReferencedSymbol), out function)) Unsupported(calleeNode);
+                signature = Type(_functionNodes[function]);
+            }
             var arguments = new List<SafeCoreMirOperand>();
             for (int index = 1; index < node.ChildIds.Count && _current is not null; index++)
             {
@@ -961,6 +1015,22 @@ public static partial class SafeCoreMirLowering
         private void EmitFunctionExitDrops(SafeCoreHirNode returnSite)
         {
             EmitDropBodies(returnSite);
+            // Parameters own an outer function scope. Aggregate parameters
+            // have no root destructor, so their remaining fields require
+            // explicit recursive cleanup after the body locals have ended.
+            // Cleanup flags skip every field already moved to the result or
+            // another destination, while preserving live siblings.
+            if (_destructorReceiverType is null)
+            {
+                int parameterSnapshot = _locals.Count;
+                for (int localId = parameterSnapshot - 1; localId >= 0 && _current is not null; localId--)
+                {
+                    Step(returnSite, 0);
+                    SafeCoreMirLocal local = _locals[localId];
+                    if (local.Kind == SafeCoreMirLocalKind.Parameter && RequiresDrop(local.Type))
+                        EmitOwnedPlaceDrop(local.Type, SafeCoreMirPlace.Root(localId), local.Source, 0);
+                }
+            }
             // `drop`'s own lexical locals end before the automatically owned
             // fields, including when its body returns explicitly.
             if (_destructorReceiverType is { } droppedType && _current is not null)
@@ -1004,11 +1074,14 @@ public static partial class SafeCoreMirLowering
             EmitOwnedScopeDrops(_dropScopes[scope], _storageScopes[scope], 0);
         }
 
-        private void EmitDestructorCall(int functionId, SafeCoreHirNode method,
-            SafeCoreMirSource source, int? dropLocalId, SafeCoreMirPlace? receiverPlace = null)
+        private void EmitDestructorCall(int functionId, SafeCoreMirSource source,
+            int? dropLocalId, SafeCoreMirPlace? receiverPlace = null)
         {
+            SafeCoreHirNode method = functionId < _functionNodes.Count ? _functionNodes[functionId] :
+                input.Hir.GetNode(source.HirNodeId);
             Step(method, 0);
-            SafeCoreType signature = Type(method);
+            SafeCoreType signature = functionId < _functionNodes.Count ? Type(method) :
+                _externalFunctions[functionId - _functionNodes.Count].Signature;
             if (signature.Kind != K.Function || signature.ParameterTypes.Count != 1 ||
                 signature.ParameterTypes[0].Kind != K.Reference ||
                 signature.ParameterTypes[0].ElementType is null)
@@ -1070,7 +1143,7 @@ public static partial class SafeCoreMirLowering
             if (depth > options.MaximumNestingDepth) Limit(input.Hir.Root!);
             if (type.Name is { } name && _dropFunctions.TryGetValue(name, out int destructor))
             {
-                EmitDestructorCall(destructor, _functionNodes[destructor], source, null, receiverPlace);
+                EmitDestructorCall(destructor, source, null, receiverPlace);
                 return;
             }
             EmitAggregateFieldDrops(type, source, receiverPlace, depth);

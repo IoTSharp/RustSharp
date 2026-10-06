@@ -386,9 +386,11 @@ accepts source files, file modules and the existing
 bounded Cargo package entry point. Library-like inputs need no `main`.
 `build`, `compile`, `run` and `publish` report `RSC0009` before creating output.
 The [type-system contract](docs/type-system-profile.md) records the supported
-type rules, diagnostics and limits. A bounded ownership foundation now covers
-move/borrow checks and reference escape; source/HIR/MIR integration and the full
-P1-07 gate remain open. Richer executable lowering remains P1-09 work.
+type rules, diagnostics and limits. At that historical delivery, the bounded
+ownership foundation covered move/borrow checks and reference escape; full
+source/HIR/MIR ownership and richer executable lowering were later work. Current
+delivery and evidence are tracked in [P1 leaves](docs/roadmap/P1.md) and the
+[source-package implementation record](docs/p1-09-implementation.md).
 
 ```text
 dotnet run --project src/RustSharp.Cli -c Release --no-build --no-restore -- check samples/type-system.rs --profile safe-core-types-v1
@@ -448,7 +450,7 @@ publish/run, printing `42` and `true` with exit code zero. The environment is
 Windows x64, .NET SDK 10.0.400/runtime 10.0.11 and
 `rustc 1.98.0 (88d9e12ae 2026-08-18)`.
 
-After the P1-05 merge, the executable test harness registers and passes 377/377
+In the recorded run after the P1-05 merge, the executable test harness registers and passes 377/377
 tests. A supplemental 2026-09-22 run used the installed .NET SDK 10.0.401 via
 explicit MSBuild because 10.0.400 is unavailable on this host; it supplements,
 but does not replace, the recorded 10.0.400 Native AOT evidence above.
@@ -461,21 +463,24 @@ Evidence is `artifacts/p1-05/tests-release.log`,
 `artifacts/p1-05/windows-x64-packages-aot.json`. Windows/Linux workflows validate
 and archive the corpus and both ILVerify gates; Windows also runs both generic
 Native AOT samples. This local evidence does not claim a new remote CI run or
-generic Linux Native AOT execution. Move/borrow/lifetime analysis remains a
-separate ownership gate; bounded independent-consumer assembly
-import/compilation is now covered by P1-09, while broader signatures and
-ownership-aware calls remain gated.
+generic Linux Native AOT execution. Move/borrow/lifetime analysis and source
+package contracts were separate gates at that historical delivery. Current
+reference/aggregate signatures and ownership-aware imported calls are recorded
+under [P1-09](docs/p1-09-implementation.md); the full candidate-SHA gate remains
+separate.
 
 ### First executable P1 batch
 
 The opt-in `safe-core-primitives-v1` profile follows
-[ADR 0007](docs/adr/0007-safe-core-primitives.md): C# front end -> name-bound
-HIR -> primitive type checking -> validated CLR LIR -> direct IL/Portable PDB
+[ADR 0007](docs/adr/0007-safe-core-primitives.md). Its current production route is
+C# front end -> name-bound HIR -> primitive compatibility/type gate ->
+ownership-checked typed MIR and cleanup -> validated CLR LIR -> direct IL/Portable PDB
 -> CoreCLR or Native AOT. It supports inline modules/imports, i32/bool
 functions, initialized locals, mutability, calls, conditionals, returns,
 checked arithmetic, comparisons, short-circuit logic and bounded built-in
 printing. It rejects unsupported types and ownership-bearing constructs.
-Full typed MIR, borrow/NLL and deterministic Drop remain separate gates.
+The broader typed-MIR, borrow/NLL and deterministic Drop contracts retain their
+separate P1-06/P1-07/P1-08 scope; the primitive profile retains its bounded ABI.
 
 The primitive regression harness and 14-case rustc 1.98.0 differential suite
 exercise runtime behavior and rejection before output. Acceptance commands are:
@@ -513,8 +518,8 @@ publish warnings and no cleanup diagnostic. Both CoreCLR and Native AOT print
 | P1-05 | ✅ Complete | [Leaf breakdown](docs/roadmap/P1.md#p1-05). Implement generic substitution, monomorphization, impl coherence, and the versioned trait-solver subset. | P0-14, P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile safe-core-generics-v1 --oracle rustc-1.98` | The executable generic profile checks rigid HIR bodies, positive marker-trait bounds and coherence, specializes reachable bodies and aggregate layouts, and emits through CLR LIR. The bounded package graph preserves generic identities/definitions and enforces its orphan subset. The recorded profile gate passes 350 regressions and 32 fixed cases, including eight runtime comparisons; the merged executable harness currently passes 377/377 tests. Standalone and local Cargo samples pass ILVerify and Windows Native AOT. See the [generic contract](docs/generic-profile.md). |
 | P1-06 | ✅ Complete | [Leaf breakdown](docs/roadmap/P1.md#p1-06). Define typed MIR, CFG validation, desugaring, and source mapping. | P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | The frozen typed-MIR families now include scalar operators/conversions, struct/enum layouts, nested references and reference-bearing aggregates, general shared/mutable slice calls/indexing/subslices/writes, move/ref patterns, declaration-time closure captures and checked constants/promotion. GC-owned handles preserve actual-owner identity; provenance, source mappings, capability/budget boundaries and deterministic MIR/LIR/PE/PDB are covered by registered tests. See the [implementation inventory](docs/p1-06-implementation.md) and [typed MIR contract](docs/typed-mir-profile.md). P1-07–P1-10 and the complete native candidate-SHA gate remain separate. |
 | P1-07 | ✅ Complete | [Leaf breakdown](docs/roadmap/P1.md#p1-07). Implement move paths, borrow checking, non-lexical lifetimes, reborrowing, and escape analysis for the profile. | P0-13, P1-06.04, P1-06.05 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet D:/GitHub/RustSharp/tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --profile p1-differential-v3 --oracle rustc-1.98 --report artifacts/p1-next-session/p1-differential-v3-final2.json --timeout 30 --deadline 300` | All twelve ownership leaves are complete: golden diagnostics preserve move/borrow/escape codes, messages, original paths and spans; the differential report passes 32/32 with borrow 20/20 and Drop 6/6 semantic closure. Candidate-SHA aggregation remains a separate P1-10.08/P1-GATE boundary. |
-| P1-08 | ✅ Complete | [Leaf breakdown](docs/roadmap/P1.md#p1-08). Implement scope cleanup, deterministic `Drop`, unwind/abort profile behavior, and panic boundaries. | P1-06.01, P1-07.01 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --p1-drop-call-interface create artifacts/p1-drop/p1-08-call-interface-win-x64.json 2` | [Implementation inventory](docs/p1-08-implementation.md) closes all fourteen leaves with checked destructor receivers, typed/shared drop flags, aggregate/temporary cleanup, explicit panic strategies and the reusable direct-call host. Current Release has zero warnings/errors; 894/894 regressions pass. The fixed differential records 26 rustc matches plus two frozen contract differences; original-PE ILVerify is 30/30. Windows and Ubuntu WSL each pass Native AOT 28/28 and callable 7/7 over two original PE artifacts. Final process/host cleanup and nine retained historical temporary objects are separately disclosed; source imported calls and the candidate-SHA gate remain under P1-09/P1-10/P1-GATE. |
-| P1-09 | 🚧 In progress | [Leaf breakdown](docs/roadmap/P1.md#p1-09). Emit safe-core programs through CLR LIR with Rust# cross-package metadata. | P0-07, P1-05, P1-08.11 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | `CompilerDriver` emits deterministic `rustsharp-metadata-v1` JSON through `AssemblyMetadataAttribute`, carrying profile, source SHA-256, signatures, generic instances (zero-arity canonicalized as `()`), trait selections, optional MIR snapshots and attached ownership/cleanup evidence. `RustSharpMetadataReader`/`RustSharpMetadataConsumer` validate bounded PE/schema/profile/required exports, reconcile each function with the generated `Program` MethodDef (name, CLR signature, visibility, and static flag), and read `RustSharp.Generics.v1.json`; parse, round-trip and independent-consumer tests are registered in the executable harness. Imported declarations are synthesized into bounded external crate scopes and HIR/name resolution; CLR LIR emits `AssemblyRef`/`TypeRef`/`MemberRef` for bounded scalar calls, and a producer-to-consumer CoreCLR runtime call is verified. Aggregate/byref imported signatures and call contracts now have metadata tests and manually constructed CLR LIR producer/consumer CoreCLR tests. Complete source-level imported ownership contracts and ILVerify/Native AOT evidence for these additions remain open. |
+| P1-08 | ✅ Complete | [Leaf breakdown](docs/roadmap/P1.md#p1-08). Implement scope cleanup, deterministic `Drop`, unwind/abort profile behavior, and panic boundaries. | P1-06.01, P1-07.01 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --p1-drop-call-interface create artifacts/p1-drop/p1-08-call-interface-win-x64.json 2` | [Implementation inventory](docs/p1-08-implementation.md) closes all fourteen leaves with checked destructor receivers, typed/shared drop flags, aggregate/temporary cleanup, explicit panic strategies and the reusable direct-call host. Historical E9 Release has zero warnings/errors; 894/894 regressions pass. The fixed differential records 26 rustc matches plus two frozen contract differences; original-PE ILVerify is 30/30. Windows and Ubuntu WSL each pass Native AOT 28/28 and callable 7/7 over two original PE artifacts. Final process/host cleanup and nine retained historical temporary objects are separately disclosed; At that historical point, source imported calls were P1-09 work; candidate-SHA aggregation remains P1-10/P1-GATE work. |
+| P1-09 | ✅ Complete | [Leaf breakdown](docs/roadmap/P1.md#p1-09). Emit supported safe-core programs through validated CLR LIR with Rust# cross-package metadata and source ownership contracts. | P0-07, P1-05, P1-08.11 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-build --no-restore` | Closure-9 Release has zero warnings/errors, focused 84/84 and full 964/964. The frozen source-package manifest has SHA `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`; Windows and Ubuntu WSL each pass 19/19 CoreCLR, 39/39 original-PE ILVerify and Native AOT cases with zero warnings/failed/blocked/not-executed cases, equal independent builds, deadline and cleanup audits. Local working-tree evidence is complete for P1-09; P1-10 candidate-SHA aggregation and P1-GATE remain separate 🚧 gates. |
 | P1-10 | 🚧 In progress | [Leaf breakdown](docs/roadmap/P1.md#p1-10). Establish compile-pass, compile-fail, run-pass, and differential regression suites. | P0-11, P1-06.01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile p1-differential-v3 --oracle rustc-1.98 --report artifacts/p1-next-session/p1-differential-v3-final2.json --timeout 30 --deadline 300`<br>`dotnet D:/GitHub/RustSharp/tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --profile p1-platform-v2 --report artifacts/p1-next-session/p1-platform-v2-final-closed4.json --timeout 30 --deadline 600` | P1-10.03 through P1-10.07 are ✅ Complete locally: differential 32/32, borrow 20/20, Drop 6/6 and platform 24/24 with CoreCLR, ILVerify, Native AOT and binding validation all passing. Candidate-SHA aggregation and publication leaves remain under P1-10.08 through P1-GATE. |
 
 The recorded `p1-exit-gate-v1` report at `artifacts/p1-10/p1-exit-gate-v1.json`
@@ -555,18 +560,18 @@ ILVerify and Windows Native AOT. Reports are retained under
 for the local expanded evidence; candidate-SHA aggregation and publication remain
 under the full P1 gate.
 
-The follow-up from `e601789` advances P1-07.12, P1-09.03/.07 and P1-10.07:
+The follow-up from `e601789` recorded P1-07.12, P1-09.03/.07 and P1-10.07; the current P1-09 closure is documented separately:
 explicit ownership evidence obeys per-function resource bounds and preserves
 source diagnostics; package metadata rejects missing/unknown fields, scalar
 schema downgrades and ambiguous source aliases; expanded platform reports bind
 fixed sources/expectations, outputs and backend process evidence. The
 [evidence audit](docs/p1-evidence-audit.md) records focused verification and the
-remaining semantic/native boundaries. P1 and all six P1-GATE leaves remain open.
+remaining semantic/native boundaries. P1-09 is ✅ Complete on current local source-package evidence; P1-10 and all six P1-GATE leaves remain 🚧 In progress.
 Use the exact leaf dependencies in the [P1 execution order](docs/roadmap/P1.md):
 typed place/provenance work unlocks source ownership; drop flags unlock cleanup;
 metadata contracts and test runners can advance in separate owned files.
 P1-06.13 reconciles named lowering families rather than becoming another open-ended
-implementation bucket. Source imported panic integration belongs to P1-09.06,
+implementation bucket. Source imported panic integration is ✅ Complete in P1-09.06,
 after the reusable local boundary in P1-08.11. Complete P1-GATE.01 through .06
 after the frozen implementation and evidence leaves, preserving every old suite.
 
@@ -788,8 +793,7 @@ zero failures/skips and a zero-error/zero-warning Release build. The recorded `p
 library-contract probes and records `"nativeAot": false` and
 `"crossPlatform": false`; it does not close the full P1 exit gate. P1-07 is ✅
 Complete; P1-08 is ✅ Complete on its current generated-program and platform
-evidence. P1-09, P1-10 and the P1 stage remain 🚧 In progress for source-level imported contracts,
-remaining P1-10 evidence, candidate aggregate and publication gates.
+evidence. P1-09 is ✅ Complete on current local source-package evidence. P1-10 and the P1 stage remain 🚧 In progress for remaining P1-10 evidence, candidate aggregate and publication gates.
 P0-10, P0-16, and P0-17 are now ✅ Complete on the recorded two-platform evidence;
 later language-profile claims remain gated on the full HIR/MIR and differential
 suites.

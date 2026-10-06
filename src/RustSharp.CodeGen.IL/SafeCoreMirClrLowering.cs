@@ -135,6 +135,21 @@ public static partial class SafeCoreMirClrLowering
             return name;
         }
 
+        internal SafeCoreMirExternalFunction? ExternalFunction(int functionId) =>
+            program.ExternalFunctions.FirstOrDefault(function => function.Id == functionId);
+
+        internal ClrLirCallSite CallSite(int functionId, ClrLirType returnType, ClrLirType[] parameters, SafeCoreMirSource source)
+        {
+            if (ExternalFunction(functionId) is not { } imported)
+                return new(MethodName(functionId, source), returnType, parameters);
+            SafeCoreExternalFunction external = imported.ExternalFunction;
+            return new(external.ClrName, returnType, parameters)
+            {
+                ExternalCall = new(external.AssemblyName, external.ClrNamespace, external.ClrTypeName, external.ClrName,
+                    external.CallPanicStrategy, external.CallParameterContracts, external.CallReturnContract),
+            };
+        }
+
         internal ClrLirType StorageType(SafeCoreType type, SafeCoreMirSource source, int depth = 0)
         {
             Step();
@@ -150,7 +165,7 @@ public static partial class SafeCoreMirClrLowering
                 // boundary instead of silently changing its meaning.
                 SafeCoreSemanticTypeKind.Char => FailType(type, source),
                 SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array => Layout(type, source, depth).Type,
-                SafeCoreSemanticTypeKind.Reference => ClrLirType.Any,
+                SafeCoreSemanticTypeKind.Reference => ReferenceStorageType(type, source, depth),
                 SafeCoreSemanticTypeKind.Adt => Layout(type, source, depth).Type,
                 _ => FailType(type, source),
             };
@@ -160,6 +175,20 @@ public static partial class SafeCoreMirClrLowering
             type.Kind is SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Never
                 ? ClrLirType.Void
                 : StorageType(type, source);
+
+        private ClrLirType ReferenceStorageType(SafeCoreType type, SafeCoreMirSource source, int depth)
+        {
+            Step();
+            if (depth > 128) Limit("MIR reference type nesting exceeded the CLR lowering limit.");
+            SafeCoreType referent = type.ElementType;
+            if (referent.Kind is SafeCoreSemanticTypeKind.Reference or SafeCoreSemanticTypeKind.Slice)
+                ReferenceStorageType(referent, source, depth + 1);
+            else if (referent.Kind is SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Adt)
+            {
+                if (!_activeLayouts.Contains(TypeKey(referent))) Layout(referent, source, depth + 1);
+            }
+            return ClrLirType.Any;
+        }
 
         internal ClrLirValueType Layout(SafeCoreType type, SafeCoreMirSource source, int depth = 0)
         {
@@ -210,7 +239,17 @@ public static partial class SafeCoreMirClrLowering
 
                 string name = "mir_value_" + Convert.ToHexString(
                     SHA256.HashData(Encoding.UTF8.GetBytes(key))).ToLowerInvariant()[..24];
-                var layout = new ClrLirValueType(name, fields) { ImplementsMirValue = true };
+                SafeCoreMirAdtLayout? imported = program.AdtLayouts.FirstOrDefault(item => item.Type == type && item.ExternalAssemblyName is not null);
+                SafeCoreMirImportedStructuralType? structural = program.ImportedStructuralTypes.FirstOrDefault(item => item.Type == type);
+                string? externalAssembly = imported?.ExternalAssemblyName ?? structural?.AssemblyName;
+                string? externalClrName = imported?.ExternalClrName ?? structural?.ClrName;
+                if (externalAssembly is not null) name = externalAssembly + "::" + externalClrName;
+                var layout = new ClrLirValueType(name, fields)
+                {
+                    ImplementsMirValue = true,
+                    ExternalAssemblyName = externalAssembly,
+                    ExternalClrName = externalClrName,
+                };
                 _layouts.Add(key, layout);
                 return layout;
             }
@@ -372,7 +411,7 @@ public static partial class SafeCoreMirClrLowering
                 SourceQualifiedName = function.Name,
                 // The CLR entry point must remain externally discoverable even
                 // when Rust's source declaration uses its default private visibility.
-                IsPublic = function.IsPublic || IsEntryName(function.Name),
+                IsPublic = function.IsPublic || function.IsDestructor || IsEntryName(function.Name),
             };
         }
 
@@ -725,8 +764,16 @@ public static partial class SafeCoreMirClrLowering
                 value.Type != value.Operands[0].Type.Elements[index])
                 Lowerer.Fail(value.Source, "MIR tuple projection does not match its aggregate layout.");
             EmitOperand(value.Operands[0]);
+            int fieldIndex = int.Parse(value.Operator!, CultureInfo.InvariantCulture);
             Emit(new ClrLirReadField(owner.Layout(value.Operands[0].Type, value.Source),
-                int.Parse(value.Operator!, CultureInfo.InvariantCulture)));
+                fieldIndex));
+            SafeCoreMirOperand aggregate = value.Operands[0];
+            SafeCoreMirPlace projected = (aggregate.Place ?? SafeCoreMirPlace.Root(aggregate.Id))
+                .Append(SafeCoreMirProjection.TupleIndex(fieldIndex));
+            // Reading an owned field transfers only that field's cleanup
+            // obligations. Its live siblings remain owned by the aggregate.
+            // Reference values carry loans and never own the referent's Drop.
+            ConsumeMovedOperand(SafeCoreMirOperand.PlaceValue(projected, value.Type, value.Source));
         }
 
         private void EmitIndex(SafeCoreMirRvalue value)
@@ -903,7 +950,7 @@ public static partial class SafeCoreMirClrLowering
             if (flag.HasValue) SetNormalCleanupMode(isCleanup: true);
             var parameterTypes = callee.Type.ParameterTypes.Select(type => owner.StorageType(type, source)).ToArray();
             ClrLirType returnType = owner.ReturnType(callee.Type.ReturnType, source);
-            Emit(new ClrLirCall(new(owner.MethodName(callee.Id, source), returnType, parameterTypes)));
+            Emit(new ClrLirCall(owner.CallSite(callee.Id, returnType, parameterTypes, source)));
             if (flag.HasValue) SetNormalCleanupMode(isCleanup: function.IsDestructor);
             if (terminator.DestinationLocalId is int destination)
                 Store(destination, source);

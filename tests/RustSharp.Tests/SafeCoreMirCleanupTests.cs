@@ -33,7 +33,68 @@ internal static class SafeCoreMirCleanupTests
         new("compiler MIR backend executes fixed-array indexing", MirBackendArrayAsync),
         new("compiler MIR backend executes direct calls and inclusive comparisons", MirBackendCallAsync),
         new("compiler MIR check shares backend capability diagnostics", BackendCapabilityGateAsync),
+        new("typed MIR imported Drop retains exactly one cleanup obligation without a fake body", ImportedDropAsync),
     ];
+
+    private static Task ImportedDropAsync()
+    {
+        SafeCoreMirSource source = Source(0);
+        SafeCoreType token = SafeCoreType.Adt("dep::Token");
+        SafeCoreType receiver = SafeCoreType.Reference(token, true);
+        SafeCoreType unit = SafeCoreType.Primitive(SafeCoreSemanticTypeKind.Unit);
+        var descriptor = new SafeCoreExternalFunction("dep::drop", "drop", "Any->Void", "dep", "dep.dll", IsPublic: false)
+        {
+            SourceSchema = "rustsharp-source-call-v1",
+            SourceParameterTypes = ["&mut crate::Token"],
+            SourceReturnType = "()",
+            NominalScope = "dep",
+            CallParameterContracts = ["borrow:mut"],
+            CallReturnContract = "unit",
+            CallPanicStrategy = "unwind",
+        };
+        var signature = SafeCoreType.Function([receiver], unit, "dep::drop");
+        SafeCoreMirAdtLayout layout = new(token, [], source)
+        {
+            ExternalAssemblyName = "dep",
+            ExternalClrName = "Token",
+            ExternalDropFunction = descriptor,
+        };
+        SafeCoreMirLocal owner = new(0, "resource", token, SafeCoreMirLocalKind.Parameter, true, source)
+        { DestructorFunctionId = 1, IsUnitAdt = true };
+        SafeCoreMirLocal temporary = new(1, "drop_receiver", receiver, SafeCoreMirLocalKind.Temporary, false, source);
+        var borrow = new SafeCoreMirStatement(1, SafeCoreMirRvalue.Unary("&mut",
+            SafeCoreMirOperand.PlaceValue(SafeCoreMirPlace.Root(0), token, source), receiver, source), source);
+        var drop = SafeCoreMirTerminator.Call(SafeCoreMirOperand.Function(1, signature, source),
+            [SafeCoreMirOperand.Local(1, receiver, source)], null, 1, source);
+        // The root annotation links this canonical receiver to exactly one owned local.
+        drop = new(drop.Kind, drop.Operand, drop.Arguments, drop.DestinationLocalId,
+            drop.TargetBlockId, drop.FalseTargetBlockId, source) { DropLocalId = 0 };
+        SafeCoreMirFunction caller = new(0, "caller", unit, [owner, temporary],
+            [new(0, [borrow], drop, source), new(1, [], SafeCoreMirTerminator.Return(null, source), source)], 0, source);
+        SafeCoreMirProgram mir = new([caller], [layout], [new(1, descriptor, signature, source) { IsDestructor = true }]);
+        SafeCoreMirOwnershipResult ownership = SafeCoreMirOwnershipAdapter.Analyze(mir);
+        AssertEx.True(ownership.IsSuccessful, string.Join(Environment.NewLine, ownership.Diagnostics));
+        SafeCoreMirCleanupResult cleanup = SafeCoreMirCleanupLowering.Lower(mir, ownership);
+        AssertEx.True(cleanup.IsSuccessful, string.Join(Environment.NewLine, cleanup.Diagnostics));
+        AssertEx.Equal(1, cleanup.Functions.Count);
+        AssertEx.Equal(1, cleanup.Functions.Single().Paths.Single().Actions.Count(action =>
+            action.Kind == SafeCoreMirCleanupActionKind.Drop && action.LocalName == "resource"));
+        SafeCoreMirDropFlagResult flags = SafeCoreMirDropFlagLowering.Lower(ownership);
+        AssertEx.True(flags.IsSuccessful, string.Join(Environment.NewLine, flags.Diagnostics));
+        AssertEx.Equal(SafeCoreDropPlaceState.Dropped,
+            flags.Paths.Single().FinalFlags.Single(flag => flag.LocalName == "resource").State);
+        AssertEx.Equal(1, mir.Functions.Count);
+        AssertEx.True(mir.IsDestructorFunction(1), "The producer's destructor remains bodyless external evidence.");
+
+        SafeCoreMirFunction missing = new(0, "caller", unit, [owner with { DestructorFunctionId = null }, temporary],
+            caller.Blocks, 0, source);
+        AssertEx.False(SafeCoreMirValidation.Validate(new([missing], [layout], mir.ExternalFunctions)).IsSuccessful,
+            "An imported owner cannot omit its producer destructor identity.");
+        AssertEx.False(SafeCoreMirValidation.Validate(new([caller], [layout],
+            [mir.ExternalFunctions[0] with { IsDestructor = false }])).IsSuccessful,
+            "A plain imported call cannot masquerade as layout Drop evidence.");
+        return Task.CompletedTask;
+    }
 
     private static Task BranchLoopCleanupAsync()
     {

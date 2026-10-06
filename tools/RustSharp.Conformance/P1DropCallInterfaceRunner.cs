@@ -229,7 +229,7 @@ internal static class P1DropCallInterfaceRunner
                     artifact["generatedAssemblySha256"] = HashFile(generatedPath);
                     artifact["runtimeAssemblyPath"] = runtimePath;
                     artifact["runtimeAssemblySha256"] = HashFile(runtimePath);
-                    RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(generatedPath);
+                    RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(generatedPath, cancellationToken: cancellationToken);
                     if (!imported.IsSuccessful || imported.Document is null) throw new InvalidOperationException("Callable PE metadata is invalid.");
                     if (!string.Equals(imported.Document.SourceSha256, HashFile(sourcePath), StringComparison.OrdinalIgnoreCase))
                         throw new InvalidOperationException("Callable PE source hash does not bind its retained original source.");

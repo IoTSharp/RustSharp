@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Collections.Immutable;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
@@ -394,7 +395,9 @@ public sealed class CompilerDriver
                     safeCore.MirSnapshot,
                     safeCore.Ownership,
                     safeCore.CleanupSnapshot,
-                    BuildCallContracts(safeCore, cancellationToken));
+                    BuildCallContracts(safeCore, cancellationToken),
+                    sourceValueTypes: BuildSourceValueTypes(safeCore, cancellationToken),
+                    sourceStructuralTypes: BuildSourceStructuralTypes(safeCore, cancellationToken));
             GeneratedAssembly generated;
             try
             {
@@ -531,7 +534,7 @@ public sealed class CompilerDriver
         // accepted here and then rejected by `compile` for an LIR-only reason.
         SafeCoreClrResult backend = SafeCoreMirClrLowering.Lower(
             result.Mir!.Program!, cancellationToken);
-        backend = AttachMirEvidence(backend, result, requireOwnershipMetadata: true);
+        backend = AttachMirEvidence(backend, result, requireOwnershipMetadata: true, cancellationToken);
         return backend.IsSuccessful
             ? new(true, [], null)
             : CompilationResult.Failed(backend.Diagnostics.Count == 0
@@ -591,7 +594,7 @@ public sealed class CompilerDriver
             // source-to-MIR contract.
             SafeCoreClrResult emitted = SafeCoreMirClrLowering.Lower(
                 evidence.Mir!.Program!, cancellationToken);
-            return AttachMirEvidence(emitted, evidence, requireOwnershipMetadata: true);
+            return AttachMirEvidence(emitted, evidence, requireOwnershipMetadata: true, cancellationToken);
         }
         SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new SafeCoreHirLoweringOptions
         {
@@ -605,27 +608,54 @@ public sealed class CompilerDriver
         });
         SafeCoreTypeCheckResult types = SafeCoreTypeChecking.Check(hir, cancellationToken);
         if (!types.IsSuccessful) return new([], [], types.Diagnostics);
-        SafeCoreClrResult lowered = SafeCoreClrLowering.Lower(types.Program!, cancellationToken);
 
-        // Primitive programs remain source-compatible with the existing
-        // profile.  When the richer evidence pipeline accepts the same source,
-        // attach its deterministic MIR/ownership facts without making the
-        // legacy executable gate depend on optional constructs.
-        try
+        // Keep the primitive profile's accepted syntax, diagnostics and limits
+        // as its compatibility gate. Emission consumes the same validated MIR
+        // and ownership/cleanup evidence as the richer executable profiles;
+        // a failed stage cannot fall back to a separate primitive backend.
+        SafeCoreMirPipelineResult primitiveEvidence = SafeCoreMirPipeline.Analyze(syntax,
+            new SafeCoreMirPipelineOptions
+            {
+                CancellationToken = cancellationToken,
+                RequireOwnershipEvidence = true,
+                RequireCleanupEvidence = true,
+                Crates = crates.IsDefault ? [] : crates,
+            });
+        if (!primitiveEvidence.IsSuccessful)
+            return new([], [], primitiveEvidence.Diagnostics);
+
+        SafeCoreClrResult primitive = SafeCoreMirClrLowering.Lower(
+            primitiveEvidence.Mir!.Program!, cancellationToken);
+        if (!primitive.IsSuccessful)
+            return primitive with
+            {
+                // Preserve the primitive v1 diagnostic for CLR budgets while
+                // retaining rejection from the mandatory MIR backend.
+                Diagnostics = primitive.Diagnostics.Select(static diagnostic =>
+                    diagnostic.Code == SafeCoreMirClrLowering.LimitReached
+                        ? diagnostic with
+                        {
+                            Code = "RST2001",
+                            Message = "CLR lowering exceeded its local, block, work, nesting or time limit.",
+                        }
+                        : diagnostic).ToArray(),
+            };
+        // The richer type pass's body suffix is internal; the primitive v1
+        // metadata ABI has always exposed the original source declaration.
+        primitive = primitive with
         {
-            SafeCoreMirPipelineResult evidence = SafeCoreMirPipeline.Analyze(syntax,
-                new SafeCoreMirPipelineOptions
-                {
-                    CancellationToken = cancellationToken,
-                    RequireOwnershipEvidence = true,
-                    Crates = crates.IsDefault ? [] : crates,
-                });
-            if (evidence.Mir is { IsSuccessful: true })
-                lowered = AttachMirEvidence(lowered, evidence);
-        }
-        catch (OperationCanceledException) { throw; }
-        catch (TimeoutException) { }
-        return lowered;
+            Methods = primitive.Methods.Select(static method =>
+                method.SourceQualifiedName is { } sourceName && sourceName.EndsWith("#value", StringComparison.Ordinal)
+                    ? new ClrLirMethod(method.Name, method.ReturnType, method.Parameters, method.Locals, method.Blocks,
+                        method.ExceptionCleanup, method.FaultTryBlockCount, method.GuardedExceptionCleanup, method.PanicHandling)
+                    {
+                        SourceQualifiedName = sourceName[..^6],
+                        IsPublic = method.IsPublic,
+                        IsCompilerGenerated = method.IsCompilerGenerated,
+                    }
+                    : method).ToArray(),
+        };
+        return AttachMirEvidence(primitive, primitiveEvidence, requireOwnershipMetadata: true, cancellationToken);
     }
 
     private static IEnumerable<RustSharpMetadataCallContract> BuildCallContracts(SafeCoreClrResult program,
@@ -636,9 +666,47 @@ public sealed class CompilerDriver
         // are deliberately not used to infer their ownership or lifetimes.
         var covered = new HashSet<string>(StringComparer.Ordinal);
         var clock = Stopwatch.StartNew();
+        SafeCoreMirReferenceProvenanceResult? provenance = program.SourceMir is null ? null :
+            SafeCoreMirReferenceProvenance.Analyze(program.SourceMir, new() { CancellationToken = cancellationToken });
+        SafeCoreMirReturnedVariantsResult? variants = program.SourceMir is null ? null :
+            SafeCoreMirReturnedVariants.Analyze(program.SourceMir, new() { CancellationToken = cancellationToken });
+        if (variants is { IsSuccessful: false }) throw new InvalidOperationException("Source returned variant evidence could not be validated.");
         foreach (ClrLirMethod method in program.Methods)
         {
             CheckBudget();
+            SafeCoreMirFunction? sourceFunction = program.SourceMir?.Functions.FirstOrDefault(function =>
+                function.Name == method.SourceQualifiedName || function.Name == method.SourceQualifiedName + "#value");
+            if (sourceFunction is not null &&
+                (sourceFunction.Locals.Where(static local => local.Kind == SafeCoreMirLocalKind.Parameter)
+                    .Any(static local => local.Type.Kind is not (SafeCoreSemanticTypeKind.I32 or SafeCoreSemanticTypeKind.Bool)) ||
+                 sourceFunction.ReturnType.Kind is not (SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.I32 or SafeCoreSemanticTypeKind.Bool)))
+            {
+                SafeCoreMirLocal[] parameters = sourceFunction.Locals.Where(static local => local.Kind == SafeCoreMirLocalKind.Parameter).ToArray();
+                IReadOnlyList<SafeCoreMirReferenceOrigin> origins = provenance?.Functions.FirstOrDefault(value => value.FunctionId == sourceFunction.Id)?.ReturnOrigins ?? [];
+                var encodedOrigins = new List<string>();
+                foreach (SafeCoreMirReferenceOrigin origin in origins)
+                {
+                    CheckBudget();
+                    encodedOrigins.Add(SafeCoreSourceOriginCodec.Format(origin, cancellationToken));
+                }
+                covered.Add(method.Name);
+                covered.Add(sourceFunction.Name);
+                if (sourceFunction.Name.EndsWith("#value", StringComparison.Ordinal)) covered.Add(sourceFunction.Name[..^6]);
+                yield return new RustSharpMetadataCallContract(method.Name, sourceFunction.PanicStrategy == SafeCorePanicStrategy.Abort ? "abort" : "unwind",
+                    parameters.Select(local => SourceEffect(local.Type)).ToArray(),
+                    sourceFunction.ReturnType.Kind == SafeCoreSemanticTypeKind.Unit ? "unit" : SourceEffect(sourceFunction.ReturnType))
+                {
+                    Schema = RustSharpMetadataCallContract.SourceSchema,
+                    SourceParameterTypes = parameters.Select(local => SafeCoreSourceTypeCodec.Format(local.Type, cancellationToken)).ToArray(),
+                    SourceParameterStaticLifetimes = parameters.Select(static local => local.RequiresStaticLifetime).ToArray(),
+                    SourceReturnType = SafeCoreSourceTypeCodec.Format(sourceFunction.ReturnType, cancellationToken),
+                    ReturnOrigins = encodedOrigins,
+                    SourceReturnVariants = variants?.Functions.FirstOrDefault(summary => summary.FunctionId == sourceFunction.Id)?.Variants
+                        .SelectMany(variant => variant.VariantNames.Select(name => new RustSharpMetadataSourceReturnVariant(
+                            variant.ValuePath.Select(projection => SafeCoreSourceOriginCodec.FormatProjection(projection, cancellationToken)).ToArray(), name))).ToArray() ?? [],
+                };
+                continue;
+            }
             if (method.IsCompilerGenerated || !IsContractType(method.ReturnType, allowVoid: true) ||
                 method.Parameters.Any(static type => !IsContractType(type, allowVoid: false)))
                 continue;
@@ -696,23 +764,121 @@ public sealed class CompilerDriver
             ClrLirTypeKind.Void when isReturn => "unit",
             _ => throw new InvalidOperationException("The source call contract type is outside the bounded ABI."),
         };
+
+        string SourceEffect(SafeCoreType type) => type.Kind switch
+        {
+            SafeCoreSemanticTypeKind.Reference => type.IsMutable ? "borrow:mut" : "borrow:shared",
+            SafeCoreSemanticTypeKind.Adt or SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array => IsSourceCopy(type, 0) ? "copy" : "move",
+            _ => "copy",
+        };
+
+        bool IsSourceCopy(SafeCoreType type, int depth)
+        {
+            CheckBudget();
+            if (depth > 32) throw new ArgumentException("Source ownership type depth exceeded its package budget.");
+            return type.Kind switch
+            {
+                SafeCoreSemanticTypeKind.Adt => program.SourceMir?.AdtLayouts.FirstOrDefault(layout => layout.Type == type)?.IsCopy == true,
+                SafeCoreSemanticTypeKind.Reference => !type.IsMutable,
+                SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Tuple => type.Elements.All(child => IsSourceCopy(child, depth + 1)),
+                _ => true,
+            };
+        }
+    }
+
+    private static IEnumerable<RustSharpMetadataSourceValueType> BuildSourceValueTypes(SafeCoreClrResult program, CancellationToken cancellationToken)
+    {
+        var clock = Stopwatch.StartNew();
+        var privateModules = new HashSet<string>(StringComparer.Ordinal);
+        foreach (SafeCoreHirNode node in program.SourceHir?.Nodes ?? [])
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (clock.Elapsed > TimeSpan.FromSeconds(5)) throw new TimeoutException("Source export visibility exceeded its package budget.");
+            if (node.Kind == SafeCoreHirNodeKind.Module && node.DeclaredSymbol is { IsPublic: false } module)
+                privateModules.Add(module.QualifiedName);
+        }
+        foreach (SafeCoreMirAdtLayout layout in program.SourceMir?.AdtLayouts ?? [])
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (clock.Elapsed > TimeSpan.FromSeconds(5)) throw new TimeoutException("Source layouts exceeded the package budget.");
+            SafeCoreExternalValueType? externalLayout = layout.ExternalSourceLayout;
+            string clrName = layout.ExternalAssemblyName is null ? "mir_value_" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(layout.Type.Kind + "|" + layout.Type))).ToLowerInvariant()[..24]
+                : layout.ExternalAssemblyName + "::" + layout.ExternalClrName;
+            if (externalLayout is null && !program.ValueTypes.Any(value => value.Name == clrName)) continue;
+            SafeCoreMirFunction? destructor = program.SourceMir!.Functions.FirstOrDefault(function => function.IsDestructor &&
+                function.Locals.Count > 0 && function.Locals[0].Type.ElementType == layout.Type);
+            string? dropName = externalLayout?.DropFunction?.ClrName ?? (destructor is null ? null : program.Methods.FirstOrDefault(method => method.SourceQualifiedName == destructor.Name)?.Name);
+            SafeCoreHirNode? declaration = program.SourceHir?.GetNode(layout.Source.HirNodeId);
+            yield return new(layout.Type.Name!, clrName, layout.Fields.Select((field, index) => new RustSharpMetadataSourceField(field.Name,
+                SafeCoreSourceTypeCodec.Format(field.Type, cancellationToken),
+                externalLayout?.Fields[index].IsPublic ?? (layout.Variants.Count != 0 || (program.SourceHir?.GetNode(field.Source.HirNodeId).Modifiers.HasFlag(SafeCoreHirNodeModifiers.Public) ?? false)))
+                { RequiresStaticLifetime = field.RequiresStaticLifetime }).ToArray(),
+                layout.IsCopy, dropName)
+            {
+                Owner = externalLayout?.Owner is { } owner ? new RustSharpMetadataSourceOwner(owner.AssemblyName, owner.SourceName, owner.ClrName,
+                    owner.ModuleVersionId, owner.SourceSha256, owner.AssemblySha256) : null,
+                IsPublic = externalLayout is not null ? layout.ExternalSourceIsPublic : declaration?.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Public) == true &&
+                    !privateModules.Any(module => layout.Type.Name!.StartsWith(module + "::", StringComparison.Ordinal)),
+                ConstructorKind = layout.Variants.Count != 0 ? "enum" : externalLayout?.Kind == SafeCoreExternalTypeKind.TupleStruct || declaration?.Modifiers.HasFlag(SafeCoreHirNodeModifiers.TupleStruct) == true ? "tuple" :
+                    externalLayout?.Kind == SafeCoreExternalTypeKind.UnitStruct ? "unit" :
+                    declaration?.Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct) == true ? "unit" : "named",
+                Variants = layout.Variants.Count == 0 ? null : layout.Variants.Select((variant, index) => new RustSharpMetadataSourceVariant(
+                    variant.Name, variant.Discriminant, variant.FieldOffset,
+                    variant.Fields.Select(field => new RustSharpMetadataSourceField(field.Name,
+                        SafeCoreSourceTypeCodec.Format(field.Type, cancellationToken), true)
+                        { RequiresStaticLifetime = field.RequiresStaticLifetime }).ToArray())
+                {
+                    ConstructorKind = externalLayout?.Variants[index].Kind == SafeCoreExternalTypeKind.TupleStruct || program.SourceHir?.GetNode(variant.Source.HirNodeId).Modifiers.HasFlag(SafeCoreHirNodeModifiers.TupleStruct) == true ? "tuple" :
+                        externalLayout?.Variants[index].Kind == SafeCoreExternalTypeKind.UnitStruct ? "unit" :
+                        program.SourceHir?.GetNode(variant.Source.HirNodeId).Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct) == true ? "unit" : "named",
+                }).ToArray(),
+            };
+        }
+    }
+
+    private static IEnumerable<RustSharpMetadataSourceStructuralType> BuildSourceStructuralTypes(
+        SafeCoreClrResult program, CancellationToken cancellationToken)
+    {
+        var clock = Stopwatch.StartNew();
+        IReadOnlyList<SafeCoreMirImportedStructuralType> importedTypes = program.SourceMir?.ImportedStructuralTypes ?? [];
+        if (importedTypes.Count > RustSharpMetadataDocument.MaximumValueTypes)
+            throw new ArgumentException("Imported source structural bindings exceed their package count budget.");
+        foreach (SafeCoreMirImportedStructuralType structural in importedTypes)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new TimeoutException("Source structural bindings exceeded their package time budget.");
+            string clrName = structural.AssemblyName + "::" + structural.ClrName;
+            if (!program.ValueTypes.Any(layout => layout.Name == clrName)) continue;
+            SafeCoreExternalOwner owner = structural.Owner ??
+                throw new InvalidDataException("A re-exported anonymous source layout requires its independently checked original producer proof.");
+            yield return new(SafeCoreSourceTypeCodec.Format(structural.Type, cancellationToken), clrName,
+                new(owner.AssemblyName, owner.SourceName, owner.ClrName, owner.ModuleVersionId, owner.SourceSha256, owner.AssemblySha256));
+        }
     }
 
     private static SafeCoreClrResult AttachMirEvidence(
         SafeCoreClrResult emitted,
         SafeCoreMirPipelineResult evidence,
-        bool requireOwnershipMetadata = false)
+        bool requireOwnershipMetadata = false,
+        CancellationToken cancellationToken = default)
     {
         if (!emitted.IsSuccessful)
             return emitted;
         if (evidence.Mir is not { IsSuccessful: true } mir || mir.Program is null)
             return emitted;
 
-        string snapshot = evidence.MirSnapshot ?? SafeCoreMirFormatting.Format(mir.Program);
+        SafeCoreMirReturnedVariantsResult returnedVariants = SafeCoreMirReturnedVariants.Analyze(mir.Program,
+            new() { CancellationToken = cancellationToken });
+        if (!returnedVariants.IsSuccessful)
+            return emitted with { Diagnostics = returnedVariants.Diagnostics };
+        string snapshot = AddReturnedVariantEvidence(evidence.MirSnapshot ?? SafeCoreMirFormatting.Format(mir.Program), returnedVariants, cancellationToken);
         SafeCoreClrResult result = emitted with
         {
             MirSnapshot = snapshot,
             CleanupSnapshot = evidence.Cleanup?.Snapshot,
+            SourceMir = mir.Program,
+            SourceHir = evidence.Hir,
         };
         if (evidence.Ownership is { IsSuccessful: true } ownership)
         {
@@ -733,6 +899,37 @@ public sealed class CompilerDriver
             }
         }
         return result;
+    }
+
+    private static string AddReturnedVariantEvidence(string snapshot, SafeCoreMirReturnedVariantsResult variants,
+        CancellationToken cancellationToken)
+    {
+        if (snapshot.Length > RustSharpMetadataDocument.MaximumJsonCharacters)
+            throw new TimeoutException("Returned variant snapshot exceeded its character budget.");
+        string[] lines = snapshot.Split('\n');
+        if (lines.Length > 65_536) throw new TimeoutException("Returned variant snapshot exceeded its line budget.");
+        var clock = Stopwatch.StartNew();
+        var result = new StringBuilder(snapshot.Length);
+        foreach (string line in lines)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (clock.Elapsed > TimeSpan.FromSeconds(5)) throw new TimeoutException("Returned variant snapshot exceeded its time budget.");
+            result.Append(line).Append('\n');
+            if (!line.StartsWith("fn @", StringComparison.Ordinal)) continue;
+            int separator = line.IndexOf(' ', 4);
+            if (separator < 0 || !int.TryParse(line.AsSpan(4, separator - 4), NumberStyles.None, CultureInfo.InvariantCulture, out int id))
+                throw new InvalidOperationException("A validated MIR function has no canonical arena ID.");
+            foreach (SafeCoreMirReturnedVariant variant in variants.Functions.First(summary => summary.FunctionId == id).Variants)
+            foreach (string name in variant.VariantNames)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (clock.Elapsed > TimeSpan.FromSeconds(5)) throw new TimeoutException("Returned variant snapshot exceeded its time budget.");
+                result.Append("  return_variant ").Append(SafeCoreSourceOriginCodec.FormatReturnedVariant(variant.ValuePath, name, cancellationToken)).Append('\n');
+                if (result.Length > RustSharpMetadataDocument.MaximumJsonCharacters) throw new TimeoutException("Returned variant snapshot exceeded its character budget.");
+            }
+        }
+        if (result.Length > 0) result.Length--;
+        return result.ToString();
     }
 
     private static bool IsCargoManifest(string path) => string.Equals(Path.GetFileName(path), "Cargo.toml", StringComparison.OrdinalIgnoreCase);
@@ -1315,6 +1512,7 @@ public sealed class CompilerDriver
     {
         ArgumentNullException.ThrowIfNull(metadataReferences);
         const int maximumReferences = 256;
+        var referenceClock = Stopwatch.StartNew();
         var diagnostics = new List<Diagnostic>();
         var crates = new List<SafeCoreCrate>();
         var dependencies = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
@@ -1339,6 +1537,11 @@ public sealed class CompilerDriver
         foreach (string reference in metadataReferences)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (referenceClock.Elapsed > TimeSpan.FromSeconds(10))
+            {
+                diagnostics.Add(new Diagnostic("RSC0011", "Metadata reference loading exceeded its ten second budget.", new TextSpan(0, 0)));
+                return new([], diagnostics);
+            }
             if (++count > maximumReferences)
             {
                 diagnostics.Add(new Diagnostic("RSC0011",
@@ -1377,9 +1580,14 @@ public sealed class CompilerDriver
         foreach (string fullPath in normalizedReferences.Order(StringComparer.Ordinal))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (referenceClock.Elapsed > TimeSpan.FromSeconds(10))
+            {
+                diagnostics.Add(new Diagnostic("RSC0011", "Metadata reference loading exceeded its ten second budget.", new TextSpan(0, 0)));
+                return new([], diagnostics);
+            }
 
             RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
-                fullPath, expectedProfile, requiredFunctions);
+                fullPath, expectedProfile, requiredFunctions, normalizedReferences, cancellationToken);
             foreach (string message in imported.Diagnostics)
             {
                 int separator = message.IndexOf(':');
@@ -1409,25 +1617,52 @@ public sealed class CompilerDriver
             // the external export for diagnostics and PE resolution.
             string scopePath = "crate::__rsc_ext_" + Convert.ToHexString(
                 SHA256.HashData(Encoding.UTF8.GetBytes(identity)))[..32];
+            using FileStream producerStream = new(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            string producerSha256 = Convert.ToHexString(SHA256.HashData(producerStream));
+            var ownerDocuments = new Dictionary<string, RustSharpMetadataDocument>(StringComparer.Ordinal) { [assemblyName] = imported.Document };
+            RustSharpMetadataDocument OwnerDocument(RustSharpMetadataSourceOwner? owner)
+            {
+                if (owner is null) return imported.Document;
+                if (ownerDocuments.TryGetValue(owner.AssemblyName, out RustSharpMetadataDocument? document)) return document;
+                if (ownerDocuments.Count >= 64 || referenceClock.Elapsed > TimeSpan.FromSeconds(10))
+                    throw new InvalidDataException("Imported owner reconstruction exceeded its work or time budget.");
+                if (!imported.ResolvedOwnerPaths.TryGetValue(owner.AssemblyName, out string? ownerPath))
+                    throw new InvalidDataException("The nominal owner has no verified current PE path.");
+                RustSharpMetadataImportResult loaded = RustSharpMetadataConsumer.ReadAssembly(ownerPath,
+                    dependencyPaths: normalizedReferences, cancellationToken: cancellationToken);
+                if (!loaded.IsSuccessful || loaded.Document is null) throw new InvalidDataException("The nominal owner's current metadata is invalid.");
+                ownerDocuments.Add(owner.AssemblyName, loaded.Document);
+                return loaded.Document;
+            }
             var exports = ImmutableArray.CreateBuilder<SafeCoreExternalFunction>(imported.Document.Functions.Length);
+            ImmutableArray<SafeCoreExternalStructuralType> structuralTypes;
+            try { structuralTypes = ReadStructuralTypes(imported.Document, assemblyName, scopePath, moduleVersionId,
+                producerSha256, OwnerDocument, cancellationToken); }
+            catch (Exception exception) when (exception is ArgumentException or InvalidDataException or TimeoutException)
+            {
+                diagnostics.Add(new Diagnostic("RSC0011", exception.Message, new TextSpan(0, 0)) { SourcePath = fullPath });
+                continue;
+            }
+            var sourceLayouts = imported.Document.SourceValueTypes.Select(layout => new SafeCoreExternalValueType(layout.Name, layout.Owner?.ClrName ?? layout.ClrName,
+                layout.Fields.Select(field => new SafeCoreExternalField(field.Name, field.Type, field.IsPublic)
+                { RequiresStaticLifetime = field.RequiresStaticLifetime }).ToImmutableArray(), layout.IsCopy, layout.Owner?.AssemblyName ?? assemblyName)
+                {
+                    DropClrName = layout.DropFunctionId, DropFunction = ReadDrop(layout), Kind = ExternalKind(layout.ConstructorKind),
+                    Owner = layout.Owner is { } owner ? new(owner.AssemblyName, owner.SourceName, owner.ClrName, owner.ModuleVersionId,
+                        owner.SourceSha256, owner.AssemblySha256) : new(assemblyName, layout.Name, layout.ClrName, moduleVersionId, imported.Document.SourceSha256, producerSha256),
+                    NominalScope = layout.Owner is { } originalOwner ? OwnerScope(originalOwner) : scopePath,
+                    NominalSourceName = layout.Owner?.SourceName ?? layout.Name,
+                    Variants = (layout.Variants ?? []).Select(variant => new SafeCoreExternalVariant(variant.Name, variant.Discriminant,
+                        variant.FieldOffset, variant.Fields.Select(field => new SafeCoreExternalField(field.Name, field.Type, field.IsPublic)
+                        { RequiresStaticLifetime = field.RequiresStaticLifetime }).ToImmutableArray())
+                        { Kind = ExternalKind(variant.ConstructorKind) }).ToImmutableArray(),
+                }).ToImmutableArray();
             foreach (RustSharpMetadataFunction function in imported.Document.Functions)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                // MIR value types are represented by an opaque `Value(...)`
-                // signature in the producer metadata.  The source consumer
-                // cannot project fields from such a returned aggregate yet;
-                // reject the import at the metadata boundary with the stable
-                // name-resolution diagnostic instead of allowing type
-                // analysis to fail later with a generic lowering error.
-                if (profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2 &&
-                    function.Signature.Contains("Value(", StringComparison.Ordinal))
-                {
-                    diagnostics.Add(new Diagnostic(
-                        SafeCoreNameResolutionDiagnosticCodes.UnresolvedName,
-                        "Source aggregate imports are not supported by this profile.",
-                        new TextSpan(0, 0))
-                    { SourcePath = fullPath });
-                }
+                if (imported.Document.SourceValueTypes.Any(layout => layout.Owner is null &&
+                    layout.DropFunctionId is { } drop && RustSharpMetadataConsumer.FindFunction(imported.Document, drop)?.Name == function.Name))
+                    continue;
                 // MIR-backed producers retain an internal `#value` suffix on
                 // their emitted source identity.  That suffix distinguishes
                 // the lowered body inside the producer, but it is not a Rust
@@ -1438,6 +1673,8 @@ public sealed class CompilerDriver
                 string sourceName = function.SourceQualifiedName ?? function.Name;
                 if (sourceName.EndsWith("#value", StringComparison.Ordinal))
                     sourceName = sourceName[..^"#value".Length];
+                RustSharpMetadataCallContract? functionContract = imported.Document.CallContracts.FirstOrDefault(contract =>
+                    RustSharpMetadataConsumer.FindFunction(imported.Document, contract.FunctionId)?.Name == function.Name);
                 exports.Add(new SafeCoreExternalFunction(
                     sourceName,
                     function.Name,
@@ -1446,26 +1683,54 @@ public sealed class CompilerDriver
                     fullPath,
                     function.IsPublic)
                 {
-                    CallPanicStrategy = imported.Document.CallContracts
-                        .FirstOrDefault(contract =>
-                            string.Equals(contract.FunctionId, function.Name, StringComparison.Ordinal) ||
-                            string.Equals(contract.FunctionId, sourceName, StringComparison.Ordinal))?.PanicStrategy,
-                    CallParameterContracts = (imported.Document.CallContracts
-                        .FirstOrDefault(contract =>
-                            string.Equals(contract.FunctionId, function.Name, StringComparison.Ordinal) ||
-                            string.Equals(contract.FunctionId, sourceName, StringComparison.Ordinal))?.ParameterContracts
-                        ?? []).ToImmutableArray(),
-                    CallReturnContract = imported.Document.CallContracts
-                        .FirstOrDefault(contract =>
-                            string.Equals(contract.FunctionId, function.Name, StringComparison.Ordinal) ||
-                            string.Equals(contract.FunctionId, sourceName, StringComparison.Ordinal))?.ReturnContract,
+                    CallPanicStrategy = functionContract?.PanicStrategy,
+                    CallParameterContracts = (functionContract?.ParameterContracts ?? []).ToImmutableArray(),
+                    CallReturnContract = functionContract?.ReturnContract,
+                    SourceSchema = functionContract?.Schema == RustSharpMetadataCallContract.SourceSchema
+                        ? RustSharpMetadataCallContract.SourceSchema : null,
+                    SourceParameterTypes = (functionContract?.SourceParameterTypes ?? []).ToImmutableArray(),
+                    SourceParameterStaticLifetimes = (functionContract?.SourceParameterStaticLifetimes ?? []).ToImmutableArray(),
+                    SourceReturnType = functionContract?.SourceReturnType,
+                    ReturnOrigins = (functionContract?.ReturnOrigins ?? []).ToImmutableArray(),
+                    SourceReturnVariants = (functionContract?.SourceReturnVariants ?? []).Select(variant =>
+                        new SafeCoreExternalReturnedVariant(variant.ValuePath.ToImmutableArray(), variant.VariantName)).ToImmutableArray(),
+                    NominalScope = scopePath,
+                    StructuralTypes = structuralTypes,
+                    SourceValueTypes = sourceLayouts,
                 });
+            }
+
+            SafeCoreExternalFunction? ReadDrop(RustSharpMetadataSourceValueType layout)
+            {
+                if (layout.DropFunctionId is null) return null;
+                RustSharpMetadataDocument ownerDocument = OwnerDocument(layout.Owner);
+                RustSharpMetadataFunction drop = RustSharpMetadataConsumer.FindFunction(ownerDocument, layout.DropFunctionId)
+                    ?? throw new InvalidDataException("Imported destructor identity is missing.");
+                RustSharpMetadataCallContract? contract = ownerDocument.CallContracts.FirstOrDefault(value =>
+                    RustSharpMetadataConsumer.FindFunction(ownerDocument, value.FunctionId)?.Name == drop.Name);
+                return new(drop.SourceQualifiedName ?? drop.Name, drop.Name, drop.Signature, layout.Owner?.AssemblyName ?? assemblyName,
+                    layout.Owner is { } sourceOwner ? imported.ResolvedOwnerPaths[sourceOwner.AssemblyName] : fullPath, drop.IsPublic)
+                {
+                    SourceSchema = contract?.Schema, SourceParameterTypes = (contract?.SourceParameterTypes ?? []).ToImmutableArray(),
+                    SourceParameterStaticLifetimes = (contract?.SourceParameterStaticLifetimes ?? []).ToImmutableArray(),
+                    SourceReturnType = contract?.SourceReturnType, ReturnOrigins = (contract?.ReturnOrigins ?? []).ToImmutableArray(),
+                    SourceReturnVariants = (contract?.SourceReturnVariants ?? []).Select(variant =>
+                        new SafeCoreExternalReturnedVariant(variant.ValuePath.ToImmutableArray(), variant.VariantName)).ToImmutableArray(),
+                    CallPanicStrategy = contract?.PanicStrategy, CallParameterContracts = (contract?.ParameterContracts ?? []).ToImmutableArray(),
+                    CallReturnContract = contract?.ReturnContract, NominalScope = layout.Owner is { } sourceOwnerScope ? OwnerScope(sourceOwnerScope) : scopePath,
+                };
             }
 
             crates.Add(new SafeCoreCrate(scopePath, identity,
                 ImmutableDictionary<string, string>.Empty)
             {
                 Exports = exports.ToImmutable(),
+                StructuralTypes = structuralTypes,
+                TypeExports = imported.Document.SourceValueTypes.Select((layout, index) =>
+                    new SafeCoreExternalType(layout.Name, sourceLayouts[index], fullPath, scopePath, layout.IsPublic)
+                    {
+                        Kind = ExternalKind(layout.ConstructorKind),
+                    }).ToImmutableArray(),
             });
             AddAlias(alias, scopePath);
             if (!string.Equals(fileAlias, alias, StringComparison.Ordinal)) AddAlias(fileAlias, scopePath);
@@ -1479,6 +1744,17 @@ public sealed class CompilerDriver
         }
 
         return new(crates.ToImmutableArray(), diagnostics.AsReadOnly());
+
+        static SafeCoreExternalTypeKind ExternalKind(string kind) => kind switch
+        {
+            "enum" => SafeCoreExternalTypeKind.Enum,
+            "tuple" => SafeCoreExternalTypeKind.TupleStruct,
+            "unit" => SafeCoreExternalTypeKind.UnitStruct,
+            _ => SafeCoreExternalTypeKind.NamedStruct,
+        };
+
+        static string OwnerScope(RustSharpMetadataSourceOwner owner) => "crate::__rsc_ext_" + Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes("metadata:" + owner.AssemblyName + "@" + owner.ModuleVersionId.ToString("D"))))[..32];
 
         void AddAlias(string alias, string target)
         {
@@ -1508,6 +1784,112 @@ public sealed class CompilerDriver
     private sealed record MetadataCrateLoadResult(
         ImmutableArray<SafeCoreCrate> Crates,
         IReadOnlyList<Diagnostic> Diagnostics);
+
+    private static ImmutableArray<SafeCoreExternalStructuralType> ReadStructuralTypes(RustSharpMetadataDocument document,
+        string assemblyName, string scopePath, Guid moduleVersionId, string assemblySha256,
+        Func<RustSharpMetadataSourceOwner?, RustSharpMetadataDocument> ownerDocument, CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<string, SafeCoreExternalStructuralType>(StringComparer.Ordinal);
+        var visited = new HashSet<(string Source, string Clr)>();
+        var clock = Stopwatch.StartNew();
+        int operations = 0;
+        foreach (RustSharpMetadataCallContract contract in document.CallContracts)
+        {
+            if (contract.Schema != RustSharpMetadataCallContract.SourceSchema) continue;
+            RustSharpMetadataFunction function = RustSharpMetadataConsumer.FindFunction(document, contract.FunctionId)!;
+            string[] signature = function.Signature.Split("->", StringSplitOptions.None);
+            string[] parameters = signature[0].Length == 0 ? [] : signature[0].Split(',');
+            string[] sourceParameters = contract.SourceParameterTypes!.ToArray();
+            for (int index = 0; index < sourceParameters.Length; index++)
+                Bind(SafeCoreSourceTypeCodec.Parse(sourceParameters[index], cancellationToken), parameters[index], 0);
+            Bind(SafeCoreSourceTypeCodec.Parse(contract.SourceReturnType!, cancellationToken), signature[1], 0);
+        }
+        foreach (RustSharpMetadataSourceValueType layout in document.SourceValueTypes)
+            Bind(SafeCoreType.Adt(layout.Name, cancellationToken: cancellationToken), "Value(" + layout.ClrName + ")", 0);
+        foreach (RustSharpMetadataSourceStructuralType structural in document.SourceStructuralTypes)
+            Bind(SafeCoreSourceTypeCodec.Parse(structural.Type, cancellationToken), "Value(" + structural.ClrName + ")", 0);
+        return result.Values.OrderBy(static value => value.SourceType, StringComparer.Ordinal).ToImmutableArray();
+
+        void Bind(SafeCoreType source, string clr, int depth, RustSharpMetadataDocument? clrDocument = null, string? clrAssembly = null)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (++operations > 65536 || depth > 32 || clock.Elapsed > TimeSpan.FromSeconds(5))
+                throw new InvalidDataException("Imported structural ABI reconstruction exceeded its budget.");
+            if (source.Kind is SafeCoreSemanticTypeKind.Reference or SafeCoreSemanticTypeKind.Slice)
+            {
+                Bind(source.ElementType!, "", depth + 1, clrDocument, clrAssembly);
+                return;
+            }
+            string sourceIdentity = SafeCoreSourceTypeCodec.Format(source, cancellationToken);
+            RustSharpMetadataSourceValueType? sourceLayout = source.Kind == SafeCoreSemanticTypeKind.Adt
+                ? document.SourceValueTypes.FirstOrDefault(value => value.Name == source.Name) : null;
+            if (!clr.StartsWith("Value(", StringComparison.Ordinal) || !clr.EndsWith(')'))
+            {
+                RustSharpMetadataSourceStructuralType? explicitBinding = document.SourceStructuralTypes.FirstOrDefault(value => value.Type == sourceIdentity);
+                if (explicitBinding is not null) clr = "Value(" + explicitBinding.ClrName + ")";
+                else if (sourceLayout is not null) clr = "Value(" + sourceLayout.ClrName + ")";
+                else if (source.Kind is SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Unit)
+                {
+                    string generated = "mir_value_" + Convert.ToHexString(SHA256.HashData(
+                        Encoding.UTF8.GetBytes(source.Kind + "|" + source))).ToLowerInvariant()[..24];
+                    if (!(clrDocument ?? document).ValueTypes.Any(value => value.Name == generated)) return;
+                    clr = "Value(" + generated + ")";
+                }
+                else return;
+            }
+            string name = clr[6..^1];
+            RustSharpMetadataDocument actualDocument = sourceLayout?.Owner is { } verifiedOwner ? ownerDocument(verifiedOwner) : clrDocument ?? document;
+            string actualAssembly = sourceLayout?.Owner?.AssemblyName ?? clrAssembly ?? assemblyName;
+            string actualName = sourceLayout?.Owner?.ClrName ?? name;
+            int ownerSeparator = actualName.IndexOf("::", StringComparison.Ordinal);
+            if (ownerSeparator > 0)
+            {
+                actualAssembly = actualName[..ownerSeparator];
+                actualName = actualName[(ownerSeparator + 2)..];
+            }
+            RustSharpMetadataSourceOwner? structuralOwner = null;
+            if (source.Kind is SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Unit)
+            {
+                RustSharpMetadataSourceStructuralType? binding = document.SourceStructuralTypes.FirstOrDefault(value =>
+                    value.Type == sourceIdentity && value.ClrName == actualAssembly + "::" + actualName);
+                structuralOwner = binding?.Owner;
+                if (structuralOwner is not null) actualDocument = ownerDocument(structuralOwner);
+                else if (actualAssembly != assemblyName)
+                    throw new InvalidDataException("Imported anonymous structural ABI has no independently verified original owner binding.");
+            }
+            if (!visited.Add((source.ToString(), actualAssembly + "::" + actualName))) return;
+            RustSharpMetadataValueType? layout = actualDocument.ValueTypes.FirstOrDefault(value => value.Name == actualName);
+            if (layout is null) throw new InvalidDataException("Imported structural ABI has no checked CLR layout.");
+            RustSharpMetadataField[] fields = (layout.Fields ?? []).ToArray();
+            if (source.Kind is SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array or SafeCoreSemanticTypeKind.Unit)
+            {
+                if (source.Kind == SafeCoreSemanticTypeKind.Array &&
+                    source.Length is not (>= 0 and <= RustSharpMetadataDocument.MaximumFieldsPerValueType))
+                    throw new InvalidDataException("Imported anonymous array exceeds its source layout field budget.");
+                int expectedFields = source.Kind == SafeCoreSemanticTypeKind.Array ? (int)source.Length!.Value : source.Elements.Count;
+                if (fields.Length != expectedFields || fields.Length > RustSharpMetadataDocument.MaximumFieldsPerValueType)
+                    throw new InvalidDataException("Imported anonymous structural ABI contradicts its exact source field count.");
+                SafeCoreExternalOwner proof = structuralOwner is { } original ? new SafeCoreExternalOwner(original.AssemblyName, original.SourceName,
+                    original.ClrName, original.ModuleVersionId, original.SourceSha256, original.AssemblySha256) :
+                    new(actualAssembly, sourceIdentity, actualName, moduleVersionId, document.SourceSha256, assemblySha256);
+                var importedType = new SafeCoreExternalStructuralType(sourceIdentity, actualAssembly, actualName, scopePath) { Owner = proof };
+                if (result.TryGetValue(sourceIdentity, out SafeCoreExternalStructuralType? previous) &&
+                    (previous.AssemblyName != actualAssembly || previous.ClrName != actualName || previous.Owner != proof))
+                    throw new InvalidDataException("One anonymous source shape has conflicting CLR owners or original producer proofs.");
+                result[sourceIdentity] = importedType;
+                for (int index = 0; index < fields.Length; index++)
+                    Bind(source.Kind == SafeCoreSemanticTypeKind.Array ? source.ElementType : source.Elements[index], fields[index].Type, depth + 1, actualDocument, actualAssembly);
+            }
+            else if (source.Kind == SafeCoreSemanticTypeKind.Adt)
+            {
+                RustSharpMetadataSourceField[] sourceFields = (sourceLayout ?? throw new InvalidDataException("Imported nominal structural ABI has no source layout.")).Fields.ToArray();
+                if (sourceFields.Length != fields.Length)
+                    throw new InvalidDataException("Imported nominal structural ABI contradicts its source field count.");
+                for (int index = 0; index < fields.Length; index++)
+                    Bind(SafeCoreSourceTypeCodec.Parse(sourceFields[index].Type, cancellationToken), fields[index].Type, depth + 1, actualDocument, actualAssembly);
+            }
+        }
+    }
 
     private static bool PathsCollide(string first, string second) =>
         string.Equals(

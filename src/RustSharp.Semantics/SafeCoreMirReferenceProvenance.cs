@@ -82,7 +82,28 @@ public static partial class SafeCoreMirReferenceProvenance
         {
             try
             {
-                if (program.Functions.Count > options.MaximumFunctions) throw new ProvenanceLimitException();
+                if (program.Functions.Count + program.ExternalFunctions.Count > options.MaximumFunctions) throw new ProvenanceLimitException();
+                foreach (SafeCoreMirExternalFunction external in program.ExternalFunctions)
+                {
+                    Step();
+                    var origins = new List<SafeCoreMirReferenceOrigin>();
+                    foreach (string declared in external.ExternalFunction.ReturnOrigins)
+                    {
+                        Step();
+                        SafeCoreMirReferenceOrigin origin = SafeCoreSourceOriginCodec.Parse(declared, options.CancellationToken);
+                        if (!declared.StartsWith(SafeCoreSourceOriginCodec.Prefix, StringComparison.Ordinal))
+                        {
+                            origin = origin with
+                            {
+                                IsMutable = external.Signature.ReturnType.IsMutable,
+                                HasUnknownSliceOffset = external.Signature.ReturnType.Kind == SafeCoreSemanticTypeKind.Reference &&
+                                    external.Signature.ReturnType.ElementType.Kind == SafeCoreSemanticTypeKind.Slice,
+                            };
+                        }
+                        MergeOrigins(origins, [origin]);
+                    }
+                    summaries.Add(external.Id, origins);
+                }
                 // Function summaries grow monotonically. A reference-returning recursive
                 // cycle without any input-rooted base case never acquires provenance.
                 bool changed = true;
@@ -118,8 +139,9 @@ public static partial class SafeCoreMirReferenceProvenance
         }
 
         private SafeCoreMirReferenceProvenanceResult Result(bool truncated) => new(
-            truncated || diagnostics.Count != 0 ? [] : Array.AsReadOnly(program.Functions.Select(function => new SafeCoreMirReferenceSummary(function.Id,
-                summaries.TryGetValue(function.Id, out List<SafeCoreMirReferenceOrigin>? origins)
+            truncated || diagnostics.Count != 0 ? [] : Array.AsReadOnly(program.Functions.Select(function => function.Id)
+                .Concat(program.ExternalFunctions.Select(function => function.Id)).Select(functionId => new SafeCoreMirReferenceSummary(functionId,
+                summaries.TryGetValue(functionId, out List<SafeCoreMirReferenceOrigin>? origins)
                     ? Array.AsReadOnly(origins.Select(origin => origin with { Projections = Array.AsReadOnly(origin.Projections.ToArray()),
                         ValuePath = Array.AsReadOnly(origin.ValuePath.ToArray()), ParameterPath = Array.AsReadOnly(origin.ParameterPath.ToArray()) }).ToArray()) : [])).ToArray()),
             diagnostics.AsReadOnly(), truncated, operations);

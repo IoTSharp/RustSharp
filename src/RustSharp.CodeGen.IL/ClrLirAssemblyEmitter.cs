@@ -87,7 +87,7 @@ public static partial class ClrLirAssemblyEmitter
         if (!program.IsSuccessful) throw new ArgumentException("A successful lowered program is required.", nameof(program));
         return EmitCore(program.Methods, "Main", assemblyName, sourceText, sourcePath,
             pdbFileName, sourceBytes, program.MethodSpans, sourceMap, metadataDocument,
-            program.ValueTypes, program.GenericMetadata, cancellationToken);
+            program.ValueTypes, program.GenericMetadata, cancellationToken: cancellationToken);
     }
 
     private static GeneratedAssembly EmitCore(
@@ -103,10 +103,35 @@ public static partial class ClrLirAssemblyEmitter
         RustSharpMetadataDocument? metadataDocument = null,
         IEnumerable<ClrLirValueType>? valueTypes = null,
         ReadOnlyMemory<byte> genericMetadata = default,
+        bool stampMethodBodies = true,
         CancellationToken cancellationToken = default)
     {
         var sourceMapClock = Stopwatch.StartNew();
         cancellationToken.ThrowIfCancellationRequested();
+        if (stampMethodBodies && metadataDocument is not null)
+        {
+            ImmutableArray<ClrLirValueType> stableLayouts = new ClrLirValueTypeSet(valueTypes ?? [], CheckSourceMapBudget).Definitions;
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            deadline.CancelAfter(TimeSpan.FromSeconds(20));
+            try
+            {
+                GeneratedAssembly first = EmitCore(methods, entryPointName, assemblyName, sourceText, sourcePath,
+                    pdbFileName, sourceBytes, methodSpans, sourceMap, metadataDocument, stableLayouts, genericMetadata,
+                    stampMethodBodies: false, cancellationToken: deadline.Token);
+                RustSharpMetadataDocument stamped = RustSharpMetadataDocument.Parse(first.RustSharpMetadataJson!)
+                    .WithMethodBodies(RustSharpMetadataMethodBodies.Capture(first.PeImage, deadline.Token));
+                GeneratedAssembly final = EmitCore(methods, entryPointName, assemblyName, sourceText, sourcePath,
+                    pdbFileName, sourceBytes, methodSpans, sourceMap, stamped, stableLayouts, genericMetadata,
+                    stampMethodBodies: false, cancellationToken: deadline.Token);
+                if (!RustSharpMetadataMethodBodies.Capture(final.PeImage, deadline.Token).SequenceEqual(stamped.EmittedMethodBodies))
+                    throw new InvalidOperationException("The final PE method bodies disagree with their stamped source evidence.");
+                return final;
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException("The two-pass method body evidence emission exceeded its twenty second budget.");
+            }
+        }
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
         if (genericMetadata.Length > 8 * 1024 * 1024)
             throw new ArgumentException("Generic metadata exceeds the 8 MiB resource limit.", nameof(genericMetadata));
@@ -115,13 +140,14 @@ public static partial class ClrLirAssemblyEmitter
         if (sourceMap is not null && sourceMap.Documents.Count is (< 1 or > 1024))
             throw new ArgumentException("Expected 1 to 1024 source documents.", nameof(sourceMap));
         var layouts = new ClrLirValueTypeSet(valueTypes ?? [], CheckSourceMapBudget);
+        ImmutableArray<ClrLirValueType> localLayouts = [.. layouts.Definitions.Where(static layout => layout.ExternalAssemblyName is null)];
         // Value layouts are part of the source package contract. Reconcile the
         // caller-supplied document with the actual emitted definitions before
         // embedding it, so consumers can validate nominal MemberRefs without
         // loading or executing producer code.
-        if (metadataDocument is not null && layouts.Definitions.Length != 0)
+        if (metadataDocument is not null && localLayouts.Length != 0)
         {
-            var metadataLayouts = layouts.Definitions.Select(static layout =>
+            var metadataLayouts = localLayouts.Select(static layout =>
                 new RustSharpMetadataValueType(layout.Name,
                     layout.Fields.Select(static field => new RustSharpMetadataField(field.Name, field.Type.ToString()))));
             metadataDocument = metadataDocument.WithValueTypes(metadataLayouts);
@@ -156,7 +182,7 @@ public static partial class ClrLirAssemblyEmitter
         using var identity = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         foreach (ClrLirMethod method in methods)
             identity.AppendData(CreateModuleVersionId(assemblyName, method, CheckSourceMapBudget).ToByteArray());
-        foreach (ClrLirValueType layout in layouts.Definitions)
+        foreach (ClrLirValueType layout in localLayouts)
         {
             CheckSourceMapBudget();
             identity.AppendData(Encoding.UTF8.GetBytes("\0value\0" + layout.Name));
@@ -236,15 +262,40 @@ public static partial class ClrLirAssemblyEmitter
         var externalAssemblies = new Dictionary<string, AssemblyReferenceHandle>(StringComparer.Ordinal);
         var externalTypes = new Dictionary<(string Assembly, string Namespace, string Name), TypeReferenceHandle>();
 
-        var valueHandles = new Dictionary<string, TypeDefinitionHandle>(StringComparer.Ordinal);
-        var constructorHandles = new Dictionary<string, MethodDefinitionHandle>(StringComparer.Ordinal);
+        var valueHandles = new Dictionary<string, EntityHandle>(StringComparer.Ordinal);
+        var constructorHandles = new Dictionary<string, EntityHandle>(StringComparer.Ordinal);
         var fieldHandles = new Dictionary<string, ImmutableArray<FieldDefinitionHandle>>(StringComparer.Ordinal);
+        var externalFieldHandles = new Dictionary<(string Name, int Index), EntityHandle>();
         int fieldRow = 1;
         int valueMethodRow = methods.Count + 1;
-        for (int index = 0; index < layouts.Definitions.Length; index++)
+        foreach (ClrLirValueType imported in layouts.Definitions.Where(static layout => layout.ExternalAssemblyName is not null))
         {
             CheckSourceMapBudget();
-            ClrLirValueType layout = layouts.Definitions[index];
+            TypeReferenceHandle typeHandle = AddExternalValueTypeReference(metadata, externalAssemblies, externalTypes,
+                new(imported.ExternalAssemblyName!, "RustSharp.Generated.Values", imported.ExternalClrName!, ".ctor"),
+                imported.ExternalClrName!);
+            valueHandles.Add(imported.Name, typeHandle);
+            constructorHandles.Add(imported.Name, metadata.AddMemberReference(typeHandle, metadata.GetOrAddString(".ctor"),
+                CreateMethodSignature(metadata, ClrLirType.Void, imported.Fields.Select(static field => field.Type).ToArray(),
+                    valueHandles, isInstanceMethod: true,
+                    externalValueResolver: name => AddExternalValueTypeReference(metadata, externalAssemblies, externalTypes,
+                        new(imported.ExternalAssemblyName!, "RustSharp.Generated.Values", imported.ExternalClrName!, ".ctor"), name))));
+            for (int fieldIndex = 0; fieldIndex < imported.Fields.Length; fieldIndex++)
+            {
+                CheckSourceMapBudget();
+                ClrLirField field = imported.Fields[fieldIndex];
+                var signature = new BlobBuilder();
+                EncodeSignatureType(new BlobEncoder(signature).FieldSignature(), field.Type, valueHandles,
+                    name => AddExternalValueTypeReference(metadata, externalAssemblies, externalTypes,
+                        new(imported.ExternalAssemblyName!, "RustSharp.Generated.Values", imported.ExternalClrName!, ".ctor"), name));
+                externalFieldHandles.Add((imported.Name, fieldIndex), metadata.AddMemberReference(typeHandle,
+                    metadata.GetOrAddString(field.Name), metadata.GetOrAddBlob(signature)));
+            }
+        }
+        for (int index = 0; index < localLayouts.Length; index++)
+        {
+            CheckSourceMapBudget();
+            ClrLirValueType layout = localLayouts[index];
             valueHandles.Add(layout.Name, MetadataTokens.TypeDefinitionHandle(index + 3));
             constructorHandles.Add(layout.Name, MetadataTokens.MethodDefinitionHandle(valueMethodRow));
             valueMethodRow += layout.ImplementsMirValue ? 3 : 1;
@@ -265,7 +316,8 @@ public static partial class ClrLirAssemblyEmitter
                 metadata,
                 site => ResolveCall(metadata, consoleType, definitions, externalAssemblies, externalTypes, site),
                 instructionEncoder,
-                layout => constructorHandles[layout.Name], (layout, index) => fieldHandles[layout.Name][index],
+                layout => constructorHandles[layout.Name], (layout, index) => layout.ExternalAssemblyName is null
+                    ? fieldHandles[layout.Name][index] : externalFieldHandles[(layout.Name, index)],
                 CheckSourceMapBudget, type => valueHandles[type.Name!], cancellationToken);
             StandaloneSignatureHandle localSignature = AddLocalSignature(metadata, method.Locals, valueHandles);
             localSignatures.Add(localSignature);
@@ -302,12 +354,12 @@ public static partial class ClrLirAssemblyEmitter
             fieldList: firstField,
             methodList: firstMethod);
 
-        if (!layouts.Definitions.IsEmpty)
+        if (!localLayouts.IsEmpty)
         {
             TypeReferenceHandle valueTypeBase = metadata.AddTypeReference(systemRuntime,
                 metadata.GetOrAddString("System"), metadata.GetOrAddString("ValueType"));
             int nextFieldRow = 1;
-            foreach (ClrLirValueType layout in layouts.Definitions)
+            foreach (ClrLirValueType layout in localLayouts)
             {
                 CheckSourceMapBudget();
                 FieldDefinitionHandle firstValueField = MetadataTokens.FieldDefinitionHandle(nextFieldRow);
@@ -398,7 +450,7 @@ public static partial class ClrLirAssemblyEmitter
                     MetadataTokens.GetRowNumber(localSignatures[index]));
                 pdbMetadata.AddMethodDebugInformation(points.IsNil ? default : methodDocument, points);
             }
-            foreach (ClrLirValueType layout in layouts.Definitions)
+            foreach (ClrLirValueType layout in localLayouts)
             {
                 pdbMetadata.AddMethodDebugInformation(default, default);
                 if (layout.ImplementsMirValue)
@@ -437,7 +489,7 @@ public static partial class ClrLirAssemblyEmitter
 
         return new GeneratedAssembly(peImage.ToArray(), pdbBytes, RuntimeConfig, metadataDocument?.Json)
         {
-            RequiresMirRuntime = layouts.Definitions.Any(static layout => layout.ImplementsMirValue) ||
+            RequiresMirRuntime = localLayouts.Any(static layout => layout.ImplementsMirValue) ||
                 methods.Any(static method => method.PanicHandling is not null || method.Blocks.Any(static block => block.Instructions.Any(static instruction =>
                     instruction is ClrLirCall { Site.ExternalCall.AssemblyName: "RustSharp.Runtime" }))),
         };
@@ -557,6 +609,12 @@ public static partial class ClrLirAssemblyEmitter
         ClrLirExternalCall external,
         string name)
     {
+        int separator = name.IndexOf("::", StringComparison.Ordinal);
+        if (separator > 0)
+        {
+            external = new(name[..separator], "RustSharp.Generated.Values", name[(separator + 2)..], ".ctor");
+            name = name[(separator + 2)..];
+        }
         if (!externalAssemblies.TryGetValue(external.AssemblyName, out AssemblyReferenceHandle assembly))
         {
             assembly = metadata.AddAssemblyReference(
@@ -623,7 +681,7 @@ public static partial class ClrLirAssemblyEmitter
         MetadataBuilder metadata,
         ClrLirType methodReturnType,
         IReadOnlyList<ClrLirType> parameterTypes,
-        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles = null,
+        IReadOnlyDictionary<string, EntityHandle>? valueHandles = null,
         bool isInstanceMethod = false,
         Func<string, EntityHandle>? externalValueResolver = null)
     {
@@ -649,7 +707,7 @@ public static partial class ClrLirAssemblyEmitter
     private static void EncodeReturnType(
         System.Reflection.Metadata.Ecma335.ReturnTypeEncoder encoder,
         ClrLirType type,
-        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles,
+        IReadOnlyDictionary<string, EntityHandle>? valueHandles,
         Func<string, EntityHandle>? externalValueResolver = null)
     {
         if (type == ClrLirType.Void)
@@ -672,7 +730,7 @@ public static partial class ClrLirAssemblyEmitter
     private static void EncodeParameterType(
         System.Reflection.Metadata.Ecma335.SignatureTypeEncoder encoder,
         ClrLirType type,
-        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles,
+        IReadOnlyDictionary<string, EntityHandle>? valueHandles,
         Func<string, EntityHandle>? externalValueResolver = null)
     {
         if (type == ClrLirType.Void)
@@ -694,7 +752,7 @@ public static partial class ClrLirAssemblyEmitter
     private static void EncodeSignatureType(
         System.Reflection.Metadata.Ecma335.SignatureTypeEncoder encoder,
         ClrLirType type,
-        IReadOnlyDictionary<string, TypeDefinitionHandle>? valueHandles,
+        IReadOnlyDictionary<string, EntityHandle>? valueHandles,
         Func<string, EntityHandle>? externalValueResolver = null)
     {
         switch (type.Kind)
@@ -711,7 +769,7 @@ public static partial class ClrLirAssemblyEmitter
             case ClrLirTypeKind.Any:
                 encoder.Object();
                 break;
-            case ClrLirTypeKind.Value when type.Name is not null && valueHandles is not null && valueHandles.TryGetValue(type.Name, out TypeDefinitionHandle handle):
+            case ClrLirTypeKind.Value when type.Name is not null && valueHandles is not null && valueHandles.TryGetValue(type.Name, out EntityHandle handle):
                 encoder.Type(handle, isValueType: true);
                 break;
             case ClrLirTypeKind.Value when type.Name is not null && externalValueResolver is not null:
@@ -727,7 +785,7 @@ public static partial class ClrLirAssemblyEmitter
     private static StandaloneSignatureHandle AddLocalSignature(
         MetadataBuilder metadata,
         ImmutableArray<ClrLirLocal> locals,
-        IReadOnlyDictionary<string, TypeDefinitionHandle> valueHandles)
+        IReadOnlyDictionary<string, EntityHandle> valueHandles)
     {
         if (locals.IsEmpty)
         {

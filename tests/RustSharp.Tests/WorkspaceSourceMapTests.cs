@@ -1,4 +1,5 @@
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
@@ -44,20 +45,39 @@ internal static class WorkspaceSourceMapTests
                 "PDB checksums must hash original file bytes, including a UTF-8 BOM.");
         }
 
-        AssertEx.Equal(2, reader.MethodDebugInformation.Count);
+        using var pe = new PEReader(File.OpenRead(output));
+        MetadataReader peReader = pe.GetMetadataReader();
+        AssertEx.Equal(peReader.MethodDefinitions.Count, reader.MethodDebugInformation.Count,
+            "Every source or generated method must retain a corresponding PDB row.");
+        AssertEx.True(reader.MethodDebugInformation.Count <= 16, "The source-map fixture has a bounded method table.");
         int mappedMethods = 0;
         bool sawRoot = false;
         bool sawMath = false;
         foreach (MethodDebugInformationHandle handle in reader.MethodDebugInformation)
         {
             deadline.Token.ThrowIfCancellationRequested();
-            AssertEx.True(mappedMethods++ < 2, "Unexpected method mapping.");
             MethodDebugInformation method = reader.GetMethodDebugInformation(handle);
-            AssertEx.False(method.Document.IsNil, "Each method must identify its original source document.");
-            SequencePoint[] points = method.GetSequencePoints().Take(2).ToArray();
-            AssertEx.Equal(1, points.Length, "The primitive profile maps exactly one function-entry span.");
-            SequencePoint point = points[0];
-            AssertEx.False(point.IsHidden, "Function-entry source mappings must be visible.");
+            SequencePoint[] points = method.GetSequencePoints().Take(17).ToArray();
+            AssertEx.True(points.Length <= 16, "The source-map fixture has a bounded sequence-point table.");
+            MethodDefinition definition = peReader.GetMethodDefinition(
+                MetadataTokens.MethodDefinitionHandle(MetadataTokens.GetRowNumber(handle)));
+            TypeDefinition declaringType = peReader.GetTypeDefinition(definition.GetDeclaringType());
+            bool sourceMethod = peReader.GetString(declaringType.Name) == "Program" &&
+                peReader.GetString(declaringType.Namespace) == "RustSharp.Generated";
+            if (!sourceMethod)
+            {
+                AssertEx.True(method.Document.IsNil && points.All(static point => point.IsHidden),
+                    "Generated value constructors and runtime adapters must not invent source locations.");
+                continue;
+            }
+            AssertEx.True(mappedMethods++ < 2, "Unexpected source method mapping.");
+            AssertEx.False(method.Document.IsNil, "Each source method must identify its original source document.");
+            SequencePoint[] visible = points.Where(static point => !point.IsHidden).ToArray();
+            AssertEx.True(visible.Length > 0, "Each original function must retain a visible source mapping.");
+            foreach (SequencePoint visiblePoint in visible)
+                AssertEx.True(visiblePoint.Document.IsNil || visiblePoint.Document == method.Document,
+                    "All visible function mappings must belong to the original function document.");
+            SequencePoint point = visible[0];
             AssertEx.Equal(0, point.Offset);
             string path = reader.GetString(reader.GetDocument(method.Document).Name);
             if (path == files.RootPath)
@@ -80,6 +100,7 @@ internal static class WorkspaceSourceMapTests
                 AssertEx.Equal(3, point.EndColumn);
             }
         }
+        AssertEx.Equal(2, mappedMethods, "Both original functions must retain their own visible mappings.");
         AssertEx.True(sawRoot && sawMath, "Both root and child functions must map to their own original files.");
         return Task.CompletedTask;
     }

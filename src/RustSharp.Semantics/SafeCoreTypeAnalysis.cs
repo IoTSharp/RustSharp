@@ -33,6 +33,8 @@ public sealed record SafeCoreTypeAnalysisProgram(
     /// <summary>Closed immutable borrow expressions eligible for constant promotion.</summary>
     public IReadOnlyDictionary<int, SafeCoreEvaluatedConstant> Promotions { get; init; } =
         new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreEvaluatedConstant>(new Dictionary<int, SafeCoreEvaluatedConstant>());
+    public IReadOnlyList<SafeCoreMirAdtLayout> ImportedLayouts { get; init; } = [];
+    public IReadOnlyList<SafeCoreMirImportedStructuralType> ImportedStructuralTypes { get; init; } = [];
 }
 
 public sealed record SafeCoreTypeAnalysisResult(
@@ -109,7 +111,10 @@ public static partial class SafeCoreTypeAnalysis
         private int _steps;
 
         private sealed record Binding(SafeCoreType Type, bool Mutable);
-        private sealed record Field(SafeCoreHirNode Node, SafeCoreType Type);
+        private sealed record Field(SafeCoreHirNode Node, SafeCoreType Type)
+        {
+            public bool IsImported { get; init; }
+        }
         private sealed record AdtShape(SafeCoreHirNode Node, SafeCoreType Type, IReadOnlyList<Field> Fields);
         private sealed class LoopContext(SafeCoreHirNode node, SafeCoreType result, bool isWhile, bool hasExpected)
         {
@@ -136,6 +141,7 @@ public static partial class SafeCoreTypeAnalysis
         public SafeCoreTypeAnalysisProgram Run()
         {
             Collect(_hir.Root!, 0);
+            InitializeExternalTypes();
             foreach (SafeCoreHirNode node in _declarations.Values)
             {
                 Step(node, 0);
@@ -156,7 +162,8 @@ public static partial class SafeCoreTypeAnalysis
                 }
             }
             foreach (var entry in _adts)
-                Layout(entry.Key, new HashSet<string>(StringComparer.Ordinal), _declarations[entry.Key], 0);
+                Layout(entry.Key, new HashSet<string>(StringComparer.Ordinal),
+                    _declarations.TryGetValue(entry.Key, out SafeCoreHirNode? declared) ? declared : entry.Value[0].Node, 0);
             foreach (SafeCoreHirNode node in _declarations.Values)
             {
                 Step(node, 0);
@@ -243,7 +250,8 @@ public static partial class SafeCoreTypeAnalysis
                 IReadOnlyDictionary<int, SafeCoreEvaluatedConstant> promotions) = PublishConstants();
             return new(_hir, new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreType>(resolved),
                 new System.Collections.ObjectModel.ReadOnlyDictionary<int, SafeCoreType>(coercions))
-            { Constants = constants, Promotions = promotions };
+            { Constants = constants, Promotions = promotions, ImportedLayouts = _importedLayouts.Values.ToArray(),
+                ImportedStructuralTypes = _importedStructuralTypes.Values.ToArray() };
         }
 
         private void Collect(SafeCoreHirNode node, int depth)
@@ -285,6 +293,9 @@ public static partial class SafeCoreTypeAnalysis
         {
             Step(node, depth);
             string key = Key(node.DeclaredSymbol!);
+            if ((node.Kind is N.Struct or N.Enum) && _importedLayouts.Count != 0 &&
+                (_importedLayouts.ContainsKey(key) || _importedLayouts.ContainsKey(ModuleOf(node.DeclaredSymbol!) + "::" + node.DeclaredSymbol!.Name)))
+                Fail(node, "RST2002", "A consumer nominal declaration collides with a verified foreign type owner.");
             if (_namedTypes.TryGetValue(key, out SafeCoreType? found)) return found;
             if (!_resolving.Add(key)) Fail(node, "RST2008", "Recursive type aliases are not permitted.");
             string savedModule = _module;
@@ -317,7 +328,7 @@ public static partial class SafeCoreTypeAnalysis
             else if (_declarations.TryGetValue(key, out var alias) && alias.Kind == N.TypeAlias)
             {
                 SafeCoreType type = NamedType(alias, 0);
-                if (type.Kind == K.Adt) DefineAdt(_declarations[type.Name!]);
+                if (type.Kind == K.Adt && _declarations.TryGetValue(type.Name!, out SafeCoreHirNode? declaration)) DefineAdt(declaration);
             }
         }
 
@@ -388,6 +399,7 @@ public static partial class SafeCoreTypeAnalysis
         private SafeCoreType Type(SafeCoreHirNode node, bool allowInference, int depth)
         {
             Step(node, depth);
+            ExternalNameVisible(node);
             SafeCoreType type;
             switch (node.Kind)
             {
@@ -399,7 +411,9 @@ public static partial class SafeCoreTypeAnalysis
                 case N.PathType:
                     foreach (SafeCoreHirNode segment in Parts(node))
                         if (segment.ChildIds.Count != 0) Unsupported(segment);
-                    if (node.ReferencedSymbol is not null && _declarations.TryGetValue(Key(node.ReferencedSymbol), out var declaration))
+                    if (node.ReferencedSymbol is not null && _namedTypes.TryGetValue(Key(node.ReferencedSymbol), out SafeCoreType? imported) &&
+                        _importedLayouts.ContainsKey(imported.Name ?? "")) type = imported;
+                    else if (node.ReferencedSymbol is not null && _declarations.TryGetValue(Key(node.ReferencedSymbol), out var declaration))
                         type = NamedType(declaration, depth + 1);
                     else if (Enum.TryParse(node.Name, ignoreCase: true, out K kind) && IsPrimitive(kind)) type = Primitive(kind);
                     else { Unsupported(node); return null!; }
@@ -438,6 +452,7 @@ public static partial class SafeCoreTypeAnalysis
         private SafeCoreType Expr(SafeCoreHirNode node, SafeCoreType? expected, int depth)
         {
             Step(node, depth);
+            ExternalNameVisible(node);
             SafeCoreType type;
             switch (node.Kind)
             {
@@ -501,7 +516,8 @@ public static partial class SafeCoreTypeAnalysis
                 case N.LiteralExpression: type = Literal(node, false); break;
                 case N.NameExpression:
                     EnsureConstructor(node.ReferencedSymbol);
-                    if (node.ReferencedSymbol is not null && _bindings.TryGetValue(node.ReferencedSymbol, out Binding? binding)) type = binding.Type;
+                    if (node.ReferencedSymbol?.ExternalFunction is { } external) type = ExternalType(external, node);
+                    else if (node.ReferencedSymbol is not null && _bindings.TryGetValue(node.ReferencedSymbol, out Binding? binding)) type = binding.Type;
                     else if (node.ReferencedSymbol is not null && _values.TryGetValue(Key(node.ReferencedSymbol), out SafeCoreType? value)) type = value;
                     else if (node.ReferencedSymbol is not null && _declarations.TryGetValue(Key(node.ReferencedSymbol), out var item) &&
                         item.Kind is N.Function or N.Const)
@@ -553,7 +569,7 @@ public static partial class SafeCoreTypeAnalysis
                         foreach (Field field in constructor.Fields)
                         {
                             Step(field.Node, depth);
-                            Visible(field.Node.DeclaredSymbol ?? constructor.Node.DeclaredSymbol!, field.Node, node);
+                            VisibleField(field, constructor.Node.DeclaredSymbol!, node);
                         }
                     for (int i = 1; i < node.ChildIds.Count; i++) Expr(Child(node, i), callee.ParameterTypes[i - 1], depth + 1);
                     type = callee.ReturnType!; break;
@@ -744,10 +760,17 @@ public static partial class SafeCoreTypeAnalysis
             if (target.Kind == K.Tuple && int.TryParse(node.Name, NumberStyles.None, CultureInfo.InvariantCulture, out int index) &&
                 index >= 0 && index < target.Elements.Count) return target.Elements[index];
             if (target.Kind == K.Adt && _adts.TryGetValue(target.Name!, out var shapes) &&
-                _declarations[target.Name!].Kind == N.Struct)
+                shapes[0].Node.Kind == N.Struct &&
+                (!_declarations.TryGetValue(target.Name!, out SafeCoreHirNode? declaration) || declaration.Kind == N.Struct))
             {
                 Field field = FindField(shapes[0], node.Name!, node);
-                Visible(field.Node.DeclaredSymbol ?? shapes[0].Node.DeclaredSymbol!, field.Node, node);
+                if (_importedLayouts.ContainsKey(target.Name!))
+                {
+                    if (!field.Node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Public))
+                        Fail(node, "RST2002", "The imported field is private to its producer.");
+                    return field.Type;
+                }
+                VisibleField(field, shapes[0].Node.DeclaredSymbol!, node);
                 return field.Type;
             }
             Fail(node, "RST2002", "No such field exists on this type."); return null!;
@@ -761,7 +784,8 @@ public static partial class SafeCoreTypeAnalysis
             {
                 _constructors.TryGetValue(Key(node.ReferencedSymbol), out shape);
                 if (shape is null && _namedTypes.TryGetValue(Key(node.ReferencedSymbol), out SafeCoreType? aliased) &&
-                    aliased.Kind == K.Adt && _declarations[aliased.Name!].Kind == N.Struct)
+                    aliased.Kind == K.Adt && (_importedLayouts.TryGetValue(aliased.Name!, out SafeCoreMirAdtLayout? imported) && imported.Variants.Count == 0 ||
+                        _declarations.TryGetValue(aliased.Name!, out SafeCoreHirNode? declaration) && declaration.Kind == N.Struct))
                     shape = _adts[aliased.Name!][0];
             }
             if (shape is null)
@@ -779,7 +803,7 @@ public static partial class SafeCoreTypeAnalysis
                 }
                 if (!seen.Add(Canonical(field.Name!))) Fail(field, "RST2002", "A field is initialized more than once.");
                 Field declared = FindField(shape, field.Name!, field);
-                Visible(declared.Node.DeclaredSymbol ?? shape.Node.DeclaredSymbol!, declared.Node, field);
+                VisibleField(declared, shape.Node.DeclaredSymbol!, field);
                 Expr(Child(field, 0), declared.Type, depth + 1);
                 _types[field.Id] = declared.Type;
             }
@@ -789,7 +813,7 @@ public static partial class SafeCoreTypeAnalysis
                 foreach (Field field in shape.Fields)
                 {
                     Step(field.Node, depth);
-                    Visible(field.Node.DeclaredSymbol ?? shape.Node.DeclaredSymbol!, field.Node, node);
+                    VisibleField(field, shape.Node.DeclaredSymbol!, node);
                 }
             return shape.Type;
         }
@@ -813,6 +837,13 @@ public static partial class SafeCoreTypeAnalysis
             string module = declaration.DeclaredSymbol is null ? ModuleOf(symbol) : symbol.VisibilityScopePath ?? ModuleOf(symbol);
             if (_module != module && !_module.StartsWith(module + "::", StringComparison.Ordinal))
                 Fail(use, "RST2002", "The field is private to its declaring module.");
+        }
+
+        private void VisibleField(Field field, SafeCoreSymbol fallback, SafeCoreHirNode use)
+        {
+            if (field.IsImported && !field.Node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Public))
+                Fail(use, "RST2002", "The imported field is private to its producer.");
+            Visible(field.Node.DeclaredSymbol ?? fallback, field.Node, use);
         }
 
         private void TypeVisible(SafeCoreType type, SafeCoreHirNode use, int depth)

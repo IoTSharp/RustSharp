@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
+using RustSharp.Syntax;
 
 namespace RustSharp.Semantics;
 
@@ -113,8 +114,10 @@ public static partial class SafeCoreMirValidation
             try
             {
                 Step();
-                Limit(program.Functions.Count, options.MaximumFunctions, 4_096);
+                Limit(program.Functions.Count + program.ExternalFunctions.Count, options.MaximumFunctions, 4_096);
                 AdtLayouts();
+                ImportedStructuralTypes();
+                ExternalFunctions();
                 var names = new HashSet<string>(StringComparer.Ordinal);
                 for (int index = 0; index < program.Functions.Count; index++)
                 {
@@ -229,10 +232,198 @@ public static partial class SafeCoreMirValidation
             foreach (SafeCoreMirAdtLayout layout in _adtLayouts.Values)
             {
                 Step();
+                if (layout.ExternalDropFunction is not null && layout.IsCopy)
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An imported ADT with Drop cannot be Copy.", layout.Source);
                 ValidateLayoutType(layout.Type, layout.Source, new(StringComparer.Ordinal), 0, requireCopy: false);
                 if (layout.IsCopy)
                     ValidateLayoutType(layout.Type, layout.Source, new(StringComparer.Ordinal), 0, requireCopy: true);
             }
+        }
+
+        private void ExternalFunctions()
+        {
+            var identities = new HashSet<(string Assembly, string Source)>();
+            for (int index = 0; index < program.ExternalFunctions.Count; index++)
+            {
+                Step();
+                SafeCoreMirExternalFunction external = program.ExternalFunctions[index];
+                Source(external.Source);
+                SafeCoreExternalFunction descriptor = external.ExternalFunction;
+                if (external.Id != program.Functions.Count + index || descriptor is null ||
+                    (!descriptor.IsPublic && !external.IsDestructor) || !Bounded(descriptor.SourceQualifiedName) ||
+                    !Bounded(descriptor.ClrName) || !Bounded(descriptor.Signature) ||
+                    !Bounded(descriptor.AssemblyName) || !Bounded(descriptor.AssemblyPath) ||
+                    !Bounded(descriptor.ClrNamespace) || !Bounded(descriptor.ClrTypeName) ||
+                    descriptor.SourceParameterTypes.IsDefault || descriptor.ReturnOrigins.IsDefault ||
+                    descriptor.CallParameterContracts.IsDefault || descriptor.SourceValueTypes.IsDefault ||
+                    !identities.Add((descriptor.AssemblyName, descriptor.SourceQualifiedName)))
+                {
+                    Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                        "Imported function descriptors must have unique bounded identities and follow the defined-function arena.", external.Source);
+                    continue;
+                }
+                if (!Type(external.Signature) || external.Signature.Kind != SafeCoreSemanticTypeKind.Function)
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch,
+                        "Imported function evidence requires a fully resolved function signature.", external.Source);
+                else
+                {
+                    ValidateExternalSignature(external);
+                    ValidateExternalOrigins(external);
+                    if (external.IsDestructor) ValidateExternalDestructor(external);
+                }
+            }
+            foreach (SafeCoreMirAdtLayout layout in _adtLayouts.Values)
+            {
+                Step();
+                if (layout.ExternalDropFunction is not { } drop) continue;
+                bool bound = false;
+                foreach (SafeCoreMirExternalFunction external in program.ExternalFunctions)
+                {
+                    Step();
+                    if (external.IsDestructor && external.ExternalFunction == drop) { bound = true; break; }
+                }
+                if (!bound) Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                    "An imported Drop layout requires a matching checked bodyless destructor in the function arena.", layout.Source);
+            }
+
+            static bool Bounded(string? value) => !string.IsNullOrWhiteSpace(value) && value.Length <= 4_096;
+        }
+
+        private void ImportedStructuralTypes()
+        {
+            Limit(program.ImportedStructuralTypes.Count, options.MaximumAdtLayouts, 4_096);
+            var types = new HashSet<SafeCoreType>();
+            foreach (SafeCoreMirImportedStructuralType imported in program.ImportedStructuralTypes)
+            {
+                Step();
+                Source(imported.Source);
+                if (!Type(imported.Type) || imported.Type.Kind is not (SafeCoreSemanticTypeKind.Unit or SafeCoreSemanticTypeKind.Tuple or SafeCoreSemanticTypeKind.Array) ||
+                    !types.Add(imported.Type) || string.IsNullOrWhiteSpace(imported.AssemblyName) || imported.AssemblyName.Length > 256 ||
+                    string.IsNullOrWhiteSpace(imported.ClrName) || imported.ClrName.Length > 4_096)
+                    Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                        "Imported anonymous aggregates require a unique source shape and an actual bounded producer CLR owner.", imported.Source);
+                else ValidateLayoutType(imported.Type, imported.Source, new(StringComparer.Ordinal), 0, requireCopy: false);
+                if (imported.Owner is { } owner)
+                {
+                    try
+                    {
+                        SafeCoreType original = SafeCoreSourceTypeCodec.Parse(owner.SourceName, options.CancellationToken);
+                        if (owner.AssemblyName != imported.AssemblyName || owner.ClrName != imported.ClrName || owner.ModuleVersionId == Guid.Empty ||
+                            owner.SourceSha256 is not { Length: 64 } || !owner.SourceSha256.All(char.IsAsciiHexDigit) ||
+                            owner.AssemblySha256 is not { Length: 64 } || !owner.AssemblySha256.All(char.IsAsciiHexDigit) ||
+                            original.Kind != imported.Type.Kind || original.Elements.Count != imported.Type.Elements.Count || original.Length != imported.Type.Length)
+                            Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                                "Imported anonymous aggregates require a complete verified original shape and producer PE proof.", imported.Source);
+                    }
+                    catch (ArgumentException)
+                    {
+                        Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                            "Imported anonymous aggregate owner shapes must use the bounded canonical source schema.", imported.Source);
+                    }
+                }
+            }
+        }
+
+        private void ValidateExternalSignature(SafeCoreMirExternalFunction external)
+        {
+            var descriptor = external.ExternalFunction;
+            SafeCoreType signature = external.Signature;
+            if (descriptor.SourceSchema is null)
+            {
+                string[] parts = descriptor.Signature.Split("->", StringSplitOptions.None);
+                string[] parameters = parts.Length == 2 && parts[0].Length != 0 ? parts[0].Split(',') : [];
+                if (parts.Length != 2 || parameters.Length != signature.ParameterTypes.Count ||
+                    !MatchesLegacy(parts[1], signature.ReturnType, true))
+                    Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Imported scalar CLR and semantic signatures differ.", external.Source);
+                else for (int index = 0; index < parameters.Length; index++)
+                {
+                    Step();
+                    if (!MatchesLegacy(parameters[index], signature.ParameterTypes[index], false))
+                        Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Imported scalar CLR and semantic parameter types differ.", external.Source);
+                }
+                return;
+            }
+            if (descriptor.SourceSchema != "rustsharp-source-call-v1" ||
+                descriptor.SourceParameterTypes.Length != signature.ParameterTypes.Count || descriptor.SourceReturnType is null)
+            {
+                Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Imported source-call evidence has an unknown schema or incomplete signature.", external.Source);
+                return;
+            }
+            try
+            {
+                Equal(Remap(SafeCoreSourceTypeCodec.Parse(descriptor.SourceReturnType, options.CancellationToken), 0),
+                    signature.ReturnType, external.Source, "Imported source return type differs from its semantic signature.");
+                for (int index = 0; index < signature.ParameterTypes.Count; index++)
+                {
+                    Step();
+                    Equal(Remap(SafeCoreSourceTypeCodec.Parse(descriptor.SourceParameterTypes[index], options.CancellationToken), 0),
+                        signature.ParameterTypes[index], external.Source, "Imported source parameter differs from its semantic signature.");
+                }
+            }
+            catch (ArgumentException)
+            {
+                Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Imported source-call type evidence is malformed or outside its bounded schema.", external.Source);
+            }
+
+            SafeCoreType Remap(SafeCoreType type, int depth)
+            {
+                Step();
+                if (depth > options.MaximumTypeDepth) throw new SafeCoreMirLimitException("Imported source type nesting exceeds its bound.");
+                if (type.Kind == SafeCoreSemanticTypeKind.Adt)
+                {
+                    if (string.IsNullOrWhiteSpace(descriptor.NominalScope)) throw new ArgumentException("Missing imported nominal scope.");
+                    SafeCoreExternalValueType? declared = null;
+                    foreach (SafeCoreExternalValueType candidate in descriptor.SourceValueTypes)
+                    {
+                        Step();
+                        if (candidate.Name != type.Name) continue;
+                        if (declared is not null) throw new ArgumentException("Imported source nominal names must be unambiguous.");
+                        declared = candidate;
+                    }
+                    if (declared is null && !external.IsDestructor)
+                        throw new ArgumentException("Imported nominal source types require checked producer layout evidence.");
+                    string scope = declared?.NominalScope ?? descriptor.NominalScope;
+                    string sourceName = declared?.NominalSourceName ?? type.Name!;
+                    string identity = scope + "::" +
+                        (sourceName.StartsWith("crate::", StringComparison.Ordinal) ? sourceName[7..] : sourceName);
+                    if (!_adtLayouts.TryGetValue(identity, out SafeCoreMirAdtLayout? layout) ||
+                        layout.ExternalAssemblyName != (declared?.AssemblyName ?? descriptor.AssemblyName) ||
+                        declared is not null && layout.ExternalClrName != declared.ClrName)
+                        throw new ArgumentException("Missing producer-owned nominal layout.");
+                    return SafeCoreType.Adt(identity);
+                }
+                return type.Kind switch
+                {
+                    SafeCoreSemanticTypeKind.Reference => SafeCoreType.Reference(Remap(type.ElementType!, depth + 1), type.IsMutable),
+                    SafeCoreSemanticTypeKind.Slice => SafeCoreType.Slice(Remap(type.ElementType!, depth + 1)),
+                    SafeCoreSemanticTypeKind.Array => SafeCoreType.Array(Remap(type.ElementType!, depth + 1), type.Length!.Value),
+                    SafeCoreSemanticTypeKind.Tuple => SafeCoreType.Tuple(type.Elements.Select(element => Remap(element, depth + 1)).ToArray()),
+                    _ => type,
+                };
+            }
+            static bool MatchesLegacy(string token, SafeCoreType type, bool result) => token switch
+            {
+                "I32" => type.Kind == SafeCoreSemanticTypeKind.I32,
+                "Bool" => type.Kind == SafeCoreSemanticTypeKind.Bool,
+                "Void" when result => type.Kind == SafeCoreSemanticTypeKind.Unit,
+                _ => false,
+            };
+        }
+
+        private void ValidateExternalDestructor(SafeCoreMirExternalFunction external)
+        {
+            SafeCoreType signature = external.Signature;
+            var descriptor = external.ExternalFunction;
+            if (signature.ParameterTypes.Count != 1 || signature.ParameterTypes[0].Kind != SafeCoreSemanticTypeKind.Reference ||
+                !signature.ParameterTypes[0].IsMutable || signature.ParameterTypes[0].ElementType?.Kind != SafeCoreSemanticTypeKind.Adt ||
+                signature.ReturnType.Kind != SafeCoreSemanticTypeKind.Unit ||
+                !_adtLayouts.TryGetValue(signature.ParameterTypes[0].ElementType!.Name!, out SafeCoreMirAdtLayout? layout) ||
+                layout.IsCopy || layout.ExternalDropFunction != descriptor ||
+                layout.ExternalAssemblyName is null || layout.ExternalAssemblyName != descriptor.AssemblyName ||
+                descriptor.CallPanicStrategy is not ("unwind" or "abort") || descriptor.CallParameterContracts.Length != 1 ||
+                descriptor.CallParameterContracts[0] != "borrow:mut" || descriptor.CallReturnContract != "unit")
+                Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                    "An imported destructor must match its producer-owned layout and one mutable receiver with a checked unit contract.", external.Source);
         }
 
         private void ValidateLayoutType(SafeCoreType? type, SafeCoreMirSource source,
@@ -321,6 +512,12 @@ public static partial class SafeCoreMirValidation
                         Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Unit ADT evidence conflicts with declared fields.", local.Source);
                     if (local.DestructorFunctionId.HasValue && declared.IsCopy)
                         Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "An ADT with Drop cannot be Copy.", local.Source);
+                    if (declared.ExternalDropFunction is { } importedDrop &&
+                        (!local.DestructorFunctionId.HasValue || !program.IsDestructorFunction(local.DestructorFunctionId.Value) ||
+                            local.DestructorFunctionId.Value < program.Functions.Count ||
+                            program.ExternalFunctions[local.DestructorFunctionId.Value - program.Functions.Count].ExternalFunction != importedDrop))
+                        Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                            "An imported owned local requires its producer-declared destructor arena identity.", local.Source);
                 }
                 if (local.Kind == SafeCoreMirLocalKind.Parameter && pastParameters)
                     Error(SafeCoreMirDiagnosticCodes.InvalidInput, "Parameter slots must precede other locals.", local.Source);
@@ -413,8 +610,11 @@ public static partial class SafeCoreMirValidation
                     if (operand.Value is not null) Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "A local operand cannot carry a constant payload.", operand.Source);
                     break;
                 case SafeCoreMirOperandKind.Function:
-                    if (operand.Id < 0 || operand.Id >= program.Functions.Count)
+                    if (operand.Id < 0 || operand.Id >= program.Functions.Count + program.ExternalFunctions.Count)
                         Error(SafeCoreMirDiagnosticCodes.InvalidOperand, "Function operand ID is outside the function arena.", operand.Source);
+                    else if (operand.Id >= program.Functions.Count)
+                        Equal(program.ExternalFunctions[operand.Id - program.Functions.Count].Signature, operand.Type,
+                            operand.Source, "Imported function operand differs from its resolved signature.");
                     else
                     {
                         SafeCoreMirFunction target = program.Functions[operand.Id];
@@ -682,12 +882,11 @@ public static partial class SafeCoreMirValidation
                 terminator.Operand?.Kind != SafeCoreMirOperandKind.Function ||
                 terminator.Arguments.Count != 1 || terminator.Arguments[0].Kind != SafeCoreMirOperandKind.Local ||
                 terminator.Arguments[0].Id != destinationLocalId ||
-                terminator.Operand.Id < 0 || terminator.Operand.Id >= program.Functions.Count)
+                !program.IsDestructorFunction(terminator.Operand.Id))
                 return false;
-            SafeCoreMirFunction target = program.Functions[terminator.Operand.Id];
-            if (!target.IsDestructor || target.Locals.Count == 0 ||
-                target.Locals[0].Kind != SafeCoreMirLocalKind.Parameter ||
-                target.Locals[0].Type != value.Type || target.ReturnType.Kind != SafeCoreSemanticTypeKind.Unit)
+            SafeCoreType signature = terminator.Operand.Type;
+            if (signature.Kind != SafeCoreSemanticTypeKind.Function || signature.ParameterTypes.Count != 1 ||
+                signature.ParameterTypes[0] != value.Type || signature.ReturnType.Kind != SafeCoreSemanticTypeKind.Unit)
                 return false;
             if (!HasMatchingDropReceiver(terminator, terminator.DropLocalId)) return false;
             if (value.Operands[0].Kind != SafeCoreMirOperandKind.Place || value.Operands[0].Place is not { } place)
@@ -959,8 +1158,7 @@ public static partial class SafeCoreMirValidation
                     callee.ParameterTypes[0].Kind == SafeCoreSemanticTypeKind.Reference &&
                     callee.ParameterTypes[0].IsMutable && dropped is not null &&
                     callee.ParameterTypes[0].ElementType == dropped.Type &&
-                    terminator.Operand!.Id >= 0 && terminator.Operand.Id < program.Functions.Count &&
-                    program.Functions[terminator.Operand.Id].IsDestructor &&
+                    program.IsDestructorFunction(terminator.Operand!.Id) &&
                     HasMatchingDropReceiver(terminator, droppedLocal);
                 if (!hasReceiver || terminator.DestinationLocalId is not null ||
                     dropped is null || !dropped.DestructorFunctionId.HasValue ||
@@ -969,8 +1167,7 @@ public static partial class SafeCoreMirValidation
                     Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow,
                         "A destructor call must target the local's unit Drop function with one mutable receiver of its owned type.", terminator.Source);
             }
-            else if (terminator.Operand!.Id >= 0 && terminator.Operand.Id < program.Functions.Count &&
-                program.Functions[terminator.Operand.Id].IsDestructor &&
+            else if (program.IsDestructorFunction(terminator.Operand!.Id) &&
                 (terminator.DestinationLocalId is not null || !HasMatchingDropReceiver(terminator, null)))
                 Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow,
                     "Recursive destructor cleanup requires one uniquely defined temporary borrowing the exact owned place.",

@@ -332,6 +332,22 @@ public sealed class SafeCoreMirFunction
     public bool IsDestructor { get; init; }
 }
 
+/// <summary>A bodyless imported function with a resolved semantic signature and producer evidence.
+/// Its ID follows the defined-function arena: Functions.Count plus its ExternalFunctions index.</summary>
+public sealed record SafeCoreMirExternalFunction(int Id, SafeCoreExternalFunction ExternalFunction,
+    SafeCoreType Signature, SafeCoreMirSource Source)
+{
+    /// <summary>A producer-owned destructor attached to an imported nominal layout.</summary>
+    public bool IsDestructor { get; init; }
+}
+
+public sealed record SafeCoreMirImportedStructuralType(SafeCoreType Type, string AssemblyName,
+    string ClrName, SafeCoreMirSource Source)
+{
+    /// <summary>Independent original PE proof retained for re-exported anonymous shapes.</summary>
+    public SafeCoreExternalOwner? Owner { get; init; }
+}
+
 /// <summary>Backend-independent typed MIR. IDs index immutable owning collections.</summary>
 public sealed class SafeCoreMirProgram
 {
@@ -340,12 +356,29 @@ public sealed class SafeCoreMirProgram
 
     public SafeCoreMirProgram(IReadOnlyList<SafeCoreMirFunction> functions,
         IReadOnlyList<SafeCoreMirAdtLayout> adtLayouts, CancellationToken cancellationToken = default)
+        : this(functions, adtLayouts, [], cancellationToken) { }
+
+    public SafeCoreMirProgram(IReadOnlyList<SafeCoreMirFunction> functions,
+        IReadOnlyList<SafeCoreMirAdtLayout> adtLayouts,
+        IReadOnlyList<SafeCoreMirExternalFunction> externalFunctions, CancellationToken cancellationToken = default)
     {
         Functions = SafeCoreMirCollections.Freeze(functions, cancellationToken);
         AdtLayouts = SafeCoreMirCollections.Freeze(adtLayouts, cancellationToken);
+        ExternalFunctions = SafeCoreMirCollections.Freeze(externalFunctions, cancellationToken);
     }
     public IReadOnlyList<SafeCoreMirFunction> Functions { get; }
     public IReadOnlyList<SafeCoreMirAdtLayout> AdtLayouts { get; }
+    public IReadOnlyList<SafeCoreMirExternalFunction> ExternalFunctions { get; }
+    private readonly IReadOnlyList<SafeCoreMirImportedStructuralType> _importedStructuralTypes = [];
+    public IReadOnlyList<SafeCoreMirImportedStructuralType> ImportedStructuralTypes
+    {
+        get => _importedStructuralTypes;
+        init => _importedStructuralTypes = SafeCoreMirCollections.Freeze(value);
+    }
+
+    public bool IsDestructorFunction(int id) => id >= 0 &&
+        (id < Functions.Count ? Functions[id].IsDestructor :
+            id - Functions.Count < ExternalFunctions.Count && ExternalFunctions[id - Functions.Count].IsDestructor);
 }
 
 /// <summary>A field's declared name, type and original declaration source.</summary>
@@ -396,6 +429,12 @@ public sealed class SafeCoreMirAdtLayout
     public IReadOnlyList<SafeCoreMirAdtVariant> Variants { get; }
     public SafeCoreMirSource Source { get; }
     public bool IsCopy { get; }
+    public bool IsUnitStruct { get; init; }
+    public string? ExternalAssemblyName { get; init; }
+    public string? ExternalClrName { get; init; }
+    public SafeCoreExternalValueType? ExternalSourceLayout { get; init; }
+    public bool ExternalSourceIsPublic { get; init; }
+    public SafeCoreExternalFunction? ExternalDropFunction { get; init; }
 }
 
 public sealed class SafeCoreMirLimitException(string message) : Exception(message);

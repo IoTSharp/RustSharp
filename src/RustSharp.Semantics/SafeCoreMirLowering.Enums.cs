@@ -65,6 +65,12 @@ public static partial class SafeCoreMirLowering
         {
             if (node.ReferencedSymbol is { } symbol && _enumVariants.TryGetValue(SymbolKey(symbol), out var found))
             { layout = found.Layout; index = found.Index; return true; }
+            if (node.ReferencedSymbol?.ExternalEnumVariant is { } external && input.Types.TryGetValue(node.Id, out SafeCoreType? type))
+            {
+                if (type.Kind == K.Function) type = type.ReturnType;
+                if (type.Kind == K.Adt && _enumVariants.TryGetValue(type.Name + "::" + external.Variant.SourceName, out found))
+                { layout = found.Layout; index = found.Index; return true; }
+            }
             layout = null!; index = -1; return false;
         }
 

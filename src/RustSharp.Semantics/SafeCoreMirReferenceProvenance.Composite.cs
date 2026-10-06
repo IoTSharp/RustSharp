@@ -348,7 +348,7 @@ public static partial class SafeCoreMirReferenceProvenance
                         foreach (var origin in summary)
                         {
                             Step();
-                            if (origin.IsStatic) { MergeOrigins(returnedOrigins, [origin]); continue; }
+                            if (origin.IsStatic && !origin.IsParameter) { MergeOrigins(returnedOrigins, [origin]); continue; }
                             if (!origin.IsParameter || (uint)origin.LocalId >= (uint)terminator.Arguments.Count)
                             { if (report) Add(InvalidOrigin, "A call return requires a checked parameter or static origin.", terminator.Source); continue; }
                             var argument = terminator.Arguments[origin.LocalId];
@@ -368,7 +368,11 @@ public static partial class SafeCoreMirReferenceProvenance
                     for (int argumentIndex = 0; argumentIndex < terminator.Arguments.Count; argumentIndex++)
                     {
                         Step();
-                        if (!program.Functions[callee.Id].Locals[argumentIndex].RequiresStaticLifetime) continue;
+                        bool requiresStatic = callee.Id < program.Functions.Count
+                            ? program.Functions[callee.Id].Locals[argumentIndex].RequiresStaticLifetime
+                            : program.ExternalFunctions.FirstOrDefault(external => external.Id == callee.Id)?.ExternalFunction
+                                .SourceParameterStaticLifetimes.ElementAtOrDefault(argumentIndex) == true;
+                        if (!requiresStatic) continue;
                         foreach (var origin in ValueReferences(terminator.Arguments[argumentIndex], state, function, report))
                             if (!origin.IsStatic) Add(EscapingReference, "A static reference parameter requires promoted static storage.", terminator.Arguments[argumentIndex].Source);
                     }

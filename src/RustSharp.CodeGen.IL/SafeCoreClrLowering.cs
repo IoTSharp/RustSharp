@@ -22,6 +22,9 @@ public sealed record SafeCoreClrResult(
     public string? MirSnapshot { get; init; }
     /// <summary>Optional deterministic P1-08 cleanup projection for consumer tooling.</summary>
     public string? CleanupSnapshot { get; init; }
+    /// <summary>Validated source evidence used to publish complete package call contracts.</summary>
+    public SafeCoreMirProgram? SourceMir { get; init; }
+    public SafeCoreHirResult? SourceHir { get; init; }
     public bool IsSuccessful => Methods.Count != 0 && Diagnostics.Count == 0;
 }
 

@@ -362,7 +362,8 @@ public static partial class SafeCoreMirOwnershipAdapter
                         options, diagnostics, value.Source, ref valid);
                     continue;
                 }
-                if (value.Kind == SafeCoreMirRvalueKind.Field && value.Type.Kind == SafeCoreSemanticTypeKind.Reference)
+                if (value.Kind == SafeCoreMirRvalueKind.Field &&
+                    (value.Type.Kind == SafeCoreSemanticTypeKind.Reference || !IsCopyType(value.Type, program)))
                 {
                     SafeCoreMirOperand aggregate = value.Operands[0];
                     int fieldIndex = int.Parse(value.Operator!, CultureInfo.InvariantCulture);
@@ -372,7 +373,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                     SafeCoreMirPlace source = (aggregate.Place ?? SafeCoreMirPlace.Root(aggregate.Id)).Append(field);
                     if (!TryOwnershipPlace(slots, SafeCoreMirOperand.PlaceValue(source, value.Type, value.Source),
                         function, options, clock, ref operations, diagnostics, out SafeCoreOwnershipPlace sourcePlace)) valid = false;
-                    else AddInstruction(instructions, value.Type.IsMutable
+                    else AddInstruction(instructions, !IsCopyType(value.Type, program)
                         ? SafeCoreOwnershipInstruction.Move(sourcePlace, destinationPlace, value.Source)
                         : SafeCoreOwnershipInstruction.AssignReference(sourcePlace, destinationPlace, value.Source),
                         options, diagnostics, value.Source, ref valid);
@@ -832,7 +833,9 @@ public static partial class SafeCoreMirOwnershipAdapter
                         AddInstruction(instructions, !IsCopyType(argument.Type, program) && argument.Type.Kind != SafeCoreSemanticTypeKind.Reference
                             ? SafeCoreOwnershipInstruction.Consume(argumentPlace, argument.Source)
                             : SafeCoreOwnershipInstruction.Use(argumentPlace, argument.Source), options, diagnostics, argument.Source, ref valid);
-                    else if (argument.Kind == SafeCoreMirOperandKind.Constant && IsStructuralCopy(argument.Type))
+                    else if (argument.Kind == SafeCoreMirOperandKind.Constant &&
+                        (IsStructuralCopy(argument.Type) || argument.Value == "()" && argument.Type.Kind == SafeCoreSemanticTypeKind.Adt &&
+                            program.AdtLayouts.Any(layout => layout.Type == argument.Type && layout.IsUnitStruct && layout.Fields.Count == 0)))
                     {
                         // Constants do not consume or move an ownership local.
                     }
@@ -924,7 +927,7 @@ public static partial class SafeCoreMirOwnershipAdapter
         SafeCoreMirTerminator call = block.Terminator;
         if (call.Kind != SafeCoreMirTerminatorKind.Call || call.DestinationLocalId is not null ||
             call.Operand is not { Kind: SafeCoreMirOperandKind.Function } target ||
-            target.Id < 0 || target.Id >= program.Functions.Count || !program.Functions[target.Id].IsDestructor ||
+            !program.IsDestructorFunction(target.Id) ||
             call.Arguments.Count != 1 || call.Arguments[0] is not { Kind: SafeCoreMirOperandKind.Local } receiver ||
             receiver.Id < 0 || receiver.Id >= function.Locals.Count ||
             function.Locals[receiver.Id].Kind != SafeCoreMirLocalKind.Temporary ||

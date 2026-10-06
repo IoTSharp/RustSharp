@@ -27,6 +27,27 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length == 4 && args[0] == "--p1-source-package-platform")
+        {
+            if (!int.TryParse(args[3], NumberStyles.None, CultureInfo.InvariantCulture, out int maximumSourcePackages) ||
+                maximumSourcePackages is < 1 or > P1SourcePackagePlatformRunner.MaximumCases)
+            {
+                Console.Error.WriteLine($"Source package platform evidence requires a maximum case count between 1 and {P1SourcePackagePlatformRunner.MaximumCases}.");
+                return 2;
+            }
+            try
+            {
+                P1SourcePackagePlatformRunner.Result packages = await P1SourcePackagePlatformRunner.RunAsync(
+                    FindRepositoryRoot(), args[1], args[2], maximumSourcePackages).ConfigureAwait(false);
+                return packages.Succeeded ? 0 : 1;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                ArgumentException or InvalidOperationException or JsonException or OperationCanceledException or Win32Exception)
+            {
+                Console.Error.WriteLine("Source package platform evidence failed: " + exception.Message);
+                return 2;
+            }
+        }
         if (args.Length == 4 && args[0] == "--p1-drop-call-interface")
         {
             if (!int.TryParse(args[3], NumberStyles.None, CultureInfo.InvariantCulture, out int maximumArtifacts) ||
