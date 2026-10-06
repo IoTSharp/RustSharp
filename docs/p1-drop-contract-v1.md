@@ -50,6 +50,16 @@ is `Aborted`. `RustPanicBoundary` reports this outcome without calling
 process according to its own policy. An abort panic leaves the drop scope
 untouched and performs no unwind `Drop` calls.
 
+The normal continuation policy intentionally differs from rustc 1.98.0: rustc
+aborts when another destructor fails while unwinding the first destructor
+panic, whereas Rust# retains all normal cleanup failures and attempts the
+remaining live obligations. This includes an outer destructor and its owned
+fields. If the outer destructor instead fails during an existing body panic,
+the double-panic rule stops immediately, before its remaining fields, and
+preserves the body panic and that destructor failure. Generated process entry
+points terminate an abort with exit code `134`; reusable generated exports
+surface `RustGeneratedAbortException` for `RustPanicBoundary` to inspect.
+
 ## Stable case IDs
 
 `DROP-*` IDs are the immutable transition denominator for P1-08.01. The

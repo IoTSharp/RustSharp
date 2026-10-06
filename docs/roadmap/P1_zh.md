@@ -12,6 +12,8 @@
 
 [后续证据审计](../p1-evidence-audit_zh.md) 现已记录全部 32 个差分用例和 24 个平台用例的可执行语义源码。差分报告通过 32/32，其中借用 20/20、Drop 6/6；Windows 平台报告通过 CoreCLR、ILVerify 和 Native AOT 的 24/24，进程清理完整。P1-07 为 ✅ 已完成；完整 P1 候选及 SHA 绑定聚合仍属于 P1-10.08 至 P1-GATE 的独立工作。
 
+当前 [P1-08 实现记录](../p1-08-implementation_zh.md)的全部十四个叶子为 ✅ 已完成。E9 将零警告/零错误的 Release 构建及 894/894 回归绑定到 `p1-drop-closure-v3`：26 项 rustc 一致加两项冻结的正常清理契约差异、原始 PE ILVerify 30/30，以及每个平台 Windows/Ubuntu WSL 的 Native AOT 28/28 与 callable 7/7。接口包含两个原始 PE 产物；Linux 目标为 `linux-x64`，实际宿主为 `ubuntu.24.04-x64`。最终报告进程/临时宿主清理、历史父进程链限制与九个保留工作区对象分别披露。源码 `panic!` 仍不支持，256 个源码局部值限制仍受检查。P1-09 源码导入调用集成及 P1-10/候选发布门禁仍为独立工作。
+
 历史/现有证据标签（仅用于对应的限定范围）：
 
 | 标签 | 已有证据及限制 |
@@ -24,6 +26,7 @@
 | E6 | `f4692c704b0c5432e05d7f08a00c6736ce3a1c75`：本地 Release 零警告/错误、464/464；[Windows CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341932)、[Linux CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341925)、[P1 平台 CI](https://github.com/IoTSharp/RustSharp/actions/runs/35883341877) 全通过。后者每平台 12 平台/24 回归/16 差分用例、6 份聚合输入；新增构造未被该平台清单覆盖时，不据此声称其 AOT 已验收。 |
 | E7 | 历史结构体/place/引用子集：使用 SDK 10.0.401 通过 551/551 项测试、回归 v2 24/24 和借用/Drop v2 16/16。[投影示例](../../samples/mir-places.rs) 的 CoreCLR/rustc 与 Windows x64 Native AOT 输出一致；此前的 CLR byref 表示报告 ILVerify `ReturnPtrToStack`，等价 C# 也复现该诊断。配套[存储示例](../../samples/mir-places-verified.rs) 通过 ILVerify 和 Windows x64 Native AOT。E8 取代该投影实现及验证器限制。 |
 | E8 | 当前冻结的 P1-06 类别：[实现清单](../p1-06-implementation_zh.md)、670/670 项测试、回归 v3 26/26 及借用/Drop v2 16/16；使用 SDK 10.0.401（仓库固定 10.0.400）的 Release 构建零警告/零错误。[类别示例](../../samples/mir-families.rs) 和投影示例的 CoreCLR 与 Windows x64 Native AOT 输出均匹配 rustc 1.98.0，并通过 ILVerify 10.0.11，没有抑制诊断。GC 拥有的引用解决此前的引用返回诊断。证据位于 `artifacts/p1-06-final-session`；Native AOT 临时目录已回收。这些结果关闭 P1-06 自身叶子；当前 P1-07 及扩展差分/平台证据另有最新报告，候选 SHA 门禁仍独立。 |
+| E9 | [P1-08 当前实现与精确报告链接](../p1-08-implementation_zh.md)：Release 零警告/零错误、894/894 回归、28 差分用例 = 26 项 rustc 一致 + 两项冻结契约差异、原始 PE ILVerify 28/28 + callable 2/2。Windows 与 Ubuntu WSL 均通过 Native AOT 28/28 与 callable 7/7。Windows SDK 10.0.401、Ubuntu SDK 10.0.112、ILVerify 10.0.11；证据位于 `artifacts/p1-08-session` 与 `artifacts/p1-drop`。独立审计：227 个记录的直接启动均无同身份存活进程，68 个可丢弃目录不存在；不能独立重建完整历史后代链。自动审批以 `blocked by policy` 拒绝删除后，九个历史 `tmp` 对象保留；完整工作区临时对象清理为 false。P1-09 与候选 SHA 门禁仍开放。 |
 
 E8 日志包括 `build-final.stdout.log`、`harness-final.stdout.log`、
 `regression-v3-final.json`、`differential-v2-final.json` 及两个示例的 CoreCLR、
@@ -136,20 +139,20 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 
 | ID | 状态 | 交付物 / 文件所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| P1-08.01 | ✅ 已完成 | 固定析构与 panic 状态转移表 | P1-06.01, P1-07.01 | 明确初始化/移动/drop flag、正常/return/unwind/abort、首次析构失败和双重 panic 转移；若有 Rust# 差异须显式记录。 | `docs/p1-drop-contract-v1.md` 和 `_zh.md`；`SafeCoreMirDropContract` 快照及转移测试已固定 v1 表。 |
-| P1-08.02 | 🚧 进行中 | 编译析构主体及 receiver place | P1-08.01, P1-06.04 | 源码 impl Drop 解析唯一合法 receiver/主体，经 MIR 访问自有字段；非法签名/未支持主体稳定诊断。 | `SafeCoreMirLowering.cs`；计划拥有字段的析构器夹具 |
-| P1-08.03 | 🚧 进行中 | 每个 place 的初始化与 drop flag | P1-08.02, P1-07.03 | 已初始化活动值只可清理一次；移动、部分初始化、重新赋值在可能抛异常操作前更新标记。 | `SafeCoreMirDropFlagLowering.cs` 和 `SafeCoreMirCleanupTests` 提供有界逐 place 快照及分支/循环证据；生成聚合接入仍待完成。 |
-| P1-08.04 | ✅ 已完成 | unit Drop 正常作用域基础 | P1-06.03 | 生成的 unit 析构器在正常离开作用域时按声明逆序恰好运行一次。 | `SafeCoreMirDropCodegenTests.ReverseOrderAsync`; E6 |
-| P1-08.05 | 🚧 进行中 | 分支、循环、break 与 continue 清理 | P1-08.03, P1-08.13, P1-08.14 | 仅按确定逆序清理退出作用域中已初始化活动值；后续迭代不能复用已消费标记。 | 计划生成程序的分支/循环跟踪语料 |
-| P1-08.06 | 🚧 进行中 | 显式/提前 return 清理 | P1-08.05 | return 操作数在清理前仅求值一次；返回/移出值存活，其他活动所有者恰好清理一次。 | 已有 unit return 差分；计划聚合/操作数失败扩展 |
-| P1-08.07 | ✅ 已完成 | unit Drop fault 清理基础 | P1-08.04 | 生成的溢出 fault 执行受支持 unit 析构器后传播原始异常。 | `SafeCoreMirDropCodegenTests.FaultPathAsync`; E6 |
-| P1-08.08 | 🚧 进行中 | 跨生成的嵌套作用域与调用展开 | P1-08.03, P1-08.06 | 主体、参数或嵌套调用 panic 时活动所有者仅展开一次；不重复清理已移出值或已完成清理。 | `P1GeneratedUnwindEvidenceTests` 覆盖嵌套调用、return 及参数溢出清理；生成 PE/rustc 差分跟踪仍开放 |
-| P1-08.09 | 🚧 进行中 | 析构失败后的继续清理与双重 panic | P1-08.08 | 正常清理首次失败执行已固定的后续清理策略；展开中失败执行已固定的 abort 规则，不能吞掉任一失败。 | `RustDropGlue`、`RustPanicBoundary`、`SafeCoreMirDropCodegenTests` 和 `P1NestedDropUnwindTests` 覆盖继续清理、嵌套双失败传播、双重 panic 报告及 abort 选择；子进程退出证据仍待完成。 |
-| P1-08.10 | 🚧 进行中 | 生成程序的 abort 行为 | P1-08.01, P1-08.03 | abort 在声明边界终止且不做展开 Drop；跟踪、退出类别及后续用户效果缺失符合契约。 | `RustPanicBoundary` 和 `SafeCoreMirDropCodegenTests` 覆盖有界 abort 结果及未触碰的作用域；独立生成进程证据仍待完成。 |
-| P1-08.11 | 🚧 进行中 | 生成的本地 panic 边界与可复用调用接口 | P1-08.09, P1-08.10 | 生成的本地调用使用声明 panic 策略；returned/unwound/aborted 与发射行为一致。向 P1-09.06 发布已检查的 panic 接口；源码导入调用集成在该项及 P1-09.09 验收。 | 计划编译器与 `RustPanicBoundary` 的集成及契约负向夹具 |
-| P1-08.12 | ⏳ 计划中 | 固定 rustc 1.98 Drop 差分 | P1-08.11, P1-10.05 | 正常/return/unwind/abort、含字段所有者、部分移动和析构失败均比较生成程序跟踪/退出；未解释差异/跳过为零。 | 计划 `p1-differential-v3` 的 Drop 部分；Rust# 与 rustc 进程记录 |
-| P1-08.13 | 🚧 进行中 | 递归聚合 drop glue 与字段/元素顺序 | P1-08.02, P1-08.03, P1-06.18 | 没有自身 Drop 的结构体仍清理自有字段；声明的元组/数组/活动 enum 字段在外层析构器之后按 Rust 字段/元素顺序清理，区别于局部值的逆声明顺序。跳过已移出/未初始化字段，失败边交给 P1-08.08/.09。 | `RustDropGlue` 现会把 unwind 模式传递给嵌套 `RustDropAggregate`；`P1NestedDropUnwindTests` 固定停止/继续清理轨迹。生成嵌套聚合覆盖仍待完成。 |
-| P1-08.14 | 🚧 进行中 | 赋值替换与临时值析构 | P1-08.03, P1-08.13 | 替换已初始化所有者时旧值恰好清理一次；表达式/块临时值在声明作用域到期，移出抑制后续清理。发出显式异常边；RHS panic 执行由 P1-08.08 验收。 | `RustDropSlot` 和 `SafeCoreMirDropCodegenTests` 覆盖替换与移出的一次性标记；编译器临时值降低仍待完成。 |
+| P1-08.01 | ✅ 已完成 | 固定析构与 panic 状态转移表 | P1-06.01, P1-07.01 | 明确初始化/移动/drop flag、正常/return/unwind/abort、首次析构失败和双重 panic 转移；若有 Rust# 差异须显式记录。 | `docs/p1-drop-contract-v1.md` 和 `_zh.md`；`SafeCoreMirDropContract` 快照及转移测试已固定 v1 表；E9 |
+| P1-08.02 | ✅ 已完成 | 编译析构主体及 receiver place | P1-08.01, P1-06.04 | 源码 impl Drop 解析唯一合法 receiver/主体，经 MIR 访问自有字段；非法签名/未支持主体稳定诊断。 | `SafeCoreMirLowering.cs` 与 `P1DropReceiverTests` 注册经过检查的签名、可变字段接收者与非法源码诊断；当前原始 PE/平台证据记录于 E9。 |
+| P1-08.03 | ✅ 已完成 | 每个 place 的初始化与 drop flag | P1-08.02, P1-07.03 | 已初始化活动值只可清理一次；移动、部分初始化、重新赋值在可能抛异常操作前更新标记。 | `SafeCoreMirDropFlagLowering`、`SafeCoreMirDropEvidencePlaces`、`SafeCoreMirClrLowering.Drop` 和 `MirReference` 绑定类型化代、当前枚举 tag 与共享精确 place 消费。`P1DropFlagGenerationTests`、`P1GeneratedDropFlagTests` 和 `P1MirReferenceDropStateTests` 已注册；当前原始 PE/平台证据记录于 E9。 |
+| P1-08.04 | ✅ 已完成 | unit Drop 正常作用域基础 | P1-06.03 | 生成的 unit 析构器在正常离开作用域时按声明逆序恰好运行一次。 | `SafeCoreMirDropCodegenTests.ReverseOrderAsync`; E6; E9 |
+| P1-08.05 | ✅ 已完成 | 分支、循环、break 与 continue 清理 | P1-08.03, P1-08.13, P1-08.14 | 仅按确定逆序清理退出作用域中已初始化活动值；后续迭代不能复用已消费标记。 | `P1ControlFlowDropTests` 和固定生成源码夹具覆盖分支/循环、带标签 break、continue 与已退出作用域；当前原始 PE/平台证据记录于 E9。 |
+| P1-08.06 | ✅ 已完成 | 显式/提前 return 清理 | P1-08.05 | return 操作数在清理前仅求值一次；返回/移出值存活，其他活动所有者恰好清理一次。 | `P1ControlFlowDropTests`、`P1GeneratedUnwindEvidenceTests` 和固定的拥有型返回夹具覆盖返回转移与操作数失败；当前原始 PE/平台证据记录于 E9。 |
+| P1-08.07 | ✅ 已完成 | unit Drop fault 清理基础 | P1-08.04 | 生成的溢出 fault 执行受支持 unit 析构器后传播原始异常。 | `SafeCoreMirDropCodegenTests.FaultPathAsync`; E6; E9 |
+| P1-08.08 | ✅ 已完成 | 跨生成的嵌套作用域与调用展开 | P1-08.03, P1-08.06 | 主体、参数或嵌套调用 panic 时活动所有者仅展开一次；不重复清理已移出值或已完成清理。 | `P1GeneratedUnwindEvidenceTests` 和固定的函数体/移出调用/活动枚举/已退出作用域夹具注册精确清理 trace。共享的已消费 place guard 阻止失败的借用替换清理被重复执行；当前原始 PE/平台证据记录于 E9。 |
+| P1-08.09 | ✅ 已完成 | 析构失败后的继续清理与双重 panic | P1-08.08 | 正常清理首次失败执行已固定的后续清理策略；展开中失败执行已固定的 abort 规则，不能吞掉任一失败。 | `RustGeneratedPanic`、`RustPanicBoundary`、生成失败夹具和 callable 宿主保留有序正常失败及函数体/析构器双重 panic 对。收集器独立于聚合限制，允许 16,384 个后续失败；源码/LIR 限制仍受检查。当前原始 PE/平台证据记录于 E9。 |
+| P1-08.10 | ✅ 已完成 | 生成程序的 abort 行为 | P1-08.01, P1-08.03 | abort 在声明边界终止且不做展开 Drop；跟踪、退出类别及后续用户效果缺失符合契约。 | 显式 `CompilerDriver.CompileWithPanicStrategy` abort 选择、生成源码夹具和 callable 宿主覆盖退出 `134`、后续效应缺失与宿主作用域保留。当前原始 PE/平台证据记录于 E9。 |
+| P1-08.11 | ✅ 已完成 | 生成的本地 panic 边界与可复用调用接口 | P1-08.09, P1-08.10 | 生成的本地调用使用声明 panic 策略；returned/unwound/aborted 与发射行为一致。向 P1-09.06 发布已检查的 panic 接口；源码导入调用集成在该项及 P1-09.09 验收。 | `P1DropCallInterfaceRunner` 将两个原始 PE 产物的七个直接公共方法用例绑定到 `RustPanicBoundary`、CoreCLR 和 `NativeAotPublisher.HostSourceOverride`；当前加载的生产者/运行时指纹及污染负例约束复用。当前原始 PE/平台证据记录于 E9。 |
+| P1-08.12 | ✅ 已完成 | 固定 rustc 1.98 Drop 差分 | P1-08.11, P1-10.05 | 正常/return/unwind/abort、含字段所有者、部分移动和析构失败均比较生成程序跟踪/退出；未解释差异/跳过为零。 | `P1DropDifferentialRunner` 将 `p1-drop-closure-v3` 固定为 28 个源码、rustc 1.98.0 与两项显式正常清理差异。当前原始 PE/平台证据记录于 E9。 |
+| P1-08.13 | ✅ 已完成 | 递归聚合 drop glue 与字段/元素顺序 | P1-08.02, P1-08.03, P1-06.18 | 没有自身 Drop 的结构体仍清理自有字段；声明的元组/数组/活动 enum 字段在外层析构器之后按 Rust 字段/元素顺序清理，区别于局部值的逆声明顺序。跳过已移出/未初始化字段，失败边交给 P1-08.08/.09。 | `P1AggregateDropCodegenTests`、`P1GeneratedDropFlagTests` 和固定聚合夹具注册递归结构体/元组/数组/活动枚举顺序及所有者/字段失败转移；当前原始 PE/平台证据记录于 E9。 |
+| P1-08.14 | ✅ 已完成 | 赋值替换与临时值析构 | P1-08.03, P1-08.13 | 替换已初始化所有者时旧值恰好清理一次；表达式/块临时值在声明作用域到期，移出抑制后续清理。发出显式异常边；RHS panic 执行由 P1-08.08 验收。 | 生成聚合/字段/借用替换及语句/通配符/延长借用/部分构造夹具覆盖临时值所有权与代变化。经过检查的源码/CFG 证据区分旧借用值替换与新值作用域所有权；当前原始 PE/平台证据记录于 E9。 |
 
 <a id="p1-09"></a>
 
@@ -200,9 +203,9 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 
 ## 下一批可交付工作及并行边界
 
-1. P1-06 已凭冻结范围账本及 E8 实现证据为 ✅ 已完成。P1-07 已 ✅ 已完成：12 个所有权叶子、4 个诊断黄金用例及 20 个借用闭环全部通过。P1-10.01 至 P1-10.07 的本地扩展证据也已 ✅ 已完成：6 个 Drop 用例及此前 12 个平台占位用例均有语义源码并通过有界报告。候选 SHA 聚合及其余 P1 门禁仍属于 P1-10.08 至 P1-GATE。
-2. P1-06.04/.05/.08/.09 提供 place/引用/切片前置。所有权线程推进 P1-07.01～.10；析构线程在 move/drop flag 前提满足后推进 P1-08.01～.11。引用同一 `SafeCoreMirLowering.cs` 或 validator 时必须串行集成，不能让不同智能体同时写该文件。
+1. P1-06 已凭冻结范围账本及 E8 实现证据为 ✅ 已完成。P1-07 已 ✅ 已完成：12 个所有权叶子、4 个诊断黄金用例及 20 个借用闭环全部通过。P1-08 的十四个叶子及 E9 生成程序/后端证据均为 ✅ 已完成。P1-10.01 至 P1-10.07 的本地扩展证据也已 ✅ 已完成：6 个 Drop 用例及此前 12 个平台占位用例均有语义源码并通过有界报告。候选 SHA 聚合及其余 P1 门禁仍属于 P1-10.08 至 P1-GATE。
+2. P1-06.04/.05/.08/.09 提供 place/引用/切片前置。P1-07 的所有权与 P1-08 的本地析构/panic 交付均为 ✅ 已完成。后续修改同一 `SafeCoreMirLowering.cs` 或 validator 时必须串行集成，不能让不同智能体同时写该文件。
 3. 元数据线程可先推进 P1-09.03/.04；语料/运行器线程可独立推进 P1-10.03/.05/.06/.07。源码调用集成 P1-09.06 必须等引用和 panic 契约到位。
-4. 最后交付源码 borrow/Drop 差分、真实跨包平台用例及 P1-10.08～.10；按 P1-GATE.01～.06 逐项对账。已有库探针和手工 LIR 测试继续保留。
+4. 最后交付源码导入调用契约、真实跨包平台用例及 P1-10.08～.10；按 P1-GATE.01～.06 逐项对账。已有库探针和手工 LIR 测试继续保留。
 
 表中父 ID 表示该组全部必需实施叶子完成；P1-GATE 表示六个门禁叶子的合取。单个叶子不依赖自己的父任务或 P1-GATE。与父表粗粒度依赖相比，P1-07 的起点精确为 P1-06.04/.05，P1-08 的起点精确为已固定 place/Drop 契约，因此可以实现并行开发而不制造循环等待。

@@ -68,12 +68,24 @@ public sealed class CompilerDriver
         CompilationProfile profile = CompilationProfile.VerticalSlice, CancellationToken cancellationToken = default)
         => CheckCore(source, sourcePath, profile, default, cancellationToken);
 
+    /// <summary>Checks a local MIR program with an explicit, evidence-backed panic policy.</summary>
+    public static CompilationResult CheckWithPanicStrategy(string source, string sourcePath,
+        SafeCorePanicStrategy panicStrategy, CompilationProfile profile = CompilationProfile.SafeCoreMirV2,
+        CancellationToken cancellationToken = default)
+    {
+        ValidatePanicStrategy(panicStrategy);
+        if (profile is not (CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
+            return RejectPanicStrategyProfile(sourcePath);
+        return CheckCore(source, sourcePath, profile, default, cancellationToken, panicStrategy);
+    }
+
     private static CompilationResult CheckCore(
         string source,
         string sourcePath,
         CompilationProfile profile,
         ImmutableArray<SafeCoreCrate> crates,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
@@ -91,7 +103,7 @@ public sealed class CompilerDriver
             return CheckSafeCoreGenerics(source, sourcePath, cancellationToken, crates);
         if (profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
             return CheckSafeCoreMir(source, sourcePath, cancellationToken, crates,
-                profile == CompilationProfile.SafeCoreMirV2);
+                profile == CompilationProfile.SafeCoreMirV2, panicStrategy);
         if (profile != CompilationProfile.VerticalSlice)
         {
             SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates);
@@ -181,10 +193,26 @@ public sealed class CompilerDriver
         string? assemblyName = null,
         CompilationProfile profile = CompilationProfile.VerticalSlice,
         CancellationToken cancellationToken = default)
+        => CompileWithPanicStrategy(source, sourcePath, outputPath, SafeCorePanicStrategy.Unwind,
+            assemblyName, profile, cancellationToken);
+
+    /// <summary>Emits local MIR calls and cleanup using the declared panic policy.</summary>
+    public static CompilationResult CompileWithPanicStrategy(
+        string source,
+        string sourcePath,
+        string outputPath,
+        SafeCorePanicStrategy panicStrategy,
+        string? assemblyName = null,
+        CompilationProfile profile = CompilationProfile.SafeCoreMirV2,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+        ValidatePanicStrategy(panicStrategy);
+        if (panicStrategy != SafeCorePanicStrategy.Unwind &&
+            profile is not (CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
+            return RejectPanicStrategyProfile(sourcePath);
 
         cancellationToken.ThrowIfCancellationRequested();
         if (profile == CompilationProfile.SafeCoreTypes)
@@ -218,7 +246,8 @@ public sealed class CompilerDriver
             assemblyName,
             sourceBytes,
             profile,
-            cancellationToken);
+            cancellationToken,
+            panicStrategy: panicStrategy);
     }
 
     private static CompilationResult CompileCoreWithCrates(
@@ -285,7 +314,8 @@ public sealed class CompilerDriver
         ReadOnlyMemory<byte> sourceBytes,
         CompilationProfile profile,
         CancellationToken cancellationToken,
-        SafeCoreSourceMap? sourceMap = null, ImmutableArray<SafeCoreCrate> crates = default)
+        SafeCoreSourceMap? sourceMap = null, ImmutableArray<SafeCoreCrate> crates = default,
+        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
     {
         cancellationToken.ThrowIfCancellationRequested();
         SyntaxTree? syntaxTree = null;
@@ -298,7 +328,7 @@ public sealed class CompilerDriver
         }
         else
         {
-            safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates);
+            safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates, panicStrategy);
             if (!safeCore.IsSuccessful) return CompilationResult.Failed(MapDiagnostics(safeCore.Diagnostics, sourceMap));
         }
 
@@ -422,6 +452,16 @@ public sealed class CompilerDriver
             { SourcePath = sourcePath }]);
     }
 
+    private static void ValidatePanicStrategy(SafeCorePanicStrategy strategy)
+    {
+        if (!Enum.IsDefined(strategy)) throw new ArgumentOutOfRangeException(nameof(strategy));
+    }
+
+    private static CompilationResult RejectPanicStrategyProfile(string sourcePath) =>
+        CompilationResult.Failed([new Diagnostic("RSC0010",
+            "An explicit panic strategy requires an executable safe-core MIR profile.", new TextSpan(0, 0))
+        { SourcePath = sourcePath }]);
+
     private static CompilationResult CheckSafeCoreTypes(string source, string sourcePath,
         CancellationToken cancellationToken)
     {
@@ -465,7 +505,7 @@ public sealed class CompilerDriver
 
     private static CompilationResult CheckSafeCoreMir(string source, string sourcePath,
         CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default,
-        bool enableRepeatedArrays = false)
+        bool enableRepeatedArrays = false, SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
     {
         SafeCoreMirPipelineResult result = SafeCoreMirPipeline.Analyze(source, sourcePath,
             new SafeCoreMirPipelineOptions
@@ -475,6 +515,7 @@ public sealed class CompilerDriver
                 RequireCleanupEvidence = true,
                 EnableRepeatedArrays = enableRepeatedArrays,
                 EnableP1Extensions = enableRepeatedArrays,
+                PanicStrategy = panicStrategy,
                 Crates = crates.IsDefault ? [] : crates,
             });
         if (!result.IsSuccessful)
@@ -499,7 +540,8 @@ public sealed class CompilerDriver
     }
 
     private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
-        CompilationProfile profile, CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
+        CompilationProfile profile, CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default,
+        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
     {
         if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
@@ -530,6 +572,7 @@ public sealed class CompilerDriver
                     RequireCleanupEvidence = true,
                     EnableRepeatedArrays = profile == CompilationProfile.SafeCoreMirV2,
                     EnableP1Extensions = profile == CompilationProfile.SafeCoreMirV2,
+                    PanicStrategy = panicStrategy,
                     Crates = crates.IsDefault ? [] : crates,
                 });
             if (!evidence.IsSuccessful)

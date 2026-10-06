@@ -438,7 +438,7 @@ public static partial class ClrLirAssemblyEmitter
         return new GeneratedAssembly(peImage.ToArray(), pdbBytes, RuntimeConfig, metadataDocument?.Json)
         {
             RequiresMirRuntime = layouts.Definitions.Any(static layout => layout.ImplementsMirValue) ||
-                methods.Any(static method => method.Blocks.Any(static block => block.Instructions.Any(static instruction =>
+                methods.Any(static method => method.PanicHandling is not null || method.Blocks.Any(static block => block.Instructions.Any(static instruction =>
                     instruction is ClrLirCall { Site.ExternalCall.AssemblyName: "RustSharp.Runtime" }))),
         };
 
@@ -874,19 +874,67 @@ public static partial class ClrLirAssemblyEmitter
             }
         }
 
-        if (!method.ExceptionCleanup.IsEmpty)
+        if (method.HasExceptionCleanup)
         {
             _ = descriptor.Append('\0').Append("fault-cleanup");
+            if (method.PanicHandling is { } panic)
+                _ = descriptor.Append(':').Append(panic.PanicLocalIndex).Append(':').Append(panic.CleanupFailureLocalIndex)
+                    .Append(':').Append(panic.NormalCleanupLocalIndex).Append(':').Append(panic.IsEntryBoundary)
+                    .Append(':').Append(panic.AbortWithoutUnwind).Append(':').Append(panic.UnwindStateLocalIndex);
             foreach (ClrLirCallSite cleanup in method.ExceptionCleanup)
             {
-                _ = descriptor.Append('\0').Append(cleanup.Name).Append(':').Append(cleanup.ReturnType);
-                foreach (ClrLirType parameter in cleanup.ParameterTypes)
-                    _ = descriptor.Append(':').Append(parameter);
+                _ = descriptor.Append('\0');
+                AppendCleanupCall(cleanup);
+            }
+            foreach (ClrLirGuardedCleanup cleanup in method.GuardedExceptionCleanup)
+            {
+                _ = descriptor.Append('\0').Append("guard:").Append(cleanup.FlagLocalIndex)
+                    .Append(':').Append(cleanup.ReceiverLocalIndex).Append(':');
+                AppendCleanupCall(cleanup.Site);
+                foreach (int flag in cleanup.ConsumedFlagLocalIndices)
+                    _ = descriptor.Append(":consume:").Append(flag);
+                _ = descriptor.Append(":receiver:").Append(cleanup.ReceiverInstructions.Length);
+                AppendCleanupInstructions(cleanup.ReceiverInstructions);
+                _ = descriptor.Append(":guards:").Append(cleanup.GuardInstructions.Length);
+                foreach (var guard in cleanup.GuardInstructions)
+                {
+                    checkBudget();
+                    _ = descriptor.Append(":guard-group:").Append(guard.Length);
+                    AppendCleanupInstructions(guard);
+                }
             }
         }
 
         byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(descriptor.ToString()));
         return new Guid(hash.AsSpan(0, 16));
+
+        void AppendCleanupInstructions(IEnumerable<ClrLirInstruction> instructions)
+        {
+            foreach (ClrLirInstruction instruction in instructions)
+            {
+                checkBudget();
+                _ = descriptor.Append(':').Append(instruction.GetType().Name);
+                switch (instruction)
+                {
+                    case ClrLirLoadLocal local: _ = descriptor.Append(':').Append(local.Index); break;
+                    case ClrLirLoadInt32 integer: _ = descriptor.Append(':').Append(integer.Value); break;
+                    case ClrLirUnbox unbox: _ = descriptor.Append(':').Append(unbox.Type); break;
+                    case ClrLirCall call: AppendCleanupCall(call.Site); break;
+                }
+            }
+        }
+
+        void AppendCleanupCall(ClrLirCallSite site)
+        {
+            checkBudget();
+            _ = descriptor.Append(site.Name).Append(':').Append(site.ReturnType);
+            foreach (ClrLirType parameter in site.ParameterTypes) _ = descriptor.Append(':').Append(parameter);
+            if (site.ExternalCall is not { } external) return;
+            _ = descriptor.Append(":external:").Append(external.AssemblyName).Append(':').Append(external.TypeNamespace)
+                .Append(':').Append(external.TypeName).Append(':').Append(external.MethodName)
+                .Append(":panic:").Append(external.PanicStrategy).Append(":return:").Append(external.ReturnContract);
+            foreach (string contract in external.ParameterContracts) _ = descriptor.Append(":param:").Append(contract);
+        }
     }
 
     private static BlobContentId ComputeContentId(IEnumerable<Blob> content)

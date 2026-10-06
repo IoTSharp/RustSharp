@@ -293,6 +293,8 @@ public static partial class SafeCoreMirClrLowering
         private readonly List<Block> _blocks = [];
         private readonly Dictionary<int, string> _labels = [];
         private readonly Dictionary<int, ClrLirType> _localTypes = [];
+        private int _normalCleanupLocal = -1;
+        private ClrLirPanicHandling? _panicHandling;
         private int _storeTemporary = -1;
         private Block? _current;
         private int _extraLabel;
@@ -322,12 +324,21 @@ public static partial class SafeCoreMirClrLowering
             int parameterCount = function.Locals.TakeWhile(static local => local.Kind == SafeCoreMirLocalKind.Parameter).Count();
             var parameters = function.Locals.Take(parameterCount)
                 .Select(local => _localTypes[local.Id]).ToArray();
+            ClrLirGuardedCleanup[] exceptionCleanup = BuildExceptionCleanup();
+            int panicLocal = Temporary(ClrLirType.Any, function.Source);
+            int cleanupFailureLocal = Temporary(ClrLirType.Any, function.Source);
+            _normalCleanupLocal = Temporary(ClrLirType.Bool, function.Source);
+            int unwindStateLocal = Temporary(ClrLirType.Bool, function.Source);
+            _panicHandling = new(panicLocal, cleanupFailureLocal, _normalCleanupLocal, IsEntryName(function.Name),
+                function.PanicStrategy == SafeCorePanicStrategy.Abort, unwindStateLocal);
 
             foreach (SafeCoreMirBlock mirBlock in ReachableBlocks())
             {
                 Start(new Block(_labels[mirBlock.Id]));
                 if (mirBlock.Id == function.EntryBlockId)
                 {
+                    foreach (var drop in _dropPlaces) SetDropFlag(drop.Flag, live: false);
+                    SetNormalCleanupMode(isCleanup: function.IsDestructor);
                     foreach (SafeCoreMirLocal local in function.Locals)
                     {
                         Emit(new ClrLirLoadNull());
@@ -351,13 +362,12 @@ public static partial class SafeCoreMirClrLowering
             }
 
             ClrLirType returnType = owner.ReturnType(function.ReturnType, function.Source);
-            ClrLirCallSite[] exceptionCleanup = BuildExceptionCleanup();
             int faultTryBlockCount = _blocks.Count;
-            if (exceptionCleanup.Length != 0)
-                RewriteReturnsForFault(returnType, out faultTryBlockCount);
+            RewriteReturnsForFault(returnType, exceptionCleanup, out faultTryBlockCount);
             return new(owner.MethodName(function.Id, function.Source), returnType, parameters, _locals,
                 _blocks.Select(static block => new ClrLirBlock(block.Label, block.Instructions)),
-                exceptionCleanup, faultTryBlockCount)
+                faultTryBlockCount: faultTryBlockCount, guardedExceptionCleanup: exceptionCleanup,
+                panicHandling: _panicHandling)
             {
                 SourceQualifiedName = function.Name,
                 // The CLR entry point must remain externally discoverable even
@@ -366,7 +376,8 @@ public static partial class SafeCoreMirClrLowering
             };
         }
 
-        private void RewriteReturnsForFault(ClrLirType returnType, out int protectedBlockCount)
+        private void RewriteReturnsForFault(ClrLirType returnType, IReadOnlyList<ClrLirGuardedCleanup> cleanupCalls,
+            out int protectedBlockCount)
         {
             protectedBlockCount = _blocks.Count;
             int returnLocal = -1;
@@ -389,9 +400,12 @@ public static partial class SafeCoreMirClrLowering
                         index++;
                     }
 
-                    block.Instructions[index] = new ClrLirLeave(epilogueLabel);
+                    block.Instructions[index] = new ClrLirBranch("normal_cleanup_epilogue");
                 }
             }
+
+            EmitNormalCleanupEpilogue(cleanupCalls, epilogueLabel);
+            protectedBlockCount = _blocks.Count;
 
             var epilogue = new Block(epilogueLabel);
             if (returnLocal >= 0)
@@ -401,33 +415,6 @@ public static partial class SafeCoreMirClrLowering
 
             epilogue.Instructions.Add(new ClrLirReturn());
             _blocks.Add(epilogue);
-        }
-
-        private ClrLirCallSite[] BuildExceptionCleanup()
-        {
-            // The MIR cleanup calls are emitted in lexical reverse-drop order.
-            // Keep one call per local and order by local ID so a fault raised
-            // before the normal return observes the same deterministic reverse
-            // declaration order.  The generated fault handler is deliberately
-            // bounded and only exists for functions that own a Drop value.
-            var calls = new List<(int LocalId, ClrLirCallSite Site)>();
-            foreach (SafeCoreMirBlock block in function.Blocks)
-            {
-                owner.Step();
-                SafeCoreMirTerminator terminator = block.Terminator;
-                if (terminator.DropLocalId is not int localId ||
-                    terminator.Operand is null || terminator.Operand.Kind != SafeCoreMirOperandKind.Function)
-                    continue;
-                ClrLirType returnType = owner.ReturnType(terminator.Operand.Type.ReturnType, terminator.Source);
-                ClrLirType[] parameters = terminator.Operand.Type.ParameterTypes
-                    .Select(type => owner.StorageType(type, terminator.Source)).ToArray();
-                string name = owner.MethodName(terminator.Operand.Id, terminator.Source);
-                if (calls.Any(item => item.LocalId == localId)) continue;
-                calls.Add((localId, new ClrLirCallSite(name, returnType, parameters)));
-            }
-
-            calls.Sort(static (left, right) => right.LocalId.CompareTo(left.LocalId));
-            return calls.Select(static item => item.Site).ToArray();
         }
 
         private static bool IsEntryName(string name) =>
@@ -553,7 +540,11 @@ public static partial class SafeCoreMirClrLowering
                 case SafeCoreMirRvalueKind.Tuple:
                 case SafeCoreMirRvalueKind.Array:
                 case SafeCoreMirRvalueKind.Adt:
-                    foreach (SafeCoreMirOperand operand in value.Operands) EmitOperand(operand);
+                    foreach (SafeCoreMirOperand operand in value.Operands)
+                    {
+                        EmitOperand(operand);
+                        ConsumeMovedOperand(operand);
+                    }
                     Emit(new ClrLirConstructValue(owner.Layout(value.Type, value.Source)));
                     return;
                 case SafeCoreMirRvalueKind.Index:
@@ -844,6 +835,7 @@ public static partial class SafeCoreMirClrLowering
                     if (terminator.Operand is not null)
                     {
                         EmitOperand(terminator.Operand);
+                        ConsumeMovedOperand(terminator.Operand);
                         if (function.ReturnType.Kind == SafeCoreSemanticTypeKind.Unit)
                             Emit(new ClrLirDiscard(owner.StorageType(terminator.Operand.Type, source)));
                     }
@@ -884,10 +876,35 @@ public static partial class SafeCoreMirClrLowering
                 Lowerer.FailUnsupported(source, "MIR CLR lowering supports direct function calls only.");
             if (callee.Type.Kind != SafeCoreSemanticTypeKind.Function)
                 Lowerer.Fail(source, "MIR call operand does not carry a function signature.");
-            foreach (SafeCoreMirOperand argument in terminator.Arguments) EmitOperand(argument);
+            int? flag = _dropCallFlags.TryGetValue(terminator, out int index)
+                ? index : null;
+            if (flag is int liveFlag)
+            {
+                Block cleanup = NewBlock();
+                Emit(new ClrLirLoadLocal(liveFlag));
+                Terminate(new ClrLirBranchTrue(cleanup.Label));
+                Block skipped = NewBlock();
+                Start(skipped);
+                Terminate(new ClrLirBranch(Label(terminator.TargetBlockId, source)));
+                Start(cleanup);
+                EmitCleanupGuards(_dropFlagGuards[liveFlag], Label(terminator.TargetBlockId, source));
+                if (terminator.Arguments.Count == 1)
+                {
+                    EmitOperand(terminator.Arguments[0]);
+                    Runtime("ConsumeDrop", ClrLirType.Void, ClrLirType.Any);
+                }
+            }
+            foreach (SafeCoreMirOperand argument in terminator.Arguments)
+            {
+                EmitOperand(argument);
+                ConsumeMovedOperand(argument);
+            }
+            if (flag is int consumedFlag) ConsumeDropFlag(consumedFlag);
+            if (flag.HasValue) SetNormalCleanupMode(isCleanup: true);
             var parameterTypes = callee.Type.ParameterTypes.Select(type => owner.StorageType(type, source)).ToArray();
             ClrLirType returnType = owner.ReturnType(callee.Type.ReturnType, source);
             Emit(new ClrLirCall(new(owner.MethodName(callee.Id, source), returnType, parameterTypes)));
+            if (flag.HasValue) SetNormalCleanupMode(isCleanup: function.IsDestructor);
             if (terminator.DestinationLocalId is int destination)
                 Store(destination, source);
             if (terminator.TargetBlockId >= 0)
@@ -911,7 +928,15 @@ public static partial class SafeCoreMirClrLowering
             Emit(new ClrLirLoadLocal(id));
             Emit(new ClrLirLoadLocal(_storeTemporary));
             Runtime("Write", ClrLirType.Void, ClrLirType.Any, ClrLirType.Any);
+            SetInitializedPlace(SafeCoreMirPlace.Root(id), source);
         }
+
+        private void SetDropFlag(int flag, bool live)
+        {
+            Emit(new ClrLirLoadBoolean(live));
+            Emit(new ClrLirStoreLocal(flag));
+        }
+
 
         private Block NewBlock() => new("extra_" + (++_extraLabel).ToString(CultureInfo.InvariantCulture));
 

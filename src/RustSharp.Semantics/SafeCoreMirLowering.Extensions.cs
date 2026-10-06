@@ -41,10 +41,12 @@ public static partial class SafeCoreMirLowering
                 int declarationLocal = Local(pattern.Name ?? string.Empty, declarationType,
                     SafeCoreMirLocalKind.User, pattern.Modifiers.HasFlag(SafeCoreHirNodeModifiers.Mutable), pattern);
                 if (!_bindings.TryAdd(pattern.DeclaredSymbol, declarationLocal)) Invalid(pattern);
+                if (RequiresDrop(declarationType)) _dropScopes[^1].Add(declarationLocal);
                 return Unit(node);
             }
             SafeCoreHirNode initializer = Child(node, valueIndex);
-            if (_storageScopes.Count != 0) MarkExtendedTemporaries(initializer, _storageScopes[^1], depth + 1);
+            if (_storageScopes.Count != 0 && pattern.Kind != N.WildcardPattern)
+                MarkExtendedTemporaries(initializer, _storageScopes[^1], depth + 1);
             if (initializer.Kind == N.NameExpression && initializer.ReferencedSymbol is { } escapedSymbol &&
                 _closures.ContainsKey(escapedSymbol))
                 Unsupported(initializer);
@@ -91,7 +93,11 @@ public static partial class SafeCoreMirLowering
                 BindIrrefutablePattern(pattern, value, depth + 1);
                 return Unit(node);
             }
-            if (pattern.Kind == N.WildcardPattern) return Unit(node);
+            if (pattern.Kind == N.WildcardPattern)
+            {
+                MaterializeDiscardedDropValue(value, node);
+                return Unit(node);
+            }
             if (pattern.DeclaredSymbol is null || pattern.Name is null) Invalid(pattern);
             SafeCoreType type = Type(pattern);
             int local = Local(pattern.Name, type, SafeCoreMirLocalKind.User,

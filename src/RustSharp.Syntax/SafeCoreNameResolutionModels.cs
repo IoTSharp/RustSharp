@@ -63,6 +63,8 @@ public sealed record SafeCoreNameResolutionOptions
     public bool EnableGenericExtensions { get; init; }
     /// <summary>Enables the versioned MIR profile's built-in Drop implementation syntax.</summary>
     public bool EnableDropImplementations { get; init; }
+    /// <summary>Enables lexically scoped loop labels without changing legacy type profiles.</summary>
+    public bool EnableLoopLabels { get; init; }
     public ImmutableArray<SafeCoreCrate> Crates { get; init; } = [];
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
     public CancellationToken CancellationToken { get; init; }

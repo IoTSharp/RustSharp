@@ -143,6 +143,7 @@ public static class SafeCoreNameResolution
             EnableTypeSystemExtensions = options.EnableTypeSystemExtensions,
             EnableGenericExtensions = options.EnableGenericExtensions,
             EnableDropImplementations = options.EnableDropImplementations,
+            EnableLoopLabels = options.EnableLoopLabels,
             Crates = options.Crates,
             Timeout = options.Timeout > TimeSpan.Zero && options.Timeout <= TimeSpan.FromMinutes(1)
                 ? options.Timeout : TimeSpan.FromSeconds(10),
@@ -179,6 +180,8 @@ public static class SafeCoreNameResolution
         private readonly List<GlobImport> _globImports = [];
         private readonly List<(string Path, ScopeBuilder Scope, TextSpan Span)> _importGroupPrefixes = [];
         private readonly List<PathRecord> _pathRecords = [];
+        private readonly List<string?> _loopLabels = [];
+        private int _labelBoundary;
         private readonly Dictionary<SafeCoreItemSyntax, ScopeBuilder> _itemScopes =
             new(ReferenceComparer<SafeCoreItemSyntax>.Instance);
         private readonly Dictionary<SafeCoreImplSyntax, IReadOnlyList<SafeCoreFunctionSyntax>> _implementationFunctions =
@@ -1769,6 +1772,11 @@ public static class SafeCoreNameResolution
 
         private void ResolveFunction(SafeCoreFunctionSyntax function, ScopeBuilder scope, int depth)
         {
+            ResolveLabelBoundary(() => ResolveFunctionBody(function, scope, depth));
+        }
+
+        private void ResolveFunctionBody(SafeCoreFunctionSyntax function, ScopeBuilder scope, int depth)
+        {
             ResolveGenericBounds(function.GenericParameters, scope);
             ResolveWhereBounds(function.WhereClause, scope, depth + 1);
             for (var index = 0; index < function.Parameters.Count; index++)
@@ -2480,7 +2488,7 @@ public static class SafeCoreNameResolution
                         ResolveBlock(block.Block, scope, depth + 1);
                         break;
                     case SafeCoreConstBlockExpressionSyntax block when _options.EnableTypeSystemExtensions:
-                        ResolveBlock(block.Block, scope, depth + 1);
+                        ResolveLabelBoundary(() => ResolveBlock(block.Block, scope, depth + 1));
                         break;
                     case SafeCoreIfExpressionSyntax conditional:
                         ResolveExpression(conditional.Condition, scope, depth + 1);
@@ -2524,20 +2532,21 @@ public static class SafeCoreNameResolution
                         ResolveType(cast.Type, scope, depth + 1);
                         break;
                     case SafeCoreLoopExpressionSyntax loop when _options.EnableTypeSystemExtensions:
-                        if (loop.Label is not null) RejectNewSyntax(loop.Span);
-                        ResolveBlock(loop.Body, scope, depth + 1);
+                        if (loop.Label is not null && !_options.EnableLoopLabels) RejectNewSyntax(loop.Span);
+                        ResolveLoopLabel(loop.Label, loop.Body, null, scope, depth, loop.Span);
                         break;
                     case SafeCoreWhileExpressionSyntax loop when _options.EnableTypeSystemExtensions:
-                        if (loop.Label is not null) RejectNewSyntax(loop.Span);
-                        ResolveExpression(loop.Condition, scope, depth + 1);
-                        ResolveBlock(loop.Body, scope, depth + 1);
+                        if (loop.Label is not null && !_options.EnableLoopLabels) RejectNewSyntax(loop.Span);
+                        ResolveLoopLabel(loop.Label, loop.Body, loop.Condition, scope, depth, loop.Span);
                         break;
                     case SafeCoreBreakExpressionSyntax result when _options.EnableTypeSystemExtensions:
-                        if (result.Label is not null) RejectNewSyntax(result.Span);
+                        if (result.Label is not null && !_options.EnableLoopLabels) RejectNewSyntax(result.Span);
+                        ResolveControlLabel(result.Label, result.Span);
                         if (result.Value is not null) ResolveExpression(result.Value, scope, depth + 1);
                         break;
                     case SafeCoreContinueExpressionSyntax result when _options.EnableTypeSystemExtensions:
-                        if (result.Label is not null) RejectNewSyntax(result.Span);
+                        if (result.Label is not null && !_options.EnableLoopLabels) RejectNewSyntax(result.Span);
+                        ResolveControlLabel(result.Label, result.Span);
                         break;
                     case SafeCoreReturnExpressionSyntax result when _options.EnableTypeSystemExtensions:
                         if (result.Value is not null) ResolveExpression(result.Value, scope, depth + 1);
@@ -2553,7 +2562,7 @@ public static class SafeCoreNameResolution
                             if (parameter.Type is not null) ResolveType(parameter.Type, closureScope, depth + 1);
                         }
                         if (closure.ReturnType is not null) ResolveType(closure.ReturnType, closureScope, depth + 1);
-                        ResolveExpression(closure.Body, closureScope, depth + 1);
+                        ResolveLabelBoundary(() => ResolveExpression(closure.Body, closureScope, depth + 1));
                         break;
                     case SafeCoreMatchExpressionSyntax match when _options.EnableTypeSystemExtensions:
                         ResolveExpression(match.Scrutinee, scope, depth + 1);
@@ -2619,6 +2628,42 @@ public static class SafeCoreNameResolution
             else ResolvePattern(pattern, scope, depth);
         }
 
+        private void ResolveLabelBoundary(Action resolve)
+        {
+            int previous = _labelBoundary;
+            _labelBoundary = _loopLabels.Count;
+            try { resolve(); }
+            finally { _labelBoundary = previous; }
+        }
+
+        private void ResolveLoopLabel(string? label, SafeCoreBlockSyntax body, SafeCoreExpressionSyntax? condition,
+            ScopeBuilder scope, int depth, TextSpan span)
+        {
+            if (!Step(span)) return;
+            if (_loopLabels.Count >= _options.MaximumNestingDepth || label?.Length > _options.MaximumNameLength)
+            { StopLimit(span); return; }
+            _loopLabels.Add(label is null ? null : CanonicalizeIdentifier(label));
+            try
+            {
+                if (condition is not null) ResolveExpression(condition, scope, depth + 1);
+                ResolveBlock(body, scope, depth + 1);
+            }
+            finally { _loopLabels.RemoveAt(_loopLabels.Count - 1); }
+        }
+
+        private void ResolveControlLabel(string? label, TextSpan span)
+        {
+            if (label is null) return;
+            string name = CanonicalizeIdentifier(label);
+            for (int index = _loopLabels.Count - 1; index >= _labelBoundary; index--)
+            {
+                if (!Step(span)) return;
+                if (string.Equals(_loopLabels[index], name, StringComparison.Ordinal)) return;
+            }
+            AddDiagnostic(SafeCoreNameResolutionDiagnosticCodes.UnresolvedName,
+                $"Could not resolve loop label '{label}' in the current function or closure.", span);
+        }
+
         private void ResolveConstructorAndRecord(string path, ScopeBuilder scope, TextSpan span)
         {
             PathResult result = ResolvePathInternal(path, scope, SafeCoreSymbolNamespace.Type, span, emitDiagnostic: false);
@@ -2680,8 +2725,11 @@ public static class SafeCoreNameResolution
                 start = FindCrateScope(context);
                 position = 1;
             }
-            else if (segments[0] == "self")
+            else if (segments[0] == "self" &&
+                (segments.Count != 1 || expectedNamespace != SafeCoreSymbolNamespace.Value))
             {
+                // `self::item` selects the enclosing module, but a standalone
+                // value `self` is the checked method receiver's lexical binding.
                 start = FindModuleScope(context);
                 position = 1;
             }

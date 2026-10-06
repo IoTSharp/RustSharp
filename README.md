@@ -89,7 +89,8 @@ through explicit MSBuild and does not replace the recorded 10.0.400 AOT
 evidence.
 
 P1-06 is ✅ Complete for its frozen typed-MIR contract; P1-07 is ✅ Complete for
-the source ownership and lifetime scope, while P1-08 through P1-10 and the P1
+the source ownership and lifetime scope; P1-08 is ✅ Complete for generated
+Drop/panic. P1-09, P1-10 and the P1
 stage remain 🚧 In progress. The opt-in
 `safe-core-mir-p1-v2` profile adds structural-`Copy` repeated arrays, named and
 enum layouts, nested references and reference-bearing aggregates, checked constants
@@ -104,9 +105,23 @@ owner identity through nested projections, reference slots and slice ranges.
 The [P1-06 inventory](docs/p1-06-implementation.md) maps each executable family
 to its registered tests and separates local evidence from the full platform gate.
 
+P1-08 is ✅ Complete on the current evidence in the
+[Drop/panic implementation inventory](docs/p1-08-implementation.md). It
+records checked destructor receivers, typed and shared drop flags, aggregate and
+temporary cleanup, unwind/abort strategies and the reusable panic interface.
+Its fixed acceptance inventories contain 28 source differential cases with two
+explicit normal-cleanup contract differences, plus seven direct-call interface
+cases over two original PE artifacts on CoreCLR and Native AOT. The final Release
+build has zero warnings/errors and 894/894 regressions pass. The differential
+records 26 rustc matches and two frozen contract differences; ILVerify passes
+30/30 original PEs. Windows and Ubuntu WSL each pass Native AOT 28/28 and callable
+7/7. Linux targets `linux-x64` on actual host `ubuntu.24.04-x64`. Verification
+process/host cleanup and retained historical temporary objects are separately
+disclosed in the record.
+
 Bounded composite borrow/reborrow origins, place/projection models and
 ownership evidence now flow through typed MIR and the CLR LIR backend. Shared
-reference copies clone their loan, mutable reference moves transfer it, and
+reference copies clone their loan, `&mut` reference moves transfer it, and
 source escapes receive stable ownership diagnostics. The ownership golden
 catalog freezes source code, message, path and span for four fixed negative
 borrow cases. The expanded differential report
@@ -123,8 +138,8 @@ harness passes 784/784 with zero failures/skips using the installed SDK 10.0.401
 the repository pin remains 10.0.400. Logs are retained under
 `artifacts/p1-next-session`. The [follow-up audit](docs/p1-evidence-audit.md)
 records ownership diagnostics, Drop closure, source package metadata and
-platform evidence binding. These results leave only the candidate-SHA aggregate
-and remaining P1-GATE publication work open.
+platform evidence binding. P1-09 source imported contracts, the remaining P1-10 evidence and candidate-SHA
+aggregate, and P1-GATE publication work remain 🚧 In progress.
 
 The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
 skips. The historical `safe-core-regression-v2` report passes 24/24 with one

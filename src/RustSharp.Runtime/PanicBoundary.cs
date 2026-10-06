@@ -109,6 +109,9 @@ public static class RustPanicBoundary
 
     private static RustPanicReport PanicReport(Exception panic, DropScope? scope, RustPanicStrategy strategy)
     {
+        if (panic is RustGeneratedAbortException generatedAbort)
+            return new(RustPanicOutcome.Aborted, generatedAbort.Panic, generatedAbort.CleanupFailure,
+                generatedAbort.CleanupFailure is not null, false);
         if (strategy == RustPanicStrategy.Abort)
         {
             // Abort deliberately leaves the scope untouched.  The caller can

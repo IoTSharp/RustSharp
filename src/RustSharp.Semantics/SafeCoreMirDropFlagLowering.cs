@@ -23,7 +23,11 @@ public sealed record SafeCoreMirDropFlag(
     string LocalName,
     SafeCoreDropPlaceState State,
     bool Eligible,
-    SafeCoreMirSource Source);
+    SafeCoreMirSource Source)
+{
+    /// <summary>An active enum payload condition required before this potential obligation is eligible.</summary>
+    public string? GuardCondition { get; init; }
+}
 
 /// <summary>Flag observations for one ownership path.</summary>
 public sealed record SafeCoreMirDropFlagPath(
@@ -50,7 +54,7 @@ public sealed record SafeCoreMirDropFlagResult(
 /// ownership evidence. It never invents a drop obligation and never executes
 /// a destructor, so generated cleanup can consume the same path facts.
 /// </summary>
-public static class SafeCoreMirDropFlagLowering
+public static partial class SafeCoreMirDropFlagLowering
 {
     public const string Profile = "safe-core-mir-drop-flags-p1-v1";
     public const string InvalidEvidence = "RSM4201";
@@ -80,7 +84,9 @@ public static class SafeCoreMirDropFlagLowering
             // boundary.  Do not silently discard a path for an unknown
             // function or collapse duplicate local identities while building
             // the flag map; either would publish an incomplete cleanup plan.
-            ValidateEvidenceShape(evidence.Program, evidence.Ownership, options);
+            ValidateEvidenceShape(evidence.Program, evidence.Ownership, options, clock, ref operations);
+            if (evidence.MirProgram is { } typedMir)
+                return LowerTyped(typedMir, evidence.Program, evidence.Ownership, options, clock, ref operations);
 
             var lowered = new List<SafeCoreMirDropFlagPath>();
             foreach (SafeCoreOwnershipFunction function in evidence.Program.Functions)
@@ -106,6 +112,11 @@ public static class SafeCoreMirDropFlagLowering
             AddLimitDiagnostic(diagnostics, "Drop-flag lowering exceeded its bounded work or output limit.");
             return Failure(diagnostics, true);
         }
+        catch (SafeCoreMirLimitException)
+        {
+            AddLimitDiagnostic(diagnostics, "Typed drop-flag place resolution exceeded its bounded work or time limit.");
+            return Failure(diagnostics, true);
+        }
         catch (DropFlagEvidenceException exception)
         {
             AddDiagnostic(diagnostics, InvalidEvidence, exception.Message, InvalidSource, options);
@@ -116,7 +127,7 @@ public static class SafeCoreMirDropFlagLowering
     private static void ValidateEvidenceShape(
         SafeCoreOwnershipProgram program,
         SafeCoreOwnershipAnalysisResult ownership,
-        SafeCoreMirDropFlagLoweringOptions options)
+        SafeCoreMirDropFlagLoweringOptions options, Stopwatch clock, ref int operations)
     {
         if (ownership.Paths.Length > options.MaximumPaths)
             throw new DropFlagLimitException();
@@ -125,6 +136,8 @@ public static class SafeCoreMirDropFlagLowering
             ownership.Paths.Select(path => path.FunctionName), StringComparer.Ordinal);
         foreach (SafeCoreOwnershipFunction function in program.Functions)
         {
+            Step(options, clock, ref operations);
+            if (function.Locals.Count > 4096 || function.Blocks.Count > 16384) throw new DropFlagLimitException();
             if (!functions.Add(function.Name))
                 throw new DropFlagEvidenceException($"Ownership function '{function.Name}' is duplicated.");
 
@@ -132,6 +145,7 @@ public static class SafeCoreMirDropFlagLowering
             var localNames = new HashSet<string>(StringComparer.Ordinal);
             foreach (SafeCoreOwnershipLocal local in function.Locals)
             {
+                Step(options, clock, ref operations);
                 if (local.Id < 0 || !localIds.Add(local.Id))
                     throw new DropFlagEvidenceException(
                         $"Ownership function '{function.Name}' has duplicate or negative local ID {local.Id.ToString(CultureInfo.InvariantCulture)}.");
@@ -148,6 +162,9 @@ public static class SafeCoreMirDropFlagLowering
         var pathIds = new HashSet<int>();
         foreach (SafeCoreOwnershipPath path in ownership.Paths)
         {
+            Step(options, clock, ref operations);
+            if (path.Trace.Length > options.MaximumEventsPerPath || path.DropOrder.Length > options.MaximumEventsPerPath)
+                throw new DropFlagLimitException();
             if (path.PathId < 0 || !pathIds.Add(path.PathId))
                 throw new DropFlagEvidenceException(
                     $"Drop evidence path ID {path.PathId.ToString(CultureInfo.InvariantCulture)} is duplicated or negative.");
@@ -173,7 +190,7 @@ public static class SafeCoreMirDropFlagLowering
                 ? SafeCoreDropPlaceState.Live
                 : SafeCoreDropPlaceState.Uninitialized;
         var events = new List<IReadOnlyList<SafeCoreMirDropFlag>>();
-        var observedDrops = new HashSet<int>();
+        var observedDrops = new Dictionary<int, int>();
         for (int index = 0; index < path.Trace.Length; index++)
         {
             Step(options, clock, ref operations);
@@ -187,7 +204,7 @@ public static class SafeCoreMirDropFlagLowering
         // DropOrder is authoritative when an older producer omitted a trace
         // event. Mark all listed places consumed before publishing the final
         // flags; unknown names are rejected rather than silently discarded.
-        var dropOrderSeen = new HashSet<int>();
+        var dropOrderSeen = new Dictionary<int, int>();
         foreach (string name in path.DropOrder)
         {
             Step(options, clock, ref operations);
@@ -195,13 +212,26 @@ public static class SafeCoreMirDropFlagLowering
                 throw new DropFlagEvidenceException($"Drop evidence references unknown local '{name}'.");
             if (!local.HasDrop)
                 throw new DropFlagEvidenceException($"Drop evidence references non-droppable local '{local.Name}'.");
-            if (!dropOrderSeen.Add(local.Id))
-                throw new DropFlagEvidenceException($"Drop evidence repeats local '{local.Name}'.");
-            if (observedDrops.Contains(local.Id))
+            int occurrence = dropOrderSeen.GetValueOrDefault(local.Id) + 1;
+            dropOrderSeen[local.Id] = occurrence;
+            if (occurrence <= observedDrops.GetValueOrDefault(local.Id))
                 continue;
+            // An assignment starts another live generation of the same
+            // place. Repeated DropOrder entries are valid only when matching
+            // explicit trace drops prove those generations were consumed.
+            // A legacy missing trace may materialize one final obligation.
+            if (occurrence > 1)
+                throw new DropFlagEvidenceException($"Drop evidence repeats local '{local.Name}' without a matching live generation.");
             if (states[local.Id] is not (SafeCoreDropPlaceState.Live or SafeCoreDropPlaceState.PartiallyMoved))
                 throw new DropFlagEvidenceException($"Drop evidence references non-live local '{local.Name}'.");
             states[local.Id] = SafeCoreDropPlaceState.Dropped;
+        }
+
+        foreach ((int localId, int count) in observedDrops)
+        {
+            Step(options, clock, ref operations);
+            if (count != dropOrderSeen.GetValueOrDefault(localId))
+                throw new DropFlagEvidenceException($"Drop trace for local '{locals[localId].Name}' is absent from DropOrder.");
         }
 
         if (path.Outcome == SafeCoreOwnershipOutcome.Aborted)
@@ -221,7 +251,7 @@ public static class SafeCoreMirDropFlagLowering
         Dictionary<int, SafeCoreDropPlaceState> states,
         Dictionary<int, SafeCoreOwnershipLocal> locals,
         SafeCoreOwnershipFunction function,
-        HashSet<int> observedDrops,
+        Dictionary<int, int> observedDrops,
         SafeCoreMirDropFlagLoweringOptions options,
         Stopwatch clock,
         ref int operations)
@@ -257,7 +287,7 @@ public static class SafeCoreMirDropFlagLowering
                     throw new DropFlagEvidenceException(
                         $"Drop trace repeats or consumes non-live local '{local.Name}'.");
                 states[local.Id] = SafeCoreDropPlaceState.Dropped;
-                observedDrops.Add(local.Id);
+                observedDrops[local.Id] = observedDrops.GetValueOrDefault(local.Id) + 1;
             }
             else
             {
@@ -380,7 +410,7 @@ public static class SafeCoreMirDropFlagLowering
             foreach (SafeCoreMirDropFlag flag in path.FinalFlags)
             {
                 Step(options, clock, ref operations);
-                Append(text, FormattableString.Invariant($"  %{flag.LocalId} {Escape(flag.LocalName)} state={flag.State.ToString().ToLowerInvariant()} eligible={(flag.Eligible ? "true" : "false")}\n"),
+                Append(text, FormattableString.Invariant($"  %{flag.LocalId} {Escape(flag.LocalName)} state={flag.State.ToString().ToLowerInvariant()} eligible={(flag.Eligible ? "true" : "false")}{(flag.GuardCondition is null ? string.Empty : " guard=" + Escape(flag.GuardCondition))}\n"),
                     options, clock, ref operations);
             }
         }

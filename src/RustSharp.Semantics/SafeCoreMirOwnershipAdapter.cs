@@ -42,6 +42,8 @@ public sealed record SafeCoreMirOwnershipResult(
     IReadOnlyList<Diagnostic> Diagnostics,
     bool IsTruncated)
 {
+    /// <summary>The validated MIR that supplied this ownership evidence, when adapted from source.</summary>
+    public SafeCoreMirProgram? MirProgram { get; init; }
     public SafeCoreOwnershipAnalysisResult? Analysis => Ownership;
     public bool IsSuccessful => Program is not null &&
         Validation is { IsSuccessful: true } &&
@@ -165,7 +167,8 @@ public static partial class SafeCoreMirOwnershipAdapter
             foreach (SafeCoreOwnershipDiagnostic diagnostic in ownershipResult.Diagnostics)
                 AddDiagnostic(diagnostics, new Diagnostic(diagnostic.Code, diagnostic.Message, diagnostic.Source.Span)
                 { SourcePath = diagnostic.Source.SourcePath }, options);
-            return new(ownershipProgram, ownershipResult, validation, diagnostics.AsReadOnly(), ownershipResult.IsTruncated);
+            return new(ownershipProgram, ownershipResult, validation, diagnostics.AsReadOnly(), ownershipResult.IsTruncated)
+            { MirProgram = program };
         }
         catch (AdapterLimitException)
         {
@@ -245,6 +248,8 @@ public static partial class SafeCoreMirOwnershipAdapter
 
             statements += block.Statements.Count;
             var instructions = new List<SafeCoreOwnershipInstruction>(block.Statements.Count * 2);
+            bool hasCleanupReceiver = TryCheckedCleanupReceiver(program, function, block, options, clock,
+                ref operations, out int cleanupReceiverId, out SafeCoreMirPlace? cleanupReceiverPlace);
             for (int statementIndex = 0; statementIndex < block.Statements.Count; statementIndex++)
             {
                 Step(options, clock, ref operations);
@@ -259,6 +264,22 @@ public static partial class SafeCoreMirOwnershipAdapter
                 }
 
                 SafeCoreMirRvalue value = statement.Value;
+                if (statement.IsCleanupDiscriminant)
+                {
+                    // Validation proves this tag is consumed only by generated
+                    // variant cleanup. Reading its guard does not require the
+                    // enum to be usable as an ordinary whole value.
+                    AddInstruction(instructions, AssignmentKnownFacts(
+                        SafeCoreOwnershipInstruction.Assign(statement.DestinationLocalId, statement.Source), value, program,
+                        options, clock, ref operations),
+                        options, diagnostics, statement.Source, ref valid);
+                    continue;
+                }
+                // This temporary is generated exclusively for the validated
+                // conditional destructor call. Creating a user loan here would
+                // read an already moved field before the runtime drop flag can
+                // skip it. The call below carries the actual ownership effect.
+                if (hasCleanupReceiver && statement.DestinationLocalId == cleanupReceiverId) continue;
                 var referenceTransfers = new List<SafeCoreOwnershipInstruction>();
                 slots.TransferStatement(statement, referenceTransfers, options, clock, ref operations, diagnostics, ref valid);
                 try
@@ -551,11 +572,8 @@ public static partial class SafeCoreMirOwnershipAdapter
                             else valid = false;
                             break;
                         case SafeCoreMirOperandKind.Constant:
-                            SafeCoreMirLocal constantDestinationLocal = function.Locals[statement.DestinationLocalId];
-                            bool zeroFieldDropConstant = constantDestinationLocal.DestructorFunctionId.HasValue &&
-                                constantDestinationLocal.Type.Kind == SafeCoreSemanticTypeKind.Adt && operand.Value == "()";
                             if (!IsStructuralCopy(operand.Type) &&
-                                !(constantDestinationLocal.IsUnitAdt && operand.Value == "()") && !zeroFieldDropConstant)
+                                !IsDeclaredUnitAdtConstant(operand, program, options, clock, ref operations))
                             {
                                 AddDiagnostic(diagnostics, MakeDiagnostic(Unsupported,
                                     "A non-Copy constant has no ownership bridge representation.", operand.Source), options);
@@ -587,6 +605,7 @@ public static partial class SafeCoreMirOwnershipAdapter
                             assignment = assignment with { CopiedBooleanLocalId = value.Operands[0].Id };
                         else assignment = assignment with { EnumVariantReferenceSlots = slots.EnumTestSlots(value, block, statementIndex) };
                     }
+                    assignment = AssignmentKnownFacts(assignment, value, program, options, clock, ref operations);
                     AddInstruction(instructions, assignment, options, diagnostics, statement.Source, ref valid);
                 }
                 else
@@ -608,7 +627,8 @@ public static partial class SafeCoreMirOwnershipAdapter
             }
 
             SafeCoreOwnershipTerminator? terminator = AdaptTerminator(slots,
-                program, provenance, function, block, instructions, locals, options, clock, ref operations, diagnostics, ref valid);
+                program, provenance, function, block, cleanupReceiverPlace, instructions, locals,
+                options, clock, ref operations, diagnostics, ref valid);
             if (terminator is not null)
                 blocks.Add(new SafeCoreOwnershipBlock(block.Id, 0, instructions, terminator, block.Source));
         }
@@ -620,8 +640,58 @@ public static partial class SafeCoreMirOwnershipAdapter
             [new SafeCoreOwnershipScope(0, -1, function.Source)],
             blocks,
             function.EntryBlockId,
-            SafeCorePanicStrategy.Unwind,
+            function.PanicStrategy,
             function.Source);
+    }
+
+    private static SafeCoreOwnershipInstruction AssignmentKnownFacts(SafeCoreOwnershipInstruction assignment,
+        SafeCoreMirRvalue value, SafeCoreMirProgram program, SafeCoreMirOwnershipOptions options,
+        Stopwatch clock, ref int operations)
+    {
+        Step(options, clock, ref operations);
+        if (assignment.Place is { IsRoot: false }) return assignment;
+        if (value.Kind == SafeCoreMirRvalueKind.Enum &&
+            int.TryParse(value.Operator, NumberStyles.Integer, CultureInfo.InvariantCulture, out int variant))
+            foreach (SafeCoreMirAdtLayout layout in program.AdtLayouts)
+            {
+                Step(options, clock, ref operations);
+                if (layout.Type == value.Type && variant >= 0 && variant < layout.Variants.Count)
+                    return assignment with { ConstantEnumDiscriminant = layout.Variants[variant].Discriminant };
+            }
+        if (value.Kind == SafeCoreMirRvalueKind.Discriminant && value.Operands.Count == 1 &&
+            RootOperand(value.Operands[0]) is int owner)
+            return assignment with { DiscriminantOwnerLocalId = owner };
+        if (value.Kind == SafeCoreMirRvalueKind.Use && value.Operands.Count == 1)
+        {
+            SafeCoreMirOperand source = value.Operands[0];
+            if (value.Type.Kind == SafeCoreSemanticTypeKind.Adt && RootOperand(source) is int enumOwner)
+                return assignment with { CopiedEnumLocalId = enumOwner };
+            // Source boolean bindings retain both ownership alternatives.
+            // Exact bool facts are attached only to the checked temporary
+            // assignments above; enum discriminant facts remain independent.
+        }
+        if (value.Kind == SafeCoreMirRvalueKind.Binary && value.Operator == "==" && value.Operands.Count == 2 &&
+            value.Operands[0].Type.Kind == SafeCoreSemanticTypeKind.I32 && RootOperand(value.Operands[0]) is int integerOwner &&
+            value.Operands[1].Kind == SafeCoreMirOperandKind.Constant &&
+            int.TryParse(value.Operands[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int compared))
+            return assignment with { ComparedIntegerLocalId = integerOwner, ComparedIntegerConstant = compared };
+        return assignment;
+
+        static int? RootOperand(SafeCoreMirOperand operand) => operand.Kind == SafeCoreMirOperandKind.Local ||
+            operand.Kind == SafeCoreMirOperandKind.Place && operand.Place is { IsRoot: true } ? operand.Id : null;
+    }
+
+    private static bool IsDeclaredUnitAdtConstant(SafeCoreMirOperand operand, SafeCoreMirProgram program,
+        SafeCoreMirOwnershipOptions options, Stopwatch clock, ref int operations)
+    {
+        if (operand.Type.Kind != SafeCoreSemanticTypeKind.Adt || operand.Value != "()") return false;
+        foreach (SafeCoreMirAdtLayout layout in program.AdtLayouts)
+        {
+            Step(options, clock, ref operations);
+            if (layout.Type == operand.Type)
+                return layout.Fields.Count == 0 && layout.Variants.Count == 0;
+        }
+        return false;
     }
 
     private static SafeCoreOwnershipTerminator? AdaptTerminator(ReferenceSlots slots,
@@ -629,6 +699,7 @@ public static partial class SafeCoreMirOwnershipAdapter
         SafeCoreMirReferenceProvenanceResult provenance,
         SafeCoreMirFunction function,
         SafeCoreMirBlock block,
+        SafeCoreMirPlace? cleanupReceiverPlace,
         List<SafeCoreOwnershipInstruction> instructions,
         List<SafeCoreOwnershipLocal> locals,
         SafeCoreMirOwnershipOptions options,
@@ -698,20 +769,18 @@ public static partial class SafeCoreMirOwnershipAdapter
                     valid = false;
                     return null;
                 }
-                if (terminator.DropLocalId is int droppedLocal)
+                if (cleanupReceiverPlace is not null)
                 {
-                    if (terminator.Arguments.Count != 0 || terminator.DestinationLocalId is not null ||
-                        droppedLocal < 0 || droppedLocal >= function.Locals.Count ||
-                        !function.Locals[droppedLocal].DestructorFunctionId.HasValue)
+                    if (!TryOwnershipPlace(slots, SafeCoreMirOperand.PlaceValue(cleanupReceiverPlace,
+                            terminator.Arguments[0].Type.ElementType!, terminator.Source),
+                        function, options, clock, ref operations, diagnostics, out SafeCoreOwnershipPlace cleanupPlace))
                     {
-                        AddDiagnostic(diagnostics, MakeDiagnostic(InvalidEvidence,
-                            "A MIR destructor call must identify a Drop local with no arguments or destination.", terminator.Source), options);
                         valid = false;
                     }
                     else
                     {
                         AddInstruction(instructions,
-                            SafeCoreOwnershipInstruction.Drop(droppedLocal, terminator.Source),
+                            SafeCoreOwnershipInstruction.Drop(cleanupPlace, terminator.Source) with { IsConditionalDrop = true },
                             options, diagnostics, terminator.Source, ref valid);
                     }
                     if (!valid) return null;
@@ -844,6 +913,61 @@ public static partial class SafeCoreMirOwnershipAdapter
                 valid = false;
                 return null;
         }
+    }
+
+    private static bool TryCheckedCleanupReceiver(SafeCoreMirProgram program, SafeCoreMirFunction function,
+        SafeCoreMirBlock block, SafeCoreMirOwnershipOptions options, Stopwatch clock, ref int operations,
+        out int receiverId, out SafeCoreMirPlace? place)
+    {
+        receiverId = -1;
+        place = null;
+        SafeCoreMirTerminator call = block.Terminator;
+        if (call.Kind != SafeCoreMirTerminatorKind.Call || call.DestinationLocalId is not null ||
+            call.Operand is not { Kind: SafeCoreMirOperandKind.Function } target ||
+            target.Id < 0 || target.Id >= program.Functions.Count || !program.Functions[target.Id].IsDestructor ||
+            call.Arguments.Count != 1 || call.Arguments[0] is not { Kind: SafeCoreMirOperandKind.Local } receiver ||
+            receiver.Id < 0 || receiver.Id >= function.Locals.Count ||
+            function.Locals[receiver.Id].Kind != SafeCoreMirLocalKind.Temporary ||
+            receiver.Type.Kind != SafeCoreSemanticTypeKind.Reference || !receiver.Type.IsMutable ||
+            receiver.Type.ElementType?.Kind != SafeCoreSemanticTypeKind.Adt || block.Statements.Count == 0)
+            return false;
+        SafeCoreMirStatement definition = block.Statements[^1];
+        SafeCoreMirRvalue value = definition.Value;
+        if (definition.DestinationLocalId != receiver.Id || definition.DestinationPlace is not null ||
+            value.Kind != SafeCoreMirRvalueKind.Unary || value.Operator != "&mut" || value.Type != receiver.Type ||
+            value.Operands.Count != 1 || value.Operands[0].Place is not { } owner ||
+            value.Operands[0].Type != receiver.Type.ElementType ||
+            definition.Source != call.Source || value.Source != call.Source ||
+            function.Locals[receiver.Id].Source != call.Source ||
+            call.DropLocalId is int root && (!owner.IsRoot || owner.LocalId != root)) return false;
+        int definitions = 0;
+        foreach (SafeCoreMirStatement statement in block.Statements)
+        {
+            Step(options, clock, ref operations);
+            if (statement.DestinationLocalId == receiver.Id) definitions++;
+        }
+        if (definitions != 1) return false;
+        bool ownedSelf = function.IsDestructor && owner.LocalId == 0 && owner.Projections.Count > 0 &&
+            owner.Projections[0].Kind == SafeCoreMirProjectionKind.Dereference &&
+            function.Locals[owner.LocalId] is { Kind: SafeCoreMirLocalKind.Parameter, Name: "self" };
+        bool firstDereference = true;
+        foreach (SafeCoreMirProjection projection in owner.Projections)
+        {
+            Step(options, clock, ref operations);
+            if (projection.Kind != SafeCoreMirProjectionKind.Dereference) continue;
+            if (ownedSelf && firstDereference)
+            {
+                firstDereference = false;
+                continue;
+            }
+            if (SafeCoreMirDropEvidencePlaces.TryCanonicalBorrowedReplacementDrop(program, function, block,
+                    clock, options.Timeout, options.MaximumOperations, ref operations, options.CancellationToken) is null)
+                return false;
+            break;
+        }
+        receiverId = receiver.Id;
+        place = owner;
+        return true;
     }
 
     private static SafeCoreOwnershipTerminator? InvalidCallTarget(

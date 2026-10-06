@@ -51,6 +51,11 @@ public static partial class SafeCoreMirClrLowering
 
         private void EmitStatement(SafeCoreMirStatement statement)
         {
+            if (statement.IsCleanupDiscriminant)
+            {
+                EmitCleanupDiscriminant(statement);
+                return;
+            }
             if (statement.Value.Kind == SafeCoreMirRvalueKind.Write)
             {
                 EmitOperand(statement.Value.Operands[0]);
@@ -62,10 +67,15 @@ public static partial class SafeCoreMirClrLowering
             {
                 EmitPlaceAddress(destination, statement.Source, mutable: true);
                 EmitRvalue(statement.Value);
+                if (statement.Value.Kind == SafeCoreMirRvalueKind.Use)
+                    ConsumeMovedOperand(statement.Value.Operands[0], statement.DestinationLocalId);
                 WriteReference(owner.StorageType(statement.Value.Type, statement.Source));
+                SetInitializedPlace(destination, statement.Source);
                 return;
             }
             EmitRvalue(statement.Value);
+            if (statement.Value.Kind == SafeCoreMirRvalueKind.Use)
+                ConsumeMovedOperand(statement.Value.Operands[0], statement.DestinationLocalId);
             Store(statement.DestinationLocalId, statement.Source);
         }
 

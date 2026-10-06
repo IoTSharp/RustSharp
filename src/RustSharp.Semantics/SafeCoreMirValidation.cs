@@ -327,6 +327,18 @@ public static partial class SafeCoreMirValidation
                 pastParameters |= local.Kind != SafeCoreMirLocalKind.Parameter;
             }
             Target(function.EntryBlockId, function.Source);
+            if (!Enum.IsDefined(function.PanicStrategy))
+                Error(SafeCoreMirDiagnosticCodes.InvalidInput, "A function requires a supported panic strategy.", function.Source);
+            if (function.IsDestructor)
+            {
+                SafeCoreMirLocal[] receivers = [.. function.Locals.Where(local => local.Kind == SafeCoreMirLocalKind.Parameter)];
+                if (receivers.Length != 1 || receivers[0].Name != "self" ||
+                    receivers[0].Type.Kind != SafeCoreSemanticTypeKind.Reference || !receivers[0].Type.IsMutable ||
+                    receivers[0].Type.ElementType?.Kind != SafeCoreSemanticTypeKind.Adt ||
+                    function.ReturnType.Kind != SafeCoreSemanticTypeKind.Unit || function.IsPublic)
+                    Error(SafeCoreMirDiagnosticCodes.InvalidInput,
+                        "A destructor body requires one private mutable self receiver for an owned ADT and a unit result.", function.Source);
+            }
             for (int index = 0; index < function.Blocks.Count; index++)
             {
                 Step();
@@ -358,7 +370,9 @@ public static partial class SafeCoreMirValidation
                         Error(SafeCoreMirDiagnosticCodes.InvalidInput, "An assignment requires a value.", statement.Source);
                     else
                     {
-                        Rvalue(statement.Value);
+                        Rvalue(statement.Value, statement.DestinationLocalId);
+                        if (statement.IsCleanupDiscriminant || statement.CleanupDiscriminantJoinBlockId.HasValue)
+                            ValidateCleanupDiscriminant(statement);
                         Equal(destination, statement.Value.Type, statement.Source, "Assignment type differs from its destination.");
                     }
                 }
@@ -600,7 +614,7 @@ public static partial class SafeCoreMirValidation
             return number >= (signed ? -magnitude : BigInteger.Zero) && number < magnitude;
         }
 
-        private void Rvalue(SafeCoreMirRvalue value)
+        private void Rvalue(SafeCoreMirRvalue value, int destinationLocalId)
         {
             Step();
             Source(value.Source);
@@ -636,7 +650,8 @@ public static partial class SafeCoreMirValidation
             {
                 SafeCoreMirRvalueKind.Use => first == value.Type,
                 SafeCoreMirRvalueKind.Unary => Unary(value.Operator, first!, value.Type) &&
-                    (value.Operator != "&mut" || MutablePlace(value.Operands[0])) &&
+                    (value.Operator != "&mut" || MutablePlace(value.Operands[0]) ||
+                        IsDestructorReceiver(value, destinationLocalId)) &&
                     (value.Operator != "reborrow_mut" || MutableReferent(value.Operands[0])),
                 SafeCoreMirRvalueKind.Binary => Binary(value.Operator, first!, value.Operands[1].Type, value.Type),
                 SafeCoreMirRvalueKind.Coerce => Coercion(first!, value.Type),
@@ -657,6 +672,31 @@ public static partial class SafeCoreMirValidation
                 _ => false,
             };
             if (!valid) Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Rvalue operator and operand/result types are incompatible.", value.Source);
+        }
+
+        private bool IsDestructorReceiver(SafeCoreMirRvalue value, int destinationLocalId)
+        {
+            Step();
+            SafeCoreMirTerminator terminator = _block!.Terminator;
+            if (terminator.Kind != SafeCoreMirTerminatorKind.Call ||
+                terminator.Operand?.Kind != SafeCoreMirOperandKind.Function ||
+                terminator.Arguments.Count != 1 || terminator.Arguments[0].Kind != SafeCoreMirOperandKind.Local ||
+                terminator.Arguments[0].Id != destinationLocalId ||
+                terminator.Operand.Id < 0 || terminator.Operand.Id >= program.Functions.Count)
+                return false;
+            SafeCoreMirFunction target = program.Functions[terminator.Operand.Id];
+            if (!target.IsDestructor || target.Locals.Count == 0 ||
+                target.Locals[0].Kind != SafeCoreMirLocalKind.Parameter ||
+                target.Locals[0].Type != value.Type || target.ReturnType.Kind != SafeCoreSemanticTypeKind.Unit)
+                return false;
+            if (!HasMatchingDropReceiver(terminator, terminator.DropLocalId)) return false;
+            if (value.Operands[0].Kind != SafeCoreMirOperandKind.Place || value.Operands[0].Place is not { } place)
+                return false;
+            // A root Drop annotation must borrow that root, while recursive
+            // glue supplies the exact typed projected field/element place.
+            if (terminator.DropLocalId is int dropLocal && (place.LocalId != dropLocal || !place.IsRoot))
+                return false;
+            return ResolvePlace(place, value.Source)?.Type == value.Type.ElementType;
         }
 
         private bool Adt(SafeCoreMirRvalue value)
@@ -914,13 +954,27 @@ public static partial class SafeCoreMirValidation
             {
                 SafeCoreMirLocal? dropped = droppedLocal >= 0 && droppedLocal < _function!.Locals.Count
                     ? _function.Locals[droppedLocal] : null;
-                if (terminator.Arguments.Count != 0 || terminator.DestinationLocalId is not null ||
+                bool hasReceiver = terminator.Arguments.Count == 1 &&
+                    callee.ParameterTypes.Count == 1 &&
+                    callee.ParameterTypes[0].Kind == SafeCoreSemanticTypeKind.Reference &&
+                    callee.ParameterTypes[0].IsMutable && dropped is not null &&
+                    callee.ParameterTypes[0].ElementType == dropped.Type &&
+                    terminator.Operand!.Id >= 0 && terminator.Operand.Id < program.Functions.Count &&
+                    program.Functions[terminator.Operand.Id].IsDestructor &&
+                    HasMatchingDropReceiver(terminator, droppedLocal);
+                if (!hasReceiver || terminator.DestinationLocalId is not null ||
                     dropped is null || !dropped.DestructorFunctionId.HasValue ||
                     terminator.Operand is null || terminator.Operand.Id != dropped.DestructorFunctionId.Value ||
                     callee.ReturnType.Kind != SafeCoreSemanticTypeKind.Unit)
                     Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow,
-                        "A destructor call must target the local's zero-argument unit Drop function.", terminator.Source);
+                        "A destructor call must target the local's unit Drop function with one mutable receiver of its owned type.", terminator.Source);
             }
+            else if (terminator.Operand!.Id >= 0 && terminator.Operand.Id < program.Functions.Count &&
+                program.Functions[terminator.Operand.Id].IsDestructor &&
+                (terminator.DestinationLocalId is not null || !HasMatchingDropReceiver(terminator, null)))
+                Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow,
+                    "Recursive destructor cleanup requires one uniquely defined temporary borrowing the exact owned place.",
+                    terminator.Source);
             if (callee.ParameterTypes.Count != terminator.Arguments.Count)
                 Error(SafeCoreMirDiagnosticCodes.TypeMismatch, "Call argument count differs from the function signature.", terminator.Source);
             else
@@ -944,6 +998,56 @@ public static partial class SafeCoreMirValidation
                     Error(SafeCoreMirDiagnosticCodes.InvalidControlFlow, "A diverging call cannot continue to executable control flow.", terminator.Source);
             }
             else Target(terminator.TargetBlockId, terminator.Source);
+        }
+
+        private bool HasMatchingDropReceiver(SafeCoreMirTerminator terminator, int? droppedLocal)
+        {
+            if (terminator.Arguments.Count != 1 || _block!.Statements.Count == 0) return false;
+            SafeCoreMirOperand receiver = terminator.Arguments[0];
+            if (receiver.Kind != SafeCoreMirOperandKind.Local || receiver.Id < 0 ||
+                receiver.Id >= _function!.Locals.Count ||
+                receiver.Type.Kind != SafeCoreSemanticTypeKind.Reference || !receiver.Type.IsMutable ||
+                receiver.Type.ElementType?.Kind != SafeCoreSemanticTypeKind.Adt ||
+                _function.Locals[receiver.Id].Kind != SafeCoreMirLocalKind.Temporary ||
+                _function.Locals[receiver.Id].Source != terminator.Source) return false;
+            int definitions = 0;
+            bool matching = false;
+            foreach (SafeCoreMirStatement statement in _block!.Statements)
+            {
+                Step();
+                if (statement.DestinationLocalId != receiver.Id) continue;
+                definitions++;
+                SafeCoreMirRvalue value = statement.Value;
+                SafeCoreMirPlace? place = value.Operands.Count == 1 ? value.Operands[0].Place : null;
+                matching = value.Kind == SafeCoreMirRvalueKind.Unary && value.Operator == "&mut" &&
+                    place is not null && place.LocalId >= 0 && place.LocalId < _function.Locals.Count &&
+                    (droppedLocal is null || place.IsRoot && place.LocalId == droppedLocal.Value) &&
+                    value.Type == receiver.Type && value.Operands[0].Type == receiver.Type.ElementType &&
+                    statement.DestinationPlace is null && statement.Source == terminator.Source &&
+                    value.Source == terminator.Source && ReferenceEquals(statement, _block.Statements[^1]);
+                if (matching)
+                {
+                    SafeCoreMirPlace matchedPlace = place!;
+                    bool ownedSelf = _function.IsDestructor && matchedPlace.LocalId == 0 && matchedPlace.Projections.Count > 0 &&
+                        matchedPlace.Projections[0].Kind == SafeCoreMirProjectionKind.Dereference &&
+                        _function.Locals[matchedPlace.LocalId] is { Kind: SafeCoreMirLocalKind.Parameter, Name: "self" };
+                    bool firstDereference = true;
+                    foreach (SafeCoreMirProjection projection in matchedPlace.Projections)
+                    {
+                        Step();
+                        if (projection.Kind != SafeCoreMirProjectionKind.Dereference) continue;
+                        if (ownedSelf && firstDereference)
+                        {
+                            firstDereference = false;
+                            continue;
+                        }
+                        matching = SafeCoreMirDropEvidencePlaces.TryCanonicalBorrowedReplacementDrop(program, _function, _block!,
+                            _clock, options.Timeout, options.MaximumOperations, ref _operations, options.CancellationToken) is not null;
+                        break;
+                    }
+                }
+            }
+            return definitions == 1 && matching;
         }
 
         private void Reachability()

@@ -31,6 +31,8 @@ public sealed record SafeCoreMirPipelineOptions
     public bool EnableRepeatedArrays { get; init; }
     /// <summary>Enables the versioned P1 source extensions (patterns, match and closures).</summary>
     public bool EnableP1Extensions { get; init; }
+    /// <summary>Policy carried into MIR, ownership evidence and generated local calls.</summary>
+    public SafeCorePanicStrategy PanicStrategy { get; init; } = SafeCorePanicStrategy.Unwind;
     public int MaximumPatternAlternatives { get; init; } = 256;
     public bool InferNonLexicalLifetimes { get; init; } = true;
     /// <summary>
@@ -154,6 +156,7 @@ public static class SafeCoreMirPipeline
                     EnableTypeSystemExtensions = true,
                     EnableGenericExtensions = options.EnableP1Extensions,
                     EnableDropImplementations = options.EnableP1Extensions,
+                    EnableLoopLabels = options.EnableP1Extensions,
                     Crates = options.Crates.IsDefault ? [] : options.Crates,
                 },
             });
@@ -181,6 +184,7 @@ public static class SafeCoreMirPipeline
                 MaximumLocalsPerFunction = options.MaximumLocalsPerFunction,
                 EnableRepeatedArrays = options.EnableRepeatedArrays,
                 EnableP1Extensions = options.EnableP1Extensions,
+                PanicStrategy = options.PanicStrategy,
                 MaximumPatternAlternatives = options.MaximumPatternAlternatives,
             }, options.CancellationToken);
             if (!mir.IsSuccessful)
@@ -302,7 +306,7 @@ public static class SafeCoreMirPipeline
             options.MaximumFunctions is < 1 or > 4_096 ||
             options.MaximumBlocksPerFunction is < 1 or > 65_536 ||
             options.MaximumLocalsPerFunction is < 1 or > 262_144 ||
-            options.MaximumPatternAlternatives is < 1 or > 4_096)
+            options.MaximumPatternAlternatives is < 1 or > 4_096 || !Enum.IsDefined(options.PanicStrategy))
             throw new ArgumentOutOfRangeException(nameof(options));
     }
 }

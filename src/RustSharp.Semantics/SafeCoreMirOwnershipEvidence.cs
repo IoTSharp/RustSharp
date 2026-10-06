@@ -126,7 +126,8 @@ public static partial class SafeCoreMirOwnershipAdapter
             foreach (SafeCoreOwnershipDiagnostic diagnostic in ownershipResult.Diagnostics)
                 AddEvidenceDiagnostic(diagnostics, new Diagnostic(diagnostic.Code, diagnostic.Message, diagnostic.Source.Span)
                 { SourcePath = diagnostic.Source.SourcePath }, options);
-            return new(evidence.Program, ownershipResult, validation, diagnostics.AsReadOnly(), ownershipResult.IsTruncated);
+            return new(evidence.Program, ownershipResult, validation, diagnostics.AsReadOnly(), ownershipResult.IsTruncated)
+            { MirProgram = mir };
         }
         catch (Exception exception) when (exception is EvidenceLimitException or AdapterLimitException)
         {
@@ -198,6 +199,10 @@ public static partial class SafeCoreMirOwnershipAdapter
 
             RequireSameSource(mirFunction.Source, ownershipFunction.Source, diagnostics, options,
                 $"Ownership function '{mirFunction.Name}' source evidence differs from typed MIR.");
+            if (ownershipFunction.PanicStrategy != mirFunction.PanicStrategy)
+                AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
+                    $"Ownership function '{mirFunction.Name}' panic strategy differs from typed MIR.",
+                    ownershipFunction.Source), options);
             if (ownershipFunction.Locals.Count < mirFunction.Locals.Count)
             {
                 AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(MissingEvidence,
@@ -371,9 +376,6 @@ public static partial class SafeCoreMirOwnershipAdapter
                     }
                     if (!referenceFunction)
                     {
-                        if (instruction.ConstantBoolean is not null || instruction.CopiedBooleanLocalId != -1 || instruction.EnumVariantReferenceSlots is not null)
-                            AddEvidenceDiagnostic(diagnostics, MakeEvidenceDiagnostic(EvidenceMismatch,
-                                "Reference-free ownership evidence cannot invent branch-pruning facts.", instruction.Source), options);
                         ValidateEvidencePlace(instruction.Place, instruction.LocalId, allowedPlaces,
                             instruction.Source, diagnostics, options);
                         ValidateEvidencePlace(instruction.RelatedPlace, instruction.RelatedLocalId, allowedPlaces,
@@ -423,10 +425,17 @@ public static partial class SafeCoreMirOwnershipAdapter
                         SafeCoreOwnershipInstruction effect = effects[effectIndex];
                         SafeCoreOwnershipInstruction candidate = actual.Instructions[effectIndex];
                         bool matched = effect.Kind == candidate.Kind && effect.LocalId == candidate.LocalId &&
+                                effect.ScopeId == candidate.ScopeId &&
                                 effect.ConstantBoolean == candidate.ConstantBoolean && effect.CopiedBooleanLocalId == candidate.CopiedBooleanLocalId &&
+                                effect.ConstantEnumDiscriminant == candidate.ConstantEnumDiscriminant &&
+                                effect.CopiedEnumLocalId == candidate.CopiedEnumLocalId &&
+                                effect.DiscriminantOwnerLocalId == candidate.DiscriminantOwnerLocalId &&
+                                effect.ComparedIntegerLocalId == candidate.ComparedIntegerLocalId &&
+                                effect.ComparedIntegerConstant == candidate.ComparedIntegerConstant &&
                                 EqualReferenceSlotIds(effect.EnumVariantReferenceSlots, candidate.EnumVariantReferenceSlots, options, clock, ref operations) &&
                                 effect.RelatedLocalId == candidate.RelatedLocalId && effect.IsMutable == candidate.IsMutable &&
                                 effect.IsStaticBorrow == candidate.IsStaticBorrow && effect.AllowAbsentReference == candidate.AllowAbsentReference &&
+                                effect.IsConditionalDrop == candidate.IsConditionalDrop &&
                                 SameSource(effect.Source, candidate.Source) && EqualOwnershipPlace(effect.Place, candidate.Place, effect.LocalId) &&
                                 EqualOwnershipPlace(effect.RelatedPlace, candidate.RelatedPlace, effect.RelatedLocalId) &&
                                 EqualAlternativePlaces(effect.AlternativePlaces, candidate.AlternativePlaces, options, clock, ref operations) &&

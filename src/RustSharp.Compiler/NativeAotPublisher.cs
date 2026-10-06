@@ -11,7 +11,11 @@ public sealed record NativeAotPublishRequest(
     string OutputDirectory,
     TimeSpan Timeout,
     Action<BoundedProcessStarted>? OnProcessStarted = null,
-    IReadOnlyList<string>? AdditionalAssemblyPaths = null);
+    IReadOnlyList<string>? AdditionalAssemblyPaths = null)
+{
+    /// <summary>Optional host source; null keeps the existing generated Main host.</summary>
+    public string? HostSourceOverride { get; init; }
+}
 
 public sealed record NativeAotPublishResult(
     string HostDirectory,
@@ -88,6 +92,9 @@ public sealed class NativeAotPublisher
         ValidateRuntimeIdentifier(request.RuntimeIdentifier);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.GeneratedAssemblyPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.OutputDirectory);
+        if (request.HostSourceOverride is { } hostOverride &&
+            (hostOverride.Length > 65_536 || Encoding.UTF8.GetByteCount(hostOverride) > 65_536))
+            throw new ArgumentException("Native AOT host override exceeds 64 KiB.", nameof(request));
 
         var generatedAssemblyPath = Path.GetFullPath(request.GeneratedAssemblyPath);
         if (!File.Exists(generatedAssemblyPath))
@@ -155,7 +162,7 @@ public sealed class NativeAotPublisher
                 }
             }
 
-            var hostSource = CreateHostSource();
+            var hostSource = request.HostSourceOverride ?? CreateHostSource();
             var hostProject = CreateHostProject(
                 request.AssemblyName,
                 hostAssemblyName,

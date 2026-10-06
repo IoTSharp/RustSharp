@@ -15,6 +15,7 @@ internal static class P1GeneratedUnwindEvidenceTests
     [
         new("P1 generated nested calls unwind each owner once", NestedCallUnwindAsync),
         new("P1 generated return paths clean nested scopes once", NestedReturnCleanupAsync),
+        new("P1 generated return operand panic evaluates once and unwinds its live owner", ReturnOperandPanicAsync),
         new("P1 generated argument panic cleans the caller scope once", ArgumentPanicUnwindAsync),
         new("P1 unsupported source panic keeps a stable diagnostic boundary", UnsupportedPanicBoundaryAsync),
     ];
@@ -70,6 +71,31 @@ internal static class P1GeneratedUnwindEvidenceTests
             "Argument evaluation must retain the originating exception type: " + result.StandardError);
     }
 
+    private static async Task ReturnOperandPanicAsync()
+    {
+        const string source = """
+            struct Marker;
+            impl Drop for Marker { fn drop(&mut self) { println!("drop"); } }
+            fn overflow(value: i32) -> i32 { println!("operand"); value + 1 }
+            fn value() -> i32 {
+                let owner = Marker;
+                let max: i32 = 2147483647;
+                return overflow(max);
+            }
+            fn main() { println!("{}", value()); println!("unreachable"); }
+            """;
+
+        BoundedProcessResult result = await CompileAndRunAsync(source, "return-operand-panic").ConfigureAwait(false);
+        AssertEx.False(result.ProcessTreeCleanupIncomplete,
+            "Return operand panic process cleanup failed: " + result.ProcessTreeCleanupDiagnostic);
+        AssertEx.Equal(BoundedProcessTermination.Exited, result.Termination,
+            "A deadline or cancellation cannot count as successful return-panic evidence.");
+        AssertEx.False(result.Succeeded, "A failing return operand must propagate its original arithmetic panic.");
+        AssertEx.Equal("operand\ndrop\n", Normalize(result.StandardOutput));
+        AssertEx.True(result.StandardError.Contains(nameof(OverflowException), StringComparison.Ordinal),
+            "Return operand evaluation must retain the originating exception type: " + result.StandardError);
+    }
+
     private static Task UnsupportedPanicBoundaryAsync()
     {
         const string source = """
@@ -111,7 +137,8 @@ internal static class P1GeneratedUnwindEvidenceTests
 
             using var runDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             return await new BoundedProcessRunner().RunAsync(
-                new("dotnet", [outputPath], directory, TimeSpan.FromSeconds(10)), runDeadline.Token)
+                new("dotnet", [outputPath], directory, TimeSpan.FromSeconds(10), started =>
+                    Console.WriteLine($"generated unwind process: pid={started.ProcessId} parent={started.ParentProcessId} started={started.StartedAt:O} command={started.CommandLine}")), runDeadline.Token)
                 .ConfigureAwait(false);
         }
         finally

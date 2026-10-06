@@ -16,7 +16,7 @@ internal static class SafeCoreMirDropCodegenTests
     [
         new("generated MIR Drop runs exactly once in reverse order", ReverseOrderAsync),
         new("generated MIR Drop runs on an exception fault path", FaultPathAsync),
-        new("generated MIR Drop rejects unsupported destructor failure stably", DestructorFailureBoundaryAsync),
+        new("generated MIR Drop rejects unsupported destructor bodies stably", DestructorBodyBoundaryAsync),
         new("P1 Drop contract freezes flags and failure transitions", DropContractAsync),
         new("P1 Drop flags project bounded ownership paths", DropFlagProjectionAsync),
         new("P1 Drop glue preserves aggregate order and double-panic stop", DropGlueAsync),
@@ -56,24 +56,24 @@ internal static class SafeCoreMirDropCodegenTests
             "The fault path must retain the original exception boundary: " + result.StandardError);
     }
 
-    private static Task DestructorFailureBoundaryAsync()
+    private static Task DestructorBodyBoundaryAsync()
     {
         const string source = """
             struct Marker;
             impl Drop for Marker {
                 fn drop(&mut self) {
-                    let max: i32 = 2147483647;
-                    println!("{}", max + 1);
+                    let callback = || 1;
+                    println!("{}", callback());
                 }
             }
             fn main() { let marker = Marker; }
             """;
         CompilationResult result = CompilerDriver.Check(
-            source, "drop-destructor-failure.rs", CompilationProfile.SafeCoreMirV2);
+            source, "drop-destructor-body.rs", CompilationProfile.SafeCoreMirV2);
         AssertEx.False(result.Success,
-            "A destructor body outside the generated failure contract must not compile silently.");
+            "A destructor body outside the supported lowering contract must not compile silently.");
         AssertEx.True(result.Diagnostics.Any(diagnostic => diagnostic.Code == "RSM2002"),
-            "Unsupported destructor failure must retain the stable MIR diagnostic: " +
+            "Unsupported destructor bodies must retain the stable MIR diagnostic: " +
             string.Join("; ", result.Diagnostics.Select(static diagnostic => diagnostic.Code + ":" + diagnostic.Message)));
         return Task.CompletedTask;
     }

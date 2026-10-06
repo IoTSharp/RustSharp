@@ -12,6 +12,9 @@ internal static class SafeCoreOwnershipTests
         new("ownership CFG reports move and reference escape diagnostics", MoveAndEscapeAsync),
         new("ownership CFG records unwind and abort panic paths", PanicStrategiesAsync),
         new("ownership CFG bounds looping paths", LoopLimitAsync),
+        new("ownership CFG rejects known true cleanup cycles and unknown cycles without exits", NonTerminatingCyclesAsync),
+        new("ownership CFG converges cleanup cycles with an unknown exit", CleanupCycleExitAsync),
+        new("ownership CFG preserves semantic diagnostics when cycle exits are invalid", InvalidCycleExitAsync),
         new("ownership CFG rejects invalid local and terminator IDs", InvalidArenaIdsAsync),
         new("ownership CFG cleans only entered branch scopes", BranchScopeCleanupAsync),
         new("ownership CFG rejects owner assignment during mutable borrow", MutableOwnerWriteAsync),
@@ -150,6 +153,78 @@ internal static class SafeCoreOwnershipTests
         AssertEx.True(result.IsTruncated, "An unbounded CFG loop must stop at the configured visit limit.");
         AssertEx.True(result.Diagnostics.Any(diagnostic => diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.LimitReached),
             "The loop limit diagnostic must be machine readable.");
+        return Task.CompletedTask;
+    }
+
+    private static Task NonTerminatingCyclesAsync()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        SafeCoreOwnershipFunction knownTrue = Function(
+            [Local(0, "condition", Type(SafeCoreSemanticTypeKind.Bool), SafeCoreOwnershipKind.Copy),
+             Local(1, "resource", hasDrop: true, initiallyInitialized: false)],
+            [Block(0, [SafeCoreOwnershipInstruction.Assign(0, Source(1)) with { ConstantBoolean = true }],
+                SafeCoreOwnershipTerminator.Branch(0, 1, 2, Source(2))),
+             Block(1, [SafeCoreOwnershipInstruction.Assign(1, Source(3)),
+                SafeCoreOwnershipInstruction.Drop(1, Source(4)) with { IsConditionalDrop = true }],
+                SafeCoreOwnershipTerminator.Goto(0, Source(5))),
+             Block(2, [], SafeCoreOwnershipTerminator.ReturnUnit(Source(6)))]);
+        SafeCoreOwnershipAnalysisResult constant = SafeCoreOwnershipAnalysis.Analyze(new([knownTrue]), new()
+            { Timeout = TimeSpan.FromSeconds(4), MaximumOperations = 16_384, MaximumBlockVisits = 8, CancellationToken = deadline.Token });
+        AssertEx.True(constant.IsTruncated && constant.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.LimitReached),
+            "A constant true loop must retain its loop-limit diagnostic even when every iteration reconstructs and drops a fresh resource.");
+        SafeCoreOwnershipFunction unknown = Function(
+            [Local(0, "condition", Type(SafeCoreSemanticTypeKind.Bool), SafeCoreOwnershipKind.Copy)],
+            [Block(0, [], SafeCoreOwnershipTerminator.Branch(0, 1, 2, Source(1))),
+             Block(1, [], SafeCoreOwnershipTerminator.Goto(0, Source(2))),
+             Block(2, [], SafeCoreOwnershipTerminator.Goto(0, Source(3)))]);
+        SafeCoreOwnershipFunction sibling = new("crate::terminal_sibling", [],
+            [new SafeCoreOwnershipScope(0, -1, Source(0))],
+            [Block(0, [], SafeCoreOwnershipTerminator.ReturnUnit(Source(1)))], 0, SafeCorePanicStrategy.Unwind, Source(0));
+        SafeCoreOwnershipAnalysisResult closed = SafeCoreOwnershipAnalysis.Analyze(new([sibling, unknown]), new()
+            { Timeout = TimeSpan.FromSeconds(4), MaximumOperations = 16_384, MaximumBlockVisits = 8, CancellationToken = deadline.Token });
+        AssertEx.False(closed.IsSuccessful, "A sibling function's terminal evidence cannot hide a cycle whose unknown alternatives all return to the cycle.");
+        AssertEx.True(closed.IsTruncated && closed.Diagnostics.Any(diagnostic =>
+            diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.LimitReached),
+            "An unknown cycle without a terminal exit must report the stable loop-limit diagnostic.");
+        return Task.CompletedTask;
+    }
+
+    private static Task CleanupCycleExitAsync()
+    {
+        SafeCoreOwnershipFunction loop = Function(
+            [Local(0, "condition", Type(SafeCoreSemanticTypeKind.Bool), SafeCoreOwnershipKind.Copy),
+             Local(1, "resource", hasDrop: true, initiallyInitialized: false)],
+            [Block(0, [], SafeCoreOwnershipTerminator.Branch(0, 1, 2, Source(1))),
+             Block(1, [SafeCoreOwnershipInstruction.Assign(1, Source(2)),
+                SafeCoreOwnershipInstruction.Drop(1, Source(3)) with { IsConditionalDrop = true }],
+                SafeCoreOwnershipTerminator.Goto(0, Source(4))),
+             Block(2, [], SafeCoreOwnershipTerminator.ReturnUnit(Source(5)))]);
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([loop]), new()
+            { Timeout = TimeSpan.FromSeconds(5), MaximumOperations = 16_384, MaximumBlockVisits = 8 });
+        AssertEx.True(result.IsSuccessful, string.Join(Environment.NewLine, result.Diagnostics));
+        AssertEx.True(result.Paths.Any(path => path.DropOrder.IsEmpty) &&
+            result.Paths.Any(path => path.DropOrder.SequenceEqual(["resource"])) &&
+            result.Paths.All(path => path.Outcome == SafeCoreOwnershipOutcome.Returned),
+            "Convergence must retain both zero-iteration and completed-cleanup exit evidence.");
+        return Task.CompletedTask;
+    }
+
+    private static Task InvalidCycleExitAsync()
+    {
+        SafeCoreOwnershipFunction loop = Function(
+            [Local(0, "condition", Type(SafeCoreSemanticTypeKind.Bool), SafeCoreOwnershipKind.Copy),
+             Local(1, "missing", Type(SafeCoreSemanticTypeKind.Bool), SafeCoreOwnershipKind.Copy, initiallyInitialized: false)],
+            [Block(0, [], SafeCoreOwnershipTerminator.Branch(0, 1, 2, Source(1))),
+             Block(1, [], SafeCoreOwnershipTerminator.Goto(0, Source(2))),
+             Block(2, [], SafeCoreOwnershipTerminator.Branch(1, 3, 3, Source(3))),
+             Block(3, [], SafeCoreOwnershipTerminator.ReturnUnit(Source(4)))]);
+        SafeCoreOwnershipAnalysisResult result = SafeCoreOwnershipAnalysis.Analyze(new([loop]), new()
+            { Timeout = TimeSpan.FromSeconds(5), MaximumOperations = 16_384, MaximumBlockVisits = 8 });
+        AssertEx.False(result.IsSuccessful, "An invalid exit may not supply terminal ownership evidence.");
+        AssertEx.True(result.Diagnostics.Any(diagnostic => diagnostic.Code == SafeCoreOwnershipDiagnosticCodes.UseAfterMove) &&
+            !result.IsTruncated && result.Diagnostics.All(diagnostic => diagnostic.Code != SafeCoreOwnershipDiagnosticCodes.LimitReached),
+            "Convergence must retain the original uninitialized condition diagnostic without substituting a loop limit.");
         return Task.CompletedTask;
     }
 

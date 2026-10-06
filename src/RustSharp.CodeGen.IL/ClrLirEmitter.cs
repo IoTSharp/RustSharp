@@ -108,7 +108,7 @@ public static class ClrLirEmitter
         LabelHandle tryEnd = default;
         LabelHandle handlerStart = default;
         LabelHandle handlerEnd = default;
-        if (!method.ExceptionCleanup.IsEmpty)
+        if (method.HasExceptionCleanup)
         {
             tryStart = encoder.DefineLabel();
             tryEnd = encoder.DefineLabel();
@@ -121,7 +121,7 @@ public static class ClrLirEmitter
         int blockOrdinal = 0;
         foreach (ClrLirBlock block in method.Blocks)
         {
-            if (!method.ExceptionCleanup.IsEmpty && !tryEndMarked &&
+            if (method.HasExceptionCleanup && !tryEndMarked &&
                 blockOrdinal == method.FaultTryBlockCount)
             {
                 encoder.MarkLabel(tryEnd);
@@ -290,11 +290,19 @@ public static class ClrLirEmitter
             encoder.Token(handle);
         }
 
-        if (!method.ExceptionCleanup.IsEmpty)
+        if (method.HasExceptionCleanup)
         {
             if (!tryEndMarked)
                 encoder.MarkLabel(tryEnd);
             encoder.MarkLabel(handlerStart);
+            if (method.PanicHandling is { } panicHandling)
+            {
+                EncodePanicHandler(panicHandling);
+                encoder.MarkLabel(handlerEnd);
+                encoder.ControlFlowBuilder!.AddCatchRegion(tryStart, tryEnd, handlerStart, handlerEnd,
+                    PrimitiveTypeHandle(metadata, "Exception"));
+                return Math.Max(2, validation.MaximumStackDepth);
+            }
             foreach (ClrLirCallSite cleanup in method.ExceptionCleanup)
             {
                 EntityHandle target = callResolver(cleanup);
@@ -303,12 +311,201 @@ public static class ClrLirEmitter
                 encoder.Call(target);
             }
 
+            foreach (ClrLirGuardedCleanup cleanup in method.GuardedExceptionCleanup)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                checkBudget?.Invoke();
+                LabelHandle next = encoder.DefineLabel();
+                encoder.LoadLocal(cleanup.FlagLocalIndex);
+                encoder.Branch(ILOpCode.Brfalse, next);
+                EncodeCleanupGuards(cleanup, next);
+                // Consume the obligation before any user destructor executes.
+                encoder.LoadConstantI4(0);
+                encoder.StoreLocal(cleanup.FlagLocalIndex);
+                EncodeConsumedFlags(cleanup);
+                EncodeSharedDropConsumption(cleanup);
+                EncodeCleanupReceiver(cleanup);
+                EntityHandle target = callResolver(cleanup.Site);
+                if (target.IsNil)
+                    throw new InvalidOperationException($"Call resolver returned a nil cleanup target for '{cleanup.Site.Name}'.");
+                encoder.Call(target);
+                encoder.MarkLabel(next);
+            }
+
             encoder.OpCode(ILOpCode.Endfinally);
             encoder.MarkLabel(handlerEnd);
             encoder.ControlFlowBuilder!.AddFaultRegion(tryStart, tryEnd, handlerStart, handlerEnd);
         }
 
         return Math.Max(1, validation.MaximumStackDepth);
+
+        void EncodePanicHandler(ClrLirPanicHandling handling)
+        {
+            encoder.StoreLocal(handling.PanicLocalIndex);
+            LabelHandle propagate = encoder.DefineLabel();
+            encoder.LoadLocal(handling.PanicLocalIndex);
+            CallPanic("IsAbort", ClrLirType.Bool, ClrLirType.Any);
+            encoder.Branch(ILOpCode.Brtrue, propagate);
+            // Inspect the caller's mode before this handler starts cleanup. A
+            // failure during an existing unwind must reach that caller intact;
+            // its cleanup catch preserves the original panic and stops here.
+            CallPanic("IsUnwinding", ClrLirType.Bool);
+            encoder.Branch(ILOpCode.Brtrue, propagate);
+            if (handling.AbortWithoutUnwind)
+            {
+                encoder.LoadLocal(handling.PanicLocalIndex);
+                CallPanic("Abort", ClrLirType.Any, ClrLirType.Any);
+                encoder.StoreLocal(handling.PanicLocalIndex);
+                encoder.Branch(ILOpCode.Br, propagate);
+            }
+            else
+            {
+                foreach (ClrLirGuardedCleanup cleanup in method.GuardedExceptionCleanup)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    checkBudget?.Invoke();
+                    LabelHandle next = encoder.DefineLabel();
+                    LabelHandle cleanupTryStart = encoder.DefineLabel();
+                    LabelHandle cleanupTryEnd = encoder.DefineLabel();
+                    LabelHandle cleanupHandlerStart = encoder.DefineLabel();
+                    LabelHandle cleanupHandlerEnd = encoder.DefineLabel();
+                    LabelHandle normalFailure = encoder.DefineLabel();
+                    LabelHandle nestedAbort = encoder.DefineLabel();
+                    encoder.LoadLocal(cleanup.FlagLocalIndex);
+                    encoder.Branch(ILOpCode.Brfalse, next);
+                    EncodeCleanupGuards(cleanup, next);
+                    encoder.LoadConstantI4(0);
+                    encoder.StoreLocal(cleanup.FlagLocalIndex);
+                    EncodeConsumedFlags(cleanup);
+                    encoder.LoadLocal(handling.NormalCleanupLocalIndex);
+                    encoder.LoadConstantI4(1);
+                    encoder.OpCode(ILOpCode.Xor);
+                    CallPanic("SwapUnwinding", ClrLirType.Bool, ClrLirType.Bool);
+                    encoder.StoreLocal(handling.UnwindStateLocalIndex);
+                    encoder.MarkLabel(cleanupTryStart);
+                    EncodeSharedDropConsumption(cleanup);
+                    EncodeCleanupReceiver(cleanup);
+                    EntityHandle destructor = callResolver(cleanup.Site);
+                    if (destructor.IsNil) throw new InvalidOperationException("A generated destructor did not resolve.");
+                    encoder.Call(destructor);
+                    RestoreUnwindState(handling);
+                    encoder.Branch(ILOpCode.Leave, next);
+                    encoder.MarkLabel(cleanupTryEnd);
+                    encoder.MarkLabel(cleanupHandlerStart);
+                    encoder.StoreLocal(handling.CleanupFailureLocalIndex);
+                    RestoreUnwindState(handling);
+                    encoder.LoadLocal(handling.CleanupFailureLocalIndex);
+                    CallPanic("IsAbort", ClrLirType.Bool, ClrLirType.Any);
+                    encoder.Branch(ILOpCode.Brtrue, nestedAbort);
+                    encoder.LoadLocal(handling.NormalCleanupLocalIndex);
+                    encoder.Branch(ILOpCode.Brtrue, normalFailure);
+                    encoder.LoadLocal(handling.PanicLocalIndex);
+                    encoder.LoadLocal(handling.CleanupFailureLocalIndex);
+                    CallPanic("DoublePanic", ClrLirType.Any, ClrLirType.Any, ClrLirType.Any);
+                    encoder.StoreLocal(handling.PanicLocalIndex);
+                    encoder.Branch(ILOpCode.Leave, propagate);
+                    encoder.MarkLabel(nestedAbort);
+                    encoder.LoadLocal(handling.CleanupFailureLocalIndex);
+                    encoder.StoreLocal(handling.PanicLocalIndex);
+                    encoder.Branch(ILOpCode.Leave, propagate);
+                    encoder.MarkLabel(normalFailure);
+                    encoder.LoadLocal(handling.PanicLocalIndex);
+                    encoder.LoadLocal(handling.CleanupFailureLocalIndex);
+                    CallPanic("ContinueNormalCleanup", ClrLirType.Any, ClrLirType.Any, ClrLirType.Any);
+                    encoder.StoreLocal(handling.PanicLocalIndex);
+                    encoder.Branch(ILOpCode.Leave, next);
+                    encoder.MarkLabel(cleanupHandlerEnd);
+                    encoder.MarkLabel(next);
+                    encoder.ControlFlowBuilder!.AddCatchRegion(cleanupTryStart, cleanupTryEnd,
+                        cleanupHandlerStart, cleanupHandlerEnd, PrimitiveTypeHandle(metadata, "Exception"));
+                }
+            }
+            encoder.MarkLabel(propagate);
+            encoder.LoadLocal(handling.PanicLocalIndex);
+            encoder.LoadConstantI4(handling.IsEntryBoundary ? 1 : 0);
+            CallPanic("Propagate", ClrLirType.Void, ClrLirType.Any, ClrLirType.Bool);
+            // Propagate is non-returning. Keep that terminal edge explicit in IL.
+            encoder.OpCode(ILOpCode.Ldnull);
+            encoder.OpCode(ILOpCode.Throw);
+        }
+
+        void CallPanic(string name, ClrLirType result, params ClrLirType[] parameters)
+        {
+            EntityHandle target = callResolver(new("RustGeneratedPanic." + name, result, parameters)
+            {
+                ExternalCall = new("RustSharp.Runtime", "RustSharp.Runtime", "RustGeneratedPanic", name),
+            });
+            if (target.IsNil) throw new InvalidOperationException("A generated panic operation did not resolve.");
+            encoder.Call(target);
+        }
+
+        void RestoreUnwindState(ClrLirPanicHandling handling)
+        {
+            encoder.LoadLocal(handling.UnwindStateLocalIndex);
+            CallPanic("SwapUnwinding", ClrLirType.Bool, ClrLirType.Bool);
+            encoder.OpCode(ILOpCode.Pop);
+        }
+
+        void EncodeCleanupReceiver(ClrLirGuardedCleanup cleanup)
+        {
+            if (cleanup.ReceiverLocalIndex is int receiver) encoder.LoadLocal(receiver);
+            EncodeCleanupProjection(cleanup.ReceiverInstructions);
+        }
+
+        void EncodeCleanupGuards(ClrLirGuardedCleanup cleanup, LabelHandle skipped)
+        {
+            foreach (var guard in cleanup.GuardInstructions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                checkBudget?.Invoke();
+                EncodeCleanupProjection(guard);
+                encoder.Branch(ILOpCode.Brfalse, skipped);
+            }
+        }
+
+        void EncodeSharedDropConsumption(ClrLirGuardedCleanup cleanup)
+        {
+            if (!cleanup.HasReceiver) return;
+            EncodeCleanupReceiver(cleanup);
+            EntityHandle target = callResolver(new("MirReference.ConsumeDrop", ClrLirType.Void, [ClrLirType.Any])
+            {
+                ExternalCall = new("RustSharp.Runtime", "RustSharp.Runtime", "MirReference", "ConsumeDrop"),
+            });
+            if (target.IsNil) throw new InvalidOperationException("A shared cleanup consumption operation did not resolve.");
+            encoder.Call(target);
+        }
+
+        void EncodeCleanupProjection(IEnumerable<ClrLirInstruction> instructions)
+        {
+            foreach (ClrLirInstruction instruction in instructions)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                checkBudget?.Invoke();
+                switch (instruction)
+                {
+                    case ClrLirLoadLocal local: encoder.LoadLocal(local.Index); break;
+                    case ClrLirLoadInt32 integer: encoder.LoadConstantI4(integer.Value); break;
+                    case ClrLirUnbox unbox: EncodeBox(unbox.Type, true); break;
+                    case ClrLirCall call:
+                        EntityHandle target = callResolver(call.Site);
+                        if (target.IsNil) throw new InvalidOperationException("A cleanup receiver projection did not resolve.");
+                        encoder.Call(target);
+                        break;
+                    default: throw new InvalidOperationException("An unsafe cleanup receiver instruction reached emission.");
+                }
+            }
+        }
+
+        void EncodeConsumedFlags(ClrLirGuardedCleanup cleanup)
+        {
+            foreach (int flag in cleanup.ConsumedFlagLocalIndices)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                checkBudget?.Invoke();
+                encoder.LoadConstantI4(0);
+                encoder.StoreLocal(flag);
+            }
+        }
     }
 
     private static MemberReferenceHandle AddIndexOutOfRangeConstructor(MetadataBuilder metadata)

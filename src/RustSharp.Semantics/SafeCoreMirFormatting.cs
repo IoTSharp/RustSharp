@@ -71,6 +71,9 @@ public static class SafeCoreMirFormatting
                 Add(FormattableString.Invariant($"fn @{function.Id} {Escape(function.Name)} -> {function.ReturnType} entry bb{function.EntryBlockId} "));
                 Source(function.Source);
                 if (function.ReturnsStaticReference) Add(" returns_static");
+                if (function.IsDestructor) Add(" destructor");
+                if (function.PanicStrategy != SafeCorePanicStrategy.Unwind)
+                    Add(" panic=" + function.PanicStrategy.ToString().ToLowerInvariant());
                 Add(" {\n");
                 for (int localIndex = 0; localIndex < function.Locals.Count; localIndex++)
                 {
@@ -110,6 +113,9 @@ public static class SafeCoreMirFormatting
                         Operands(value.Operands);
                         Add($"): {value.Type} ");
                         Source(statement.Source);
+                        if (statement.IsCleanupDiscriminant) Add(" cleanup_discriminant");
+                        if (statement.CleanupDiscriminantJoinBlockId is int cleanupJoin)
+                            Add(FormattableString.Invariant($" cleanup_join=bb{cleanupJoin}"));
                         Add("\n");
                     }
                     Terminator(block.Terminator);
@@ -161,6 +167,7 @@ public static class SafeCoreMirFormatting
             foreach (SafeCoreMirFunction function in program.Functions)
             {
                 Step();
+                if (function.IsDestructor || function.PanicStrategy != SafeCorePanicStrategy.Unwind) return true;
                 foreach (SafeCoreMirLocal local in function.Locals)
                 {
                     Step();

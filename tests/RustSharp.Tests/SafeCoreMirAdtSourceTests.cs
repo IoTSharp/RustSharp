@@ -136,10 +136,19 @@ internal static class SafeCoreMirAdtSourceTests
         "fn dangling(input: &i32) -> &i32 { let local = 7; &local } fn main() { let owner = 1; " +
         "let escaped = dangling(&owner); println!(\"{}\", *escaped); }", SafeCoreOwnershipDiagnosticCodes.Escape);
 
-    private static Task LocalReferenceJoinConflictAsync() => RejectAsync(
-        "fn main() { let mut first = 3; let second = 8; let choose_first = false; " +
-        "let selected = if choose_first { &first } else { &second }; first = 5; println!(\"{}\", *selected); }",
-        SafeCoreOwnershipDiagnosticCodes.BorrowConflict);
+    private static async Task LocalReferenceJoinConflictAsync()
+    {
+        // Both named boolean values must preserve every possible reference
+        // owner. Each check/compile rejection has its own 30-second deadline.
+        await RejectAsync(
+            "fn main() { let mut first = 3; let second = 8; let choose_first = false; " +
+            "let selected = if choose_first { &first } else { &second }; first = 5; println!(\"{}\", *selected); }",
+            SafeCoreOwnershipDiagnosticCodes.BorrowConflict).ConfigureAwait(false);
+        await RejectAsync(
+            "fn main() { let first = 3; let mut second = 8; let choose_first = true; " +
+            "let selected = if choose_first { &first } else { &second }; second = 5; println!(\"{}\", *selected); }",
+            SafeCoreOwnershipDiagnosticCodes.BorrowConflict).ConfigureAwait(false);
+    }
 
     private static Task BranchReferenceEscapeAsync() => RejectAsync(
         "fn main() { let outer = 1; let choose_inner = true; let escaped = if choose_inner { " +

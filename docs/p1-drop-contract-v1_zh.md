@@ -42,6 +42,13 @@ panic unwind 期间首次析构失败属于双重 panic：清理停止，同时�
 `Environment.FailFast`，因此有界测试宿主可以检查结果并按自身策略终止进程。abort panic
 保持 drop scope 不变，并且不调用 unwind `Drop`。
 
+正常继续清理策略有意与 rustc 1.98.0 不同：rustc 在展开首次析构 panic 时，如果另一个
+析构器再次失败就会 abort；Rust# 则保留所有正常清理失败，并尝试其余活动清理义务。
+这一规则也涵盖外层析构器及其拥有的字段。若外层析构器是在已有主体 panic 的展开中
+失败，双重 panic 规则会立即停止，不再清理其剩余字段，并保留主体 panic 和该析构
+失败。生成程序的进程入口以退出码 `134` 终止 abort；可复用生成导出则抛出
+`RustGeneratedAbortException`，供 `RustPanicBoundary` 检查。
+
 ## 稳定用例 ID
 
 `DROP-*` ID 是 P1-08.01 的不可变转移分母。机器可读快照由

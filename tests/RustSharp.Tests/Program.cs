@@ -47,6 +47,11 @@ internal static class Program
             .. P1PlatformBindingContractTests.All, .. P1NestedDropUnwindTests.All];
         tests = [.. tests, .. P1OwnershipResourceContractTests.All];
         tests = [.. tests, .. P1OwnershipDiagnosticGoldenTests.All];
+        tests = [.. tests, .. P1DropFlagGenerationTests.All, .. P1GeneratedDropFlagTests.All,
+            .. P1DropReceiverTests.All, .. P1AggregateDropCodegenTests.All, .. P1ControlFlowDropTests.All];
+        tests = [.. tests, .. P1DropDifferentialCodegenTests.All];
+        tests = [.. tests, .. P1LabelResolutionTests.All];
+        tests = [.. tests, .. P1MirReferenceDropStateTests.All];
         if (args.Length != 0)
         {
             if (args.Length != 2 || args[0] != "--filter" || args[1].Length is 0 or > 256)

@@ -190,6 +190,14 @@ public static class SafeCoreMirCleanupLowering
                 return Failure(diagnostics, false);
             }
 
+            if (ownership.MirProgram is not null && !ReferenceEquals(mir, ownership.MirProgram))
+            {
+                AddDiagnostic(diagnostics, InvalidEvidence,
+                    "Cleanup typed MIR must be the same immutable program that supplied its ownership evidence.",
+                    mir.Functions.Count > 0 ? mir.Functions[0].Source : InvalidSource, options);
+                return Failure(diagnostics, false);
+            }
+
             SafeCoreMirValidationResult mirValidation = SafeCoreMirValidation.Validate(mir,
                 new SafeCoreMirValidationOptions
                 {
@@ -267,7 +275,8 @@ public static class SafeCoreMirCleanupLowering
                     if (loweredPaths.Count >= options.MaximumPaths)
                         throw new CleanupLimitException();
                     SafeCoreMirCleanupPath? lowered = LowerPath(
-                        path, ownershipFunction, localsByName, options, clock, ref operations, diagnostics);
+                        mir, mirFunction, path, ownershipFunction, localsByName, ownership.MirProgram is not null,
+                        options, clock, ref operations, diagnostics);
                     if (lowered is not null) loweredPaths.Add(lowered);
                 }
 
@@ -285,6 +294,13 @@ public static class SafeCoreMirCleanupLowering
             string snapshot = Format(functions, options, clock, ref operations);
             return new(functions.AsReadOnly(), snapshot, diagnostics.AsReadOnly(), false);
         }
+        catch (SafeCoreMirLimitException)
+        {
+            AddLimitSafeDiagnostic(diagnostics, LimitReached,
+                "Cleanup typed-place resolution exceeded its bounded work or time limit.",
+                mir.Functions.Count > 0 ? mir.Functions[0].Source : InvalidSource, options);
+            return Failure(diagnostics, true);
+        }
         catch (CleanupLimitException)
         {
             AddLimitDiagnostic(diagnostics,
@@ -301,9 +317,12 @@ public static class SafeCoreMirCleanupLowering
     }
 
     private static SafeCoreMirCleanupPath? LowerPath(
+        SafeCoreMirProgram mir,
+        SafeCoreMirFunction mirFunction,
         SafeCoreOwnershipPath path,
         SafeCoreOwnershipFunction function,
         Dictionary<string, SafeCoreOwnershipLocal> localsByName,
+        bool requireExactDropTrace,
         SafeCoreMirCleanupLoweringOptions options,
         Stopwatch clock,
         ref int operations,
@@ -338,6 +357,7 @@ public static class SafeCoreMirCleanupLowering
         var observedDrops = new HashSet<string>(StringComparer.Ordinal);
         var dropGenerations = new Dictionary<string, int>(StringComparer.Ordinal);
         var observedDropKeys = new Dictionary<string, Queue<string>>(StringComparer.Ordinal);
+        var observedDropSequence = new List<string>();
         bool hasScopeExit = false;
         bool hasBoundary = false;
         for (int traceIndex = 0; traceIndex < path.Trace.Length; traceIndex++)
@@ -358,22 +378,46 @@ public static class SafeCoreMirCleanupLowering
 
             if (TryParseLocalEvent(trace, "assign ", localsByName, out SafeCoreOwnershipLocal? assigned) && assigned is not null)
             {
-                dropGenerations[assigned.Name] = dropGenerations.TryGetValue(assigned.Name, out int generation)
-                    ? generation + 1 : 1;
+                string assignedName = trace["assign ".Length..];
+                SafeCoreMirDropEvidencePlaces.Resolved? assignedPlace = SafeCoreMirDropEvidencePlaces.Resolve(mir, mirFunction,
+                    localsByName, assignedName, clock, options.Timeout, options.MaximumOperations, ref operations, options.CancellationToken);
+                AdvanceGeneration(assigned, assignedPlace?.Key ?? assigned.Name);
                 continue;
             }
 
-            if (TryParseLocalEvent(trace, "drop ", localsByName, out SafeCoreOwnershipLocal? drop) && drop is not null)
+            // Moving a value into a local initializes a fresh obligation just
+            // like assignment, including when the producer reuses a moved-out
+            // destination after its earlier value was dropped.
+            if (trace.StartsWith("move ", StringComparison.Ordinal))
             {
-                if (!drop.HasDrop)
+                int separator = trace.IndexOf(" -> ", StringComparison.Ordinal);
+                if (separator > "move ".Length &&
+                    TryParseLocalEvent("assign " + trace[(separator + " -> ".Length)..],
+                        "assign ", localsByName, out SafeCoreOwnershipLocal? destination) && destination is not null)
+                {
+                    string destinationName = trace[(separator + " -> ".Length)..];
+                    SafeCoreMirDropEvidencePlaces.Resolved? destinationPlace = SafeCoreMirDropEvidencePlaces.Resolve(mir, mirFunction,
+                        localsByName, destinationName, clock, options.Timeout, options.MaximumOperations, ref operations, options.CancellationToken);
+                    AdvanceGeneration(destination, destinationPlace?.Key ?? destination.Name);
+                    continue;
+                }
+            }
+
+            if (trace.StartsWith("drop ", StringComparison.Ordinal))
+            {
+                SafeCoreMirDropEvidencePlaces.Resolved? place = SafeCoreMirDropEvidencePlaces.Resolve(mir, mirFunction,
+                    localsByName, trace["drop ".Length..], clock, options.Timeout,
+                    options.MaximumOperations, ref operations, options.CancellationToken);
+                if (place is null || !place.Droppable)
                 {
                     AddDiagnostic(diagnostics, InvalidEvidence,
-                        $"Cleanup drop evidence references non-droppable local '{drop.Name}'.",
-                        drop.Source, options);
+                        $"Cleanup drop evidence references unknown or non-droppable typed place '{trace["drop ".Length..]}'.",
+                        place?.Root.Source ?? function.Source, options);
                     return null;
                 }
-                int generation = dropGenerations.TryGetValue(drop.Name, out int currentGeneration) ? currentGeneration : 0;
-                string dropKey = drop.Name + "\u001f" + generation.ToString(CultureInfo.InvariantCulture);
+                SafeCoreOwnershipLocal drop = place.Root;
+                int generation = dropGenerations.GetValueOrDefault(place.Key, dropGenerations.GetValueOrDefault(drop.Name));
+                string dropKey = place.Key + "\u001f" + generation.ToString(CultureInfo.InvariantCulture);
                 if (!observedDrops.Add(dropKey))
                 {
                     AddDiagnostic(diagnostics, InvalidEvidence,
@@ -381,10 +425,11 @@ public static class SafeCoreMirCleanupLowering
                         drop.Source, options);
                     return null;
                 }
-                if (!observedDropKeys.TryGetValue(drop.Name, out Queue<string>? keys))
-                    observedDropKeys[drop.Name] = keys = new Queue<string>();
+                if (!observedDropKeys.TryGetValue(place.Key, out Queue<string>? keys))
+                    observedDropKeys[place.Key] = keys = new Queue<string>();
                 keys.Enqueue(dropKey);
-                actions.Add(SafeCoreMirCleanupAction.Drop(drop.Id, drop.Name, drop.Source));
+                observedDropSequence.Add(place.Key);
+                actions.Add(SafeCoreMirCleanupAction.Drop(drop.Id, place.Key, drop.Source));
                 continue;
             }
 
@@ -441,16 +486,73 @@ public static class SafeCoreMirCleanupLowering
             return null;
         }
 
-        // DropOrder is a compact, stable ownership fact. Older ownership
-        // producers may omit individual `drop` trace entries, so materialize
-        // any missing drops immediately before the terminal boundary.
+        // Current typed producers retain every actual drop trace in order.
+        // A compact fact must never fill a missing or reordered typed event.
+        if (requireExactDropTrace)
+        {
+            if (!SafeCoreMirDropEvidencePlaces.MatchCanonicalBorrowedDropTrace(mir, mirFunction, function, path, localsByName,
+                    clock, options.Timeout, options.MaximumOperations, ref operations, options.CancellationToken))
+            {
+                AddDiagnostic(diagnostics, InvalidEvidence,
+                    "Typed borrowed Drop traces must exactly follow canonical replacement instructions; borrowed new values have no callee scope Drop obligation.",
+                    function.Source, options);
+                return null;
+            }
+            if (observedDropSequence.Count != path.DropOrder.Length)
+            {
+                AddDiagnostic(diagnostics, InvalidEvidence,
+                    "Typed cleanup DropOrder and drop trace counts do not match; missing or extra drop events cannot be materialized.",
+                    function.Source, options);
+                return null;
+            }
+            for (int index = 0; index < path.DropOrder.Length; index++)
+            {
+                Step(options, clock, ref operations);
+                SafeCoreMirDropEvidencePlaces.Resolved? ordered = SafeCoreMirDropEvidencePlaces.Resolve(mir, mirFunction,
+                    localsByName, path.DropOrder[index], clock, options.Timeout, options.MaximumOperations,
+                    ref operations, options.CancellationToken);
+                if (ordered is null || !ordered.Droppable ||
+                    !string.Equals(observedDropSequence[index], ordered.Key, StringComparison.Ordinal))
+                {
+                    AddDiagnostic(diagnostics, InvalidEvidence,
+                        "Typed cleanup DropOrder does not exactly match the ordered typed drop trace.", function.Source, options);
+                    return null;
+                }
+            }
+        }
+
+        // Only older ownership producers without attached typed MIR may omit
+        // individual `drop` trace entries. Preserve their compact fallback.
         var dropOrderSeen = new HashSet<string>(StringComparer.Ordinal);
         var materializedGenerations = new Dictionary<string, int>(StringComparer.Ordinal);
+        var dropOrderOccurrences = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (string dropName in path.DropOrder)
         {
             Step(options, clock, ref operations);
+            SafeCoreMirDropEvidencePlaces.Resolved? place = SafeCoreMirDropEvidencePlaces.Resolve(mir, mirFunction,
+                localsByName, dropName, clock, options.Timeout, options.MaximumOperations, ref operations, options.CancellationToken);
+            if (place is null || !place.Droppable)
+            {
+                AddDiagnostic(diagnostics, InvalidEvidence,
+                    $"Cleanup drop evidence references unknown or non-droppable typed place '{dropName}'.", function.Source, options);
+                return null;
+            }
+            SafeCoreOwnershipLocal local = place.Root;
+            string canonicalName = place.Key;
+            int occurrence = dropOrderOccurrences.TryGetValue(dropName, out int priorOccurrences)
+                ? priorOccurrences + 1 : 1;
+            dropOrderOccurrences[dropName] = occurrence;
+            int generations = dropGenerations.GetValueOrDefault(place.Key, dropGenerations.GetValueOrDefault(local.Name));
+            int initializedGenerations = generations + (local.InitiallyInitialized ? 1 : 0);
+            if (occurrence > initializedGenerations)
+            {
+                AddDiagnostic(diagnostics, InvalidEvidence,
+                    $"Cleanup DropOrder repeats or consumes uninitialized local '{dropName}' without a fresh initialization generation.",
+                    local.Source, options);
+                return null;
+            }
             string dropKey;
-            bool alreadyObserved = observedDropKeys.TryGetValue(dropName, out Queue<string>? observedKeys) && observedKeys.Count > 0;
+            bool alreadyObserved = observedDropKeys.TryGetValue(canonicalName, out Queue<string>? observedKeys) && observedKeys.Count > 0;
             if (alreadyObserved)
             {
                 dropKey = observedKeys!.Dequeue();
@@ -458,7 +560,25 @@ public static class SafeCoreMirCleanupLowering
             else
             {
                 int generation = materializedGenerations.TryGetValue(dropName, out int currentGeneration)
-                    ? currentGeneration + 1 : 0;
+                    ? currentGeneration + 1 : local.InitiallyInitialized ? 0 : 1;
+                // A compact fact can fill a missing trace entry, but it must
+                // consume a generation that was not already traced. Keep the
+                // search bounded by the producer's initialization events.
+                for (int candidate = generation; candidate <= generations; candidate++)
+                {
+                    Step(options, clock, ref operations);
+                    generation = candidate;
+                    string candidateKey = dropName + "\u001f" + candidate.ToString(CultureInfo.InvariantCulture);
+                    if (!observedDrops.Contains(candidateKey)) break;
+                    generation = candidate + 1;
+                }
+                if (generation > generations)
+                {
+                    AddDiagnostic(diagnostics, InvalidEvidence,
+                        $"Cleanup DropOrder repeats local '{dropName}' without an unconsumed initialization generation.",
+                        local.Source, options);
+                    return null;
+                }
                 materializedGenerations[dropName] = generation;
                 dropKey = dropName + "\u001f" + generation.ToString(CultureInfo.InvariantCulture);
             }
@@ -469,28 +589,33 @@ public static class SafeCoreMirCleanupLowering
                 return null;
             }
             if (alreadyObserved) continue;
-            if (!localsByName.TryGetValue(dropName, out SafeCoreOwnershipLocal? local))
-            {
-                AddDiagnostic(diagnostics, Unsupported,
-                    $"Cleanup drop evidence references unknown local '{dropName}'.", function.Source, options);
-                return null;
-            }
-            if (!local.HasDrop)
-            {
-                AddDiagnostic(diagnostics, InvalidEvidence,
-                    $"Cleanup drop evidence references non-droppable local '{local.Name}'.",
-                    local.Source, options);
-                return null;
-            }
             if (actions.Count >= options.MaximumActionsPerPath)
                 throw new CleanupLimitException();
             int boundaryIndex = actions.FindIndex(action =>
                 action.Kind is SafeCoreMirCleanupActionKind.ReturnBoundary or SafeCoreMirCleanupActionKind.PanicBoundary or
                 SafeCoreMirCleanupActionKind.UnreachableBoundary);
-            SafeCoreMirCleanupAction drop = SafeCoreMirCleanupAction.Drop(local.Id, local.Name, local.Source);
+            SafeCoreMirCleanupAction drop = SafeCoreMirCleanupAction.Drop(local.Id, place.Key, local.Source);
             if (boundaryIndex < 0) actions.Add(drop);
             else actions.Insert(boundaryIndex, drop);
-            observedDrops.Add(dropName);
+            observedDrops.Add(dropKey);
+        }
+
+        // Every explicit trace drop must be represented by the compact
+        // DropOrder fact exactly once.  Older producers may omit trace drops
+        // (the loop above materializes those from DropOrder), but a producer
+        // must never publish an extra trace event that the order fact does
+        // not contain: accepting it would make the emitted cleanup plan lose
+        // the one-shot place/drop-flag correspondence.
+        foreach ((string dropName, Queue<string> pending) in observedDropKeys)
+        {
+            Step(options, clock, ref operations);
+            if (pending.Count == 0) continue;
+            AddDiagnostic(diagnostics, InvalidEvidence,
+                $"Cleanup trace contains drop event(s) for local '{dropName}' that are absent from DropOrder.",
+                localsByName.TryGetValue(dropName, out SafeCoreOwnershipLocal? local)
+                    ? local.Source : function.Source,
+                options);
+            return null;
         }
 
         if (exitKind is SafeCoreMirCleanupExitKind.Returned or SafeCoreMirCleanupExitKind.Unwound)
@@ -519,6 +644,9 @@ public static class SafeCoreMirCleanupLowering
 
         return new SafeCoreMirCleanupPath(path.PathId, function.Name, exitKind,
             function.PanicStrategy, actions, function.Source);
+
+        void AdvanceGeneration(SafeCoreOwnershipLocal local, string key) =>
+            dropGenerations[key] = dropGenerations.GetValueOrDefault(key, dropGenerations.GetValueOrDefault(local.Name)) + 1;
     }
 
     private static Dictionary<string, SafeCoreOwnershipLocal> BuildLocalMap(

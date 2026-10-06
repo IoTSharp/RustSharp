@@ -97,7 +97,8 @@ public static partial class SafeCoreMirLowering
 
         private SafeCoreMirOperand SnapshotCallArgument(SafeCoreMirOperand value, SafeCoreHirNode node)
         {
-            if (!options.EnableP1Extensions || value.Type.Kind != K.Reference) return value;
+            if (!options.EnableP1Extensions) return value;
+            if (value.Type.Kind != K.Reference) return MaterializeOwnedConstantValue(value, node);
             if (!value.Type.IsMutable) return SnapshotOperand(value, node);
             if (value.Kind is not (SafeCoreMirOperandKind.Local or SafeCoreMirOperandKind.Place)) Invalid(node);
             SafeCoreMirPlace place = value.Place ?? SafeCoreMirPlace.Root(value.Id);
@@ -194,7 +195,8 @@ public static partial class SafeCoreMirLowering
         }
 
         private SafeCoreMirOperand SnapshotOperand(SafeCoreMirOperand value, SafeCoreHirNode node) =>
-            value.Kind == SafeCoreMirOperandKind.Constant ? value : Emit(SafeCoreMirRvalue.Use(value, Source(node)), value.Type, node);
+            value.Kind == SafeCoreMirOperandKind.Constant ? MaterializeOwnedConstantValue(value, node)
+                : Emit(SafeCoreMirRvalue.Use(value, Source(node)), value.Type, node);
 
         private int FindAdtField(SafeCoreMirAdtLayout layout, string name, SafeCoreHirNode node)
         {
@@ -289,15 +291,17 @@ public static partial class SafeCoreMirLowering
             // evaluate the RHS before evaluating the destination place.
             SafeCoreMirOperand? right = Expr(Child(node, 1), depth + 1);
             if (_current is null || right is null) return null;
+            right = MaterializeOwnedConstantValue(right, Child(node, 1));
             (SafeCoreMirPlace place, SafeCoreType type) = ResolvePlace(target, depth + 1);
             if (_current is null || right is null) return null;
-            if (operation == "=" && place.IsRoot &&
-                _dropInitialized.Contains(place.LocalId) &&
-                _locals[place.LocalId].DestructorFunctionId is int destructor)
+            if (operation == "=" && RequiresDrop(type))
             {
-                SafeCoreHirNode method = _functionNodes[destructor];
-                EmitDestructorCall(destructor, method, Source(target), place.LocalId);
-                _dropInitialized.Remove(place.LocalId);
+                // The RHS has been completely evaluated, but still owns its
+                // value until this store succeeds. Compiler cleanup is
+                // conditional on the destination's runtime initialization
+                // state, including moved roots and projected fields.
+                EmitOwnedPlaceDrop(type, place, Source(target), depth + 1);
+                if (place.IsRoot) _dropInitialized.Remove(place.LocalId);
             }
             if (operation != "=")
                 right = Emit(SafeCoreMirRvalue.Binary(operation[..^1], SafeCoreMirOperand.PlaceValue(place, type, Source(target)),

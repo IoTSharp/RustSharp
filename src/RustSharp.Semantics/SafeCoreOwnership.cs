@@ -242,9 +242,17 @@ public sealed record SafeCoreOwnershipInstruction(
     public bool IsStaticBorrow { get; init; }
     /// <summary>An aggregate enum transfer may have an inactive reference payload slot.</summary>
     public bool AllowAbsentReference { get; init; }
+    /// <summary>Checked generated cleanup tests the place's live drop flag before invoking Drop.</summary>
+    public bool IsConditionalDrop { get; init; }
     /// <summary>Exact boolean assignment facts derived from the corresponding MIR rvalue.</summary>
     public bool? ConstantBoolean { get; init; }
     public int CopiedBooleanLocalId { get; init; } = -1;
+    /// <summary>Exact enum/tag facts derived from checked MIR assignments.</summary>
+    public int? ConstantEnumDiscriminant { get; init; }
+    public int CopiedEnumLocalId { get; init; } = -1;
+    public int DiscriminantOwnerLocalId { get; init; } = -1;
+    public int ComparedIntegerLocalId { get; init; } = -1;
+    public int? ComparedIntegerConstant { get; init; }
     /// <summary>Required payload slots for an enum tag equality; absence proves the comparison false.</summary>
     public IReadOnlyList<int>? EnumVariantReferenceSlots { get; init; }
 
@@ -693,6 +701,10 @@ public static class SafeCoreOwnershipAnalysis
                     add(SafeCoreOwnershipDiagnosticCodes.InvalidInput, "Ownership instruction references a local outside the arena.", function.Name, block.Id, instructionIndex, instruction.Source);
                 ValidatePlace(instruction.Place, instruction.LocalId, function, block, instructionIndex, add);
                 ValidatePlace(instruction.RelatedPlace, instruction.RelatedLocalId, function, block, instructionIndex, add);
+                if (instruction.IsConditionalDrop && instruction.Kind != SafeCoreOwnershipInstructionKind.Drop)
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop,
+                        "A conditional cleanup flag may only annotate a Drop effect.",
+                        function.Name, block.Id, instructionIndex, instruction.Source);
                 if (instruction.ConstantBoolean is not null || instruction.CopiedBooleanLocalId != -1 || instruction.EnumVariantReferenceSlots is not null)
                 {
                     bool validBoolean = instruction.Kind == SafeCoreOwnershipInstructionKind.Assign && instruction.RelatedLocalId == -1 &&
@@ -712,6 +724,34 @@ public static class SafeCoreOwnershipAnalysis
                     }
                     if (!validBoolean)
                         add(SafeCoreOwnershipDiagnosticCodes.InvalidInput, "Boolean ownership facts require a checked boolean assignment and optional enum reference slots.",
+                            function.Name, block.Id, instructionIndex, instruction.Source);
+                }
+                if (instruction.ConstantEnumDiscriminant is not null || instruction.CopiedEnumLocalId != -1 ||
+                    instruction.DiscriminantOwnerLocalId != -1 || instruction.ComparedIntegerLocalId != -1 ||
+                    instruction.ComparedIntegerConstant is not null)
+                {
+                    bool validFacts = instruction.Kind == SafeCoreOwnershipInstructionKind.Assign &&
+                        instruction.RelatedLocalId == -1 && instruction.Place is not { IsRoot: false } &&
+                        IsValidLocalId(instruction.LocalId, function.Locals.Count);
+                    SafeCoreSemanticTypeKind destinationKind = validFacts
+                        ? function.Locals[instruction.LocalId].Type.Kind : SafeCoreSemanticTypeKind.Error;
+                    if (instruction.ConstantEnumDiscriminant is not null || instruction.CopiedEnumLocalId != -1)
+                        validFacts &= destinationKind == SafeCoreSemanticTypeKind.Adt;
+                    if (instruction.CopiedEnumLocalId != -1)
+                        validFacts &= IsValidLocalId(instruction.CopiedEnumLocalId, function.Locals.Count) &&
+                            function.Locals[instruction.CopiedEnumLocalId].Type.Kind == SafeCoreSemanticTypeKind.Adt;
+                    if (instruction.DiscriminantOwnerLocalId != -1)
+                        validFacts &= destinationKind == SafeCoreSemanticTypeKind.I32 &&
+                            IsValidLocalId(instruction.DiscriminantOwnerLocalId, function.Locals.Count) &&
+                            function.Locals[instruction.DiscriminantOwnerLocalId].Type.Kind == SafeCoreSemanticTypeKind.Adt;
+                    if (instruction.ComparedIntegerLocalId != -1 || instruction.ComparedIntegerConstant is not null)
+                        validFacts &= destinationKind == SafeCoreSemanticTypeKind.Bool &&
+                            instruction.ComparedIntegerConstant is not null &&
+                            IsValidLocalId(instruction.ComparedIntegerLocalId, function.Locals.Count) &&
+                            function.Locals[instruction.ComparedIntegerLocalId].Type.Kind == SafeCoreSemanticTypeKind.I32;
+                    if (!validFacts)
+                        add(SafeCoreOwnershipDiagnosticCodes.InvalidInput,
+                            "Enum and tag ownership facts require matching root assignments and typed sources.",
                             function.Name, block.Id, instructionIndex, instruction.Source);
                 }
                 if (instruction.AlternativePlaces is { } alternatives)
@@ -849,6 +889,15 @@ public static class SafeCoreOwnershipAnalysis
         ref int nextPathId,
         SafeCoreOwnershipOptions options)
     {
+        int initialPathCount = paths.Count;
+        bool convergedCycle = false;
+        bool reportedSemanticDiagnostic = false;
+        Action<string, string, string, int, int, SafeCoreMirSource> diagnosticSink = add;
+        add = (code, message, functionName, blockId, instructionIndex, source) =>
+        {
+            reportedSemanticDiagnostic = true;
+            diagnosticSink(code, message, functionName, blockId, instructionIndex, source);
+        };
         var locals = new Dictionary<int, SafeCoreOwnershipLocal>();
         foreach (SafeCoreOwnershipLocal local in function.Locals) locals.Add(local.Id, local);
         var scopes = function.Scopes.ToDictionary(scope => scope.Id);
@@ -899,12 +948,12 @@ public static class SafeCoreOwnershipAnalysis
             if (repeatedState && state.VisitCount(block.Id) > 1)
             {
                 // A repeated state after visiting this block already is a
-                // genuine backedge (including multi-block cycles). A repeated
-                // conditional header has already explored its exit edge, so
-                // it is a converged loop fixed point; a repeated non-branch
-                // block has no such proof and remains a bounded-cycle failure.
-                if (block.Terminator.Kind != SafeCoreOwnershipTerminatorKind.Branch)
+                // genuine backedge (including multi-block cycles). Only an
+                // unknown branch in that cycle has queued alternative paths.
+                // A known-true branch alone proves no exit was explored.
+                if (!state.CycleHasUnknownBranch)
                     throw new OwnershipLimitException();
+                convergedCycle = true;
                 continue;
             }
 
@@ -935,6 +984,7 @@ public static class SafeCoreOwnershipAnalysis
                         work.Push(new WorkItem(target, state, item.Depth + 1));
                         break;
                     }
+                    state.RecordUnknownBranch();
                     PathState falseState = state.Clone();
                     PathState trueState = state;
                     falseState.Trace.Add($"branch {terminator.FalseTargetBlockId}");
@@ -977,6 +1027,12 @@ public static class SafeCoreOwnershipAnalysis
                     break;
             }
         }
+        // Unknown branches may all lead back into the same cycle. Reaching a
+        // fixed point there proves ownership invariance, not a terminal cleanup
+        // path. Evidence from another function must not hide this function's
+        // missing terminal path; preserve any original semantic diagnostic.
+        if (convergedCycle && paths.Count == initialPathCount && !reportedSemanticDiagnostic)
+            throw new OwnershipLimitException();
     }
 
     private static NllLiveness BuildNllLiveness(
@@ -1087,6 +1143,10 @@ public static class SafeCoreOwnershipAnalysis
             // Backward liveness must not keep the overwritten loan alive.
             if (instruction.RelatedPlace is null || instruction.RelatedPlace.IsRoot)
                 references.Remove(instruction.RelatedLocalId);
+            else if (locals.TryGetValue(instruction.RelatedLocalId, out SafeCoreOwnershipLocal? destination) && destination.IsReference)
+                // A projected store replaces the referent, while its reference
+                // remains the live address needed to perform that store.
+                references.Add(instruction.RelatedLocalId);
             if (locals.TryGetValue(instruction.LocalId, out SafeCoreOwnershipLocal? local) && local.IsReference)
                 references.Add(instruction.LocalId);
             if (instruction.Kind == SafeCoreOwnershipInstructionKind.Borrow)
@@ -1204,15 +1264,19 @@ public static class SafeCoreOwnershipAnalysis
                 bool assigned = instruction.Place is null || instruction.Place.IsRoot
                     ? state.Assign(instruction.LocalId, locals, add, function, block, index, instruction.Source)
                     : state.AssignPlace(instruction.Place, locals, add, function, block, index, instruction.Source);
-                if (assigned) state.AssignBooleanFacts(instruction, locals, step);
+                if (assigned) state.AssignKnownFacts(instruction, locals, step);
                 return assigned;
             case SafeCoreOwnershipInstructionKind.Move:
-                return instruction.Place is null && instruction.RelatedPlace is null
+                bool moved = instruction.Place is null && instruction.RelatedPlace is null
                     ? state.Move(instruction.LocalId, instruction.RelatedLocalId, locals, add, function, block, index, instruction.Source)
                     : state.MovePlace(instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId),
                         instruction.RelatedPlace ?? SafeCoreOwnershipPlace.Root(instruction.RelatedLocalId),
                         locals, add, function, block, index, instruction.Source, step);
+                if (moved) state.TransferKnownFacts(instruction);
+                return moved;
             case SafeCoreOwnershipInstructionKind.Borrow:
+                if (instruction.IsMutable && instruction.Place is not { IsRoot: false })
+                    state.ForgetKnownFacts(instruction.LocalId);
                 if (instruction.IsStaticBorrow)
                 {
                     bool promoted = state.BorrowPlace(instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId),
@@ -1238,6 +1302,9 @@ public static class SafeCoreOwnershipAnalysis
                     ? state.Write(instruction.LocalId, locals, add, function, block, index, instruction.Source)
                     : state.WritePlace(instruction.Place, locals, add, function, block, index, instruction.Source);
             case SafeCoreOwnershipInstructionKind.Drop:
+                if (instruction.IsConditionalDrop)
+                    return state.DropCleanupPlace(instruction.Place ?? SafeCoreOwnershipPlace.Root(instruction.LocalId),
+                        locals, add, function, block, index, instruction.Source, step);
                 return instruction.Place is null || instruction.Place.IsRoot
                     ? state.Drop(instruction.LocalId, locals, add, function, block, index, instruction.Source, step)
                     : state.DropPlace(instruction.Place, locals, add, function, block, index, instruction.Source, step);
@@ -1271,8 +1338,14 @@ public static class SafeCoreOwnershipAnalysis
         private readonly Dictionary<int, BorrowState> borrows = [];
         private readonly Dictionary<int, SafeCoreOwnershipPlace> storageAliases = [];
         private readonly Dictionary<int, bool> booleanValues = [];
+        private readonly Dictionary<int, int> enumDiscriminants = [];
+        private readonly Dictionary<int, int> integerValues = [];
         private readonly HashSet<int> activeScopes = [];
         private readonly Dictionary<int, int> visits = [];
+        private readonly Dictionary<int, int> visitOrder = [];
+        private int visitSequence;
+        private int lastUnknownBranchVisit;
+        public bool CycleHasUnknownBranch { get; private set; }
         public List<string> DropOrder { get; } = [];
         public List<string> Trace { get; } = [];
 
@@ -1303,8 +1376,14 @@ public static class SafeCoreOwnershipAnalysis
             foreach ((int id, BorrowState borrow) in other.borrows) borrows[id] = borrow with { };
             foreach ((int id, SafeCoreOwnershipPlace storage) in other.storageAliases) storageAliases[id] = storage;
             foreach ((int id, bool value) in other.booleanValues) booleanValues[id] = value;
+            foreach ((int id, int value) in other.enumDiscriminants) enumDiscriminants[id] = value;
+            foreach ((int id, int value) in other.integerValues) integerValues[id] = value;
             foreach (int scope in other.activeScopes) activeScopes.Add(scope);
             foreach ((int block, int count) in other.visits) visits[block] = count;
+            foreach ((int block, int order) in other.visitOrder) visitOrder[block] = order;
+            visitSequence = other.visitSequence;
+            lastUnknownBranchVisit = other.lastUnknownBranchVisit;
+            CycleHasUnknownBranch = other.CycleHasUnknownBranch;
             DropOrder.AddRange(other.DropOrder);
             Trace.AddRange(other.Trace);
         }
@@ -1328,6 +1407,7 @@ public static class SafeCoreOwnershipAnalysis
                     .Append(value.Available ? '1' : '0')
                     .Append(value.Moved ? '1' : '0')
                     .Append(value.Dropped ? '1' : '0')
+                    .Append(value.CleanupDropCompleted ? '1' : '0')
                     .Append(value.DropOwned ? '1' : '0')
                     .Append(':').Append(value.MovedTo?.ToString(CultureInfo.InvariantCulture) ?? "-")
                     .Append(';');
@@ -1342,6 +1422,7 @@ public static class SafeCoreOwnershipAnalysis
                     .Append(value.Available ? '1' : '0')
                     .Append(value.Moved ? '1' : '0')
                     .Append(value.Dropped ? '1' : '0')
+                    .Append(value.CleanupDropCompleted ? '1' : '0')
                     .Append(value.DropOwned ? '1' : '0')
                     .Append(';');
             }
@@ -1387,24 +1468,41 @@ public static class SafeCoreOwnershipAnalysis
                 _step();
                 builder.Append(id.ToString(CultureInfo.InvariantCulture)).Append(':').Append(value ? '1' : '0').Append(',');
             }
-            builder.Append("]d[");
-            foreach (string drop in DropOrder)
+            builder.Append("]e[");
+            foreach ((int id, int value) in enumDiscriminants.OrderBy(static pair => pair.Key))
             {
                 _step();
-                builder.Append(drop.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(drop).Append(';');
+                builder.Append(id.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(value.ToString(CultureInfo.InvariantCulture)).Append(',');
             }
+            builder.Append("]i[");
+            foreach ((int id, int value) in integerValues.OrderBy(static pair => pair.Key))
+            {
+                _step();
+                builder.Append(id.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(value.ToString(CultureInfo.InvariantCulture)).Append(',');
+            }
+            // DropOrder is retained on terminal evidence paths, but is not a
+            // future ownership fact. Including its ever-growing history here
+            // prevents a loop that drops one fresh owner each iteration from
+            // reaching a fixed point despite identical live/move/loan states.
             return builder.Append(']').ToString();
         }
 
         public void Visit(int blockId, int maximum, Action step)
         {
             step();
+            CycleHasUnknownBranch = visitOrder.TryGetValue(blockId, out int previousVisit) &&
+                lastUnknownBranchVisit >= previousVisit;
+            visitOrder[blockId] = ++visitSequence;
             visits.TryGetValue(blockId, out int count);
             if (++count > maximum) throw new OwnershipLimitException();
             visits[blockId] = count;
         }
 
         public int VisitCount(int blockId) => visits.TryGetValue(blockId, out int count) ? count : 0;
+
+        public void RecordUnknownBranch() => lastUnknownBranchVisit = visitSequence;
 
         public void EnterBlock(int targetScope, IReadOnlyDictionary<int, SafeCoreOwnershipScope> scopes,
             IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals, Action step, Action<int, int> reportEscape)
@@ -1597,12 +1695,19 @@ public static class SafeCoreOwnershipAnalysis
         {
             if (place.IsRoot)
                 return Use(place.LocalId, locals, add, function, block, index, source);
+            if (HasCompletedCleanupProjection(place))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove,
+                    "A projected value has already completed destructor cleanup.",
+                    function.Name, block.Id, index, source);
+                return false;
+            }
             if (place.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference &&
                 locals.TryGetValue(place.LocalId, out SafeCoreOwnershipLocal? reference) && reference.IsReference)
                 return AccessReferencePlace(place, false, locals, add, function, block, index, source);
             if (!EnsureLocalScope(place.LocalId, locals, add, function, block, index, source)) return false;
             if (!values.TryGetValue(place.LocalId, out ValueState? root) ||
-                !root.Available || !root.Initialized || root.Moved || root.Dropped ||
+                !root.Available || !root.Initialized || root.Moved || root.Dropped || root.CleanupDropCompleted ||
                 HasMovedProjection(place))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove,
@@ -1684,6 +1789,7 @@ public static class SafeCoreOwnershipAnalysis
                 Initialized = true,
                 Moved = false,
                 Dropped = false,
+                CleanupDropCompleted = false,
                 DropOwned = false,
                 MovedTo = null,
             });
@@ -1774,7 +1880,8 @@ public static class SafeCoreOwnershipAnalysis
             }
 
             ValueState destination = ReadPlace(destinationPlace, destinationRoot);
-            if (destination.Initialized && !destination.Moved && !destination.Dropped && destination.DropOwned)
+            if (destination.Initialized && !destination.Moved && !destination.Dropped &&
+                !destination.CleanupDropCompleted && destination.DropOwned)
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop,
                     $"A move destination '{DisplayPlace(destinationPlace, locals)}' is already initialized.",
@@ -1790,7 +1897,8 @@ public static class SafeCoreOwnershipAnalysis
                 Initialized = true,
                 Moved = false,
                 Dropped = false,
-                DropOwned = false,
+                CleanupDropCompleted = false,
+                DropOwned = moved.DropOwned || destinationPlace.IsRoot && locals[destinationPlace.LocalId].HasDrop,
                 MovedTo = null,
             });
             Trace.Add($"move {DisplayPlace(sourcePlace, locals)} -> {DisplayPlace(destinationPlace, locals)}");
@@ -2190,6 +2298,67 @@ public static class SafeCoreOwnershipAnalysis
             return true;
         }
 
+        public bool DropCleanupPlace(SafeCoreOwnershipPlace place,
+            IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals,
+            Action<string, string, string, int, int, SafeCoreMirSource> add,
+            SafeCoreOwnershipFunction function, SafeCoreOwnershipBlock block, int index,
+            SafeCoreMirSource source, Action step)
+        {
+            if (!EnsureLocalScope(place.LocalId, locals, add, function, block, index, source) ||
+                !values.TryGetValue(place.LocalId, out ValueState? root)) return false;
+            // Compiler cleanup consults a place flag. Moving the root or any
+            // ancestor transfers all descendant obligations to the recipient.
+            if (!root.Available || !root.Initialized || root.Moved || root.Dropped) return true;
+            string key = PlaceKey(place);
+            foreach ((string projectedKey, ValueState value) in projectedValues)
+            {
+                step();
+                if ((projectedKey == key || IsPlacePrefix(projectedKey, key)) &&
+                    (!value.Initialized || value.Moved || value.Dropped)) return true;
+                if (IsPlacePrefix(key, projectedKey) && (value.Moved || value.Dropped))
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop,
+                        "A whole destructor receiver cannot contain a moved or dropped field.",
+                        function.Name, block.Id, index, source);
+                    return false;
+                }
+            }
+            ValueState live = place.IsRoot ? root : ReadPlace(place, root) with { CleanupDropCompleted = false };
+            if (projectedValues.TryGetValue(key, out ValueState? exact)) live = exact;
+            if (live.CleanupDropCompleted) return true;
+            int excludedReceiver = -1;
+            if (!place.IsRoot && place.Projections[0].Kind == SafeCoreOwnershipProjectionKind.Dereference &&
+                locals.TryGetValue(place.LocalId, out SafeCoreOwnershipLocal? reference) && reference.IsReference)
+            {
+                if (!borrows.TryGetValue(place.LocalId, out BorrowState? receiver) ||
+                    !receiver.Active || !receiver.Mutable || receiver.Suspended)
+                {
+                    add(SafeCoreOwnershipDiagnosticCodes.InvalidBorrow,
+                        "Recursive destructor cleanup requires an active exclusive receiver.",
+                        function.Name, block.Id, index, source);
+                    return false;
+                }
+                excludedReceiver = place.LocalId;
+            }
+            if (HasActiveBorrow(place, mutableOnly: false, excludedReferenceId: excludedReceiver))
+            {
+                add(SafeCoreOwnershipDiagnosticCodes.MoveWhileBorrowed,
+                    "Cannot clean up a live value while a user borrow is active.",
+                    function.Name, block.Id, index, source);
+                return false;
+            }
+            // Completing the body clears its own obligation before the call.
+            // Field storage stays available solely for subsequent recursive
+            // cleanup; ordinary uses observe the completed bit and are rejected.
+            ValueState completed = live with { CleanupDropCompleted = true, DropOwned = false };
+            if (place.IsRoot) values[place.LocalId] = completed;
+            else projectedValues[key] = completed;
+            string display = DisplayPlace(place, locals);
+            Trace.Add($"drop {display}");
+            DropOrder.Add(display);
+            return true;
+        }
+
         private static string PlaceKey(SafeCoreOwnershipPlace place)
         {
             // The display form is intentionally human-readable, but it is not
@@ -2261,13 +2430,21 @@ public static class SafeCoreOwnershipAnalysis
             return storageAliases.Any(pair => PlacesOverlap(root, pair.Value) &&
                 values.TryGetValue(pair.Key, out ValueState? value) && (value.Moved || value.Dropped)) || projectedValues.Any(pair =>
                 (IsPlacePrefix(key, pair.Key) || IsPlacePrefix(pair.Key, key) || pair.Key == key) &&
-                (pair.Value.Moved || pair.Value.Dropped));
+                (pair.Value.Moved || pair.Value.Dropped || pair.Value.CleanupDropCompleted));
         }
 
         private bool HasMovedAncestor(SafeCoreOwnershipPlace place)
         {
             string key = PlaceKey(place);
-            return projectedValues.Any(pair => IsPlacePrefix(pair.Key, key) && (pair.Value.Moved || pair.Value.Dropped));
+            return projectedValues.Any(pair => IsPlacePrefix(pair.Key, key) &&
+                (pair.Value.Moved || pair.Value.Dropped || pair.Value.CleanupDropCompleted));
+        }
+
+        private bool HasCompletedCleanupProjection(SafeCoreOwnershipPlace place)
+        {
+            string key = PlaceKey(place);
+            return projectedValues.Any(pair => pair.Value.CleanupDropCompleted &&
+                (pair.Key == key || IsPlacePrefix(pair.Key, key) || IsPlacePrefix(key, pair.Key)));
         }
 
         private bool PlacesOverlap(SafeCoreOwnershipPlace left, SafeCoreOwnershipPlace right)
@@ -2343,7 +2520,7 @@ public static class SafeCoreOwnershipAnalysis
                 return false;
             }
 
-            if (!value.Available || !value.Initialized || value.Moved || value.Dropped)
+            if (!value.Available || !value.Initialized || value.Moved || value.Dropped || value.CleanupDropCompleted)
             {
                 add(SafeCoreOwnershipDiagnosticCodes.UseAfterMove, "A local is uninitialized, moved, or already dropped.", function.Name, block.Id, index, source);
                 return false;
@@ -2428,7 +2605,8 @@ public static class SafeCoreOwnershipAnalysis
                 return false;
             }
 
-            values[id] = value with { Initialized = true, Moved = false, Dropped = false, DropOwned = local.HasDrop, MovedTo = null };
+            values[id] = value with { Initialized = true, Moved = false, Dropped = false,
+                CleanupDropCompleted = false, DropOwned = local.HasDrop, MovedTo = null };
             InvalidateProjected(id);
             Trace.Add($"assign {local.Name}");
             return true;
@@ -2460,15 +2638,24 @@ public static class SafeCoreOwnershipAnalysis
         }
 
         public bool IsInitialized(int localId) => values.TryGetValue(localId, out ValueState? value) &&
-            value.Available && value.Initialized && !value.Moved && !value.Dropped;
+            value.Available && value.Initialized && !value.Moved && !value.Dropped && !value.CleanupDropCompleted;
 
         public bool? KnownBoolean(int localId) => booleanValues.TryGetValue(localId, out bool value) ? value : null;
 
-        public void AssignBooleanFacts(SafeCoreOwnershipInstruction instruction,
+        public void AssignKnownFacts(SafeCoreOwnershipInstruction instruction,
             IReadOnlyDictionary<int, SafeCoreOwnershipLocal> locals, Action step)
         {
+            step();
+            if (instruction.Place is { IsRoot: false }) return;
+            int? tag = instruction.ConstantEnumDiscriminant;
+            if (instruction.CopiedEnumLocalId >= 0)
+                tag = enumDiscriminants.TryGetValue(instruction.CopiedEnumLocalId, out int copiedTag) ? copiedTag : null;
+            int? integer = instruction.DiscriminantOwnerLocalId >= 0 &&
+                enumDiscriminants.TryGetValue(instruction.DiscriminantOwnerLocalId, out int ownerTag) ? ownerTag : null;
             bool? known = instruction.ConstantBoolean;
             if (instruction.CopiedBooleanLocalId >= 0) known = KnownBoolean(instruction.CopiedBooleanLocalId);
+            if (instruction.ComparedIntegerLocalId >= 0 && instruction.ComparedIntegerConstant is int compared)
+                known = integerValues.TryGetValue(instruction.ComparedIntegerLocalId, out int actual) ? actual == compared : null;
             if (instruction.EnumVariantReferenceSlots is { } required)
                 foreach (int slot in required)
                 {
@@ -2480,6 +2667,43 @@ public static class SafeCoreOwnershipAnalysis
                 }
             if (known is { } value) booleanValues[instruction.LocalId] = value;
             else booleanValues.Remove(instruction.LocalId);
+            if (tag is int exactTag) enumDiscriminants[instruction.LocalId] = exactTag;
+            else enumDiscriminants.Remove(instruction.LocalId);
+            if (integer is int exactInteger) integerValues[instruction.LocalId] = exactInteger;
+            else integerValues.Remove(instruction.LocalId);
+        }
+
+        public void TransferKnownFacts(SafeCoreOwnershipInstruction instruction)
+        {
+            _step();
+            bool sourceRoot = instruction.Place is null || instruction.Place.IsRoot;
+            bool destinationRoot = instruction.RelatedPlace is null || instruction.RelatedPlace.IsRoot;
+            if (destinationRoot)
+            {
+                if (sourceRoot && enumDiscriminants.TryGetValue(instruction.LocalId, out int tag))
+                    enumDiscriminants[instruction.RelatedLocalId] = tag;
+                else enumDiscriminants.Remove(instruction.RelatedLocalId);
+                if (sourceRoot && integerValues.TryGetValue(instruction.LocalId, out int integer))
+                    integerValues[instruction.RelatedLocalId] = integer;
+                else integerValues.Remove(instruction.RelatedLocalId);
+                if (sourceRoot && booleanValues.TryGetValue(instruction.LocalId, out bool boolean))
+                    booleanValues[instruction.RelatedLocalId] = boolean;
+                else booleanValues.Remove(instruction.RelatedLocalId);
+            }
+            if (sourceRoot && values.TryGetValue(instruction.LocalId, out ValueState? source) && source.Moved)
+            {
+                enumDiscriminants.Remove(instruction.LocalId);
+                integerValues.Remove(instruction.LocalId);
+                booleanValues.Remove(instruction.LocalId);
+            }
+        }
+
+        public void ForgetKnownFacts(int ownerLocalId)
+        {
+            _step();
+            enumDiscriminants.Remove(ownerLocalId);
+            integerValues.Remove(ownerLocalId);
+            booleanValues.Remove(ownerLocalId);
         }
 
         public void ClearReference(int localId)
@@ -2679,7 +2903,7 @@ public static class SafeCoreOwnershipAnalysis
                 add(SafeCoreOwnershipDiagnosticCodes.BorrowConflict, "Cannot replace a move destination while it is borrowed.", function.Name, block.Id, index, source);
                 return false;
             }
-            if (destination.Initialized && !destination.Moved && !destination.Dropped && !destinationLocal.IsReference &&
+            if (destination.Initialized && !destination.Moved && !destination.Dropped && !destination.CleanupDropCompleted && !destinationLocal.IsReference &&
                 (destination.DropOwned || destinationLocal.HasDrop))
             {
                 add(SafeCoreOwnershipDiagnosticCodes.InvalidDrop, "A move destination is already initialized.", function.Name, block.Id, index, source);
@@ -2689,7 +2913,8 @@ public static class SafeCoreOwnershipAnalysis
             if (sourceLocal.Kind == SafeCoreOwnershipKind.Move ||
                 sourceLocal.IsReference && sourceLocal.Type.IsMutable)
                 values[sourceId] = values[sourceId] with { Initialized = false, Moved = true, MovedTo = destinationId };
-            values[destinationId] = destination with { Initialized = true, Moved = false, Dropped = false, DropOwned = values[sourceId].DropOwned || sourceLocal.HasDrop, MovedTo = null };
+            values[destinationId] = destination with { Initialized = true, Moved = false, Dropped = false,
+                CleanupDropCompleted = false, DropOwned = values[sourceId].DropOwned || sourceLocal.HasDrop, MovedTo = null };
             InvalidateProjected(destinationId);
             if (transferBorrow)
             {
@@ -2816,7 +3041,7 @@ public static class SafeCoreOwnershipAnalysis
                 return;
             step();
             values[local.Id] = value with { Initialized = false, Dropped = true };
-            if (value.DropOwned || local.HasDrop)
+            if (!value.CleanupDropCompleted && (value.DropOwned || local.HasDrop))
             {
                 DropOrder.Add(local.Name);
                 Trace.Add($"drop {local.Name}");
@@ -2853,9 +3078,13 @@ public static class SafeCoreOwnershipAnalysis
                     Initialized = local.InitiallyInitialized,
                     Moved = false,
                     Dropped = false,
+                    CleanupDropCompleted = false,
                     DropOwned = local.HasDrop,
                     MovedTo = null,
                 };
+                enumDiscriminants.Remove(local.Id);
+                integerValues.Remove(local.Id);
+                booleanValues.Remove(local.Id);
             }
         }
 
@@ -2921,6 +3150,7 @@ public static class SafeCoreOwnershipAnalysis
 
         private sealed record ValueState(bool Initialized, bool Available, bool Moved, bool Dropped, bool DropOwned, int? MovedTo)
         {
+            public bool CleanupDropCompleted { get; init; }
             public ValueState(bool initialized, bool available, bool moved, bool dropOwned, int? movedTo)
                 : this(initialized, available, moved, false, dropOwned, movedTo) { }
         }

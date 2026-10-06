@@ -257,6 +257,48 @@ public sealed record ClrLirCallSite
     public ClrLirExternalCall? ExternalCall { get; init; }
 }
 
+/// <summary>A fault cleanup obligation guarded by one generated live flag.</summary>
+public sealed record ClrLirGuardedCleanup
+{
+    public ClrLirGuardedCleanup(ClrLirCallSite site, int flagLocalIndex, int? receiverLocalIndex = null,
+        IEnumerable<ClrLirInstruction>? receiverInstructions = null,
+        IEnumerable<int>? consumedFlagLocalIndices = null,
+        IEnumerable<IEnumerable<ClrLirInstruction>>? guardInstructions = null)
+    {
+        ArgumentNullException.ThrowIfNull(site);
+        ArgumentOutOfRangeException.ThrowIfNegative(flagLocalIndex);
+        if (receiverLocalIndex is < 0) throw new ArgumentOutOfRangeException(nameof(receiverLocalIndex));
+        Site = site;
+        FlagLocalIndex = flagLocalIndex;
+        ReceiverLocalIndex = receiverLocalIndex;
+        ReceiverInstructions = ClrLirLimits.CopyBounded(receiverInstructions ?? [], 512, nameof(receiverInstructions));
+        ConsumedFlagLocalIndices = ClrLirLimits.CopyBounded(consumedFlagLocalIndices ?? [],
+            ClrLirLimits.MaximumLocals, nameof(consumedFlagLocalIndices));
+        GuardInstructions = ClrLirLimits.CopyBounded(guardInstructions ?? [], 129, nameof(guardInstructions))
+            .Select(group => ClrLirLimits.CopyBounded(group, 512, nameof(guardInstructions))).ToImmutableArray();
+        if (ConsumedFlagLocalIndices.Any(static index => index < 0))
+            throw new ArgumentOutOfRangeException(nameof(consumedFlagLocalIndices));
+        if (receiverLocalIndex.HasValue && !ReceiverInstructions.IsEmpty)
+            throw new ArgumentException("Cleanup uses either a root receiver or explicit receiver projection.", nameof(receiverInstructions));
+    }
+
+    public ClrLirCallSite Site { get; }
+    public int FlagLocalIndex { get; }
+    /// <summary>The GC-owned root storage that supplies the &amp;mut receiver.</summary>
+    public int? ReceiverLocalIndex { get; }
+    public ImmutableArray<ClrLirInstruction> ReceiverInstructions { get; }
+    /// <summary>Nested obligations consumed by this owner's destructor.</summary>
+    public ImmutableArray<int> ConsumedFlagLocalIndices { get; }
+    /// <summary>Pure boolean tests evaluated in order with short circuit before receiver reconstruction.</summary>
+    public ImmutableArray<ImmutableArray<ClrLirInstruction>> GuardInstructions { get; }
+    public bool HasReceiver => ReceiverLocalIndex.HasValue || !ReceiverInstructions.IsEmpty;
+}
+
+/// <summary>Storage and policy for a generated, reusable panic catch boundary.</summary>
+public sealed record ClrLirPanicHandling(int PanicLocalIndex, int CleanupFailureLocalIndex,
+    int NormalCleanupLocalIndex, bool IsEntryBoundary, bool AbortWithoutUnwind = false,
+    int UnwindStateLocalIndex = -1);
+
 public abstract record ClrLirInstruction;
 
 public sealed record ClrLirLoadInt32(int Value) : ClrLirInstruction;
@@ -454,7 +496,9 @@ public sealed class ClrLirMethod
         IEnumerable<ClrLirLocal> locals,
         IEnumerable<ClrLirBlock> blocks,
         IEnumerable<ClrLirCallSite>? exceptionCleanup = null,
-        int? faultTryBlockCount = null)
+        int? faultTryBlockCount = null,
+        IEnumerable<ClrLirGuardedCleanup>? guardedExceptionCleanup = null,
+        ClrLirPanicHandling? panicHandling = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(parameters);
@@ -478,6 +522,9 @@ public sealed class ClrLirMethod
             exceptionCleanup ?? [],
             ClrLirLimits.MaximumBlocks,
             nameof(exceptionCleanup));
+        GuardedExceptionCleanup = ClrLirLimits.CopyBounded(
+            guardedExceptionCleanup ?? [], ClrLirLimits.MaximumLocals, nameof(guardedExceptionCleanup));
+        PanicHandling = panicHandling;
         FaultTryBlockCount = faultTryBlockCount ?? Blocks.Length;
         if (FaultTryBlockCount is < 1 or >  ClrLirLimits.MaximumBlocks || FaultTryBlockCount > Blocks.Length)
             throw new ArgumentOutOfRangeException(nameof(faultTryBlockCount));
@@ -522,6 +569,10 @@ public sealed class ClrLirMethod
     /// method, preserving cleanup for CoreCLR and Native AOT generated code.
     /// </summary>
     public ImmutableArray<ClrLirCallSite> ExceptionCleanup { get; }
+    /// <summary>Fault cleanup that consumes only initialized, still-live source places.</summary>
+    public ImmutableArray<ClrLirGuardedCleanup> GuardedExceptionCleanup { get; }
+    public ClrLirPanicHandling? PanicHandling { get; }
+    public bool HasExceptionCleanup => PanicHandling is not null || !ExceptionCleanup.IsEmpty || !GuardedExceptionCleanup.IsEmpty;
     /// <summary>Number of leading blocks covered by the generated fault region.</summary>
     public int FaultTryBlockCount { get; }
 
@@ -530,6 +581,7 @@ public sealed class ClrLirMethod
         long started = Stopwatch.GetTimestamp();
         cancellationToken.ThrowIfCancellationRequested();
         var diagnostics = ImmutableArray.CreateBuilder<ClrLirDiagnostic>();
+        int cleanupStackDepth = PanicHandling is not null ? 2 : HasExceptionCleanup ? 1 : 0;
         if (IsCompilerGenerated && (IsPublic || SourceQualifiedName is not null))
             diagnostics.Add(new("LIR021", "Compiler helpers must be internal and have no source declaration identity.", null, -1));
         ValidateType(ReturnType, "return", null, -1, diagnostics, allowVoid: true);
@@ -541,6 +593,91 @@ public sealed class ClrLirMethod
         for (var index = 0; index < Locals.Length; index++)
         {
             ValidateType(Locals[index].Type, "local", null, index, diagnostics, allowVoid: false);
+        }
+
+        foreach (ClrLirGuardedCleanup cleanup in GuardedExceptionCleanup)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (cleanup is null || cleanup.FlagLocalIndex >= Locals.Length ||
+                Locals[cleanup.FlagLocalIndex].Type != ClrLirType.Bool ||
+                cleanup.Site.ReturnType != ClrLirType.Void ||
+                cleanup.ReceiverLocalIndex is int receiver &&
+                    (receiver >= Locals.Length || Locals[receiver].Type != ClrLirType.Any) ||
+                cleanup.Site.ParameterTypes.Length != (cleanup.HasReceiver ? 1 : 0) ||
+                cleanup.HasReceiver && cleanup.Site.ParameterTypes[0] != ClrLirType.Any)
+                diagnostics.Add(new("LIR022", "Guarded cleanup requires a bool flag, optional root receiver, and a void destructor.", null, -1));
+            if (cleanup is not null && cleanup.ConsumedFlagLocalIndices.Any(index => !HasLocal(index, ClrLirType.Bool)))
+                diagnostics.Add(new("LIR022", "Nested cleanup obligations require bool flag locals.", null, -1));
+            if (cleanup is not null)
+                foreach (ImmutableArray<ClrLirInstruction> guard in cleanup.GuardInstructions)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    bool safe = !guard.IsEmpty && guard.All(static instruction => instruction is
+                        ClrLirLoadLocal or ClrLirLoadInt32 or ClrLirUnbox { Type.Kind: ClrLirTypeKind.Any or ClrLirTypeKind.I32 } ||
+                        instruction is ClrLirCall call && IsCleanupRead(call.Site, allowGuards: true));
+                    if (!safe)
+                        diagnostics.Add(new("LIR022", "Cleanup guards may only read checked MIR storage.", null, -1));
+                    else
+                    {
+                        var guardCheck = new ClrLirMethod("cleanup_guard", ClrLirType.Bool, Parameters, Locals,
+                            [new("entry", [.. guard, new ClrLirReturn()])]);
+                        ClrLirValidationResult guardValidation = guardCheck.Validate(cancellationToken);
+                        cleanupStackDepth = Math.Max(cleanupStackDepth, guardValidation.MaximumStackDepth);
+                        if (!guardValidation.IsValid)
+                            diagnostics.Add(new("LIR022", "Cleanup guard has an invalid bool result, CLR stack or local access.", null, -1));
+                    }
+                }
+            if (cleanup is not null && !cleanup.ReceiverInstructions.IsEmpty)
+            {
+                bool safe = cleanup.ReceiverInstructions.All(static instruction => instruction is
+                    ClrLirLoadLocal or ClrLirLoadInt32 or ClrLirUnbox { Type.Kind: ClrLirTypeKind.Any or ClrLirTypeKind.I32 } ||
+                    instruction is ClrLirCall call && IsCleanupRead(call.Site, allowGuards: false));
+                if (!safe)
+                    diagnostics.Add(new("LIR022", "Cleanup receiver projections may only read checked MIR storage.", null, -1));
+                else
+                {
+                    var receiverCheck = new ClrLirMethod("cleanup_receiver", ClrLirType.Void, Parameters, Locals,
+                        [new("entry", [.. cleanup.ReceiverInstructions, new ClrLirCall(cleanup.Site), new ClrLirReturn()])]);
+                    ClrLirValidationResult receiverValidation = receiverCheck.Validate(cancellationToken);
+                    cleanupStackDepth = Math.Max(cleanupStackDepth, receiverValidation.MaximumStackDepth);
+                    if (!receiverValidation.IsValid)
+                        diagnostics.Add(new("LIR022", "Cleanup receiver projection has an invalid CLR stack or local access.", null, -1));
+                }
+            }
+        }
+        if (PanicHandling is { } handling &&
+            (!HasLocal(handling.PanicLocalIndex, ClrLirType.Any) ||
+             !HasLocal(handling.CleanupFailureLocalIndex, ClrLirType.Any) ||
+             !HasLocal(handling.NormalCleanupLocalIndex, ClrLirType.Bool) ||
+             !HasLocal(handling.UnwindStateLocalIndex, ClrLirType.Bool) ||
+             handling.PanicLocalIndex == handling.CleanupFailureLocalIndex || !ExceptionCleanup.IsEmpty))
+            diagnostics.Add(new("LIR023", "Generated panic handling requires two object slots and a normal-cleanup bool slot.", null, -1));
+
+        bool HasLocal(int index, ClrLirType type) => index >= 0 && index < Locals.Length && Locals[index].Type == type;
+
+        static bool IsCleanupRead(ClrLirCallSite site, bool allowGuards)
+        {
+            if (site.ExternalCall is not { AssemblyName: "RustSharp.Runtime", TypeNamespace: "RustSharp.Runtime", TypeName: "MirReference" } external)
+                return false;
+            ClrLirType[] parameters;
+            ClrLirType result = ClrLirType.Any;
+            switch (external.MethodName)
+            {
+                case "Read": parameters = [ClrLirType.Any]; break;
+                case "Field": case "SliceIndex": parameters = [ClrLirType.Any, ClrLirType.I32]; break;
+                case "ArrayIndex": parameters = [ClrLirType.Any, ClrLirType.I32, ClrLirType.I32]; break;
+                case "FromEndIndex": parameters = [ClrLirType.Any, ClrLirType.I32, ClrLirType.I32, ClrLirType.I32]; break;
+                case "HasVariant" when allowGuards:
+                    result = ClrLirType.Bool;
+                    parameters = [ClrLirType.Any, ClrLirType.I32];
+                    break;
+                case "IsDropLive" when allowGuards:
+                    result = ClrLirType.Bool;
+                    parameters = [ClrLirType.Any];
+                    break;
+                default: return false;
+            }
+            return site.ReturnType == result && site.ParameterTypes.SequenceEqual(parameters);
         }
 
         if (Blocks.IsEmpty)
@@ -566,7 +703,7 @@ public sealed class ClrLirMethod
         var work = new Queue<ClrLirBlock>();
         work.Enqueue(Blocks[0]);
         int stateCount = 0;
-        int maximumStackDepth = 0;
+        int maximumStackDepth = cleanupStackDepth;
         var stateLimitExceeded = false;
         while (work.Count > 0)
         {

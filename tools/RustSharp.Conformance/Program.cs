@@ -27,6 +27,50 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length == 4 && args[0] == "--p1-drop-call-interface")
+        {
+            if (!int.TryParse(args[3], NumberStyles.None, CultureInfo.InvariantCulture, out int maximumArtifacts) ||
+                maximumArtifacts is not (1 or P1DropCallInterfaceRunner.MaximumArtifacts))
+            {
+                Console.Error.WriteLine("Callable Drop evidence requires an artifact limit of 1 or 2.");
+                return 2;
+            }
+            try
+            {
+                P1DropCallInterfaceRunner.Result callable = await P1DropCallInterfaceRunner.RunAsync(
+                    FindRepositoryRoot(), args[1] == "create" ? null : args[1], args[2], maximumArtifacts).ConfigureAwait(false);
+                Console.WriteLine($"P1 Drop callable evidence: {callable.ReportPath}; passed={callable.Passed}, failed={callable.Failed}, blocked={callable.Blocked}, fullClosure={callable.ExpectedContractSatisfied}");
+                return callable.Succeeded ? 0 : 1;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                ArgumentException or InvalidOperationException or JsonException or OperationCanceledException or Win32Exception)
+            {
+                Console.Error.WriteLine("Callable Drop evidence failed: " + exception.Message);
+                return 2;
+            }
+        }
+        if (args.Length == 4 && args[0] == "--p1-drop-native-aot")
+        {
+            if (!int.TryParse(args[3], NumberStyles.None, CultureInfo.InvariantCulture, out int maximumCases) ||
+                maximumCases is not (1 or P1DropNativeAotRunner.MaximumCases))
+            {
+                Console.Error.WriteLine($"Native Drop evidence requires a maximum case count of 1 or {P1DropNativeAotRunner.MaximumCases}.");
+                return 2;
+            }
+            try
+            {
+                P1DropNativeAotRunner.Result native = await P1DropNativeAotRunner.RunAsync(
+                    FindRepositoryRoot(), args[1], args[2], maximumCases).ConfigureAwait(false);
+                Console.WriteLine($"P1 Drop Native AOT evidence: {native.ReportPath}; passed={native.Passed}, failed={native.Failed}, blocked={native.Blocked}, fullClosure={native.ExpectedContractSatisfied}");
+                return native.Succeeded ? 0 : 1;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                ArgumentException or InvalidOperationException or JsonException or OperationCanceledException)
+            {
+                Console.Error.WriteLine("Native Drop evidence failed: " + exception.Message);
+                return 2;
+            }
+        }
         if (args.Length == 1 && args[0] is "--help" or "-h")
         {
             Console.WriteLine("""

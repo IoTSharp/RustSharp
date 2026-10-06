@@ -229,6 +229,10 @@ public sealed class SafeCoreMirRvalue
 /// MIR locals are storage slots and may be written on separate CFG paths.</summary>
 public sealed record SafeCoreMirStatement(int DestinationLocalId, SafeCoreMirRvalue Value, SafeCoreMirSource Source)
 {
+    /// <summary>Generated enum cleanup may inspect the tag only while descendant drop flags are live.</summary>
+    public bool IsCleanupDiscriminant { get; init; }
+    /// <summary>Validated end of the cleanup-only variant dispatch; ordinary code resumes here.</summary>
+    public int? CleanupDiscriminantJoinBlockId { get; init; }
     /// <summary>Explicit projected storage destination. Its root must match
     /// DestinationLocalId; null retains the original local-assignment contract.</summary>
     public SafeCoreMirPlace? DestinationPlace { get; init; }
@@ -291,6 +295,8 @@ public sealed class SafeCoreMirBlock
 
 public sealed class SafeCoreMirFunction
 {
+    /// <summary>Checked policy applied when an exception crosses this generated function.</summary>
+    public SafeCorePanicStrategy PanicStrategy { get; init; } = SafeCorePanicStrategy.Unwind;
     public SafeCoreMirFunction(int id, string name, SafeCoreType returnType,
         IReadOnlyList<SafeCoreMirLocal> locals, IReadOnlyList<SafeCoreMirBlock> blocks, int entryBlockId,
         SafeCoreMirSource source, CancellationToken cancellationToken = default)
@@ -322,6 +328,8 @@ public sealed class SafeCoreMirFunction
     /// <summary>Whether the source declaration is visible to external crates.</summary>
     public bool IsPublic { get; }
     public bool ReturnsStaticReference { get; init; }
+    /// <summary>A checked source impl Drop body with one mutable self receiver.</summary>
+    public bool IsDestructor { get; init; }
 }
 
 /// <summary>Backend-independent typed MIR. IDs index immutable owning collections.</summary>
