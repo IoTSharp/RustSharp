@@ -2,10 +2,17 @@
 
 [English](p1-08-implementation.md) | 简体中文
 
-状态：✅ 已完成。下方当前生成程序、原始 PE 检查与双平台报告关闭全部十四个
+状态：✅ 已完成。下方历史 E9 生成程序、原始 PE 检查与双平台报告关闭全部十四个
 P1-08 叶子。行为遵循
 [v1 Drop/panic 契约](p1-drop-contract-v1_zh.md)和
 [冻结的 P1 范围](p1-exit-scope-v1_zh.md)。
+
+下方最终证据保留 E9 验证阶段。新 P1-10 验证使用版本化的
+[P1-10 实现记录](p1-10-implementation_zh.md)，包括 `p1-drop-closure-v4`：
+28 项源码／生成程序期望保持固定，Windows 记录 26 项一致加两项契约差异，原生
+Linux 记录 25 项一致加三项差异。对于 `unwind-own-drop-body-failure`，Ubuntu
+rustc 在 owner panic 后访问 bad 字段，Rust# 则立即 abort；两者均记录双重 panic
+abort。这项额外轨迹差异用于测试中的明确披露，尚未关闭独立的 P1 语言门禁。
 
 ## 范围与实现清单
 
@@ -174,7 +181,7 @@ P1-09.06 与 P1-09.09 负责源码导入调用集成与跨包验收。其消费�
 契约，并验证生成 PE。局部 P1-08 调用与报告不能替代这些集成，也不能替代独立的
 P1 候选 SHA 门禁。
 
-## 验证记录
+## 历史 E9 验证记录
 
 状态：✅ 已完成，限定于 P1-08 实现及其固定证据门槛。最终 Release 构建零警告/
 零错误，可执行测试工具通过 894/894，失败/跳过均为零。28 用例差分记录 26 项
@@ -229,16 +236,16 @@ dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll
 dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --p1-drop-call-interface artifacts/p1-drop/p1-08-call-interface-win-x64.json artifacts/p1-drop/p1-08-call-interface-linux-x64.json 2
 ```
 
-### 最终证据
+### 历史 E9 证据
 
-| 门槛 | 状态 | 当前证据 |
+| 门槛 | 状态 | 历史 E9 证据 |
 | --- | --- | --- |
-| 当前 Release 构建 | ✅ 已完成 | SDK 10.0.401，零警告/零错误：[build-12 日志](../artifacts/p1-08-session/build-12.stdout.log)与[进程记录](../artifacts/p1-08-session/build-12.process.json)；当前 DLL 指纹绑定于下方报告。 |
+| E9 Release 构建 | ✅ 已完成 | SDK 10.0.401，零警告/零错误：[build-12 日志](../artifacts/p1-08-session/build-12.stdout.log)与[进程记录](../artifacts/p1-08-session/build-12.process.json)；E9 DLL 指纹绑定于下方报告。 |
 | 已注册可执行回归 | ✅ 已完成 | 注册/执行/通过均为 894，失败/跳过为零：[full-03 日志](../artifacts/p1-08-session/full-03.stdout.log)与[进程记录](../artifacts/p1-08-session/full-03.process.json)。保留此前失败尝试。 |
-| 固定源码差分 | ✅ 已完成 | [当前 28 用例报告](../artifacts/p1-drop/differential-win-x64-a00da4e4d936434aa0768b536098082a.json)：26 项一致加两项指定的正常清理差异；失败/阻塞/跳过均为零。 |
+| 固定源码差分 | ✅ 已完成 | [E9 28 用例报告](../artifacts/p1-drop/differential-win-x64-a00da4e4d936434aa0768b536098082a.json)：26 项一致加两项指定的正常清理差异；失败/阻塞/跳过均为零。 |
 | 原始 PE ILVerify | ✅ 已完成 | [差分 28/28](../artifacts/p1-drop/ilverify-985ed7dbb91941659e70c850003edaef/summary.json)与 [callable 2/2](../artifacts/p1-drop/callable-ilverify-690e8ac294b84021b4d04326a49db54d/summary.json)，使用 ILVerify 10.0.11 且不抑制诊断；两者均为 `fullClosure: true` 并确认临时目录清理。 |
 | 原始 PE Native AOT | ✅ 已完成 | [Windows 28/28](../artifacts/p1-drop/p1-08-native-win-x64.json)与 [Ubuntu WSL 28/28](../artifacts/p1-drop/p1-08-native-linux-x64.json)，精确 trace/退出匹配及原始输入哈希；[原生格式审计](../artifacts/p1-08-session/native-format-audit.json)。 |
-| 可复用调用接口 | ✅ 已完成 | [Windows 7/7](../artifacts/p1-drop/p1-08-call-interface-win-x64.json)与 [Ubuntu WSL 7/7](../artifacts/p1-drop/p1-08-call-interface-linux-x64.json)，每个平台两个原始 PE 产物、两个后端及当前生产者/运行时绑定。 |
+| 可复用调用接口 | ✅ 已完成 | [Windows 7/7](../artifacts/p1-drop/p1-08-call-interface-win-x64.json)与 [Ubuntu WSL 7/7](../artifacts/p1-drop/p1-08-call-interface-linux-x64.json)，每个平台两个原始 PE 产物、两个后端及 E9 生产者/运行时绑定。 |
 | 最终报告进程与可丢弃宿主 | ✅ 已完成 | [独立资源审计](../artifacts/p1-08-session/final-resource-audit.json)：227 个记录的直接启动均无同身份存活进程；68 个精确的临时宿主/探测目录不存在，每个平台 34 个。报告无清理不完整字段；ILVerify 工具目录清理记录于两份摘要。 |
 | 历史工作区临时对象 | ⛔ 已阻塞 | [保留对象记录](../artifacts/p1-08-session/temporary-cleanup.json)：`tmp` 下保留七个任务自有与两个归属未确认对象；自动审批以 `blocked by policy` 拒绝删除。完整工作区临时对象清理为 false。 |
 

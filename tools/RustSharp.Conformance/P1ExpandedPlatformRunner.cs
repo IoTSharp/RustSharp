@@ -422,7 +422,8 @@ internal static class P1ExpandedPlatformRunner
             throw new ArgumentException("Binding requires the previously validated frozen platform suite.", nameof(suite));
         return new("p1-platform-coreclr-ilverify-native-aot", ProfileName, runtimeIdentifier, suite.Denominator, manifestSha256, compilerSha256,
             CandidateSha: candidateSha, CaseBindings: suite.Cases.Select(static fixture => new P1EvidenceBindingValidator.CaseBinding(fixture.Id, fixture.Source, fixture.SourceSha256, fixture.ExpectationSha256,
-                ExpectedOutputs.TryGetValue(fixture.Id, out string? output) ? output : fixture.Id + "\n")).ToArray(), RequireSemanticClosure: true);
+                ExpectedOutputs.TryGetValue(fixture.Id, out string? output) ? output : fixture.Id + "\n")).ToArray(), RequireSemanticClosure: true,
+            ObservedRuntimeIdentifier: System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier);
     }
     internal static string ReadGeneratedAssemblyName(string path) => System.Reflection.AssemblyName.GetAssemblyName(path).Name ?? throw new InvalidOperationException("Generated PE assembly identity is missing.");
     private static bool IsNativeHost(string runtimeIdentifier) => System.Runtime.InteropServices.RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.X64 && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.X64 && (runtimeIdentifier == "win-x64" ? OperatingSystem.IsWindows() : runtimeIdentifier == "linux-x64" && OperatingSystem.IsLinux());

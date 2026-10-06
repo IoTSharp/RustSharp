@@ -2,10 +2,19 @@
 
 English | [简体中文](p1-08-implementation_zh.md)
 
-Status: ✅ Complete for all fourteen P1-08 leaves, based on the current generated
+Status: ✅ Complete for all fourteen P1-08 leaves, based on the historical E9 generated
 programs, original-PE checks and two-platform reports below. The behavior follows the
 [v1 Drop/panic contract](p1-drop-contract-v1.md) and the
 [frozen P1 scope](p1-exit-scope-v1.md).
+
+The final evidence below preserves the E9 validation stage. Fresh P1-10
+verification uses the versioned [P1-10 implementation record](p1-10-implementation.md),
+including `p1-drop-closure-v4`: the 28 source/generated expectations stay fixed,
+Windows records 26 matches plus two contract differences, and native Linux
+records 25 matches plus three. For `unwind-own-drop-body-failure`, Ubuntu rustc
+visits the bad field after the owner's panic; Rust# immediately aborts. Both
+record double-panic abort. This additional trace difference is disclosed for
+testing and has not closed the independent P1 language gate.
 
 ## Scope and implementation inventory
 
@@ -205,7 +214,7 @@ strategy into actual imported MemberRef calls, preserve the reusable outcome
 contract, and validate the resulting PE. Local P1-08 calls and reports do not
 substitute for that integration or the separate P1 candidate-SHA gate.
 
-## Validation record
+## Historical E9 validation record
 
 Status: ✅ Complete for the P1-08 implementation and its fixed evidence gates.
 The final Release build has zero warnings/errors and the executable harness
@@ -269,16 +278,16 @@ dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll
 dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --p1-drop-call-interface artifacts/p1-drop/p1-08-call-interface-win-x64.json artifacts/p1-drop/p1-08-call-interface-linux-x64.json 2
 ```
 
-### Final evidence
+### Historical E9 evidence
 
-| Gate | Status | Current evidence |
+| Gate | Status | Historical E9 evidence |
 | --- | --- | --- |
-| Current Release build | ✅ Complete | SDK 10.0.401, zero warnings/errors: [build-12 log](../artifacts/p1-08-session/build-12.stdout.log) and [process record](../artifacts/p1-08-session/build-12.process.json); current DLL fingerprints are bound in the reports below. |
+| E9 Release build | ✅ Complete | SDK 10.0.401, zero warnings/errors: [build-12 log](../artifacts/p1-08-session/build-12.stdout.log) and [process record](../artifacts/p1-08-session/build-12.process.json); E9 DLL fingerprints are bound in the reports below. |
 | Registered executable regressions | ✅ Complete | 894 registered/executed/passed, zero failures/skips: [full-03 log](../artifacts/p1-08-session/full-03.stdout.log) and [process record](../artifacts/p1-08-session/full-03.process.json). Earlier failed attempts remain retained. |
-| Fixed source differential | ✅ Complete | [Current 28-case report](../artifacts/p1-drop/differential-win-x64-a00da4e4d936434aa0768b536098082a.json): 26 matches plus two designated normal-cleanup differences; zero failed/blocked/skipped. |
+| Fixed source differential | ✅ Complete | [E9 28-case report](../artifacts/p1-drop/differential-win-x64-a00da4e4d936434aa0768b536098082a.json): 26 matches plus two designated normal-cleanup differences; zero failed/blocked/skipped. |
 | Original PE ILVerify | ✅ Complete | [Differential 28/28](../artifacts/p1-drop/ilverify-985ed7dbb91941659e70c850003edaef/summary.json) and [callable 2/2](../artifacts/p1-drop/callable-ilverify-690e8ac294b84021b4d04326a49db54d/summary.json), ILVerify 10.0.11 with unsuppressed diagnostics; both have `fullClosure: true` and temporary cleanup confirmed. |
 | Original PE Native AOT | ✅ Complete | [Windows 28/28](../artifacts/p1-drop/p1-08-native-win-x64.json) and [Ubuntu WSL 28/28](../artifacts/p1-drop/p1-08-native-linux-x64.json), exact trace/exit matches and original input hashes; [native-format audit](../artifacts/p1-08-session/native-format-audit.json). |
-| Reusable call interface | ✅ Complete | [Windows 7/7](../artifacts/p1-drop/p1-08-call-interface-win-x64.json) and [Ubuntu WSL 7/7](../artifacts/p1-drop/p1-08-call-interface-linux-x64.json), two original PE artifacts per platform, both backends and current producer/runtime binding. |
+| Reusable call interface | ✅ Complete | [Windows 7/7](../artifacts/p1-drop/p1-08-call-interface-win-x64.json) and [Ubuntu WSL 7/7](../artifacts/p1-drop/p1-08-call-interface-linux-x64.json), two original PE artifacts per platform, both backends and E9 producer/runtime binding. |
 | Final reported processes and disposable hosts | ✅ Complete | [Independent resource audit](../artifacts/p1-08-session/final-resource-audit.json): 227 recorded direct launches have no surviving same identity; 68 exact disposable host/probe directories are absent, 34 per platform. Reports have no incomplete cleanup fields; ILVerify tool-directory cleanup is recorded in its two summaries. |
 | Historical workspace temporary objects | ⛔ Blocked | [Retained-object record](../artifacts/p1-08-session/temporary-cleanup.json): seven task-owned and two ownership-unconfirmed objects remain under `tmp`; automatic approval rejected deletion as `blocked by policy`. Complete workspace temporary cleanup is false. |
 

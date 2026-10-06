@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Buffers.Binary;
+using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -14,7 +17,7 @@ namespace RustSharp.Conformance;
 internal static class P1DropDifferentialRunner
 {
     internal const string OracleVersion = "rustc 1.98.0 (88d9e12ae 2026-08-18)";
-    internal const string ClosureProfile = "p1-drop-closure-v3";
+    internal const string ClosureProfile = "p1-drop-closure-v4";
     internal const int MaximumCases = 28;
     private static readonly TimeSpan ProcessTimeout = TimeSpan.FromSeconds(20);
     private static readonly TimeSpan SuiteTimeout = TimeSpan.FromSeconds(300);
@@ -36,6 +39,27 @@ internal static class P1DropDifferentialRunner
     private sealed record Fixture(string Id, string Source, string Output, string Outcome = "success",
         SafeCorePanicStrategy Strategy = SafeCorePanicStrategy.Unwind, string? OracleOutcome = null,
         string? OracleOutput = null);
+
+    private static Fixture PlatformFixture(int index, string platform) =>
+        platform == "linux-x64" && Fixtures[index].Id == "unwind-own-drop-body-failure"
+            ? Fixtures[index] with { OracleOutcome = "double-panic-abort", OracleOutput = "body\nowner\nbad\n" }
+            : Fixtures[index];
+
+    private static int ContractDifferences(string platform) => platform == "linux-x64" ? 3 : 2;
+
+    private static string HostPlatform()
+    {
+        if (RuntimeInformation.ProcessArchitecture != Architecture.X64 ||
+            (!OperatingSystem.IsWindows() && !OperatingSystem.IsLinux()))
+            throw new InvalidOperationException("Drop differential evidence requires Windows or Linux x64.");
+        return OperatingSystem.IsWindows() ? "windows-x64" : "linux-x64";
+    }
+
+    private static string Difference(Fixture fixture) => fixture.Id == "unwind-own-drop-body-failure"
+        ? "Linux rustc visits the bad field after a destructor panic during body unwind; Rust# aborts after the owner panic. The exact stdout differs (body/owner/bad versus body/owner), while both outcomes are double-panic-abort. This platform oracle difference is not approved by the full P1 language exit gate."
+        : fixture.OracleOutput is null
+            ? "Observable stdout agrees; rustc aborts the second destructor panic while Rust# preserves both failures in RustGeneratedCleanupException."
+            : "Rust# continues to the good field after owner and bad-field failures; rustc aborts after bad and never visits good. Both the stdout difference and exit-category difference are explicit frozen-contract expectations.";
 
     private static readonly Fixture[] Fixtures =
     [
@@ -137,6 +161,8 @@ internal static class P1DropDifferentialRunner
         if (!report.StartsWith(evidenceRoot + Path.DirectorySeparatorChar, comparison))
             throw new ArgumentException("Drop evidence must be saved below the dedicated artifacts/p1-drop directory.");
         if (Fixtures.Length != MaximumCases) throw new InvalidOperationException("The fixed Drop denominator changed.");
+        string platform = HostPlatform();
+        string runtimeIdentifier = RuntimeInformation.RuntimeIdentifier;
         if (maximumCasesToExecute is < 1 or > MaximumCases) throw new ArgumentOutOfRangeException(nameof(maximumCasesToExecute));
         string evidenceDirectory = Path.Combine(Path.GetDirectoryName(report)!, "evidence-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(evidenceDirectory);
@@ -158,7 +184,7 @@ internal static class P1DropDifferentialRunner
             bool oracleAvailable = Complete(probe) && probe.Succeeded && probe.StandardOutput.Trim() == OracleVersion;
             for (int index = 0; index < maximumCasesToExecute && clock.Elapsed < SuiteTimeout; index++)
             {
-                Fixture fixture = Fixtures[index];
+                Fixture fixture = PlatformFixture(index, platform);
                 if (fixture.OracleOutput is not null && fixture.OracleOutcome is null)
                     throw new InvalidOperationException("An expected oracle stdout difference must have an explicit contract-difference outcome.");
                 Console.WriteLine($"P1 Drop differential: {index + 1}/{MaximumCases} {fixture.Id}");
@@ -190,13 +216,13 @@ internal static class P1DropDifferentialRunner
         {
             if (index >= maximumCasesToExecute && harnessError is null && !deadline.IsCancellationRequested)
             {
-                JsonObject unexecuted = Blocked(Fixtures[index], "Outside the deliberate smoke execution limit; this report cannot close the fixed suite.");
+                JsonObject unexecuted = Blocked(PlatformFixture(index, platform), "Outside the deliberate smoke execution limit; this report cannot close the fixed suite.");
                 unexecuted["status"] = "not-executed";
                 cases.Add(unexecuted);
                 skipped++;
                 continue;
             }
-            cases.Add(Blocked(Fixtures[index], harnessError ?? "Suite deadline prevented execution."));
+            cases.Add(Blocked(PlatformFixture(index, platform), harnessError ?? "Suite deadline prevented execution."));
             blocked++;
         }
         bool cleanupComplete = processes.All(static process => !process.ProcessTreeCleanupIncomplete);
@@ -214,7 +240,15 @@ internal static class P1DropDifferentialRunner
                 AssemblyFingerprint(typeof(SafeCoreMirLowering)),
                 AssemblyFingerprint(typeof(ClrLirEmitter)),
                 AssemblyFingerprint(typeof(RustGeneratedPanic))),
-            ["runtimeIdentifier"] = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,
+            ["runtimeIdentifier"] = runtimeIdentifier,
+            ["hostContract"] = new JsonObject
+            {
+                ["contractVersion"] = 1, ["platform"] = platform, ["nativeRuntimeIdentifier"] = runtimeIdentifier,
+                ["exactMatches"] = MaximumCases - ContractDifferences(platform),
+                ["contractDifferences"] = ContractDifferences(platform),
+                ["fullP1Closure"] = false, ["fullP1LanguageGateApproved"] = false,
+                ["platformBinding"] = "retained-rustc-native-executable-sha256-and-machine-header",
+            },
             ["oracleVersion"] = probe?.StandardOutput.Trim(),
             ["oracleProbe"] = Evidence(probe),
             ["summary"] = new JsonObject
@@ -226,7 +260,7 @@ internal static class P1DropDifferentialRunner
                 ["matchesRustcInAllCases"] = passed == MaximumCases,
                 ["expectedContractSatisfied"] = passed + differences == MaximumCases && failed == 0 && blocked == 0 && skipped == 0 && cleanupComplete,
             },
-            ["contractDifference"] = "Rust# normal cleanup retains multiple destructor failures and continues remaining cleanup; rustc turns the second destructor panic during unwind into abort. The nested owner/field case also has an explicitly different stdout trace because rustc never visits the remaining good field.",
+            ["contractDifference"] = "Rust# normal cleanup retains multiple destructor failures and continues remaining cleanup; rustc turns the second destructor panic during unwind into abort. The nested owner/field case has a different stdout trace because rustc never visits the remaining good field. On Linux, unwind-own-drop-body-failure has the additional explicit rustc body/owner/bad versus Rust# body/owner trace difference; neither this oracle contract nor its additional difference establishes full P1 language closure.",
             ["execution"] = new JsonObject
             {
                 ["startedAtUtc"] = started, ["finishedAtUtc"] = DateTimeOffset.UtcNow,
@@ -296,6 +330,11 @@ internal static class P1DropDifferentialRunner
             ["expectedOutputsAgree"] = expectedOracleOutput == fixture.Output,
             ["expectedRustcOutcome"] = expectedOracleOutcome, ["expectedRustSharpOutcome"] = fixture.Outcome,
             ["rustcOutcome"] = oracleOutcome, ["rustSharpOutcome"] = managedOutcome,
+            ["rustcArtifact"] = File.Exists(oracleOutput) ? new JsonObject
+            {
+                ["path"] = oracleOutput, ["sha256"] = HashFile(oracleOutput),
+                ["platform"] = NativeExecutablePlatform(oracleOutput),
+            } : null,
             ["rustcCompile"] = Evidence(oracleCompile), ["rustcRun"] = Evidence(oracleRun),
             ["rustSharpCompile"] = new JsonObject
             {
@@ -305,9 +344,7 @@ internal static class P1DropDifferentialRunner
                 ["outputPath"] = managedOutput, ["outputSha256"] = File.Exists(managedOutput) ? HashFile(managedOutput) : null,
             },
             ["rustSharpRun"] = Evidence(managedRun),
-            ["difference"] = status == "contract-difference" ? fixture.OracleOutput is null
-                ? "Observable stdout agrees; rustc aborts the second destructor panic while Rust# preserves both failures in RustGeneratedCleanupException."
-                : "Rust# continues to the good field after owner and bad-field failures; rustc aborts after bad and never visits good. Both the stdout difference and exit-category difference are explicit frozen-contract expectations." :
+            ["difference"] = status == "contract-difference" ? Difference(fixture) :
                 status == "failed" ? "Compilation, exact stdout or semantic exit classification did not match the declared fixture contract." : null,
         };
     }
@@ -365,8 +402,28 @@ internal static class P1DropDifferentialRunner
             Text(document, "evidenceKind") == "p1-drop-source-generated-pe-rustc-differential" &&
             Text(document, "profile") == ClosureProfile && Text(document, "runPurpose") == "fixed-suite-closure" &&
             Text(document, "oracleVersion") == OracleVersion, "The input is not the current fixed-suite differential closure.");
+        Require(document["cases"] is JsonArray { Count: MaximumCases }, "The input has a missing or extra fixed case.");
+        JsonArray cases = (JsonArray)document["cases"]!;
+        JsonObject firstArtifact = Object(cases[0]!.AsObject(), "rustcArtifact");
+        string firstOraclePath = FullPath(Text(firstArtifact, "path"));
+        RequireUnder(firstOraclePath, artifactRoot);
+        // The retained native executable binds the original execution host. A Windows
+        // report can therefore be replayed for Linux Native AOT without trusting its
+        // platform declaration or confusing the replay host with the oracle host.
+        string platform = NativeExecutablePlatform(firstOraclePath);
+        CheckBudget();
+        JsonObject hostContract = Object(document, "hostContract");
+        string runtimeIdentifier = Text(document, "runtimeIdentifier");
+        int expectedDifferences = ContractDifferences(platform);
+        Require(hostContract["contractVersion"]?.GetValue<int>() == 1 && Text(hostContract, "platform") == platform &&
+            Text(hostContract, "nativeRuntimeIdentifier") == runtimeIdentifier &&
+            (platform == "windows-x64" ? runtimeIdentifier == "win-x64" : runtimeIdentifier is "linux-x64" or "ubuntu.24.04-x64") &&
+            hostContract["exactMatches"]?.GetValue<int>() == MaximumCases - expectedDifferences &&
+            hostContract["contractDifferences"]?.GetValue<int>() == expectedDifferences &&
+            hostContract["fullP1Closure"]?.GetValue<bool>() == false && hostContract["fullP1LanguageGateApproved"]?.GetValue<bool>() == false &&
+            Text(hostContract, "platformBinding") == "retained-rustc-native-executable-sha256-and-machine-header",
+            "The Drop host contract does not match the retained native oracle platform or its fixed expectations.");
         JsonObject summary = Object(document, "summary");
-        int expectedDifferences = Fixtures.Count(static fixture => fixture.OracleOutcome is not null);
         Require(summary["expectedContractSatisfied"]?.GetValue<bool>() == true &&
             summary["denominator"]?.GetValue<int>() == MaximumCases && summary["executed"]?.GetValue<int>() == MaximumCases &&
             summary["passed"]?.GetValue<int>() == MaximumCases - expectedDifferences &&
@@ -378,7 +435,8 @@ internal static class P1DropDifferentialRunner
             Object(document, "execution")["deadlineExpired"]?.GetValue<bool>() == false, "The input closure has incomplete cleanup, a harness error or an expired deadline.");
         JsonObject oracleProbe = Object(document, "oracleProbe");
         Require(CompleteEvidence(oracleProbe) && oracleProbe["rawExitCode"]?.GetValue<int>() == 0 &&
-            Text(oracleProbe, "stdout").Trim() == OracleVersion, "The pinned oracle probe has no complete successful outcome.");
+            Text(oracleProbe, "stdout").Trim() == OracleVersion &&
+            Arguments(oracleProbe).SequenceEqual(["+1.98.0", "--version"]), "The pinned oracle probe has no complete successful outcome.");
 
         (string Name, string Path)[] producers =
         [
@@ -408,12 +466,10 @@ internal static class P1DropDifferentialRunner
         Require(Path.GetFileName(compilerPath) == "RustSharp.Compiler.dll" &&
             Text(document, "compilerSha256").Equals(producerHashes["RustSharp.Compiler.dll"], StringComparison.OrdinalIgnoreCase) &&
             Hash(compilerPath).Equals(producerHashes["RustSharp.Compiler.dll"], StringComparison.OrdinalIgnoreCase), "The compiler identity disagrees with the implementation fingerprints.");
-        Require(document["cases"] is JsonArray { Count: MaximumCases }, "The input has a missing or extra fixed case.");
-        JsonArray cases = (JsonArray)document["cases"]!;
         for (int index = 0; index < MaximumCases; index++)
         {
             CheckBudget();
-            Fixture expected = Fixtures[index];
+            Fixture expected = PlatformFixture(index, platform);
             Require(cases[index] is JsonObject, "A fixed case is not an object.");
             JsonObject item = (JsonObject)cases[index]!;
             string expectedSourceHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected.Source)));
@@ -424,11 +480,20 @@ internal static class P1DropDifferentialRunner
                 Text(item, "expectedRustSharpOutcome") == expected.Outcome &&
                 Text(item, "expectedRustcOutcome") == (expected.OracleOutcome ?? expected.Outcome) &&
                 item["expectedOutputsAgree"]?.GetValue<bool>() == ((expected.OracleOutput ?? expected.Output) == expected.Output) &&
-                Text(item, "status") == (expected.OracleOutcome is null ? "passed" : "contract-difference"),
+                Text(item, "status") == (expected.OracleOutcome is null ? "passed" : "contract-difference") &&
+                (expected.OracleOutcome is null ? item["difference"] is null : Text(item, "difference") == Difference(expected)),
                 "A fixed case ID, source, strategy or expectation differs from the current immutable inventory.");
             string sourcePath = FullPath(Text(item, "sourcePath"));
             RequireUnder(sourcePath, artifactRoot);
             Require(Hash(sourcePath) == expectedSourceHash, "A fixed source artifact has changed.");
+            JsonObject oracleArtifact = Object(item, "rustcArtifact");
+            string oraclePath = FullPath(Text(oracleArtifact, "path"));
+            RequireUnder(oraclePath, artifactRoot);
+            Require(oraclePath == Path.Combine(Path.GetDirectoryName(sourcePath)!, platform == "windows-x64" ? "oracle.exe" : "oracle") &&
+                IsHash(Text(oracleArtifact, "sha256")) && Hash(oraclePath).Equals(Text(oracleArtifact, "sha256"), StringComparison.OrdinalIgnoreCase) &&
+                Text(oracleArtifact, "platform") == platform && NativeExecutablePlatform(oraclePath) == platform,
+                "A retained oracle executable does not match its hash, case directory or original host platform.");
+            CheckBudget();
             JsonObject compilation = Object(item, "rustSharpCompile");
             Require(compilation["success"]?.GetValue<bool>() == true && compilation["diagnostics"] is JsonArray { Count: 0 },
                 "The generated PE has no clean successful compilation evidence.");
@@ -441,6 +506,15 @@ internal static class P1DropDifferentialRunner
             JsonObject oracleCompile = Object(item, "rustcCompile"), oracleRun = Object(item, "rustcRun"), managedRun = Object(item, "rustSharpRun");
             Require(CompleteEvidence(oracleCompile) && oracleCompile["rawExitCode"]?.GetValue<int>() == 0 &&
                 CompleteEvidence(oracleRun) && CompleteEvidence(managedRun), "A required process outcome is incomplete or has incomplete cleanup.");
+            Require(Text(oracleCompile, "executable") == Text(oracleProbe, "executable") &&
+                Arguments(oracleCompile).SequenceEqual(["+1.98.0", Text(item, "sourcePath"), "--edition", "2024", "-C", "overflow-checks=yes", "-C",
+                    expected.Strategy == SafeCorePanicStrategy.Abort ? "panic=abort" : "panic=unwind", "-o", Text(oracleArtifact, "path")]) &&
+                Text(oracleRun, "executable") == Text(oracleArtifact, "path") && Arguments(oracleRun).Length == 0 &&
+                FullPath(Text(oracleRun, "workingDirectory")) == Path.GetDirectoryName(oraclePath) &&
+                Path.GetFileName(PlatformPath(Text(managedRun, "executable"))) == (platform == "windows-x64" ? "dotnet.exe" : "dotnet") &&
+                Arguments(managedRun).SequenceEqual([Text(compilation, "outputPath")]) &&
+                FullPath(Text(managedRun, "workingDirectory")) == Path.GetDirectoryName(managedPath),
+                "The recorded compilation or execution is not bound to its retained source, oracle and generated PE.");
             string oracleOutcome = oracleRun["rawExitCode"]?.GetValue<int>() == 0 ? "success" :
                 ClassifyOracleFailure(oracleRun["rawExitCode"]?.GetValue<int>(), Text(oracleRun, "stderr"), expected.Strategy);
             string managedOutcome = ClassifyGeneratedFailure(managedRun["rawExitCode"]?.GetValue<int>(), Text(managedRun, "stderr"));
@@ -461,7 +535,7 @@ internal static class P1DropDifferentialRunner
         {
             CheckBudget();
             if (hashes.TryGetValue(path, out string? existing)) return existing;
-            if (hashes.Count >= MaximumCases * 3 + 12) throw new InvalidOperationException("Drop report artifact count exceeded its bound.");
+            if (hashes.Count >= MaximumCases * 4 + 12) throw new InvalidOperationException("Drop report artifact count exceeded its bound.");
             const int blockBytes = 65536;
             const int maximumBlocks = 8192;
             using FileStream stream = File.OpenRead(path);
@@ -486,14 +560,43 @@ internal static class P1DropDifferentialRunner
         }
     }
 
+    private static string NativeExecutablePlatform(string path)
+    {
+        using FileStream stream = File.OpenRead(path);
+        Span<byte> header = stackalloc byte[64];
+        Require(stream.Length is >= 64 and <= 64 * 1024 * 1024, "A native oracle executable is outside its fixed 64 MiB size bounds.");
+        stream.ReadExactly(header);
+        if (header[0] == 0x7f && header[1] == (byte)'E' && header[2] == (byte)'L' && header[3] == (byte)'F')
+        {
+            Require(header[4] == 2 && header[5] == 1 && header[6] == 1 &&
+                BinaryPrimitives.ReadUInt16LittleEndian(header[18..]) == 62,
+                "The retained ELF oracle is not Linux x64.");
+            return "linux-x64";
+        }
+        Require(header[0] == (byte)'M' && header[1] == (byte)'Z', "The retained oracle has no supported native executable header.");
+        stream.Position = 0;
+        using var pe = new PEReader(stream);
+        Require(pe.PEHeaders.CoffHeader.Machine == Machine.Amd64 && pe.PEHeaders.PEHeader?.Magic == PEMagic.PE32Plus &&
+            pe.PEHeaders.CorHeader is null, "The retained PE oracle is not native Windows x64.");
+        return "windows-x64";
+    }
+
     private static bool CompleteEvidence(JsonObject process) => Text(process, "termination") == "exited" &&
         process["pid"]?.GetValue<int>() > 0 && process["parentPid"]?.GetValue<int>() > 0 &&
         DateTimeOffset.TryParse(Text(process, "startedAtUtc"), System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.None, out _) && Text(process, "commandLine").Length > 0 &&
+            System.Globalization.DateTimeStyles.None, out _) && Text(process, "commandLine") ==
+            new BoundedProcessStarted(process["pid"]!.GetValue<int>(), process["parentPid"]!.GetValue<int>(), default,
+                Text(process, "executable"), Arguments(process), Text(process, "workingDirectory")).CommandLine &&
         Path.IsPathFullyQualified(PlatformPath(Text(process, "workingDirectory"))) && process["rawExitCode"] is not null &&
         process["outputTruncated"]?.GetValue<bool>() == false && process["outputReadTimedOut"]?.GetValue<bool>() == false &&
         process["outputDrainTimedOut"]?.GetValue<bool>() == false && process["outputReadLimitReached"]?.GetValue<bool>() == false &&
         process["cleanupIncomplete"]?.GetValue<bool>() == false && process["cleanupDiagnostic"] is null;
+    private static string[] Arguments(JsonObject process)
+    {
+        Require(process["arguments"] is JsonArray { Count: <= 16 }, "Process arguments are missing or exceed the fixed bound.");
+        return ((JsonArray)process["arguments"]!).Select(static argument => argument?.GetValue<string>()
+            ?? throw new InvalidOperationException("A process argument is missing.")).ToArray();
+    }
     private static JsonObject Object(JsonObject parent, string name) => parent[name] as JsonObject
         ?? throw new InvalidOperationException("Required Drop evidence object is missing: " + name);
     private static string Text(JsonObject parent, string name) => parent[name]?.GetValue<string>()
@@ -539,6 +642,8 @@ internal static class P1DropDifferentialRunner
     {
         ["pid"] = result.StartedProcess.ProcessId, ["parentPid"] = result.StartedProcess.ParentProcessId,
         ["startedAtUtc"] = result.StartedProcess.StartedAt, ["commandLine"] = result.StartedProcess.CommandLine,
+        ["executable"] = result.StartedProcess.FileName,
+        ["arguments"] = new JsonArray(result.StartedProcess.Arguments.Select(static argument => (JsonNode)JsonValue.Create(argument)!).ToArray()),
         ["workingDirectory"] = result.StartedProcess.WorkingDirectory, ["rawExitCode"] = result.ExitCode,
         ["termination"] = result.Termination.ToString().ToLowerInvariant(), ["elapsedMilliseconds"] = result.Elapsed.TotalMilliseconds,
         ["stdout"] = result.StandardOutput, ["stderr"] = result.StandardError, ["outputTruncated"] = result.OutputTruncated,

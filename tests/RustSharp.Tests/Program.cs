@@ -2,8 +2,6 @@ namespace RustSharp.Tests;
 
 internal static class Program
 {
-    private const int MaximumTestCount = 1024;
-
     public static async Task<int> Main(string[] args)
     {
         if (BoundedProcessTests.IsChildInvocation(args))
@@ -54,38 +52,7 @@ internal static class Program
         tests = [.. tests, .. P1MirReferenceDropStateTests.All];
         tests = [.. tests, .. P1SourceTypeMetadataTests.All, .. P1SourcePackageExecutionTests.All, .. P1SourceOriginTests.All, .. P1ImportedAggregateTests.All,
             .. P1StructuralOwnerPackageTests.All];
-        if (args.Length != 0)
-        {
-            if (args.Length != 2 || args[0] != "--filter" || args[1].Length is 0 or > 256)
-            {
-                Console.Error.WriteLine("Usage: RustSharp.Tests [--filter name-fragment]");
-                return 2;
-            }
-            tests = tests.Where(test => test.Name.Contains(args[1], StringComparison.OrdinalIgnoreCase)).ToArray();
-            if (tests.Length == 0) { Console.Error.WriteLine("The test filter matched no cases."); return 2; }
-        }
-        if (tests.Length > MaximumTestCount)
-        {
-            Console.Error.WriteLine($"Test count {tests.Length} exceeds the safety limit {MaximumTestCount}.");
-            return 2;
-        }
-
-        var failed = 0;
-        foreach (var test in tests)
-        {
-            try
-            {
-                await test.ExecuteAsync().ConfigureAwait(false);
-                Console.WriteLine($"PASS {test.Name}");
-            }
-            catch (Exception exception)
-            {
-                failed++;
-                Console.Error.WriteLine($"FAIL {test.Name}: {exception}");
-            }
-        }
-
-        Console.WriteLine($"Executed {tests.Length} tests: {tests.Length - failed} passed, {failed} failed.");
-        return failed == 0 ? 0 : 1;
+        tests = [.. tests, .. P1HarnessEvidenceTests.All];
+        return await RegressionHarness.RunAsync(tests, args).ConfigureAwait(false);
     }
 }

@@ -90,7 +90,7 @@ evidence.
 
 P1-06 is ✅ Complete for its frozen typed-MIR contract; P1-07 is ✅ Complete for
 the source ownership and lifetime scope; P1-08 is ✅ Complete for generated
-Drop/panic. P1-09 is ✅ Complete on current local evidence; P1-10 and the P1 stage remain 🚧 In progress. The opt-in
+Drop/panic. P1-09 and P1-10 are ✅ Complete on the recorded local evidence; the P1 stage remains 🚧 In progress. The opt-in
 `safe-core-mir-p1-v2` profile adds structural-`Copy` repeated arrays, named and
 enum layouts, nested references and reference-bearing aggregates, checked constants
 and promotion, patterns and captured closures to source-mapped HIR → typed MIR → CLR LIR emission. The v1
@@ -108,7 +108,7 @@ P1-08 is ✅ Complete on the current evidence in the
 [Drop/panic implementation inventory](docs/p1-08-implementation.md). It
 records checked destructor receivers, typed and shared drop flags, aggregate and
 temporary cleanup, unwind/abort strategies and the reusable panic interface.
-Its fixed acceptance inventories contain 28 source differential cases with two
+Its historical v3 acceptance inventories contain 28 source differential cases with two
 explicit normal-cleanup contract differences, plus seven direct-call interface
 cases over two original PE artifacts on CoreCLR and Native AOT. The recorded P1-08 Release
 build has zero warnings/errors and 894/894 regressions pass. The differential
@@ -137,7 +137,9 @@ harness passes 784/784 with zero failures/skips using the installed SDK 10.0.401
 the repository pin remains 10.0.400. Logs are retained under
 `artifacts/p1-next-session`. The [follow-up audit](docs/p1-evidence-audit.md)
 records ownership diagnostics, Drop closure, source package metadata and
-platform evidence binding. P1-09 source-package contracts are ✅ Complete on current local evidence: closure-9 Release 0/0 warnings/errors, focused 84/84 and full 964/964; the frozen manifest (`BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`) passes 19/19 with 39/39 original PEs on Windows and Ubuntu WSL Native AOT/CoreCLR. The separate P1-10 candidate-SHA aggregate and P1-GATE publication work remain 🚧 In progress.
+platform evidence binding. P1-09 source-package contracts are ✅ Complete on the recorded local evidence: historical Closure-9 Release 0/0 warnings/errors, focused 84/84 and full 964/964; those reports record raw manifest SHA `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB` and pass 19/19 with 39/39 original PEs on Windows and Ubuntu WSL Native AOT/CoreCLR. That historical CRLF raw-byte hash is distinct from the current LF-normalized manifest hash.
+
+P1-10 is ✅ Complete at local candidate `0a415e25c362f8a35c09cb9e1163f5ce30accf82`: Windows and Ubuntu Linux x64 each pass a zero-warning/error Release build, 969/969 full-harness tests, 32/32 expanded differential cases, 24/24 CoreCLR/ILVerify/Native AOT cases and 60/60 immutable baseline audit entries. The strict aggregate passes 15/15. The [P1-10 implementation record](docs/p1-10-implementation.md) distinguishes the 40-requirement/160-record coverage inventory from semantic execution and records the additional Ubuntu rustc Drop trace difference in `p1-drop-closure-v4`. That difference has not been approved by the P1 language gates. The six P1-GATE leaves remain ⏳ Planned; remote CI has not run for this candidate.
 
 The recorded `safe-core-regression-v1` report passes 8/8 with zero failures or
 skips. The historical `safe-core-regression-v2` report passes 24/24 with one

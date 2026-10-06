@@ -83,7 +83,7 @@ Cargo 包示例也分别通过 ILVerify 与 Windows x64 Native AOT。P1-05 合�
 通过显式 MSBuild 完成，不替代已记录的 10.0.400 Native AOT 证据。
 
 P1-06 对冻结的类型化 MIR 契约为 ✅ 已完成；P1-07 的源码所有权和生命周期范围也为
-✅ 已完成；P1-08 的生成 Drop/panic 为 ✅ 已完成。P1-09 基于当前本地证据已 ✅ 已完成；P1-10 及 P1 阶段仍为 🚧 进行中。可选的 `safe-core-mir-p1-v2` 配置档在
+✅ 已完成；P1-08 的生成 Drop/panic 为 ✅ 已完成。P1-09 和 P1-10 基于已记录的本地证据为 ✅ 已完成；P1 阶段仍为 🚧 进行中。可选的 `safe-core-mir-p1-v2` 配置档在
 带源码映射的 HIR → 类型化 MIR → CLR LIR 发射链路上增加结构化 `Copy` 重复数组、
 具名及枚举布局、嵌套引用与含引用聚合、已检查常量与提升、模式及捕获闭包。v1 对
 重复数组的拒绝契约保持不变。流水线具有确定性快照与 PE/PDB 检查、显式未支持诊断，
@@ -97,7 +97,7 @@ P1-06 对冻结的类型化 MIR 契约为 ✅ 已完成；P1-07 的源码所有�
 P1-08 基于 [Drop/panic 实现清单](docs/p1-08-implementation_zh.md)中的当前证据为
 ✅ 已完成。该清单记录经过检查的析构接收者、
 类型化及共享 drop flag、聚合与临时值清理、unwind/abort 策略和可复用 panic
-接口。固定验收清单包含 28 个源码差分用例，其中两项为显式正常清理契约差异，
+接口。历史 v3 验收清单包含 28 个源码差分用例，其中两项为显式正常清理契约差异，
 以及通过两个原始 PE 产物在 CoreCLR 与 Native AOT 执行的七个直接调用接口用例。
 已记录的 P1-08 Release 构建零警告/零错误，回归通过 894/894。差分记录 26 项 rustc 一致与
 两项冻结契约差异；ILVerify 通过 30/30 原始 PE。Windows 与 Ubuntu WSL 均通过
@@ -116,7 +116,9 @@ SHA，因此候选发布门禁仍是独立的 P1 要求。
 2026-10-05 的本地 Release 构建零错误/零警告，可执行测试工具使用已安装的 SDK 10.0.401 通过
 784/784，失败/跳过均为零；仓库固定版本仍为 10.0.400。日志保留于
 `artifacts/p1-next-session`。[后续审计](docs/p1-evidence-audit_zh.md) 记录所有权诊断、Drop
-闭环、源码包元数据及平台证据绑定。P1-09 源码包契约基于当前本地证据已 ✅ 已完成：closure-9 Release 零警告/零错误，关键回归84/84、完整回归964/964；固定清单（`BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`）在 Windows 与 Ubuntu WSL Native AOT/CoreCLR 均通过19/19及39/39个原始 PE。独立的 P1-10 候选 SHA 聚合与 P1-GATE 发布工作仍为 🚧 进行中。
+闭环、源码包元数据及平台证据绑定。P1-09 源码包契约基于已记录的本地证据为 ✅ 已完成：历史 Closure-9 Release 零警告/零错误，关键回归84/84、完整回归964/964；这些报告记录清单原始字节 SHA `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`，在 Windows 与 Ubuntu WSL Native AOT/CoreCLR 均通过19/19及39/39个原始 PE。该历史 CRLF 原始字节哈希不同于当前规范化 LF 后的清单哈希。
+
+P1-10 在本地候选 `0a415e25c362f8a35c09cb9e1163f5ce30accf82` 为 ✅ 已完成：Windows 与 Ubuntu Linux x64 分别通过零警告/零错误的 Release 构建、969/969 项完整测试、32/32 项扩展差分、24/24 项 CoreCLR/ILVerify/Native AOT 用例及 60/60 项不可变基线审计。严格聚合通过 15/15。[P1-10 实现记录](docs/p1-10-implementation_zh.md)区分 40 个需求/160 条清单记录的覆盖账本与真实语义执行，并记录 `p1-drop-closure-v4` 中额外的 Ubuntu rustc Drop 轨迹差异。该差异尚未获 P1 语言门禁批准。六个 P1-GATE 叶子仍为 ⏳ 计划中；此候选尚未运行远程 CI。
 
 已记录的 `safe-core-regression-v1` 报告通过 8/8，失败和跳过均为零。
 历史 `safe-core-regression-v2` 报告通过 24/24，包含 1 个编译通过、6 个编译失败、

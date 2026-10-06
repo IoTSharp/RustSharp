@@ -31,7 +31,8 @@ internal static class P1EvidenceBindingValidator
         string OracleVersionPrefix = "rustc 1.98.0 (",
         string? CandidateSha = null,
         IReadOnlyList<CaseBinding>? CaseBindings = null,
-        bool RequireSemanticClosure = false);
+        bool RequireSemanticClosure = false,
+        string? ObservedRuntimeIdentifier = null);
 
     internal sealed record ValidationResult(
         bool Valid,
@@ -263,7 +264,7 @@ internal static class P1EvidenceBindingValidator
         if (TryObject(root, "platform", out JsonElement platform, errors))
         {
             RequireString(platform, "name", expected.RuntimeIdentifier == "win-x64" ? "windows-x64" : "linux-x64", errors, "platform");
-            RequireString(platform, "observedRuntimeIdentifier", expected.RuntimeIdentifier, errors, "platform");
+            RequireString(platform, "observedRuntimeIdentifier", expected.ObservedRuntimeIdentifier ?? expected.RuntimeIdentifier, errors, "platform");
             RequireString(platform, "architecture", "X64", errors, "platform");
             RequireString(platform, "processArchitecture", "X64", errors, "platform");
             RequireBoolean(platform, "nativeExecution", true, "platform", errors);

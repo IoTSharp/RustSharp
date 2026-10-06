@@ -15,3 +15,7 @@ tools/RustSharp.Conformance/fixtures/syntax-expanded-closures.rs -text whitespac
 tools/RustSharp.Conformance/fixtures/syntax-expanded-expressions.rs -text whitespace=cr-at-eol
 tools/RustSharp.Conformance/fixtures/syntax-expanded-modules.rs -text whitespace=cr-at-eol
 tools/RustSharp.Conformance/fixtures/syntax-expanded-qualified.rs -text whitespace=cr-at-eol
+# P1 frozen source hashes and diagnostic spans were reviewed against raw bytes.
+# Preserve those bytes in native checkouts and Git archives on both platforms.
+tools/RustSharp.Conformance/fixtures/p1-v3-*.rs -text whitespace=cr-at-eol
+tools/RustSharp.Conformance/fixtures/p1-platform-v2-*.rs -text whitespace=cr-at-eol

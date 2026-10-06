@@ -24,7 +24,10 @@ internal static class P1DropDifferentialCodegenTests
         P1DropDifferentialRunner.Result result = await ExecuteAsync(P1DropDifferentialRunner.MaximumCases).ConfigureAwait(false);
         AssertEx.True(result.ExpectedContractSatisfied,
             $"Drop source differential did not close its fixed contract: passed={result.Passed}, differences={result.ContractDifferences}, failed={result.Failed}, blocked={result.Blocked}; evidence={result.ReportPath}");
-        AssertEx.Equal(2, result.ContractDifferences, "Independent and nested normal multiple-drop failures must remain explicit rustc contract differences.");
+        int differences = OperatingSystem.IsLinux() ? 3 : 2;
+        AssertEx.Equal(differences, result.ContractDifferences, "The fixed Windows/Linux oracle differences must remain explicit.");
+        AssertEx.Equal(P1DropDifferentialRunner.MaximumCases - differences, result.Passed,
+            "Different stdout must never count as exact rustc equality.");
         await VerifyClosedReportAsync(result.ReportPath).ConfigureAwait(false);
     }
 
@@ -137,6 +140,7 @@ internal static class P1DropDifferentialCodegenTests
     {
         JsonObject original = await ReadReportAsync(path).ConfigureAwait(false);
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+        var clock = System.Diagnostics.Stopwatch.StartNew();
         string root = RepositoryRoot();
         P1DropDifferentialRunner.ValidateClosedReport(original, root, deadline.Token);
         Action<JsonObject>[] mutations =
@@ -145,7 +149,7 @@ internal static class P1DropDifferentialCodegenTests
             report => report["summary"]!["skipped"] = 1,
             report => report["cleanup"]!["completed"] = false,
             report => report["runPurpose"] = "bounded-smoke-only",
-            report => report["profile"] = "p1-drop-closure-v2",
+            report => report["profile"] = "p1-drop-closure-v3",
             report => report["oracleVersion"] = "rustc unpinned",
             report => report["cases"]![1]!["id"] = report["cases"]![0]!["id"]!.GetValue<string>(),
             report => report["cases"]![0]!["sourceSha256"] = report["cases"]![1]!["sourceSha256"]!.GetValue<string>(),
@@ -155,17 +159,43 @@ internal static class P1DropDifferentialCodegenTests
             report => report["cases"]![0]!["rustSharpCompile"]!["outputSha256"] = new string('A', 64),
             report => report["cases"]![0]!["rustSharpRun"]!["outputDrainTimedOut"] = true,
             report => report["cases"]!.AsArray().Single(item => item!["id"]!.GetValue<string>() == "explicit-abort")!["rustSharpRun"]!["rawExitCode"] = 135,
+            report => report["hostContract"]!["contractVersion"] = 2,
+            report => report["hostContract"]!["platform"] = OperatingSystem.IsLinux() ? "windows-x64" : "linux-x64",
+            report => report["runtimeIdentifier"] = OperatingSystem.IsLinux() ? "win-x64" : "linux-x64",
+            report => report["hostContract"]!["nativeRuntimeIdentifier"] = "forged-x64",
+            report => report["hostContract"]!["exactMatches"] = 28,
+            report => report["hostContract"]!["contractDifferences"] = 0,
+            report => report["hostContract"]!["fullP1Closure"] = true,
+            report => report["hostContract"]!["fullP1LanguageGateApproved"] = true,
+            report => report["cases"]![0]!["rustcArtifact"]!["sha256"] = new string('A', 64),
+            report => report["cases"]![1]!["rustcArtifact"]!["platform"] = OperatingSystem.IsLinux() ? "windows-x64" : "linux-x64",
+            report => report["cases"]![0]!["rustcCompile"]!["arguments"]![1] = "unrelated-source.rs",
+            report => report["cases"]![0]!["rustcRun"]!["executable"] = "unrelated-oracle",
+            report => report["cases"]![0]!["rustSharpRun"]!["arguments"]![0] = "unrelated-program.dll",
+            report => Case(report, "normal-multiple-drop-panic-contract")["expectedRustcOutcome"] = "multiple-normal-cleanup-failures",
+            report => Case(report, "normal-own-drop-body-and-field-failure-contract")["expectedRustcOutput"] = "body\nowner\nbad\ngood\n",
+            report => Case(report, "unwind-own-drop-body-failure")["expectedRustcOutput"] = OperatingSystem.IsLinux() ? "body\nowner\n" : "body\nowner\nbad\n",
+            report => Case(report, "unwind-own-drop-body-failure")["expectedRustSharpOutput"] = "body\nowner\nbad\n",
+            report => Case(report, "unwind-own-drop-body-failure")["rustcRun"]!["stdout"] = OperatingSystem.IsLinux() ? "body\nowner\n" : "body\nowner\nbad\n",
+            report => Case(report, "unwind-own-drop-body-failure")["rustSharpRun"]!["stdout"] = "body\nowner\nbad\n",
+            report => Case(report, "unwind-own-drop-body-failure")["status"] = OperatingSystem.IsLinux() ? "passed" : "contract-difference",
+            report => Case(report, "unwind-own-drop-body-failure")["expectedOutputsAgree"] = OperatingSystem.IsLinux(),
         ];
-        foreach (Action<JsonObject> mutate in mutations)
+        AssertEx.True(mutations.Length <= 36, "Drop contamination controls exceed their fixed count bound.");
+        for (int index = 0; index < mutations.Length && index < 36; index++)
         {
             deadline.Token.ThrowIfCancellationRequested();
+            AssertEx.True(clock.Elapsed < TimeSpan.FromSeconds(45), "Drop contamination controls exceeded 45 seconds.");
             JsonObject changed = original.DeepClone().AsObject();
-            mutate(changed);
+            mutations[index](changed);
             AssertEx.Throws<InvalidOperationException>(() => P1DropDifferentialRunner.ValidateClosedReport(changed, root, deadline.Token));
         }
         using var cancelled = new CancellationTokenSource();
         cancelled.Cancel();
         AssertEx.Throws<OperationCanceledException>(() => P1DropDifferentialRunner.ValidateClosedReport(original, root, cancelled.Token));
+
+        static JsonObject Case(JsonObject report, string id) => report["cases"]!.AsArray()
+            .Single(item => item!["id"]!.GetValue<string>() == id)!.AsObject();
     }
 
     private static async Task<JsonObject> ReadReportAsync(string path)

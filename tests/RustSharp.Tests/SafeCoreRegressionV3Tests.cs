@@ -74,6 +74,7 @@ internal static class SafeCoreRegressionV3Tests
 
     private static async Task GateIntegrationAsync()
     {
+        const string candidateSha = "1111111111111111111111111111111111111111";
         string temporaryRoot = Path.GetFullPath(Path.GetTempPath());
         string directory = Path.Combine(temporaryRoot, "rustsharp-regression-gate-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
@@ -95,6 +96,7 @@ internal static class SafeCoreRegressionV3Tests
             }
             JsonObject Platform(string name, string rid) => new()
             {
+                ["candidateSha"] = candidateSha,
                 ["evidenceKind"] = "p1-platform-coreclr-ilverify-native-aot", ["profile"] = "p1-differential-v2",
                 ["platform"] = new JsonObject { ["name"] = name, ["runtimeIdentifier"] = rid },
                 ["manifest"] = new JsonObject { ["denominator"] = 12 }, ["summary"] = Summary(12), ["cases"] = Cases(12),
@@ -104,7 +106,7 @@ internal static class SafeCoreRegressionV3Tests
             var differentialSummary = Summary(16);
             differentialSummary["borrowDenominator"] = 10;
             differentialSummary["dropDenominator"] = 6;
-            string differential = Write("differential", new JsonObject { ["schemaVersion"] = 2, ["profile"] = "p1-differential-v2",
+            string differential = Write("differential", new JsonObject { ["schemaVersion"] = 2, ["profile"] = "p1-differential-v2", ["candidateSha"] = candidateSha,
                 ["oracle"] = new JsonObject { ["available"] = true, ["version"] = "rustc 1.98.0 (synthetic-validator-input)" },
                 ["summary"] = differentialSummary, ["cases"] = Cases(16) });
             string Regression(bool version3, bool corruptCoverage)
@@ -117,7 +119,7 @@ internal static class SafeCoreRegressionV3Tests
                     ["run-pass"] = corruptCoverage ? 16 : version3 ? 17 : 13, ["differential"] = 4,
                     ["legacy"] = 8, ["typed-mir"] = version3 ? 14 : 12, ["borrow"] = 2, ["drop"] = 2,
                 };
-                return Write("regression", new JsonObject { ["schemaVersion"] = 2, ["evidenceKind"] = "safe-core-typed-mir-regression",
+                return Write("regression", new JsonObject { ["schemaVersion"] = 2, ["evidenceKind"] = "safe-core-typed-mir-regression", ["candidateSha"] = candidateSha,
                     ["profile"] = version3 ? "safe-core-regression-v3" : "safe-core-regression-v2", ["summary"] = summary, ["cases"] = Cases(count) });
             }
             string pwsh = OperatingSystem.IsWindows()
@@ -132,7 +134,8 @@ internal static class SafeCoreRegressionV3Tests
                 var arguments = new List<string> { "-NoProfile", "-File", Path.Combine(Root, "eng", "Test-P1ExitGate.ps1"),
                     "-WindowsPlatformReport", windows, "-LinuxPlatformReport", linux,
                     "-WindowsDifferentialReport", differential, "-LinuxDifferentialReport", differential,
-                    "-WindowsRegressionReport", regression, "-LinuxRegressionReport", regression, "-EvidencePath", output };
+                    "-WindowsRegressionReport", regression, "-LinuxRegressionReport", regression, "-EvidencePath", output,
+                    "-CandidateSha", candidateSha };
                 if (scenario.SelectV3) arguments.AddRange(["-RegressionProfile", "safe-core-regression-v3"]);
                 var run = await new BoundedProcessRunner().RunAsync(new(pwsh, arguments, directory, TimeSpan.FromSeconds(15)), deadline.Token).ConfigureAwait(false);
                 AssertEx.False(run.ProcessTreeCleanupIncomplete, "Validator process tree must be reclaimed.");

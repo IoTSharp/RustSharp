@@ -428,8 +428,8 @@ AOT 探测器。这些工作流修改需要新的 CI 运行。此配置的 Linux
 | P1-06 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-06). 定义类型化 MIR、CFG 验证、脱糖和源码映射。 | P1-04 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore` | 冻结的类型化 MIR 类别现包括标量操作符/转换、结构体/枚举布局、嵌套引用与含引用聚合、通用共享/可变切片调用/索引/子切片/写入、move/ref 模式、声明时闭包捕获及已检查常量/提升。GC 拥有的句柄保持真实所有者标识；已注册测试覆盖来源、源码映射、能力/预算边界及确定性 MIR/LIR/PE/PDB。详见[实现清单](docs/p1-06-implementation_zh.md)和[类型化 MIR 契约](docs/typed-mir-profile.md)。P1-07～P1-10 及完整原生候选 SHA 门禁保持独立。 |
 | P1-07 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-07). 为该配置档实现移动路径、借用检查、非词法生命周期、再借用和逃逸分析。 | P0-13, P1-06.04, P1-06.05 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet D:/GitHub/RustSharp/tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --profile p1-differential-v3 --oracle rustc-1.98 --report artifacts/p1-next-session/p1-differential-v3-final2.json --timeout 30 --deadline 300` | 12 个所有权叶子均已完成：黄金诊断保留 move/borrow/escape 代码、消息、原始路径及范围；差分报告通过 32/32，其中借用 20/20、Drop 6/6。候选 SHA 聚合仍是 P1-10.08/P1-GATE 的独立边界。 |
 | P1-08 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-08). 实现作用域清理、确定性 `Drop`、展开/中止配置档行为和 panic 边界。 | P1-06.01, P1-07.01 | `dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore`<br>`dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --p1-drop-call-interface create artifacts/p1-drop/p1-08-call-interface-win-x64.json 2` | [实现清单](docs/p1-08-implementation_zh.md)以经过检查的析构接收者、类型化/共享 drop flag、聚合/临时值清理、显式 panic 策略和可复用直接调用宿主关闭全部十四个叶子。历史 E9 Release 零警告/零错误，回归通过 894/894。固定差分记录 26 项 rustc 一致加两项冻结契约差异；原始 PE ILVerify 为 30/30。Windows 与 Ubuntu WSL 均通过 Native AOT 28/28 和两个原始 PE 产物的 callable 7/7。最终进程/宿主清理及九个保留的历史临时对象分别披露；在该历史时点，源码导入调用属于 P1-09 工作；候选 SHA 聚合仍属于 P1-10/P1-GATE。 |
-| P1-09 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-09)。通过经验证的 CLR LIR 发射支持的 safe-core 程序，并携带 Rust# 跨包元数据与源码所有权契约。 | P0-07, P1-05, P1-08.11 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-build --no-restore` | Closure-9 Release 零警告/零错误，关键回归 84/84、完整回归 964/964。固定源码包清单 SHA 为 `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`；Windows 与 Ubuntu WSL 均通过 19/19 CoreCLR、39/39 原始 PE ILVerify 和 Native AOT，用例零警告/失败/阻塞/未执行，独立构建相同，截止时间及清理审计通过。本地工作树证据已闭环 P1-09；P1-10 候选 SHA 聚合与 P1-GATE 仍为独立 🚧 门禁。 |
-| P1-10 | 🚧 进行中 | [叶子详情](docs/roadmap/P1_zh.md#p1-10). 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-06.01 | `dotnet run --project tools/RustSharp.Conformance -c Release --no-build --no-restore -- --profile p1-differential-v3 --oracle rustc-1.98 --report artifacts/p1-next-session/p1-differential-v3-final2.json --timeout 30 --deadline 300`<br>`dotnet D:/GitHub/RustSharp/tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --profile p1-platform-v2 --report artifacts/p1-next-session/p1-platform-v2-final-closed4.json --timeout 30 --deadline 600` | P1-10.03 至 P1-10.07 已在本地 ✅ 已完成：差分 32/32、借用 20/20、Drop 6/6，平台 24/24 的 CoreCLR、ILVerify、Native AOT 及绑定校验全部通过。候选 SHA 聚合及发布叶子仍属于 P1-10.08 至 P1-GATE。 |
+| P1-09 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-09)。通过经验证的 CLR LIR 发射支持的 safe-core 程序，并携带 Rust# 跨包元数据与源码所有权契约。 | P0-07, P1-05, P1-08.11 | `dotnet run --project tests/RustSharp.Tests/RustSharp.Tests.csproj -c Release --no-build --no-restore` | 历史 Closure-9 Release 零警告/零错误，关键回归 84/84、完整回归 964/964。这些报告记录源码包清单原始字节 SHA `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`；Windows 与 Ubuntu WSL 均通过 19/19 CoreCLR、39/39 原始 PE ILVerify 和 Native AOT，用例零警告/失败/阻塞/未执行，独立构建相同，截止时间及清理审计通过。历史 CRLF 原始字节哈希不同于当前规范化 LF 后的哈希。已记录本地证据闭环 P1-09；P1-10 实现闭环与独立的 P1-GATE 叶子具有各自证据。 |
+| P1-10 | ✅ 已完成 | [叶子详情](docs/roadmap/P1_zh.md#p1-10). 建立编译通过、编译失败、运行通过和差异回归测试套件。 | P0-11, P1-06.01 | `pwsh -NoProfile -File eng/Test-P1SuiteGate.ps1 -CandidateSha 0a415e25c362f8a35c09cb9e1163f5ce30accf82 -WindowsReportSet artifacts/p1-expanded/windows-x64/p1-suite-report-set.json -LinuxReportSet artifacts/p1-expanded/linux-x64/p1-suite-report-set.json` | 十个叶子均在固定本地候选 ✅ 已完成：每个原生 Windows/Ubuntu Linux x64 宿主均通过零警告/零错误的 Release、969/969 项完整测试、32/32 项扩展差分、24/24 项平台 CoreCLR/ILVerify/Native AOT、60/60 项不可变基线审计及 631/631 项源码快照。覆盖账本校验 40 个需求/160 条清单记录，不代表 160 项语义执行。严格聚合通过 15/15，`fullP1Closure=false`；详见[实现记录](docs/p1-10-implementation_zh.md)。CI 发布契约检查通过 8/8；远程 CI 尚未运行，P1-GATE 叶子仍为 ⏳ 计划中。 |
 
 已记录的 `p1-exit-gate-v1` 报告位于 `artifacts/p1-10/p1-exit-gate-v1.json`，
 5/5 个进程内库契约探针均通过：`typed-mir-validation`、`ownership-bridge`、
@@ -456,17 +456,18 @@ P1-06.01 的[退出范围账本](docs/p1-exit-scope-v1_zh.md) 保留 40 个需�
 [投影示例](samples/mir-places.rs) 的 CoreCLR 及 Windows x64 Native AOT 输出均与
 rustc 1.98.0 一致，并通过 ILVerify 10.0.11，没有抑制诊断；GC 拥有的引用解决了
 此前的 `ReturnPtrToStack` 诊断。历史[存储示例](samples/mir-places-verified.rs) 证据保留。
-使用 SDK 10.0.401（仓库固定 10.0.400）的最终本地 Release 验证零警告/零错误，
+使用 SDK 10.0.401（仓库固定 10.0.400）的历史本地 Release 验证零警告/零错误，
 通过 784/784 项测试、差分 v3 32/32（其中借用 20/20、Drop 6/6），以及经 CoreCLR、
 ILVerify 和 Windows Native AOT 执行的平台 v2 24/24。报告保留于
-`artifacts/p1-next-session`。P1-07 及 P1-10.01 至 P1-10.07 的本地扩展证据为
-✅ 已完成；候选 SHA 聚合和发布仍属于完整 P1 门禁。
+`artifacts/p1-next-session`。这些报告闭环各自记录的本地扩展范围；当前 P1-10
+候选验证另有独立记录。
 
 从 `e601789` 开始的后续推进记录了 P1-07.12、P1-09.03/.07 及 P1-10.07；当前 P1-09 闭环另见实现清单：
 显式所有权证据遵守逐函数资源边界并保留源码诊断；包元数据拒绝缺失/未知字段、
 标量 schema 降级及歧义源码别名；扩展平台报告绑定固定源码/期望、输出及后端进程证据。
 [证据审计](docs/p1-evidence-audit_zh.md) 记录聚焦验证和剩余语义/原生边界。
-P1-09 基于当前本地源码包证据已 ✅ 已完成；P1-10 及六个 P1-GATE 叶子仍为 🚧 进行中。
+P1-09 和 P1-10 基于已记录的本地证据为 ✅ 已完成；六个 P1-GATE 叶子仍为 ⏳ 计划中。
+[P1-10 实现记录](docs/p1-10-implementation_zh.md)将本地候选 `0a415e25c362f8a35c09cb9e1163f5ce30accf82` 及其 631 个固定编译器/测试/工具输入绑定到双平台 969/969 项完整测试、32/32 项差分、24/24 项平台及 60/60 项基线结果。严格聚合通过 15/15。该记录区分 40 个需求/160 条记录的账本与语义执行、历史原始字节哈希与当前 LF 字节，以及版本化 Drop 差异与语言门禁认可。此候选尚未运行远程 CI；完整 P1 闭环仍为独立门禁。
 按 [P1 执行顺序](docs/roadmap/P1_zh.md)
 中的精确叶子依赖推进：类型化 place/provenance 解锁源码所有权，drop flag 解锁清理，
 元数据契约和测试运行器可在独立所属文件中并行。P1-06.13 只对账具名降低类别，不再成为
@@ -654,6 +655,6 @@ P1-05（有界可执行泛型/trait）也基于已记录的回归、差分、ILV
 Release 构建。已记录的 `p1-exit-gate-v1` 报告通过
 5/5 个进程内库契约探针，并记录 `"nativeAot": false` 和 `"crossPlatform": false`；
 它不能关闭完整 P1 退出门槛。P1-07 为 ✅ 已完成；P1-08 基于当前生成程序与平台
-证据为 ✅ 已完成。P1-09 基于当前本地源码包证据已 ✅ 已完成。P1-10 及 P1 阶段仍为 🚧 进行中，尚需 P1-10 的剩余证据、候选聚合及发布门禁。
+证据为 ✅ 已完成。P1-09 和 P1-10 基于已记录的本地证据为 ✅ 已完成。P1 阶段仍为 🚧 进行中；其六个 P1-GATE 叶子仍为 ⏳ 计划中，包括同一推送 SHA 的验证和发布。
 P0-10、P0-16 和 P0-17 现在基于已记录的双平台证据均为 ✅ 已完成；后续语言配置档声明仍受完整
 HIR/MIR 和差异测试套件的门槛约束。

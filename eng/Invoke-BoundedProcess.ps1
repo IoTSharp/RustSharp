@@ -27,7 +27,7 @@ $ErrorActionPreference = 'Stop'
 $terminationWaitMilliseconds = 5000
 
 $resolvedWorkingDirectory = (Resolve-Path -LiteralPath $WorkingDirectory).Path
-$command = Get-Command -Name $FilePath -ErrorAction Stop
+$command = Get-Command -Name $FilePath -ErrorAction Stop | Select-Object -First 1
 $process = $null
 $captureStreams = @()
 $captureTasks = @()

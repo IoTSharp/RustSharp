@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using RustSharp.Compiler;
+using RustSharp.Conformance;
 using RustSharp.Runtime;
 
 namespace RustSharp.Tests;
@@ -430,10 +431,16 @@ internal static class P1AggregateDropCodegenTests
                 AssertEx.True(result.StandardError.Contains(additionalError, StringComparison.Ordinal),
                     "Generated aggregate cleanup must retain its failure evidence: " + result.StandardError);
             if (forbidAbort)
-                AssertEx.False(result.ExitCode == RustGeneratedPanic.AbortExitCode ||
+            {
+                AssertEx.Equal("unwind", P1DropDifferentialRunner.ClassifyGeneratedFailure(result.ExitCode, result.StandardError),
+                    "A consumed borrowed replacement must retain the original unwind exception: " + result.StandardError);
+                AssertEx.False(result.StandardError.Contains("RustSharp panic abort:", StringComparison.Ordinal) ||
                     result.StandardError.Contains("RustSharp double panic abort:", StringComparison.Ordinal) ||
-                    result.StandardError.Contains(nameof(RustGeneratedAbortException), StringComparison.Ordinal),
+                    result.StandardError.Contains(nameof(RustGeneratedAbortException), StringComparison.Ordinal) ||
+                    result.StandardError.Contains("FailFast", StringComparison.Ordinal) ||
+                    result.StandardError.Contains("Process terminated.", StringComparison.Ordinal),
                     "A consumed borrowed replacement must propagate one original panic without double-panic abort: " + result.StandardError);
+            }
             AssertEx.Equal(expected, result.StandardOutput.Replace("\r\n", "\n", StringComparison.Ordinal));
         }
         finally

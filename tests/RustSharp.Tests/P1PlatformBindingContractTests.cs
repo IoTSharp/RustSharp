@@ -39,6 +39,29 @@ internal static class P1PlatformBindingContractTests
         P1EvidenceBindingValidator.ValidationResult result = P1EvidenceBindingValidator.Validate(report.ToJsonString(), Expected);
         AssertEx.True(result.Valid, string.Join("; ", result.Errors));
         AssertEx.False(report["semanticClosureEligible"]!.GetValue<bool>(), "A complete execution contract cannot close semantic coverage.");
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        Stopwatch clock = Stopwatch.StartNew();
+        var ubuntuExpected = Expected with { RuntimeIdentifier = "linux-x64", ObservedRuntimeIdentifier = "ubuntu.24.04-x64" };
+        JsonObject ubuntu = Report();
+        ubuntu["platform"]!["name"] = "linux-x64";
+        ubuntu["platform"]!["runtimeIdentifier"] = "linux-x64";
+        ubuntu["platform"]!["observedRuntimeIdentifier"] = "ubuntu.24.04-x64";
+        P1EvidenceBindingValidator.ValidationResult native = P1EvidenceBindingValidator.Validate(ubuntu.ToJsonString(), ubuntuExpected, deadline.Token);
+        AssertEx.True(native.Valid, "A trusted Ubuntu native host must accept its distinct linux-x64 target: " + string.Join("; ", native.Errors));
+        AssertEx.False(P1EvidenceBindingValidator.Validate(ubuntu.ToJsonString(), ubuntuExpected with { ObservedRuntimeIdentifier = null }, deadline.Token).Valid,
+            "Omitting the independently supplied host preserves the existing exact target fallback.");
+        (string Field, string Value)[] mutations = [("observedRuntimeIdentifier", "linux-x64"), ("observedRuntimeIdentifier", "win-x64"), ("runtimeIdentifier", "win-x64")];
+        for (int index = 0; index < mutations.Length && index < 3; index++)
+        {
+            deadline.Token.ThrowIfCancellationRequested();
+            AssertEx.True(clock.Elapsed < TimeSpan.FromSeconds(5), "Ubuntu host/target controls exceeded their three-input, five-second bound.");
+            JsonObject changed = ubuntu.DeepClone().AsObject();
+            changed["platform"]![mutations[index].Field] = mutations[index].Value;
+            P1EvidenceBindingValidator.ValidationResult rejected = P1EvidenceBindingValidator.Validate(changed.ToJsonString(), ubuntuExpected, deadline.Token);
+            AssertEx.False(rejected.Valid, "Native host and target identifiers must each match the independent expectation exactly.");
+            AssertEx.True(rejected.Errors.Any(error => error.StartsWith("platform." + mutations[index].Field + " does not match", StringComparison.Ordinal)),
+                "The mutated host or target field must cause its own binding rejection.");
+        }
         return Task.CompletedTask;
     }
 

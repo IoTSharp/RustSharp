@@ -1,10 +1,15 @@
-name: P1 expanded evidence (manual)
+name: P1 test suite evidence (manual)
 
 on:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
 
 jobs:
   expanded:
@@ -19,27 +24,41 @@ jobs:
             runner: ubuntu-24.04
             rid: linux-x64
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 45
+    timeout-minutes: 75
+    env:
+      GITHUB_SHA: ${{ github.sha }}
+      CI_COMMIT_SHA: ${{ github.sha }}
+      DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+      DOTNET_CLI_UI_LANGUAGE: en-US
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             10.0.400
             10.0.401
+      - name: Verify PowerShell 7 and CI publication contract
+        shell: pwsh
+        run: |
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo', '-NoProfile', '-File', 'eng/Test-P1CiPublicationContract.ps1') -TimeoutSeconds 90 -CapturePrefix artifacts/p1-preflight/ci-publication-contract
       - name: Install rustc 1.98 oracle
         shell: pwsh
         run: ./eng/Invoke-BoundedProcess.ps1 -FilePath rustup -ArgumentList @('toolchain', 'install', '1.98.0', '--profile', 'minimal') -TimeoutSeconds 180 -CapturePrefix artifacts/p1-preflight/rustup
-      - name: Restore and build
+      - name: Bind candidate source before build and execution
+        if: always()
         shell: pwsh
-        run: |
-          $env:DOTNET_CLI_USE_MSBUILD_SERVER = '0'
-          ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('restore', 'RustSharp.slnx', '--disable-build-servers') -TimeoutSeconds 180 -CapturePrefix artifacts/p1-preflight/restore
-          ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('build', 'RustSharp.slnx', '-c', 'Release', '--no-restore', '-m:1', '--disable-build-servers', '-p:UseSharedCompilation=false') -TimeoutSeconds 300 -CapturePrefix artifacts/p1-preflight/build
+        run: ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Get-P1SourceSnapshot.ps1','-CandidateSha',$env:GITHUB_SHA,'-EvidencePath','artifacts/p1-expanded/${{ matrix.name }}/source-snapshot-before.json') -TimeoutSeconds 100 -CapturePrefix 'artifacts/p1-expanded/${{ matrix.name }}/snapshot-before-launch'
+      - name: Restore and verify zero-warning Release build
+        shell: pwsh
+        run: ./eng/Invoke-P1ReleaseBuild.ps1 -CandidateSha $env:GITHUB_SHA -ReportPath 'artifacts/p1-expanded/${{ matrix.name }}/release-build.json'
       - name: Verify evidence rejection checks
         shell: pwsh
         run: ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo', '-NoProfile', '-File', 'eng/Test-P1EvidenceValidation.ps1') -TimeoutSeconds 40 -CapturePrefix artifacts/p1-preflight/evidence-rejections
-      - name: Restore ILVerify tool
+      - name: Restore ILVerify 10.0.11 tool
         shell: pwsh
         run: ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tool', 'restore', '--tool-manifest', '.config/dotnet-tools.json') -TimeoutSeconds 180 -CapturePrefix artifacts/p1-preflight/tools
       - name: Install Linux Native AOT prerequisites
@@ -48,86 +67,77 @@ jobs:
         run: |
           ./eng/Invoke-BoundedProcess.ps1 -FilePath sudo -ArgumentList @('timeout', '--kill-after=10s', '180s', 'apt-get', 'update') -TimeoutSeconds 200 -CapturePrefix artifacts/p1-preflight/apt-update
           ./eng/Invoke-BoundedProcess.ps1 -FilePath sudo -ArgumentList @('timeout', '--kill-after=10s', '180s', 'apt-get', 'install', '--no-install-recommends', '-y', 'clang', 'zlib1g-dev') -TimeoutSeconds 200 -CapturePrefix artifacts/p1-preflight/apt-install
-      - name: Run expanded differential and platform reports
+      - name: Run expanded reports, full harness and immutable baseline audit
         if: always()
         shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $PSNativeCommandUseErrorActionPreference = $false
-          $reportRoot = 'artifacts/p1-expanded/${{ matrix.name }}'
-          New-Item -ItemType Directory -Force -Path $reportRoot | Out-Null
-          $assembly = 'tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll'
-          $diff = Join-Path $reportRoot 'p1-differential-v3.json'
-          $platform = Join-Path $reportRoot 'p1-platform-v2.json'
-          $diffCode = 0
-          $platformCode = 0
-          try { ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @($assembly, '--profile', 'p1-differential-v3', '--oracle', 'rustc-1.98', '--timeout', '30', '--deadline', '900', '--report', $diff) -TimeoutSeconds 930 -CapturePrefix (Join-Path $reportRoot 'differential-launch') } catch { $diffCode = 1; Write-Warning $_.Exception.Message }
-          try { ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @($assembly, '--profile', 'p1-platform-v2', '--timeout', '30', '--deadline', '900', '--report', $platform) -TimeoutSeconds 930 -CapturePrefix (Join-Path $reportRoot 'platform-launch') } catch { $platformCode = 1; Write-Warning $_.Exception.Message }
-          if (-not (Test-Path -LiteralPath $diff -PathType Leaf)) { throw "Missing differential report (exit $diffCode)." }
-          if (-not (Test-Path -LiteralPath $platform -PathType Leaf)) { throw "Missing platform report (exit $platformCode)." }
-          if ($diffCode -ne 0 -or $platformCode -ne 0) { Write-Warning "Expanded evidence is blocked or failed; reports were preserved."; exit 1 }
-      - name: Upload expanded reports
+        run: ./eng/Invoke-P1SuiteReports.ps1 -CandidateSha $env:GITHUB_SHA -PlatformName '${{ matrix.name }}'
+      - name: Reverify candidate source after execution
+        if: always()
+        shell: pwsh
+        run: ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Get-P1SourceSnapshot.ps1','-CandidateSha',$env:GITHUB_SHA,'-EvidencePath','artifacts/p1-expanded/${{ matrix.name }}/source-snapshot.json') -TimeoutSeconds 100 -CapturePrefix 'artifacts/p1-expanded/${{ matrix.name }}/snapshot-after-launch'
+      - name: Preserve unavailable reports and bind CI publication
+        if: always()
+        shell: pwsh
+        env:
+          UPSTREAM_STATUS: ${{ job.status }}
+        run: ./eng/Write-P1CiPublication.ps1 -CandidateSha $env:GITHUB_SHA -PlatformName '${{ matrix.name }}' -RunId '${{ github.run_id }}' -RunAttempt '${{ github.run_attempt }}' -Repository '${{ github.repository }}' -UpstreamStatus $env:UPSTREAM_STATUS
+      - name: Upload all native reports and bounded launch diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p1-expanded-${{ matrix.name }}
+          name: p1-expanded-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/p1-expanded/${{ matrix.name }}
           if-no-files-found: error
+          retention-days: 30
       - name: Upload preflight diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p1-preflight-${{ matrix.name }}
+          name: p1-preflight-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/p1-preflight
           if-no-files-found: warn
+          retention-days: 30
 
-  candidate-gate:
+  suite-gate:
     if: always()
     needs: expanded
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.400
-      - name: Download paired expanded reports
+          ref: ${{ github.sha }}
+      - name: Download Windows candidate reports
+        if: always()
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
-          pattern: p1-expanded-*
-          path: artifacts/p1-expanded-download
-      - name: Run candidate SHA aggregate
+          name: p1-expanded-windows-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-expanded/windows-x64
+      - name: Download Linux candidate reports
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-expanded-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-expanded/linux-x64
+      - name: Reconcile publication hashes and aggregate P1-10 suite evidence
         if: always()
         shell: pwsh
         env:
           GITHUB_SHA: ${{ github.sha }}
+          NATIVE_JOB_RESULT: ${{ needs.expanded.result }}
         run: |
           $ErrorActionPreference = 'Stop'
-          New-Item -ItemType Directory -Force -Path artifacts/p1-expanded/windows-x64, artifacts/p1-expanded/linux-x64 | Out-Null
-          $copyClock = [Diagnostics.Stopwatch]::StartNew()
-          foreach ($platformName in @('windows-x64', 'linux-x64')) {
-            foreach ($reportName in @('p1-differential-v3.json', 'p1-platform-v2.json')) {
-              if ($copyClock.Elapsed.TotalSeconds -ge 15) { throw 'Report copy deadline expired.' }
-              $source = "artifacts/p1-expanded-download/p1-expanded-$platformName/$reportName"
-              if (Test-Path -LiteralPath $source -PathType Leaf) { Copy-Item -LiteralPath $source -Destination "artifacts/p1-expanded/$platformName/$reportName" -Force }
-            }
-          }
-          $expandedCode = 0
-          $expandedArgs = @('-NoLogo', '-NoProfile', '-File', 'eng/Test-P1ExpandedExitGate.ps1', '-DifferentialWindowsReport', 'artifacts/p1-expanded/windows-x64/p1-differential-v3.json', '-DifferentialLinuxReport', 'artifacts/p1-expanded/linux-x64/p1-differential-v3.json', '-PlatformWindowsReport', 'artifacts/p1-expanded/windows-x64/p1-platform-v2.json', '-PlatformLinuxReport', 'artifacts/p1-expanded/linux-x64/p1-platform-v2.json', '-CandidateSha', $env:GITHUB_SHA, '-EvidencePath', 'artifacts/p1-expanded/p1-expanded-exit-gate.json')
-          try { ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList $expandedArgs -TimeoutSeconds 90 -CapturePrefix artifacts/p1-expanded/aggregate-launch } catch { $expandedCode = 1; Write-Warning $_.Exception.Message }
-          if (-not (Test-Path -LiteralPath artifacts/p1-expanded/p1-expanded-exit-gate.json -PathType Leaf)) { throw "Expanded exit gate did not publish a report (exit $expandedCode)." }
-          New-Item -ItemType Directory -Force -Path artifacts/p1-candidate | Out-Null
-          $code = 0
-          $candidateArgs = @('-NoLogo', '-NoProfile', '-File', 'eng/Test-P1CandidateGate.ps1', '-CandidateSha', $env:GITHUB_SHA, '-ExpandedWindowsDifferentialReport', 'artifacts/p1-expanded/windows-x64/p1-differential-v3.json', '-ExpandedLinuxDifferentialReport', 'artifacts/p1-expanded/linux-x64/p1-differential-v3.json', '-ExpandedWindowsPlatformReport', 'artifacts/p1-expanded/windows-x64/p1-platform-v2.json', '-ExpandedLinuxPlatformReport', 'artifacts/p1-expanded/linux-x64/p1-platform-v2.json', '-EvidencePath', 'artifacts/p1-candidate/p1-candidate-gate.json')
-          try { ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList $candidateArgs -TimeoutSeconds 90 -CapturePrefix artifacts/p1-candidate/aggregate-launch } catch { $code = 1; Write-Warning $_.Exception.Message }
-          if (-not (Test-Path -LiteralPath artifacts/p1-candidate/p1-candidate-gate.json -PathType Leaf)) { throw "Candidate gate did not publish a report (exit $code)." }
-          if ($code -ne 0 -or $expandedCode -ne 0) { Write-Warning "Candidate gate is blocked or failed; preserving the report."; exit 1 }
-      - name: Upload candidate aggregate
+          $failed = $false
+          try { ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Test-P1CiPublication.ps1','-CandidateSha',$env:GITHUB_SHA,'-RunId','${{ github.run_id }}','-RunAttempt','${{ github.run_attempt }}','-Repository','${{ github.repository }}','-NativeJobResult',$env:NATIVE_JOB_RESULT) -TimeoutSeconds 30 -CapturePrefix artifacts/p1-candidate/publication-launch } catch { $failed = $true; Write-Warning $_.Exception.Message }
+          try { ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Test-P1SuiteGate.ps1','-CandidateSha',$env:GITHUB_SHA,'-WindowsReportSet','artifacts/p1-expanded/windows-x64/p1-suite-report-set.json','-LinuxReportSet','artifacts/p1-expanded/linux-x64/p1-suite-report-set.json','-EvidencePath','artifacts/p1-candidate/p1-suite-gate.json') -TimeoutSeconds 90 -CapturePrefix artifacts/p1-candidate/suite-launch } catch { $failed = $true; Write-Warning $_.Exception.Message }
+          if ($failed) { exit 1 }
+      - name: Upload P1-10 aggregate and publication reconciliation
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p1-candidate-gate
-          path: |
-            artifacts/p1-candidate
-            artifacts/p1-expanded/p1-expanded-exit-gate.json
+          name: p1-suite-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-candidate
           if-no-files-found: error
+          retention-days: 30

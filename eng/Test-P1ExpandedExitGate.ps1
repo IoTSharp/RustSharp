@@ -12,7 +12,7 @@ param(
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'Test-P1ExpandedExitGate.ps1 requires PowerShell 7 or newer.' }
-. (Join-Path $PSScriptRoot 'P1EvidenceValidation.ps1')
+. (Join-Path $PSScriptRoot 'P1SuiteEvidenceValidation.ps1')
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $started = [DateTimeOffset]::UtcNow
 $checks = [Collections.Generic.List[object]]::new()
@@ -32,7 +32,7 @@ function Read-Report([string] $name, [string] $path) {
     if ($bytes.Length -lt 1 -or $bytes.Length -gt $MaximumReportBytes) { [void]$checks.Add([pscustomobject]@{ Name=$name; Status='failed'; Message='Report exceeds byte bound.' }); return $null }
     $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes))
     [void]$inputs.Add([pscustomobject]@{ Name=$name; Path=[IO.Path]::GetRelativePath($root,$full).Replace('\','/'); Sha256=$hash; Bytes=$bytes.Length })
-    try { return [Text.Encoding]::UTF8.GetString($bytes) | ConvertFrom-Json } catch { [void]$checks.Add([pscustomobject]@{ Name=$name; Status='failed'; Message='Invalid JSON.' }); return $null }
+    try { return ConvertFrom-P1StrictJson $bytes } catch { [void]$checks.Add([pscustomobject]@{ Name=$name; Status='failed'; Message='Invalid JSON: ' + $_.Exception.Message }); return $null }
 }
 
 function Validate-Expanded([string] $name, [object] $report, [string] $profile, [int] $denominator, [string] $rid) {

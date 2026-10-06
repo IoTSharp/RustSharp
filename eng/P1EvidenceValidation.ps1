@@ -2,8 +2,104 @@
 Set-StrictMode -Version 3.0
 
 function Get-P1Property($Object, [string] $Name) {
+    if ($Object -is [Collections.IDictionary]) { if ($Object.Contains($Name)) { return $Object[$Name] }; return $null }
     if ($null -eq $Object -or $null -eq $Object.PSObject.Properties[$Name]) { return $null }
     return $Object.PSObject.Properties[$Name].Value
+}
+
+function Get-P1NormalizedOutput($Process) {
+    return ([string](Get-P1Property $Process 'standardOutput')).Replace("`r`n", "`n").Replace("`r", "`n")
+}
+
+function Get-P1ExpectedPlatformOutput([string] $Id) {
+    $outputs=@{
+        'borrow-shared'="7`n"; 'borrow-mutable-reborrow'="9`n"; 'drop-return-order'="body`ndrop`n"; 'drop-early-return'="drop`n"
+        'borrow-write-read'="9`n9`n"; 'borrow-shared-after-update'="1`n9`n"; 'borrow-mutable-reborrow-chain'="9`n9`n9`n"; 'borrow-shared-reborrow'="7`n9`n"
+        'drop-reverse-locals'="body`nsecond`nfirst`n"; 'drop-nested-scopes'="nested`ninner`nafter`nouter`n"; 'drop-return-reverse'="return`nsecond`nfirst`ncaller`n"; 'drop-branch-return'="early`nsecond`nfirst`nlate`nfirst`n"
+        'slice-unsize'="3`n5`n"; 'pattern-capture'="7`n"; 'generic-import-call'="42`ntrue`n9`n"; 'byref-import-call'="7`n"
+        'metadata-contract'="42`n"; 'mir-projection'="7`n"; 'mir-family'="7`n"; 'source-package'="42`n"
+        'aggregate-struct-drop'="body`naggregate`nfirst`nsecond`n"; 'aggregate-enum-drop'="one`n"; 'panic-unwind-generated'="body`ninner-drop`nouter-drop`n"; 'panic-abort-generated'="drop`nbody`ndrop`n"
+    }
+    return $outputs[$Id]
+}
+
+function Test-P1DifferentialPlatformEvidence($Platform, $Versions, [string] $Rid, [Collections.Generic.List[string]] $Errors) {
+    $observedRid=[string](Get-P1Property $Platform 'runtimeIdentifier')
+    $name=if ($Rid -ceq 'win-x64') { 'windows-x64' } else { 'linux-x64' }
+    $operatingSystem=[string](Get-P1Property $Platform 'operatingSystem')
+    $ridMatches=if ($Rid -ceq 'win-x64') { $observedRid -ceq 'win-x64' } else { $Rid -ceq 'linux-x64' -and $observedRid -cmatch '^(linux|ubuntu(?:\.[0-9]+\.[0-9]+)?)-x64$' }
+    $osMatches=$false
+    if ($operatingSystem.Length -gt 0 -and $operatingSystem.Length -le 512) {
+        if ($Rid -ceq 'win-x64') { $osMatches=$operatingSystem -cmatch '^Microsoft Windows (?:NT )?[0-9]+\.[0-9]+' }
+        else {
+            $osMatches=$operatingSystem -cmatch '^(?:Ubuntu [0-9]+\.[0-9]+(?:\.[0-9]+)?(?:[ \t]+[A-Za-z0-9(). _-]+)?|Debian (?:GNU/Linux )?[0-9]+(?:[ \t]+[A-Za-z0-9(). _-]+)?|(?:Linux|Unix) [0-9]+\.[0-9]+[A-Za-z0-9.()+ _/-]*)$'
+            if ($observedRid -cmatch '^ubuntu(?:\.([0-9]+\.[0-9]+))?-x64$') {
+                $distributionVersion=$Matches[1]
+                $osMatches=$osMatches -and $operatingSystem.StartsWith('Ubuntu ',[StringComparison]::Ordinal)
+                if ($distributionVersion) { $osMatches=$osMatches -and $operatingSystem -cmatch ('^Ubuntu '+[regex]::Escape($distributionVersion)+'(?:\.| |$)') }
+            }
+        }
+    }
+    if (-not $ridMatches) { $Errors.Add('Native runtime identifier mismatch.') }
+    if ((Get-P1Property $Platform 'nativeHost') -cne $true -or (Get-P1Property $Platform 'name') -cne $name -or
+        -not $osMatches -or (Get-P1Property $Platform 'osArchitecture') -cne 'X64' -or
+        (Get-P1Property $Platform 'processArchitecture') -cne 'X64') { $Errors.Add('Observed native x64 host provenance is missing or mismatched.') }
+    foreach ($entry in @(@{field='sdkVersion';label='sdk'},@{field='dotnet';label='runtime'})) {
+        $version=[string](Get-P1Property $Versions $entry.field)
+        if ($version -cnotmatch '^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][a-zA-Z0-9.]+)?$') { $Errors.Add("Observed $($entry.label) version is missing or invalid.") }
+    }
+    if ((Get-P1Property $Versions 'rustc') -cne (Get-P1Property $Platform 'oracle')) { $Errors.Add('Observed rustc tool/version provenance is inconsistent.') }
+}
+
+function Test-P1DifferentialCase($Case, [string] $Id, [Collections.Generic.List[string]] $Errors) {
+    # These identities are frozen in expanded manifest revision 2. A failed
+    # process proves a semantic negative only with its exact diagnostic.
+    $negative = @{
+        'borrow-fail-mut-alias' = @('E0499', 'RSO1002')
+        'borrow-fail-shared-write' = @('E0506', 'RSO1002')
+        'borrow-fail-moved-mut-ref' = @('E0382', 'RSO1001')
+        'borrow-fail-escape' = @('E0597', 'RSO1005')
+        'drop-partial-move' = @('E0509', 'RSO1008')
+    }
+    $runtimeNegative = @{
+        'drop-unwind-nested' = "body`ninner-drop`nouter-drop`n"
+        'drop-double-panic' = "body`ndrop-start`n"
+    }
+    $fixedOutput = @{
+        'drop-aggregate-fields' = "body`naggregate`nfirst-field`nsecond-field`n"
+        'drop-assignment-replacement' = "drop`nbody`ndrop`n"
+        'drop-temporary-scope' = "drop`nafter`n"
+    }
+    $isCompileNegative = $negative.ContainsKey($Id)
+    $expectedOutcome = if ($isCompileNegative) { 'compile-fail' } elseif ($runtimeNegative.ContainsKey($Id)) { 'run-fail' } else { 'run-pass' }
+    if ((Get-P1Property $Case 'expectedOutcome') -cne $expectedOutcome -or
+        -not [string]::IsNullOrEmpty([string](Get-P1Property $Case 'failureKind'))) { $Errors.Add("Case '$Id' semantic outcome or failure classification is invalid.") }
+    $compilerNames = @('rustcCompile', 'rustSharpCheck', 'rustSharpCompile')
+    for ($ordinal = 0; $ordinal -lt 3; $ordinal++) {
+        $name = $compilerNames[$ordinal]
+        $process = Get-P1Property $Case $name
+        Test-P1ProcessEvidence $process "$Id $name" $Errors -Successful:(-not $isCompileNegative)
+        if ($isCompileNegative) {
+            $code = $negative[$Id][[int]($ordinal -gt 0)]
+            $exitCode = Get-P1Property $process 'exitCode'
+            $diagnostics = [string](Get-P1Property $process 'standardError') + [string](Get-P1Property $process 'standardOutput')
+            if ($null -eq $exitCode -or $exitCode -eq 0 -or $diagnostics -notmatch ('\b' + $code + '\b') -or $diagnostics -match '\bRSC0009\b') { $Errors.Add("Case '$Id' expected semantic diagnostic $code is missing or replaced by unsupported lowering.") }
+        }
+    }
+    if ($isCompileNegative) {
+        if ($null -ne (Get-P1Property $Case 'rustcRun') -or $null -ne (Get-P1Property $Case 'rustSharpRun')) { $Errors.Add("Case '$Id' compile-fail evidence contains unexpected execution.") }
+        return
+    }
+    foreach ($name in @('rustcRun', 'rustSharpRun')) {
+        $process = Get-P1Property $Case $name
+        Test-P1ProcessEvidence $process "$Id $name" $Errors -Successful:($expectedOutcome -ceq 'run-pass')
+        if ($expectedOutcome -ceq 'run-fail' -and (Get-P1Property $process 'exitCode') -eq 0) { $Errors.Add("Case '$Id' expected runtime failure executed successfully.") }
+    }
+    $oracleOutput = Get-P1NormalizedOutput (Get-P1Property $Case 'rustcRun')
+    $managedOutput = Get-P1NormalizedOutput (Get-P1Property $Case 'rustSharpRun')
+    if ($oracleOutput -cne $managedOutput -or
+        ($runtimeNegative.ContainsKey($Id) -and $oracleOutput -cne $runtimeNegative[$Id]) -or
+        ($fixedOutput.ContainsKey($Id) -and $oracleOutput -cne $fixedOutput[$Id])) { $Errors.Add("Case '$Id' exact differential output does not match.") }
 }
 
 function Test-P1LabelPlaceholder([string] $Source, [string] $Id) {
@@ -42,6 +138,7 @@ function Test-P1ExpandedEvidence {
     $watch = [Diagnostics.Stopwatch]::StartNew()
     try {
         if ($null -eq $Report) { return @('blocked: execution report is missing.') }
+        if ((Get-P1Property $Report 'schemaVersion') -ne 1) { $errors.Add('Expanded schema version is invalid.') }
         if ([string]::IsNullOrWhiteSpace($CandidateSha)) { $errors.Add('blocked: candidate SHA is required.') }
         elseif ($CandidateSha -notmatch '^[0-9a-fA-F]{40,64}$' -or (Get-P1Property $Report 'candidateSha') -cne $CandidateSha) { $errors.Add('Candidate SHA is invalid or mismatched.') }
         if ((Get-P1Property $Report 'profile') -cne $Profile) { $errors.Add('Expanded profile mismatch.') }
@@ -49,14 +146,22 @@ function Test-P1ExpandedEvidence {
         $kind = if ($Profile -ceq 'p1-platform-v2') { 'p1-platform-coreclr-ilverify-native-aot' } else { 'p1-source-borrow-drop-differential' }
         if ((Get-P1Property $Report 'evidenceKind') -cne $kind) { $errors.Add('Expanded evidence kind mismatch.') }
         $platform = Get-P1Property $Report 'platform'
-        if ((Get-P1Property $platform 'runtimeIdentifier') -cne $Rid) { $errors.Add('Native runtime identifier mismatch.') }
-        $observedRid = [string](Get-P1Property $platform 'observedRuntimeIdentifier')
-        $hostMatches = if ($Rid -ceq 'win-x64') { $observedRid -ceq 'win-x64' } else { $observedRid -cmatch '^(linux|ubuntu(?:\.\d+\.\d+)?)-x64$' }
-        if ((Get-P1Property $platform 'nativeExecution') -cne $true -or -not $hostMatches -or (Get-P1Property $platform 'architecture') -cne 'X64') { $errors.Add('Observed native x64 host provenance is missing or mismatched.') }
-        if ((Get-P1Property $platform 'oracle') -notmatch '^rustc 1\.98\.0 \(') { $errors.Add('Observed rustc 1.98.0 version is missing.') }
-        foreach ($name in @('sdk', 'runtime')) {
-            if ([string]::IsNullOrWhiteSpace([string](Get-P1Property $platform $name)) -or (Get-P1Property $platform $name) -eq 'unavailable') { $errors.Add("Observed $name version is missing.") }
+        if ($Profile -ceq 'p1-differential-v3') {
+            # Differential and platform runners deliberately emit different
+            # provenance envelopes. Validate the observed fields of each;
+            # absent platform-runner aliases cannot replace these facts.
+            Test-P1DifferentialPlatformEvidence $platform (Get-P1Property $Report 'toolVersions') $Rid $errors
         }
+        else {
+            if ((Get-P1Property $platform 'runtimeIdentifier') -cne $Rid) { $errors.Add('Native runtime identifier mismatch.') }
+            $observedRid = [string](Get-P1Property $platform 'observedRuntimeIdentifier')
+            $hostMatches = if ($Rid -ceq 'win-x64') { $observedRid -ceq 'win-x64' } else { $observedRid -cmatch '^(linux|ubuntu(?:\.\d+\.\d+)?)-x64$' }
+            if ((Get-P1Property $platform 'nativeExecution') -cne $true -or -not $hostMatches -or (Get-P1Property $platform 'architecture') -cne 'X64') { $errors.Add('Observed native x64 host provenance is missing or mismatched.') }
+            foreach ($name in @('sdk', 'runtime')) {
+                if ([string]::IsNullOrWhiteSpace([string](Get-P1Property $platform $name)) -or (Get-P1Property $platform $name) -eq 'unavailable') { $errors.Add("Observed $name version is missing.") }
+            }
+        }
+        if ((Get-P1Property $platform 'oracle') -notmatch '^rustc 1\.98\.0 \(') { $errors.Add('Observed rustc 1.98.0 version is missing.') }
         $compilerHash = [string](Get-P1Property (Get-P1Property $Report 'compiler') 'sha256')
         if ($compilerHash -notmatch '^[a-fA-F0-9]{64}$' -or $compilerHash -cne [string](Get-P1Property $Report 'compilerSha256')) { $errors.Add('Actual compiler SHA-256 provenance is missing or inconsistent.') }
         if ((Get-P1Property (Get-P1Property $Report 'cleanup') 'completed') -cne $true) { $errors.Add('Report cleanup did not complete.') }
@@ -113,10 +218,15 @@ function Test-P1ExpandedEvidence {
                 if ((Get-P1Property $aot 'status') -cne 'passed' -or (Get-P1Property $aot 'succeeded') -cne $true -or (Get-P1Property $aot 'outputMatches') -cne $true -or (Get-P1Property $aot 'hostCleanupIncomplete') -cne $false) { $errors.Add("Case '$id' Native AOT evidence is incomplete.") }
                 Test-P1ProcessEvidence (Get-P1Property $aot 'publish') "$id AOT publish" $errors -Successful
                 Test-P1ProcessEvidence (Get-P1Property $aot 'run') "$id AOT run" $errors -Successful
+                $output = Get-P1ExpectedPlatformOutput $id
+                $hasReportedExpectation = ($case -is [Collections.IDictionary] -and $case.Contains('expectedOutput')) -or
+                    ($case -isnot [Collections.IDictionary] -and $null -ne $case.PSObject.Properties['expectedOutput'])
+                if ($null -eq $output -or ($hasReportedExpectation -and (Get-P1Property $case 'expectedOutput') -cne $output) -or
+                    (Get-P1NormalizedOutput (Get-P1Property $case 'coreClrRun')) -cne $output -or
+                    (Get-P1NormalizedOutput (Get-P1Property $aot 'run')) -cne $output) { $errors.Add("Case '$id' exact CoreCLR/Native AOT frozen output is missing or mismatched.") }
             }
             else {
-                Test-P1ProcessEvidence (Get-P1Property $case 'rustcCompile') "$id rustc compile" $errors
-                Test-P1ProcessEvidence (Get-P1Property $case 'rustSharpCompile') "$id RustSharp compile" $errors
+                Test-P1DifferentialCase $case $id $errors
             }
         }
         if ($seen.Count -ne $count -or $watch.Elapsed.TotalSeconds -ge 15) { $errors.Add('Expanded evidence validation exceeded its item/time bound.') }
