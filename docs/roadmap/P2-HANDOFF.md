@@ -2,7 +2,46 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 06:59
+## Current checkpoint — 2026-10-08 07:25
+
+Accepted separately: `ad813af` fixes Linux hidden receipt sandbox cleanup;
+Windows/Ubuntu each pass tiny1 and fixed3, four sandboxes removed. `6d3d428`
+adds monotonic remaining-evidence I/O acceptance checks: candidate
+`a434f5bbdf74e3e2b81c368f9bf12a1fd36c20af`,703 inputs, Release0/0,
+mapping10, compiled-guard3 and actual Windows CLI9 pass; generated NativeV5
+executes28 with26 exact matches/two inherited differences. Its positive harness
+input is explicitly older regression evidence. Root observed123 PIDs absent.
+Actual I/O timer-delay injection and independent descendants remain open.
+
+`4945807` fixes formatter byte-limit exceptions found by real synchronized
+source growth. Candidate `eb0598f39c3797e29b3c9d0332a179a03aeac9f1`,tree
+`ee500132a72b60022f2c689ac74dc2038d67cdbc`,703 inputs, Release0/0,
+fixed59 and Windows CLI8 pass. Linux tiny1 plus growth/change/SIGINT/managed
+scheduling4 and separate external FIFO-worker1 pass. Root confirms18 Windows
+launcher PIDs and six Linux CLI PIDs/fixtures absent. Preserve the baseline
+missed event and actual exit134. Windows directed CTRL+C and actual async I/O
+interruption remain open; P2-08.02 is 🚧 In progress. P2 remains8/101
+✅ Complete leaves; all six P1 gates and all P2 parents/phases remain open.
+
+CI v14 binds old264416f/run37699582503: final ❌ Failed. Windows executes
+1203/1203, formatter59/59 and source703; Linux expanded executes0 after the
+diagnostic's hidden sandbox cleanup failure despite3/3 assertions. Both native
+source19/39 and local backend12 pass; suite9passed/3failed/3blocked prevents
+the production aggregate, with no physical24 matrix. v14 independently
+reconciles43 Linux hashes/16 reports and53 Windows hashes/19 reports within
+152/250 files; twenty recorded local launch identities exited. Keep the failed
+run-log retrieval and auditor's corrected blocked-shape failure.
+
+Transport hardening drafts in `joint-transport-hardening-v1/` pass utility12,
+five AST checks and two patch checks; actual native/ILVerify/AOT/joint12 remain0.
+No shared workflow integration is claimed. Next review transport3 and mandatory
+joint wiring, complete trusted descendant containment and safe Windows cancel
+controls, then execute same-SHA native gates. Windows cancel/containment drafts
+are isolated and require root acceptance. Latest Git/push/unique-CI state is in
+`artifacts/p2-supervision/formatter-limit-root-v1/resumption.json`. Preserve
+user tmp, prior failures and the sole ACTIVE thirty-minute heartbeat.
+
+## Historical checkpoint — 2026-10-08 06:59
 
 Accepted commits this slice: `9265057` receipt diagnostics (trial1/fixed3 and
 publication8); `64b3046` guarded NativeV5 producer integration (utility1/8,

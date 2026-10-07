@@ -2,7 +2,40 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 06:59
+## 当前检查点 — 2026-10-08 07:25
+
+分别验收提交：`ad813af` 修复Linux隐藏回执沙箱清理，Windows/Ubuntu各通过
+tiny1及fixed3，四个沙箱已移除。`6d3d428` 添加剩余证据单调I/O接受检查：候选
+`a434f5bbdf74e3e2b81c368f9bf12a1fd36c20af`、703输入、Release0/0、mapping10、
+compiled-guard3及真实Windows CLI9通过；NativeV5生成执行28项，26精确匹配/
+两个继承差异。正向harness输入明确是旧回归证据。root观察123个PID不存在。
+实际I/O计时器延迟注入和独立后代证明仍开放。
+
+`4945807` 修复真实同步源码增长发现的formatter字节限制异常。候选
+`eb0598f39c3797e29b3c9d0332a179a03aeac9f1`、tree
+`ee500132a72b60022f2c689ac74dc2038d67cdbc`、703输入、Release0/0、fixed59及
+Windows CLI8通过。Linux tiny1，以及增长/变化/SIGINT/托管调度4项和独立外部
+FIFO-worker1项通过。root确认18个Windows launcher PID和六个Linux CLI PID/夹具
+不存在。保留原未命中事件及实际退出134失败。Windows定向CTRL+C和实际异步I/O
+中断仍开放，P2-08.02为 🚧 进行中。P2仍为8/101个 ✅ 已完成叶项；六个P1门禁
+和全部P2父项/阶段均保持开放。
+
+CI v14绑定旧264416f/run37699582503，最终 ❌ 失败。Windows实际1203/1203、
+formatter59/59及source703；Linux expanded在诊断隐藏沙箱清理失败后实际执行0，
+其断言虽然3/3通过。两native源码19/39及本地backend12通过；suite的9passed/
+3failed/3blocked阻止production聚合，没有物理24矩阵。v14独立对账Linux43哈希/
+16报告及Windows53哈希/19报告，使用152/250文件；20个已记录本地launcher身份
+均已退出。保留run-log获取失败及审计器修正blocked形状前的失败。
+
+`joint-transport-hardening-v1/` 的transport加固草稿通过utility12、五AST及两patch
+检查；真实native/ILVerify/AOT/joint12仍为0。不声称共享workflow已经接入。
+下一步审阅transport3及强制joint接线，完成可信后代约束和安全Windows取消控制，
+再执行同SHA原生门禁。Windows取消/后代约束草稿独占，仍需root验收。
+最新Git/推送/唯一CI状态保存在
+`artifacts/p2-supervision/formatter-limit-root-v1/resumption.json`。
+保留用户tmp、旧失败及唯一ACTIVE半小时heartbeat。
+
+## 历史检查点 — 2026-10-08 06:59
 
 本轮已验收提交：`9265057` 回执诊断（trial1/fixed3及publication8）；`64b3046`
 有界NativeV5 producer接入（utility1/8，真实native执行0）；`e0fb26b` formatter接入。
