@@ -55,6 +55,7 @@ internal static class Program
         tests = [.. tests, .. P1HarnessEvidenceTests.All];
         tests = [.. tests, .. P2CargoContractTests.All];
         tests = [.. tests, .. P2ToolingContractTests.All];
+        tests = [.. tests, .. P2FormatterTests.All];
         tests = [.. tests, .. P2InteropContractTests.All];
         tests = [.. tests, .. P1NativeUnwindClosureTests.All];
         tests = [.. tests, .. P1GateCoverageContractTests.All];

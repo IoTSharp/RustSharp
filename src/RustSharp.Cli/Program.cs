@@ -12,6 +12,8 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "fmt")
+            return FormatterCommand.Run(args);
         var parseResult = CommandLineParser.Parse(args);
         if (!parseResult.Success)
         {
@@ -250,6 +252,7 @@ internal static class Program
               rsc compile <source.rs|Cargo.toml> [--output <program.dll>]
               rsc run <source.rs|Cargo.toml> [--output <program.dll>] [--timeout <seconds>]
               rsc publish <source.rs|Cargo.toml> [--runtime <rid>] [--output <directory>] [--timeout <seconds>]
+              rsc fmt [--check] <source.rs|directory>
               rsc --version
 
             Profiles (Rust 1.98 / Edition 2024):
