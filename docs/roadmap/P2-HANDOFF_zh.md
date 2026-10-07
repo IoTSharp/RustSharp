@@ -2,6 +2,49 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
+## 当前检查点 — 2026-10-08 03:58
+
+本节决定接续；后续章节是历史检查点。`20c77a8` 完成 P2-04.04 后，P2 为
+6/101 ✅ 已完成叶子。最终候选为 `b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a`：
+全新 SDK 10.0.401 Release 零警告/错误，12/12 cfg、11/11 feature、38/38 清单
+及 3+5+2 旧版案例。归档为 `docs/evidence/p2/P2-04.04*`；最终物理源码与执行
+保存在 `artifacts/p2-supervision/cfg-v5/`。71 条隔离执行记录均退出。cfg-v1/v2
+初步失败在不缩范围的情况下修复；v3 证据早于 Program 行尾修正，v4 正确拒绝
+陈旧候选，v5 重新绑定最终字节并重跑。保留全部来源。P2 父项/阶段和 P1 门禁
+均未闭环。唯一 30 分钟定时监督仍为 ACTIVE。
+
+真实远程候选 `bb1c062906f7bd581f98d45f8b14791c2595215e` 已通过路线图
+`37675252213`、Windows P0 `37675252075`、Linux Native AOT `37675252162`
+和平台 `37675252198`。Expanded 运行 `37675251918` 的两个 production-native
+和 expanded Linux ✅ 已完成；expanded Windows ❌ 失败：1,104 个测试全部执行，
+1,102 通过，恰好两个 generated Drop oracle 测试未能在有界 PATH 查找中找到 rustc。
+不是超时，也不是语义 trace 差异。失败 job 为 `112976974188`；下载的 harness、
+stderr 和失败摘要位于 `artifacts/p1-supervision/ci-followup-v4/`。双平台回执的
+SHA/tree/run/attempt 与 64 个选定物理哈希匹配；这种选定审核不等于全部保留字节
+或聚合门禁闭环。Backend 回执使用 `legacy-v1`，六夹具矩阵不能替代 NativeV5 Drop。
+
+Root 已把验证过的 Windows P0 oracle 安装块接到 expanded/production-native 两处：
+有界安装、Get-Command rustc/dotnet 路径、真实 +1.98.0 版本检查和 GITHUB_ENV。
+全新本机候选 `ed2ad9b0b3ab4e95aed98c60565a709cc956a7a9` 通过 SDK401 零警告/错误
+构建；两个真实 Drop 测试均通过且进程完全清理。修复提交 `705efc3` 记录 CI 修复。证据在
+`artifacts/p1-supervision/expanded-oracle-fix-v1/`。所属启动器已退出；推送已接受提交并调度一套同 SHA CI。不得拼接早先失败/成功候选证据。
+
+已冻结未构建草稿包括 `prepared-cfg-v1/`（已集成）、`prepared-lock-v1/`
+（P2-04.05，15 文件/10 案例）、`prepared-interop-binding-v1/`（P2-06.02，
+11 文件/14 案例）和 `prepared-formatter-v1/`（P2-08.02，59 案例）。Formatter
+只读审核准备了 `formatter-review-v1/formatter-command-guards.patch`，修复实际
+读取字节上限、Unix 权限、所属临时文件创建和清理。此外须在重解析前拒绝超过
+冻结 1M 输入字符上限的格式化输出，否则第二次格式化可能拒绝第一次的输出。
+先接入原实现再应用审核修复，完成语义构建、固定执行和真实 CLI 字节非修改验收
+后才宣称完成。Root 是唯一集成/构建/共享注册负责人，每次提交一个已验收任务。
+全部草稿工作者报告没有待回收所属资源。
+
+活跃工作者 `p1_remaining_gates` 和 `documentation_p2` 仅预留
+`prepared-p1-remaining-gates-v1/` 和 `prepared-documentation-v1/`。前者准备缺失的
+真实 coverage/NativeV5 CLI 与保留 CI 证据接线；后者在父项 91 中冻结 P2-08.03 的
+12 个文档场景。先接续现有工作者再替换。保留用户 `tmp/`、已移动旧 junction 及
+目标、被拒绝清理 ZIP 日志、全部快照和诊断产物。
+
 ## 当前检查点 — 2026-10-08
 
 接续以本节为准，后续章节保留历史检查点。P2 有 5/101 个 ✅ 已完成叶子：

@@ -2,6 +2,58 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
+## Current checkpoint — 2026-10-08 03:58
+
+This section governs resumption; the later sections are historical checkpoints.
+P2 has 6/101 ✅ Complete leaves after `20c77a8` closes P2-04.04. Its final
+candidate is `b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a`: fresh SDK 10.0.401
+Release 0 warnings/errors, 12/12 cfg, 11/11 feature, 38/38 manifest and 3+5+2
+legacy cases. Archives are `docs/evidence/p2/P2-04.04*`; accepted physical source
+and execution are `artifacts/p2-supervision/cfg-v5/`. The 71 isolated execution
+records exited. Earlier cfg-v1/v2 failures were repaired without reducing scope;
+v3 evidence precedes a Program line-ending correction, v4 correctly rejected
+that stale candidate, and v5 rebinds and reruns the final bytes. Keep all provenance.
+No P2 parent/phase or P1 gate is closed. The sole 30-minute heartbeat remains ACTIVE.
+
+Actual remote candidate `bb1c062906f7bd581f98d45f8b14791c2595215e` passes Roadmap
+`37675252213`, Windows P0 `37675252075`, Linux Native AOT `37675252162`, and platform
+`37675252198`. Expanded run `37675251918` has both production-native jobs and
+expanded Linux ✅ Complete; expanded Windows ❌ Failed: full 1,104 tests execute,
+1,102 pass and exactly two generated Drop oracle tests cannot find rustc within
+the bounded PATH lookup. It is neither a timeout nor a semantic trace mismatch.
+Exact failed job is `112976974188`; downloaded harness/stderr and failure summary
+are under `artifacts/p1-supervision/ci-followup-v4/`. Two platform receipts bind
+SHA/tree/run/attempt and 64 selected physical hashes match; this selected audit
+is not complete retained-byte or aggregate gate closure. Backend receipt profile
+is `legacy-v1`, so the six-fixture matrix does not substitute for NativeV5 Drop.
+
+Root has connected the previously verified Windows P0 oracle block to both
+expanded/production-native jobs: bounded installation, Get-Command rustc/dotnet
+paths, real +1.98.0 version check and GITHUB_ENV. Fresh local candidate
+`ed2ad9b0b3ab4e95aed98c60565a709cc956a7a9` passes a zero-warning/error SDK401 build;
+both actual Drop tests pass with complete process cleanup. Repair commit `705efc3` records the CI fix.
+Evidence is `artifacts/p1-supervision/expanded-oracle-fix-v1/`. The owned launcher has exited; push accepted commits and dispatch one
+same-SHA set. Do not merge earlier failed/successful candidate evidence.
+
+Frozen unbuilt drafts now include `prepared-cfg-v1/` (already integrated),
+`prepared-lock-v1/` (P2-04.05, 15 files/10 cases), `prepared-interop-binding-v1/`
+(P2-06.02, 11 files/14 cases), and `prepared-formatter-v1/` (P2-08.02, 59 cases).
+Formatter read-only review prepared `formatter-review-v1/formatter-command-guards.patch`
+for bounded actual byte reads, Unix permissions, owned temp creation and cleanup.
+Also reject formatted output above the frozen 1M input character ceiling before
+reparse, otherwise a second formatting invocation may reject first output.
+Apply review fixes after original implementation, then semantic build, fixed
+execution and actual CLI byte-nonmutation acceptance before any completion claim.
+Root remains the only integrator/builder/shared-registration owner and commits
+one accepted task at a time. All draft workers reported no pending owned cleanup.
+
+Active workers `p1_remaining_gates` and `documentation_p2` reserve only
+`prepared-p1-remaining-gates-v1/` and `prepared-documentation-v1/`. The first
+prepares missing actual coverage/NativeV5 CLI and retained CI proof integration;
+the second freezes P2-08.03's 12 documentation scenarios within parent 91.
+Resume these workers before replacing them. Preserve user `tmp/`, the old moved
+junction/target, rejected-cleanup ZIP log, all snapshots and diagnostic artifacts.
+
 ## Current checkpoint — 2026-10-08
 
 This section governs resumption; the later sections retain historical checkpoints.
