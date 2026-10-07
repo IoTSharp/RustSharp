@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-release-build-binding-repair-archive",
+  "candidateSha": "dfdd76155934e286b85979a28b053ce8ffc10547",
+  "scope": "source-and-retained-assembly-bindings",
+  "fullP1Closure": false,
+  "summary": {
+    "denominator": 9,
+    "status": "passed",
+    "passed": 9,
+    "failed": 0
+  },
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "artifacts": [
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/release-build.json",
+      "sourceSha256": "8B0BFF45E1D8B0638B39B6BEE1FF5EBBE508B283E6C0220F76732E31AEC924BD",
+      "archivedPath": "docs/evidence/p1/release-build-bindings.release.json",
+      "archivedSha256": "94D19429F12F2C389AAE1F86492D78545D0368BDB7B085DC99EA6C03EA58DFCA"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/release-bindings-9.stdout.log",
+      "sourceSha256": "81F634463DE1274840E40B758A7B780ABA6AD7B8773D1474A62554A14AE5E0B8",
+      "archivedPath": "docs/evidence/p1/release-build-bindings.controls.log",
+      "archivedSha256": "C45400A4EA393E81E60C85AE9B6851DD603D2847EFF1EB993CC91AC0C31D12DB"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/release-bindings-9.process.json",
+      "sourceSha256": "BB052CB6EBE90F072106816E0A92FB7124C537D5A786A6C5BD5DFB95E0AB4964",
+      "archivedPath": "docs/evidence/p1/release-build-bindings.process.json",
+      "archivedSha256": "C5D2618BC90B2E007FBEC6D35011B5715D7F2532DC07C31C9D25D37DD9C56964"
+    }
+  ]
+}

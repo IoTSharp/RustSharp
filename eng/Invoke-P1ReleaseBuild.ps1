@@ -25,15 +25,37 @@ $compilerHash = $null
 $compilerPath = 'src/RustSharp.Cli/bin/Release/net10.0/rsc.dll'
 $testsAssemblyPath = 'tests/RustSharp.Tests/bin/Release/net10.0/RustSharp.Tests.dll'
 $testsAssemblyHash = $null
+$compilerArtifactPath = $null
+$testsAssemblyArtifactPath = $null
 $registrationInventory = $null
 $registrationInventoryProcess = $null
 $registrationInventoryPath = $null
 $registrationInventoryHash = $null
+$sourceSnapshots = [Collections.Generic.List[object]]::new()
+$implementationAssemblies = [Collections.Generic.List[object]]::new()
+$sourceProvenance = $null
+$beforeSnapshot = $null
 $oldLanguage = $env:DOTNET_CLI_UI_LANGUAGE
 $oldBuildServer = $env:DOTNET_CLI_USE_MSBUILD_SERVER
+function Save-ReleaseAssembly([string] $Path, [string] $Hash) {
+    if ($clock.Elapsed.TotalSeconds -ge 625) { throw 'Release retained assembly deadline expired.' }
+    $full = Join-Path $root $Path
+    if (-not [IO.File]::Exists($full) -or ([IO.FileInfo]::new($full)).Length -gt 32MB) { throw 'Release retained assembly exceeds its byte bound.' }
+    $bytes = [IO.File]::ReadAllBytes($full)
+    if ($bytes.Length -gt 32MB -or [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)) -ine $Hash) { throw 'Release assembly changed before retention.' }
+    $artifactDirectory = Join-Path ([IO.Path]::GetDirectoryName($report)) 'build-artifacts'
+    $null = [IO.Directory]::CreateDirectory($artifactDirectory)
+    $artifact = Join-Path $artifactDirectory ([IO.Path]::GetFileName($Path))
+    [IO.File]::WriteAllBytes($artifact,$bytes)
+    return [IO.Path]::GetRelativePath($root,$artifact).Replace('\','/')
+}
 try {
     $env:DOTNET_CLI_UI_LANGUAGE = 'en-US'
     $env:DOTNET_CLI_USE_MSBUILD_SERVER = '0'
+    $beforePath = Join-Path ([IO.Path]::GetDirectoryName($report)) 'build-source-before.json'
+    & (Join-Path $PSScriptRoot 'Get-P1SourceSnapshot.ps1') -CandidateSha $CandidateSha -EvidencePath $beforePath -RepositoryRoot $root -DeadlineSeconds 90
+    $beforeSnapshot = ConvertFrom-P1StrictJson ([IO.File]::ReadAllBytes($beforePath))
+    $sourceSnapshots.Add([ordered]@{ path=[IO.Path]::GetRelativePath($root,$beforePath).Replace('\','/'); sha256=(Get-FileHash -LiteralPath $beforePath -Algorithm SHA256).Hash })
     $dotnet = (Get-Command $DotNetPath -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
     $dotnetInfo = [IO.FileInfo]::new($dotnet)
     $dotnetTarget = $dotnetInfo.ResolveLinkTarget($true)
@@ -49,10 +71,10 @@ try {
         @{ name='restore'; timeout=180; arguments=@('restore', 'RustSharp.slnx', '--disable-build-servers') },
         @{ name='build'; timeout=300; arguments=@('build', 'RustSharp.slnx', '-c', 'Release', '--no-restore', '-m:1', '--disable-build-servers', '-p:UseSharedCompilation=false') }
     )
-    # Exactly two build commands, one SDK probe and one registration inventory
-    # command; the helper records identity and reclaims its owned tree.
+    # Two source snapshots bracket two build commands, an SDK probe and one
+    # registration inventory; each helper records and reclaims its owned tree.
     foreach ($command in $commands) {
-        if ($clock.Elapsed.TotalSeconds -ge 515) { throw 'Release build orchestration deadline expired.' }
+        if ($clock.Elapsed.TotalSeconds -ge 605) { throw 'Release build orchestration deadline expired.' }
         $prefix = Join-Path ([IO.Path]::GetDirectoryName($report)) ('build-' + $command.name)
         $stepFailure = $null
         try {
@@ -75,7 +97,7 @@ try {
             $compilerHash = (Get-FileHash -LiteralPath $compilerFullPath -Algorithm SHA256).Hash
         }
     }
-    if ($clock.Elapsed.TotalSeconds -ge 535) { throw 'Release inventory orchestration deadline expired.' }
+    if ($clock.Elapsed.TotalSeconds -ge 625) { throw 'Release inventory orchestration deadline expired.' }
     $testsAssemblyFullPath = Join-Path $root $testsAssemblyPath
     if (-not [IO.File]::Exists($testsAssemblyFullPath)) { throw 'Release build did not produce the tests assembly.' }
     $testsAssemblyHash = (Get-FileHash -LiteralPath $testsAssemblyFullPath -Algorithm SHA256).Hash
@@ -90,11 +112,30 @@ try {
     if ((Get-FileHash -LiteralPath $testsAssemblyFullPath -Algorithm SHA256).Hash -ine $testsAssemblyHash) { throw 'Tests assembly changed while listing its registration inventory.' }
     $registrationInventoryPath = [IO.Path]::GetRelativePath($root, $inventoryPrefix + '.stdout.log').Replace('\','/')
     $registrationInventoryHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($inventoryBytes))
+    $compilerArtifactPath = Save-ReleaseAssembly $compilerPath $compilerHash
+    $testsAssemblyArtifactPath = Save-ReleaseAssembly $testsAssemblyPath $testsAssemblyHash
+    $implementationNames = @('RustSharp.Compiler','RustSharp.Conformance','RustSharp.Runtime','RustSharp.Semantics','RustSharp.CodeGen.IL','RustSharp.Syntax')
+    foreach ($implementationName in $implementationNames) {
+        if ($clock.Elapsed.TotalSeconds -ge 625) { throw 'Release implementation hashing deadline expired.' }
+        $implementationPath = 'tests/RustSharp.Tests/bin/Release/net10.0/' + $implementationName + '.dll'
+        $implementationFullPath = Join-Path $root $implementationPath
+        if (-not [IO.File]::Exists($implementationFullPath) -or ([IO.FileInfo]::new($implementationFullPath)).Length -gt 32MB) { throw 'Release implementation dependency is missing or oversized.' }
+        $implementationHash = (Get-FileHash -LiteralPath $implementationFullPath -Algorithm SHA256).Hash
+        $implementationAssemblies.Add([ordered]@{path=$implementationPath;sha256=$implementationHash;artifactPath=(Save-ReleaseAssembly $implementationPath $implementationHash)})
+    }
+    $afterPath = Join-Path ([IO.Path]::GetDirectoryName($report)) 'build-source-after.json'
+    & (Join-Path $PSScriptRoot 'Get-P1SourceSnapshot.ps1') -CandidateSha $CandidateSha -EvidencePath $afterPath -RepositoryRoot $root -DeadlineSeconds 90
+    $afterSnapshot = ConvertFrom-P1StrictJson ([IO.File]::ReadAllBytes($afterPath))
+    if ($afterSnapshot.treeSha -cne $beforeSnapshot.treeSha -or
+        ($afterSnapshot.files | ConvertTo-Json -Depth 6 -Compress) -cne ($beforeSnapshot.files | ConvertTo-Json -Depth 6 -Compress)) { throw 'Candidate compiler inputs changed during Release build.' }
+    $sourceSnapshots.Add([ordered]@{path=[IO.Path]::GetRelativePath($root,$afterPath).Replace('\','/');sha256=(Get-FileHash -LiteralPath $afterPath -Algorithm SHA256).Hash})
+    $sourceProvenance = $afterSnapshot.sourceProvenance
+    if ($clock.Elapsed.TotalSeconds -ge 715) { throw 'Release provenance orchestration deadline expired.' }
 } catch { $failure = $_.Exception.Message }
 finally {
     $env:DOTNET_CLI_UI_LANGUAGE = $oldLanguage
     $env:DOTNET_CLI_USE_MSBUILD_SERVER = $oldBuildServer
-    $succeeded = $null -eq $failure -and $steps.Count -eq 2 -and $warnings -ceq 0 -and $errors -ceq 0 -and $null -ne $registrationInventory
-    [ordered]@{ schemaVersion=1; evidenceKind='p1-release-build'; candidateSha=$CandidateSha; configuration='Release'; succeeded=$succeeded; sdkVersion=$SdkVersion; sdkProbe=$sdkProbe; compilerPath=$compilerPath; compilerSha256=$compilerHash; testsAssemblyPath=$testsAssemblyPath; testsAssemblySha256=$testsAssemblyHash; registrationInventory=$registrationInventory; registrationInventoryProcess=$registrationInventoryProcess; registrationInventoryPath=$registrationInventoryPath; registrationInventorySha256=$registrationInventoryHash; summary=@{ status=if($succeeded){'passed'}else{'blocked'}; warnings=$warnings; errors=$errors }; steps=@($steps.ToArray()); execution=@{ startedAtUtc=$started.ToString('O'); finishedAtUtc=[DateTimeOffset]::UtcNow.ToString('O'); maximumCommands=4; deadlineSeconds=535 }; harnessError=$failure } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $report -Encoding utf8
+    $succeeded = $null -eq $failure -and $steps.Count -eq 2 -and $warnings -ceq 0 -and $errors -ceq 0 -and $null -ne $registrationInventory -and $sourceSnapshots.Count -eq 2 -and $implementationAssemblies.Count -eq 6
+    [ordered]@{ schemaVersion=1; evidenceKind='p1-release-build'; candidateSha=$CandidateSha; configuration='Release'; succeeded=$succeeded; sdkVersion=$SdkVersion; sdkProbe=$sdkProbe; sourceProvenance=$sourceProvenance; sourceSnapshots=@($sourceSnapshots.ToArray()); implementationAssemblies=@($implementationAssemblies.ToArray()); compilerPath=$compilerPath; compilerSha256=$compilerHash; compilerArtifactPath=$compilerArtifactPath; testsAssemblyPath=$testsAssemblyPath; testsAssemblySha256=$testsAssemblyHash; testsAssemblyArtifactPath=$testsAssemblyArtifactPath; registrationInventory=$registrationInventory; registrationInventoryProcess=$registrationInventoryProcess; registrationInventoryPath=$registrationInventoryPath; registrationInventorySha256=$registrationInventoryHash; summary=@{ status=if($succeeded){'passed'}else{'blocked'}; warnings=$warnings; errors=$errors }; steps=@($steps.ToArray()); execution=@{ startedAtUtc=$started.ToString('O'); finishedAtUtc=[DateTimeOffset]::UtcNow.ToString('O'); maximumCommands=6; deadlineSeconds=715 }; harnessError=$failure } | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $report -Encoding utf8
 }
 if (-not $succeeded) { Write-Warning $failure; exit 2 }

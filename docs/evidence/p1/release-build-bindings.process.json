@@ -1,0 +1,28 @@
+{
+  "Pid": 37836,
+  "ParentPid": 81664,
+  "StartedAt": "2026-10-08T02:08:09.2023703+08:00",
+  "FilePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+  "Arguments": [
+    "-NoProfile",
+    "-File",
+    "eng/Test-P1ReleaseBuildBindings.ps1",
+    "-ReportPath",
+    "artifacts/p1-supervision/continuation-v3/release-build.json",
+    "-CandidateSha",
+    "dfdd76155934e286b85979a28b053ce8ffc10547",
+    "-MaximumChecks",
+    "9",
+    "-DeadlineSeconds",
+    "120"
+  ],
+  "WorkingDirectory": "D:\\GitHub\\RustSharp",
+  "TimeoutSeconds": 130,
+  "MaximumAttempts": 1,
+  "MaximumOutputBytes": 16777216,
+  "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\continuation-v3\\release-bindings-9",
+  "FinishedAt": "2026-10-08T02:08:15.0416840+08:00",
+  "ExitCode": 0,
+  "CleanupComplete": true,
+  "Failure": null
+}

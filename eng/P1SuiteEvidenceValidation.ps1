@@ -2,9 +2,12 @@
 Set-StrictMode -Version 3.0
 . (Join-Path $PSScriptRoot 'P1EvidenceValidation.ps1')
 $script:P1SnapshotValidationProcesses = [Collections.Generic.List[object]]::new()
+$script:P1SnapshotValidationClock = [Diagnostics.Stopwatch]::StartNew()
 
 function Invoke-P1ValidationGit([string] $Root, [string[]] $Arguments, [string] $InputText = '') {
-    if ($script:P1SnapshotValidationProcesses.Count -ge 8 -or $Arguments.Count -gt 12 -or $InputText.Length -gt 1MB) { throw 'Snapshot Git item/input bound exceeded.' }
+    # A native candidate checks its main and two build snapshots (12 calls).
+    # The two-RID suite checks six snapshots (24); all share a 110-second bound.
+    if ($script:P1SnapshotValidationProcesses.Count -ge 24 -or $script:P1SnapshotValidationClock.Elapsed.TotalSeconds -ge 110 -or $Arguments.Count -gt 12 -or $InputText.Length -gt 1MB) { throw 'Snapshot Git item/input/time bound exceeded.' }
     $git = (Get-Command git -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
     $info = [Diagnostics.ProcessStartInfo]::new($git)
     $info.WorkingDirectory=$Root; $info.UseShellExecute=$false
@@ -17,8 +20,10 @@ function Invoke-P1ValidationGit([string] $Root, [string[]] $Arguments, [string] 
         $record.pid=$process.Id; $record.startedAtUtc=([DateTimeOffset]$process.StartTime).ToUniversalTime().ToString('O')
         $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync()
         $process.StandardInput.Write($InputText); $process.StandardInput.Close()
-        if (-not $process.WaitForExit(10000)) { throw 'Candidate Git verification timed out.' }
-        if (-not [Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($stdout,$stderr),2000)) { throw 'Candidate Git output drain timed out.' }
+        $remaining=[Math]::Max(1,[Math]::Min(10000,[int](110000-$script:P1SnapshotValidationClock.ElapsedMilliseconds)))
+        if (-not $process.WaitForExit($remaining)) { throw 'Candidate Git verification timed out.' }
+        $drainRemaining=[Math]::Max(1,[Math]::Min(2000,[int](110000-$script:P1SnapshotValidationClock.ElapsedMilliseconds)))
+        if (-not [Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($stdout,$stderr),$drainRemaining)) { throw 'Candidate Git output drain timed out.' }
         $record.exitCode=$process.ExitCode
         if ($stdout.Result.Length -gt 4MB -or $stderr.Result.Length -gt 1MB) { throw 'Candidate Git output bound exceeded.' }
         if ($process.ExitCode -ne 0) { throw 'Candidate Git object verification failed.' }
@@ -292,6 +297,7 @@ function Test-P1BuildEvidence($Report, [string] $CandidateSha, [string] $Rid = '
         $inventoryArguments.Count -ne 2 -or $inventoryArguments[1] -cne '--list' -or
         -not ([string]$inventoryArguments[0]).Replace('\','/').EndsWith('/tests/RustSharp.Tests/bin/Release/net10.0/RustSharp.Tests.dll', [StringComparison]::Ordinal)) { $errors.Add('Fresh Release registration inventory process/artifact binding is incomplete.') }
     if ($Root) {
+        foreach ($bindingError in @(Test-P1ReleaseArtifactBindings $Report $CandidateSha $Root)) { $errors.Add($bindingError) }
         try {
             $inventoryPath = [IO.Path]::GetFullPath([string](Get-P1Property $Report 'registrationInventoryPath'), $Root)
             $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
@@ -321,5 +327,88 @@ function Test-P1BuildEvidence($Report, [string] $CandidateSha, [string] $Rid = '
             [string]::IsNullOrWhiteSpace([string](Get-P1Property $process 'StartedAt')) -or
             [string]::IsNullOrWhiteSpace([string](Get-P1Property $process 'FilePath'))) { $errors.Add('Release build bounded process envelope is incomplete.') }
     } }
+    return @($errors.ToArray())
+}
+
+function Test-P1ReleaseArtifactBindings($Report, [string] $CandidateSha, [string] $Root) {
+    $errors = [Collections.Generic.List[string]]::new()
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    $resolvedRoot = [IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar)
+    $comparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
+    function Read-BoundReleaseArtifact([string] $RelativePath, [string] $Hash, [long] $MaximumBytes) {
+        if ($clock.Elapsed.TotalSeconds -ge 110 -or [string]::IsNullOrWhiteSpace($RelativePath) -or
+            [IO.Path]::IsPathRooted($RelativePath) -or $Hash -notmatch '^[a-fA-F0-9]{64}$') { throw 'Release artifact identity/time bound is invalid.' }
+        $full = [IO.Path]::GetFullPath($RelativePath,$resolvedRoot)
+        if (-not $full.StartsWith($resolvedRoot+[IO.Path]::DirectorySeparatorChar,$comparison) -or
+            [IO.Path]::GetRelativePath($resolvedRoot,$full).Replace('\','/') -cne $RelativePath -or
+            -not [IO.File]::Exists($full) -or ([IO.FileInfo]::new($full)).Length -gt $MaximumBytes) { throw 'Release artifact is missing, oversized or outside its canonical path.' }
+        $component = $full
+        for ($depth=0; $depth -lt 64 -and -not $component.Equals($resolvedRoot,$comparison); $depth++) {
+            if ($clock.Elapsed.TotalSeconds -ge 110 -or (([IO.File]::GetAttributes($component)) -band [IO.FileAttributes]::ReparsePoint)) { throw 'Release artifact cannot traverse filesystem links.' }
+            $component = [IO.Path]::GetDirectoryName($component)
+        }
+        if (-not $component.Equals($resolvedRoot,$comparison)) { throw 'Release artifact path depth bound exceeded.' }
+        $bytes = [IO.File]::ReadAllBytes($full)
+        if ($bytes.Length -gt $MaximumBytes -or [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)) -ine $Hash) { throw 'Release artifact physical SHA-256 is stale.' }
+        return ,$bytes
+    }
+    try {
+        foreach ($kind in @('compiler','testsAssembly')) {
+            $expectedPath = if ($kind -ceq 'compiler') { 'src/RustSharp.Cli/bin/Release/net10.0/rsc.dll' } else { 'tests/RustSharp.Tests/bin/Release/net10.0/RustSharp.Tests.dll' }
+            if ((Get-P1Property $Report ($kind+'Path')) -cne $expectedPath) { throw 'Release executable path is invalid.' }
+            $artifactPath = [string](Get-P1Property $Report ($kind+'ArtifactPath'))
+            if (-not $artifactPath.EndsWith('/build-artifacts/'+[IO.Path]::GetFileName($expectedPath),[StringComparison]::Ordinal)) { throw 'Release retained executable path is invalid.' }
+            $null = Read-BoundReleaseArtifact $artifactPath ([string](Get-P1Property $Report ($kind+'Sha256'))) 32MB
+        }
+        $implementations = @(Get-P1Property $Report 'implementationAssemblies')
+        $names = @('RustSharp.Compiler','RustSharp.Conformance','RustSharp.Runtime','RustSharp.Semantics','RustSharp.CodeGen.IL','RustSharp.Syntax')
+        if ($implementations.Count -ne 6) { throw 'Release implementation assembly denominator must be six.' }
+        for ($index=0; $index -lt 6; $index++) {
+            $path = 'tests/RustSharp.Tests/bin/Release/net10.0/'+$names[$index]+'.dll'
+            if ((Get-P1Property $implementations[$index] 'path') -cne $path) { throw 'Release implementation assembly inventory differs.' }
+            $artifactPath = [string](Get-P1Property $implementations[$index] 'artifactPath')
+            if (-not $artifactPath.EndsWith('/build-artifacts/'+$names[$index]+'.dll',[StringComparison]::Ordinal)) { throw 'Release retained implementation path is invalid.' }
+            $null = Read-BoundReleaseArtifact $artifactPath ([string](Get-P1Property $implementations[$index] 'sha256')) 32MB
+        }
+        $snapshots = @(Get-P1Property $Report 'sourceSnapshots')
+        if ($snapshots.Count -ne 2) { throw 'Release build must retain exactly two source snapshots.' }
+        $beforeFiles = $null
+        $tree = [string](Get-P1Property (Get-P1Property $Report 'sourceProvenance') 'candidateTreeSha')
+        Test-P1SourceProvenance $Report $CandidateSha $tree $errors
+        for ($index=0; $index -lt 2; $index++) {
+            $path = [string](Get-P1Property $snapshots[$index] 'path')
+            $expectedName = if ($index -eq 0) { 'build-source-before.json' } else { 'build-source-after.json' }
+            if ([IO.Path]::GetFileName($path) -cne $expectedName) { throw 'Release source snapshot order/name differs.' }
+            $snapshot = ConvertFrom-P1StrictJson (Read-BoundReleaseArtifact $path ([string](Get-P1Property $snapshots[$index] 'sha256')) 4MB)
+            $snapshotErrors = @(Test-P1SnapshotEvidence $snapshot $resolvedRoot $CandidateSha)
+            if ($snapshotErrors.Count -gt 0) { throw ('Release source snapshot failed actual candidate verification: '+($snapshotErrors -join '; ')) }
+            if ((Get-P1Property $snapshot 'treeSha') -cne $tree) { throw 'Release source snapshot tree differs from the build.' }
+            $files = Get-P1Property $snapshot 'files' | ConvertTo-Json -Depth 6 -Compress
+            if ($index -eq 0) { $beforeFiles=$files } elseif ($files -cne $beforeFiles) { throw 'Release source inputs changed across build.' }
+            $processes = @(Get-P1Property $snapshot 'processes')
+            if ($processes.Count -lt 1 -or $processes.Count -gt 12) { throw 'Release snapshot process denominator is invalid.' }
+            if ($index -eq 0) {
+                $finished = [DateTimeOffset](Get-P1Property $processes[-1] 'finishedAtUtc')
+                $sdkStarted = [DateTimeOffset](Get-P1Property (Get-P1Property $Report 'sdkProbe') 'StartedAt')
+                if ($finished -gt $sdkStarted) { throw 'Release first source snapshot must precede the build SDK probe.' }
+            } else {
+                $started = [DateTimeOffset](Get-P1Property $processes[0] 'startedAtUtc')
+                $inventoryFinished = [DateTimeOffset](Get-P1Property (Get-P1Property $Report 'registrationInventoryProcess') 'FinishedAt')
+                if ($started -lt $inventoryFinished) { throw 'Release final source snapshot must follow fresh registration.' }
+            }
+        }
+        $steps = @(Get-P1Property $Report 'steps')
+        if ($steps.Count -ne 2) { throw 'Release command denominator differs.' }
+        foreach ($step in $steps) {
+            $name = [string](Get-P1Property $step 'name')
+            $process = Get-P1Property $step 'process'
+            $arguments = @(Get-P1Property $process 'Arguments')
+            if ($name -cnotin @('restore','build') -or $arguments.Count -lt 4 -or $arguments[1] -cne $name -or
+                $arguments[2] -cne 'RustSharp.slnx' -or [IO.Path]::GetFileName([string](Get-P1Property $process 'FilePath')) -cnotin @('dotnet','dotnet.exe') -or
+                -not ([string]$arguments[0]).Replace('\','/').EndsWith('/sdk/'+[string](Get-P1Property $Report 'sdkVersion')+'/dotnet.dll',[StringComparison]::Ordinal) -or
+                [string]::IsNullOrWhiteSpace([string](Get-P1Property $process 'WorkingDirectory')) -or
+                '--disable-build-servers' -cnotin $arguments -or ($name -ceq 'build' -and ('Release' -cnotin $arguments -or '--no-restore' -cnotin $arguments))) { throw 'Release process command does not bind the selected SDK and solution.' }
+        }
+    } catch { $errors.Add('Release physical/source bindings failed: '+$_.Exception.Message) }
     return @($errors.ToArray())
 }
