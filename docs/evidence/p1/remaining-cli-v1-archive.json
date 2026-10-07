@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "scope": "remaining P1 production CLI integration repair",
+  "producerCandidateSha": "13e77bde34e642974f7eec0ea842b108d0e40447",
+  "producerCandidateTreeSha": "a69da77076490b8b6089dfb4897b1fd210d5e1ba",
+  "producerAssemblySha256": "49886B2CA929B37A916D033C553F61063BF221B8D19FDF538E8848F838F7EAE7",
+  "regressionInputCandidateSha": "e773869314e5d7ebb51f035820bc75bcfcc1fdc5",
+  "regressionInputCandidateTreeSha": "f97c655a04df9baf8c2e4b4f6806ecc012ee6052",
+  "regressionInputIsCurrentCandidateGate": false,
+  "currentGateAccepted": false,
+  "fullP1Closure": false,
+  "buildWarnings": 0,
+  "buildErrors": 0,
+  "frozenMappingTests": 10,
+  "actualCliControls": 9,
+  "nativeV5Cases": 28,
+  "nativeV5ExactMatches": 26,
+  "nativeV5FrozenDifferences": 2,
+  "nativeV5Failed": 0,
+  "nativeV5Blocked": 0,
+  "nativeV5Skipped": 0,
+  "physicalDropValidation": true,
+  "reports": [
+    {
+      "sha256": "8C85EDBA27C76615476C86F08FA7E417BB901F28A772C141E93ECF9B537F7748",
+      "path": "artifacts/p1-supervision/remaining-cli-v3/release-build.json"
+    },
+    {
+      "sha256": "64780AC8289BDED8565C4CE90714FBCEF037B8BCB932B0177FA0A3509189E706",
+      "path": "artifacts/p1-supervision/remaining-cli-v3/gate-controls-harness.json"
+    },
+    {
+      "sha256": "374E2D6CCAA7CA4B79ED81AAF16BD9F5B202AA637289F1FAA2D1460D1B84A0E0",
+      "path": "artifacts/p1-supervision/remaining-cli-v3/filtered-harness.json"
+    },
+    {
+      "sha256": "150DE82EC5DDD5498282C5524B3B02E5998EA702790615E5E8E7B3D24059C0A3",
+      "path": "artifacts/p1-supervision/remaining-cli-v3/cli-controls.json"
+    },
+    {
+      "sha256": "64E4E0357EF47293A513E62290B9581D9831EE6289431A6582D2DAF4FA25C18C",
+      "path": "artifacts/p1-supervision/remaining-cli-v3/regression-input-proof.json"
+    },
+    {
+      "sha256": "76F9759A377759E765BBF1B3825A16125FDB55E744F891E58079F76022D19B34",
+      "path": "artifacts/p1-supervision/remaining-cli-v3/actual-cli-launch.process.json"
+    },
+    {
+      "sha256": "84FE173BF36452C51107506BB857D3E30A288BA124F378B262522E11F61298B3",
+      "path": "artifacts/p1-drop/remaining-cli-v3/full.json"
+    }
+  ]
+}

@@ -2,7 +2,39 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 04:29
+## Current checkpoint — 2026-10-08 04:58
+
+P2 remains 7/101 ✅ Complete leaves; P1-GATE.01–.03 remain 🚧 In progress and
+.04–.06 remain ⏳ Planned. Remote candidate `723ab72178911b24ecdf6b6a31d9f94b646fcce1`
+expanded run `37682369775` has six successful jobs: Windows/Linux full harnesses
+1126/1126 each, suite aggregate 15/15 and physical production matrix 24/24.
+CI follow-up v8 reconciles 37 hashes and sixteen exited child/parent identities.
+This repairs the earlier Linux aggregation failure; `fullP1Closure=false` remains.
+
+Root has implemented the actual full-harness coverage and NativeV5 CLI entries,
+bounded captured reads and non-overwriting proof publication. Frozen candidate
+`13e77bde34e642974f7eec0ea842b108d0e40447`, tree
+`a69da77076490b8b6089dfb4897b1fd210d5e1ba`, passes fresh SDK401 Release with zero
+warnings/errors, 10/10 mapping controls and 9/9 actual CLI controls. Current
+NativeV5 execution retains all 28 cases: 26 exact matches plus two inherited
+frozen differences, no failure/block/skip, and physical PE validation passes.
+The positive harness CLI control reads the real 1126-case report from older
+`e773869314e5d7ebb51f035820bc75bcfcc1fdc5` as an explicitly labelled regression
+input. It does not establish a full harness or formal gate for the new producer.
+Archives: `docs/evidence/p1/remaining-cli-v1-*`; physical files:
+`artifacts/p1-supervision/remaining-cli-v3/`, `artifacts/p1-drop/remaining-cli-v3/`.
+Fresh same-SHA CI must execute the new coverage entry before any gate closes.
+
+Next: reconcile that CI, then finish the formal joint transport/gate packet,
+actual rejection controls, NativeV5 ILVerify/AOT receipts and bilingual closure
+record. Prepared joint/native receipt drafts remain unaccepted. Interop scope
+repair is frozen in `artifacts/p1-supervision/interop-scope-fix-v1/`; runtime0,
+14 leaf/36 parent cases, fresh 14+8 execution still required. Retain formatter/
+documentation drafts, original `tmp/`, old junction/target and diagnostic files.
+The sole thirty-minute heartbeat remains ACTIVE; root retains shared-source,
+build, integration, bilingual documentation, stage and per-task commit ownership.
+
+## Historical checkpoint — 2026-10-08 04:29
 
 P2 has 7/101 ✅ Complete leaves. Commit `d813a1e` closes P2-04.05: final
 candidate `064f5c54600b5a6b0c7feaafd564b2cdf2fb8421`, fresh SDK401 Release

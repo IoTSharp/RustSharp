@@ -1,0 +1,262 @@
+{
+  "fullP1Closure": false,
+  "cleanupComplete": true,
+  "checks": [
+    {
+      "process": {
+        "Pid": 30028,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:34.3441248+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-gate-harness",
+          "artifacts/p1-supervision/remaining-cli-v2/full-harness.json",
+          "e773869314e5d7ebb51f035820bc75bcfcc1fdc5",
+          "f97c655a04df9baf8c2e4b4f6806ecc012ee6052",
+          "win-x64",
+          "artifacts/p1-supervision/remaining-cli-v3/regression-input-proof.json"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\proof-current",
+        "FinishedAt": "2026-10-08T04:55:34.6617366+08:00",
+        "ExitCode": 0,
+        "CleanupComplete": true,
+        "Failure": null
+      },
+      "name": "proof-current",
+      "expectedExit": 0
+    },
+    {
+      "process": {
+        "Pid": 50404,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:34.6916052+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-gate-harness",
+          "artifacts/p1-supervision/remaining-cli-v2/full-harness.json",
+          "0000000000000000000000000000000000000000",
+          "f97c655a04df9baf8c2e4b4f6806ecc012ee6052",
+          "win-x64",
+          "artifacts/p1-supervision/remaining-cli-v3/rejected-sha.json"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\proof-stale-sha",
+        "FinishedAt": "2026-10-08T04:55:34.9221758+08:00",
+        "ExitCode": 2,
+        "CleanupComplete": true,
+        "Failure": "Process 50404 exited with code 2."
+      },
+      "name": "proof-stale-sha",
+      "expectedExit": 2
+    },
+    {
+      "process": {
+        "Pid": 88192,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:34.9345877+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-gate-harness",
+          "artifacts/p1-supervision/remaining-cli-v2/full-harness.json",
+          "e773869314e5d7ebb51f035820bc75bcfcc1fdc5",
+          "0000000000000000000000000000000000000000",
+          "win-x64",
+          "artifacts/p1-supervision/remaining-cli-v3/rejected-tree.json"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\proof-stale-tree",
+        "FinishedAt": "2026-10-08T04:55:35.169839+08:00",
+        "ExitCode": 2,
+        "CleanupComplete": true,
+        "Failure": "Process 88192 exited with code 2."
+      },
+      "name": "proof-stale-tree",
+      "expectedExit": 2
+    },
+    {
+      "process": {
+        "Pid": 15016,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:35.1803622+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-gate-harness",
+          "artifacts/p1-supervision/remaining-cli-v2/full-harness.json",
+          "e773869314e5d7ebb51f035820bc75bcfcc1fdc5",
+          "f97c655a04df9baf8c2e4b4f6806ecc012ee6052",
+          "linux-x64",
+          "artifacts/p1-supervision/remaining-cli-v3/rejected-rid.json"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\proof-wrong-rid",
+        "FinishedAt": "2026-10-08T04:55:35.4024814+08:00",
+        "ExitCode": 2,
+        "CleanupComplete": true,
+        "Failure": "Process 15016 exited with code 2."
+      },
+      "name": "proof-wrong-rid",
+      "expectedExit": 2
+    },
+    {
+      "process": {
+        "Pid": 63504,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:35.4136156+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-gate-harness",
+          "artifacts/p1-supervision/remaining-cli-v3/filtered-harness.json",
+          "13e77bde34e642974f7eec0ea842b108d0e40447",
+          "a69da77076490b8b6089dfb4897b1fd210d5e1ba",
+          "win-x64",
+          "artifacts/p1-supervision/remaining-cli-v3/rejected-filtered.json"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\proof-filtered",
+        "FinishedAt": "2026-10-08T04:55:35.5887436+08:00",
+        "ExitCode": 2,
+        "CleanupComplete": true,
+        "Failure": "Process 63504 exited with code 2."
+      },
+      "name": "proof-filtered",
+      "expectedExit": 2
+    },
+    {
+      "process": {
+        "Pid": 103212,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:35.6022946+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-gate-harness",
+          "artifacts/p1-supervision/remaining-cli-v2/full-harness.json",
+          "e773869314e5d7ebb51f035820bc75bcfcc1fdc5",
+          "f97c655a04df9baf8c2e4b4f6806ecc012ee6052",
+          "win-x64",
+          "artifacts/p1-supervision/remaining-cli-v3/regression-input-proof.json"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\proof-existing-preserved",
+        "FinishedAt": "2026-10-08T04:55:35.8627793+08:00",
+        "ExitCode": 2,
+        "CleanupComplete": true,
+        "Failure": "Process 103212 exited with code 2."
+      },
+      "name": "proof-existing-preserved",
+      "expectedExit": 2
+    },
+    {
+      "process": {
+        "Pid": 28436,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:35.8755623+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-drop-native-v5",
+          "artifacts/p1-drop/remaining-cli-v3/invalid.json",
+          "C:\\Users\\mysti\\.cargo\\bin\\rustc.exe",
+          "C:\\Program Files\\dotnet\\dotnet.exe",
+          "2"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\drop-invalid-denominator",
+        "FinishedAt": "2026-10-08T04:55:35.9596533+08:00",
+        "ExitCode": 2,
+        "CleanupComplete": true,
+        "Failure": "Process 28436 exited with code 2."
+      },
+      "name": "drop-invalid-denominator",
+      "expectedExit": 2
+    },
+    {
+      "process": {
+        "Pid": 94468,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:35.9715019+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--p1-drop-native-v5",
+          "artifacts/p1-drop/remaining-cli-v3/full.json",
+          "C:\\Users\\mysti\\.cargo\\bin\\rustc.exe",
+          "C:\\Program Files\\dotnet\\dotnet.exe",
+          "28"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 270,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\drop-full",
+        "FinishedAt": "2026-10-08T04:55:51.0386462+08:00",
+        "ExitCode": 0,
+        "CleanupComplete": true,
+        "Failure": null
+      },
+      "name": "drop-full",
+      "expectedExit": 0
+    },
+    {
+      "process": {
+        "Pid": 54696,
+        "ParentPid": 96332,
+        "StartedAt": "2026-10-08T04:55:51.0544604+08:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+          "--validate-p1-drop-generated",
+          "artifacts/p1-drop/remaining-cli-v3/full.json"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp",
+        "TimeoutSeconds": 30,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 4194304,
+        "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\remaining-cli-v3\\drop-physical-validation",
+        "FinishedAt": "2026-10-08T04:55:51.2627629+08:00",
+        "ExitCode": 0,
+        "CleanupComplete": true,
+        "Failure": null
+      },
+      "name": "drop-physical-validation",
+      "expectedExit": 0
+    }
+  ],
+  "regressionInputCandidateSha": "e773869314e5d7ebb51f035820bc75bcfcc1fdc5",
+  "producerCandidateSha": "13e77bde34e642974f7eec0ea842b108d0e40447",
+  "passed": 9,
+  "currentGateAccepted": false,
+  "denominator": 9,
+  "scope": "actual CLI integration and rejection controls; no full P1 closure",
+  "schemaVersion": 1,
+  "regressionInputCandidateTreeSha": "f97c655a04df9baf8c2e4b4f6806ecc012ee6052",
+  "producerCandidateTreeSha": "a69da77076490b8b6089dfb4897b1fd210d5e1ba",
+  "proofSha256": "64E4E0357EF47293A513E62290B9581D9831EE6289431A6582D2DAF4FA25C18C"
+}

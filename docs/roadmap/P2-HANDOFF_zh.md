@@ -2,7 +2,34 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 04:29
+## 当前检查点 — 2026-10-08 04:58
+
+P2 仍为 7/101 个 ✅ 已完成叶项；P1-GATE.01–.03 仍为 🚧 进行中，
+.04–.06 仍为 ⏳ 计划中。远程候选 `723ab72178911b24ecdf6b6a31d9f94b646fcce1`
+的 expanded run `37682369775` 六个 job 均通过：Windows/Linux 完整 harness
+各 1126/1126，suite 聚合 15/15，物理 production 矩阵 24/24。
+CI follow-up v8 对账 37 个 hash，并核验十六个子/父进程身份已退出。
+此前 Linux 聚合失败已修复；仍保持 `fullP1Closure=false`。
+
+root 已实现真实完整 harness 覆盖和 NativeV5 CLI 入口、有界捕获读取及不覆盖
+已有证明的写入。冻结候选 `13e77bde34e642974f7eec0ea842b108d0e40447`，tree
+`a69da77076490b8b6089dfb4897b1fd210d5e1ba`，新鲜 SDK401 Release 零警告/零错误，
+映射控制 10/10、真实 CLI 控制 9/9 均通过。当前 NativeV5 真实运行保留全部 28 例：
+26 个精确匹配加两个继承的冻结差异，无失败/阻塞/跳过，物理 PE 验证通过。
+harness CLI 正向控制读取旧候选 `e773869314e5d7ebb51f035820bc75bcfcc1fdc5`
+真实 1126 例报告，明确标注为回归输入。它不能证明新 producer 的完整 harness
+或正式门禁。归档：`docs/evidence/p1/remaining-cli-v1-*`；物理原件：
+`artifacts/p1-supervision/remaining-cli-v3/`、`artifacts/p1-drop/remaining-cli-v3/`。
+任何门禁关闭前，新鲜同 SHA CI 必须执行新增覆盖入口。
+
+下一步：对账该 CI，再完成正式 joint transport/gate packet、真实拒绝控制、
+NativeV5 ILVerify/AOT 回执和双语完成记录。joint/native receipt 准备稿仍未验收。
+Interop scope 修复已冻结于 `artifacts/p1-supervision/interop-scope-fix-v1/`；
+runtime0，叶 14/父 36 例，仍需新鲜 14+8 验收。保留 formatter/documentation
+草稿、原有 `tmp/`、旧 junction/target 和诊断文件。唯一半小时 heartbeat 保持
+ACTIVE；root 继续独占共享源码、构建、集成、双语文档、stage 和逐任务 commit。
+
+## 历史检查点 — 2026-10-08 04:29
 
 P2 现有 7/101 个 ✅ 已完成叶项。`d813a1e` 关闭 P2-04.05：最终候选
 `064f5c54600b5a6b0c7feaafd564b2cdf2fb8421`，新鲜 SDK401 Release 零警告/零错误，

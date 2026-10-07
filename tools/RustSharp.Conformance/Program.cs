@@ -28,6 +28,8 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (P1RemainingEvidenceEntry.Handles(args))
+            return await P1RemainingEvidenceEntry.RunAsync(FindRepositoryRoot(), args).ConfigureAwait(false);
         if (args.Length == 5 && args[0] is "--validate-p1-backend-native" or "--validate-p1-backend-matrix")
         {
             try

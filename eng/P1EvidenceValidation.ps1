@@ -290,18 +290,25 @@ function Test-P1ClosureRecord {
 function Test-P1RequirementClosure([string] $Root, [string] $EnglishText = '', [string] $ChineseText = '') {
     $watch = [Diagnostics.Stopwatch]::StartNew()
     $errors = [Collections.Generic.List[string]]::new()
-    $path = Join-Path $Root 'tools/RustSharp.Conformance/fixtures/p1-coverage-v1-manifest.json'
-    if (([IO.FileInfo]::new($path)).Length -gt 1MB) { return @('blocked: coverage inventory is oversized.') }
-    $manifest = [IO.File]::ReadAllText($path) | ConvertFrom-Json -Depth 32
+    $path = Join-Path $Root 'tools/RustSharp.Conformance/fixtures/p1-gate-coverage-v1-manifest.json'
+    if (([IO.FileInfo]::new($path)).Length -gt 262144) { return @('blocked: frozen gate mapping is oversized.') }
+    $manifest = [IO.File]::ReadAllText($path) | ConvertFrom-Json -Depth 24
     $requirements = @($manifest.requirements)
-    if ($requirements.Count -ne 40) { return @('Coverage inventory must contain exactly 40 requirements.') }
+    if ($manifest.profile -cne 'p1-gate-coverage-v1' -or $manifest.requirementDenominator -ne 40 -or $manifest.catalogueDenominator -ne 160 -or $requirements.Count -ne 40) { return @('Frozen gate mapping identity or denominator changed.') }
     $english = if ($EnglishText) { $EnglishText } else { [IO.File]::ReadAllText((Join-Path $Root 'docs/roadmap/P1.md')) }
     $chinese = if ($ChineseText) { $ChineseText } else { [IO.File]::ReadAllText((Join-Path $Root 'docs/roadmap/P1_zh.md')) }
     for ($index = 0; $index -lt 40 -and $watch.Elapsed.TotalSeconds -lt 15; $index++) {
         $requirement = $requirements[$index]
-        $leaf = [regex]::Escape([string]$requirement.leaf)
-        if ($english -notmatch ('(?m)^\| ' + $leaf + ' \| ✅ Complete \|') -or $chinese -notmatch ('(?m)^\| ' + $leaf + ' \| ✅ 已完成 \|')) { $errors.Add("blocked: requirement '$($requirement.id)' designated leaf '$($requirement.leaf)' remains open.") }
+        $leaves = @($requirement.implementationLeaves)
+        if ($leaves.Count -gt 32 -or ($requirement.role -cne 'aggregate-ownership' -and $leaves.Count -eq 0)) { $errors.Add('Missing or oversized actual implementation leaf mapping.'); continue }
+        foreach ($leaf in $leaves) {
+            if ($watch.Elapsed.TotalSeconds -ge 15) { break }
+            $prefix = '(?m)^\| ' + [regex]::Escape([string]$leaf) + ' \| '
+            if (-not [regex]::IsMatch($english,$prefix+'✅ Complete \|',[Text.RegularExpressions.RegexOptions]::CultureInvariant,[TimeSpan]::FromSeconds(1)) -or
+                -not [regex]::IsMatch($chinese,$prefix+'✅ 已完成 \|',[Text.RegularExpressions.RegexOptions]::CultureInvariant,[TimeSpan]::FromSeconds(1))) { $errors.Add("blocked: requirement '$($requirement.id)' designated leaf '$leaf' remains open.") }
+        }
     }
-    if ($index -ne 40) { $errors.Add('Requirement closure validation timed out.') }
+    if ($index -ne 40 -or $watch.Elapsed.TotalSeconds -ge 15) { $errors.Add('Requirement closure validation timed out.') }
+    # Status reconciliation only; full harness and physical backend evidence remain independent obligations.
     return @($errors.ToArray())
 }

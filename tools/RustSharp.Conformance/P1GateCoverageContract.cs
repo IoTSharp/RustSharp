@@ -74,8 +74,8 @@ internal static class P1GateCoverageContract
         Require(Text(root, "evidencePolicy") == "catalogue-is-not-execution; source-bound-full-harness; native-obligations-remain-open; aggregate-ownership-is-not-prerequisite",
             "Gate mapping cannot equate inventory or status text with execution.");
         Require(Text(root, "testTarget") == "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P1-GATE.01 --timeout 30 --deadline 120", "Gate target changed.");
-        string ledgerText = ValidateBoundFile(root.GetProperty("scopeLedger"), "docs/p1-exit-scope-v1.md", repositoryRoot);
-        string catalogueText = ValidateBoundFile(root.GetProperty("legacyCatalogue"), "tools/RustSharp.Conformance/fixtures/p1-coverage-v1-manifest.json", repositoryRoot);
+        string ledgerText = ValidateBoundFile(root.GetProperty("scopeLedger"), "docs/p1-exit-scope-v1.md", repositoryRoot, started, cancellationToken);
+        string catalogueText = ValidateBoundFile(root.GetProperty("legacyCatalogue"), "tools/RustSharp.Conformance/fixtures/p1-coverage-v1-manifest.json", repositoryRoot, started, cancellationToken);
         P1CoverageProfileRunner.Manifest catalogue = P1CoverageProfileRunner.ParseManifest(catalogueText, repositoryRoot);
         Require(catalogue.Denominator == 40 && catalogue.Cases.Count == 160, "Legacy denominator changed.");
         JsonElement rows = root.GetProperty("requirements");
@@ -108,7 +108,7 @@ internal static class P1GateCoverageContract
                 string file = Text(source, "file");
                 Require(sourceFiles.Add(file), "Duplicate harness source file.");
                 Require(file.StartsWith("tests/RustSharp.Tests/", StringComparison.Ordinal) && file.EndsWith("Tests.cs", StringComparison.Ordinal), "Evidence must name an actual regression source.");
-                string sourceText = ValidateBoundFile(source, file, repositoryRoot);
+                string sourceText = ValidateBoundFile(source, file, repositoryRoot, started, cancellationToken);
                 string[] ids = Strings(source.GetProperty("caseIds"), 64);
                 int declaration = sourceText.IndexOf("All { get; }", StringComparison.Ordinal);
                 Require(declaration >= 0 && ids.Length > 0, "Test registration must be statically addressable.");
@@ -213,15 +213,64 @@ internal static class P1GateCoverageContract
         return new(runtimeIdentifier, candidateSha, 40, 160, bound.Count, true, false, pending.AsReadOnly());
     }
 
-    private static string ValidateBoundFile(JsonElement binding, string expectedPath, string repositoryRoot)
+    private static string ValidateBoundFile(JsonElement binding, string expectedPath, string repositoryRoot,
+        long started, CancellationToken cancellationToken)
     {
         Fields(binding, binding.TryGetProperty("caseIds", out _) ? ["file", "sha256", "caseIds"] : ["file", "sha256"]);
         string relative = Text(binding, "file");
         Require(relative == expectedPath && !relative.Contains("..", StringComparison.Ordinal) && !relative.Contains(':') && !relative.Contains('\\'), "Source binding escaped its declared repository path.");
-        string path = Path.GetFullPath(Path.Combine(repositoryRoot, relative));
-        Require(File.Exists(path) && new FileInfo(path).Length <= 1_048_576 && (File.GetAttributes(path) & FileAttributes.ReparsePoint) == 0, "Bound source is missing, oversized or redirected.");
-        string text = File.ReadAllText(path);
+        string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(repositoryRoot));
+        string path = Path.GetFullPath(Path.Combine(root, relative));
+        using var readDeadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        readDeadline.CancelAfter(TimeSpan.FromSeconds(10));
+        long readStarted = Stopwatch.GetTimestamp();
+        void ReadGuard()
+        {
+            Guard(started, readDeadline.Token);
+            if (Stopwatch.GetElapsedTime(readStarted) >= TimeSpan.FromSeconds(10))
+                throw new TimeoutException("Bound source read exceeded ten seconds.");
+        }
+        void CheckParents()
+        {
+            long parentStarted = Stopwatch.GetTimestamp();
+            string current = path;
+            StringComparison comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+            Require(path.StartsWith(root + Path.DirectorySeparatorChar, comparison), "Bound source escaped the repository.");
+            for (int depth = 0; depth < 32; depth++)
+            {
+                ReadGuard();
+                if (Stopwatch.GetElapsedTime(parentStarted) >= TimeSpan.FromSeconds(2))
+                    throw new IOException("Bound source parent verification exceeded two seconds.");
+                if ((File.Exists(current) || Directory.Exists(current)) &&
+                    (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                    throw new IOException("Bound source cannot traverse a file or parent link.");
+                if (current.Equals(root, comparison)) return;
+                current = Path.GetDirectoryName(current) ?? throw new IOException("Bound source parent escaped the repository.");
+            }
+            throw new IOException("Bound source parent chain exceeded 32 components.");
+        }
+        CheckParents();
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+            65_536, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        ReadGuard();
+        Require(stream.Length is > 0 and <= 1_048_576, "Opened bound source is empty or oversized.");
+        CheckParents();
+        using var captured = new MemoryStream(65_536);
+        byte[] buffer = new byte[65_536];
+        bool complete = false;
+        for (int iteration = 0; iteration < 17; iteration++)
+        {
+            ReadGuard();
+            int read = stream.ReadAsync(buffer.AsMemory(), readDeadline.Token).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (read == 0) { complete = true; break; }
+            Require(captured.Length + read <= 1_048_576, "Bound source exceeded its actual one-MiB byte bound.");
+            captured.Write(buffer, 0, read);
+        }
+        Require(complete && captured.Length > 0, "Bound source exceeded its fixed read-count bound.");
+        ReadGuard();
+        string text = new UTF8Encoding(false, true).GetString(captured.ToArray());
         Require(Text(binding, "sha256") == Hash(text), "Bound source hash changed: " + relative);
+        ReadGuard();
         return text;
     }
     private static string[] ExpandOwners(string text)

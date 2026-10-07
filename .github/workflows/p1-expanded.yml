@@ -91,6 +91,14 @@ jobs:
         if: always()
         shell: pwsh
         run: ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Get-P1SourceSnapshot.ps1','-CandidateSha',$env:GITHUB_SHA,'-EvidencePath','artifacts/p1-expanded/${{ matrix.name }}/source-snapshot.json') -TimeoutSeconds 100 -CapturePrefix 'artifacts/p1-expanded/${{ matrix.name }}/snapshot-after-launch'
+      - name: Bind frozen gate coverage to the actual full harness
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $snapshot = Get-Content -LiteralPath 'artifacts/p1-expanded/${{ matrix.name }}/source-snapshot.json' -Raw | ConvertFrom-Json -Depth 32
+          if ($snapshot.candidateSha -cne $env:GITHUB_SHA -or $snapshot.verified -ne $true) { throw 'Fresh candidate snapshot is required.' }
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll','--p1-gate-harness','artifacts/p1-expanded/${{ matrix.name }}/regression-harness.json',$env:GITHUB_SHA,[string]$snapshot.treeSha,'${{ matrix.rid }}','artifacts/p1-expanded/${{ matrix.name }}/p1-gate-harness-coverage.json') -TimeoutSeconds 40 -CapturePrefix 'artifacts/p1-expanded/${{ matrix.name }}/gate-harness-coverage-launch'
       - name: Preserve unavailable reports and bind CI publication
         if: always()
         shell: pwsh
