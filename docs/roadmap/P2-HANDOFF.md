@@ -68,6 +68,36 @@ Keep original user `tmp/`, the rejected-cleanup ZIP log, candidate refs and all
 review artifacts. The sole `rustsharp-p2` heartbeat remains active every
 30 minutes; resume existing workers before creating replacements.
 
+Latest CI follow-up: `5646c98` archives the two historical source-package reports
+and replaces ignored-artifact roadmap links in both languages. Roadmap CI passes
+at `5646c982418df7740a609d4f8232b2d091e175f6` (run `37674077686`). Linux Native
+AOT CI passes at `c4e0962460afc4abe32dd1fd0406e34eb59dc79b` (run `37673374351`);
+this is one workflow's result, not phase closure. The native suite runs are
+`37673475249` at `c4e0962` and `37674078250` at `5646c98`. Exact snapshots and
+downloaded diagnostic artifacts are under `artifacts/p1-supervision/remote-ci-v1/`
+and `remote-ci-v2/`. Duplicate manually dispatched platform/Linux runs
+`37673480822` and `37673486650` were cancelled; keep their provenance.
+
+Two actual Linux failures are repaired but await new native CI: `6f83d50` records
+the verifier launch clock before short Git processes exit, removing a null
+`Process.StartTime` race without weakening candidate checks; real source
+verification plus 12 short Git launches pass. `8aa7d63` restores the modeled
+Windows identity after the offline unavailable-report fixture is rewritten on
+Linux, while preserving failed upstream/blocked report semantics; all eight
+publication controls pass. The production receipt and source report from the
+failed native job are retained in `remote-ci-v1/download-receipt/` and
+`download-source/`; the fixture failure is in `download-suite-preflight/`.
+All diagnostic/download/validation launchers exited with complete cleanup.
+Push the repair candidate and dispatch one new native suite at that same SHA;
+do not accept prior failed runs or fixture models as native closure.
+
+`prepared-cfg-v1/` now has 11 frozen review files and a progress manifest: 12
+fixed cases, syntax/patch checks pass, semantic build/runtime/closure remain open.
+Workers `interop_p2` and `tooling_p2` reserve `prepared-interop-binding-v1/`
+(P2-06.02: 14 fixed leaf cases within the unchanged 36-record contract) and
+`prepared-formatter-v1/` (P2-08.02: 49 corpus cases plus 10 formatter scenarios).
+Both are drafts; root must review, integrate, build, execute and commit them.
+
 ## Authorization and resumption
 
 The user authorized supervised subagents to implement all 15 P2 parents, 94
