@@ -2,7 +2,18 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 05:54
+## Current checkpoint — 2026-10-08 06:08
+
+The previous05:54 checkpoint omitted its Chinese translation. Both language
+versions now carry the same checkpoint and this corrective record; no task
+status or acceptance denominator changes. Commit `e90e9fe83b201be882c76c0e5c9f20be3b779b66`
+is pushed; its unique CI run is `37693029849`, attempt1. Continue that run and
+read `artifacts/p1-supervision/process-wrapper-root-v1/resumption.json` before
+dispatching or assigning more work. Reference-retention and receipt-diagnostic
+drafts in `reference-retention-fix-v1/` have runtime0 and await acceptance.
+P2 remains8/101 ✅ Complete leaves and all six P1 phase gates remain open.
+
+## Historical checkpoint — 2026-10-08 05:54
 
 P2 remains 8/101 ✅ Complete leaves. All six P1 phase gates remain open. Root
 integrated the process wrapper cancellation/error-retention repair; final Windows

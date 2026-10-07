@@ -2,7 +2,46 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 05:22
+## 当前检查点 — 2026-10-08 06:08
+
+此前05:54检查点遗漏了中文翻译。两种语言现包含相同检查点及本更正记录；不改变
+任务状态或验收分母。提交 `e90e9fe83b201be882c76c0e5c9f20be3b779b66` 已推送；
+唯一 CI 为 run `37693029849`、attempt1。接续该运行，派发或创建后续任务前先读
+`artifacts/p1-supervision/process-wrapper-root-v1/resumption.json`。
+`reference-retention-fix-v1/` 的引用留存及回执诊断草稿 runtime0，等待验收。
+P2 仍为8/101个 ✅ 已完成叶项，六个 P1 阶段门禁均保持开放。
+
+## 历史检查点 — 2026-10-08 05:54
+
+P2 仍为8/101个 ✅ 已完成叶项。六个 P1 阶段门禁均保持开放。root已接入进程
+包装器取消/错误保留修复；最终 Windows PowerShell 工具验收为 tiny1、fixed6、
+failure-tiny1、failure2及既有 publication8。候选
+`2e38438404e112b6afe3ae39d635cc5d670f55cc` 绑定693个输入。
+参见 `docs/p1-process-wrapper-v1.md`、成对翻译及验收归档。
+CleanupComplete 仍仅证明父进程退出，未声明后代闭环。保留worker最后here-string
+调用失败及root标量数组试跑失败；它们均不属于成功证据。root负责最终guard/dispose
+修改及独立故障控制。资源审阅和准确Git结果保留于
+`artifacts/p1-supervision/process-wrapper-root-v1/`。
+
+前一远程候选 `e6ee4e6140d5776c376af59bc94ed0766faf806a`、tree
+`8e303078c582e8548cc9f74ecca9fc6ad400fa99`、run `37689531739` 的Windows
+production-native失败：源码包17/19，scalar-positional-copy及
+reference-shared-mutable-origin因verifier引用留存10s阻塞。
+CI follow-up v11对账28个hash/13报告、两个1140项harness、691个源码输入、真实
+mapped440/pending24及suite15。四个原始PE哈希保留。源码报告匹配回执哈希
+AA1503D77CF86F6BEC840950AF032E31C1D815A1BC6DA02B6003B50BA0C28F2C；
+回执中的bytes-changed消息没有已证实的制品不匹配。Windows backend验证12个单元格；
+完整24/native闭环仍开放。Actions报告回收孤儿vctip PID3328；不得混淆本地下载进程
+不存在与CI子树闭环。保留v11原件和失败审阅。
+
+下一步：安全修复10s验证器引用留存及失败validator的误导诊断；接续已有run且不混用
+候选证明。NativeV5回执/joint transport集成仍开放。Formatter v2部分副本/CLI控制
+保存在 `formatter-read-fix-v2/`，runtime0、固定59/父91，注册计数脚本错误后尚缺
+patch/最终hash审阅。完整稿审阅及新鲜源码绑定59项验收前，不接入原7文件/注册、
+formatter-review-v1 guards和v2副本。保留用户tmp和唯一ACTIVE半小时heartbeat。
+不声明阶段完成。
+
+## 历史检查点 — 2026-10-08 05:22
 
 P2-06.02 最终候选 `29a8edaa6d63f1b7601159dedbe04decbeef989a`，tree
 `f4709c042009cf8da47a837dbfdb0014519f05ce`，新鲜 SDK401 Release 零警告/零错误，
