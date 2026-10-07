@@ -163,8 +163,23 @@ if ($ready) {
         if ((File-Binding $assembly).sha256 -cne $implementation.runnerSha256 -or
             (File-Binding $implementation.retainedRunnerPath).sha256 -cne $implementation.runnerSha256 -or
             (File-Binding $implementation.retainedDotnetPath).sha256 -cne $implementation.dotnetSha256) { throw 'Executed/retained validator implementation bytes changed.' }
-        if ($stages.Count -ne 4 -or $stages[1].reportSha256 -cne $reports.sourcePackage.sha256 -or
-            $stages[3].reportSha256 -cne $reports.backend.sha256) { throw 'Validated report bytes changed before CI receipt publication.' }
+        if ($stages.Count -ne 4) { throw 'Production receipt requires all four stage records.' }
+        # These two validator records are finite; Check-Budget enforces the existing orchestration deadline.
+        foreach ($validated in @(@{index=1;name='sourcePackage'},@{index=3;name='backend'})) {
+            Check-Budget 1
+            $validationStage = $stages[$validated.index]
+            if ($validationStage.status -cne 'passed' -or
+                [string]::IsNullOrWhiteSpace([string]$validationStage.reportSha256)) {
+                throw ($validationStage.name + ': successful validation report hash is unavailable; ' + $validationStage.error)
+            }
+            $publishedReport = $reports[$validated.name]
+            if ($null -eq $publishedReport) {
+                throw ($validated.name + ': original report binding is unavailable for publication.')
+            }
+            if ($validationStage.reportSha256 -cne $publishedReport.sha256) {
+                throw ($validated.name + ': validated report bytes changed before CI receipt publication.')
+            }
+        }
     } catch { $failures.Add($_.Exception.Message) }
 }
 $closed = $failures.Count -eq 0 -and $ready -and $stages.Count -eq 4 -and @($stages | Where-Object { $_.status -cne 'passed' }).Count -eq 0 -and $clock.Elapsed.TotalSeconds -lt $maximumSeconds

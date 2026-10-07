@@ -45,6 +45,7 @@ jobs:
         run: |
           if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
           ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo', '-NoProfile', '-File', 'eng/Test-P1CiPublicationContract.ps1') -TimeoutSeconds 90 -CapturePrefix artifacts/p1-preflight/ci-publication-contract
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo', '-NoProfile', '-File', 'eng/Test-P1ProductionReceiptDiagnostics.ps1', '-ResultPath', 'artifacts/p1-preflight/receipt-diagnostic-controls.json') -TimeoutSeconds 35 -CapturePrefix artifacts/p1-preflight/receipt-diagnostic-controls
       - name: Install and bind rustc 1.98 oracle
         shell: pwsh
         timeout-minutes: 5

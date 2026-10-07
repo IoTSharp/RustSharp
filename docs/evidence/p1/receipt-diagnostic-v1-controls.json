@@ -1,0 +1,99 @@
+{
+  "SchemaVersion": 1,
+  "EvidenceKind": "offline-receipt-diagnostic-utility",
+  "Mode": "All",
+  "StartedAt": "2026-10-08T06:37:32.5286902+08:00",
+  "FinishedAt": "2026-10-08T06:37:32.7248144+08:00",
+  "ExpectedControls": 3,
+  "ObservedControls": 3,
+  "PassedControls": 3,
+  "UtilityScriptPath": "D:\\GitHub\\RustSharp\\eng\\Test-P1ProductionReceiptDiagnostics.ps1",
+  "UtilityScriptSha256": "B521DC711B85E07F2BA76F79286525427B9AEBFE5884350AAAF32F3BBFE97D0B",
+  "Provenance": {
+    "ProductionScriptPath": "D:\\GitHub\\RustSharp\\eng\\Invoke-P1ProductionNativeEvidence.ps1",
+    "ProductionScriptSha256": "627316D581387E8E2536AA09B6324A53DE4DA941F5BE2EE415814A6791F12D93",
+    "PatchDraftPath": "D:\\GitHub\\RustSharp\\eng\\fixtures\\p1-receipt-diagnostic-v1.patch",
+    "PatchDraftSha256": "14517A2625D4A829242D0A4D1476528A6A10B08408CD2329269218599C933F72",
+    "SourceFragmentState": "candidate-source-fragment-extracted",
+    "CandidatePresentInRealSource": true,
+    "BaselineFragmentSha256": "AE9178F16C1A0B64579F6EBCDA117C9D70AE33B29F766490E0C803B37DBC204D",
+    "CandidateFragmentSha256": "7FB85AC8DBC20AD58097FFC10E3A62B00B92BB3DADC9C5927376294607E6ACEE",
+    "BudgetFragmentSha256": "494BCF8F90C3EEE4C874533C865D430DAF32C80EF67619C29A61271EA07170C1",
+    "CloseoutFragmentSha256": "330B946491E40473D792330C16C592CAB606B9F8E8C9018072DFF1F856581934",
+    "BaselineFragment": "        if ($stages.Count -ne 4 -or $stages[1].reportSha256 -cne $reports.sourcePackage.sha256 -or\n            $stages[3].reportSha256 -cne $reports.backend.sha256) { throw 'Validated report bytes changed before CI receipt publication.' }",
+    "CandidateFragment": "        if ($stages.Count -ne 4) { throw 'Production receipt requires all four stage records.' }\n        # These two validator records are finite; Check-Budget enforces the existing orchestration deadline.\n        foreach ($validated in @(@{index=1;name='sourcePackage'},@{index=3;name='backend'})) {\n            Check-Budget 1\n            $validationStage = $stages[$validated.index]\n            if ($validationStage.status -cne 'passed' -or\n                [string]::IsNullOrWhiteSpace([string]$validationStage.reportSha256)) {\n                throw ($validationStage.name + ': successful validation report hash is unavailable; ' + $validationStage.error)\n            }\n            $publishedReport = $reports[$validated.name]\n            if ($null -eq $publishedReport) {\n                throw ($validated.name + ': original report binding is unavailable for publication.')\n            }\n            if ($validationStage.reportSha256 -cne $publishedReport.sha256) {\n                throw ($validated.name + ': validated report bytes changed before CI receipt publication.')\n            }\n        }",
+    "BudgetFragment": "function Check-Budget([int] $Reserve = 0) {\n    $CancellationToken.ThrowIfCancellationRequested()\n    if ($clock.Elapsed.TotalSeconds -ge ($maximumSeconds - $Reserve)) { throw 'Native production orchestration deadline expired.' }\n}",
+    "CloseoutFragment": "$closed = $failures.Count -eq 0 -and $ready -and $stages.Count -eq 4 -and @($stages | Where-Object { $_.status -cne 'passed' }).Count -eq 0 -and $clock.Elapsed.TotalSeconds -lt $maximumSeconds"
+  },
+  "Controls": [
+    {
+      "Name": "success-equalhash",
+      "Passed": true,
+      "Baseline": {
+        "Failure": null,
+        "Closed": false,
+        "Ready": false,
+        "ValidatorStatus": "passed",
+        "ValidatedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "PublishedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "Candidate": {
+        "Failure": null,
+        "Closed": false,
+        "Ready": false,
+        "ValidatorStatus": "passed",
+        "ValidatedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "PublishedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    {
+      "Name": "failed-validator-nullhash",
+      "Passed": true,
+      "Baseline": {
+        "Failure": "Validated report bytes changed before CI receipt publication.",
+        "Closed": false,
+        "Ready": false,
+        "ValidatorStatus": "failed",
+        "ValidatedHash": null,
+        "PublishedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "Candidate": {
+        "Failure": "utility-source-validator: successful validation report hash is unavailable; utility validator failure",
+        "Closed": false,
+        "Ready": false,
+        "ValidatorStatus": "failed",
+        "ValidatedHash": null,
+        "PublishedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    {
+      "Name": "passed-validator-changedhash",
+      "Passed": true,
+      "Baseline": {
+        "Failure": "Validated report bytes changed before CI receipt publication.",
+        "Closed": false,
+        "Ready": false,
+        "ValidatorStatus": "passed",
+        "ValidatedHash": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "PublishedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "Candidate": {
+        "Failure": "sourcePackage: validated report bytes changed before CI receipt publication.",
+        "Closed": false,
+        "Ready": false,
+        "ValidatorStatus": "passed",
+        "ValidatedHash": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "PublishedHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    }
+  ],
+  "SyntheticUtilityHashes": true,
+  "ActionsExecuted": false,
+  "ProducersExecuted": false,
+  "FormalGateAccepted": false,
+  "PhaseClosed": false,
+  "Sandbox": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\receipt-diagnostic-root-v1\\.utility-owned-8babbcf6559f44da8c70b0d3a2e3e9c0",
+  "SandboxRemoved": true,
+  "CleanupFailures": [],
+  "PrimaryFailure": null
+}
