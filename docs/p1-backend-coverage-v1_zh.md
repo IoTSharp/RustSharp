@@ -44,3 +44,5 @@ dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll
 ```
 
 成功的单 fixture 试跑保留 2 个通过、22 个阻塞单元，返回 2。完整本机成功运行关闭 12 个本地单元、保留 12 个异平台阻塞单元，返回 0；只有独立双报告验证器能够关闭全部 24 个单元。
+
+✅ 已完成：候选 `93e60b2e3881bb13e5a836271739aaae944e13af` 的 Windows 原生执行及保留内容验证关闭全部 12 个本地单元。六个 fixture 和七个原始 PE 均通过 CoreCLR 前置执行、ILVerify 与 NativeAOT，包含第六行的两种 witness。生产验证器报告 `ArtifactContentVerified=true`、`SatisfiesNativeGate=true`、`SatisfiesMatrixGate=false`。[原生报告](evidence/p1/backend-native-win-v1.json)、[验证回执](evidence/p1/backend-native-win-v1.validation.json)与[原始／归档哈希](evidence/p1/backend-native-win-v1.archive.json)保留本地证据。另 12 个 Linux 单元及同 SHA CI 聚合仍未关闭。30 个记录的子进程均已退出，所属临时目录已移除，原始审阅产物保留于 `artifacts/p1-backend/`。

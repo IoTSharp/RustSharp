@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-exact-backend-native-proof-archive",
+  "candidateSha": "93e60b2e3881bb13e5a836271739aaae944e13af",
+  "runtimeIdentifier": "win-x64",
+  "fullP1Closure": false,
+  "summary": {
+    "status": "passed",
+    "fixtureDenominator": 6,
+    "foreignBlocked": 12,
+    "originalPeDenominator": 7,
+    "localPassed": 12,
+    "matrixDenominator": 24,
+    "localCellDenominator": 12
+  },
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "artifacts": [
+    {
+      "sourcePath": "artifacts/p1-backend/supervision-native-full-v1.json",
+      "sourceSha256": "D61AE843EF4D77AF8385A5F739BD29931C38A9E078E4D5F1827926A0B4A058BC",
+      "archivedPath": "docs/evidence/p1/backend-native-win-v1.json",
+      "archivedSha256": "670AEDE7519A47A4EE566933E879ED1380871607131577DAB49A2FDC45E5384E"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/native-trials-v2/backend-full-validation.stdout.log",
+      "sourceSha256": "696BBFE86BFBE7327BFF0AFAC74410E62C54E540442F5C065146D8F04DC6601D",
+      "archivedPath": "docs/evidence/p1/backend-native-win-v1.validation.json",
+      "archivedSha256": "8F7612885A90EE35055572644AC46E0FAA099780A7B60045CA94B729B435ABF8"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/native-trials-v2/backend-full-validation.process.json",
+      "sourceSha256": "B71B9BC4FD739C8F0AC9A41CCA5B03F0F9E67B852BF572554306E2652C6ADC0D",
+      "archivedPath": "docs/evidence/p1/backend-native-win-v1.validation-process.json",
+      "archivedSha256": "518EC894E7CEC11A442CE37D984574FF650E00C54E01D15A2BB92499BEA476FB"
+    }
+  ]
+}

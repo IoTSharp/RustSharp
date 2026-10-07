@@ -44,3 +44,5 @@ dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll
 ```
 
 A successful one-fixture trial retains 2 passed and 22 blocked cells and returns 2. A full successful native run closes 12 local cells, leaves 12 foreign cells blocked and returns 0; only the independent two-report validator can close all 24.
+
+✅ Complete: Windows native execution and retained-content validation close all 12 local cells for candidate `93e60b2e3881bb13e5a836271739aaae944e13af`. All six fixtures and seven original PEs pass CoreCLR prerequisites, ILVerify and NativeAOT, including both sixth-row witnesses. The production validator reports `ArtifactContentVerified=true`, `SatisfiesNativeGate=true`, `SatisfiesMatrixGate=false`. [Native report](evidence/p1/backend-native-win-v1.json), [validation receipt](evidence/p1/backend-native-win-v1.validation.json) and [original/archive hashes](evidence/p1/backend-native-win-v1.archive.json) retain this local proof. The other 12 Linux cells and same-SHA CI aggregation remain open. All 30 recorded children exited, owned temporary directories were removed, and original review artifacts remain under `artifacts/p1-backend/`.
