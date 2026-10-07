@@ -23,7 +23,7 @@
 | --- | --- | --- | --- | --- | --- |
 | P0 | ✅ 已完成 | 17 | 34 | 3 | [纵向架构](docs/roadmap/P0_zh.md) |
 | P1 | 🚧 进行中 | 10 | 85 | 6 | [安全核心实现与闭环](docs/roadmap/P1_zh.md) |
-| P2 | ⏳ 计划中 | 15 | 94 | 7 | [库、包与工具链](docs/roadmap/P2_zh.md) |
+| P2 | 🚧 进行中 | 15 | 94 | 7 | [库、包与工具链](docs/roadmap/P2_zh.md) |
 | P3 | ⏳ 计划中 | 6 | 38 | 4 | [宏、async、unsafe/FFI 与 TLS](docs/roadmap/P3_zh.md) |
 | P4 | ⏳ 计划中 | 5 | 29 | 4 | [HTTP 与 WebSocket](docs/roadmap/P4_zh.md) |
 | P5 | ⏳ 计划中 | 7 | 39 | 4 | [数据库与 ORM](docs/roadmap/P5_zh.md) |
@@ -501,11 +501,11 @@ API/feature/RID 配置档报告；Visual Studio 工作只在共享 LSP 和 SDK �
 | P2-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-01). 实现以 Rust 命名的 `core` 原语、`Option`、`Result`、格式化、比较、哈希和迭代器基础。 | P1 门槛 | `rsc test library/core/Cargo.toml` | 配置档清单中的公共名称/签名存在，且行为测试在 CoreCLR/AOT 上通过。 |
 | P2-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-02). 使用托管混合模型为 `Box`、`Vec`、`String`、`Rc`、`Arc` 和集合实现 `alloc` 配置档。 | P2-01 | `rsc test library/alloc/Cargo.toml` | 所有权、容量、索引、迭代、Drop、线程安全和分配限制测试通过。 |
 | P2-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-03). 实现 `std::io`、`std::fs`、`std::path`、环境、时间、进程、线程、同步和 `std::net` 配置档。 | P2-02 | `rsc test library/std/Cargo.toml` | 文件/目录操作、流、路径、进程取消、同步、TCP/UDP 和 DNS 示例在受支持的 x64 平台上通过。 |
-| P2-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-04). 解析兼容 Cargo 的包/工作区清单、feature、目标 `cfg`、锁定数据和依赖图。 | P1-03 | `rsc check tests/workspaces/basic/Cargo.toml --locked` | 解析具有确定性；feature 合并和受支持的 `cfg` 用例与已记录的 Cargo 子集匹配；对不支持的键给出清晰诊断。 |
+| P2-04 | 🚧 进行中 | [叶子详情](docs/roadmap/P2_zh.md#p2-04). 解析兼容 Cargo 的包/工作区清单、feature、目标 `cfg`、锁定数据和依赖图。 | P1-03 | `rsc check tests/workspaces/basic/Cargo.toml --locked` | 解析具有确定性；feature 合并和受支持的 `cfg` 用例与已记录的 Cargo 子集匹配；对不支持的键给出清晰诊断。 |
 | P2-05 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-05). 从受控 NuGet 源还原带有完整性、目标/配置档和 AOT 元数据的 Rust# 包。 | P2-04 | `rsc restore tests/workspaces/packages/Cargo.toml --locked` | 精确的包可以可复现地还原；不兼容的配置档/RID/AOT 包在编译前失败。 |
-| P2-06 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-06). 冻结并实现版本化的 `extern "dotnet"` 风格互操作和普通 .NET 库输出。 | P0-15, P1-09 | `rsc build tests/interop/dotnet/Cargo.toml --target dotnet-library` | C# 消费者调用生成的库；Rust# 调用 AOT 安全的 NuGet API；不支持的反射/动态代码路径产生诊断。 |
+| P2-06 | 🚧 进行中 | [叶子详情](docs/roadmap/P2_zh.md#p2-06). 冻结并实现版本化的 `extern "dotnet"` 风格互操作和普通 .NET 库输出。 | P0-15, P1-09 | `rsc build tests/interop/dotnet/Cargo.toml --target dotnet-library` | C# 消费者调用生成的库；Rust# 调用 AOT 安全的 NuGet API；不支持的反射/动态代码路径产生诊断。 |
 | P2-07 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-07). 实现 `rsc new/check/build/run/test/publish` 和依赖还原，并提供稳定的退出码和诊断。 | P2-04, P2-05 | `rsc test tests/cli/Cargo.toml` | 每个命令都有成功/失败黄金测试、取消、有限超时，且不会泄漏自有进程/文件。 |
-| P2-08 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-08). 实现格式化程序、文档生成器、增量缓存键和确定性构建。 | P1-02, P1-09 | `rsc fmt --check tests/programs; rsc doc tests/programs/Cargo.toml; rsc build tests/programs --locked` | 格式化具有幂等性，文档链接正确，未更改的构建复用有效制品，干净输出可复现。 |
+| P2-08 | 🚧 进行中 | [叶子详情](docs/roadmap/P2_zh.md#p2-08). 实现格式化程序、文档生成器、增量缓存键和确定性构建。 | P1-02, P1-09 | `rsc fmt --check tests/programs; rsc doc tests/programs/Cargo.toml; rsc build tests/programs --locked` | 格式化具有幂等性，文档链接正确，未更改的构建复用有效制品，干净输出可复现。 |
 | P2-09 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-09). 实现共享 LSP 契约、VS Code 集成和 Portable PDB 单步调试。 | P1-03, P1-06, P2-07 | `dotnet test RustSharp.slnx -c Release --filter LanguageServer` | 打开/更改/诊断/悬停/补全/定义/引用/重命名/格式化/代码操作/语义词元/内联提示测试通过；调试器从生成代码单步执行到预期 `.rs` 行；面向项目的取消和增量状态不会泄漏进程或陈旧诊断。 |
 | P2-10 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-10). 为 Windows/Linux x64 发布首个有文档记录的 SDK/包/配置档集合。 | P2-01 至 P2-09 | `rsc publish samples/file-server/Cargo.toml --runtime win-x64 --locked` | 干净机器可以只使用有文档记录的输入来还原、构建、测试、调试和 AOT 发布示例。 |
 | P2-11 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-11). 定义并实现可选的 `RustSharp.NET.Sdk` MSBuild 桥接和面向 `Cargo.toml` 包的 SDK 风格项目包装层。 | P2-04, P2-05, P2-06, P2-07 | `dotnet build tests/sdk/console/RustSharp.rsproj -c Release` | `dotnet build/run/test/pack` 将引用、诊断、符号、确定性设置和 profile/RID 属性转发给 `rsc`；SDK 包装层与直接 Cargo 工作流产生等价的编译器输入和可复现输出。实现前通过 ADR 冻结包装层形状和属性契约。 |

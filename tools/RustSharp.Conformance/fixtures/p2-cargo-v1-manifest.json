@@ -1,0 +1,1148 @@
+{
+  "schemaVersion": 1,
+  "profile": "cargo-v1",
+  "leafId": "P2-04.01",
+  "hardDependencies": [
+    "P1-03"
+  ],
+  "denominator": 78,
+  "inventoryKind": "frozen-cargo-contract-cases-not-runtime-execution",
+  "platforms": [
+    "win-x64",
+    "linux-x64"
+  ],
+  "acceptedKeys": [
+    "package.name",
+    "package.version",
+    "package.edition",
+    "workspace.members",
+    "workspace.exclude",
+    "workspace.resolver",
+    "lib.name",
+    "lib.path",
+    "lib.crate-type",
+    "bin.name",
+    "bin.path",
+    "bin.required-features",
+    "dependencies.<name>.path",
+    "dependencies.<name>.package",
+    "dependencies.<name>.version",
+    "dependencies.<name>.features",
+    "dependencies.<name>.optional",
+    "dependencies.<name>.default-features",
+    "target.<cfg>.dependencies.<name>.path",
+    "target.<cfg>.dependencies.<name>.package",
+    "target.<cfg>.dependencies.<name>.version",
+    "target.<cfg>.dependencies.<name>.features",
+    "target.<cfg>.dependencies.<name>.optional",
+    "target.<cfg>.dependencies.<name>.default-features",
+    "features.<name>",
+    "lock.version",
+    "lock.package.name",
+    "lock.package.version",
+    "lock.package.dependencies"
+  ],
+  "limits": {
+    "maximumPackages": 64,
+    "maximumManifestBytes": 1000000,
+    "maximumDependenciesPerPackage": 64,
+    "maximumTargets": 32,
+    "maximumFeaturesPerPackage": 128,
+    "maximumFeatureEdges": 1024,
+    "maximumCfgDepth": 16,
+    "maximumGraphDepth": 32,
+    "maximumOperations": 20000,
+    "maximumLockBytes": 1000000,
+    "timeoutMilliseconds": 10000
+  },
+  "rules": [
+    {
+      "id": "toml",
+      "contract": "Strict UTF8 with optional leading BOM; scalar basic/literal strings, booleans, arrays on one physical line, ordinary tables, bin arrays of tables and flat inline dependency tables. Duplicate keys/tables, malformed tokens diagnose with original spans. Multiline values, dotted assignments, floats/dates and nested inline tables reject."
+    },
+    {
+      "id": "unknown-members",
+      "contract": "Any unknown table/key/value in the closed accepted inventory rejects; no ignored metadata."
+    },
+    {
+      "id": "workspace-root",
+      "contract": "Package roots, virtual roots and combined roots are admitted. Members/excludes are exact relative directories without globs or inheritance. Canonical manifest paths deduplicate; root package occurs once."
+    },
+    {
+      "id": "targets",
+      "contract": "One rlib library and multiple binaries retain name/path metadata. Inference uses existing src/lib.rs and src/main.rs. Explicit paths must stay within package root. Missing files/duplicate target names reject."
+    },
+    {
+      "id": "package-identity",
+      "contract": "Package identity is name plus exact numeric major.minor.patch version; names use ASCII letters/digits/underscore/hyphen and start with a letter or underscore. Same identity at different paths rejects."
+    },
+    {
+      "id": "dependency-forms",
+      "contract": "Inline and dependencies.name table forms share path/package/exact-version/features/optional/default-features keys; all value types are strict."
+    },
+    {
+      "id": "dependency-sources",
+      "contract": "Only local path dependencies are admitted; paths may resolve siblings. Registry/git/source requests reject before network access. Optional dependencies retain graph nodes but selection controls activation."
+    },
+    {
+      "id": "dependency-order",
+      "contract": "Packages, targets and edges use ordinal stable identity/path ordering on each platform; dictionary insertion order is not observable."
+    },
+    {
+      "id": "paths",
+      "contract": "Manifest/source filesystem links reject; source targets cannot escape their package root. Relative paths normalize on the actual platform; cross-platform separator spelling is explicit input."
+    },
+    {
+      "id": "features-default",
+      "contract": "Default root activation may be disabled. Each dependency edge contributes its default-features flag (default true); enabled edges union defaults."
+    },
+    {
+      "id": "features-optional",
+      "contract": "optional true adds implicit feature named for dependency unless an explicit dep:name mention suppresses that implicit feature; dep:name activates that dependency."
+    },
+    {
+      "id": "features-transitive",
+      "contract": "Feature members are local feature names, dep:name or dependency/feature. Unknown names and unavailable dependency feature exports reject."
+    },
+    {
+      "id": "features-unification",
+      "contract": "Feature activation unifies by exact package identity across active edges to a deterministic fixed point bounded by operations/deadline."
+    },
+    {
+      "id": "features-cycles",
+      "contract": "Local or cross-package cyclic feature expansion rejects with RSCARGO1008; dependency package cycles use RSCARGO1003."
+    },
+    {
+      "id": "features-unsupported",
+      "contract": "Weak dependency?/feature syntax and feature expressions outside the frozen forms reject."
+    },
+    {
+      "id": "cfg-platform",
+      "contract": "Only win-x64/windows/x86_64 and linux-x64/linux/x86_64 are admitted. Predicates are windows/unix, target_os with windows/linux and target_arch with x86_64. Incompatible RID combinations reject."
+    },
+    {
+      "id": "cfg-feature",
+      "contract": "feature=\"name\" tests unified activation; required-features admit a binary only if every feature is active. Explicitly selecting a disabled binary yields RSCARGO1009."
+    },
+    {
+      "id": "cfg-combinators",
+      "contract": "all/any accept zero or more predicates; not accepts exactly one. Evaluation is bounded by cfg depth, operations and deadline."
+    },
+    {
+      "id": "cfg-items",
+      "contract": "Source cfg attributes and target cfg dependency tables evaluate from the same frozen predicate environment before disabled items bind."
+    },
+    {
+      "id": "cfg-unsupported",
+      "contract": "Unsupported predicate names/values, malformed expressions and invalid arity yield RSCARGO1009 rather than ignored conditions."
+    },
+    {
+      "id": "lock-format",
+      "contract": "Cargo.lock TOML version=4, package array tables with name/version/dependencies only. Local sources omit source/checksum; dependency identifiers are name plus space plus exact version. Feature/cfg selection is persisted in a companion normalized resolution metadata record with profile/RID/activation fingerprint."
+    },
+    {
+      "id": "lock-determinism",
+      "contract": "Lock bytes are UTF8 without BOM, LF and sorted package/edge entries. Topological package order is dependencies first with ordinal identity tie breaks. Paths do not leak into portable lock identity."
+    },
+    {
+      "id": "locked-mode",
+      "contract": "Locked mode requires existing exact graph lock and matching resolution metadata; absent/stale/incompatible inputs fail RSCARGO1010 without rewriting. Unlocked mode writes only through atomic replacement after complete successful validation."
+    },
+    {
+      "id": "dependency-cycles",
+      "contract": "Self and multi-node path cycles reject even for discovered nodes; graph results never claim success with diagnostics."
+    },
+    {
+      "id": "cancellation",
+      "contract": "Caller cancellation propagates OperationCanceledException; limit/deadline failures use RSCARGO1004. Loading reads bounded files and creates no processes/network requests or outputs."
+    },
+    {
+      "id": "source-assembly",
+      "contract": "Multi-package graphs compile through production source metadata/emitter, preserve missing/private/incompatible-export diagnostics, run generated programs and verify CoreCLR/ILVerify/AOT on win-x64 and linux-x64; host simulations do not count."
+    }
+  ],
+  "unsupportedKeys": [
+    "package.authors",
+    "package.build",
+    "package.metadata",
+    "workspace.package",
+    "workspace.dependencies",
+    "workspace.default-members",
+    "dev-dependencies",
+    "build-dependencies",
+    "patch",
+    "replace",
+    "profile",
+    "dependencies.<name>.git",
+    "dependencies.<name>.registry",
+    "lock.package.source",
+    "lock.package.checksum"
+  ],
+  "diagnostics": {
+    "malformedManifest": "RSCARGO1001",
+    "unsupportedDependency": "RSCARGO1002",
+    "dependencyCycle": "RSCARGO1003",
+    "limitExceeded": "RSCARGO1004",
+    "unsupportedManifest": "RSCARGO1005",
+    "duplicateIdentity": "RSCARGO1006",
+    "missingInput": "RSCARGO1007",
+    "invalidFeature": "RSCARGO1008",
+    "invalidCfg": "RSCARGO1009",
+    "incompatibleLock": "RSCARGO1010",
+    "missingExport": "RSN1003",
+    "privateExport": "RSN1005",
+    "incompatibleExport": "RST1002"
+  },
+  "testTargets": [
+    {
+      "leafId": "P2-04.01",
+      "target": "test:cargo-contract",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter \"P2 cargo contract\" --timeout 30 --deadline 180",
+      "denominator": 78,
+      "denominatorKind": "validated contract case inventory",
+      "registration": "P2CargoContractTests.All"
+    },
+    {
+      "leafId": "P2-04.02",
+      "target": "test:cargo-manifests",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter \"P2 cargo manifests\" --timeout 30 --deadline 180",
+      "denominator": 38,
+      "denominatorKind": "scenario executions",
+      "registration": "P2CargoManifestTests.All"
+    },
+    {
+      "leafId": "P2-04.03",
+      "target": "test:cargo-features",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter \"P2 cargo features\" --timeout 30 --deadline 180",
+      "denominator": 11,
+      "denominatorKind": "scenario executions",
+      "registration": "P2CargoFeatureTests.All"
+    },
+    {
+      "leafId": "P2-04.04",
+      "target": "test:cargo-cfg",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter \"P2 cargo cfg\" --timeout 30 --deadline 180",
+      "denominator": 12,
+      "denominatorKind": "scenario executions",
+      "registration": "P2CargoCfgTests.All"
+    },
+    {
+      "leafId": "P2-04.05",
+      "target": "test:cargo-lock",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter \"P2 cargo lock\" --timeout 30 --deadline 180",
+      "denominator": 10,
+      "denominatorKind": "scenario executions",
+      "registration": "P2CargoLockTests.All"
+    },
+    {
+      "leafId": "P2-04.06",
+      "target": "test:cargo-workspaces",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter \"P2 cargo workspaces\" --timeout 60 --deadline 600",
+      "denominator": 7,
+      "denominatorKind": "generated programs on each RID",
+      "registration": "P2CargoIntegrationTests.All"
+    }
+  ],
+  "cases": [
+    {
+      "id": "package-minimal",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "package.name",
+        "package.version"
+      ],
+      "scenario": "A package with name and exact semantic version loads."
+    },
+    {
+      "id": "package-metadata",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "package.name",
+        "package.version",
+        "package.edition"
+      ],
+      "scenario": "All four editions 2015/2018/2021/2024 preserve metadata."
+    },
+    {
+      "id": "workspace-members",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "workspace.members"
+      ],
+      "scenario": "Declared relative members load in ordinal manifest-path order."
+    },
+    {
+      "id": "workspace-exclude",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "workspace.exclude"
+      ],
+      "scenario": "Exact relative excludes remove members; wildcard members and excludes reject."
+    },
+    {
+      "id": "workspace-resolver",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "workspace.resolver"
+      ],
+      "scenario": "Resolver 2 is accepted; no resolver means 2."
+    },
+    {
+      "id": "virtual-workspace",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "workspace-root"
+      ],
+      "scenario": "A root with only workspace has no synthetic package."
+    },
+    {
+      "id": "combined-workspace",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "workspace-root"
+      ],
+      "scenario": "A package/workspace root includes its root package exactly once."
+    },
+    {
+      "id": "default-targets",
+      "leafId": "P2-04.02",
+      "family": "target",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "targets"
+      ],
+      "scenario": "Existing src/lib.rs and src/main.rs are both retained; library precedes binaries."
+    },
+    {
+      "id": "explicit-lib",
+      "leafId": "P2-04.02",
+      "family": "target",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "lib.name",
+        "lib.path",
+        "lib.crate-type"
+      ],
+      "scenario": "Named library with a custom relative path and crate-type rlib resolves."
+    },
+    {
+      "id": "explicit-bin",
+      "leafId": "P2-04.02",
+      "family": "target",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "bin.name",
+        "bin.path"
+      ],
+      "scenario": "Multiple named binary tables retain their individual paths and order by name."
+    },
+    {
+      "id": "bin-required-features",
+      "leafId": "P2-04.02",
+      "family": "target",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "bin.required-features"
+      ],
+      "scenario": "Required feature names are retained for target selection by P2-04.04."
+    },
+    {
+      "id": "dependency-inline",
+      "leafId": "P2-04.02",
+      "family": "dependency",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependencies.<name>.path"
+      ],
+      "scenario": "An inline path dependency loads its manifest."
+    },
+    {
+      "id": "dependency-table",
+      "leafId": "P2-04.02",
+      "family": "dependency",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependency-forms"
+      ],
+      "scenario": "A dependencies.name table has the same meaning as the inline form."
+    },
+    {
+      "id": "dependency-rename",
+      "leafId": "P2-04.02",
+      "family": "dependency",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependencies.<name>.package"
+      ],
+      "scenario": "Dependency alias differs from package name and resolves the declared package identity."
+    },
+    {
+      "id": "dependency-version",
+      "leafId": "P2-04.02",
+      "family": "dependency",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependencies.<name>.version"
+      ],
+      "scenario": "Optional exact local dependency version must match package version; ranges reject."
+    },
+    {
+      "id": "dependency-order",
+      "leafId": "P2-04.02",
+      "family": "dependency",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependency-order"
+      ],
+      "scenario": "Permuting manifest entries yields equal package/edge/target order."
+    },
+    {
+      "id": "malformed-toml",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1001",
+      "covers": [
+        "toml"
+      ],
+      "scenario": "Unterminated quoted strings and invalid headers fail at their exact original spans."
+    },
+    {
+      "id": "duplicate-key",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1001",
+      "covers": [
+        "toml"
+      ],
+      "scenario": "Duplicate scalar keys or repeated singleton tables fail at the second declaration span."
+    },
+    {
+      "id": "duplicate-package",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1006",
+      "covers": [
+        "package-identity"
+      ],
+      "scenario": "Two different manifest paths declaring the same name and version reject."
+    },
+    {
+      "id": "missing-member",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1007",
+      "covers": [
+        "workspace.members"
+      ],
+      "scenario": "A missing declared member fails at its root manifest member span."
+    },
+    {
+      "id": "missing-source",
+      "leafId": "P2-04.02",
+      "family": "target",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1007",
+      "covers": [
+        "targets"
+      ],
+      "scenario": "A declared or inferred package without a source target fails before resolution."
+    },
+    {
+      "id": "unknown-key",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1005",
+      "covers": [
+        "unknown-members"
+      ],
+      "scenario": "Unknown package/workspace/target/dependency keys and tables are never silently ignored."
+    },
+    {
+      "id": "registry-dependency",
+      "leafId": "P2-04.02",
+      "family": "dependency",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1002",
+      "covers": [
+        "dependency-sources"
+      ],
+      "scenario": "Version-only registry dependencies reject without network activity."
+    },
+    {
+      "id": "git-dependency",
+      "leafId": "P2-04.02",
+      "family": "dependency",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1002",
+      "covers": [
+        "dependency-sources"
+      ],
+      "scenario": "git/registry/source dependency origins reject without network activity."
+    },
+    {
+      "id": "path-escape",
+      "leafId": "P2-04.02",
+      "family": "target",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1005",
+      "covers": [
+        "paths"
+      ],
+      "scenario": "Source target paths escaping package root and linked manifests/sources reject; dependency paths may refer to siblings."
+    },
+    {
+      "id": "quoted-hash",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "toml"
+      ],
+      "scenario": "Hash and equals inside basic/literal strings are data; comments start only outside strings."
+    },
+    {
+      "id": "utf8-invalid",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1001",
+      "covers": [
+        "toml"
+      ],
+      "scenario": "Malformed UTF8 rejects; a single leading UTF8 BOM is accepted."
+    },
+    {
+      "id": "unsupported-value",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1005",
+      "covers": [
+        "toml"
+      ],
+      "scenario": "Multiline strings/arrays, dotted assignments, dates, floats and nested inline tables reject explicitly."
+    },
+    {
+      "id": "edition-unsupported",
+      "leafId": "P2-04.02",
+      "family": "manifest",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1005",
+      "covers": [
+        "package.edition"
+      ],
+      "scenario": "Editions other than the four admitted strings reject at value span."
+    },
+    {
+      "id": "resolver-unsupported",
+      "leafId": "P2-04.02",
+      "family": "workspace",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1005",
+      "covers": [
+        "workspace.resolver"
+      ],
+      "scenario": "Resolver 1 or 3 and inherited workspace keys reject at their source spans."
+    },
+    {
+      "id": "feature-default",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "features.<name>",
+        "features-default"
+      ],
+      "scenario": "Root default feature closure activates unless no-default-features is requested."
+    },
+    {
+      "id": "feature-no-default",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "features-default"
+      ],
+      "scenario": "Explicit no-default-features permits an empty default closure."
+    },
+    {
+      "id": "feature-optional-dependency",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependencies.<name>.optional",
+        "features-optional"
+      ],
+      "scenario": "dep:name enables an optional dependency; its implicit feature is suppressed when dep:name is named."
+    },
+    {
+      "id": "feature-transitive",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependencies.<name>.features",
+        "features-transitive"
+      ],
+      "scenario": "dep/feature activates the dependency feature and local names recurse transitively."
+    },
+    {
+      "id": "feature-unification",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "features-unification"
+      ],
+      "scenario": "Same package identity reached by two dependents receives the union independent of traversal order."
+    },
+    {
+      "id": "feature-unknown",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1008",
+      "covers": [
+        "features.<name>"
+      ],
+      "scenario": "Unknown requested local/dependency feature names reject at source or option location."
+    },
+    {
+      "id": "feature-cycle",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1008",
+      "covers": [
+        "features-cycles"
+      ],
+      "scenario": "Local and cross-package feature cycles reject rather than being silently accepted."
+    },
+    {
+      "id": "feature-weak-unsupported",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1008",
+      "covers": [
+        "features-unsupported"
+      ],
+      "scenario": "Weak dep?/feature and unsupported feature expressions reject explicitly."
+    },
+    {
+      "id": "feature-dependency-default",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "dependencies.<name>.default-features",
+        "features-default"
+      ],
+      "scenario": "Dependency default-features false suppresses only that edge; another true edge unifies defaults."
+    },
+    {
+      "id": "feature-empty",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "features.<name>"
+      ],
+      "scenario": "An empty named feature is valid and contributes its activation to cfg."
+    },
+    {
+      "id": "feature-edge-budget",
+      "leafId": "P2-04.03",
+      "family": "feature",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumFeaturesPerPackage",
+        "maximumFeatureEdges"
+      ],
+      "scenario": "Exactly configured feature/edge limits pass; one additional entry rejects with no partial graph."
+    },
+    {
+      "id": "cfg-windows",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-platform",
+        "target.<cfg>.dependencies.<name>.path",
+        "target.<cfg>.dependencies.<name>.package",
+        "target.<cfg>.dependencies.<name>.version"
+      ],
+      "scenario": "win-x64 selects windows flag and target_os windows path dependencies."
+    },
+    {
+      "id": "cfg-linux",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-platform"
+      ],
+      "scenario": "linux-x64 selects unix flag and target_os linux path dependencies."
+    },
+    {
+      "id": "cfg-x64",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-platform"
+      ],
+      "scenario": "Both admitted RIDs select target_arch x86_64 and reject unsupported architectures."
+    },
+    {
+      "id": "cfg-feature",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-feature",
+        "target.<cfg>.dependencies.<name>.features",
+        "target.<cfg>.dependencies.<name>.optional",
+        "target.<cfg>.dependencies.<name>.default-features"
+      ],
+      "scenario": "feature name uses the unified feature closure and conditional dependencies preserve all admitted metadata."
+    },
+    {
+      "id": "cfg-all",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-combinators"
+      ],
+      "scenario": "all predicates require every member; empty all evaluates true."
+    },
+    {
+      "id": "cfg-any",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-combinators"
+      ],
+      "scenario": "any predicates require one member; empty any evaluates false."
+    },
+    {
+      "id": "cfg-not",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-combinators"
+      ],
+      "scenario": "not accepts exactly one predicate and inverts its result."
+    },
+    {
+      "id": "cfg-unknown",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1009",
+      "covers": [
+        "cfg-unsupported"
+      ],
+      "scenario": "Unknown predicates, values, malformed cfg syntax and not with wrong arity reject."
+    },
+    {
+      "id": "cfg-invalid-combination",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1009",
+      "covers": [
+        "cfg-platform"
+      ],
+      "scenario": "Contradictory RID/target OS or arch requests reject before item selection."
+    },
+    {
+      "id": "cfg-depth",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumCfgDepth"
+      ],
+      "scenario": "Nesting exactly 16 passes; depth 17 rejects under the shared deadline."
+    },
+    {
+      "id": "cfg-required-features",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-feature",
+        "bin.required-features"
+      ],
+      "scenario": "A binary is admitted only when all required-features are active; an explicit disabled target request fails."
+    },
+    {
+      "id": "cfg-source-items",
+      "leafId": "P2-04.04",
+      "family": "cfg",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cfg-items"
+      ],
+      "scenario": "Source cfg attributes remove disabled items before binding and use the same predicates as dependency tables."
+    },
+    {
+      "id": "lock-serialize",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "lock.version",
+        "lock.package.name",
+        "lock.package.version",
+        "lock.package.dependencies",
+        "lock-format"
+      ],
+      "scenario": "Cargo.lock version 4 serializes local package identities and sorted name version dependency strings with LF."
+    },
+    {
+      "id": "lock-reordered",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "lock-determinism"
+      ],
+      "scenario": "Reordered manifest/member/dependency inputs produce byte-identical locks and ordinal topological order."
+    },
+    {
+      "id": "locked-current",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "locked-mode"
+      ],
+      "scenario": "Existing exact lock succeeds without modifying it; feature/cfg selections are fixed in normalized resolution metadata."
+    },
+    {
+      "id": "locked-missing",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "locked-mode"
+      ],
+      "scenario": "Locked resolution without Cargo.lock fails without writing any files."
+    },
+    {
+      "id": "locked-stale",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "locked-mode"
+      ],
+      "scenario": "Changed package version/dependency/selected feature or cfg metadata rejects stale lock."
+    },
+    {
+      "id": "lock-version",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "lock-format"
+      ],
+      "scenario": "Lock versions other than 4 and registry source/checksum entries reject."
+    },
+    {
+      "id": "lock-duplicate",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "lock-format"
+      ],
+      "scenario": "Duplicate lock identities or edges and unknown lock keys reject."
+    },
+    {
+      "id": "lock-identity",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "lock-format"
+      ],
+      "scenario": "Missing/unexpected lock packages and incompatible dependency identities reject."
+    },
+    {
+      "id": "graph-cycle",
+      "leafId": "P2-04.05",
+      "family": "graph",
+      "kind": "error",
+      "expectedDiagnostic": "RSCARGO1003",
+      "covers": [
+        "dependency-cycles"
+      ],
+      "scenario": "Self dependency and multi-package path cycles fail even when nodes are already discovered."
+    },
+    {
+      "id": "lock-byte-boundary",
+      "leafId": "P2-04.05",
+      "family": "lock",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumLockBytes"
+      ],
+      "scenario": "Exactly configured lock-byte limit passes; one byte beyond rejects before parsing."
+    },
+    {
+      "id": "package-count-budget",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumPackages"
+      ],
+      "scenario": "Exactly 64 packages pass; the 65th rejects with no successful partial graph."
+    },
+    {
+      "id": "manifest-byte-budget",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumManifestBytes"
+      ],
+      "scenario": "Exactly configured bytes pass; one extra byte fails before reading an oversized manifest."
+    },
+    {
+      "id": "dependency-count-budget",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumDependenciesPerPackage"
+      ],
+      "scenario": "Exactly 64 dependency edges per package pass; the 65th rejects."
+    },
+    {
+      "id": "target-count-budget",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumTargets"
+      ],
+      "scenario": "Exactly 32 targets pass; the 33rd rejects."
+    },
+    {
+      "id": "graph-depth-budget",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumGraphDepth"
+      ],
+      "scenario": "Root depth one through depth 32 pass; depth 33 fails before descending."
+    },
+    {
+      "id": "operation-budget",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumOperations"
+      ],
+      "scenario": "Every input token, node and edge consumes bounded work; exhaustion yields a limit diagnostic."
+    },
+    {
+      "id": "deadline-budget",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "timeoutMilliseconds"
+      ],
+      "scenario": "Whole resolution exceeding 10000 milliseconds fails with owned cleanup and no partial success."
+    },
+    {
+      "id": "cancelled-resolution",
+      "leafId": "P2-04.02",
+      "family": "graph",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "cancellation"
+      ],
+      "scenario": "Caller cancellation propagates OperationCanceledException and retains no owned handles or files."
+    },
+    {
+      "id": "consumer-two-package",
+      "leafId": "P2-04.06",
+      "family": "integration",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "source-assembly"
+      ],
+      "scenario": "A locked two-package consumer compiles and executes exported scalar calls with output 42 newline."
+    },
+    {
+      "id": "consumer-multi-package",
+      "leafId": "P2-04.06",
+      "family": "integration",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "source-assembly"
+      ],
+      "scenario": "A three-package transitive consumer compiles and runs without merging namespaces."
+    },
+    {
+      "id": "consumer-feature-cfg",
+      "leafId": "P2-04.06",
+      "family": "integration",
+      "kind": "positive",
+      "expectedDiagnostic": "",
+      "covers": [
+        "source-assembly"
+      ],
+      "scenario": "Frozen feature/cfg selection feeds source-to-assembly integration on both admitted RIDs."
+    },
+    {
+      "id": "consumer-missing-export",
+      "leafId": "P2-04.06",
+      "family": "integration",
+      "kind": "error",
+      "expectedDiagnostic": "RSN1003",
+      "covers": [
+        "source-assembly"
+      ],
+      "scenario": "An unresolved imported export diagnoses before execution with its source span."
+    },
+    {
+      "id": "consumer-private-export",
+      "leafId": "P2-04.06",
+      "family": "integration",
+      "kind": "error",
+      "expectedDiagnostic": "RSN1005",
+      "covers": [
+        "source-assembly"
+      ],
+      "scenario": "A private imported export diagnoses before execution with its source span."
+    },
+    {
+      "id": "consumer-incompatible-export",
+      "leafId": "P2-04.06",
+      "family": "integration",
+      "kind": "error",
+      "expectedDiagnostic": "RST1002",
+      "covers": [
+        "source-assembly"
+      ],
+      "scenario": "An incompatible imported argument or return type diagnoses before emission."
+    },
+    {
+      "id": "consumer-deterministic",
+      "leafId": "P2-04.06",
+      "family": "integration",
+      "kind": "boundary",
+      "expectedDiagnostic": "",
+      "covers": [
+        "source-assembly"
+      ],
+      "scenario": "Independent locked builds of the same graph have equal package metadata and PE/PDB hashes."
+    }
+  ],
+  "evidenceRequiredFields": [
+    "leafId",
+    "manifestSha256",
+    "candidateSha",
+    "tools",
+    "runtimeIdentifier",
+    "command",
+    "denominator",
+    "passed",
+    "failed",
+    "skipped",
+    "timeResourceLimits",
+    "processId",
+    "processStartedAtUtc",
+    "parentProcessId",
+    "parentChain",
+    "cleanup",
+    "failureReasons",
+    "provenance"
+  ]
+}
