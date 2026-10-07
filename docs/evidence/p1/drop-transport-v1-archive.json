@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-drop-transport-component-acceptance",
+  "candidateSha": "c950e0164719bdcf6309e944c2e0078d2ee5eafe",
+  "candidateTreeSha": "08ec300868804497bc985f547bd8679f88e8f5cf",
+  "sourceInputCount": 707,
+  "sourceHashes": [
+    {
+      "path": "eng/P1DropTransportContract.ps1",
+      "sha256": "C9CCBE9FCCC2D20E153EEA1E7ACAAEC35DE7665F25B6F86C7369507AF9885AF5",
+      "snapshotMatched": true
+    },
+    {
+      "path": "eng/Write-P1DropTransport.ps1",
+      "sha256": "E470BF1D314BE15683D013C8D167A3039D326AE187B542C58271A24B87940ACC",
+      "snapshotMatched": true
+    },
+    {
+      "path": "eng/Test-P1DropTransport.ps1",
+      "sha256": "FCAA16DFCC0B157DCB1A5BC29799E88DC3DDAA945F672FA545A3D1CBD1B4C23B",
+      "snapshotMatched": true
+    },
+    {
+      "path": "eng/Test-P1DropTransportUtilities.ps1",
+      "sha256": "C40EC4AD8F5A9DDD0A5C6965D9344E289EB6D8F47515103B7F46A84E973F4D1D",
+      "snapshotMatched": true
+    }
+  ],
+  "reports": [
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/source-snapshot.json",
+      "sha256": "3974B6973CCC5755AA1E5E27C2C5BED6EE94A950C4247BD6A8D2290A9C0FDB24"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/release-build.json",
+      "sha256": "7F5752C6D86EF1F8718FA7EDD2D682F5F1AFD54ADC3140411084F84FF801BB2B"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/windows-final-tiny.json",
+      "sha256": "8B47971ED077FA188E690A469B649F67EB2006E8A26B5591EA35A6D7D3DED007"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/windows-final-all.json",
+      "sha256": "0FD11C63326AA3FF1D2AB5CB2CEA86101DFFE495A75568C2678440AA02ED83B8"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/linux-tiny.json",
+      "sha256": "C6C1D4E1D9BC9603A99C76C4F68C893F60E86B863FEC5EF5F3ECA6E16CAD31D5"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/linux-all.json",
+      "sha256": "80F538DF81F277126A86BAB69A8238FEE554B74442EA93156F3919FF98C04A4C"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/writer-unauthenticated.process.json",
+      "sha256": "F6F4A24C48F7DBE1908DEFBE358E1974D1F0234E3B3D5FE8CFC7E1F9A84DAF53"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/writer-unauthenticated.stderr.log",
+      "sha256": "D915F25435697DE56101B423B8C0BF2FE012B7737C1072DE7AEA57F0ED498C3A"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/validator-unauthenticated.process.json",
+      "sha256": "C5537A34D1F4BCA71EA28F9ED64B030410C75A39CB1C2657872D24F575841355"
+    },
+    {
+      "path": "artifacts/p1-supervision/transport-root-v1/validator-unauthenticated.stderr.log",
+      "sha256": "DDEDA79374BB033EFE84D81FC26C012911392319631AD4B6DDCFC9F11EFC4CE3"
+    }
+  ],
+  "resourceReview": {
+    "path": "artifacts/p1-supervision/transport-root-v1/resource-review.json",
+    "sha256": "60C5D04039BE06B4BA43600BEA5AEA8EC7153A21B5B2A9D51841ECB7BBED5168"
+  },
+  "release": {
+    "sdkVersion": "10.0.401",
+    "warnings": 0,
+    "errors": 0,
+    "registeredDenominator": 1203,
+    "executedHarness": 0
+  },
+  "utility": {
+    "windowsTiny": 1,
+    "windowsFixed": 12,
+    "ubuntuTiny": 1,
+    "ubuntuFixed": 12,
+    "entryRejections": 2,
+    "astFiles": 4,
+    "syntheticVerifierMetadata": true,
+    "nativeRuntimeExecuted": 0,
+    "originalPeIlVerifyExecuted": 0,
+    "nativeAotExecuted": 0,
+    "formalJointControlsExecuted": 0
+  },
+  "frozenNativeDenominators": {
+    "generated": 28,
+    "exactRustcMatches": 26,
+    "inheritedDifferences": 2,
+    "originalPeIlVerify": 30,
+    "nativeAot": 28,
+    "callableArtifacts": 2,
+    "callableCases": 7,
+    "stages": 36,
+    "formalJointControls": 12
+  },
+  "workflowIntegrated": false,
+  "processCleanupVerification": "parent-exit-only",
+  "descendantContainmentVerified": false,
+  "p1GateClosed": false,
+  "p2LeafClosed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}
