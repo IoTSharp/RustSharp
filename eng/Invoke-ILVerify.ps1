@@ -909,6 +909,19 @@ if (-not $succeeded) {
     if ([string]::IsNullOrWhiteSpace($failureMessage)) {
         $failureMessage = 'ILVerify did not complete successfully.'
     }
+    # Capture already has a 262,144-character process-output bound. Emit at most
+    # 4,096 characters from each stream so CI logs retain the actual failure.
+    # Two fixed streams and a five-second closeout budget; no process is started.
+    $diagnosticClock = [Diagnostics.Stopwatch]::StartNew()
+    if ($null -ne $verifyResult) {
+        foreach ($streamName in @('StandardOutput','StandardError')) {
+            if ($diagnosticClock.Elapsed.TotalSeconds -ge 5) { break }
+            $detail = [string]$verifyResult.$streamName
+            if (-not [string]::IsNullOrWhiteSpace($detail)) {
+                Write-Warning ("ILVerify ${streamName}: " + $detail.Substring(0,[Math]::Min(4096,$detail.Length)))
+            }
+        }
+    }
     Write-Error $failureMessage
     exit 1
 }
