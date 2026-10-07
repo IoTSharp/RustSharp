@@ -118,7 +118,7 @@ SHA，因此候选发布门禁仍是独立的 P1 要求。
 `artifacts/p1-next-session`。[后续审计](docs/p1-evidence-audit_zh.md) 记录所有权诊断、Drop
 闭环、源码包元数据及平台证据绑定。P1-09 源码包契约基于已记录的本地证据为 ✅ 已完成：历史 Closure-9 Release 零警告/零错误，关键回归84/84、完整回归964/964；这些报告记录清单原始字节 SHA `BC0975F428B6A8AB0AE47DE50970B1152482C3465C27B47AB44A3AC4153519AB`，在 Windows 与 Ubuntu WSL Native AOT/CoreCLR 均通过19/19及39/39个原始 PE。该历史 CRLF 原始字节哈希不同于当前规范化 LF 后的清单哈希。
 
-P1-10 在本地候选 `0a415e25c362f8a35c09cb9e1163f5ce30accf82` 为 ✅ 已完成：Windows 与 Ubuntu Linux x64 分别通过零警告/零错误的 Release 构建、969/969 项完整测试、32/32 项扩展差分、24/24 项 CoreCLR/ILVerify/Native AOT 用例及 60/60 项不可变基线审计。严格聚合通过 15/15。[P1-10 实现记录](docs/p1-10-implementation_zh.md)区分 40 个需求/160 条清单记录的覆盖账本与真实语义执行，并记录 `p1-drop-closure-v4` 中额外的 Ubuntu rustc Drop 轨迹差异。该差异尚未获 P1 语言门禁批准。六个 P1-GATE 叶子仍为 ⏳ 计划中；此候选尚未运行远程 CI。
+P1-10 在本地候选 `0a415e25c362f8a35c09cb9e1163f5ce30accf82` 为 ✅ 已完成：Windows 与 Ubuntu Linux x64 分别通过零警告/零错误的 Release 构建、969/969 项完整测试、32/32 项扩展差分、24/24 项 CoreCLR/ILVerify/Native AOT 用例及 60/60 项不可变基线审计。严格聚合通过 15/15。[P1-10 实现记录](docs/p1-10-implementation_zh.md)区分 40 个需求/160 条清单记录的覆盖账本与真实语义执行，并记录 `p1-drop-closure-v4` 中额外的 Ubuntu rustc Drop 轨迹差异。该差异尚未获 P1 语言门禁批准。P1-GATE.01–.03 为 🚧 进行中，.04–.06 仍为 ⏳ 计划中。后续提交 `0c5d80f623ab263682ed36c47f3e9182e23374f9` 的远程 CI 失败；当前修复及精确覆盖／源码包证据继续接受[监督](docs/roadmap/P2-HANDOFF_zh.md)。
 
 已记录的 `safe-core-regression-v1` 报告通过 8/8，失败和跳过均为零。
 历史 `safe-core-regression-v2` 报告通过 24/24，包含 1 个编译通过、6 个编译失败、

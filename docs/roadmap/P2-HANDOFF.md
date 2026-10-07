@@ -108,7 +108,7 @@ leaves remain open. Three workers were explicitly reassigned to P1:
 | --- | --- | --- |
 | ILVerify runtime reference | ✅ Complete | `cargo_p2`: `eng/Invoke-ILVerify.ps1`, `eng/Test-ILVerifyRuntimeReference.ps1`; 10/10 real generated-PE checks, including a conflicting duplicate AssemblyRef. This repair does not close P1-GATE.03. |
 | Native Drop/unwind implementation | ✅ Complete | `prerequisite_audit`: explicit NativeV2 API/PE metadata and nested exception preservation; 8/8 directed Windows checks and 28 v5 cases (26 matches, the two inherited normal-cleanup differences). Linux/platform/CLI/package acceptance remains open. |
-| Exact P1 requirement/evidence mapping | 🚧 In progress | `tooling_p2`: `P1GateCoverageContract.cs`, `p1-gate-coverage-v1-manifest.json`, `P1GateCoverageContractTests.cs`; at most ten new registrations. |
+| Exact P1 requirement/evidence mapping implementation | ✅ Complete | `tooling_p2`: 10/10 isolated mapping/rejection checks; 40 requirements, 160 catalogue records, full actual source registrations and six precise gaps covering 24 backend/RID cells. Production gate/full-harness integration remains open. |
 
 Preserve the old v1 Drop and v4 runner entry points. Native-v2 must be a named,
 observable production choice, retain the parent/child exception chain, and pass
@@ -150,3 +150,21 @@ The final filtered harness reports are archived at
 the 1023-test full harness and native Linux/ILVerify/AOT gates remain required.
 All validation launchers exited with complete cleanup. Preserve the candidate
 ref and the generated Drop artifacts referenced by the reports.
+
+The mapping's 10/10 checks pass at the same source candidate. The parser now
+reads the standalone C# registration-array closing line rather than a Rust
+string's `];`, rejects duplicate source files, and directly binds REQ028/029
+to the final eight NativeV2 checks. The archived filtered report and raw/archive
+hashes are `docs/evidence/p1/gate-mapping.harness.json` and
+`docs/evidence/p1/gate-mapping-archive.json`. This is validator verification,
+not actual coverage closure: the six named gaps/24 cells still need real
+ILVerify/AOT execution on both RIDs. Fresh complete harness inventory checks
+must be combined with this mapping in the production gate.
+
+Accepted repair commits: `30f728b` (runtime references) and `f42bd7e` (explicit
+NativeV2 implementation). Next ownership is `cargo_p2` for P2-04.02 manifests,
+`prerequisite_audit` for CLI/compiler/metadata Drop-profile propagation, and
+`tooling_p2` for the 19-case source-package provenance/strict validator. Root
+owns shared registration capacity, caller integration, CI/gate aggregation,
+bilingual status and serial verification/commits. Do not rerun already accepted
+checks unless a new edit/failure affects them.

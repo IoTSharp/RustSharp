@@ -1,0 +1,1779 @@
+{
+  "schemaVersion": 1,
+  "profile": "p1-gate-coverage-v1",
+  "version": 1,
+  "taskId": "P1-GATE.01",
+  "requirementDenominator": 40,
+  "catalogueDenominator": 160,
+  "scopeLedger": {
+    "file": "docs/p1-exit-scope-v1.md",
+    "sha256": "F8DB4C4022C5556788410AE34130637EFC9AB99DF644EDA8492A00FF2C69C2EF"
+  },
+  "legacyCatalogue": {
+    "file": "tools/RustSharp.Conformance/fixtures/p1-coverage-v1-manifest.json",
+    "sha256": "5D44AB1E8383D3D4D9233D543B18616EEC45501D36FEB388AEAB828E52B5AE8C"
+  },
+  "evidencePolicy": "catalogue-is-not-execution; source-bound-full-harness; native-obligations-remain-open; aggregate-ownership-is-not-prerequisite",
+  "testTarget": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P1-GATE.01 --timeout 30 --deadline 120",
+  "requirements": [
+    {
+      "id": "P1-REQ-001",
+      "classification": "check-only",
+      "role": "check-only",
+      "implementationLeaves": [
+        "P1-01.01",
+        "P1-01.02",
+        "P1-01.03",
+        "P1-01.04",
+        "P1-02.01",
+        "P1-02.02",
+        "P1-02.03",
+        "P1-02.04"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-001-positive",
+        "p1-req-001-negative",
+        "p1-req-001-boundary",
+        "p1-req-001-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/LexerClosureTests.cs",
+          "sha256": "DBDFC39A9637EEA925C8305410CABB4CEA47DF7A6CB196E952C1F71633C5F300",
+          "caseIds": [
+            "Lexer preserves BOM and distinguishes shebangs from inner attributes",
+            "Lexer distinguishes all comment styles and carriage returns",
+            "Lexer covers the Edition 2024 keyword inventory",
+            "Lexer rejects nondecimal floats with complete token spans",
+            "Lexer preserves multiline literals and raw terminator boundaries",
+            "Lexer rejects invalid source scalars inside every lexical context",
+            "Lexer cancels and enforces wall-clock budgets",
+            "Lexer freezes maximum-depth trees without CLR recursion",
+            "Lexer bounds each retained collection independently",
+            "Lexer reconstructs bounded deterministic malformed inputs"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/SyntaxManifestTests.cs",
+          "sha256": "1E0B1FC46259AE06ED022825AF5975DB3EE0B842E3F44464B329FC5EB4222172",
+          "caseIds": [
+            "Syntax corpus preserves original source bytes and reviewed spans",
+            "Syntax corpus rejects missing categories and invalid contracts",
+            "Syntax corpus fails incorrect diagnostic text and item expectations"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-002",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-03.01",
+        "P1-03.02",
+        "P1-03.03",
+        "P1-03.04",
+        "P1-06.14",
+        "P1-09.01",
+        "P1-09.02",
+        "P1-09.03",
+        "P1-09.04",
+        "P1-09.05",
+        "P1-09.06",
+        "P1-09.07",
+        "P1-09.08",
+        "P1-09.09"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-002-positive",
+        "p1-req-002-negative",
+        "p1-req-002-boundary",
+        "p1-req-002-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreWorkspaceTests.cs",
+          "sha256": "30B4CDD09D56AF17722BC23ACF4E55A46080C76412B8F3A5561E8F5D3B2DCDFD",
+          "caseIds": [
+            "workspace loads only declared modules and maps their source",
+            "workspace resolves flat nested inline and raw modules",
+            "workspace diagnoses missing and conflicting module files",
+            "workspace retains child syntax paths and spans",
+            "workspace preserves UTF8 bytes and rejects invalid encoding",
+            "workspace handles shebang comments and module inner attributes",
+            "workspace refuses module attribute evaluation",
+            "workspace enforces file byte source depth operation and time budgets",
+            "workspace propagates caller cancellation",
+            "workspace rejects linked source files and directories",
+            "workspace clips mappings to original source fragments",
+            "workspace source map rejects invalid public construction"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/WorkspaceSourceMapTests.cs",
+          "sha256": "804D3160D23DF02B291CEC243033BCB928C5F8DB7CB2CCA10633D6BB72B98D0C",
+          "caseIds": [
+            "workspace PDB preserves every source hash and original function location",
+            "workspace emission is deterministic and tracks child bytes and paths"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-003",
+      "classification": "check-only",
+      "role": "check-only",
+      "implementationLeaves": [
+        "P1-04.01",
+        "P1-04.02",
+        "P1-04.03",
+        "P1-04.04"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-003-positive",
+        "p1-req-003-negative",
+        "p1-req-003-boundary",
+        "p1-req-003-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreTypeConformanceTests.cs",
+          "sha256": "337A1388CB646CB96D4724DB4FC7C087500E79381FCE5250E241CC1146C315D7",
+          "caseIds": [
+            "type conformance v2 fixes 96 source outcomes and 16 required categories",
+            "type conformance rejects wrong diagnostic codes and source spans",
+            "type conformance rejects incomplete categories and malformed fixtures",
+            "type conformance validation bounds work and respects cancellation",
+            "type conformance cannot pass skipped incomplete or failed cleanup reports"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreTypeProfileTests.cs",
+          "sha256": "7AE94769753401EE097ED271F6C9EEC1C5C4DCE68FD309EC9D83D5576BA48F18",
+          "caseIds": [
+            "type profile checks library functions without emitting IL",
+            "type profile loads file modules and Cargo package inputs",
+            "type profile maps errors to original module spans",
+            "type profile rejects emission before reading or creating output",
+            "type profile preserves cancellation and legacy profile boundaries",
+            "CLI exposes check-only type profile and rejects executable commands"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-004",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-05.01",
+        "P1-05.02",
+        "P1-05.03",
+        "P1-05.04",
+        "P1-09.01"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-004-positive",
+        "p1-req-004-negative",
+        "p1-req-004-boundary",
+        "p1-req-004-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreGenericCompilationTests.cs",
+          "sha256": "BAE22498F7F5FB1D882D455993CFCA6119AA160830216B86131BAFF3D2D1C6CF",
+          "caseIds": [
+            "generic CLR executes independent primitive and unit instances",
+            "generic CLR executes closed record tuple and tuple-struct values",
+            "generic CLR preserves source order and snapshots earlier aggregate arguments",
+            "generic CLR preserves early returns and closed recursive calls",
+            "generic CLR emits deterministic closed metadata and source mapped PDB",
+            "generic CLR rejects oversized closed signatures and layouts without artifacts",
+            "generic CLR preserves cancellation before emission"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreGenericProfileTests.cs",
+          "sha256": "CC3A85D6AEB246F369E22178C74491058EE1223DAB74D56B662D2E41D28A8F0D",
+          "caseIds": [
+            "generic profile checks source without emitting artifacts",
+            "generic profile checks and executes file modules and Cargo package inputs",
+            "generic profile maps body errors to original module spans",
+            "generic profile rejects invalid bodies and absent executable roots before output creation",
+            "generic profile preserves cancellation and previous profile boundaries",
+            "CLI checks builds and runs generic programs and rejects invalid publish input"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-005",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.02"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-005-positive",
+        "p1-req-005-negative",
+        "p1-req-005-boundary",
+        "p1-req-005-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirValidationTests.cs",
+          "sha256": "44A86FFE444C3A360867380146F394253BDD94166A73E890E730DAF70C1E6C2C",
+          "caseIds": [
+            "typed MIR preserves frozen collection ownership",
+            "typed MIR accepts cyclic CFG and reports deterministic reachability",
+            "typed MIR rejects negative and duplicate arena IDs",
+            "typed MIR validates dead blocks and explicit terminator shapes",
+            "typed MIR validates source evidence without integer overflow",
+            "typed MIR enforces assignments branches and return types",
+            "typed MIR checks scalar constant ranges and Unicode scalars",
+            "typed MIR checks nominal call signatures arguments and results",
+            "typed MIR keeps diverging calls terminal",
+            "typed MIR validates explicit coercions casts and tuple construction",
+            "typed MIR validates fixed-array construction and indexing",
+            "typed MIR validation obeys cancellation work size diagnostic depth and time budgets",
+            "typed MIR formatter is invariant deterministic and bounded"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-006",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.03"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-006-positive",
+        "p1-req-006-negative",
+        "p1-req-006-boundary",
+        "p1-req-006-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirLoweringTests.cs",
+          "sha256": "C271A60CACFC479128A045185AFDAE15C9A24AF9992090C39008208CCA9F8BC5",
+          "caseIds": [
+            "MIR lowering produces deterministic typed three-address snapshots",
+            "MIR lowering preserves scalar literal spelling and original HIR evidence",
+            "MIR lowering preserves branches loops break continue and direct calls",
+            "MIR lowering snapshots reads before later side effects",
+            "MIR lowering emits typed tuple aggregates",
+            "MIR lowering emits bounded array aggregates and fixed indexing",
+            "MIR lowering repeats structural Copy array elements",
+            "MIR lowering short circuits and drops unreachable tails",
+            "MIR lowering rejects unsupported constructs at their original spans",
+            "MIR lowering bounds work size nesting time and cancellation"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-007",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.04",
+        "P1-06.19"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-007-positive",
+        "p1-req-007-negative",
+        "p1-req-007-boundary",
+        "p1-req-007-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirPlaceTests.cs",
+          "sha256": "39310EA549685C9070CBCF66B8CC3C9395D1E4A8F928649614B6DD5F41FFB857",
+          "caseIds": [
+            "typed MIR resolves nested place projections from the root type",
+            "typed MIR publishes deterministic source-backed place facts only on success",
+            "typed MIR rejects forged root and projected result types",
+            "typed MIR rejects mismatched projection kinds and bounds",
+            "typed MIR rejects field projections without declaration layout",
+            "typed MIR confines place metadata to place operands",
+            "typed MIR mutable borrowing respects binding and temporary storage",
+            "typed MIR mutable place access preserves shared reference barriers",
+            "typed MIR reborrowing preserves reference permissions",
+            "typed MIR writes require accessible mutable references",
+            "typed MIR place validation enforces an independent projection budget"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-008",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.05",
+        "P1-07.07",
+        "P1-07.09"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-008-positive",
+        "p1-req-008-negative",
+        "p1-req-008-boundary",
+        "p1-req-008-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirReferenceProvenanceTests.cs",
+          "sha256": "B81D561396DBBAE57868AB70430D73309E8DE217CDD725DF660FF6A48CF90DE8",
+          "caseIds": [
+            "MIR provenance returns checked input field origins across calls",
+            "MIR provenance unions distinct incoming reference origins",
+            "MIR provenance rejects missing initialization on an incoming edge",
+            "MIR provenance rejects local storage returned as a reference",
+            "MIR provenance rejects fabricated reference constants",
+            "MIR provenance enforces operation and path budgets",
+            "MIR provenance cancellation is observed before work",
+            "MIR ownership keeps both possible returned-call referents borrowed",
+            "MIR provenance rejects invalid public input without throwing",
+            "MIR provenance checks a reference used only by a projected write",
+            "MIR explicit ownership evidence cannot omit reference effects",
+            "MIR NLL ends a reference value before its replacement",
+            "MIR ownership permits disjoint mutable projections of a parent reference",
+            "MIR ownership checks runtime projection index initialization",
+            "MIR ownership restores moved fields and clears replaced child paths",
+            "MIR call arguments reject repeated exclusive references",
+            "MIR source calls reject exclusive aliases and allow disjoint consecutive calls",
+            "MIR reference coercion creates a shared reborrow with the right provenance",
+            "MIR provenance keeps dynamic reference writes on concrete array elements",
+            "MIR provenance retains offset owners through reference subslices and calls",
+            "MIR imported calls retain explicit parameter origins without invented bodies",
+            "MIR imported reference calls reject absent incompatible and mutable static origins"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-009",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.06"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-009-positive",
+        "p1-req-009-negative",
+        "p1-req-009-boundary",
+        "p1-req-009-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirV2ProfileTests.cs",
+          "sha256": "FFDE51BD1CAB1AFA60A3C71AFFE20DC3502B56F8654A836B1ED572E040C65BE5",
+          "caseIds": [
+            "MIR v2 preserves the v1 repeated-array rejection contract",
+            "MIR v2 produces deterministic source ownership and cleanup evidence",
+            "MIR v2 emits deterministic metadata and evaluates repeated operands once",
+            "MIR v2 CLI checks compiles and executes the versioned profile",
+            "MIR v2 repeated arrays obey length work snapshot and cancellation bounds"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": [
+        {
+          "caseId": "MIR v2 emits deterministic metadata and evaluates repeated operands once",
+          "ownerLeaf": "P1-06.06",
+          "backends": [
+            "ilverify",
+            "native-aot"
+          ],
+          "rids": [
+            "win-x64",
+            "linux-x64"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P1-REQ-010",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.07"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-010-positive",
+        "p1-req-010-negative",
+        "p1-req-010-boundary",
+        "p1-req-010-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirSliceTests.cs",
+          "sha256": "134B6BF06FE5FC04F6323E26E941C93DDC33861FC6C5C211CB6D4619A39DE193",
+          "caseIds": [
+            "MIR v2 lowers a full array slice, length and constant index",
+            "MIR v2 preserves slice provenance in deterministic MIR",
+            "MIR v2 executes dynamic full-array slice indexes",
+            "MIR v2 dynamic full-array slice indexes trap outside their bounds",
+            "MIR v2 traps an out-of-bounds empty slice index"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-011",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.08",
+        "P1-09.05"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-011-positive",
+        "p1-req-011-negative",
+        "p1-req-011-boundary",
+        "p1-req-011-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirReferenceAbiTests.cs",
+          "sha256": "AC6F9CC2990466FCCC5BFDE7405BD75CC89E3AE276EC124166D04C36B80FA520",
+          "caseIds": [
+            "MIR reference ABI enum joins preserve active reference payloads",
+            "MIR reference ABI enum returns allow inactive reference variants",
+            "MIR reference ABI nested parameter preserves the original value",
+            "MIR reference ABI reference tuple crosses calls and returns",
+            "MIR reference ABI writes preserve independent aggregate value copies",
+            "MIR reference ABI nested mutable slots can rebind their referent",
+            "MIR reference ABI nested mutable referents preserve replacement writes",
+            "MIR reference ABI dynamic arrays retain selected reference owners",
+            "MIR reference ABI dynamic mutable arrays write through selected owners",
+            "MIR reference ABI fixed array rest returns retain window offsets and value copies",
+            "MIR slice ABI nested fixed array rest unsizing retains its original window",
+            "MIR slice ABI call and return preserve mutable subslice ownership",
+            "MIR slice ABI different owner lengths join across returns",
+            "MIR slice ABI inclusive ranges and empty suffix retain length",
+            "MIR slice ABI aggregate elements preserve projected mutation",
+            "MIR slice ABI dynamic suffix preserves reference element owners",
+            "MIR slice ABI inverted dynamic range traps before access",
+            "MIR slice ABI subrange index cannot access adjacent owner elements"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-012",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.09"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-012-positive",
+        "p1-req-012-negative",
+        "p1-req-012-boundary",
+        "p1-req-012-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirReferenceAbiTests.cs",
+          "sha256": "AC6F9CC2990466FCCC5BFDE7405BD75CC89E3AE276EC124166D04C36B80FA520",
+          "caseIds": [
+            "MIR reference ABI enum joins preserve active reference payloads",
+            "MIR reference ABI enum returns allow inactive reference variants",
+            "MIR reference ABI nested parameter preserves the original value",
+            "MIR reference ABI reference tuple crosses calls and returns",
+            "MIR reference ABI writes preserve independent aggregate value copies",
+            "MIR reference ABI nested mutable slots can rebind their referent",
+            "MIR reference ABI nested mutable referents preserve replacement writes",
+            "MIR reference ABI dynamic arrays retain selected reference owners",
+            "MIR reference ABI dynamic mutable arrays write through selected owners",
+            "MIR reference ABI fixed array rest returns retain window offsets and value copies",
+            "MIR slice ABI nested fixed array rest unsizing retains its original window",
+            "MIR slice ABI call and return preserve mutable subslice ownership",
+            "MIR slice ABI different owner lengths join across returns",
+            "MIR slice ABI inclusive ranges and empty suffix retain length",
+            "MIR slice ABI aggregate elements preserve projected mutation",
+            "MIR slice ABI dynamic suffix preserves reference element owners",
+            "MIR slice ABI inverted dynamic range traps before access",
+            "MIR slice ABI subrange index cannot access adjacent owner elements"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": [
+        {
+          "caseId": "MIR slice ABI call and return preserve mutable subslice ownership",
+          "ownerLeaf": "P1-06.09",
+          "backends": [
+            "ilverify",
+            "native-aot"
+          ],
+          "rids": [
+            "win-x64",
+            "linux-x64"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P1-REQ-013",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.10",
+        "P1-07.02",
+        "P1-07.03",
+        "P1-07.04",
+        "P1-07.05",
+        "P1-07.06",
+        "P1-07.07",
+        "P1-07.08"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-013-positive",
+        "p1-req-013-negative",
+        "p1-req-013-boundary",
+        "p1-req-013-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirPatternExecutionTests.cs",
+          "sha256": "71A64F2BADBB96CE6C2B7ABCE8CADFEFB57D5F1ECF9E3267D54027801566689C",
+          "caseIds": [
+            "MIR v2 lowers scalar tuple match and guard through CFG",
+            "MIR v2 expands a captured closure call into typed MIR",
+            "MIR v2 rejects closure escape at its source span",
+            "MIR v2 shared closure captures borrow mutable bindings",
+            "MIR v2 binding or-patterns select consistent locals",
+            "MIR v2 bounds pattern alternatives",
+            "MIR v2 executes match and closure through CoreCLR",
+            "MIR patterns select nested or bindings and retry guards",
+            "MIR patterns execute let else and exhaustive or declarations",
+            "MIR patterns bind tuple struct and array rests",
+            "MIR patterns mutate original tuple and ADT fields",
+            "MIR patterns compare negative literals ranges and named constants",
+            "MIR patterns inspect slices only after successful length tests",
+            "MIR patterns borrow fixed array rest views and write full arrays",
+            "MIR patterns borrow disjoint mutable array fields and rests",
+            "MIR patterns borrow disjoint mutable dynamic slice prefixes and rests",
+            "MIR patterns borrow disjoint mutable dynamic slice suffixes and rests",
+            "MIR patterns defer noncopy payload moves until guards succeed",
+            "MIR patterns reject guard moves and mutable guard writes",
+            "MIR patterns validate partition bounds result lengths and mutability",
+            "MIR patterns validate from end minimum length evidence",
+            "MIR patterns destructure function and closure parameters with ref bindings"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-014",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.11",
+        "P1-07.07",
+        "P1-08.14"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-014-positive",
+        "p1-req-014-negative",
+        "p1-req-014-boundary",
+        "p1-req-014-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirClosureCaptureTests.cs",
+          "sha256": "39DE7DE8DB5E2923611AA8BD9C6492C37892D38BBFB4BD9C3B93A9751824B4B9",
+          "caseIds": [
+            "MIR closure mutable captures write back across calls",
+            "MIR closure move captures use owned storage across calls",
+            "MIR closure captured shared references retain their owner",
+            "MIR closure captured mutable references reborrow their referent",
+            "MIR closure implicit mutable capture arguments reborrow across calls",
+            "MIR closure captured aggregate projections retain original storage",
+            "MIR closure noncopy field captures move only their selected field",
+            "MIR closure disjoint field captures retain independent loans",
+            "MIR closure shared arguments reborrow mutable references",
+            "MIR closure consumed aggregate fields cannot be reused",
+            "MIR closure field loans reject mutation of the captured field",
+            "MIR closure immediate invocations collect their captures",
+            "MIR closure shared captures protect owners until the last call",
+            "MIR closure owned captures cannot consume values twice",
+            "MIR closure moved captures prevent subsequent owner uses"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": [
+        {
+          "caseId": "MIR closure mutable captures write back across calls",
+          "ownerLeaf": "P1-06.11",
+          "backends": [
+            "ilverify",
+            "native-aot"
+          ],
+          "rids": [
+            "win-x64",
+            "linux-x64"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P1-REQ-015",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.12"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-015-positive",
+        "p1-req-015-negative",
+        "p1-req-015-boundary",
+        "p1-req-015-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirConstantExecutionTests.cs",
+          "sha256": "6E43177E33D18463A8355A49EDF9E977FCDB5B52D0D127042D08ABEBB1B3BB72",
+          "caseIds": [
+            "safe-core-mir constants scalar arithmetic and imports",
+            "safe-core-mir constants tuples arrays and named aggregates",
+            "safe-core-mir constants independent aggregate materialization",
+            "safe-core-mir constants inline const functions and bounded loops",
+            "safe-core-mir constants retain const functions called at runtime",
+            "safe-core-mir constants enum tuple and named payloads",
+            "safe-core-mir promotion survives return and call boundaries",
+            "safe-core-mir promotion nested references and aggregate storage",
+            "safe-core-mir promotion constant array to slice",
+            "safe-core-mir promotion checked evidence is deterministic",
+            "safe-core-mir promotion ownership evidence rejects forged lifetime",
+            "safe-core-mir constants reject checked overflow",
+            "safe-core-mir constants reject cyclic dependencies",
+            "safe-core-mir constants reject interpreter budget exhaustion",
+            "safe-core-mir constants reject borrowed local storage",
+            "safe-core-mir constants reject mutable promotion"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": [
+        {
+          "caseId": "safe-core-mir constants inline const functions and bounded loops",
+          "ownerLeaf": "P1-06.12",
+          "backends": [
+            "ilverify",
+            "native-aot"
+          ],
+          "rids": [
+            "win-x64",
+            "linux-x64"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P1-REQ-016",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.13",
+        "P1-09.01"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-016-positive",
+        "p1-req-016-negative",
+        "p1-req-016-boundary",
+        "p1-req-016-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirFamilyEvidenceTests.cs",
+          "sha256": "00C6C39A9FE98ABA818C9A0035B860C09AA28DEB09BE435FC3F3EDE4160E3459",
+          "caseIds": [
+            "MIR families preserve deterministic MIR LIR PE PDB and original source mappings",
+            "MIR families enforce work depth time cancellation and no partial publication"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-017",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.14"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-017-positive",
+        "p1-req-017-negative",
+        "p1-req-017-boundary",
+        "p1-req-017-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/WorkspaceSourceMapTests.cs",
+          "sha256": "804D3160D23DF02B291CEC243033BCB928C5F8DB7CB2CCA10633D6BB72B98D0C",
+          "caseIds": [
+            "workspace PDB preserves every source hash and original function location",
+            "workspace emission is deterministic and tracks child bytes and paths"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-018",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.15"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-018-positive",
+        "p1-req-018-negative",
+        "p1-req-018-boundary",
+        "p1-req-018-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirFamilyEvidenceTests.cs",
+          "sha256": "00C6C39A9FE98ABA818C9A0035B860C09AA28DEB09BE435FC3F3EDE4160E3459",
+          "caseIds": [
+            "MIR families preserve deterministic MIR LIR PE PDB and original source mappings",
+            "MIR families enforce work depth time cancellation and no partial publication"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-019",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.16"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-019-positive",
+        "p1-req-019-negative",
+        "p1-req-019-boundary",
+        "p1-req-019-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirFamilyEvidenceTests.cs",
+          "sha256": "00C6C39A9FE98ABA818C9A0035B860C09AA28DEB09BE435FC3F3EDE4160E3459",
+          "caseIds": [
+            "MIR families preserve deterministic MIR LIR PE PDB and original source mappings",
+            "MIR families enforce work depth time cancellation and no partial publication"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-020",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.17"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-020-positive",
+        "p1-req-020-negative",
+        "p1-req-020-boundary",
+        "p1-req-020-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirScalarExecutionTests.cs",
+          "sha256": "09817C470BA8B1FC6AAD7548939B75143985A277B0F9F38FAE89D733B8A5B550",
+          "caseIds": [
+            "MIR scalar signed division remainder bitwise and shifts execute",
+            "MIR scalar boolean bitwise operations evaluate both operands",
+            "MIR scalar bounded usize operators and conversions execute",
+            "MIR bounded usize left shifts truncate native-width bits before checking the result",
+            "MIR scalar division rejects zero",
+            "MIR scalar signed division rejects minimum divided by minus one",
+            "MIR scalar signed remainder rejects minimum modulo minus one",
+            "MIR scalar shifts reject overflowing dynamic counts",
+            "MIR scalar shifts reject negative dynamic counts",
+            "MIR bounded usize subtraction rejects unsigned underflow",
+            "MIR bounded usize shifts reject unrepresentable values",
+            "MIR bounded usize shifts reject native-width counts",
+            "MIR bounded usize shifts reject native-width unrepresentable results",
+            "MIR bounded usize conversion rejects unrepresentable negatives"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": [
+        {
+          "caseId": "MIR scalar signed division remainder bitwise and shifts execute",
+          "ownerLeaf": "P1-06.17",
+          "backends": [
+            "ilverify",
+            "native-aot"
+          ],
+          "rids": [
+            "win-x64",
+            "linux-x64"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P1-REQ-021",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.18"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-021-positive",
+        "p1-req-021-negative",
+        "p1-req-021-boundary",
+        "p1-req-021-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirEnumTests.cs",
+          "sha256": "FA6CEC973E587842F5E015F3A558863B3D7D203FE5A42C1E43778E46A0D7FEFD",
+          "caseIds": [
+            "MIR v2 enum unit tuple and named variants execute through calls",
+            "MIR v2 enum payload construction preserves source evaluation order",
+            "MIR v2 enum matching tests payload only after its tag",
+            "MIR v2 enum matching supports borrowed payloads",
+            "MIR v2 enum matching writes through mutable payload bindings",
+            "MIR v2 enum nested payloads and rest patterns execute",
+            "MIR v2 enum payloads store promoted static reference handles",
+            "MIR v2 enum explicit discriminants retain evaluated values",
+            "MIR v2 enum payload moves remain tracked",
+            "MIR enum validation rejects forged layout tags and downcasts",
+            "MIR enum validation checks variant constructor fields"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-022",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-06.19"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-022-positive",
+        "p1-req-022-negative",
+        "p1-req-022-boundary",
+        "p1-req-022-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirProjectionBackendTests.cs",
+          "sha256": "19114FDBBD220326F9A32CD814B430117D3436FEC96BDA5D356BE6DB7F93DA90",
+          "caseIds": [
+            "MIR CLR nested named tuple array places retain owner storage",
+            "MIR CLR reference calls returns and CFG joins retain runtime owner",
+            "MIR CLR dynamic array bounds trap instead of aliasing another field",
+            "MIR CLR rejects forged projected operands at its public entry",
+            "CLR LIR rejects immutable indirect stores and malformed referent types",
+            "MIR CLR public lowering rejects a reference to dead callee storage",
+            "MIR CLR reference-bearing aggregates preserve mutation of their original owner",
+            "MIR source zero-array indexing preserves metadata and traps at runtime",
+            "MIR CLR managed references load and store complete aggregate values",
+            "MIR CLR legacy shared slice reborrows preserve their fixed-array layout",
+            "MIR CLR executes the declared CFG entry before reading a reference"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": [
+        {
+          "caseId": "MIR CLR nested named tuple array places retain owner storage",
+          "ownerLeaf": "P1-06.19",
+          "backends": [
+            "ilverify",
+            "native-aot"
+          ],
+          "rids": [
+            "win-x64",
+            "linux-x64"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P1-REQ-023",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-07.01",
+        "P1-07.02",
+        "P1-07.03"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-023-positive",
+        "p1-req-023-negative",
+        "p1-req-023-boundary",
+        "p1-req-023-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreOwnershipTests.cs",
+          "sha256": "39E8E0A1F3C49047F61F4AD616B429C890069F8EFC7D0BCE486D1917240A9688",
+          "caseIds": [
+            "ownership CFG drops live values in reverse declaration order",
+            "ownership CFG checks borrow conflicts and explicit NLL",
+            "ownership CFG reports move and reference escape diagnostics",
+            "ownership CFG records unwind and abort panic paths",
+            "ownership CFG bounds looping paths",
+            "ownership CFG rejects known true cleanup cycles and unknown cycles without exits",
+            "ownership CFG converges cleanup cycles with an unknown exit",
+            "ownership CFG preserves semantic diagnostics when cycle exits are invalid",
+            "ownership CFG rejects invalid local and terminator IDs",
+            "ownership CFG cleans only entered branch scopes",
+            "ownership CFG rejects owner assignment during mutable borrow",
+            "ownership CFG validates nested reborrows and scope escapes",
+            "ownership CFG tracks partial move paths",
+            "ownership CFG keeps disjoint projected borrows independent",
+            "ownership CFG rejects overlapping projected borrows",
+            "ownership CFG rejects overlapping projected moves",
+            "ownership CFG rejects projected moves out of Drop values",
+            "ownership CFG isolates projection keys by local ID",
+            "ownership CFG isolates structural field projection keys",
+            "ownership CFG rejects projected Drop boundaries and repeats",
+            "ownership CFG permits concurrent shared reborrows",
+            "ownership CFG can infer non-lexical borrow ends",
+            "ownership CFG rejects self moves without reviving the source",
+            "ownership CFG reports moved values on branch join paths",
+            "ownership CFG ends dead-branch loans with inferred NLL",
+            "ownership CFG observes cancellation before bounded work"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-024",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-07.04",
+        "P1-07.05",
+        "P1-07.06",
+        "P1-07.07",
+        "P1-07.08"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-024-positive",
+        "p1-req-024-negative",
+        "p1-req-024-boundary",
+        "p1-req-024-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirReferenceProvenanceTests.cs",
+          "sha256": "B81D561396DBBAE57868AB70430D73309E8DE217CDD725DF660FF6A48CF90DE8",
+          "caseIds": [
+            "MIR provenance returns checked input field origins across calls",
+            "MIR provenance unions distinct incoming reference origins",
+            "MIR provenance rejects missing initialization on an incoming edge",
+            "MIR provenance rejects local storage returned as a reference",
+            "MIR provenance rejects fabricated reference constants",
+            "MIR provenance enforces operation and path budgets",
+            "MIR provenance cancellation is observed before work",
+            "MIR ownership keeps both possible returned-call referents borrowed",
+            "MIR provenance rejects invalid public input without throwing",
+            "MIR provenance checks a reference used only by a projected write",
+            "MIR explicit ownership evidence cannot omit reference effects",
+            "MIR NLL ends a reference value before its replacement",
+            "MIR ownership permits disjoint mutable projections of a parent reference",
+            "MIR ownership checks runtime projection index initialization",
+            "MIR ownership restores moved fields and clears replaced child paths",
+            "MIR call arguments reject repeated exclusive references",
+            "MIR source calls reject exclusive aliases and allow disjoint consecutive calls",
+            "MIR reference coercion creates a shared reborrow with the right provenance",
+            "MIR provenance keeps dynamic reference writes on concrete array elements",
+            "MIR provenance retains offset owners through reference subslices and calls",
+            "MIR imported calls retain explicit parameter origins without invented bodies",
+            "MIR imported reference calls reject absent incompatible and mutable static origins"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-025",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-07.09",
+        "P1-07.10",
+        "P1-07.12"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-025-positive",
+        "p1-req-025-negative",
+        "p1-req-025-boundary",
+        "p1-req-025-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1OwnershipResourceContractTests.cs",
+          "sha256": "FD9F01AAED6A06868C814E02151D543E4D415EF6E8F3A6F9A94FFEF10E89DDED",
+          "caseIds": [
+            "P1 ownership resource rejects invalid statement and instruction options",
+            "P1 ownership resource enforces per-function MIR locals",
+            "P1 ownership resource enforces per-function MIR blocks",
+            "P1 ownership resource enforces per-function MIR statements",
+            "P1 ownership resource bounds independently supplied instruction effects",
+            "P1 ownership resource bounds independently supplied arenas",
+            "P1 ownership resource accepts exact per-function boundaries",
+            "P1 ownership resource preserves semantic rejection diagnostics",
+            "P1 ownership resource honors cancellation before analysis",
+            "P1 ownership resource preserves the shared validation budget",
+            "P1 ownership resource honors the caller wall-clock budget"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1OwnershipDiagnosticGoldenTests.cs",
+          "sha256": "0D11257D7332A2A6B432C04A3850B02DCFA3E1FB0499AF1E5FE459B0C6E50D8D",
+          "caseIds": [
+            "P1 ownership diagnostic golden catalog is complete",
+            "P1 ownership diagnostics preserve code message path and span",
+            "P1 ownership compile diagnostics preserve the same golden facts",
+            "P1 ownership golden checks reject unsupported lowering"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-026",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-07.11",
+        "P1-10.05"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-026-positive",
+        "p1-req-026-negative",
+        "p1-req-026-boundary",
+        "p1-req-026-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1DifferentialProfileTests.cs",
+          "sha256": "3A8D9251124404A943B4E64E5C30E67ABF6AACF96C72974D9CD7FCDC5ADFD13F",
+          "caseIds": [
+            "P1 differential manifest fixes borrow and Drop denominators",
+            "P1 differential v2 preserves v1 and fixes sixteen source cases",
+            "P1 differential compile-fail rejects unsupported timeout and incomplete evidence",
+            "P1 differential oracle requires exact stable rustc 1.98.0",
+            "P1 differential v2 rejects lowered coverage and diagnostic substitutions",
+            "P1 differential manifests enforce byte case and execution budgets"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1ExpandedOwnershipEvidenceTests.cs",
+          "sha256": "C8A46EB13DE59C6DA151DEA7FDD19AA171B0F308DEC0AD50661A6C05DD5660B4",
+          "caseIds": [
+            "P1 expanded ownership diagnostics accept exact semantic rejection",
+            "P1 expanded ownership diagnostics reject unsupported lowering",
+            "P1 expanded ownership diagnostics reject incomplete process evidence",
+            "P1 expanded Drop runtime failures require matching traces",
+            "P1 expanded Drop corpus contains executable semantic sources"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-027",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-08.01",
+        "P1-08.02",
+        "P1-08.03",
+        "P1-08.13",
+        "P1-08.14"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-027-positive",
+        "p1-req-027-negative",
+        "p1-req-027-boundary",
+        "p1-req-027-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1DropReceiverTests.cs",
+          "sha256": "EA016931CDCEA0DF37F6EE719A7809F4D9AD9E32291FD311714DDB2B02E1F0C0",
+          "caseIds": [
+            "P1 Drop receiver retains mutable self and owned field MIR places",
+            "P1 Drop receiver invalid signatures diagnose stably",
+            "P1 Drop receiver mutable access is restricted to checked destructor calls",
+            "P1 Drop receiver generated bodies read and mutate owned fields",
+            "P1 Drop receiver cleanup skips moved fields and records live projected obligations",
+            "P1 Drop receiver conditional cleanup preserves user borrow and use-after-drop errors",
+            "P1 Drop receiver cleanup evidence rejects changed conditional flags",
+            "P1 Drop receiver generated body drops local owners before owned fields",
+            "P1 Drop receiver guarded enum cleanup skips uninitialized and moved storage",
+            "P1 Drop receiver MIR snapshots bind destructor identity and panic policy",
+            "P1 Drop receiver enum facts select the actual moved variant and reject evidence drift",
+            "P1 Drop receiver mutable owner borrows invalidate exact branch facts",
+            "P1 Drop receiver replacement moves create a fresh root or field generation after cleanup",
+            "P1 Drop receiver cleanup guards reject writes, forged signatures, and invalid bool results",
+            "P1 Drop receiver borrowed local aliases share enum replacement and panic consumption"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1DropFlagGenerationTests.cs",
+          "sha256": "359E0466AD1A85227B866A57DDEC11F9F222A23B20DB33B5248B7598FAB869C5",
+          "caseIds": [
+            "P1 Drop flags retain distinct replacement generations",
+            "P1 Drop flags reject excess and missing generation facts",
+            "P1 typed Drop flags retain moved field and live sibling separately",
+            "P1 typed Drop flags reinitialize a field without resetting its sibling",
+            "P1 typed Drop flags reject unknown and non-droppable projected facts",
+            "P1 typed Drop flags reject stale projected generations",
+            "P1 typed enum Drop flags guard only the actual payload",
+            "P1 typed mutable enum borrow invalidates tag facts without reviving moved owners",
+            "P1 typed borrowed replacement drops the old value without scope-owning the new value",
+            "P1 typed borrowed enum replacement rejects inactive extra drops"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1AggregateDropCodegenTests.cs",
+          "sha256": "8406C6DE03F363715BF885DF246C5E36DE502B008EB55F811367BF6C83425186",
+          "caseIds": [
+            "P1 generated array Drop visits every element in order",
+            "P1 generated tuple and nested struct Drop preserve field order",
+            "P1 generated enum Drop visits only the active variant",
+            "P1 generated array Drop unwinds every initialized element",
+            "P1 generated array Drop does not repeat completed field cleanup on fault",
+            "P1 generated aggregate Drop skips a moved field",
+            "P1 generated aggregate Drop unwinds the moved value and remaining field once",
+            "P1 generated enum Drop unwinds only the active payload",
+            "P1 generated aggregate construction panic drops only initialized operand temporaries",
+            "P1 generated aggregate assignment destroys replaced fields before storing RHS",
+            "P1 generated projected assignment destroys only the replaced field",
+            "P1 generated assignment RHS panic retains the old owner",
+            "P1 generated expression temporary drops at statement end",
+            "P1 generated call argument temporary drops after its borrow is consumed",
+            "P1 generated direct temporary borrow extends to the owning let scope",
+            "P1 generated wildcard rvalue drops at statement end",
+            "P1 generated block tail transfers temporary ownership before cleanup",
+            "P1 generated owner Drop consumes fields after projected replacement and panic",
+            "P1 generated replacement destructor panic cleans evaluated RHS and stops the statement",
+            "P1 generated partial struct construction cleans a completed zero size Drop operand",
+            "P1 generated partial tuple construction cleans a completed zero size Drop operand",
+            "P1 generated partial array construction cleans a completed zero size Drop operand",
+            "P1 generated partial enum construction cleans a completed zero size Drop operand",
+            "P1 generated later argument panic cleans a completed zero size Drop argument",
+            "P1 generated nested normal cleanup retains owner failure and continues after field failure",
+            "P1 generated nested unwind stops after the owner failure before visiting fields",
+            "P1 generated mutable enum replacement drops old and current payloads once",
+            "P1 generated mutable enum replacement unwinds the current payload after callee panic",
+            "P1 generated borrowed enum replacement destructor panic shares consumed state with its caller"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-028",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-08.04",
+        "P1-08.05",
+        "P1-08.06",
+        "P1-08.07",
+        "P1-08.08",
+        "P1-08.09",
+        "P1-08.10"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-028-positive",
+        "p1-req-028-negative",
+        "p1-req-028-boundary",
+        "p1-req-028-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1ControlFlowDropTests.cs",
+          "sha256": "2979C37CD341E87BC434D620DB49A02A86B0FC654713DB59C7BC06B6887B00B8",
+          "caseIds": [
+            "P1 generated break drops only exited loop scopes",
+            "P1 generated continue consumes each iteration before the next",
+            "P1 generated labelled break cleans nested scopes in reverse order",
+            "P1 generated early return evaluates its scalar operand once before cleanup",
+            "P1 generated owned return transfers its Drop value exactly once",
+            "P1 generated moved argument belongs only to its callee cleanup",
+            "P1 generated uninitialized Drop storage is conditional on successful assignment",
+            "P1 generated uninitialized enum cleanup does not read inactive storage",
+            "P1 generated discarded block result expires at its statement",
+            "P1 generated owned closure capture drops at its declaration scope",
+            "P1 generated destructor return drops body locals before owned fields",
+            "P1 generated abort policy skips local and caller unwind Drop",
+            "P1 local panic interface rejects invalid and unsupported policy declarations"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1GeneratedUnwindEvidenceTests.cs",
+          "sha256": "63CE1B78C151E3B0BDF50235EE57D77A67EBC7D8DF5AE344226DABF743A47D5A",
+          "caseIds": [
+            "P1 generated nested calls unwind each owner once",
+            "P1 generated return paths clean nested scopes once",
+            "P1 generated return operand panic evaluates once and unwinds its live owner",
+            "P1 generated argument panic cleans the caller scope once",
+            "P1 unsupported source panic keeps a stable diagnostic boundary"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1NativeUnwindClosureTests.cs",
+          "sha256": "EDAC003E6D48E0A3BDD5B78CF551F6E40726C28E25EE93FE23B9A00A5A2AC26A",
+          "caseIds": [
+            "P1 native unwind tiny generated program carries explicit v2 PE metadata",
+            "P1 native unwind destructor failure visits owned fields and stops on first field failure",
+            "P1 native unwind field order and exactly once consumption survive nested failure",
+            "P1 native unwind ordinary double panic and explicit abort retain their boundaries",
+            "P1 native unwind legacy production entry retains frozen v1 behavior",
+            "P1 native unwind preserves parent and nested child exception identity",
+            "P1 native unwind rejects unknown profile and incompatible compiler input",
+            "P1 native unwind v5 fixed generated differential retains all 28 cases"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-029",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-08.11",
+        "P1-08.12",
+        "P1-10.05"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-029-positive",
+        "p1-req-029-negative",
+        "p1-req-029-boundary",
+        "p1-req-029-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs",
+          "sha256": "A1863D765103F70F69199912A070750A045E0B7B0A5D673D48DF0DF3887C7342",
+          "caseIds": [
+            "P1 generated Drop rustc 1.98 bounded smoke records one real case",
+            "P1 generated Drop rustc 1.98 differential records equality and frozen contract differences",
+            "P1 Drop oracle distinguishes Windows double panic from ordinary unwind",
+            "P1 generated abort classification requires the declared raw exit code",
+            "P1 callable original reports reject stale producers, mismatched runtimes and nonadjacent runtime paths"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1NativeUnwindClosureTests.cs",
+          "sha256": "EDAC003E6D48E0A3BDD5B78CF551F6E40726C28E25EE93FE23B9A00A5A2AC26A",
+          "caseIds": [
+            "P1 native unwind tiny generated program carries explicit v2 PE metadata",
+            "P1 native unwind destructor failure visits owned fields and stops on first field failure",
+            "P1 native unwind field order and exactly once consumption survive nested failure",
+            "P1 native unwind ordinary double panic and explicit abort retain their boundaries",
+            "P1 native unwind legacy production entry retains frozen v1 behavior",
+            "P1 native unwind preserves parent and nested child exception identity",
+            "P1 native unwind rejects unknown profile and incompatible compiler input",
+            "P1 native unwind v5 fixed generated differential retains all 28 cases"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-030",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-09.01",
+        "P1-09.02",
+        "P1-09.03",
+        "P1-09.04",
+        "P1-09.05",
+        "P1-09.06",
+        "P1-09.07",
+        "P1-09.08",
+        "P1-09.09"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-030-positive",
+        "p1-req-030-negative",
+        "p1-req-030-boundary",
+        "p1-req-030-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1SourcePackageExecutionTests.cs",
+          "sha256": "43006C5289A89925107C9A938D75F1AD57B2085C00BEF132AC0A4BEE3BEEBAC0",
+          "caseIds": [
+            "P1-09 source aggregate identity and move execute across packages",
+            "P1-09 source shared and mutable reference calls execute across packages",
+            "P1-09 source slice calls preserve owner and mutation across packages",
+            "P1-09 imported source moves reject reuse before emission",
+            "P1-09 imported source borrow conflicts reject before emission",
+            "P1-09 imported source Drop transfers and cleans up exactly once",
+            "P1-09 source tuple and fixed array use producer CLR layouts",
+            "P1-09 imported nominal types support source annotations and constructors",
+            "P1-09 source composite return references preserve each origin",
+            "P1-09 source composite parameter reference paths execute",
+            "P1-09 source projected reference origins execute across packages",
+            "P1-09 imported composite borrow retains ownership conflicts",
+            "P1-09 producer unwind runs consumer Drop exactly once",
+            "P1-09 producer abort skips consumer Drop",
+            "P1-09 imported static parameter accepts promoted reference",
+            "P1-09 imported static parameter rejects caller stack reference",
+            "P1-09 source nominal identities reject another producer's same-name layout",
+            "P1-09 source private aggregate fields reject consumer access",
+            "P1-09 source unsupported generic nominal exports reject before publication",
+            "P1-09 source enum variants construct and match across packages",
+            "P1-09 source enum returns retain active static payload origins",
+            "P1-09 source nested module types and calls preserve source paths",
+            "P1-09 source private module exports remain inaccessible"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1SourcePackageContractTests.cs",
+          "sha256": "E8A8BF2EAE9C26CA7A4EF83093082DA11B4B165FC32BD1BBF6252891359D052D",
+          "caseIds": [
+            "P1-09 rejects stale producer aggregate layout metadata",
+            "P1-09 rejects reference exports without ownership contracts",
+            "P1-09 reconstructs source aggregate imports before emission",
+            "P1-09 emits identical consumer artifacts for reordered metadata references",
+            "P1-09 executes deterministic scalar source packages with positional Copy contracts",
+            "P1-09 keeps generic source specialization call contracts distinct",
+            "P1-09 rejects missing scalar source parameter contracts",
+            "P1-09 rejects scalar source contract type substitution",
+            "P1-09 rejects unknown source call contract schema",
+            "P1-09 rejects duplicate source and CLR call contract aliases",
+            "P1-09 rejects source call panic and ownership disagreement",
+            "P1-09 rejects missing scalar source return contracts",
+            "P1-09 rejects source scalar schema removal",
+            "P1-09 rejects source scalar schema and terms downgrade",
+            "P1-09 rejects malformed source metadata core and unknown fields",
+            "P1-09 resolves exact CLR identities and rejects ambiguous source aliases",
+            "P1-09 preserves legacy optional metadata extensions"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-031",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-09.10",
+        "P1-10.06"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-031-positive",
+        "p1-req-031-negative",
+        "p1-req-031-boundary",
+        "p1-req-031-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1SourcePackageContractTests.cs",
+          "sha256": "E8A8BF2EAE9C26CA7A4EF83093082DA11B4B165FC32BD1BBF6252891359D052D",
+          "caseIds": [
+            "P1-09 rejects stale producer aggregate layout metadata",
+            "P1-09 rejects reference exports without ownership contracts",
+            "P1-09 reconstructs source aggregate imports before emission",
+            "P1-09 emits identical consumer artifacts for reordered metadata references",
+            "P1-09 executes deterministic scalar source packages with positional Copy contracts",
+            "P1-09 keeps generic source specialization call contracts distinct",
+            "P1-09 rejects missing scalar source parameter contracts",
+            "P1-09 rejects scalar source contract type substitution",
+            "P1-09 rejects unknown source call contract schema",
+            "P1-09 rejects duplicate source and CLR call contract aliases",
+            "P1-09 rejects source call panic and ownership disagreement",
+            "P1-09 rejects missing scalar source return contracts",
+            "P1-09 rejects source scalar schema removal",
+            "P1-09 rejects source scalar schema and terms downgrade",
+            "P1-09 rejects malformed source metadata core and unknown fields",
+            "P1-09 resolves exact CLR identities and rejects ambiguous source aliases",
+            "P1-09 preserves legacy optional metadata extensions"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1SourceTypeMetadataTests.cs",
+          "sha256": "C5CCD9DFEA40968D4C4D2FC695F2A052FEC6B1E21D6B8355D63126A3F1D0C40C",
+          "caseIds": [
+            "P1-09 source type codec round-trips exact closed structural identities",
+            "P1-09 source type codec rejects malformed shapes and exhausted budgets",
+            "P1-09 source metadata preserves field parameter and origin positions",
+            "P1-09 source metadata rejects unknown members and invalid origin terms",
+            "P1-09 structural owner metadata rejects incomplete ambiguous and exhausted evidence",
+            "P1-09 source reference contracts execute in separately compiled source packages",
+            "P1-09 source contracts reject fifteen real producer PE mutations before emission",
+            "P1-09 source contracts reject actual MemberRef and user string drift with unchanged IL and metadata JSON",
+            "P1-09 source static lifetime fields preserve and reconcile import evidence",
+            "P1-09 static mutable source parameter origins preserve checked lifetime evidence",
+            "P1-09 borrowed enum payload origins preserve typed physical projections across source packages",
+            "P1-09 source re-export owner proofs reject five real wrapper PE mutations"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-032",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-10.01",
+        "P1-10.02",
+        "P1-10.03",
+        "P1-10.04"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-032-positive",
+        "p1-req-032-negative",
+        "p1-req-032-boundary",
+        "p1-req-032-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1CoverageProfileTests.cs",
+          "sha256": "EEA2830E9446D15A3FDA0E26F6D50F2F939F1E742E03E6F9FD3564989B0399A6",
+          "caseIds": [
+            "P1 coverage manifest fixes all requirement categories and source hashes",
+            "P1 coverage runner emits a reproducible report"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreRegressionV2Tests.cs",
+          "sha256": "40561495D0EBDCC72F3D5826977D20C7B6EF0DFDCBA84C1C5A1B81E836016A05",
+          "caseIds": [
+            "Safe-core regression v2 preserves v1 and fixes a 24-case denominator",
+            "Safe-core regression v2 fixtures are bounded and source-addressable",
+            "Safe-core regression v2 preserves stable positive and negative contracts",
+            "Safe-core regression v2 rejects manifest contract mutation",
+            "Safe-core regression v2 process evidence rejects incomplete failures"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-033",
+      "classification": "executable",
+      "role": "implementation",
+      "implementationLeaves": [
+        "P1-10.05",
+        "P1-10.06",
+        "P1-10.07",
+        "P1-10.08",
+        "P1-10.09",
+        "P1-10.10"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-033-positive",
+        "p1-req-033-negative",
+        "p1-req-033-boundary",
+        "p1-req-033-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/P1EvidenceBindingTests.cs",
+          "sha256": "848EBB2F0A2C4920C8B439E3C3D38B4352C97DFB35CE497E58250ECBAFC417C7",
+          "caseIds": [
+            "P1 evidence binding accepts complete candidate provenance",
+            "P1 evidence binding rejects stale hashes and skipped cases",
+            "P1 evidence binding rejects missing oracle and cleanup provenance",
+            "P1 evidence binding enforces an optional candidate SHA"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/P1HarnessEvidenceTests.cs",
+          "sha256": "5A2AF41A454C391582726D8C8DFCC6B43A450D69FDDB9CEBFC814341336D5B57",
+          "caseIds": [
+            "P1 harness rejects filtered full-suite closure",
+            "P1 harness rejects reduced denominator and incomplete execution",
+            "P1 harness rejects stale candidate and non-Release closure",
+            "P1 harness bounds option parsing and requires candidate provenance",
+            "P1 harness list emits actual registration and assembly identity without executing cases"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-034",
+      "classification": "executable",
+      "role": "aggregate-ownership",
+      "implementationLeaves": [],
+      "gateOwners": [
+        "P1-GATE.01",
+        "P1-GATE.02",
+        "P1-GATE.03",
+        "P1-GATE.04",
+        "P1-GATE.05",
+        "P1-GATE.06"
+      ],
+      "catalogueCases": [
+        "p1-req-034-positive",
+        "p1-req-034-negative",
+        "p1-req-034-boundary",
+        "p1-req-034-budget"
+      ],
+      "harnessSources": [],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-035",
+      "classification": "check-only",
+      "role": "check-only",
+      "implementationLeaves": [
+        "P1-04.01",
+        "P1-04.02",
+        "P1-04.03",
+        "P1-04.04",
+        "P1-06.15",
+        "P1-06.17"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-035-positive",
+        "p1-req-035-negative",
+        "p1-req-035-boundary",
+        "p1-req-035-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreTypeProfileTests.cs",
+          "sha256": "7AE94769753401EE097ED271F6C9EEC1C5C4DCE68FD309EC9D83D5576BA48F18",
+          "caseIds": [
+            "type profile checks library functions without emitting IL",
+            "type profile loads file modules and Cargo package inputs",
+            "type profile maps errors to original module spans",
+            "type profile rejects emission before reading or creating output",
+            "type profile preserves cancellation and legacy profile boundaries",
+            "CLI exposes check-only type profile and rejects executable commands"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-036",
+      "classification": "excluded",
+      "role": "rejection-boundary",
+      "implementationLeaves": [
+        "P1-06.06",
+        "P1-06.13",
+        "P1-06.15"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-036-positive",
+        "p1-req-036-negative",
+        "p1-req-036-boundary",
+        "p1-req-036-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreMirV2ProfileTests.cs",
+          "sha256": "FFDE51BD1CAB1AFA60A3C71AFFE20DC3502B56F8654A836B1ED572E040C65BE5",
+          "caseIds": [
+            "MIR v2 preserves the v1 repeated-array rejection contract",
+            "MIR v2 produces deterministic source ownership and cleanup evidence",
+            "MIR v2 emits deterministic metadata and evaluates repeated operands once",
+            "MIR v2 CLI checks compiles and executes the versioned profile",
+            "MIR v2 repeated arrays obey length work snapshot and cancellation bounds"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-037",
+      "classification": "excluded",
+      "role": "rejection-boundary",
+      "implementationLeaves": [
+        "P1-03.01",
+        "P1-04.04",
+        "P1-06.15"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-037-positive",
+        "p1-req-037-negative",
+        "p1-req-037-boundary",
+        "p1-req-037-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SyntaxProfileBoundaryTests.cs",
+          "sha256": "55D60EA10B50CC4B7D3FC58A7949B10FABB78CD831AAAB6CE1037EDFE926048B",
+          "caseIds": [
+            "syntax extensions cannot silently pass the narrower semantic profile",
+            "deferred generic bounds validate nested syntax without binding trait names",
+            "deferred generic bound validation obeys semantic work limits",
+            "attribute semantics reject unknown root and item attributes at their spans"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-038",
+      "classification": "excluded",
+      "role": "rejection-boundary",
+      "implementationLeaves": [
+        "P1-04.04",
+        "P1-05.04",
+        "P1-06.15"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-038-positive",
+        "p1-req-038-negative",
+        "p1-req-038-boundary",
+        "p1-req-038-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SafeCoreGenericProfileTests.cs",
+          "sha256": "CC3A85D6AEB246F369E22178C74491058EE1223DAB74D56B662D2E41D28A8F0D",
+          "caseIds": [
+            "generic profile checks source without emitting artifacts",
+            "generic profile checks and executes file modules and Cargo package inputs",
+            "generic profile maps body errors to original module spans",
+            "generic profile rejects invalid bodies and absent executable roots before output creation",
+            "generic profile preserves cancellation and previous profile boundaries",
+            "CLI checks builds and runs generic programs and rejects invalid publish input"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-039",
+      "classification": "excluded",
+      "role": "rejection-boundary",
+      "implementationLeaves": [
+        "P1-02.03",
+        "P1-03.03",
+        "P1-04.04",
+        "P1-06.15"
+      ],
+      "gateOwners": [],
+      "catalogueCases": [
+        "p1-req-039-positive",
+        "p1-req-039-negative",
+        "p1-req-039-boundary",
+        "p1-req-039-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/SyntaxProfileBoundaryTests.cs",
+          "sha256": "55D60EA10B50CC4B7D3FC58A7949B10FABB78CD831AAAB6CE1037EDFE926048B",
+          "caseIds": [
+            "syntax extensions cannot silently pass the narrower semantic profile",
+            "deferred generic bounds validate nested syntax without binding trait names",
+            "deferred generic bound validation obeys semantic work limits",
+            "attribute semantics reject unknown root and item attributes at their spans"
+          ]
+        },
+        {
+          "file": "tests/RustSharp.Tests/SemanticAstBoundaryTests.cs",
+          "sha256": "86B8FC9B484591511D1DDFC311CEB82ECA1C175059758C0116E42055BC2644BB",
+          "caseIds": [
+            "public AST collection validates structured type arguments",
+            "public AST collection validates function path components without flags",
+            "public AST collection validates pattern arguments without flags",
+            "public AST collection rejects hidden receiver and const parameter syntax"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    },
+    {
+      "id": "P1-REQ-040",
+      "classification": "excluded",
+      "role": "platform-boundary",
+      "implementationLeaves": [
+        "P1-10.06"
+      ],
+      "gateOwners": [
+        "P1-GATE.05"
+      ],
+      "catalogueCases": [
+        "p1-req-040-positive",
+        "p1-req-040-negative",
+        "p1-req-040-boundary",
+        "p1-req-040-budget"
+      ],
+      "harnessSources": [
+        {
+          "file": "tests/RustSharp.Tests/NativeAotTests.cs",
+          "sha256": "1E27F97E39CC8DAE5D0E4E92E7655EA55236CDB374A4AEA7BDEDDBD13560051D",
+          "caseIds": [
+            "Native AOT result requires complete host cleanup"
+          ]
+        }
+      ],
+      "pendingBackendEvidence": []
+    }
+  ]
+}

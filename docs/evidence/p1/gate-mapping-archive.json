@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "scope": "coverage-mapping-validator-only",
+  "candidateSha": "4bfe06016586775baa4df0385397fb1298d4b944",
+  "fullP1Closure": false,
+  "requirements": 40,
+  "catalogueRecords": 160,
+  "pendingBackendCells": 24,
+  "producer": "artifacts/p1-supervision/gate-mapping-3.harness.json",
+  "producerSha256": "74CC6EC0530661EEB8B372D496CD921391EF92AD51BEA552AECCE5DE83305544",
+  "archive": "docs/evidence/p1/gate-mapping.harness.json",
+  "archiveSha256": "B8A11FF8B5088A3425A91A30941D34C0003243C8A1A2DB0B14AF7334C87AAA51",
+  "transformation": "physical CRLF to LF only; JSON values unchanged"
+}

@@ -92,7 +92,7 @@ Release 构建零警告／零错误；当前注册数为 1005（继承的 969 �
 | --- | --- | --- |
 | ILVerify 运行时引用 | ✅ 已完成 | `cargo_p2`：`eng/Invoke-ILVerify.ps1`、`eng/Test-ILVerifyRuntimeReference.ps1`；10/10 项真实生成 PE 检查，包含冲突的重复 AssemblyRef。此修复不关闭 P1-GATE.03。 |
 | native Drop/展开实现 | ✅ 已完成 | `prerequisite_audit`：显式 NativeV2 API／PE 元数据及嵌套异常保留；8/8 项 Windows 定向检查和 28 项 v5 用例（26 项匹配、继承的两项正常清理差异）。Linux／平台／CLI／包验收仍待完成。 |
-| 精确 P1 需求／证据映射 | 🚧 进行中 | `tooling_p2`：`P1GateCoverageContract.cs`、`p1-gate-coverage-v1-manifest.json`、`P1GateCoverageContractTests.cs`；最多十项新增注册。 |
+| 精确 P1 需求／证据映射实现 | ✅ 已完成 | `tooling_p2`：10/10 项隔离映射／拒绝检查；40 个需求、160 条清册记录、完整实际源码注册和六个精确缺口，覆盖 24 个后端／RID 单元。生产门禁／完整测试集成仍待完成。 |
 
 保留旧 v1 Drop 和 v4 运行器入口。Native-v2 必须是具名、可观察的生产选择，保留父／子
 异常链并通过真实生成程序检查；不授权输出字符串特判或批准新差异。门禁映射必须使用
@@ -122,3 +122,17 @@ v5 报告验证器接受两种根路径分隔符形式，拒绝同名前缀兄�
 `docs/evidence/p1/drop-v4-compatibility.harness.json`。它们验证此修复；仍需要
 1023 项完整测试及原生 Linux／ILVerify／AOT 门禁。全部验证启动进程已退出且清理完整。
 保留候选 ref 和报告引用的生成 Drop 制品。
+
+映射的 10/10 项检查在同一源码候选上通过。解析器现在读取独立 C# 注册数组关闭行，
+不再误匹配 Rust 字符串中的 `];`；拒绝重复源文件，并把 REQ028/029 直接绑定到最终
+八项 NativeV2 检查。过滤测试报告及原始／归档哈希分别归档于
+`docs/evidence/p1/gate-mapping.harness.json` 和
+`docs/evidence/p1/gate-mapping-archive.json`。这是验证器验证，不是实际覆盖闭环：
+六个具名缺口／24 个单元仍需要双 RID 的真实 ILVerify／AOT 执行。生产门禁必须把
+此映射与新鲜完整测试注册清册检查联合使用。
+
+已验收的修复提交：`30f728b`（运行时引用）和 `f42bd7e`（显式 NativeV2 实现）。
+下一步所有权为：`cargo_p2` 负责 P2-04.02 清单，`prerequisite_audit` 负责 CLI／
+编译器／元数据 Drop 策略传播，`tooling_p2` 负责十九项源码包的来源绑定／严格验证器。
+root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状态、串行验证／提交。
+仅在新改动／失败影响已验收检查时重跑这些检查。
