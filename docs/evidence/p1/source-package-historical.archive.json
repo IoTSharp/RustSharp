@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-source-package-historical-report-archive",
+  "fullP1Closure": false,
+  "purpose": "Preserve historical leaf evidence and make roadmap links work in clean checkouts; not current candidate-bound or independent CI proof",
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "artifacts": [
+    {
+      "sourcePath": "artifacts/p1-source-package/p1-09-win-x64.json",
+      "sourceSha256": "843CB7F12757D6A7F78D12C995F0EE73DEC8E25F52C617D92F1EFE2F7D28AC65",
+      "archivedPath": "docs/evidence/p1/source-package-historical-win-x64.json",
+      "archivedSha256": "70522661240F61E8755959ABDFFF6801ACC5AD5332EC0D5977264E59130C5C4E",
+      "candidateSha": null,
+      "independentCiProof": false
+    },
+    {
+      "sourcePath": "artifacts/p1-source-package/p1-09-linux-x64.json",
+      "sourceSha256": "AFFDCAFA1096C26F5DF96FBE07597F0218CF4019CFF6F12A6AF74BC7AADA6A45",
+      "archivedPath": "docs/evidence/p1/source-package-historical-linux-x64.json",
+      "archivedSha256": "AFFDCAFA1096C26F5DF96FBE07597F0218CF4019CFF6F12A6AF74BC7AADA6A45",
+      "candidateSha": null,
+      "independentCiProof": false
+    }
+  ]
+}

@@ -172,7 +172,7 @@ ILVerify 和 AOT 报告。全部最终套件记录的失败、阻塞及跳过均
 | P1-09.07 | ✅ 已完成 | producer/consumer 元数据对账与限制 | P1-09.04, P1-09.05 | 对账 MethodDef/MemberRef 类型、程序集、可见性、static、owner、源码哈希及全部条款；畸形、重复、超限、陈旧和缺失证据被拒绝。 | `P1SourcePackageContractTests`、`P1SourceTypeMetadataTests`、真实 PE 篡改负例，包括 IL/JSON 不变但 MemberRef 和 `#US` 漂移。 |
 | P1-09.08 | ✅ 已完成 | 确定性跨包制品 | P1-09.06, P1-09.07 | 等价的固定源码/包输入产生相同的有序元数据及 PE/PDB 字节；陈旧方法体、引用、用户字符串和 owner 输入不能复用。 | `ReorderedMetadataReferencesAreDeterministicAsync`；两平台十九项报告均保留并核对每个包的两次独立构建制品相同。 |
 | P1-09.09 | ✅ 已完成 | 源码 producer/consumer CoreCLR 集成 | P1-09.08 | 十九个固定源码包用例分别编译并经 CoreCLR 执行，确切 stdout 与 success/unwind/abort/double-panic 分类结果一致。 | [P1-09 实现清单](../p1-09-implementation_zh.md)；closure-9 Windows 与 Ubuntu 报告通过 19/19。 |
-| P1-09.10 | ✅ 已完成 | 跨包 ILVerify 与双原生 x64 AOT 平台 | P1-09.09, P1-10.06 | 同一固定源码包在 Windows/Linux 通过新生成原始 PE ILVerify 和原生 x64 AOT；跟踪与 CoreCLR 等价，警告/失败/阻塞/未执行为零，截止时间和清理均有界通过。 | [Windows 报告](../../artifacts/p1-source-package/p1-09-win-x64.json)与[Ubuntu 报告](../../artifacts/p1-source-package/p1-09-linux-x64.json)：各通过 19/19 用例及 39/39 原始 PE。 |
+| P1-09.10 | ✅ 已完成 | 跨包 ILVerify 与双原生 x64 AOT 平台 | P1-09.09, P1-10.06 | 同一固定源码包在 Windows/Linux 通过新生成原始 PE ILVerify 和原生 x64 AOT；跟踪与 CoreCLR 等价，警告/失败/阻塞/未执行为零，截止时间和清理均有界通过。 | [Windows 报告](../evidence/p1/source-package-historical-win-x64.json)与[Ubuntu 报告](../evidence/p1/source-package-historical-linux-x64.json)：各通过 19/19 用例及 39/39 原始 PE。 |
 <a id="p1-10"></a>
 
 ## P1-10: 版本化套件与证据聚合
