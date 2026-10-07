@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-implementation-checks-archive",
+  "candidateSha": "dfdd76155934e286b85979a28b053ce8ffc10547",
+  "scope": "native-v2-cli-and-recursive-metadata-policy",
+  "fullP1Closure": false,
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "denominator": 8,
+    "status": "passed"
+  },
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "sourcePath": "artifacts/p1-supervision/continuation-v3/drop-profile.harness.json",
+  "sourceSha256": "6FE7FEE386A4318358B22FB265DAA258886BF0411CF211E38789CA053D8A0C2F",
+  "archivedPath": "docs/evidence/p1/drop-profile.harness.json",
+  "archivedSha256": "7567432216513228E0974B7F7437820078291B17F83EE643172600A9CDA40074"
+}

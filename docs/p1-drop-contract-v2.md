@@ -24,9 +24,37 @@ The emitted PE has the independent assembly metadata key
 The policy also participates in the deterministic method/MVID descriptor.
 The existing RustSharp metadata-v1 wire format is preserved. The v5 validator
 reads the original PE attribute rather than trusting a report's profile string;
-v5 cannot be relabeled as v4. Source-package imports need explicit compatible
-profile validation before a mixed graph can be accepted; this implementation
-does not certify mixed-profile source packages or ordinary .NET export adapters.
+v5 cannot be relabeled as v4. Independent source-package imports validate the
+actual producer declaration and reject a mixed profile graph before emission.
+Ordinary .NET export adapters still require their separate compatibility work.
+
+## Production entry points and package compatibility
+
+`rsc check`, `build`/`compile`, `run` and `publish` accept
+`--drop-cleanup-profile legacy-v1|native-v2`. The default is `legacy-v1`;
+`native-v2` requires `--profile safe-core-mir-p1-v1` or `safe-core-mir-p1-v2`.
+Unknown, missing or repeated selections reject at parsing; the compiler API
+also rejects unknown enum values and incompatible profiles. `CheckWithDropProfile`,
+`CheckFileWithDropProfile` and `CompileFileWithDropProfile` explicitly select
+the policy. Existing signatures retain LegacyV1. One file/module or Cargo path
+package graph reaches one MIR/lowering invocation, so every source crate and
+dependency destructor uses that invocation's selected policy. A virtual Cargo
+root without package selection rejects with `RSCARGO1005`; combining `Cargo.toml`
+with `--reference` remains an explicit unsupported command combination.
+
+Additional `CheckWithMetadataReferences` and `CompileWithMetadataReferences`
+overloads take `SafeCoreDropCleanupProfile` immediately after `CompilationProfile`.
+They validate every supplied PE before the output transaction. The additional
+`RustSharpMetadataConsumer.ReadAssembly` overload takes the expected cleanup
+profile immediately after the assembly path; its result exposes the actual
+`DropCleanupProfile`. The bounded independent attribute reader treats absence
+as LegacyV1 and accepts only the exact NativeV2 declaration above. Unknown,
+malformed or duplicate declarations report `RSC0011`; a requested producer
+profile mismatch reports `RSC0012`. Recursive nominal/structural owner reads
+inherit the root's actual profile, including neighbor PE resolution and owner
+reconstruction; a matching wrapper cannot conceal a mixed owner graph.
+The metadata-v1 JSON schema is unchanged. Validation never loads producer code,
+and rejection preserves existing PE/PDB files without publishing partial output.
 
 ## General cleanup algorithm
 
@@ -79,7 +107,15 @@ attributes and two seconds, with cancellation at every iteration.
 
 Windows/Linux native CoreCLR and rustc execution, original-PE ILVerify and
 actual AOT of the same retained PE remain required. Callable exported exception
-graphs, CLI selection, source-package profile reconciliation and final same-SHA
-CI aggregation must also be checked. Historical evidence stays unchanged;
+graphs and final same-SHA CI aggregation must also be checked. Eight additional
+`P1DropProfileIntegrationTests` cover real file/Cargo cleanup, matching independent
+PE execution, both mixed-reference directions, recursive destructor owners,
+unknown/duplicate actual PE declarations, CLI entry points and cancellation.
+Each fixture has a 45-second deadline and 10-second child limits, records owned
+process identities, and deletes only its unique `artifacts/tests/p1-drop-profile-*`
+directory in `finally`. These tests still require fresh native platform execution;
+adding their source is not platform acceptance. Historical evidence stays unchanged;
 `fullP1Closure` and `fullP1LanguageGateApproved` remain `false` in these suite
 reports until the independent full P1 language/phase gates are satisfied.
+
+✅ Complete: CLI and recursive metadata policy propagation passes 8/8 isolated source/PE integration checks on candidate `dfdd76155934e286b85979a28b053ce8ffc10547`, using the source-bound Release build with SDK `10.0.401` and zero warnings/errors. [Execution report](evidence/p1/drop-profile.harness.json) and [original/archive hashes](evidence/p1/drop-profile.archive.json) preserve this repair's verification. The full Windows/Linux differential, ILVerify/AOT and P1 phase gates remain open.

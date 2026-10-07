@@ -20,9 +20,31 @@ NativeV2 在 CLR LIR 中携带所选策略及析构主体分类。发射 PE 带�
 `RustSharp.DropCleanupProfile`，精确值为
 `safe-core-drop-contract-p1-v2;selection=NativeV2;dispatch=runtime-native;normal=legacy-v1;source-packages=explicit-profile-required`。
 策略同时进入确定性方法/MVID 描述符。现有 RustSharp metadata-v1 线格式保持不变。
-v5 验证器读取原始 PE 属性，而不信任报告里的配置字符串；v5 不能重标为 v4。源码包
-导入需要显式兼容配置校验后才能接受混合图；本实现不证明混合配置源码包或普通 .NET
-导出适配器的兼容性。
+v5 验证器读取原始 PE 属性，而不信任报告里的配置字符串；v5 不能重标为 v4。独立
+源码包导入校验生产者的实际声明，在发射之前拒绝混合配置图。普通 .NET 导出适配器
+仍需独立完成兼容性工作。
+
+## 生产入口与包兼容性
+
+`rsc check`、`build`/`compile`、`run` 与 `publish` 接受
+`--drop-cleanup-profile legacy-v1|native-v2`。默认值为 `legacy-v1`；
+`native-v2` 要求 `--profile safe-core-mir-p1-v1` 或 `safe-core-mir-p1-v2`。
+未知、缺值或重复选择在解析时拒绝；编译器 API 同样拒绝未知枚举与不兼容配置。
+`CheckWithDropProfile`、`CheckFileWithDropProfile` 与 `CompileFileWithDropProfile`
+显式选择策略。原有签名继续使用 LegacyV1。单个文件/模块或 Cargo path 包图进入一次
+MIR/降低调用，因此全部源码 crate 与依赖析构器都使用这次调用选择的策略。未选择包
+的 Cargo 虚拟根以 `RSCARGO1005` 拒绝；`Cargo.toml` 与 `--reference` 的组合仍为
+明确不支持的命令组合。
+
+新增 `CheckWithMetadataReferences` 与 `CompileWithMetadataReferences` 重载在
+`CompilationProfile` 之后紧接 `SafeCoreDropCleanupProfile`，在输出事务之前校验
+每个提供的 PE。新增 `RustSharpMetadataConsumer.ReadAssembly` 重载在程序集路径
+之后紧接期望清理配置；结果公开实际 `DropCleanupProfile`。有界独立属性读取器把
+属性缺失解释为 LegacyV1，只接受上面给出的精确 NativeV2 声明。未知、畸形或重复
+声明报告 `RSC0011`；所要求的生产者配置不匹配报告 `RSC0012`。递归 nominal/
+structural owner 读取继承根程序集实际配置，包括邻接 PE 解析与 owner 重建；匹配
+配置的 wrapper 不能隐藏混合 owner 图。metadata-v1 JSON schema 保持不变。校验
+不会加载生产者代码；拒绝时保留已有 PE/PDB，不发布部分输出。
 
 ## 通用清理算法
 
@@ -63,6 +85,12 @@ PID/启动时间/父进程/命令，夹具限制 30 秒、子进程限制 10 秒
 属性和 2 秒，每次迭代都检查取消。
 
 仍需原生 Windows/Linux CoreCLR 与 rustc 执行、原始 PE ILVerify，以及同一保留
-PE 的实际 AOT。可调用导出的异常图、CLI 选择、源码包配置协调及最终同 SHA CI
-聚合也必须检查。历史证据保持不变；这些 suite 报告中的 `fullP1Closure` 与
+PE 的实际 AOT。可调用导出的异常图及最终同 SHA CI 聚合也必须检查。新增 8 个
+`P1DropProfileIntegrationTests` 覆盖真实文件/Cargo 清理、同配置独立 PE 执行、双向
+混合引用拒绝、递归析构 owner、实际 PE 未知/重复声明、CLI 入口及取消。每个夹具
+有 45 秒 deadline 与 10 秒子进程限制，记录所属进程身份，并在 `finally` 中仅删除
+其独占的 `artifacts/tests/p1-drop-profile-*` 目录。这些测试仍需新的原生平台执行；
+加入测试源码不等于平台验收。历史证据保持不变；这些 suite 报告中的 `fullP1Closure` 与
 `fullP1LanguageGateApproved` 保持为 `false`，直到独立的完整 P1 语言/阶段门禁满足。
+
+✅ 已完成：CLI 与递归元数据策略传播在候选 `dfdd76155934e286b85979a28b053ce8ffc10547` 上通过 8/8 隔离的源码／PE 集成检查，使用 SDK `10.0.401` 的源码绑定 Release 构建，零警告、零错误。[执行报告](evidence/p1/drop-profile.harness.json)与[原始／归档哈希](evidence/p1/drop-profile.archive.json)保留本修复的验证结果。完整 Windows/Linux 差分、ILVerify/AOT 和 P1 阶段门禁仍未关闭。

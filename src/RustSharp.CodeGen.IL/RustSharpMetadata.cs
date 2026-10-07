@@ -133,6 +133,9 @@ public sealed record RustSharpMetadataImportResult(
     /// <summary>The CLR AssemblyDef name, which may differ from the file name.</summary>
     public string? AssemblyName { get; init; }
 
+    /// <summary>The independently decoded cleanup declaration; absent legacy attributes select v1.</summary>
+    public SafeCoreDropCleanupProfile DropCleanupProfile { get; init; } = SafeCoreDropCleanupProfile.LegacyV1;
+
     /// <summary>Verified owner assembly paths used to resolve re-exported source layouts.</summary>
     public IReadOnlyDictionary<string, string> ResolvedOwnerPaths { get; init; } =
         new Dictionary<string, string>(StringComparer.Ordinal);
@@ -796,6 +799,36 @@ public static class RustSharpMetadataReader
 {
     public const string AttributeKey = "RustSharp.Metadata.v1";
 
+    /// <summary>Reads the independent versioned cleanup declaration without loading producer code.</summary>
+    public static SafeCoreDropCleanupProfile ReadDropCleanupProfile(MetadataReader metadata,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(metadata);
+        long started = Stopwatch.GetTimestamp();
+        CustomAttributeHandleCollection attributes = metadata.GetAssemblyDefinition().GetCustomAttributes();
+        if (attributes.Count > 256) throw new InvalidDataException("Drop cleanup declaration exceeds its assembly attribute bound.");
+        bool found = false;
+        foreach (CustomAttributeHandle handle in attributes)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (Stopwatch.GetElapsedTime(started) >= TimeSpan.FromSeconds(2))
+                throw new InvalidDataException("Drop cleanup declaration exceeded its two second read budget.");
+            CustomAttribute attribute = metadata.GetCustomAttribute(handle);
+            if (TryGetAttributeTypeName(metadata, attribute.Constructor) != "System.Reflection.AssemblyMetadataAttribute") continue;
+            BlobReader blob = metadata.GetBlobReader(attribute.Value);
+            if (blob.ReadUInt16() != 1) throw new InvalidDataException("Invalid assembly metadata attribute prolog.");
+            string? key = blob.ReadSerializedString();
+            string? value = blob.ReadSerializedString();
+            if (key != SafeCoreDropCleanupProfiles.MetadataKey) continue;
+            if (found) throw new InvalidDataException("The assembly contains duplicate Drop cleanup declarations.");
+            found = true;
+            if (value != SafeCoreDropCleanupProfiles.NativeV2MetadataValue || blob.ReadUInt16() != 0 || blob.RemainingBytes != 0)
+                throw new InvalidDataException("The assembly contains an unknown or malformed Drop cleanup declaration.");
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+        return found ? SafeCoreDropCleanupProfile.NativeV2 : SafeCoreDropCleanupProfile.LegacyV1;
+    }
+
     public static string? FindJson(System.Reflection.Metadata.MetadataReader metadata)
     {
         ArgumentNullException.ThrowIfNull(metadata);
@@ -926,12 +959,26 @@ public static partial class RustSharpMetadataConsumer
         IEnumerable<string>? requiredFunctions = null,
         IEnumerable<string>? dependencyPaths = null,
         CancellationToken cancellationToken = default) =>
-        ReadAssemblyCore(assemblyPath, expectedProfile, requiredFunctions, new OwnerReadContext(dependencyPaths, cancellationToken));
+        ReadAssemblyCore(assemblyPath, expectedProfile, requiredFunctions, SafeCoreDropCleanupProfile.LegacyV1,
+            new OwnerReadContext(dependencyPaths, cancellationToken));
+
+    /// <summary>Validates the actual producer and every recursively resolved owner's cleanup contract.</summary>
+    public static RustSharpMetadataImportResult ReadAssembly(string assemblyPath,
+        SafeCoreDropCleanupProfile expectedDropCleanupProfile, string? expectedProfile = null,
+        IEnumerable<string>? requiredFunctions = null, IEnumerable<string>? dependencyPaths = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (expectedDropCleanupProfile is not (SafeCoreDropCleanupProfile.LegacyV1 or SafeCoreDropCleanupProfile.NativeV2))
+            throw new ArgumentOutOfRangeException(nameof(expectedDropCleanupProfile));
+        return ReadAssemblyCore(assemblyPath, expectedProfile, requiredFunctions, expectedDropCleanupProfile,
+            new OwnerReadContext(dependencyPaths, cancellationToken));
+    }
 
     private static RustSharpMetadataImportResult ReadAssemblyCore(
         string assemblyPath,
         string? expectedProfile,
         IEnumerable<string>? requiredFunctions,
+        SafeCoreDropCleanupProfile? expectedDropCleanupProfile,
         OwnerReadContext context)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyPath);
@@ -941,6 +988,7 @@ public static partial class RustSharpMetadataConsumer
         string? generic = null;
         Guid? mvid = null;
         string? assemblyName = null;
+        SafeCoreDropCleanupProfile dropCleanupProfile = SafeCoreDropCleanupProfile.LegacyV1;
         var resolvedOwners = new Dictionary<string, string>(StringComparer.Ordinal);
         bool entered = false;
         try
@@ -957,6 +1005,7 @@ public static partial class RustSharpMetadataConsumer
             if (!pe.HasMetadata) throw new BadImageFormatException("Producer assembly has no CLR metadata.");
             MetadataReader metadata = pe.GetMetadataReader();
             assemblyName = metadata.GetString(metadata.GetAssemblyDefinition().Name);
+            dropCleanupProfile = RustSharpMetadataReader.ReadDropCleanupProfile(metadata, context.CancellationToken);
             document = RustSharpMetadataReader.ReadDocument(metadata);
             if (document is null)
             {
@@ -966,7 +1015,12 @@ public static partial class RustSharpMetadataConsumer
             {
                 if (expectedProfile is not null && !string.Equals(document.Profile, expectedProfile, StringComparison.Ordinal))
                     diagnostics.Add(ProfileMismatch + ": producer profile does not match the consumer profile.");
-                ResolveOwnerBindings(metadata, document, fullPath, assemblyName, context, resolvedOwners, diagnostics);
+                if (expectedDropCleanupProfile is { } expectedDrop && dropCleanupProfile != expectedDrop)
+                    diagnostics.Add(ProfileMismatch + ": producer Drop cleanup profile does not match the consumer profile.");
+                if (dropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2 &&
+                    document.Profile is not (SafeCoreMirPipeline.Profile or SafeCoreMirPipeline.ProfileV2))
+                    diagnostics.Add(InvalidMetadata + ": NativeV2 Drop cleanup requires a typed MIR producer profile.");
+                ResolveOwnerBindings(metadata, document, fullPath, assemblyName, dropCleanupProfile, context, resolvedOwners, diagnostics);
                 context.Check();
                 ValidateGeneratedFunctions(metadata, document, diagnostics);
                 context.Check();
@@ -1003,6 +1057,7 @@ public static partial class RustSharpMetadataConsumer
         return new(fullPath, document, generic, mvid, diagnostics.AsReadOnly())
         {
             AssemblyName = assemblyName,
+            DropCleanupProfile = dropCleanupProfile,
             ResolvedOwnerPaths = resolvedOwners,
         };
     }

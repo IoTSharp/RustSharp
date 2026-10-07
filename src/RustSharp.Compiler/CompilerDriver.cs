@@ -30,18 +30,23 @@ public sealed class CompilerDriver
 
     public static CompilationResult CheckFile(string sourcePath,
         CompilationProfile profile = CompilationProfile.VerticalSlice, CancellationToken cancellationToken = default)
+        => CheckFileWithDropProfile(sourcePath, SafeCoreDropCleanupProfile.LegacyV1, profile, cancellationToken);
+
+    /// <summary>Checks every source-linked crate using one explicit Drop cleanup contract.</summary>
+    public static CompilationResult CheckFileWithDropProfile(string sourcePath, SafeCoreDropCleanupProfile dropCleanupProfile,
+        CompilationProfile profile = CompilationProfile.SafeCoreMirV2, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        Diagnostic? selection = ValidateDropCleanupSelection(sourcePath, profile, dropCleanupProfile);
+        if (selection is not null) return CompilationResult.Failed([selection]);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
         if ((profile == CompilationProfile.SafeCoreGenerics || profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) && IsCargoManifest(fullSourcePath))
         {
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
-            CompilationResult checkedPackages = profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2
-                ? CheckSafeCoreMir(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates,
-                    profile == CompilationProfile.SafeCoreMirV2)
-                : CheckSafeCoreGenerics(packages.SourceText, packages.RootSourcePath, cancellationToken, packages.Crates);
+            CompilationResult checkedPackages = CheckCore(packages.SourceText, packages.RootSourcePath, profile,
+                packages.Crates, cancellationToken, dropCleanupProfile: dropCleanupProfile);
             return checkedPackages with { Diagnostics = MapDiagnostics(checkedPackages.Diagnostics, packages.SourceMap!) };
         }
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
@@ -52,7 +57,8 @@ public sealed class CompilerDriver
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
-            CompilationResult result = Check(workspace.SourceText, fullSourcePath, profile, cancellationToken);
+            CompilationResult result = CheckCore(workspace.SourceText, fullSourcePath, profile, default,
+                cancellationToken, dropCleanupProfile: dropCleanupProfile);
             return result with { Diagnostics = MapDiagnostics(result.Diagnostics, workspace.SourceMap!) };
         }
 
@@ -62,12 +68,19 @@ public sealed class CompilerDriver
             return CompilationResult.Failed([readResult.Diagnostic]);
         }
 
-        return Check(readResult.Document!.Source, fullSourcePath, profile, cancellationToken);
+        return CheckCore(readResult.Document!.Source, fullSourcePath, profile, default,
+            cancellationToken, dropCleanupProfile: dropCleanupProfile);
     }
 
     public static CompilationResult Check(string source, string sourcePath = "<memory>",
         CompilationProfile profile = CompilationProfile.VerticalSlice, CancellationToken cancellationToken = default)
         => CheckCore(source, sourcePath, profile, default, cancellationToken);
+
+    /// <summary>Checks the same versioned Drop policy used by source emission.</summary>
+    public static CompilationResult CheckWithDropProfile(string source, string sourcePath,
+        SafeCoreDropCleanupProfile dropCleanupProfile, CompilationProfile profile = CompilationProfile.SafeCoreMirV2,
+        CancellationToken cancellationToken = default) =>
+        CheckCore(source, sourcePath, profile, default, cancellationToken, dropCleanupProfile: dropCleanupProfile);
 
     /// <summary>Checks a local MIR program with an explicit, evidence-backed panic policy.</summary>
     public static CompilationResult CheckWithPanicStrategy(string source, string sourcePath,
@@ -86,10 +99,13 @@ public sealed class CompilerDriver
         CompilationProfile profile,
         ImmutableArray<SafeCoreCrate> crates,
         CancellationToken cancellationToken,
-        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
+        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind,
+        SafeCoreDropCleanupProfile dropCleanupProfile = SafeCoreDropCleanupProfile.LegacyV1)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        Diagnostic? selection = ValidateDropCleanupSelection(sourcePath, profile, dropCleanupProfile);
+        if (selection is not null) return CompilationResult.Failed([selection]);
 
         Diagnostic? sourceDiagnostic = ValidateSourceText(source, sourcePath);
         if (sourceDiagnostic is not null)
@@ -104,7 +120,7 @@ public sealed class CompilerDriver
             return CheckSafeCoreGenerics(source, sourcePath, cancellationToken, crates);
         if (profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
             return CheckSafeCoreMir(source, sourcePath, cancellationToken, crates,
-                profile == CompilationProfile.SafeCoreMirV2, panicStrategy);
+                profile == CompilationProfile.SafeCoreMirV2, panicStrategy, dropCleanupProfile);
         if (profile != CompilationProfile.VerticalSlice)
         {
             SafeCoreClrResult result = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates);
@@ -129,12 +145,23 @@ public sealed class CompilerDriver
         IEnumerable<string> metadataReferences,
         IEnumerable<string>? requiredFunctions = null,
         CancellationToken cancellationToken = default)
+        => CheckWithMetadataReferences(source, sourcePath, profile, SafeCoreDropCleanupProfile.LegacyV1,
+            metadataReferences, requiredFunctions, cancellationToken);
+
+    /// <summary>Rejects producer and recursive owner cleanup-policy mismatches before checking source.</summary>
+    public static CompilationResult CheckWithMetadataReferences(string source, string sourcePath,
+        CompilationProfile profile, SafeCoreDropCleanupProfile dropCleanupProfile,
+        IEnumerable<string> metadataReferences, IEnumerable<string>? requiredFunctions = null,
+        CancellationToken cancellationToken = default)
     {
+        Diagnostic? selection = ValidateDropCleanupSelection(sourcePath, profile, dropCleanupProfile);
+        if (selection is not null) return CompilationResult.Failed([selection]);
         MetadataCrateLoadResult references = LoadMetadataCrates(
-            metadataReferences, profile, requiredFunctions, cancellationToken);
+            metadataReferences, profile, requiredFunctions, dropCleanupProfile, cancellationToken);
         if (references.Diagnostics.Count != 0)
             return CompilationResult.Failed(references.Diagnostics);
-        return CheckCore(source, sourcePath, profile, references.Crates, cancellationToken);
+        return CheckCore(source, sourcePath, profile, references.Crates, cancellationToken,
+            dropCleanupProfile: dropCleanupProfile);
     }
 
     public static CompilationResult CompileFile(
@@ -143,9 +170,18 @@ public sealed class CompilerDriver
         string? assemblyName = null,
         CompilationProfile profile = CompilationProfile.VerticalSlice,
         CancellationToken cancellationToken = default)
+        => CompileFileWithDropProfile(sourcePath, outputPath, SafeCoreDropCleanupProfile.LegacyV1,
+            assemblyName, profile, cancellationToken);
+
+    /// <summary>Emits a file or bounded Cargo source graph with one explicit cleanup contract.</summary>
+    public static CompilationResult CompileFileWithDropProfile(string sourcePath, string outputPath,
+        SafeCoreDropCleanupProfile dropCleanupProfile, string? assemblyName = null,
+        CompilationProfile profile = CompilationProfile.SafeCoreMirV2, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+        Diagnostic? selection = ValidateDropCleanupSelection(sourcePath, profile, dropCleanupProfile);
+        if (selection is not null) return CompilationResult.Failed([selection]);
 
         cancellationToken.ThrowIfCancellationRequested();
         if (profile == CompilationProfile.SafeCoreTypes)
@@ -157,7 +193,8 @@ public sealed class CompilerDriver
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
             return CompileCore(packages.SourceText, packages.RootSourcePath, Path.GetFullPath(outputPath), assemblyName,
-                packages.SourceMap!.Documents[0].Bytes, profile, cancellationToken, packages.SourceMap, packages.Crates);
+                packages.SourceMap!.Documents[0].Bytes, profile, cancellationToken, packages.SourceMap, packages.Crates,
+                dropCleanupProfile: dropCleanupProfile);
         }
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
@@ -168,7 +205,8 @@ public sealed class CompilerDriver
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
             return CompileCore(workspace.SourceText, fullSourcePath, Path.GetFullPath(outputPath),
-                assemblyName, workspace.SourceMap!.Documents[0].Bytes, profile, cancellationToken, workspace.SourceMap);
+                assemblyName, workspace.SourceMap!.Documents[0].Bytes, profile, cancellationToken, workspace.SourceMap,
+                dropCleanupProfile: dropCleanupProfile);
         }
 
         var readResult = ReadSource(fullSourcePath);
@@ -184,7 +222,8 @@ public sealed class CompilerDriver
             assemblyName,
             readResult.Document.Bytes,
             profile,
-            cancellationToken);
+            cancellationToken,
+            dropCleanupProfile: dropCleanupProfile);
     }
 
     public static CompilationResult Compile(
@@ -225,12 +264,8 @@ public sealed class CompilerDriver
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         ValidatePanicStrategy(panicStrategy);
-        if (dropCleanupProfile is not (SafeCoreDropCleanupProfile.LegacyV1 or SafeCoreDropCleanupProfile.NativeV2))
-            throw new ArgumentOutOfRangeException(nameof(dropCleanupProfile));
-        if (dropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2 &&
-            profile is not (CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
-            return CompilationResult.Failed([new Diagnostic("RSC0010", "NativeV2 Drop cleanup requires a typed MIR compilation profile.",
-                new TextSpan(0, 0)) { SourcePath = sourcePath }]);
+        Diagnostic? selection = ValidateDropCleanupSelection(sourcePath, profile, dropCleanupProfile);
+        if (selection is not null) return CompilationResult.Failed([selection]);
         if (panicStrategy != SafeCorePanicStrategy.Unwind &&
             profile is not (CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
             return RejectPanicStrategyProfile(sourcePath);
@@ -278,6 +313,7 @@ public sealed class CompilerDriver
         string? assemblyName,
         CompilationProfile profile,
         ImmutableArray<SafeCoreCrate> crates,
+        SafeCoreDropCleanupProfile dropCleanupProfile,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -305,7 +341,7 @@ public sealed class CompilerDriver
         }
 
         return CompileCore(source, sourcePath, Path.GetFullPath(outputPath), assemblyName,
-            sourceBytes, profile, cancellationToken, crates: crates);
+            sourceBytes, profile, cancellationToken, crates: crates, dropCleanupProfile: dropCleanupProfile);
     }
 
     /// <summary>Compiles a consumer after validating independent Rust# metadata references.</summary>
@@ -318,13 +354,23 @@ public sealed class CompilerDriver
         IEnumerable<string> metadataReferences,
         IEnumerable<string>? requiredFunctions = null,
         CancellationToken cancellationToken = default)
+        => CompileWithMetadataReferences(source, sourcePath, outputPath, assemblyName, profile,
+            SafeCoreDropCleanupProfile.LegacyV1, metadataReferences, requiredFunctions, cancellationToken);
+
+    /// <summary>Emits only after all independent producers and nominal owners match the selected contract.</summary>
+    public static CompilationResult CompileWithMetadataReferences(string source, string sourcePath, string outputPath,
+        string? assemblyName, CompilationProfile profile, SafeCoreDropCleanupProfile dropCleanupProfile,
+        IEnumerable<string> metadataReferences, IEnumerable<string>? requiredFunctions = null,
+        CancellationToken cancellationToken = default)
     {
+        Diagnostic? selection = ValidateDropCleanupSelection(sourcePath, profile, dropCleanupProfile);
+        if (selection is not null) return CompilationResult.Failed([selection]);
         MetadataCrateLoadResult references = LoadMetadataCrates(
-            metadataReferences, profile, requiredFunctions, cancellationToken);
+            metadataReferences, profile, requiredFunctions, dropCleanupProfile, cancellationToken);
         if (references.Diagnostics.Count != 0)
             return CompilationResult.Failed(references.Diagnostics);
         return CompileCoreWithCrates(source, sourcePath, outputPath, assemblyName, profile,
-            references.Crates, cancellationToken);
+            references.Crates, dropCleanupProfile, cancellationToken);
     }
 
     private static CompilationResult CompileCore(
@@ -476,6 +522,18 @@ public sealed class CompilerDriver
             { SourcePath = sourcePath }]);
     }
 
+    private static Diagnostic? ValidateDropCleanupSelection(string sourcePath, CompilationProfile profile,
+        SafeCoreDropCleanupProfile dropCleanupProfile)
+    {
+        if (dropCleanupProfile is not (SafeCoreDropCleanupProfile.LegacyV1 or SafeCoreDropCleanupProfile.NativeV2))
+            throw new ArgumentOutOfRangeException(nameof(dropCleanupProfile));
+        return dropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2 &&
+            profile is not (CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
+            ? new Diagnostic("RSC0010", "NativeV2 Drop cleanup requires a typed MIR compilation profile.",
+                new TextSpan(0, 0)) { SourcePath = sourcePath }
+            : null;
+    }
+
     private static void ValidatePanicStrategy(SafeCorePanicStrategy strategy)
     {
         if (!Enum.IsDefined(strategy)) throw new ArgumentOutOfRangeException(nameof(strategy));
@@ -529,7 +587,8 @@ public sealed class CompilerDriver
 
     private static CompilationResult CheckSafeCoreMir(string source, string sourcePath,
         CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default,
-        bool enableRepeatedArrays = false, SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
+        bool enableRepeatedArrays = false, SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind,
+        SafeCoreDropCleanupProfile dropCleanupProfile = SafeCoreDropCleanupProfile.LegacyV1)
     {
         SafeCoreMirPipelineResult result = SafeCoreMirPipeline.Analyze(source, sourcePath,
             new SafeCoreMirPipelineOptions
@@ -554,7 +613,7 @@ public sealed class CompilerDriver
         // boundary.  Run that same backend during `check` so a source cannot be
         // accepted here and then rejected by `compile` for an LIR-only reason.
         SafeCoreClrResult backend = SafeCoreMirClrLowering.Lower(
-            result.Mir!.Program!, cancellationToken);
+            result.Mir!.Program!, dropCleanupProfile, cancellationToken);
         backend = AttachMirEvidence(backend, result, requireOwnershipMetadata: true, cancellationToken);
         return backend.IsSuccessful
             ? new(true, [], null)
@@ -1536,6 +1595,7 @@ public sealed class CompilerDriver
         IEnumerable<string> metadataReferences,
         CompilationProfile profile,
         IEnumerable<string>? requiredFunctions,
+        SafeCoreDropCleanupProfile dropCleanupProfile,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(metadataReferences);
@@ -1615,7 +1675,7 @@ public sealed class CompilerDriver
             }
 
             RustSharpMetadataImportResult imported = RustSharpMetadataConsumer.ReadAssembly(
-                fullPath, expectedProfile, requiredFunctions, normalizedReferences, cancellationToken);
+                fullPath, dropCleanupProfile, expectedProfile, requiredFunctions, normalizedReferences, cancellationToken);
             foreach (string message in imported.Diagnostics)
             {
                 int separator = message.IndexOf(':');
@@ -1656,7 +1716,7 @@ public sealed class CompilerDriver
                     throw new InvalidDataException("Imported owner reconstruction exceeded its work or time budget.");
                 if (!imported.ResolvedOwnerPaths.TryGetValue(owner.AssemblyName, out string? ownerPath))
                     throw new InvalidDataException("The nominal owner has no verified current PE path.");
-                RustSharpMetadataImportResult loaded = RustSharpMetadataConsumer.ReadAssembly(ownerPath,
+                RustSharpMetadataImportResult loaded = RustSharpMetadataConsumer.ReadAssembly(ownerPath, dropCleanupProfile,
                     dependencyPaths: normalizedReferences, cancellationToken: cancellationToken);
                 if (!loaded.IsSuccessful || loaded.Document is null) throw new InvalidDataException("The nominal owner's current metadata is invalid.");
                 ownerDocuments.Add(owner.AssemblyName, loaded.Document);

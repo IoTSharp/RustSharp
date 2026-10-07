@@ -87,7 +87,7 @@ public static partial class RustSharpMetadataConsumer
     }
 
     private static void ResolveOwnerBindings(MetadataReader metadata, RustSharpMetadataDocument document,
-        string currentPath, string? currentAssemblyName, OwnerReadContext context,
+        string currentPath, string? currentAssemblyName, SafeCoreDropCleanupProfile dropCleanupProfile, OwnerReadContext context,
         Dictionary<string, string> resolved, List<string> diagnostics)
     {
         var assemblyProofs = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -118,7 +118,7 @@ public static partial class RustSharpMetadataConsumer
                         !string.Equals(identity.Hash, owner.AssemblySha256, StringComparison.OrdinalIgnoreCase)) continue;
                     if (!context.Results.TryGetValue(candidate, out RustSharpMetadataImportResult? imported))
                     {
-                        imported = ReadAssemblyCore(candidate, document.Profile, null, context);
+                        imported = ReadAssemblyCore(candidate, document.Profile, null, dropCleanupProfile, context);
                         context.Results[candidate] = imported;
                     }
                     if (!imported.IsSuccessful || imported.Document is null ||

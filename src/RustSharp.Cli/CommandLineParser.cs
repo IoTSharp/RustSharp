@@ -42,6 +42,8 @@ internal static class CommandLineParser
         string? runtimeIdentifier = null;
         var timeoutSeconds = 600;
         var profile = RustSharp.Compiler.CompilationProfile.VerticalSlice;
+        var dropCleanupProfile = RustSharp.CodeGen.IL.SafeCoreDropCleanupProfile.LegacyV1;
+        bool dropProfileSelected = false;
         var metadataReferences = new List<string>();
         var requiredFunctions = new List<string>();
 
@@ -50,6 +52,15 @@ internal static class CommandLineParser
             var argument = arguments[index];
             switch (argument)
             {
+                case "--drop-cleanup-profile":
+                    if (dropProfileSelected || !TryTakeValue(arguments, ref index, out var dropName) ||
+                        dropName is not ("legacy-v1" or "native-v2"))
+                        return Failure("Option '--drop-cleanup-profile' requires legacy-v1 or native-v2 and may occur only once.");
+                    dropProfileSelected = true;
+                    dropCleanupProfile = dropName == "native-v2"
+                        ? RustSharp.CodeGen.IL.SafeCoreDropCleanupProfile.NativeV2
+                        : RustSharp.CodeGen.IL.SafeCoreDropCleanupProfile.LegacyV1;
+                    break;
                 case "--profile":
                     if (!TryTakeValue(arguments, ref index, out var profileName) ||
                         profileName is not ("vertical-slice-v1" or "safe-core-primitives-v1" or "safe-core-types-v1" or "safe-core-generics-v1" or "safe-core-mir-p1-v1" or "safe-core-mir-p1-v2"))
@@ -127,6 +138,12 @@ internal static class CommandLineParser
             return Failure($"Command '{arguments[0]}' requires a RustSharp source file or Cargo.toml.");
         }
 
+        if (dropCleanupProfile == RustSharp.CodeGen.IL.SafeCoreDropCleanupProfile.NativeV2 &&
+            profile is not (RustSharp.Compiler.CompilationProfile.SafeCoreMir or RustSharp.Compiler.CompilationProfile.SafeCoreMirV2))
+            return Failure("NativeV2 Drop cleanup requires --profile safe-core-mir-p1-v1 or safe-core-mir-p1-v2.");
+        if (metadataReferences.Count > 0 && string.Equals(Path.GetFileName(sourcePath), "Cargo.toml", StringComparison.OrdinalIgnoreCase))
+            return Failure("Combining Cargo source packages with --reference is not supported; compile the source graph or an independent assembly consumer.");
+
         if (command != CommandKind.Publish && runtimeIdentifier is not null)
         {
             return Failure("Option '--runtime' is valid only for the publish command.");
@@ -145,7 +162,8 @@ internal static class CommandLineParser
             timeoutSeconds,
             profile,
             metadataReferences.AsReadOnly(),
-            requiredFunctions.AsReadOnly()));
+            requiredFunctions.AsReadOnly(),
+            dropCleanupProfile));
     }
 
     private static bool TryTakeValue(

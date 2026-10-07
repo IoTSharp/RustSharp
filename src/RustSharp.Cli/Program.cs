@@ -61,11 +61,11 @@ internal static class Program
             string sourcePath = Path.GetFullPath(options.SourcePath!);
             string source = File.ReadAllText(sourcePath);
             result = CompilerDriver.CheckWithMetadataReferences(source, sourcePath, options.Profile,
-                options.MetadataReferences, options.RequiredFunctions, cancellationToken);
+                options.DropCleanupProfile, options.MetadataReferences, options.RequiredFunctions, cancellationToken);
         }
         else
         {
-            result = CompilerDriver.CheckFile(options.SourcePath!, options.Profile, cancellationToken);
+            result = CompilerDriver.CheckFileWithDropProfile(options.SourcePath!, options.DropCleanupProfile, options.Profile, cancellationToken);
         }
         if (!result.Success)
         {
@@ -90,11 +90,12 @@ internal static class Program
         {
             string source = File.ReadAllText(sourcePath);
             result = CompilerDriver.CompileWithMetadataReferences(source, sourcePath, outputPath,
-                assemblyName, options.Profile, options.MetadataReferences, options.RequiredFunctions, cancellationToken);
+                assemblyName, options.Profile, options.DropCleanupProfile, options.MetadataReferences, options.RequiredFunctions, cancellationToken);
         }
         else
         {
-            result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
+            result = CompilerDriver.CompileFileWithDropProfile(sourcePath, outputPath, options.DropCleanupProfile,
+                assemblyName, options.Profile, cancellationToken);
         }
         if (!result.Success)
         {
@@ -126,11 +127,12 @@ internal static class Program
         {
             string source = File.ReadAllText(sourcePath);
             result = CompilerDriver.CompileWithMetadataReferences(source, sourcePath, outputPath,
-                assemblyName, options.Profile, options.MetadataReferences, options.RequiredFunctions, cancellationToken);
+                assemblyName, options.Profile, options.DropCleanupProfile, options.MetadataReferences, options.RequiredFunctions, cancellationToken);
         }
         else
         {
-            result = CompilerDriver.CompileFile(sourcePath, outputPath, assemblyName, options.Profile, cancellationToken);
+            result = CompilerDriver.CompileFileWithDropProfile(sourcePath, outputPath, options.DropCleanupProfile,
+                assemblyName, options.Profile, cancellationToken);
         }
         if (!result.Success)
         {
@@ -179,14 +181,15 @@ internal static class Program
         {
             string source = File.ReadAllText(sourcePath);
             compilation = CompilerDriver.CompileWithMetadataReferences(source, sourcePath,
-                managedAssemblyPath, assemblyName, options.Profile, options.MetadataReferences,
+                managedAssemblyPath, assemblyName, options.Profile, options.DropCleanupProfile, options.MetadataReferences,
                 options.RequiredFunctions, cancellationToken);
         }
         else
         {
-            compilation = CompilerDriver.CompileFile(
+            compilation = CompilerDriver.CompileFileWithDropProfile(
                 sourcePath,
                 managedAssemblyPath,
+                options.DropCleanupProfile,
                 assemblyName,
                 options.Profile,
                 cancellationToken);
@@ -256,6 +259,7 @@ internal static class Program
               --profile safe-core-generics-v1     (closed generic functions, value types and marker traits)
               --profile safe-core-mir-p1-v1       (bounded typed MIR, source mapping and ownership evidence)
               --profile safe-core-mir-p1-v2       (typed MIR v2 with structural-Copy repeated arrays)
+              --drop-cleanup-profile legacy-v1|native-v2 (default: legacy-v1; native-v2 requires typed MIR)
 
             Package options:
               --reference <assembly.dll>          import a checked Rust# package (repeatable, max 32)
