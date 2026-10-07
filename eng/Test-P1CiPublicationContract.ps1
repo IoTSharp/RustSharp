@@ -72,6 +72,15 @@ try {
     & (Join-Path $PSScriptRoot 'Write-P1CiPublication.ps1') -RepositoryRoot $fixtureRoot -CandidateSha $sha -PlatformName windows-x64 -RunId 100 -RunAttempt 2 -Repository IoTSharp/RustSharp -UpstreamStatus failure
     $fallback = [IO.File]::ReadAllText($missing) | ConvertFrom-Json
     if ($fallback.summary.status -cne 'blocked' -or $fallback.summary.denominator -ne 32 -or $fallback.summary.executed -ne 0 -or $fallback.summary.blocked -ne 32 -or $fallback.summary.passed -ne 0 -or $fallback.summary.skipped -ne 0) { throw 'Unavailable infrastructure was incorrectly counted as semantic success or skip.' }
+    # As in Reset-Fixture, retain the modeled Windows host identity on Linux.
+    # Preserve the unavailable report, failed upstream and blocked status.
+    # This fixture is never an actual native execution receipt.
+    $path = Join-Path $fixtureRoot 'artifacts/p1-expanded/windows-x64/ci-publication.json'
+    $descriptor = [IO.File]::ReadAllText($path) | ConvertFrom-Json -Depth 16
+    $descriptor.nativeExecution = $true
+    $descriptor.observedRuntimeIdentifier = 'win-x64'
+    $descriptor.architecture = 'X64'
+    $descriptor | ConvertTo-Json -Depth 16 | Set-Content -LiteralPath $path -Encoding utf8
     Invoke-Check 'unavailable-report-preserved-as-blocked' 2
     Reset-Fixture
     $path = Join-Path $fixtureRoot 'artifacts/p1-expanded/linux-x64/ci-publication.json'
