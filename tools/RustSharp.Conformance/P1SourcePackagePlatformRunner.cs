@@ -618,13 +618,8 @@ internal static class P1SourcePackagePlatformRunner
             verifiedReferences = nativeReferenceArtifacts.DeepClone().AsArray();
         else if (raw?["Verification"]?["ReferenceFiles"] is JsonArray referenceFiles && referenceFiles.Count is > 0 and <= 512)
         {
-            var referenceClock = Stopwatch.StartNew();
-            foreach (JsonNode? reference in referenceFiles)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (referenceClock.Elapsed > TimeSpan.FromSeconds(10)) throw new InvalidOperationException("Verifier reference retention exceeded its time bound.");
-                verifiedReferences.Add(Artifact(reference!.GetValue<string>()));
-            }
+            verifiedReferences = await CaptureReferenceArtifactsAsync(referenceFiles,
+                cancellationToken).ConfigureAwait(false);
         }
         return new JsonObject { ["status"] = verified ? "passed" : raw is null || !Complete(process) ? "blocked" : "failed",
             ["originalAssembly"] = Artifact(assembly), ["additionalReferenceArtifacts"] = new JsonArray(references.Select(Artifact).ToArray()),
@@ -870,6 +865,61 @@ internal static class P1SourcePackagePlatformRunner
         return Convert.ToHexString(SHA256.HashData(stream));
     }
     private static JsonObject Artifact(string path) => new() { ["path"] = path, ["sha256"] = Hash(path) };
+
+    internal static async Task<JsonArray> CaptureReferenceArtifactsAsync(JsonArray references,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(references);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (references.Count is < 1 or > 512)
+            throw new ArgumentException("Verifier reference capture requires 1..512 paths.", nameof(references));
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(TimeSpan.FromSeconds(10));
+        var clock = Stopwatch.StartNew();
+        var result = new JsonArray();
+        // The entire batch retains the original ten-second/512-reference bounds.
+        for (int index = 0; index < references.Count && index < 512; index++)
+        {
+            deadline.Token.ThrowIfCancellationRequested();
+            if (clock.Elapsed >= TimeSpan.FromSeconds(10))
+                throw new InvalidOperationException("Verifier reference retention exceeded its time bound.");
+            string path = references[index]?.GetValue<string>()
+                ?? throw new ArgumentException("A verifier reference path is missing.", nameof(references));
+            result.Add(await CaptureReferenceArtifactAsync(path, deadline.Token).ConfigureAwait(false));
+        }
+        deadline.Token.ThrowIfCancellationRequested();
+        if (clock.Elapsed >= TimeSpan.FromSeconds(10))
+            throw new InvalidOperationException("Verifier reference retention exceeded its time bound.");
+        return result;
+    }
+
+    private static async Task<JsonObject> CaptureReferenceArtifactAsync(string path, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+            65_536, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        long expectedLength = stream.Length;
+        if (expectedLength is < 1 or > 512L * 1024 * 1024)
+            throw new ArgumentException("A verifier reference is empty or exceeds 512 MiB.", nameof(path));
+        using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        byte[] buffer = new byte[65_536];
+        long captured = 0;
+        // Short reads are valid: the absolute 8193-read ceiling bounds work independently of size.
+        bool complete = false;
+        for (int readIndex = 0; readIndex < 8193; readIndex++)
+        {
+            token.ThrowIfCancellationRequested();
+            int read = await stream.ReadAsync(buffer.AsMemory(), token).ConfigureAwait(false);
+            if (read == 0) { complete = true; break; }
+            captured = checked(captured + read);
+            if (captured > expectedLength) throw new IOException("Verifier reference changed during capture.");
+            hash.AppendData(buffer, 0, read);
+        }
+        token.ThrowIfCancellationRequested();
+        if (!complete || captured != expectedLength || stream.Length != expectedLength)
+            throw new IOException("Verifier reference changed or exceeded its read-count bound.");
+        return new JsonObject { ["path"] = path, ["sha256"] = Convert.ToHexString(hash.GetHashAndReset()) };
+    }
     private static JsonArray IndexRetainedArtifacts(string root, JsonArray fixtures, CancellationToken token)
     {
         var result = new JsonArray();

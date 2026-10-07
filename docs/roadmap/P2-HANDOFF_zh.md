@@ -2,7 +2,32 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 06:08
+## 当前检查点 — 2026-10-08 06:28
+
+验证器引用留存修复为 ✅ 已完成。最终候选
+`b404f0dd62cb0368159c319e67ba98e6542eb2c4`、tree
+`11523f2ca44103bcb96e86ddc53a1b53b9eb6328` 绑定694输入；新鲜SDK401
+Release零警告/零错误，trial1、reference4及legacy-source12通过。
+真实Windows源码包producer通过19/19、原始PE ILVerify39、CoreCLR19及Native
+AOT19；严格物理验证通过。root核对100个已记录进程身份不存在、20个自有临时目录
+不存在。参见 `docs/p1-reference-retention-v1.md`、成对翻译及归档。
+worker最后审阅调用解析失败，root补完其余检查。计时器延迟注入及独立后代进程
+约束仍开放。P2仍为8/101个 ✅ 已完成叶项，六个P1阶段门禁均保持开放。
+
+CI follow-up v12针对既有e90e9fe的run37693029849对账74个hash/27报告、Linux1140
+及693输入、mapped440/pending24和两平台production回执。其预算内未取得Windows
+expanded及两个aggregate。接续该run，不重复调度、不用于替代本次新修复证明。
+推送本次已验收修复并调度一次新SHA绑定run。NativeV5回执/transport/joint集成仍
+等待真实验收。
+
+回执诊断控制冻结于 `receipt-diagnostic-controls-v1/`：标准patch适用性检查及
+trial1/fixed3工具控制通过；真实生产源码接入及验收仍开放。Formatter v2的
+review-manifest保留准确替换hash和49+10用例，runtime0、leafClosed=false。
+上次只读变量错误后的标准patch生成及最终资源交接正在接续。保留旧失败、用户tmp及
+唯一ACTIVE半小时heartbeat。下一步独立接入/验收/提交回执诊断，然后接续joint/native
+门禁及formatter。
+
+## 历史检查点 — 2026-10-08 06:08
 
 此前05:54检查点遗漏了中文翻译。两种语言现包含相同检查点及本更正记录；不改变
 任务状态或验收分母。提交 `e90e9fe83b201be882c76c0e5c9f20be3b779b66` 已推送；

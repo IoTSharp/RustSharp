@@ -2,7 +2,37 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 06:08
+## Current checkpoint — 2026-10-08 06:28
+
+✅ Complete for the verifier-reference retention repair. Final candidate
+`b404f0dd62cb0368159c319e67ba98e6542eb2c4`, tree
+`11523f2ca44103bcb96e86ddc53a1b53b9eb6328`, binds694 inputs; fresh SDK401
+Release has zero warnings/errors, trial1, reference4 and legacy-source12 pass.
+The real Windows source-package producer passes19/19, original-PE ILVerify39,
+CoreCLR19 and Native AOT19; strict physical validation passes. Root checked100
+recorded process identities absent and20 owned temporary directories absent.
+See `docs/p1-reference-retention-v1.md` and its paired translation/archive.
+Worker's final audit call failed parsing; root completed remaining checks.
+Timer-delay injection and independent descendant containment remain open.
+P2 remains8/101 ✅ Complete leaves; all six P1 phase gates remain open.
+
+CI follow-up v12 for existing e90e9fe run37693029849 reconciles74 hashes/27
+reports, Linux1140 and693 inputs, mapped440/pending24 and both production
+receipts. Windows expanded and both aggregates were not obtained within its
+budget. Continue that run without duplicating dispatch or substituting it for
+the new repair. Push this accepted repair and dispatch one fresh SHA-bound run.
+NativeV5 receipt/transport/joint integration still awaits real acceptance.
+
+Receipt diagnostic controls are frozen in `receipt-diagnostic-controls-v1/`:
+standard patch apply-check, trial1/fixed3 utility controls pass; actual production
+source integration and acceptance remain open. Formatter v2 review-manifest
+contains exact replacement hashes and49+10 cases; runtime0, leafClosed=false.
+Its standard-patch generator and final resource handoff are being resumed after
+the previous read-only variable error. Preserve prior failures, user tmp and
+the sole ACTIVE thirty-minute heartbeat. Next integrate/accept/commit receipt
+diagnostics independently, then resume joint/native gates and formatter.
+
+## Historical checkpoint — 2026-10-08 06:08
 
 The previous05:54 checkpoint omitted its Chinese translation. Both language
 versions now carry the same checkpoint and this corrective record; no task

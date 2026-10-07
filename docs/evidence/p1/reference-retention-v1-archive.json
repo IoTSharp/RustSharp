@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-reference-retention-repair-acceptance",
+  "candidateSha": "b404f0dd62cb0368159c319e67ba98e6542eb2c4",
+  "candidateTreeSha": "11523f2ca44103bcb96e86ddc53a1b53b9eb6328",
+  "sourceInputCount": 694,
+  "sourceHashes": [
+    {
+      "path": "tools/RustSharp.Conformance/P1SourcePackagePlatformRunner.cs",
+      "sha256": "228F479AB554C9D8D70A2C868FBAD4880700B223F92C8F7F9F738B45073FE69A",
+      "snapshotMatched": true
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "C6EDDFC9867B25DC912910983EF6AE7ADA074C6AAC1D2163D4E8F9BC79E1D8D3",
+      "snapshotMatched": true
+    },
+    {
+      "path": "tests/RustSharp.Tests/P1ReferenceRetentionTests.cs",
+      "sha256": "D6AA05E4FBA7C01C9AC4E9ABFEB35589D91651D80C7DE9F38A0047D668A1348D",
+      "snapshotMatched": true
+    }
+  ],
+  "reports": [
+    {
+      "path": "artifacts/p1-source-package/reference-retention-full-v3.json",
+      "sha256": "4C6DACD8AF23ED2412CE37B51218813CAD9FF05B8087C16145B752EE95005AD4"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/source-snapshot.json",
+      "sha256": "26D2FBB79F4C7F63763042AED492FC96F5F10C2FB7C0A5D472D677BEA2CB55FC"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/release-build.json",
+      "sha256": "562BEEEE1764B79EBCA3D3C77AB0F9571D2ED2D8E221ACDA0BF13711DD981D60"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/tiny-harness.json",
+      "sha256": "1CD4AD5B9F23A07F011B95D339FD27EDF5178C8FF88CBE043879099858073F32"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/reference-harness.json",
+      "sha256": "D95FB6A8476F119F81F7889CA34AECC45F78462E2765E265BA3CA9B026FD6B69"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/legacy-source-harness.json",
+      "sha256": "F34915768B68E33B5255D082CCC4187995390761603217CD8530031D3E0DBF67"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/source-full-launch.process.json",
+      "sha256": "DD57C4CD219D5C47EC45A92B5A19E9C3924457E76B5F9326AF3B1BA4D463B739"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/full-validator-launch.process.json",
+      "sha256": "8AC02CF3C7D45096FEE42E096477B9AD12C9013B1AEF191801C037FD620F2202"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/full-validator-launch.stdout.log",
+      "sha256": "83B40C6339CB9B5F3B60541FA30090CAB761926A659887E4335065AEE282D90A"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/acceptance-audit.json",
+      "sha256": "B682B14382A07AC5198B8DA01A39E64453486FAA60AE2217A08883BC35D19CD0"
+    },
+    {
+      "path": "artifacts/p1-supervision/reference-retention-root-v3/frozen-scope.json",
+      "sha256": "39047397C9050C6C61E1C0639D9104DB0FB85DCCC296B1A1F38E99FD69278096"
+    }
+  ],
+  "windowsSourcePackages": 19,
+  "originalPeIlVerify": 39,
+  "coreClr": 19,
+  "nativeAot": 19,
+  "referenceControls": 4,
+  "legacySourceControls": 12,
+  "registeredTests": 1144,
+  "fullHarnessExecuted": false,
+  "validator": {
+    "Valid": true,
+    "ArtifactContentVerified": true,
+    "SatisfiesGate": true,
+    "Errors": []
+  },
+  "recordedProcessIdentitiesAbsent": 100,
+  "temporaryDirectoriesAbsent": 20,
+  "timerDelayFaultInjected": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}
