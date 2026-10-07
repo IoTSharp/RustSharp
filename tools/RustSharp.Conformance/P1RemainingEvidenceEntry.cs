@@ -101,11 +101,19 @@ internal static class P1RemainingEvidenceEntry
         return full;
     }
 
+    private static void CheckIoDeadline(Stopwatch clock, string operation, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        if (clock.Elapsed >= TimeSpan.FromSeconds(10))
+            throw new IOException(operation + " exceeded its ten-second acceptance deadline.");
+    }
+
     private sealed record CapturedFile(string Text, string Sha256);
     private static async Task<CapturedFile> ReadAsync(string root, string path, int bound, CancellationToken token)
     {
         string full = Child(root, path);
         GuardParents(root, full, token);
+        var readClock = Stopwatch.StartNew();
         using var readDeadline = CancellationTokenSource.CreateLinkedTokenSource(token);
         readDeadline.CancelAfter(TimeSpan.FromSeconds(10));
         await using var stream = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.Read,
@@ -118,18 +126,19 @@ internal static class P1RemainingEvidenceEntry
         bool complete = false;
         for (int iteration = 0; iteration < maximumReads; iteration++)
         {
-            readDeadline.Token.ThrowIfCancellationRequested();
+            CheckIoDeadline(readClock, "Evidence read", readDeadline.Token);
             int read = await stream.ReadAsync(buffer.AsMemory(), readDeadline.Token).ConfigureAwait(false);
+            CheckIoDeadline(readClock, "Evidence read", readDeadline.Token);
             if (read == 0) { complete = true; break; }
             if (captured.Length + read > bound) throw new InvalidOperationException("Evidence grew past its actual byte bound.");
             captured.Write(buffer, 0, read);
         }
         if (!complete || captured.Length == 0) throw new InvalidOperationException("Evidence exceeded its fixed read-count bound.");
-        readDeadline.Token.ThrowIfCancellationRequested();
+        CheckIoDeadline(readClock, "Evidence read", readDeadline.Token);
         byte[] bytes = captured.ToArray();
         string text = new UTF8Encoding(false, true).GetString(bytes);
         string sha256 = Convert.ToHexString(SHA256.HashData(bytes));
-        readDeadline.Token.ThrowIfCancellationRequested();
+        CheckIoDeadline(readClock, "Evidence read", readDeadline.Token);
         return new(text, sha256);
     }
 
@@ -165,6 +174,7 @@ internal static class P1RemainingEvidenceEntry
         Exception? cleanupFailure = null;
         try
         {
+            var writeClock = Stopwatch.StartNew();
             using var writeDeadline = CancellationTokenSource.CreateLinkedTokenSource(token);
             writeDeadline.CancelAfter(TimeSpan.FromSeconds(10));
             // Ownership starts only after CreateNew actually succeeds.
@@ -175,15 +185,18 @@ internal static class P1RemainingEvidenceEntry
                 int maximumWrites = checked((bytes.Length + 65_535) / 65_536);
                 for (int block = 0; block < maximumWrites; block++)
                 {
-                    writeDeadline.Token.ThrowIfCancellationRequested();
+                    CheckIoDeadline(writeClock, "Proof write", writeDeadline.Token);
                     int offset = checked(block * 65_536);
                     await stream.WriteAsync(bytes.AsMemory(offset, Math.Min(65_536, bytes.Length - offset)), writeDeadline.Token).ConfigureAwait(false);
+                    CheckIoDeadline(writeClock, "Proof write", writeDeadline.Token);
                 }
                 await stream.FlushAsync(writeDeadline.Token).ConfigureAwait(false);
+                CheckIoDeadline(writeClock, "Proof write", writeDeadline.Token);
             }
             GuardParents(root, temporary, writeDeadline.Token);
             GuardParents(root, full, writeDeadline.Token);
             // Preserve an earlier report; retries must select another fresh path.
+            CheckIoDeadline(writeClock, "Proof write", writeDeadline.Token);
             File.Move(temporary, full, overwrite: false);
         }
         catch (Exception exception) { primaryFailure = exception; }

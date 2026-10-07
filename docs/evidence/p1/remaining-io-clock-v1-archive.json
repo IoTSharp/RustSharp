@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "scope": "P1 remaining evidence monotonic I/O deadline repair",
+  "candidateSha": "a434f5bbdf74e3e2b81c368f9bf12a1fd36c20af",
+  "candidateTreeSha": "be596561f77400d47ce97493c4796cc290107140",
+  "sourceInputCount": 703,
+  "entrySourceSha256": "0943EEEE2477881CAA2223A47017229619E5430DAAB6084AF0AF338FD67D3C73",
+  "buildSummary": {
+    "status": "passed",
+    "warnings": 0,
+    "errors": 0
+  },
+  "compilerSha256": "EEEAFC5C737327395055E7BB6D0318273442134E7398293772EFE0256D7125AB",
+  "conformanceAssemblySha256": "076A0948128E5210F5F062852608D6BE4563CA05567140CA63F6871FC2717B2B",
+  "mappingSummary": {
+    "registeredDenominator": 1203,
+    "selected": 10,
+    "executed": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "notExecuted": 0
+  },
+  "actualCliControls": 9,
+  "actualCliControlsPassed": 9,
+  "compiledClockGuardControls": 3,
+  "compiledClockGuardPassed": 3,
+  "actualIoTimerDelayInjected": false,
+  "regressionInputCandidateSha": "e773869314e5d7ebb51f035820bc75bcfcc1fdc5",
+  "currentCandidateGateAccepted": false,
+  "nativeV5Summary": {
+    "status": "passed-with-contract-differences",
+    "denominator": 28,
+    "executed": 28,
+    "passed": 26,
+    "contractDifferences": 2,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "matchesRustcInAllCases": false,
+    "expectedContractSatisfied": true
+  },
+  "registeredDenominator": 1203,
+  "retainedNativeDirectory": "D:\\GitHub\\RustSharp\\artifacts\\p1-drop\\remaining-io-clock-root-v2\\evidence-899f327a25834330bb1fa766f52ba866",
+  "processObservationCount": 123,
+  "uniqueObservedPids": 123,
+  "ownedProofTemporaryCount": 0,
+  "independentDescendantContainmentProven": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "previousBuildFailure": "artifacts/p1-supervision/remaining-io-clock-root-v1/release-build.json (CA1068; corrected before acceptance)",
+  "reports": [
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/source-snapshot.json",
+      "sha256": "81F3F9F743B448B6D5F81E0C62AF96AFF2C744D95938E2D061CDAA967A5AB32C"
+    },
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/release-build.json",
+      "sha256": "492971C5CB4082D86BACA0A639C9D209913E6BCC6CC6ADD125C58D07F21AAD94"
+    },
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/filtered-harness.json",
+      "sha256": "EDB213AAB354F6488EAE513AB3614A9B134376B5BFB9969F40AE6906F4152B73"
+    },
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/gate-controls-harness.json",
+      "sha256": "14BEDBDB566AF8EE94FBFD1FD419791106750557DFBAFF1979A0F3E33E4EBCC5"
+    },
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/clock-guard-controls.json",
+      "sha256": "B05D18A58D204F78201157C1D406BE7459EDEFF219464E29F7E7BC6CBA116DA2"
+    },
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/cli-controls.json",
+      "sha256": "FACC64EB9A0B849FDEB782DE59177C239CF4ECB037E9DED33AED876DB7AA3517"
+    },
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/regression-input-proof.json",
+      "sha256": "64E4E0357EF47293A513E62290B9581D9831EE6289431A6582D2DAF4FA25C18C"
+    },
+    {
+      "path": "artifacts/p1-supervision/remaining-io-clock-root-v2/root-process-audit.json",
+      "sha256": "D23AA7CF3E8DE174A0433A97E021E304CAA45EEB69101D138BA32428B26C9148"
+    },
+    {
+      "path": "artifacts/p1-drop/remaining-io-clock-root-v2/full.json",
+      "sha256": "8121F46AD5F52A8F2F445928F9DED91CE8248792733580704D5887040EF166B7"
+    }
+  ]
+}
