@@ -141,3 +141,170 @@ jobs:
           path: artifacts/p1-candidate
           if-no-files-found: error
           retention-days: 30
+
+  production-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            runner: windows-2025
+          - name: linux-x64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    env:
+      GITHUB_SHA: ${{ github.sha }}
+      CI_COMMIT_SHA: ${{ github.sha }}
+      RUSTSHARP_NATIVE_AOT_SDK_VERSION: '10.0.401'
+      DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+      DOTNET_CLI_UI_LANGUAGE: en-US
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.400
+            10.0.401
+      - name: Verify PowerShell 7
+        shell: pwsh
+        run: |
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
+      - name: Install rustc 1.98 oracle
+        shell: pwsh
+        run: ./eng/Invoke-BoundedProcess.ps1 -FilePath rustup -ArgumentList @('toolchain', 'install', '1.98.0', '--profile', 'minimal') -TimeoutSeconds 180 -CapturePrefix 'artifacts/p1-production-preflight/${{ matrix.name }}/rustup'
+      - name: Restore ILVerify 10.0.11 tool
+        shell: pwsh
+        run: ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tool', 'restore', '--tool-manifest', '.config/dotnet-tools.json') -TimeoutSeconds 180 -CapturePrefix 'artifacts/p1-production-preflight/${{ matrix.name }}/tools'
+      - name: Install Linux Native AOT prerequisites
+        if: matrix.name == 'linux-x64'
+        shell: pwsh
+        run: |
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath sudo -ArgumentList @('timeout', '--kill-after=10s', '180s', 'apt-get', 'update') -TimeoutSeconds 200 -CapturePrefix 'artifacts/p1-production-preflight/${{ matrix.name }}/apt-update'
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath sudo -ArgumentList @('timeout', '--kill-after=10s', '180s', 'apt-get', 'install', '--no-install-recommends', '-y', 'clang', 'zlib1g-dev') -TimeoutSeconds 200 -CapturePrefix 'artifacts/p1-production-preflight/${{ matrix.name }}/apt-install'
+      - name: Run and validate frozen production source and backend evidence
+        shell: pwsh
+        run: ./eng/Invoke-P1ProductionNativeEvidence.ps1 -CandidateSha $env:GITHUB_SHA -PlatformName '${{ matrix.name }}' -RunId '${{ github.run_id }}' -RunAttempt '${{ github.run_attempt }}' -Repository '${{ github.repository }}'
+      - name: Upload production receipt, bound sources and process ledgers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-production-receipt-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: artifacts/p1-production/${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload production source package reports and retained bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-production-source-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: artifacts/p1-source-package/${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload production backend reports and retained bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-production-backend-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: artifacts/p1-backend/${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload production native preflight diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-production-preflight-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-production-preflight/${{ matrix.name }}
+          if-no-files-found: warn
+          retention-days: 30
+  production-gate:
+    if: always()
+    needs: [suite-gate, production-native]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GITHUB_SHA: ${{ github.sha }}
+      CI_COMMIT_SHA: ${{ github.sha }}
+      RUSTSHARP_NATIVE_AOT_SDK_VERSION: '10.0.401'
+      DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+      DOTNET_CLI_UI_LANGUAGE: en-US
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.400
+            10.0.401
+      - name: Download Windows production receipt
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-production-receipt-windows-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-production/windows-x64
+      - name: Download Linux production receipt
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-production-receipt-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-production/linux-x64
+      - name: Download Windows production source retained bytes
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-production-source-windows-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-source-package/windows-x64
+      - name: Download Linux production source retained bytes
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-production-source-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-source-package/linux-x64
+      - name: Download Windows production backend retained bytes
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-production-backend-windows-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-backend/windows-x64
+      - name: Download Linux production backend retained bytes
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-production-backend-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-backend/linux-x64
+      - name: Bind fresh aggregate Release validator
+        if: always()
+        shell: pwsh
+        run: |
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
+          ./eng/Invoke-P1ReleaseBuild.ps1 -CandidateSha $env:GITHUB_SHA -SdkVersion 10.0.401 -ReportPath artifacts/p1-candidate/production-aggregate-release-build.json
+      - name: Require suite gate and complete native production evidence
+        if: always()
+        shell: pwsh
+        env:
+          NATIVE_JOB_RESULT: ${{ needs.production-native.result }}
+          SUITE_JOB_RESULT: ${{ needs.suite-gate.result }}
+        run: ./eng/Test-P1ProductionCiGate.ps1 -CandidateSha $env:GITHUB_SHA -WindowsReceipt artifacts/p1-production/windows-x64/native-receipt.json -LinuxReceipt artifacts/p1-production/linux-x64/native-receipt.json -RunId '${{ github.run_id }}' -RunAttempt '${{ github.run_attempt }}' -Repository '${{ github.repository }}' -NativeJobResult $env:NATIVE_JOB_RESULT -SuiteJobResult $env:SUITE_JOB_RESULT -EvidencePath artifacts/p1-candidate/production-ci-gate.json
+      - name: Upload aggregate production gate and physical validation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-production-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-candidate
+          if-no-files-found: error
+          retention-days: 30
