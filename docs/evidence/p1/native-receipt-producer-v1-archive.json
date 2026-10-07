@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "native-receipt-producer-offline-utility-acceptance",
+  "candidateSha": "d53a3cf3352f21de325de8f07bc842d8e1dcfe84",
+  "candidateTreeSha": "24f010b510e54105c891fc6d947a9a8082a75482",
+  "sourceInputCount": 698,
+  "sourceHashes": [
+    {
+      "path": "eng/Invoke-P1NativeDropEvidence.ps1",
+      "sha256": "66A3D5EBD608455C3F08E61CF2BA3862BD3DF0D1CA15ED99EAFEEDD5729A2773"
+    },
+    {
+      "path": "eng/Test-P1NativeDropReceiptUtilities.ps1",
+      "sha256": "720AA893EB964F7F935FC80D66BC0E9E535B273CDCE6E219D377C3BC7357815D"
+    }
+  ],
+  "reports": [
+    {
+      "path": "artifacts/p1-supervision/native-receipt-root-v1/fixed.json",
+      "sha256": "CB057DBBF8F363FA07B4565E88DF4D16D393E344AAE7C7CBEEBC9907F8A6E368"
+    },
+    {
+      "path": "artifacts/p1-supervision/native-receipt-root-v1/tiny.json",
+      "sha256": "8A74566137D0B5228A3994A18FE0DCA1E7C5D8D32CEFB5E4E2ED644452E714DB"
+    },
+    {
+      "path": "artifacts/p1-supervision/native-receipt-root-v1/source-snapshot.json",
+      "sha256": "6CD86560D44D590985BC62255815B4554DE2CA20AC43C177E37068A517202B4B"
+    }
+  ],
+  "trialControls": 1,
+  "fixedControls": 8,
+  "generatedCases": 28,
+  "originalPeDenominator": 30,
+  "nativeAotDenominator": 28,
+  "callableArtifacts": 2,
+  "callableCases": 7,
+  "stageDenominator": 36,
+  "actualNativeExecution": 0,
+  "injectedElapsedClock": true,
+  "timerDelayFaultInjected": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "recordedProcesses": [
+    {
+      "ledger": "tiny-launch.process.json",
+      "pid": 51168,
+      "startedAt": "2026-10-08T06:45:47.567537+08:00",
+      "filePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-File",
+        "eng/Test-P1NativeDropReceiptUtilities.ps1",
+        "-Mode",
+        "Tiny",
+        "-ResultPath",
+        "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\native-receipt-root-v1/tiny.json"
+      ],
+      "parentPid": 73304,
+      "taskIdentityAbsent": true,
+      "unrelatedPidReuse": false,
+      "exitCode": 0
+    },
+    {
+      "ledger": "fixed-launch.process.json",
+      "pid": 15080,
+      "startedAt": "2026-10-08T06:45:48.4004153+08:00",
+      "filePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-File",
+        "eng/Test-P1NativeDropReceiptUtilities.ps1",
+        "-ResultPath",
+        "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\native-receipt-root-v1/fixed.json"
+      ],
+      "parentPid": 73304,
+      "taskIdentityAbsent": true,
+      "unrelatedPidReuse": false,
+      "exitCode": 0
+    },
+    {
+      "ledger": "snapshot-launch.process.json",
+      "pid": 28692,
+      "startedAt": "2026-10-08T06:45:49.3743731+08:00",
+      "filePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-File",
+        "eng/Get-P1SourceSnapshot.ps1",
+        "-CreateCandidate",
+        "-EvidencePath",
+        "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\native-receipt-root-v1/source-snapshot.json",
+        "-DeadlineSeconds",
+        "60"
+      ],
+      "parentPid": 73304,
+      "taskIdentityAbsent": true,
+      "unrelatedPidReuse": false,
+      "exitCode": 0
+    }
+  ]
+}
