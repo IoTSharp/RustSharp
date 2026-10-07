@@ -49,7 +49,7 @@ parents and can advance independently. The core/alloc/std chain awaits P1-GATE.
 | Leaf | Status | Owner and reserved files |
 | --- | --- | --- |
 | P2-04.01 | ✅ Complete | `cargo_p2`: `CargoContract*.cs`, `P2CargoContractTests.cs`, `p2-cargo-v1-manifest.json`; 10/10 isolated validator tests and 78 frozen records. |
-| P2-06.01 | 🚧 In progress | `prerequisite_audit`: `DotNetInteropContract*.cs`, `P2InteropContractTests.cs`, `p2-dotnet-interop-v1-manifest.json`, ADR 0010 in both languages. |
+| P2-06.01 | ✅ Complete | `prerequisite_audit`: `DotNetInteropContract*.cs`, `P2InteropContractTests.cs`, `p2-dotnet-interop-v1-manifest.json`, ADR 0010 in both languages. |
 | P2-08.01 | 🚧 In progress | `tooling_p2`: `ToolingContract*.cs`, `P2ToolingContractTests.cs`, `p2-tooling-v1-manifest.json`. |
 
 After each contract passes, commit that leaf's files and evidence/status updates
@@ -84,7 +84,7 @@ The first contract batch passes 36/36 focused tests and an additional
 10/10 + 8/8 + 18/18 isolated, source-bound validation. The validation candidate is
 `41e14c1587d4366007fa108b0f5f6ba023da6c77` (641 compiler/test/tooling inputs),
 retained at `refs/codex/p1-10-candidates/41e14c1587d4366007fa108b0f5f6ba023da6c77`.
-Portable leaf reports and their original hashed harness records are archived in
+Portable leaf reports and LF-normalized harness records with original/archive hashes are archived in
 `docs/evidence/p2/`. The Release build has zero warnings/errors; the current test
 registration is 1005 (969 inherited P1 registrations plus 36 P2 registrations).
 All build/test children exited and the snapshot helper removed its owned index.

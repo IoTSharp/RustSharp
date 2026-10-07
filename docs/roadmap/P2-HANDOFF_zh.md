@@ -41,7 +41,7 @@ core/alloc/std 任务链等待 P1-GATE。
 | 叶子 | 状态 | 所有者与预留文件 |
 | --- | --- | --- |
 | P2-04.01 | ✅ 已完成 | `cargo_p2`：`CargoContract*.cs`、`P2CargoContractTests.cs`、`p2-cargo-v1-manifest.json`；10/10 隔离验证器测试和 78 条冻结记录。 |
-| P2-06.01 | 🚧 进行中 | `prerequisite_audit`：`DotNetInteropContract*.cs`、`P2InteropContractTests.cs`、`p2-dotnet-interop-v1-manifest.json`、双语 ADR 0010。 |
+| P2-06.01 | ✅ 已完成 | `prerequisite_audit`：`DotNetInteropContract*.cs`、`P2InteropContractTests.cs`、`p2-dotnet-interop-v1-manifest.json`、双语 ADR 0010。 |
 | P2-08.01 | 🚧 进行中 | `tooling_p2`：`ToolingContract*.cs`、`P2ToolingContractTests.cs`、`p2-tooling-v1-manifest.json`。 |
 
 每个合同通过后，单独提交对应叶子的文件与证据／状态更新。先将工作智能体转到
@@ -71,7 +71,7 @@ PowerShell 为 `C:\Program Files\PowerShell\7\pwsh.exe`，版本 7.6.6。
 验证。验证候选为 `41e14c1587d4366007fa108b0f5f6ba023da6c77`
 （641 个编译器／测试／工具输入），保留于
 `refs/codex/p1-10-candidates/41e14c1587d4366007fa108b0f5f6ba023da6c77`。
-可迁移的叶子报告和原始哈希运行器记录归档于 `docs/evidence/p2/`。
+可迁移的叶子报告与记录原始／归档哈希的 LF 规范化运行器记录归档于 `docs/evidence/p2/`。
 Release 构建零警告／零错误；当前注册数为 1005（继承的 969 项 P1 注册与 36 项 P2
 注册）。全部构建／测试子进程已退出，快照助手已删除其专属索引。
 

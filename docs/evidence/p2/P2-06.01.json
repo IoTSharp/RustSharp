@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p2-frozen-contract",
+  "leafId": "P2-06.01",
+  "candidateSha": "41e14c1587d4366007fa108b0f5f6ba023da6c77",
+  "manifestPath": "tools/RustSharp.Conformance/fixtures/p2-dotnet-interop-v1-manifest.json",
+  "manifestSha256": "970373449CC9F981CD55877DD31E90F2E1C2790E1B7251365101C00094EBBE64",
+  "scope": "manifest-design-and-validator",
+  "fullP2Closure": false,
+  "contractCases": 36,
+  "implementationCasesExecuted": 0,
+  "tools": {
+    "sdkVersion": "10.0.401",
+    "powerShellVersion": "7.6.6",
+    "dotnetPath": "C:\\Program Files\\dotnet\\dotnet.exe"
+  },
+  "runtimeIdentifier": "win-x64",
+  "command": {
+    "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+    "workingDirectory": "D:\\GitHub\\RustSharp",
+    "arguments": [
+      "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\bin\\Release\\net10.0\\RustSharp.Tests.dll",
+      "--filter",
+      "P2 interop contract",
+      "--timeout",
+      "30",
+      "--deadline",
+      "120",
+      "--report",
+      "D:\\GitHub\\RustSharp\\artifacts\\p2-contracts\\P2-06.01.harness.json",
+      "--candidate-sha",
+      "41e14c1587d4366007fa108b0f5f6ba023da6c77"
+    ]
+  },
+  "denominator": 8,
+  "passed": 8,
+  "failed": 0,
+  "skipped": 0,
+  "executed": 8,
+  "notExecuted": 0,
+  "summary": {
+    "status": "passed",
+    "denominator": 8,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0
+  },
+  "bounds": {
+    "maximumCommands": 1,
+    "maximumManifestBytes": 1048576,
+    "deadlineSeconds": 120,
+    "caseTimeoutSeconds": 30,
+    "maximumOutputBytes": 4194304,
+    "maximumTests": 64
+  },
+  "timeResourceLimits": {
+    "maximumCommands": 1,
+    "maximumManifestBytes": 1048576,
+    "deadlineSeconds": 120,
+    "caseTimeoutSeconds": 30,
+    "maximumOutputBytes": 4194304,
+    "maximumTests": 64
+  },
+  "processId": 21976,
+  "processStartedAtUtc": "2026-10-07T23:35:05.9921776+08:00",
+  "parentProcessId": 22156,
+  "parentChain": [
+    {
+      "createdAt": "2026-10-07T23:34:47.101988+08:00",
+      "parentProcessId": 89648,
+      "commandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n& ./eng/Get-P1SourceSnapshot.ps1 -CreateCandidate -EvidencePath artifacts/p2-contracts/source-snapshot.json -DeadlineSeconds 60\n$contractCandidate = (Get-Content artifacts/p2-contracts/source-snapshot.json -Raw | ConvertFrom-Json).candidateSha\n& ./eng/Invoke-P2ContractEvidence.ps1 -LeafId P2-04.01 -CandidateSha $contractCandidate -ManifestPath tools/RustSharp.Conformance/fixtures/p2-cargo-v1-manifest.json -Filter 'P2 cargo contract' -ExpectedTests 10 -ContractCases 78 -DeadlineSeconds 180\n& ./eng/Invoke-P2ContractEvidence.ps1 -LeafId P2-06.01 -CandidateSha $contractCandidate -ManifestPath tools/RustSharp.Conformance/fixtures/p2-dotnet-interop-v1-manifest.json -Filter 'P2 interop contract' -ExpectedTests 8 -ContractCases 36\n& ./eng/Invoke-P2ContractEvidence.ps1 -LeafId P2-08.01 -CandidateSha $contractCandidate -ManifestPath tools/RustSharp.Conformance/fixtures/p2-tooling-v1-manifest.json -Filter P2-08.01 -ExpectedTests 18 -ContractCases 91\"",
+      "processId": 22156
+    },
+    {
+      "createdAt": "2026-10-07T00:55:06.091465+08:00",
+      "parentProcessId": 104700,
+      "commandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\5ea220ae823df3d7\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+      "processId": 89648
+    },
+    {
+      "createdAt": "2026-10-07T00:54:56.898652+08:00",
+      "parentProcessId": 12944,
+      "commandLine": "\"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.930.7945.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\" ",
+      "processId": 104700
+    },
+    {
+      "createdAt": "2026-10-02T21:45:52.746922+08:00",
+      "parentProcessId": 3472,
+      "commandLine": "sihost.exe",
+      "processId": 12944
+    },
+    {
+      "createdAt": "2026-10-02T21:45:34.162075+08:00",
+      "parentProcessId": 1892,
+      "commandLine": null,
+      "processId": 3472
+    },
+    {
+      "createdAt": "2026-10-02T21:45:33.395525+08:00",
+      "parentProcessId": 1812,
+      "commandLine": null,
+      "processId": 1892
+    },
+    {
+      "createdAt": "2026-10-02T21:45:32.630945+08:00",
+      "parentProcessId": 1672,
+      "commandLine": null,
+      "processId": 1812
+    }
+  ],
+  "cleanup": {
+    "temporaryReportRemoved": true,
+    "complete": true
+  },
+  "process": {
+    "Pid": 21976,
+    "ParentPid": 22156,
+    "StartedAt": "2026-10-07T23:35:05.9921776+08:00",
+    "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+    "Arguments": [
+      "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\bin\\Release\\net10.0\\RustSharp.Tests.dll",
+      "--filter",
+      "P2 interop contract",
+      "--timeout",
+      "30",
+      "--deadline",
+      "120",
+      "--report",
+      "D:\\GitHub\\RustSharp\\artifacts\\p2-contracts\\P2-06.01.harness.json",
+      "--candidate-sha",
+      "41e14c1587d4366007fa108b0f5f6ba023da6c77"
+    ],
+    "WorkingDirectory": "D:\\GitHub\\RustSharp",
+    "TimeoutSeconds": 130,
+    "MaximumAttempts": 1,
+    "MaximumOutputBytes": 4194304,
+    "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p2-contracts\\P2-06.01.run",
+    "FinishedAt": "2026-10-07T23:35:10.3234648+08:00",
+    "ExitCode": 0,
+    "CleanupComplete": true,
+    "Failure": null
+  },
+  "cleanupComplete": true,
+  "sourceProvenance": {
+    "candidateSha": "41e14c1587d4366007fa108b0f5f6ba023da6c77",
+    "candidateTreeSha": "838b160162440917d2cb49b0941aea1d717765e2",
+    "candidateMatchesWorkingTree": true,
+    "checkedFileCount": 703,
+    "errors": [],
+    "processes": [
+      {
+        "processId": 77696,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:06.2502468+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "41e14c1587d4366007fa108b0f5f6ba023da6c77^{commit}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"41e14c1587d4366007fa108b0f5f6ba023da6c77^{commit}\""
+      },
+      {
+        "processId": 105812,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:06.5695383+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "41e14c1587d4366007fa108b0f5f6ba023da6c77^{tree}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"41e14c1587d4366007fa108b0f5f6ba023da6c77^{tree}\""
+      },
+      {
+        "processId": 36064,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:06.7894099+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-tree",
+          "-rz",
+          "41e14c1587d4366007fa108b0f5f6ba023da6c77"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-tree\" \"-rz\" \"41e14c1587d4366007fa108b0f5f6ba023da6c77\""
+      },
+      {
+        "processId": 12512,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:07.027584+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-files",
+          "--cached",
+          "--others",
+          "--exclude-standard",
+          "-z"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+      },
+      {
+        "processId": 57616,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:07.2014051+08:00",
+        "fileName": "git",
+        "arguments": [
+          "hash-object",
+          "--stdin-paths"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"hash-object\" \"--stdin-paths\""
+      },
+      {
+        "processId": 4528,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:09.5691636+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "41e14c1587d4366007fa108b0f5f6ba023da6c77^{commit}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"41e14c1587d4366007fa108b0f5f6ba023da6c77^{commit}\""
+      },
+      {
+        "processId": 66780,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:09.6796078+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "41e14c1587d4366007fa108b0f5f6ba023da6c77^{tree}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"41e14c1587d4366007fa108b0f5f6ba023da6c77^{tree}\""
+      },
+      {
+        "processId": 15600,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:09.7822013+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-tree",
+          "-rz",
+          "41e14c1587d4366007fa108b0f5f6ba023da6c77"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-tree\" \"-rz\" \"41e14c1587d4366007fa108b0f5f6ba023da6c77\""
+      },
+      {
+        "processId": 95460,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:09.9124138+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-files",
+          "--cached",
+          "--others",
+          "--exclude-standard",
+          "-z"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+      },
+      {
+        "processId": 48312,
+        "parentProcessId": 21976,
+        "startedAtUtc": "2026-10-07T23:35:10.0383827+08:00",
+        "fileName": "git",
+        "arguments": [
+          "hash-object",
+          "--stdin-paths"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"hash-object\" \"--stdin-paths\""
+      }
+    ]
+  },
+  "provenance": {
+    "kind": "git-candidate-and-hashed-isolated-harness",
+    "harnessSha256": "22825B922172814D2EDCFF00324DA73FA920675B2F008DB9FD2FA2DDD5C45CCF",
+    "harnessReport": "docs/evidence/p2/P2-06.01.harness.json",
+    "candidateSha": "41e14c1587d4366007fa108b0f5f6ba023da6c77",
+    "originalHarnessSha256": "9FA82BF80AFCACFCDA3F12B281837FD511FEC59FB0BF266998AA37DD0CB194F8",
+    "archiveTransformation": "CRLF-to-LF only; JSON values unchanged; original report retained in artifacts/p2-contracts"
+  },
+  "startedAtUtc": "2026-10-07T23:34:59.7852801+08:00",
+  "finishedAtUtc": "2026-10-07T23:35:10.3298551+08:00",
+  "failureReasons": []
+}
