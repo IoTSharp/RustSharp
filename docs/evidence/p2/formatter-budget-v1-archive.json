@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p2-formatter-deadline-race-repair-acceptance",
+  "candidateSha": "0004e750d80900d2881d7ea680ce9a1b26228aec",
+  "candidateTreeSha": "8c0e49054af4bff4da25c3a880ea19450744e68e",
+  "compilerSourceInputCount": 707,
+  "sourceHashes": [
+    {
+      "path": "src/RustSharp.Syntax/RustFormatter.cs",
+      "sha256": "8B6606EFD87CFD381451B5EA6E9E462C804B87E58870BCB7CDB71F5B00201CD3",
+      "snapshotMatched": true
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2FormatterTests.cs",
+      "sha256": "CABAF78A72FE6650BDDFE47595234B0FFB3BE70004522E83C57402F0470B9B75",
+      "snapshotMatched": true
+    }
+  ],
+  "reports": [
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/source-snapshot.json",
+      "sha256": "9103C59E456FDD18ACDFF7D0E3F47D1B681552EFB7151DFC37BE70A5AEAF6F15"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/release-build.json",
+      "sha256": "178E9CED881C05511BD949195980F004D6BB64AEF2F59D2E3A6887D1866C501D"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/tiny-harness.json",
+      "sha256": "44B316256B6353076C3DC2D6158DF5BE998D3A4B56E43556AF44EC797EE2889D"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/formatter-harness.json",
+      "sha256": "44F3C18AD55345D5B534A3E1111F9A2B5C31DD31F4E2BADC0635C197A6095A9C"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/linux-tiny-harness.json",
+      "sha256": "967DBEB723FBF515815E60FE977C1753274C12E3E3EB7EA7B0297164F41EC4ED"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/linux-formatter-harness.json",
+      "sha256": "D0FCCBE2D22D07FD0F504A5B02024E6458A7C492B678BE3C98B301DDEEAA6BAC"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/mir-or-diagnostic-harness.json",
+      "sha256": "497E1228600F478543CD8E99BF8433A38FDC7731FFB3395BC66359A5CA4EA59B"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/windows-resource-review.json",
+      "sha256": "FF44241AE8430F2D31F922F7168640DED8F64DA05C09BC5EF6EC9C6B0E65CBCC"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-budget-root-v1/linux-resource-review.json",
+      "sha256": "006C704CCB13316A351032419253593414FB63DBC6567C217E78029C3D5EB639"
+    }
+  ],
+  "release": {
+    "sdkVersion": "10.0.401",
+    "warnings": 0,
+    "errors": 0,
+    "registeredDenominator": 1203
+  },
+  "windows": {
+    "tinyBudgetCase": 1,
+    "formatterCases": 59,
+    "mirOrDiagnosticOnly": 1,
+    "recordedIdentitiesAbsent": 70
+  },
+  "ubuntu": {
+    "tinyBudgetCase": 1,
+    "formatterCases": 59,
+    "recordedIdentitiesAbsent": 62,
+    "portableAssemblyBuiltOn": "windows",
+    "nativeCiEvidence": false
+  },
+  "budget": {
+    "subTickAssertions": 32,
+    "fixedFormatterDenominator": 59,
+    "fixedParentDenominator": 91,
+    "limitsRelaxed": false,
+    "invalidParserBudgetsRejected": true
+  },
+  "priorCi": {
+    "sha": "4d3333472af9b9c37a43df620fa209a7f4f30bae",
+    "runId": "37702329159",
+    "linuxPassed": 1202,
+    "linuxDenominator": 1203,
+    "linuxFailure": "P2-08.02 format-budget",
+    "windowsPassed": 1202,
+    "windowsDenominator": 1203,
+    "windowsFailure": "MIR v2 binding or-patterns select consistent locals",
+    "windowsFailureFixed": false,
+    "review": "artifacts/p1-supervision/ci-followup-v15/"
+  },
+  "descendantContainmentVerified": false,
+  "windowsDirectedCancellationPassed": false,
+  "actualAsyncIoInterruptionPassed": false,
+  "p2LeafClosed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}

@@ -25,8 +25,12 @@ public static class RustFormatter
         }
         TimeSpan Remaining()
         {
-            Guard();
-            return options.Timeout - clock.Elapsed;
+            cancellationToken.ThrowIfCancellationRequested();
+            // Validate the same elapsed sample used to construct the parser budget.
+            TimeSpan remaining = options.Timeout - clock.Elapsed;
+            if (remaining <= TimeSpan.Zero)
+                throw new TimeoutException("Formatting exceeded its shared wall-clock budget.");
+            return remaining;
         }
         try
         {

@@ -210,7 +210,12 @@ internal static class P2FormatterTests
         int outputBytes = Encoding.UTF8.GetByteCount(Accepted(unicodeSource).FormattedSource);
         AssertEx.True(RustFormatter.Format(unicodeSource, "budget.rs", new FormatterOptions { MaximumOutputBytes = outputBytes }).Success, "At-limit UTF-8 output bytes must succeed.");
         AssertBudgetFailure(unicodeSource, RustFormatter.Format(unicodeSource, "budget.rs", new FormatterOptions { MaximumOutputBytes = outputBytes - 1 }));
-        AssertBudgetFailure(source, RustFormatter.Format(source, "budget.rs", new FormatterOptions { Timeout = TimeSpan.FromTicks(1) }));
+        for (int attempt = 0; attempt < 32; attempt++)
+        {
+            Guard(clock);
+            AssertBudgetFailure(source, RustFormatter.Format(source, "budget.rs",
+                new FormatterOptions { Timeout = TimeSpan.FromTicks(1) }));
+        }
         // First output may expand, but must remain acceptable to a default second pass.
         string expansion = "fn f(){/*" + new string('x', 999981) + "*/}";
         AssertEx.True(expansion.Length < 1_000_000, "Expansion input stays below the frozen source ceiling.");
