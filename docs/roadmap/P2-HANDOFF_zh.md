@@ -2,7 +2,31 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 03:58
+## 当前检查点 — 2026-10-08 04:29
+
+P2 现有 7/101 个 ✅ 已完成叶项。`d813a1e` 关闭 P2-04.05：最终候选
+`064f5c54600b5a6b0c7feaafd564b2cdf2fb8421`，新鲜 SDK401 Release 零警告/零错误，
+锁 10/10 及 cfg12/features11/manifests38/legacy3+5+2 均通过。
+归档为 `docs/evidence/p2/P2-04.05*`；物理证明在 `artifacts/p2-supervision/lock-v3/`。
+此前 v2 证据早于 case map 的 LF 规范化；v3 对最终字节重新执行全部必需场景。
+1126 个注册项与实际执行分开。父项、阶段及 P1 门禁均未关闭。
+
+远程 `e9c2cb2` 的 expanded run `37678958396` 双 native 与双 expanded 作业均通过，
+但 suite15 为 13 通过/1 失败/1 阻塞。Linux 聚合误读 Windows 可执行文件 basename，
+production 因而受上游阻塞。`7ea2412` 规范路径分隔符，保留全部 SDK/方案/构建检查。
+实际生产谓词控制在 Windows 与 Ubuntu PowerShell 各通过 10/10；本地命令检查并非
+新整个候选门禁。证据在 `artifacts/p1-supervision/suite-path-fix-v1/`。
+下一轮须对账新同 SHA 运行。CI v6 保留八次下载、66 个哈希、64 个原生指定匹配与
+二十个已退出所属进程，位于 `artifacts/p1-supervision/ci-followup-v6/`。
+
+接续 `prepared-p1-joint-gate-v1/` 内 `p1_remaining_gates`：修正入口替代第一草稿；
+仅语法通过，runtime0；联合运输/强制候选接线与十二项拒绝控制仍开放。
+不得复制旧无界入口。`documentation_p2` 正在 `lock-final-review-v1/` 完成 v3 锁的
+只读资源审核。root 独占真实源码/构建/共享入口/stage/commit。保全冻结 formatter/
+documentation/interop 草稿、用户原有 `tmp/`、旧改名 junction/target 及诊断制品。
+唯一三十分钟 heartbeat 保持 ACTIVE；继续下一依赖允许任务。
+
+## 历史检查点 — 2026-10-08 03:58
 
 本节决定接续；后续章节是历史检查点。`20c77a8` 完成 P2-04.04 后，P2 为
 6/101 ✅ 已完成叶子。最终候选为 `b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a`：

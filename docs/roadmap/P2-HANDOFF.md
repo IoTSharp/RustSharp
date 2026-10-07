@@ -2,7 +2,36 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 03:58
+## Current checkpoint — 2026-10-08 04:29
+
+P2 has 7/101 ✅ Complete leaves. Commit `d813a1e` closes P2-04.05: final
+candidate `064f5c54600b5a6b0c7feaafd564b2cdf2fb8421`, fresh SDK401 Release
+zero warnings/errors, lock 10/10 and cfg12/features11/manifests38/legacy3+5+2.
+Archives are `docs/evidence/p2/P2-04.05*`; physical proof is `artifacts/p2-supervision/lock-v3/`.
+The earlier v2 evidence predates LF normalization of the case map; v3 reruns
+all required cases against the final bytes. Registration 1126 is separate from
+execution. No parent, phase or P1 gate is closed.
+
+Remote `e9c2cb2` expanded run `37678958396` passes both native and both expanded
+jobs, but suite15 is 13 passed /1 failed /1 blocked. Linux aggregation misreads
+the Windows executable basename; production is therefore blocked upstream.
+`7ea2412` normalizes separators while retaining every SDK/solution/build check.
+Actual production predicate controls pass 10/10 on Windows and Ubuntu PowerShell;
+this local command check is not a new whole-candidate gate. Evidence is
+`artifacts/p1-supervision/suite-path-fix-v1/`. Reconcile the next same-SHA run.
+CI v6 preserves eight downloads, 66 hashes, 64 native selected matches and twenty
+exited owned processes under `artifacts/p1-supervision/ci-followup-v6/`.
+
+Resume `p1_remaining_gates` in `prepared-p1-joint-gate-v1/`: its corrected entry
+supersedes the first draft; syntax only, runtime0, joint transport/mandatory
+candidate integration and twelve rejection controls remain open. Do not copy
+the older unbounded entry. `documentation_p2` is finalizing the v3 lock read-only
+resource audit in `lock-final-review-v1/`. Root remains sole real-source/build/
+shared-entry/stage/commit owner. Retain all frozen formatter/documentation/interop
+drafts, the original user `tmp/`, old moved junction/target and diagnostic artifacts.
+The sole thirty-minute heartbeat remains ACTIVE; continue the next allowed task.
+
+## Historical checkpoint — 2026-10-08 03:58
 
 This section governs resumption; the later sections are historical checkpoints.
 P2 has 6/101 ✅ Complete leaves after `20c77a8` closes P2-04.04. Its final
