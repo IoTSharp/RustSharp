@@ -50,7 +50,7 @@ parents and can advance independently. The core/alloc/std chain awaits P1-GATE.
 | --- | --- | --- |
 | P2-04.01 | ✅ Complete | `cargo_p2`: `CargoContract*.cs`, `P2CargoContractTests.cs`, `p2-cargo-v1-manifest.json`; 10/10 isolated validator tests and 78 frozen records. |
 | P2-06.01 | ✅ Complete | `prerequisite_audit`: `DotNetInteropContract*.cs`, `P2InteropContractTests.cs`, `p2-dotnet-interop-v1-manifest.json`, ADR 0010 in both languages. |
-| P2-08.01 | 🚧 In progress | `tooling_p2`: `ToolingContract*.cs`, `P2ToolingContractTests.cs`, `p2-tooling-v1-manifest.json`. |
+| P2-08.01 | ✅ Complete | `tooling_p2`: `ToolingContract*.cs`, `P2ToolingContractTests.cs`, `p2-tooling-v1-manifest.json`. |
 
 After each contract passes, commit that leaf's files and evidence/status updates
 separately. First reassign the workers to the Linux primitive conformance failure,

@@ -42,7 +42,7 @@ core/alloc/std 任务链等待 P1-GATE。
 | --- | --- | --- |
 | P2-04.01 | ✅ 已完成 | `cargo_p2`：`CargoContract*.cs`、`P2CargoContractTests.cs`、`p2-cargo-v1-manifest.json`；10/10 隔离验证器测试和 78 条冻结记录。 |
 | P2-06.01 | ✅ 已完成 | `prerequisite_audit`：`DotNetInteropContract*.cs`、`P2InteropContractTests.cs`、`p2-dotnet-interop-v1-manifest.json`、双语 ADR 0010。 |
-| P2-08.01 | 🚧 进行中 | `tooling_p2`：`ToolingContract*.cs`、`P2ToolingContractTests.cs`、`p2-tooling-v1-manifest.json`。 |
+| P2-08.01 | ✅ 已完成 | `tooling_p2`：`ToolingContract*.cs`、`P2ToolingContractTests.cs`、`p2-tooling-v1-manifest.json`。 |
 
 每个合同通过后，单独提交对应叶子的文件与证据／状态更新。先将工作智能体转到
 Linux 原始类型一致性失败、未批准的生成 Drop 展开差异，以及 P1 覆盖／源码包证据。

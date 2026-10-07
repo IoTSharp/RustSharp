@@ -1,0 +1,767 @@
+{
+  "schemaVersion": 1,
+  "profile": "tooling-v1",
+  "version": 1,
+  "taskId": "P2-08.01",
+  "dependencies": [
+    "P1-02",
+    "P1-09"
+  ],
+  "rids": [
+    "win-x64",
+    "linux-x64"
+  ],
+  "denominator": 91,
+  "hashEncoding": "sha256-utf8-lf-no-bom",
+  "syntaxBasis": {
+    "manifest": "tools/RustSharp.Conformance/fixtures/safe-core-syntax-manifest.json",
+    "sha256": "468A8CB019E37765778F1296AF94C38FAC697246FD181022381483099DE3BEA9",
+    "profile": "safe-core-syntax",
+    "version": 3,
+    "denominator": 49
+  },
+  "limits": {
+    "timeoutMilliseconds": 10000,
+    "maximumSourceCharacters": 1000000,
+    "maximumTokens": 250000,
+    "maximumTrivia": 500000,
+    "maximumFiles": 1024,
+    "maximumDocItems": 10000,
+    "maximumLinks": 20000,
+    "maximumCacheEntries": 10000,
+    "maximumOutputBytes": 16777216,
+    "maximumWriters": 2,
+    "maximumOperations": 1000000
+  },
+  "formatter": {
+    "apis": [
+      "RustFormatter.Format(string source, string sourcePath, FormatterOptions options, CancellationToken cancellationToken) -> FormatterResult",
+      "rsc fmt <path>",
+      "rsc fmt --check <path>"
+    ],
+    "syntaxFamilies": [
+      "modules",
+      "imports",
+      "functions",
+      "structs",
+      "enums",
+      "aliases-constants",
+      "statements",
+      "expressions",
+      "operator-binding",
+      "patterns",
+      "types",
+      "generics",
+      "attributes",
+      "literals",
+      "malformed",
+      "unsupported",
+      "control-flow",
+      "traits"
+    ],
+    "style": "four-space-indent; LF; one-final-newline; token-spelling-preserved",
+    "preservation": [
+      "token-kinds-and-spellings",
+      "comment-order-and-spelling",
+      "documentation-comments",
+      "nested-block-comments",
+      "literal-content",
+      "bom-and-shebang",
+      "ast-equivalence",
+      "idempotence",
+      "check-mode-nonmutation",
+      "failure-nonmutation"
+    ],
+    "corpus": [
+      {
+        "id": "safe-core-items",
+        "file": "tools/RustSharp.Conformance/fixtures/safe-core-items.rs",
+        "sourceSha256": "61EB890A2C09443B8F489ECBA4ACC65CDE0080E84FAE7C35B91B7608887800C3",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "safe-core-expressions",
+        "file": "tools/RustSharp.Conformance/fixtures/safe-core-expressions.rs",
+        "sourceSha256": "3D0E3D82234F82C32C3159F642E25B758B15DDA511DDE16175FC87900A5C1B83",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "safe-core-unsupported-unsafe",
+        "file": "tools/RustSharp.Conformance/fixtures/safe-core-unsupported.rs",
+        "sourceSha256": "5FB313D176DED4670DE36DE249EF90685314BD3613780B8A8F2A0952AE2076D6",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1003",
+        "diagnosticText": "unsafe"
+      },
+      {
+        "id": "safe-core-unsupported-loop",
+        "file": "tools/RustSharp.Conformance/fixtures/safe-core-unsupported-loop.rs",
+        "sourceSha256": "9D63B9ED0A505C2219919DE87AE29D889954D53FB40C10BEBDD2506EB4F624B2",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "safe-core-unsupported-break",
+        "file": "tools/RustSharp.Conformance/fixtures/safe-core-unsupported-break.rs",
+        "sourceSha256": "7B6261BC10889401C7F86EE58D342BC233F5540D1A11D5A7A2945E529EC9DC7B",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "safe-core-malformed",
+        "file": "tools/RustSharp.Conformance/fixtures/safe-core-malformed.rs",
+        "sourceSha256": "AC64E36414CC6A7409EB9544294B24F2A7FF3CF66DFF2161F29F7170D48A2993",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1001",
+        "diagnosticText": "}"
+      },
+      {
+        "id": "syntax-modules",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-modules.rs",
+        "sourceSha256": "124D8D2E5EF26CE797982CCBEB19EA8C54C3A684C61A64643EEE4DA4CE3A36B7",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-imports",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-imports.rs",
+        "sourceSha256": "34CC1A014FA53D1CFF539B1734D4C0C0B9246FF90D6B22F0AAA09446770941FD",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-items",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-items.rs",
+        "sourceSha256": "60227011FF20BF1ACD05A1001652847413A31F8B8280154EDC82CC98C5E187D6",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-generics",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-generics.rs",
+        "sourceSha256": "0FBBD7CEF74E0EAECE2A8A192DD59976927E51B7127D0AF44C023AC97365944A",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-types",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-types.rs",
+        "sourceSha256": "9C4883A885103CDA9BA72D83160609F9EC07B0B37F119F8E0A879FDC6210F78F",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-patterns",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-patterns.rs",
+        "sourceSha256": "2BB6324D184D390BB186474DD21B4CBC6D14CD43C6F4FE26421A1DBB3C012C15",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-aggregates",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-aggregates.rs",
+        "sourceSha256": "4EBE2865FB61BD8348BCB9B0137B71F4ABA01963B98272904E32A6BB37FFD175",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-operators",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-operators.rs",
+        "sourceSha256": "DB106D01032B9EA3A16115E370BE6880E6D32924E304028AFDBF1FF60B2C0916",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-attributes",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-attributes.rs",
+        "sourceSha256": "D0D7DCE32182E853845121221F294FD6EC00E2C70A599477E5944378899B9E90",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-literals",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-literals.rs",
+        "sourceSha256": "6CB86C21E607C7AE9CD5DB0AABD46FA56D83F6DC3D8EC2B5C711CE0E57781125",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-returns",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-returns.rs",
+        "sourceSha256": "FB5AED8CB2C6563FDAFBFEDD7B6872CDD1346CABEC7A6BA0543881C4D850DB97",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-blocks",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-blocks.rs",
+        "sourceSha256": "C33E5511A85F534510FCD10D48BB2A940330DC6C551EC6ED874E3EDB88F938B6",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-malformed-import",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-import.rs",
+        "sourceSha256": "4BDA897C63DB2A730E2080E2165C1AFE39211311285BB6F1E3D0395D2CBA2253",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1001",
+        "diagnosticText": "bar"
+      },
+      {
+        "id": "syntax-malformed-attribute",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-attribute.rs",
+        "sourceSha256": "B37B3265C47492229ED97B9B9D727C96E39F952479FFD12D83EAE2677EBFAD17",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1001",
+        "diagnosticText": "]"
+      },
+      {
+        "id": "syntax-malformed-repeat",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-repeat.rs",
+        "sourceSha256": "B02F29EB01F354DBADAA427FF6D9D872375BB5BD6EBBFD3C0C90457C7B9A7ED4",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1002",
+        "diagnosticText": ";"
+      },
+      {
+        "id": "syntax-malformed-generics",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-generics.rs",
+        "sourceSha256": "DBA325698C2984051D53A08C5D5BD5D343D7E2F4D5785D5D16C9F74CF4AEF524",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1001",
+        "diagnosticText": "+"
+      },
+      {
+        "id": "syntax-malformed-comparison",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-comparison.rs",
+        "sourceSha256": "C05DA19E8BAAE2298C65AFB91CDFC6F2415E7EF184A127F0F04BF1B6531A7933",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1002",
+        "diagnosticText": "<"
+      },
+      {
+        "id": "syntax-malformed-unary",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-unary.rs",
+        "sourceSha256": "35745E820FD9E292558A4554A79D96E6F6D6AF3AA357934B0BFCE54FFC1F817F",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1002",
+        "diagnosticText": "+"
+      },
+      {
+        "id": "syntax-malformed-expression",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-expression.rs",
+        "sourceSha256": "89590AF4C5601A3376337E1ED483F95D70E78DE4E5A55BF2EA9CBBBEA7634B9D",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1002",
+        "diagnosticText": ";"
+      },
+      {
+        "id": "syntax-malformed-keyword",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-malformed-keyword.rs",
+        "sourceSha256": "8BB9465C025636C1CB1AB5B6E9DD0C50ABD089D84E0F5CD2822EF3CA458CA7C5",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1001",
+        "diagnosticText": "loop"
+      },
+      {
+        "id": "syntax-unsupported-group-import",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-group-import.rs",
+        "sourceSha256": "EEF7A2EFF18B5E362F6A4A8DCE36290C0478761DA80DF60C6E617EEB54636D47",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-lifetime",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-lifetime.rs",
+        "sourceSha256": "49A93262553E445AE9AA0F003A77C055535FB51CBDDDE1C045847B72B7C6FE62",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-const-generic",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-const-generic.rs",
+        "sourceSha256": "F5D4C4252A5E6377694E8C5F56CEFAFBAE7573ADC41A54AAF3DEEC6383A93A79",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-where",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-where.rs",
+        "sourceSha256": "9DF83695C9E261BF83A682C8C2873451367F1B6C37D4C9E48300FA72D822ED58",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-member",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-member.rs",
+        "sourceSha256": "ED312C69237FA5CDDA332B7092922E066D08427B84EC918620A9167D62D135AD",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-raw-type",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-raw-type.rs",
+        "sourceSha256": "042CB6B544C7BEB5936DADE9A63C96C43679BECDE7B4031C89F1E376424EF433",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1003",
+        "diagnosticText": "*"
+      },
+      {
+        "id": "syntax-unsupported-inner-attribute",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-inner-attribute.rs",
+        "sourceSha256": "62D95F1D9EAC4E714CA729C2B92E0A26930B1AE74031B24088262D65FD0D3A41",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-closure",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-closure.rs",
+        "sourceSha256": "4B7D9824F2F199CC2B35BB8B621C05A145B4B0CD0675429BE5DCA473E8617ECC",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-generic-default",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-generic-default.rs",
+        "sourceSha256": "21D9887226127B25BE7E33F161B03F688C6B6FECE823A6ABA82583DE080B6ADC",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-unsupported-let-else",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-unsupported-let-else.rs",
+        "sourceSha256": "6735B73AEEB1FD7FA26B2F4653E330763047E1AFF5F2E489CC7D7B74DA0166E7",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-modules",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-modules.rs",
+        "sourceSha256": "C2D4613431B351ED886D8B7A96A2A4BC312374482888CD4504638A141FECB63B",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-expressions",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-expressions.rs",
+        "sourceSha256": "432BAE3936E4DD490897A0B2A3F43CFFA0F9E03606273E3C4ED77A0674570250",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-control",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-control.rs",
+        "sourceSha256": "6E292AEAF51D64C0A7AA40F10768CEB6745E0643D78BFA404EBF5FBD8E90E7B3",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-patterns",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-patterns.rs",
+        "sourceSha256": "25E024CC1B842D0C7879E6F9F4A665C9FE786B03D3B5E2DA4C84D5AFB825EFBA",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-closures",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-closures.rs",
+        "sourceSha256": "A0DCE7777A5F39DCD212AAFA0695802C4FDB4C2DB79F271791B055036C211D77",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-types",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-types.rs",
+        "sourceSha256": "C5C80F2925A57612CCDD71FEAB563E2B085B36184B0F9E4FF1A2C2AF2CE5B56A",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-traits",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-traits.rs",
+        "sourceSha256": "4A05D15B0260D89D316D6B8885544C4FCEAD53FA3E341A2AB6795241C86FD9A5",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-generics",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-generics.rs",
+        "sourceSha256": "8CCC80CC882808C0609EC513EAAFA71431C8E10472BF595FF9B67A2DB5AA779C",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-expanded-qualified",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-expanded-qualified.rs",
+        "sourceSha256": "C74F49CCB924558417FC579B554743BAE35B968637221826A3576F61AC486CA4",
+        "expected": "format-preserve"
+      },
+      {
+        "id": "syntax-excluded-async",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-excluded-async.rs",
+        "sourceSha256": "314B8EB28873CB98967702FF83FE554FF3EC935593177CF41AF33FA30C11A36B",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1003",
+        "diagnosticText": "async"
+      },
+      {
+        "id": "syntax-excluded-extern",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-excluded-extern.rs",
+        "sourceSha256": "B5DF69BFB945818C5A7553B29E32C924ED5B4B063C1990A9F27F0B1683D86639",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1003",
+        "diagnosticText": "extern"
+      },
+      {
+        "id": "syntax-excluded-macro",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-excluded-macro.rs",
+        "sourceSha256": "1E15AE5D155D2D547368C2EEA3F6C8EB4ACA261B6A0C57B7E3167FC2FC5B5312",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1003",
+        "diagnosticText": "!"
+      },
+      {
+        "id": "syntax-excluded-static",
+        "file": "tools/RustSharp.Conformance/fixtures/syntax-excluded-static.rs",
+        "sourceSha256": "B693224C4459DD429AC0E10C3D4885F9763B6AB596FB92403A4307521119BFAB",
+        "expected": "format-reject",
+        "diagnosticCode": "RSP1003",
+        "diagnosticText": "static"
+      }
+    ]
+  },
+  "documentation": {
+    "apis": [
+      "DocumentationModel.Create(SafeCoreSyntaxResult syntax, SafeCoreSourceMap sourceMap, DocumentationOptions options, CancellationToken cancellationToken) -> DocumentationResult",
+      "DocumentationRenderer.Render(DocumentationModel model, DocumentationOptions options, CancellationToken cancellationToken) -> DocumentationOutput",
+      "rsc doc <Cargo.toml>"
+    ],
+    "itemKinds": [
+      "module",
+      "function",
+      "struct",
+      "enum",
+      "type-alias",
+      "const",
+      "trait",
+      "associated-function",
+      "associated-type",
+      "associated-const",
+      "public-field",
+      "variant"
+    ],
+    "visibility": "public reachable items only; private and restricted items excluded; public reexports canonicalized",
+    "links": [
+      "crate-local-symbol",
+      "module-qualified-symbol",
+      "public-reexport",
+      "source-relative-path-and-span",
+      "https-external",
+      "missing-diagnostic",
+      "ambiguous-diagnostic",
+      "unsafe-scheme-rejected"
+    ],
+    "rendering": "UTF-8 HTML; encode text and attributes; stable ordinal item order; no raw HTML or script execution"
+  },
+  "cache": {
+    "apis": [
+      "IncrementalCacheKey.Create(IncrementalInputs inputs, CancellationToken cancellationToken) -> string",
+      "IncrementalPlan.Create(PackageGraph graph, IReadOnlyDictionary<string, string> previousKeys, IReadOnlyDictionary<string, string> currentKeys, CancellationToken cancellationToken) -> IncrementalPlan"
+    ],
+    "keyInputs": [
+      "cacheSchemaVersion",
+      "compilerVersion",
+      "compilerBinarySha256",
+      "profileId",
+      "profileVersion",
+      "profileManifestSha256",
+      "sourceLogicalPaths",
+      "sourceContentSha256",
+      "referenceAssemblyIdentity",
+      "referencePeSha256",
+      "referenceMetadataSha256",
+      "referenceClosure",
+      "cfg",
+      "features",
+      "rid",
+      "targetKind",
+      "assemblyName",
+      "entryPoint",
+      "panicStrategy",
+      "optimization",
+      "debugSymbols",
+      "languageEdition",
+      "sourcePathMap",
+      "emitterVersion",
+      "metadataSchemaVersion",
+      "workspaceLockSha256"
+    ],
+    "encoding": "schema-tagged length-prefixed UTF-8; ordinal sorted set inputs; content hashes; SHA-256",
+    "invalidation": "changed node and all reverse dependents; independent nodes retain valid entries; never mtime-only",
+    "excludedInputs": [
+      "wall-clock-time",
+      "process-id",
+      "physical-checkout-root-after-path-remap",
+      "input-enumeration-order"
+    ]
+  },
+  "artifacts": {
+    "determinismFields": [
+      "PE-bytes",
+      "portable-PDB-bytes",
+      "RustSharp-metadata-bytes",
+      "MVID",
+      "PDB-document-paths",
+      "PDB-document-sha256",
+      "reference-order",
+      "source-order",
+      "normalized-path-map",
+      "workspace-lock-sha256"
+    ],
+    "storage": "content-addressed verified entries; owned same-directory staging; atomic publish; two bounded writers; corrupted entries rejected",
+    "publication": "no partial committed results on failure, interruption, cancellation or budget exhaustion; clean and warm bytes equal"
+  },
+  "testTargets": {
+    "contract": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-08.01 --timeout 30 --deadline 120",
+    "formatter": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-08.02 --timeout 30 --deadline 120",
+    "documentation": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-08.03 --timeout 30 --deadline 120",
+    "incrementalKeys": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-08.04 --timeout 30 --deadline 120",
+    "incrementalArtifacts": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-08.05 --timeout 30 --deadline 120",
+    "workspace": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-08.06 --timeout 30 --deadline 120"
+  },
+  "cases": [
+    {
+      "id": "format-basic",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "Input fn main(){let x=1;x;} renders four-space indentation, LF and one final newline; AST remains equal."
+    },
+    {
+      "id": "format-comments",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "Leading, inline and trailing // and /* comments retain exact spelling and relative token order."
+    },
+    {
+      "id": "format-doc-comments",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "///, //!, /** and /*! documentation comments remain attached to the same module or item."
+    },
+    {
+      "id": "format-nested-comments",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "Input fn f(){/* outer /* inner */ tail */let x=1;} retains the entire nested block comment."
+    },
+    {
+      "id": "format-literals",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "Numeric suffixes, UTF-8/raw/byte/C strings and character literal tokens retain byte-for-byte spelling."
+    },
+    {
+      "id": "format-crlf",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "CRLF source formats to LF outside literals; CRLF inside raw-string tokens remains unchanged."
+    },
+    {
+      "id": "format-bom-shebang",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "A leading BOM and #!/usr/bin/env rsc shebang retain spelling and stay ahead of the first token."
+    },
+    {
+      "id": "format-check-drift",
+      "area": "formatter",
+      "expected": "reject",
+      "diagnosticCode": "RSTF1002",
+      "scenario": "--check on fn main(){let x=1;} returns nonzero drift and leaves the original source bytes unchanged."
+    },
+    {
+      "id": "format-idempotent",
+      "area": "formatter",
+      "expected": "pass",
+      "scenario": "Every accepted corpus source formats twice to identical bytes, AST, token spellings and ordered comment text."
+    },
+    {
+      "id": "format-budget",
+      "area": "formatter",
+      "expected": "reject",
+      "diagnosticCode": "RSTF0001",
+      "scenario": "Source/token/trivia/operation bounds at limit succeed and at limit plus one fail within ten seconds without rewriting."
+    },
+    {
+      "id": "doc-public-items",
+      "area": "documentation",
+      "expected": "pass",
+      "scenario": "Render module/function/struct/enum/alias/const/trait and public associated items, fields and variants in ordinal order."
+    },
+    {
+      "id": "doc-private-items",
+      "area": "documentation",
+      "expected": "pass",
+      "scenario": "Private, pub(crate), pub(self), pub(super), restricted and unreachable public items do not enter the public inventory."
+    },
+    {
+      "id": "doc-generics-signatures",
+      "area": "documentation",
+      "expected": "pass",
+      "scenario": "Function/trait signatures retain lifetimes, type/const parameters, bounds, where clauses and associated item signatures."
+    },
+    {
+      "id": "doc-source-links",
+      "area": "documentation",
+      "expected": "pass",
+      "scenario": "Each public item links to its exact relative .rs path and original UTF-16 span across external module files."
+    },
+    {
+      "id": "doc-local-links",
+      "area": "documentation",
+      "expected": "pass",
+      "scenario": "A /// See [crate::Widget] reference resolves to the canonical public Widget anchor and escaped href."
+    },
+    {
+      "id": "doc-cross-module-links",
+      "area": "documentation",
+      "expected": "pass",
+      "scenario": "Qualified module links and public reexports resolve canonical anchors; valid https://example.org links remain external."
+    },
+    {
+      "id": "doc-missing-link",
+      "area": "documentation",
+      "expected": "reject",
+      "diagnosticCode": "RSTD1001",
+      "scenario": "A /// See [crate::Missing] link emits a source-spanned diagnostic and publishes no partial documentation tree."
+    },
+    {
+      "id": "doc-ambiguous-link",
+      "area": "documentation",
+      "expected": "reject",
+      "diagnosticCode": "RSTD1002",
+      "scenario": "Two visible item kinds sharing the unqualified Widget link emit ambiguity with both candidate identities."
+    },
+    {
+      "id": "doc-malformed-comment",
+      "area": "documentation",
+      "expected": "reject",
+      "diagnosticCode": "RSL1014",
+      "scenario": "A documentation comment containing a bare carriage return diagnoses before rendering; prior output is preserved."
+    },
+    {
+      "id": "doc-escape-markup",
+      "area": "documentation",
+      "expected": "pass",
+      "scenario": "Comment text <script>alert(1)</script> and quotes/ampersands in link titles are HTML-encoded and cannot execute."
+    },
+    {
+      "id": "doc-unsafe-link",
+      "area": "documentation",
+      "expected": "reject",
+      "diagnosticCode": "RSTD1003",
+      "scenario": "javascript:, data:, file: and source paths escaping the workspace reject links before committing rendered outputs."
+    },
+    {
+      "id": "doc-budget",
+      "area": "documentation",
+      "expected": "reject",
+      "diagnosticCode": "RSTD0001",
+      "scenario": "Items/links/output/file/operation bounds at limit succeed and limit plus one rejects within ten seconds without publication."
+    },
+    {
+      "id": "cache-unchanged",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Graph A<-B plus independent C with identical content, compiler, profile, references, cfg, features and RID hits all entries."
+    },
+    {
+      "id": "cache-source",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Changing A source bytes with unchanged timestamps misses A and reverse dependent B; independent C retains its entry."
+    },
+    {
+      "id": "cache-compiler",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Changing compiler version or compiler binary SHA-256 invalidates every graph node even if the version label is reused."
+    },
+    {
+      "id": "cache-profile",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Changing profile ID, version or manifest SHA-256 invalidates all nodes using that exact profile."
+    },
+    {
+      "id": "cache-reference",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Changing referenced assembly identity, PE bytes, metadata bytes or transitive owner closure invalidates consumers and dependents."
+    },
+    {
+      "id": "cache-cfg",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Changing a selected cfg predicate or value invalidates affected package nodes and their reverse dependent closure."
+    },
+    {
+      "id": "cache-feature",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Changing default/optional/transitive unified features invalidates affected selected package nodes and reverse dependents."
+    },
+    {
+      "id": "cache-rid",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Switching win-x64 to linux-x64 never reuses prior target outputs, even for source-identical packages."
+    },
+    {
+      "id": "cache-reordered-inputs",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Reordering unique source/reference/cfg/feature set inputs produces the same key; distinct length-prefixed field boundaries remain distinct."
+    },
+    {
+      "id": "cache-dependent-closure",
+      "area": "incremental-keys",
+      "expected": "pass",
+      "scenario": "Diamond graph A<-B,C<-D plus E invalidates A/B/C/D exactly after A changes; target/assembly/entry/panic/optimization/debug/edition/path-map/emitter/schema/lock field changes affect their declared consumers."
+    },
+    {
+      "id": "artifact-clean-warm",
+      "area": "incremental-artifacts",
+      "expected": "pass",
+      "scenario": "Two clean builds and one verified warm build on each native RID produce byte-identical PE/PDB/metadata and deterministic MVID."
+    },
+    {
+      "id": "artifact-pdb-source-hashes",
+      "area": "incremental-artifacts",
+      "expected": "pass",
+      "scenario": "Portable PDB source document paths and SHA-256 hashes equal the mapped source documents in clean and warm builds."
+    },
+    {
+      "id": "artifact-metadata",
+      "area": "incremental-artifacts",
+      "expected": "pass",
+      "scenario": "RustSharp metadata/source ownership/reference order/source order and workspace lock hashes agree across independent builds."
+    },
+    {
+      "id": "artifact-path-remap",
+      "area": "incremental-artifacts",
+      "expected": "pass",
+      "scenario": "Equivalent physical checkouts with an identical logical source path map yield equal keys and PE/PDB/metadata bytes."
+    },
+    {
+      "id": "artifact-corruption",
+      "area": "incremental-artifacts",
+      "expected": "reject",
+      "diagnosticCode": "RSTI1001",
+      "scenario": "Truncated or modified PE/PDB/metadata/index entries fail content verification and cannot be reused as valid cache hits."
+    },
+    {
+      "id": "artifact-concurrent-writers",
+      "area": "incremental-artifacts",
+      "expected": "pass",
+      "scenario": "Exactly two owned bounded writers race one content key; readers observe one fully verified atomic entry and no staging data."
+    },
+    {
+      "id": "artifact-interruption",
+      "area": "incremental-artifacts",
+      "expected": "reject",
+      "diagnosticCode": "RSTI1002",
+      "scenario": "Interrupt a writer before atomic publication; no partial entry is accepted and its owned staging directory is reclaimed."
+    },
+    {
+      "id": "artifact-cancel",
+      "area": "incremental-artifacts",
+      "expected": "reject",
+      "diagnosticCode": "RSTI1003",
+      "scenario": "Cancellation before and during staging preserves prior committed outputs and reclaims all owned staging artifacts."
+    },
+    {
+      "id": "artifact-write-failure",
+      "area": "incremental-artifacts",
+      "expected": "reject",
+      "diagnosticCode": "RSTI1004",
+      "scenario": "Inject denied access or short write before publication; valid prior outputs remain intact and failure includes the affected path."
+    },
+    {
+      "id": "artifact-budget",
+      "area": "incremental-artifacts",
+      "expected": "reject",
+      "diagnosticCode": "RSTI0001",
+      "scenario": "Entry/output/operation/time budgets at limit succeed and limit plus one rejects without publishing partial committed results."
+    }
+  ]
+}
