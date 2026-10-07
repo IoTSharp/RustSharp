@@ -2,7 +2,42 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 04:58
+## Current checkpoint — 2026-10-08 05:22
+
+P2-06.02 now passes final candidate `29a8edaa6d63f1b7601159dedbe04decbeef989a`,
+tree `f4709c042009cf8da47a837dbfdb0014519f05ce`: fresh SDK401 Release zero
+warnings/errors, tiny1, binding14/14 and inherited contract8/8. P2 has 8/101
+✅ Complete leaves; P2-06 and P2 remain 🚧 In progress. Runtime imported calls,
+ordinary exports, real NuGet execution and two-platform AOT remain later leaves.
+Current registration1140 is separate from full execution. Archive:
+`docs/evidence/p2/P2-06.02*`; final physical proof and retained independent fixture:
+`artifacts/p2-supervision/interop-v4/`. All ten acceptance process ledgers exited.
+Earlier v1/v2 build failures and v3 pre-read-hardening passes remain preserved.
+
+The production CLI repair is committed and pushed as `f99907b`; expanded run
+`37686188538` has all six jobs successful. CI follow-up v9 reconciles 44 hashes,
+both 1126-case harnesses, actual mapped440/pending24 and physical matrix24.
+That SHA is independent from the new
+interop leaf and cannot establish its whole-candidate gates. P1 gates remain open.
+
+Native receipt v2 is frozen at `artifacts/p1-supervision/native-receipt-v2/`:
+syntax, patch applicability and 8/8 isolated utility controls pass; no actual
+ILVerify/AOT run is claimed. Preserve 28/30/28/2/7 and 36 stages. Next root work:
+review/integrate its original-PE captured-report bindings and the formal joint
+transport packet, resolve shared process cancellation/descendant cleanup gaps,
+then run actual native jobs and reconcile every same-SHA gate. Utility tests,
+synthetic metadata and prior SHA reports cannot replace these obligations.
+Root completed final source/build/worker cross-validation for P2-06.02: 691 exact
+compiler inputs, seven assemblies, 23 executed worker identities and three
+reference hashes. The last independent report was not published before its
+deadline; retain that incomplete audit and the successful root cross-check
+without relabelling it as an independent final report. The shared-process review
+plan is `artifacts/p1-supervision/process-cancellation-review-v1/REVIEW-PLAN.md`;
+its checkpoint write failed and root saved the resumption record. No runtime
+process-containment proof is claimed.
+Keep user `tmp/`, retained artifacts and the sole ACTIVE thirty-minute heartbeat.
+
+## Historical checkpoint — 2026-10-08 04:58
 
 P2 remains 7/101 ✅ Complete leaves; P1-GATE.01–.03 remain 🚧 In progress and
 .04–.06 remain ⏳ Planned. Remote candidate `723ab72178911b24ecdf6b6a31d9f94b646fcce1`

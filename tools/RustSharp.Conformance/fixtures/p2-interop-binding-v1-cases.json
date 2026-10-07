@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "profile": "dotnet-interop-v1",
+  "leafId": "P2-06.02",
+  "contractSha256": "AFA13CE319C44DB2E0A9BF6F81DE65D8929656AFEC20AF241C6AB03D5B689C56",
+  "denominator": 14,
+  "runtimeEvidence": false,
+  "validationCommand": "dotnet tests/RustSharp.Tests/bin/Release/net10.0/RustSharp.Tests.dll --filter \"P2 interop binding\" --timeout 30 --deadline 1200",
+  "cases": [
+    {
+      "id": "import-static-add",
+      "family": "import-syntax",
+      "outcome": "admit",
+      "expected": "one exact metadata-bound Add signature"
+    },
+    {
+      "id": "import-missing-identity",
+      "family": "import-syntax",
+      "outcome": "reject",
+      "expected": "RSDN1001"
+    },
+    {
+      "id": "import-duplicate-alias",
+      "family": "import-syntax",
+      "outcome": "reject",
+      "expected": "RSDN1002"
+    },
+    {
+      "id": "overload-exact-i32",
+      "family": "overload-binding",
+      "outcome": "admit",
+      "expected": "only the declared i32 overload binds"
+    },
+    {
+      "id": "overload-ambiguous",
+      "family": "overload-binding",
+      "outcome": "reject",
+      "expected": "RSDN1004"
+    },
+    {
+      "id": "overload-wrong-argument",
+      "family": "overload-binding",
+      "outcome": "reject",
+      "expected": "RSDN1005"
+    },
+    {
+      "id": "generic-closed-identity",
+      "family": "generic-mapping",
+      "outcome": "admit",
+      "expected": "closed static identity returns 42"
+    },
+    {
+      "id": "generic-invalid-constraint",
+      "family": "generic-mapping",
+      "outcome": "reject",
+      "expected": "RSDN1006"
+    },
+    {
+      "id": "generic-open-argument",
+      "family": "generic-mapping",
+      "outcome": "reject",
+      "expected": "RSDN1006"
+    },
+    {
+      "id": "visibility-public-static",
+      "family": "visibility",
+      "outcome": "admit",
+      "expected": "member binds without access bypass"
+    },
+    {
+      "id": "visibility-private-member",
+      "family": "visibility",
+      "outcome": "reject",
+      "expected": "RSDN1003"
+    },
+    {
+      "id": "visibility-instance-without-adapter",
+      "family": "visibility",
+      "outcome": "reject",
+      "expected": "RSDN1010"
+    },
+    {
+      "id": "exclusion-unmanaged-abi",
+      "family": "exclusions",
+      "outcome": "reject",
+      "expected": "RSDN1010"
+    },
+    {
+      "id": "exclusion-unlisted-member",
+      "family": "exclusions",
+      "outcome": "reject",
+      "expected": "RSDN1005"
+    }
+  ],
+  "integration": {
+    "compilerFiles": [
+      "DotNetImportModels.cs",
+      "DotNetImportParser.cs",
+      "DotNetImportBinding.cs"
+    ],
+    "testFile": "P2InteropBindingTests.cs",
+    "fixtureProject": "tests/RustSharp.InteropFixtures/InteropFixtures.csproj",
+    "fixtureSource": "tests/RustSharp.InteropFixtures/Fixtures.cs",
+    "programRegistration": "tests = [.. tests, .. P2InteropBindingTests.All];",
+    "docs": [
+      "docs/p2-interop-binding-v1.md",
+      "docs/p2-interop-binding-v1_zh.md"
+    ],
+    "patch": "interop-integration.patch"
+  }
+}

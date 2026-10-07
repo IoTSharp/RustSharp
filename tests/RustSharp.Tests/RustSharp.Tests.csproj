@@ -11,5 +11,6 @@
     <ProjectReference Include="../../src/RustSharp.Runtime/RustSharp.Runtime.csproj" />
     <ProjectReference Include="../../src/RustSharp.Semantics/RustSharp.Semantics.csproj" />
     <ProjectReference Include="../../tools/RustSharp.Conformance/RustSharp.Conformance.csproj" />
+    <ProjectReference Include="../RustSharp.InteropFixtures/InteropFixtures.csproj" />
   </ItemGroup>
 </Project>

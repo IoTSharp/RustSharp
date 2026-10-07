@@ -12,6 +12,11 @@ namespace RustSharp.Compiler;
 
 public sealed class CompilerDriver
 {
+    /// <summary>Checks explicit managed import declarations against locked PE metadata.</summary>
+    public static DotNetImportBindingResult CheckDotNetImports(string source, string sourcePath,
+        IReadOnlyList<DotNetReferenceLock> references, CancellationToken cancellationToken = default) =>
+        DotNetImportBinding.Bind(source, sourcePath, references, cancellationToken);
+
     private const int MaximumSourceBytes = 16 * 1024 * 1024;
     private const int SourceReadBufferBytes = 64 * 1024;
     // The sidecar lock is intentionally bounded. A compiler invocation that

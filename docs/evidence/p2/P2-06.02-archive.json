@@ -1,0 +1,59 @@
+{
+  "contractDenominator": 36,
+  "buildErrors": 0,
+  "passed": 14,
+  "nugetPackageExecutionClaim": false,
+  "skipped": 0,
+  "archivedHarnessSha256": "E3EB676145E93350DE98E3AC0F593BD4692E7D91025944BEE9D3CE3BAB20FD1C",
+  "failed": 0,
+  "denominator": 14,
+  "fullHarnessExecutionClaim": false,
+  "oldContractChecks": 8,
+  "candidateTreeSha": "f4709c042009cf8da47a837dbfdb0014519f05ce",
+  "registeredDenominator": 1140,
+  "fixtureSha256": "EAE3734859C6BD26E06ED53802BE9BAD1C272D84956BC8F199238BB2F0EBE0F5",
+  "reports": [
+    {
+      "path": "artifacts/p2-supervision/interop-v4/source-snapshot.json",
+      "sha256": "7D5BD6586D2407A01B5557446C23F8E63E1690D16F45B5868AEFCE4CCE729DC3"
+    },
+    {
+      "path": "artifacts/p2-supervision/interop-v4/release-build.json",
+      "sha256": "71DF41451CF1374B197B7AD95DA50CEC0D6ECDD0F0930C7BDF890549D4FDC745"
+    },
+    {
+      "path": "artifacts/p2-supervision/interop-v4/tiny-harness.json",
+      "sha256": "54C63A748C33B04336564809D9C96E1D843F1282812C7552BD13734B39302D54"
+    },
+    {
+      "path": "artifacts/p2-supervision/interop-v4/binding-harness.json",
+      "sha256": "1A14E1CC9F0EF093C6125C07AC9C7EB340D7E9531C6CD35960F30310B6314EFB"
+    },
+    {
+      "path": "artifacts/p2-supervision/interop-v4/contract-harness.json",
+      "sha256": "609512D447C228E34D9E675352B079FFBA8E36C59ED2FB5D209E3170C38E4982"
+    },
+    {
+      "path": "artifacts/p2-supervision/interop-v4/fixture-references.json",
+      "sha256": "422D02D1BCB0628E343649B5CF9499CC89C8408FD925A3EA0E96957679E966FC"
+    },
+    {
+      "path": "artifacts/p2-supervision/interop-v4/root-resource-review.json",
+      "sha256": "B2B7849DD49695538DD3C6599E2E550A109B1273740478D9264A648FA50C4FA3"
+    },
+    {
+      "path": "artifacts/p2-supervision/interop-v4/final-source-build-worker-review.json",
+      "sha256": "DC04A982AEF079CCE17DFF2FCDC6416495A8AAA44736430B704A118553C11E82"
+    }
+  ],
+  "generatedImportedCallEvidence": false,
+  "scope": "declaration syntax and locked PE metadata/signature binding",
+  "candidateSha": "29a8edaa6d63f1b7601159dedbe04decbeef989a",
+  "blocked": 0,
+  "runtimeEvidence": false,
+  "buildWarnings": 0,
+  "schemaVersion": 1,
+  "leafId": "P2-06.02",
+  "finalRootCrossValidationAccepted": true,
+  "finalIndependentReportPublished": false
+}

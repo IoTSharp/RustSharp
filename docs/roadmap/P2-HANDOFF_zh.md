@@ -2,7 +2,36 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 04:58
+## 当前检查点 — 2026-10-08 05:22
+
+P2-06.02 最终候选 `29a8edaa6d63f1b7601159dedbe04decbeef989a`，tree
+`f4709c042009cf8da47a837dbfdb0014519f05ce`，新鲜 SDK401 Release 零警告/零错误，
+tiny1、binding14/14 及继承 contract8/8 均通过。P2 达到 8/101 个 ✅ 已完成叶项；
+P2-06 和 P2 仍为 🚧 进行中。运行导入调用、普通导出、真实 NuGet 执行及双平台
+AOT 仍属于后续叶项。当前注册数 1140 与完整执行分别记录。归档：
+`docs/evidence/p2/P2-06.02*`；最终物理证明及保留的独立夹具：
+`artifacts/p2-supervision/interop-v4/`。十个验收进程台账均已退出。
+此前 v1/v2 构建失败及 v3 读取加固前通过记录仍保留。
+
+生产 CLI 修复已提交并推送为 `f99907b`；expanded run `37686188538` 六个 job
+均通过。CI follow-up v9 对账 44 个 hash、两个 1126 例 harness、真实映射
+440/pending24 及物理矩阵 24。该 SHA 与新互操作
+叶项独立，不能证明其整体候选门禁。P1 门禁仍保持开放。
+
+Native receipt v2 冻结于 `artifacts/p1-supervision/native-receipt-v2/`：语法、补丁
+适用性及 8/8 隔离工具控制通过；未声明真实 ILVerify/AOT 运行。保留 28/30/28/2/7
+及 36 个阶段。root 下一步：审查/接入原始 PE 捕获报告绑定及正式 joint transport
+packet，解决共享进程取消/后代清理缺口，再执行真实 native jobs 并逐项对账同 SHA
+门禁。工具测试、合成元数据及旧 SHA 报告不能替代这些义务。
+root 已完成 P2-06.02 最终源码/构建/worker 交叉验证：691 个精确编译输入、七个
+程序集、23 个真实 worker 身份及三个引用 hash。最后的独立报告未在期限前发布；
+保留该未完成审阅和成功的 root 交叉检查，不把它改称独立最终报告。共享进程审阅
+方案为 `artifacts/p1-supervision/process-cancellation-review-v1/REVIEW-PLAN.md`；
+其检查点写入失败，root 已保存接续记录。未声明运行时进程 containment 证明。
+保留用户 `tmp/`、
+交付物和唯一 ACTIVE 半小时 heartbeat。
+
+## 历史检查点 — 2026-10-08 04:58
 
 P2 仍为 7/101 个 ✅ 已完成叶项；P1-GATE.01–.03 仍为 🚧 进行中，
 .04–.06 仍为 ⏳ 计划中。远程候选 `723ab72178911b24ecdf6b6a31d9f94b646fcce1`

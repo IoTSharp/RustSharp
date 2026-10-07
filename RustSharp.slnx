@@ -8,6 +8,7 @@
     <Project Path="src/RustSharp.Cli/RustSharp.Cli.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/RustSharp.InteropFixtures/InteropFixtures.csproj" />
     <Project Path="tests/RustSharp.Tests/RustSharp.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
