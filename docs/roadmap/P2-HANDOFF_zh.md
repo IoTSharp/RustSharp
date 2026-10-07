@@ -18,7 +18,8 @@ PowerShell 7、有界循环／搜索／命令、进程身份与清理、工具�
 
 ## 前置项审计
 
-P2 为 🚧 进行中。P1-GATE 仍为 ⏳ 计划中；不声明 P2 阶段闭环。
+P2 为 🚧 进行中。P1-GATE.01–.03 为 🚧 进行中，.04–.06 仍为 ⏳ 计划中；
+不声明 P1/P2 阶段闭环。
 源码提交 `0c5d80f623ab263682ed36c47f3e9182e23374f9` 的公开检查均为 ❌ 失败：
 
 | 检查 | 证据 |
@@ -80,3 +81,22 @@ Release 构建零警告／零错误；当前注册数为 1005（继承的 969 �
 自动审批拒绝了组合 ZIP 提取／删除，仅返回 `blocked by policy`；安全只读提取成功。
 40,140,758 字节的 `archive.stdout.log` 仍保留于该目录；不得绕过拒绝或声称 ZIP 已删除。
 三个下载／网络进程 PID 52444、23432 和 42364 均已退出。
+
+## P1 整改派单
+
+已验收的 P2 提交为 `3aa7c00`（P2-04.01）、`867a62a`（P2-06.01）和
+`2075ebe`（P2-08.01）。这些清单是设计清册；后续实现叶子仍未关闭。
+三个工作智能体已明确重新分派到 P1：
+
+| 工作 | 状态 | 预留所有权 |
+| --- | --- | --- |
+| ILVerify 运行时引用 | 🚧 进行中 | `cargo_p2`：`eng/Invoke-ILVerify.ps1`、`eng/Test-ILVerifyRuntimeReference.ps1`；真实生成 PE、缺失／错误 sidecar 和旧案例。 |
+| native Drop/展开闭环 | 🚧 进行中 | `prerequisite_audit`：CLR LIR/发射器及程序集元数据、MIR Drop 降低、`CompilerDriver.cs`、`GeneratedPanic.cs`、Drop 差分运行器、新 native-v2/v5 配置档／文档／测试。 |
+| 精确 P1 需求／证据映射 | 🚧 进行中 | `tooling_p2`：`P1GateCoverageContract.cs`、`p1-gate-coverage-v1-manifest.json`、`P1GateCoverageContractTests.cs`；最多十项新增注册。 |
+
+保留旧 v1 Drop 和 v4 运行器入口。Native-v2 必须是具名、可观察的生产选择，保留父／子
+异常链并通过真实生成程序检查；不授权输出字符串特判或批准新差异。门禁映射必须使用
+冻结的可执行、仅检查及拒绝分类与真实证据，不能用 40/160 清册或通用平台样本替代
+缺失覆盖。REQ034 和 REQ040 是聚合／平台边界，不得引入前置依赖环。
+映射验收并单独提交后，将 `tooling_p2` 转到十九项源码包运行器的同 SHA 来源绑定和
+严格验证器。root 负责共享门禁／报告／CI／CLI 注册及串行验证。

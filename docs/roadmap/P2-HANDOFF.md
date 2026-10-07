@@ -23,7 +23,8 @@ prohibition in every assignment. Preserve the pre-existing untracked `tmp/`.
 
 ## Prerequisite audit
 
-P2 is 🚧 In progress. P1-GATE remains ⏳ Planned; no P2 phase closure is claimed.
+P2 is 🚧 In progress. P1-GATE.01–.03 are 🚧 In progress and .04–.06 remain
+⏳ Planned; no P1/P2 phase closure is claimed.
 At source commit `0c5d80f623ab263682ed36c47f3e9182e23374f9`, the published checks
 were ❌ Failed:
 
@@ -96,3 +97,26 @@ combined ZIP extraction/deletion with only `blocked by policy`; safe read-only
 extraction succeeded. The 40,140,758-byte `archive.stdout.log` remains there;
 do not bypass that rejection or claim the ZIP was removed. The three download/
 network process IDs 52444, 23432, and 42364 exited.
+
+## P1 corrective assignments
+
+The accepted P2 commits are `3aa7c00` (P2-04.01), `867a62a` (P2-06.01), and
+`2075ebe` (P2-08.01). Their manifests are design inventories; later implementation
+leaves remain open. Three workers were explicitly reassigned to P1:
+
+| Work | Status | Reserved ownership |
+| --- | --- | --- |
+| ILVerify runtime reference | 🚧 In progress | `cargo_p2`: `eng/Invoke-ILVerify.ps1`, `eng/Test-ILVerifyRuntimeReference.ps1`; real generated PE, missing/wrong sidecar and legacy cases. |
+| Native Drop/unwind closure | 🚧 In progress | `prerequisite_audit`: CLR LIR/emitter and assembly metadata, MIR Drop lowering, `CompilerDriver.cs`, `GeneratedPanic.cs`, Drop differential runner, new native-v2/v5 profile/docs/tests. |
+| Exact P1 requirement/evidence mapping | 🚧 In progress | `tooling_p2`: `P1GateCoverageContract.cs`, `p1-gate-coverage-v1-manifest.json`, `P1GateCoverageContractTests.cs`; at most ten new registrations. |
+
+Preserve the old v1 Drop and v4 runner entry points. Native-v2 must be a named,
+observable production choice, retain the parent/child exception chain, and pass
+real generated program checks; no trace-string workaround or newly approved
+divergence is authorized. The gate mapping must use the frozen executable,
+check-only and rejection categories and real evidence, not substitute the
+40/160 catalogue or a generic platform fixture for missing coverage. REQ034 and
+REQ040 are aggregate/platform boundaries and must not create prerequisite cycles.
+After accepting and separately committing the mapping, reassign `tooling_p2`
+to the 19-case source-package runner's same-SHA provenance and strict validator.
+Root owns shared gate/report/CI/CLI registrations and serial validation.
