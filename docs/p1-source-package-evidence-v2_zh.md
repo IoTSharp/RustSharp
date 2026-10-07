@@ -67,3 +67,5 @@ internal static class EntryPoint { private static void Main() => global::RustSha
 dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --p1-source-package-candidate <manifest> <report> <1..19> <candidateSHA> <source-snapshot.json> <release-build.json>
 dotnet tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll --validate-p1-source-package-candidate <report> <candidateSHA> <treeSHA> <win-x64|linux-x64>
 ```
+
+✅ 已完成：Windows 原生执行在候选 `93e60b2e3881bb13e5a836271739aaae944e13af`、tree `adcf297f7780b2ada00e5f5f745c501f714a926c` 上通过全部 19 个用例及 39 个原始 PE 的 ILVerify 验证。CoreCLR 和 NativeAOT 实际执行生成程序，满足冻结的输出和退出结果。生产实物验证器报告 `Valid=true`、`ArtifactContentVerified=true`、`SatisfiesGate=true`，且没有错误。[原生报告](evidence/p1/source-package-native-win-v1.json)、[验证回执](evidence/p1/source-package-native-win-v1.validation.json)与[原始／归档哈希](evidence/p1/source-package-native-win-v1.archive.json)保留本地证明。运行器与验证器均以零退出并完成回收；所属临时目录已不存在，原始审阅产物保留于 `artifacts/p1-source-package/`。仍需独立 Linux 执行及同 SHA 的 CI 聚合；P1-GATE.03 保持 🚧 进行中。

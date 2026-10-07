@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-source-package-native-proof-archive",
+  "candidateSha": "93e60b2e3881bb13e5a836271739aaae944e13af",
+  "candidateTreeSha": "adcf297f7780b2ada00e5f5f745c501f714a926c",
+  "runtimeIdentifier": "win-x64",
+  "fullP1Closure": false,
+  "summary": {
+    "status": "passed",
+    "denominator": 19,
+    "passed": 19,
+    "failed": 0,
+    "blocked": 0,
+    "notExecuted": 0,
+    "maximumSelectedCases": 19,
+    "succeeded": true
+  },
+  "originalPeDenominator": 39,
+  "recordedProcesses": 100,
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "artifacts": [
+    {
+      "sourcePath": "artifacts/p1-source-package/supervision-candidate-full-v1.json",
+      "sourceSha256": "F6B7CA47D07E32F2A6AD2202E6A84C5E1354FEFE00A5F957E1EA09A846D9D64E",
+      "archivedPath": "docs/evidence/p1/source-package-native-win-v1.json",
+      "archivedSha256": "154B69F4146F849BBB1F1BA01D78971B9036690CA746E37653E5E858B3867F93"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/native-trials-v2/source-package-full-validation.stdout.log",
+      "sourceSha256": "83B40C6339CB9B5F3B60541FA30090CAB761926A659887E4335065AEE282D90A",
+      "archivedPath": "docs/evidence/p1/source-package-native-win-v1.validation.json",
+      "archivedSha256": "8C80CFB934533958AC8DCF8D98E87A28756B0E8EAA16CE3A2537E7C006527A22"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/native-trials-v2/source-package-full-validation.process.json",
+      "sourceSha256": "7A575B923F9C9198E8854B6AF00F6B02946D9F254F7CB256EBBF624F45F151F4",
+      "archivedPath": "docs/evidence/p1/source-package-native-win-v1.validation-process.json",
+      "archivedSha256": "A870F3FBF3AAC256963C62A8A917929EDD2AE7B306BD9C3FC0FE8BB53CCC52B9"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/native-trials-v2/source-package-full.process.json",
+      "sourceSha256": "8848584C13274531602A8D8675F3311B525EFA52CE4BA71983F03252873EF2C5",
+      "archivedPath": "docs/evidence/p1/source-package-native-win-v1.execution-process.json",
+      "archivedSha256": "D026F1DB0AA02D0062C47C35FA4AE71E6E5CEBB2FAD0D56F59668102D8BAA431"
+    }
+  ]
+}

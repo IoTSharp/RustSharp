@@ -1,0 +1,23 @@
+{
+  "Pid": 73192,
+  "ParentPid": 80616,
+  "StartedAt": "2026-10-08T02:44:01.0567646+08:00",
+  "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+  "Arguments": [
+    "tools/RustSharp.Conformance/bin/Release/net10.0/RustSharp.Conformance.dll",
+    "--validate-p1-source-package-candidate",
+    "artifacts/p1-source-package/supervision-candidate-full-v1.json",
+    "93e60b2e3881bb13e5a836271739aaae944e13af",
+    "adcf297f7780b2ada00e5f5f745c501f714a926c",
+    "win-x64"
+  ],
+  "WorkingDirectory": "D:\\GitHub\\RustSharp",
+  "TimeoutSeconds": 130,
+  "MaximumAttempts": 1,
+  "MaximumOutputBytes": 16777216,
+  "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\native-trials-v2\\source-package-full-validation",
+  "FinishedAt": "2026-10-08T02:44:08.9603590+08:00",
+  "ExitCode": 0,
+  "CleanupComplete": true,
+  "Failure": null
+}
