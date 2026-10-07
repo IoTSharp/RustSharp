@@ -2,7 +2,42 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 06:28
+## Current checkpoint — 2026-10-08 06:59
+
+Accepted commits this slice: `9265057` receipt diagnostics (trial1/fixed3 and
+publication8); `64b3046` guarded NativeV5 producer integration (utility1/8,
+actual native execution0); `e0fb26b` formatter integration. Final formatter
+candidate `103d9a5b952cf852468dab511b244e67193895ae`, tree
+`ebe90aaf0b0c379a6973125edca30572773ba171`, binds703 inputs and passes fresh
+SDK401 Release zero warnings/errors, trial1, formatter59 and inherited tooling18.
+Actual Windows/Ubuntu CLI8 each pass with owned fixtures removed, including real
+Unix executable mode on the exclusive ext4 fixture. P2-08.02 is 🚧 In progress:
+actual CLI cancellation/deadline/source-change controls remain open. P2 remains
+8/101 ✅ Complete leaves; no parent or phase closes. Registration1203 is separate
+from full execution. Retain Ubuntu raw proof at the exclusive path recorded by
+`artifacts/p2-supervision/formatter-root-v5/linux-delivery.json` and its copied
+hashed proof. Latest Git/CI/resumption state is in that directory's `resumption.json`.
+
+CI v13 reconciles old e90 and new33b153a independently; run37696451049 has six
+successful jobs, Windows/Linux1144/1144,694 inputs and physical24-cell matrix.
+These older-SHA proofs cannot close this slice's new code. NativeV5 workflow/
+transport30/joint12 wiring and C# final I/O-clock patch still await integration.
+Read `joint-native-readiness-v1/HANDOFF.md` and the partial producer record.
+Root completed the worker's failed final PID/sandbox check; no task identity
+remained. CI audit's original90-file bound was exceeded and preserved as such;
+the separately authorized250-file final stage records206 distinct files (232
+conservative upper bound). Seventeen recorded CI launcher identities exited.
+
+Formatter failed builds v1–v3 and the v4 path-prefix failure remain preserved.
+Root fixed analyzer types/cancellation order, retained the independent public
+property oracle with96 static AST type roots, and normalized the Windows corpus
+prefix without weakening directory checks. Worker review predates final v5;
+do not present it as independent final acceptance. Next push the accepted code,
+dispatch once at the final SHA, reconcile CI, finish real formatter cancellation/
+race controls and NativeV5/joint gates. Preserve user tmp and the sole ACTIVE
+thirty-minute heartbeat; all six P1 phase gates remain open.
+
+## Historical checkpoint — 2026-10-08 06:28
 
 ✅ Complete for the verifier-reference retention repair. Final candidate
 `b404f0dd62cb0368159c319e67ba98e6542eb2c4`, tree

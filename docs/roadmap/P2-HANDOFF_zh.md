@@ -2,7 +2,34 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 06:28
+## 当前检查点 — 2026-10-08 06:59
+
+本轮已验收提交：`9265057` 回执诊断（trial1/fixed3及publication8）；`64b3046`
+有界NativeV5 producer接入（utility1/8，真实native执行0）；`e0fb26b` formatter接入。
+最终formatter候选 `103d9a5b952cf852468dab511b244e67193895ae`、tree
+`ebe90aaf0b0c379a6973125edca30572773ba171` 绑定703输入，新鲜SDK401 Release
+零警告/零错误，trial1、formatter59及既有tooling18通过。Windows/Ubuntu真实CLI各8项
+通过且自有夹具已移除，包括独占ext4夹具的真实Unix可执行权限。P2-08.02为 🚧 进行中，
+实际CLI取消/截止/源码变化控制仍开放。P2仍为8/101个 ✅ 已完成叶项，不关闭父项或
+阶段。注册1203与完整执行分开记录。保留
+`artifacts/p2-supervision/formatter-root-v5/linux-delivery.json` 记录的独占Ubuntu
+原始证明及其复制/哈希证明。最新Git/CI/接续状态保存在该目录 `resumption.json`。
+
+CI v13分别对账旧e90及新33b153a，run37696451049六个job通过，Windows/Linux
+1144/1144、694输入及物理24单元矩阵。这些旧SHA证明不能关闭本轮新代码。
+NativeV5工作流/transport30/joint12接线及C#最终I/O时钟patch仍待接入。
+读取 `joint-native-readiness-v1/HANDOFF.md` 及部分producer记录。root补完worker
+失败的最终PID/沙箱检查，未发现任务身份残留。CI审计原90文件上限越界已如实保留；
+另行授权的250文件最终阶段记录206个独立文件（保守上界232）。17个已记录CI启动
+进程身份均已退出。
+
+Formatter v1–v3构建失败及v4路径前缀失败均保留。root修正analyzer类型/取消参数顺序，
+以96个静态AST类型根保留独立公开属性oracle，并规范Windows corpus前缀且不放宽
+目录检查。worker审阅早于最终v5，不将其当独立最终验收。下一步推送已验收代码，
+在最终SHA仅调度一次并对账CI，完成真实formatter取消/竞争控制及NativeV5/joint门禁。
+保留用户tmp及唯一ACTIVE半小时heartbeat；六个P1阶段门禁均保持开放。
+
+## 历史检查点 — 2026-10-08 06:28
 
 验证器引用留存修复为 ✅ 已完成。最终候选
 `b404f0dd62cb0368159c319e67ba98e6542eb2c4`、tree
