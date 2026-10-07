@@ -458,6 +458,7 @@ finally {
         [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($reportFullPath)) | Out-Null
         $report = [ordered]@{
             SchemaVersion = 1
+            candidateSha = if ([string]::IsNullOrWhiteSpace($env:GITHUB_SHA)) { $env:CI_COMMIT_SHA } else { $env:GITHUB_SHA }
             EvidenceKind = 'p1-platform-coreclr-ilverify-native-aot'
             Profile = 'p1-differential-v2'
             Platform = [ordered]@{

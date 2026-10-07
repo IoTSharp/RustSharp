@@ -206,6 +206,8 @@ internal static class P1DifferentialProfileRunner
         string? CleanupDiagnostic,
         string? HarnessError)
     {
+        public string? CandidateSha { get; init; }
+
         [JsonPropertyName("manifest")]
         public ManifestEvidence? ManifestEvidence { get; init; }
 
@@ -472,6 +474,7 @@ internal static class P1DifferentialProfileRunner
         string compilerPath = Path.Combine(root, "src", "RustSharp.Cli", "bin", "Release", "net10.0", "rsc.dll");
         var report = new Report(profile == ProfileV2Name ? 2 : 1, "p1-source-borrow-drop-differential", profile, finishedAtUtc, relativeManifestPath, manifestSha, manifestBytes, manifest is not null, manifestError, oracle, rustSharp, host, effectiveTimeout.TotalSeconds, effectiveDeadline.TotalSeconds, summary, cases, startedAtUtc, finishedAtUtc, harnessClock.Elapsed.TotalMilliseconds, cancellation.IsCancellationRequested, cleanupDiagnostic, harnessError)
         {
+            CandidateSha = Environment.GetEnvironmentVariable("GITHUB_SHA") ?? Environment.GetEnvironmentVariable("CI_COMMIT_SHA"),
             ManifestEvidence = new(relativeManifestPath, manifestSha, denominator, manifest is not null),
             CompilerEvidence = new(compilerPath, ComputeSha256IfPresent(compilerPath), CompilerProfile),
             PlatformEvidence = new(host.RuntimeIdentifier, host.RuntimeIdentifier),

@@ -13,8 +13,13 @@ jobs:
   windows-x64:
     runs-on: windows-2025
     timeout-minutes: 45
+    env:
+      GITHUB_SHA: ${{ github.sha }}
+      CI_COMMIT_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - name: Set up .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
@@ -80,7 +85,7 @@ jobs:
           }
           if (-not (Test-Path -LiteralPath $report -PathType Leaf)) {
             [ordered]@{
-              schemaVersion = 2; evidenceKind = 'p1-differential'; profile = 'p1-differential-v2'
+              schemaVersion = 2; evidenceKind = 'p1-differential'; profile = 'p1-differential-v2'; candidateSha = $env:GITHUB_SHA
               oracle = [ordered]@{ available = $false; requestedVersion = '1.98.0'; diagnostic = 'Differential process did not produce a report.' }
               summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 16; executed = 0; passed = 0; failed = 0; blocked = 16; skipped = 0; borrowDenominator = 10; dropDenominator = 6 }
               harnessError = "Differential process exited with code $code without producing evidence."
@@ -112,7 +117,7 @@ jobs:
           try { & dotnet @arguments; $code = $LASTEXITCODE }
           catch { Write-Warning $_.Exception.Message }
           if (-not (Test-Path -LiteralPath $report -PathType Leaf)) {
-            [ordered]@{ schemaVersion = 2; evidenceKind = 'safe-core-typed-mir-regression'; profile = 'safe-core-regression-v3'; summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 26; executed = 0; passed = 0; failed = 0; blocked = 26; skipped = 0 }; harnessError = "Regression process exited with code $code without producing evidence." } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $report -Encoding utf8
+            [ordered]@{ schemaVersion = 2; evidenceKind = 'safe-core-typed-mir-regression'; profile = 'safe-core-regression-v3'; candidateSha = $env:GITHUB_SHA; summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 26; executed = 0; passed = 0; failed = 0; blocked = 26; skipped = 0 }; harnessError = "Regression process exited with code $code without producing evidence." } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $report -Encoding utf8
           }
           exit $code
 
@@ -127,8 +132,13 @@ jobs:
   linux-x64:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    env:
+      GITHUB_SHA: ${{ github.sha }}
+      CI_COMMIT_SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - name: Set up .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
@@ -200,7 +210,7 @@ jobs:
           }
           if (-not (Test-Path -LiteralPath $report -PathType Leaf)) {
             [ordered]@{
-              schemaVersion = 2; evidenceKind = 'p1-differential'; profile = 'p1-differential-v2'
+              schemaVersion = 2; evidenceKind = 'p1-differential'; profile = 'p1-differential-v2'; candidateSha = $env:GITHUB_SHA
               oracle = [ordered]@{ available = $false; requestedVersion = '1.98.0'; diagnostic = 'Differential process did not produce a report.' }
               summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 16; executed = 0; passed = 0; failed = 0; blocked = 16; skipped = 0; borrowDenominator = 10; dropDenominator = 6 }
               harnessError = "Differential process exited with code $code without producing evidence."
@@ -232,7 +242,7 @@ jobs:
           try { & dotnet @arguments; $code = $LASTEXITCODE }
           catch { Write-Warning $_.Exception.Message }
           if (-not (Test-Path -LiteralPath $report -PathType Leaf)) {
-            [ordered]@{ schemaVersion = 2; evidenceKind = 'safe-core-typed-mir-regression'; profile = 'safe-core-regression-v3'; summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 26; executed = 0; passed = 0; failed = 0; blocked = 26; skipped = 0 }; harnessError = "Regression process exited with code $code without producing evidence." } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $report -Encoding utf8
+            [ordered]@{ schemaVersion = 2; evidenceKind = 'safe-core-typed-mir-regression'; profile = 'safe-core-regression-v3'; candidateSha = $env:GITHUB_SHA; summary = [ordered]@{ status = 'blocked'; exitCode = 2; denominator = 26; executed = 0; passed = 0; failed = 0; blocked = 26; skipped = 0 }; harnessError = "Regression process exited with code $code without producing evidence." } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $report -Encoding utf8
           }
           exit $code
 
@@ -253,6 +263,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - name: Download Windows P1 evidence
         if: always()
         continue-on-error: true
@@ -308,6 +320,7 @@ jobs:
             -WindowsRegressionReport artifacts/p1-platform/windows/windows-x64-safe-core-regression-v3.json `
             -LinuxRegressionReport artifacts/p1-platform/linux/linux-x64-safe-core-regression-v3.json `
             -RegressionProfile safe-core-regression-v3 `
+            -CandidateSha '${{ github.sha }}' `
             -EvidencePath artifacts/p1-platform/p1-exit-gate.json
           $code = $LASTEXITCODE
           if (-not (Test-Path -LiteralPath artifacts/p1-platform/p1-exit-gate.json -PathType Leaf)) {

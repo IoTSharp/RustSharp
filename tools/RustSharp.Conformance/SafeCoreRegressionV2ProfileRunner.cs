@@ -102,7 +102,10 @@ internal static class SafeCoreRegressionV2ProfileRunner
         ProcessEvidence RustSharpVersion, double CaseTimeoutSeconds, double DeadlineSeconds,
         Summary Summary, IReadOnlyList<CaseReport> Cases, DateTimeOffset StartedAtUtc,
         DateTimeOffset FinishedAtUtc, double ElapsedMilliseconds, bool DeadlineExpired,
-        string? CleanupDiagnostic, string? HarnessError, HostReport Host);
+        string? CleanupDiagnostic, string? HarnessError, HostReport Host)
+    {
+        public string? CandidateSha { get; init; }
+    }
 
     internal sealed record HostReport(string OperatingSystem, string Architecture, string ProcessArchitecture,
         string Framework, string RuntimeIdentifier);
@@ -352,7 +355,10 @@ internal static class SafeCoreRegressionV2ProfileRunner
             manifestError, rustcVersion, rustSharpVersion, effectiveTimeout.TotalSeconds, effectiveDeadline.TotalSeconds,
             new Summary(status, exitCode, manifest?.Denominator ?? 0, passed + failed, passed, failed, blocked, skipped,
                 manifest is null ? new Dictionary<string, int>() : CountCoverage(manifest.Cases)), cases, startedAtUtc, DateTimeOffset.UtcNow,
-            harnessClock.Elapsed.TotalMilliseconds, cancellation.IsCancellationRequested, cleanupDiagnostic, harnessError, CurrentHost());
+            harnessClock.Elapsed.TotalMilliseconds, cancellation.IsCancellationRequested, cleanupDiagnostic, harnessError, CurrentHost())
+        {
+            CandidateSha = Environment.GetEnvironmentVariable("GITHUB_SHA") ?? Environment.GetEnvironmentVariable("CI_COMMIT_SHA"),
+        };
         await File.WriteAllTextAsync(fullReport, JsonSerializer.Serialize(report, JsonOptions)).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(report, JsonOptions));
         return exitCode;
