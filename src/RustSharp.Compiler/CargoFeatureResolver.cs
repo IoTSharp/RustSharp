@@ -30,34 +30,37 @@ public static class CargoFeatureResolver
     private static CargoFeatureResolutionResult Failure(IReadOnlyList<Diagnostic> diagnostics, CargoLoadBudget budget) =>
         new(null, null, Array.Empty<CargoPackageFeatureActivation>(), Array.Empty<CargoActivatedDependency>(), diagnostics, budget.OperationsConsumed);
 
-    private sealed class Catalog(CargoPackage package)
+    internal sealed class Catalog(CargoPackage package)
     {
         internal CargoPackage Package { get; } = package;
         internal string Identity => Package.Name + "@" + Package.Version;
         internal Dictionary<string, List<Reference>> Features { get; } = new(StringComparer.Ordinal);
         internal Dictionary<string, CargoDependency> Aliases { get; } = new(StringComparer.Ordinal);
+        internal Dictionary<string, List<CargoDependency>> AliasGroups { get; } = new(StringComparer.Ordinal);
         internal HashSet<string> ActiveFeatures { get; } = new(StringComparer.Ordinal);
         internal HashSet<string> ActiveDependencies { get; } = new(StringComparer.Ordinal);
         internal bool Active { get; set; }
     }
 
-    private sealed record Reference(Catalog Target, string? Feature, CargoDependency? Dependency, string Path, TextSpan Span);
+    internal sealed record Reference(Catalog Target, string? Feature, CargoDependency? Dependency, string Path, TextSpan Span);
     private sealed record Work(Catalog Owner, string? Feature, CargoDependency? Dependency, string Path, TextSpan Span);
     private sealed record Frame(Catalog Owner, string Feature, int Next);
 
-    private sealed class Resolver(CargoWorkspaceResult workspace, CargoFeatureOptions options, CargoWorkspaceOptions limits, CargoLoadBudget budget)
+    internal sealed class Resolver(CargoWorkspaceResult workspace, CargoFeatureOptions options, CargoWorkspaceOptions limits, CargoLoadBudget budget, bool allowConditional = false)
     {
         private static readonly StringComparer PathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         private readonly Dictionary<string, Catalog> _catalogs = new(PathComparer);
+        internal IReadOnlyDictionary<string, Catalog> Catalogs => _catalogs;
+        internal Catalog PrepareV1()
+        {
+            CreateCatalogs(); PopulateReferences(); ValidateCycles(); return SelectRoot();
+        }
         private readonly Queue<Work> _queue = new();
         private int _rawEdges;
 
         internal CargoFeatureResolutionResult Run()
         {
-            CreateCatalogs();
-            PopulateReferences();
-            ValidateCycles();
-            Catalog root = SelectRoot();
+            Catalog root = PrepareV1();
             Enqueue(new(root, null, null, root.Package.ManifestPath, root.Package.DeclarationSpan));
             if (!options.NoDefaultFeatures && root.Features.ContainsKey("default"))
                 Enqueue(new(root, "default", null, root.Package.ManifestPath, SpanFor(root, "default")));
@@ -108,9 +111,12 @@ public static class CargoFeatureResolver
                 foreach (CargoDependency dependency in package.Dependencies)
                 {
                     budget.Step(package.ManifestPath, dependency.DeclarationSpan);
-                    if (dependency.CfgCondition is not null)
+                    if (dependency.CfgCondition is not null && !allowConditional)
                         Fail(CargoWorkspace.UnsupportedManifestDiagnostic, "Conditional Cargo dependencies require cargo-v1 cfg selection before feature resolution.", package.ManifestPath, dependency.DeclarationSpan);
-                    catalog.Aliases.Add(dependency.Name, dependency);
+                    catalog.Aliases.TryAdd(dependency.Name, dependency);
+                    if (!catalog.AliasGroups.TryGetValue(dependency.Name, out List<CargoDependency>? group))
+                        catalog.AliasGroups.Add(dependency.Name, group = []);
+                    group.Add(dependency);
                 }
                 var suppressed = new HashSet<string>(StringComparer.Ordinal);
                 foreach ((string name, IReadOnlyList<string> values) in package.Features)
@@ -176,7 +182,7 @@ public static class CargoFeatureResolver
             }
         }
 
-        private Reference ParseReference(Catalog owner, string value, string path, TextSpan span)
+        internal Reference ParseReference(Catalog owner, string value, string path, TextSpan span)
         {
             budget.Step(path, span);
             if (value.Length > limits.MaximumManifestBytes)
@@ -184,7 +190,7 @@ public static class CargoFeatureResolver
             if (value.StartsWith("dep:", StringComparison.Ordinal))
             {
                 string alias = value[4..];
-                if (!IsName(alias) || !owner.Aliases.TryGetValue(alias, out CargoDependency? dependency) || !dependency.Optional)
+                if (!IsName(alias) || !owner.AliasGroups.TryGetValue(alias, out List<CargoDependency>? group) || !group.Any(static dependency => dependency.Optional))
                     Fail(FeatureDiagnostic, "dep:name must name an optional local dependency.", path, span);
                 return new(owner, null, owner.Aliases[alias], path, span);
             }
@@ -197,7 +203,11 @@ public static class CargoFeatureResolver
                     Fail(FeatureDiagnostic, "Unsupported or unknown Cargo dependency feature expression '" + value + "'.", path, span);
                 CargoDependency found = owner.Aliases[alias];
                 Catalog target = Target(found);
-                if (!target.Features.ContainsKey(feature)) Fail(FeatureDiagnostic, "Unknown dependency feature '" + feature + "'.", path, span);
+                foreach (CargoDependency candidate in owner.AliasGroups[alias])
+                {
+                    budget.Step(path, span);
+                    if (!Target(candidate).Features.ContainsKey(feature)) Fail(FeatureDiagnostic, "Unknown dependency feature '" + feature + "'.", path, span);
+                }
                 return new(target, feature, found, path, span);
             }
             if (!IsName(value) || !owner.Features.ContainsKey(value))

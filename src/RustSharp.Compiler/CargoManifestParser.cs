@@ -49,11 +49,13 @@ internal sealed class CargoManifestParser(string path, string text, CargoLoadBud
         bool array = !AtEnd && Current == '[';
         if (array) _position++;
         var components = new List<string>();
+        var componentSpans = new List<TextSpan>();
         for (int component = 0; component < 8; component++)
         {
             SkipSpace();
             if (AtEnd || Current == ']') Fail(CargoWorkspace.ManifestDiagnostic, "A TOML table requires a name.", Span(start, _line.Length - start));
-            components.Add(ReadKey(allowDotted: true).Key);
+            (string key, TextSpan keySpan) = ReadKey(allowDotted: true);
+            components.Add(key); componentSpans.Add(keySpan);
             SkipSpace();
             if (AtEnd) Fail(CargoWorkspace.ManifestDiagnostic, "Unterminated TOML table header.", Span(start, _line.Length - start));
             if (Current == '.') { _position++; continue; }
@@ -72,7 +74,7 @@ internal sealed class CargoManifestParser(string path, string text, CargoLoadBud
         string identity = string.Join('\0', components);
         if (!array && !_declaredTables.Add(identity))
             Fail(CargoWorkspace.ManifestDiagnostic, "Duplicate singleton TOML table.", headerSpan);
-        _table = new(components.AsReadOnly(), headerSpan, array);
+        _table = new(components.AsReadOnly(), headerSpan, array) { PathSpans = componentSpans.AsReadOnly() };
         _tables.Add(_table);
         budget.Step(path, headerSpan);
         SkipSpace();

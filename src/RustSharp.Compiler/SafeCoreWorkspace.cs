@@ -31,7 +31,32 @@ public static class SafeCoreWorkspace
         return new Loader(entryPath, options, cancellationToken).Run();
     }
 
-    private sealed class Loader(string entryPath, SafeCoreWorkspaceOptions options, CancellationToken cancellationToken)
+    /// <summary>Explicit cargo-v1 source selection; legacy Load retains its attribute boundary.</summary>
+    public static SafeCoreWorkspaceResult LoadWithCfgV1(string entryPath, CargoCfgEnvironment environment,
+        CargoWorkspaceOptions? cargoLimits = null, SafeCoreWorkspaceOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(entryPath); ArgumentNullException.ThrowIfNull(environment);
+        cancellationToken.ThrowIfCancellationRequested();
+        CargoWorkspaceOptions cargo = CargoWorkspace.NormalizeV1Options(cargoLimits ?? new());
+        options ??= new();
+        if (options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromMinutes(1))
+            throw new ArgumentOutOfRangeException(nameof(options));
+        options = options with
+        {
+            MaximumFiles = Math.Clamp(options.MaximumFiles, 1, 1024),
+            MaximumFileBytes = Math.Clamp(options.MaximumFileBytes, 1, 16_000_000),
+            MaximumTotalBytes = Math.Clamp(options.MaximumTotalBytes, 1, 32_000_000),
+            MaximumExpandedLength = Math.Clamp(options.MaximumExpandedLength, 1, 1_000_000),
+            MaximumModuleDepth = Math.Clamp(options.MaximumModuleDepth, 1, 128),
+            MaximumOperations = Math.Clamp(options.MaximumOperations, 1, 4_000_000),
+        };
+        return new Loader(entryPath, options, cancellationToken, environment, cargo,
+            new CargoLoadBudget(cargo, cancellationToken)).Run();
+    }
+
+    private sealed class Loader(string entryPath, SafeCoreWorkspaceOptions options, CancellationToken cancellationToken,
+        CargoCfgEnvironment? cfgEnvironment = null, CargoWorkspaceOptions? cargoLimits = null, CargoLoadBudget? cfgBudget = null)
     {
         private static readonly UTF8Encoding StrictUtf8 = new(false, true);
         private readonly long _startedAt = Stopwatch.GetTimestamp();
@@ -40,6 +65,7 @@ public static class SafeCoreWorkspace
         private readonly Dictionary<string, (SafeCoreSourceDocument Document, SafeCoreSyntaxResult Syntax)> _files =
             new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
         private readonly StringBuilder _expanded = new();
+        private readonly Dictionary<string, string> _selectedText = new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
         private readonly List<Diagnostic> _diagnostics = [];
         private string _rootDirectory = string.Empty;
         private string _currentPath = entryPath;
@@ -64,6 +90,10 @@ public static class SafeCoreWorkspace
                     Step();
                     return new SafeCoreWorkspaceResult(_expanded.ToString(), sourceMap, Array.Empty<Diagnostic>());
                 }
+            }
+            catch (CargoLoadException exception)
+            {
+                _diagnostics.Add(new Diagnostic(exception.Code, exception.Message, exception.Span) { SourcePath = exception.SourcePath });
             }
             catch (WorkspaceException exception)
             {
@@ -117,6 +147,28 @@ public static class SafeCoreWorkspace
                     return;
                 }
 
+                if (cfgEnvironment is not null)
+                {
+                    CargoCfgSourceResult selection = CargoCfgSourceSelector.SelectCore(text, path, cfgEnvironment,
+                        cargoLimits!, cfgBudget!, cancellationToken);
+                    if (!selection.IsSuccessful)
+                    {
+                        foreach (Diagnostic diagnostic in selection.Diagnostics) { Step(); _diagnostics.Add(diagnostic); }
+                        return;
+                    }
+                    _selectedText.Add(path, selection.SourceText);
+                    syntax = SafeCoreSyntax.Parse(selection.SourceText, path, new SafeCoreSyntaxOptions
+                    {
+                        Timeout = RemainingTime(), MaximumSourceLength = options.MaximumExpandedLength,
+                        MaximumOperations = Math.Min(options.MaximumOperations, 1_000_000),
+                    }, cancellationToken);
+                    Step();
+                    if (!syntax.IsSuccessful)
+                    {
+                        foreach (Diagnostic diagnostic in syntax.Diagnostics) { Step(); _diagnostics.Add(diagnostic with { SourcePath = path }); }
+                        return;
+                    }
+                }
                 RejectAttributes(syntax.Root!.Attributes);
 
                 _documents.Add(document);
@@ -124,7 +176,7 @@ public static class SafeCoreWorkspace
                 _files.Add(path, file);
             }
 
-            string content = file.Document.Text;
+            string content = _selectedText.TryGetValue(path, out string? selected) ? selected : file.Document.Text;
             if (!isEntry)
             {
                 foreach (RustTrivia trivia in file.Syntax.LexResult.Trivia)
@@ -307,6 +359,7 @@ public static class SafeCoreWorkspace
         private void Step()
         {
             cancellationToken.ThrowIfCancellationRequested();
+            cfgBudget?.Step(_currentPath, _currentSpan);
             if (++_operations > options.MaximumOperations) Limit("Workspace operation count exceeded its limit.");
             _ = RemainingTime();
         }

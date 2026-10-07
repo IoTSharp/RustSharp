@@ -38,6 +38,7 @@ public sealed record CargoDependency(string Name, string? Path)
     public bool Optional { get; init; }
     public bool DefaultFeatures { get; init; } = true;
     public string? CfgCondition { get; init; }
+    public TextSpan CfgConditionSpan { get; init; }
     public TextSpan DeclarationSpan { get; init; }
     public TextSpan PathSpan { get; init; }
     public string? ResolvedManifestPath { get; init; }
@@ -116,6 +117,7 @@ internal sealed record CargoTomlEntry(string Key, TextSpan KeySpan, CargoTomlVal
 internal sealed class CargoTomlTable(IReadOnlyList<string> path, TextSpan span, bool array)
 {
     internal IReadOnlyList<string> Path { get; } = path;
+    internal IReadOnlyList<TextSpan> PathSpans { get; init; } = Array.Empty<TextSpan>();
     internal TextSpan Span { get; } = span;
     internal bool IsArray { get; } = array;
     internal Dictionary<string, CargoTomlEntry> Entries { get; } = new(StringComparer.Ordinal);

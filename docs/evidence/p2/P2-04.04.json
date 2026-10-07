@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p2-cargo-cfg-execution",
+  "leafId": "P2-04.04",
+  "profile": "cargo-v1",
+  "candidateSha": "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a",
+  "manifestPath": "tools/RustSharp.Conformance/fixtures/p2-cargo-v1-manifest.json",
+  "manifestSha256": "CB890EA7A2C96CC3BA8618DD7E6C0DF490B3A2802B14211A0074AA6027DF1731",
+  "caseMapPath": "tools/RustSharp.Conformance/fixtures/p2-cargo-v1-cfg-cases.json",
+  "caseMapSha256": "75912813D97A0BDA551534507A94B3C0A50FE2CDF7A5D03A281B3B29D76C9BB8",
+  "scope": "strict-load-v1-cfg-source-and-dependency-selection-filesystem-execution",
+  "fullP2Closure": false,
+  "implementationCasesExecuted": 12,
+  "summary": {
+    "denominator": 12,
+    "status": "passed",
+    "failed": 0,
+    "skipped": 0,
+    "passed": 12
+  },
+  "runtimeIdentifier": "win-x64",
+  "tools": {
+    "dotnetPath": "C:\\Program Files\\dotnet\\dotnet.exe",
+    "sdkVersion": "10.0.401",
+    "powerShellVersion": "7.6.6"
+  },
+  "command": {
+    "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+    "arguments": [
+      "tests/RustSharp.Tests/bin/Release/net10.0/RustSharp.Tests.dll",
+      "--filter",
+      "P2 cargo cfg",
+      "--timeout",
+      "30",
+      "--deadline",
+      "180",
+      "--report",
+      "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\cfg-v5\\acceptance\\P2-04.04.harness.json",
+      "--candidate-sha",
+      "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a"
+    ],
+    "workingDirectory": "D:\\GitHub\\RustSharp"
+  },
+  "bounds": {
+    "orchestrationDeadlineSeconds": 300,
+    "caseTimeoutSeconds": 30,
+    "deadlineSeconds": 180,
+    "maximumTests": 12
+  },
+  "process": {
+    "Pid": 57092,
+    "ParentPid": 59208,
+    "StartedAt": "2026-10-08T03:52:11.4678614+08:00",
+    "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+    "Arguments": [
+      "tests/RustSharp.Tests/bin/Release/net10.0/RustSharp.Tests.dll",
+      "--filter",
+      "P2 cargo cfg",
+      "--timeout",
+      "30",
+      "--deadline",
+      "180",
+      "--report",
+      "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\cfg-v5\\acceptance\\P2-04.04.harness.json",
+      "--candidate-sha",
+      "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a"
+    ],
+    "WorkingDirectory": "D:\\GitHub\\RustSharp",
+    "TimeoutSeconds": 190,
+    "MaximumAttempts": 1,
+    "MaximumOutputBytes": 4194304,
+    "CapturePrefix": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\cfg-v5\\acceptance\\P2-04.04-run",
+    "FinishedAt": "2026-10-08T03:52:18.8580456+08:00",
+    "ExitCode": 0,
+    "CleanupComplete": true,
+    "Failure": null
+  },
+  "cleanupComplete": true,
+  "sourceProvenance": {
+    "candidateSha": "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a",
+    "candidateTreeSha": "f1657565d813f9a96c25f639c8076d78b03f46fd",
+    "candidateMatchesWorkingTree": true,
+    "checkedFileCount": 814,
+    "errors": [],
+    "processes": [
+      {
+        "processId": 34740,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:11.6089715+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{commit}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{commit}\""
+      },
+      {
+        "processId": 21480,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:11.6856212+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{tree}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{tree}\""
+      },
+      {
+        "processId": 50072,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:11.7642165+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-tree",
+          "-rz",
+          "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-tree\" \"-rz\" \"b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a\""
+      },
+      {
+        "processId": 100260,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:11.8645205+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-files",
+          "--cached",
+          "--others",
+          "--exclude-standard",
+          "-z"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+      },
+      {
+        "processId": 24572,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:11.9863869+08:00",
+        "fileName": "git",
+        "arguments": [
+          "hash-object",
+          "--stdin-paths"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"hash-object\" \"--stdin-paths\""
+      },
+      {
+        "processId": 79224,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:18.2380746+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{commit}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{commit}\""
+      },
+      {
+        "processId": 43092,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:18.315791+08:00",
+        "fileName": "git",
+        "arguments": [
+          "rev-parse",
+          "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{tree}"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"rev-parse\" \"b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a^{tree}\""
+      },
+      {
+        "processId": 43144,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:18.3892276+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-tree",
+          "-rz",
+          "b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-tree\" \"-rz\" \"b75bdf5d68bb8a3a50ee4aaaca9500bb1da6fa4a\""
+      },
+      {
+        "processId": 31560,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:18.4853582+08:00",
+        "fileName": "git",
+        "arguments": [
+          "ls-files",
+          "--cached",
+          "--others",
+          "--exclude-standard",
+          "-z"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+      },
+      {
+        "processId": 31812,
+        "parentProcessId": 57092,
+        "startedAtUtc": "2026-10-08T03:52:18.5723262+08:00",
+        "fileName": "git",
+        "arguments": [
+          "hash-object",
+          "--stdin-paths"
+        ],
+        "exitCode": 0,
+        "cleanupComplete": true,
+        "commandLine": "git \"hash-object\" \"--stdin-paths\""
+      }
+    ]
+  },
+  "freshBuild": {
+    "path": "artifacts/p2-supervision/cfg-v5/release-build.json",
+    "sha256": "39D0C36B0E11673190795A767C877392359554E54180AFA58C71D41493DA0669"
+  },
+  "harness": {
+    "path": "artifacts/p2-supervision/cfg-v5/acceptance/P2-04.04.harness.json",
+    "sha256": "CA3F5A1B8980F4F07820F517B9FA74B4AA4C220B04D4E5D215432F02E9E2FB93"
+  },
+  "failureReasons": []
+}

@@ -223,13 +223,13 @@ internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOp
                     _budget.Step(manifest.Path, entry.KeySpan);
                     if (entry.Value.Value is not Dictionary<string, CargoTomlEntry>)
                         Fail(CargoWorkspace.UnsupportedDependencyDiagnostic, "Only local path dependency tables are admitted; registry dependencies require network resolution.", manifest.Path, entry.Value.Span);
-                    CargoDependency dependency = BuildDependency(manifest.Path, entry.Key, (Dictionary<string, CargoTomlEntry>)entry.Value.Value, entry.KeySpan, condition);
+                    CargoDependency dependency = BuildDependency(manifest.Path, entry.Key, (Dictionary<string, CargoTomlEntry>)entry.Value.Value, entry.KeySpan, condition, conditional ? table.PathSpans[1] : default);
                     AddDependency(dependencies, dependency, manifest.Path);
                 }
             }
             else
             {
-                CargoDependency dependency = BuildDependency(manifest.Path, table.Path[^1], table.Entries, table.Span, condition);
+                CargoDependency dependency = BuildDependency(manifest.Path, table.Path[^1], table.Entries, table.Span, condition, conditional ? table.PathSpans[1] : default);
                 AddDependency(dependencies, dependency, manifest.Path);
             }
         }
@@ -246,7 +246,7 @@ internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOp
             Fail(CargoWorkspace.LimitDiagnostic, "Cargo package exceeds its dependency edge limit.", path, dependency.DeclarationSpan);
     }
 
-    private CargoDependency BuildDependency(string path, string alias, Dictionary<string, CargoTomlEntry> entries, TextSpan span, string? condition)
+    private CargoDependency BuildDependency(string path, string alias, Dictionary<string, CargoTomlEntry> entries, TextSpan span, string? condition, TextSpan conditionSpan)
     {
         ValidateName(alias, path, span);
         foreach (CargoTomlEntry entry in entries.Values)
@@ -276,6 +276,7 @@ internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOp
             PackageName = packageName, Version = version, Features = features, Optional = optional,
             FeatureSpans = System.Array.AsReadOnly(featureValues.Select(static item => item.Span).ToArray()),
             DefaultFeatures = defaultFeatures, CfgCondition = condition, DeclarationSpan = span,
+            CfgConditionSpan = conditionSpan,
             PathSpan = pathEntry.Value.Span, ResolvedManifestPath = target,
         };
     }

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "profile": "cargo-v1",
+  "leafId": "P2-04.04",
+  "entryPoint": "CargoCfgResolver.ResolveV1",
+  "sourceEntryPoint": "CargoCfgSourceSelector.Select",
+  "moduleEntryPoint": "SafeCoreWorkspace.LoadWithCfgV1",
+  "denominator": 12,
+  "inventoryKind": "runtime-test-case-map-not-execution-result",
+  "contractContentSha256": "97D95FF1CDBFF523F52B694AC6D47C445668BAD77C471CF7710532C88A40DB44",
+  "contractNormalizedLfSha256": "CB890EA7A2C96CC3BA8618DD7E6C0DF490B3A2802B14211A0074AA6027DF1731",
+  "registration": "P2CargoCfgTests.All",
+  "fixtureKind": "unique-owned-real-filesystem",
+  "timeResourceLimits": {
+    "scenarioTimeoutMilliseconds": 20000,
+    "maximumFixtureWrites": 512,
+    "maximumVariantInputs": 10,
+    "maximumGeneratedNotPredicates": 16,
+    "maximumOffsetVerificationCharacters": 32768,
+    "maximumCompilerProfiles": 2,
+    "maximumOwnedDirectories": 1024,
+    "maximumOwnedDirectoryDepth": 16,
+    "cleanupTimeoutMilliseconds": 20000,
+    "callerCancellation": true
+  },
+  "cleanup": "Delete only tracked files and empty directories within fixed item counts and an independent 20-second wall deadline. Verify the unique absolute root and assert it is gone. Exclusive reopen checks verify manifest/module handles are released. CompilerDriver.Check uses real production binding with no emitted output, builds, restores, network requests or child processes.",
+  "cases": [
+    { "id": "cfg-windows", "testName": "P2 cargo cfg cfg-windows", "expectedDiagnostic": "", "assertions": ["12 registrations match frozen order and diagnostics", "win-x64 selects windows and target_os windows real path dependencies", "alias package and exact version metadata survive", "source selection agrees with package environment", "one shared operation ceiling is reported"] },
+    { "id": "cfg-linux", "testName": "P2 cargo cfg cfg-linux", "expectedDiagnostic": "", "assertions": ["linux-x64 selects unix and target_os linux real path dependencies", "Windows dependencies remain inactive", "source selection uses same environment", "successive RID requests do not leak state"] },
+    { "id": "cfg-x64", "testName": "P2 cargo cfg cfg-x64", "expectedDiagnostic": "", "assertions": ["both admitted RIDs select x86_64 conditional dependency and source item", "unsupported requested or predicate architectures reject with RSCARGO1009"] },
+    { "id": "cfg-feature", "testName": "P2 cargo cfg cfg-feature", "expectedDiagnostic": "", "assertions": ["transitive root defaults drive conditional dependency activation", "no-default leaves conditional package inactive", "inactive valid source feature evaluates false", "optional conditional dependency preserves features optional and default-features metadata", "dep activation and cfg gate converge together", "diamond unified features drive downstream package cfg environment", "dependency edge defaults false remain suppressed"] },
+    { "id": "cfg-all", "testName": "P2 cargo cfg cfg-all", "expectedDiagnostic": "", "assertions": ["empty all is true", "all requires every platform predicate", "nested combinators select both real dependency and source item", "selected source binds under SafeCoreGenerics and SafeCoreMirV2"] },
+    { "id": "cfg-any", "testName": "P2 cargo cfg cfg-any", "expectedDiagnostic": "", "assertions": ["empty any is false", "one true member admits real dependency and source item", "all-false members disable dependency and source", "nested empty combinators preserve semantics"] },
+    { "id": "cfg-not", "testName": "P2 cargo cfg cfg-not", "expectedDiagnostic": "", "assertions": ["one predicate is inverted for both RIDs", "not empty any is true", "not empty all is false", "dependency and source predicate semantics agree"] },
+    { "id": "cfg-unknown", "testName": "P2 cargo cfg cfg-unknown", "expectedDiagnostic": "RSCARGO1009", "assertions": ["unknown predicate names and unsupported values reject", "malformed syntax and not arity reject", "source diagnostics retain whole original attribute span with CRLF and Unicode prefix", "manifest diagnostics retain whole original quoted cfg path component", "short-circuit members never hide unsupported predicates", "failure exposes no partial source or graph"] },
+    { "id": "cfg-invalid-combination", "testName": "P2 cargo cfg cfg-invalid-combination", "expectedDiagnostic": "RSCARGO1009", "assertions": ["explicit compatible OS and architecture succeed", "contradictory RID target OS or architecture reject", "unsupported empty or unknown RIDs reject before selection", "failure has no feature graph root or targets"] },
+    { "id": "cfg-depth", "testName": "P2 cargo cfg cfg-depth", "expectedDiagnostic": "RSCARGO1004", "assertions": ["predicate root counts in nesting", "15 not predicates plus atom at depth 16 pass in source and package selection", "depth 17 rejects", "tiny configured depth boundary is exact", "exact shared operation count passes and one less rejects", "tiny whole deadline rejects", "source and graph caller cancellation propagate", "timeout above ten seconds rejects"] },
+    { "id": "cfg-required-features", "testName": "P2 cargo cfg cfg-required-features", "expectedDiagnostic": "", "assertions": ["library and ungated binary remain admitted", "all required features are necessary for gated binary", "explicit disabled binary request fails RSCARGO1009", "explicit enabled and ungated target requests return only requested target", "unknown target request rejects", "target output retains stable library-before-binary name order"] },
+    { "id": "cfg-source-items", "testName": "P2 cargo cfg cfg-source-items", "expectedDiagnostic": "", "assertions": ["disabled functions structs imports and inline modules disappear before production binding", "multiple cfg attributes intersect", "nested struct fields enum variants and trait associated items are selected", "mask retains UTF16 length and CRLF positions", "comments and string literals containing cfg remain literal", "SafeCoreWorkspace skips disabled missing external modules before file access", "enabled module children share cfg environment", "enabled invalid declarations still fail binding", "module cancellation propagates and all file handles reopen exclusively"] }
+  ]
+}
