@@ -169,7 +169,9 @@ function Test-P1CoverageEvidence($Report, [string] $Root, [string] $CandidateSha
 function Test-P1RegistrationInventory($Inventory, [string] $AssemblyHash, [string] $Rid = '') {
     $errors = [Collections.Generic.List[string]]::new()
     $clock = [Diagnostics.Stopwatch]::StartNew()
-    if ($null -eq $Inventory -or (Get-P1Property $Inventory 'schemaVersion') -ne 1 -or
+    $schema = Get-P1Property $Inventory 'schemaVersion'
+    $maximumRegistrations = if ($schema -eq 2) { 4096 } else { 1024 }
+    if ($null -eq $Inventory -or $schema -notin @(1,2) -or
         (Get-P1Property $Inventory 'evidenceKind') -cne 'p1-regression-registration-inventory' -or
         (Get-P1Property $Inventory 'buildConfiguration') -cne 'Release' -or
         $AssemblyHash -notmatch '^[a-fA-F0-9]{64}$' -or (Get-P1Property $Inventory 'assemblySha256') -ine $AssemblyHash) {
@@ -180,14 +182,14 @@ function Test-P1RegistrationInventory($Inventory, [string] $AssemblyHash, [strin
     if ($Rid -and (($Rid -ceq 'win-x64' -and $observedRid -cne 'win-x64') -or
         ($Rid -ceq 'linux-x64' -and $observedRid -cnotmatch '^(linux|ubuntu(?:\.\d+\.\d+)?)-x64$'))) { $errors.Add('Registration inventory native host does not match the required platform.') }
     $ids = @(Get-P1Property $Inventory 'registeredIds')
-    if ($ids.Count -lt 464 -or $ids.Count -gt 1024 -or (Get-P1Property $Inventory 'registeredDenominator') -ne $ids.Count) {
+    if ($ids.Count -lt 464 -or $ids.Count -gt $maximumRegistrations -or (Get-P1Property $Inventory 'registeredDenominator') -ne $ids.Count) {
         $errors.Add('Fresh Release registration inventory denominator is missing or invalid.')
         return @($errors.ToArray())
     }
     $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($ids -join "`n")))
     if ((Get-P1Property $Inventory 'registeredIdsSha256') -ine $hash) { $errors.Add('Fresh Release registration inventory identity hash is stale.') }
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-    for ($index=0; $index -lt $ids.Count -and $index -lt 1024 -and $clock.Elapsed.TotalSeconds -lt 5; $index++) {
+    for ($index=0; $index -lt $ids.Count -and $index -lt $maximumRegistrations -and $clock.Elapsed.TotalSeconds -lt 5; $index++) {
         if ($ids[$index] -isnot [string] -or [string]::IsNullOrWhiteSpace($ids[$index]) -or $ids[$index].Length -gt 4096 -or -not $seen.Add($ids[$index])) { $errors.Add('Fresh Release registration inventory contains invalid or duplicate IDs.') }
     }
     if ($index -ne $ids.Count) { $errors.Add('Registration inventory validation exceeded item/time bounds.') }
@@ -197,7 +199,9 @@ function Test-P1RegistrationInventory($Inventory, [string] $AssemblyHash, [strin
 function Test-P1HarnessEvidence($Report, [string] $CandidateSha, [string] $TreeSha, [string] $Rid = '', $BuildReport = $null) {
     $errors = [Collections.Generic.List[string]]::new()
     $clock = [Diagnostics.Stopwatch]::StartNew()
-    if ((Get-P1Property $Report 'schemaVersion') -ne 1 -or (Get-P1Property $Report 'evidenceKind') -cne 'p1-full-regression-harness' -or
+    $schema = Get-P1Property $Report 'schemaVersion'
+    $maximumRegistrations = if ($schema -eq 2) { 4096 } else { 1024 }
+    if ($schema -notin @(1,2) -or (Get-P1Property $Report 'evidenceKind') -cne 'p1-full-regression-harness' -or
         (Get-P1Property $Report 'candidateSha') -cne $CandidateSha -or (Get-P1Property $Report 'fullSuite') -cne $true -or
         (Get-P1Property $Report 'suiteSucceeded') -cne $true -or (Get-P1Property $Report 'buildConfiguration') -cne 'Release' -or
         (Get-P1Property $Report 'processIsolated') -cne $true -or (Get-P1Property $Report 'cleanupComplete') -cne $true -or
@@ -208,11 +212,13 @@ function Test-P1HarnessEvidence($Report, [string] $CandidateSha, [string] $TreeS
     Test-P1SourceProvenance $Report $CandidateSha $TreeSha $errors
     $ids = @(Get-P1Property $Report 'registeredIds'); $cases = @(Get-P1Property $Report 'cases')
     $count = $ids.Count
-    if ($count -lt 464 -or $count -gt 4096 -or $cases.Count -ne $count -or
+    if ($schema -eq 2 -and (Get-P1Property (Get-P1Property $Report 'bounds') 'maximumTests') -ne 4096) { $errors.Add('Version 2 harness must declare its 4096 registration bound.') }
+    if ($count -lt 464 -or $count -gt $maximumRegistrations -or $cases.Count -ne $count -or
         (Get-P1Property (Get-P1Property $Report 'summary') 'registeredDenominator') -ne $count) { $errors.Add('Full harness fixed registered denominator is missing or incomplete.'); return @($errors.ToArray()) }
     $idsHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($ids -join "`n")))
     if ((Get-P1Property $Report 'registeredIdsSha256') -ine $idsHash) { $errors.Add('Full harness registered identity hash is stale.') }
     $inventory = Get-P1Property $BuildReport 'registrationInventory'
+    if ((Get-P1Property $inventory 'schemaVersion') -ne $schema) { $errors.Add('Harness and fresh registration inventory schema versions differ.') }
     $assemblyHash = [string](Get-P1Property $BuildReport 'testsAssemblySha256')
     foreach ($inventoryError in @(Test-P1RegistrationInventory $inventory $assemblyHash $Rid)) { $errors.Add($inventoryError) }
     $expectedIds = @(Get-P1Property $inventory 'registeredIds')

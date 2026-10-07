@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-harness-capacity-repair-archive",
+  "candidateSha": "e3dcfb631054b2d6e5c400523d72aaa29faa929d",
+  "candidateTreeSha": "8c949d775f784236d0ec3e8d5849da53da96e6ae",
+  "fullP1Closure": false,
+  "summary": {
+    "registeredDenominator": 1073,
+    "selected": 9,
+    "executed": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "notExecuted": 0
+  },
+  "rawPath": "artifacts/p1-supervision/harness-regression-v2.harness.json",
+  "rawSha256": "135B4AC6B357854F31449FA48C6A9294683F9E7960CCA1A4B7D6CE061C190BCC",
+  "archivePath": "docs/evidence/p1/harness-capacity-v2.harness.json",
+  "archiveSha256": "191E4560C049B955AED82C874D5CF6D92D1970F061009FDA7653E18E0823251A",
+  "normalization": "Physical CRLF to LF only; JSON escaped program text preserved",
+  "buildProcessPath": "artifacts/p1-supervision/p1-p2-integration-build-4.process.json",
+  "buildProcessSha256": "492B2AEC70544F5256736ABB66550B7DD1775BC6A946F7E755DC53F5560163DE",
+  "freshInventoryPath": "artifacts/p1-supervision/slices-registration.stdout.log",
+  "freshInventorySha256": "B4E1C3C027599D46477625201EE828A4C95DD809444FD962FB983BD679DA094D"
+}

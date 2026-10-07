@@ -11,7 +11,9 @@ namespace RustSharp.Tests;
 /// <summary>A fixed registration inventory, with process isolation for reviewable full-suite evidence.</summary>
 internal static class RegressionHarness
 {
-    internal const int MaximumTestCount = 1024;
+    internal const int EvidenceSchemaVersion = 2;
+    internal const int LegacyMaximumTestCount = 1024;
+    internal const int MaximumTestCount = 4096;
     internal const int MinimumFullTestCount = 464;
     private const string WorkerSwitch = "--rustsharp-test-worker";
     private static readonly string AssemblyPath = Path.Combine(AppContext.BaseDirectory, "RustSharp.Tests.dll");
@@ -62,7 +64,7 @@ internal static class RegressionHarness
         if (registered.Count > MaximumTestCount) throw new ArgumentException("Registration inventory exceeds its fixed bound.");
         if (new FileInfo(AssemblyPath).Length > 32 * 1024 * 1024) throw new InvalidOperationException("Test assembly exceeds the inventory's 32 MiB bound.");
         string[] ids = RegistrationIds(registered);
-        return new(1, "p1-regression-registration-inventory", RuntimeInformation.RuntimeIdentifier,
+        return new(EvidenceSchemaVersion, "p1-regression-registration-inventory", RuntimeInformation.RuntimeIdentifier,
             Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyConfigurationAttribute>()?.Configuration ?? "unknown",
             Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(AssemblyPath))), registered.Count, ids, InventoryHash(ids));
     }
@@ -74,7 +76,8 @@ internal static class RegressionHarness
     internal static bool IsFullSuccess(bool fullSuite, Summary summary, bool provenanceValid, bool release, string? error) =>
         fullSuite && release && provenanceValid && error is null && summary.RegisteredDenominator >= MinimumFullTestCount &&
         summary.Selected == summary.RegisteredDenominator && summary.Executed == summary.RegisteredDenominator &&
-        summary.Passed == summary.RegisteredDenominator && summary.Failed == 0 && summary.Skipped == 0 && summary.NotExecuted == 0;
+        summary.RegisteredDenominator <= MaximumTestCount && summary.Passed == summary.RegisteredDenominator &&
+        summary.Failed == 0 && summary.Skipped == 0 && summary.NotExecuted == 0;
 
     internal static async Task<int> RunAsync(TestCase[] registered, string[] args)
     {
@@ -200,7 +203,7 @@ internal static class RegressionHarness
             configuration == "Release", harnessError);
         if (options.Report is not null)
         {
-            var report = new HarnessReport(1, "p1-full-regression-harness", options.CandidateSha,
+            var report = new HarnessReport(EvidenceSchemaVersion, "p1-full-regression-harness", options.CandidateSha,
                 RuntimeInformation.RuntimeIdentifier, startedAt, DateTimeOffset.UtcNow, options.Filter is null, succeeded, provenance,
                 configuration, isolated, options.Filter, Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(AssemblyPath))),
                 new(options.TimeoutSeconds, options.DeadlineSeconds, MaximumTestCount),

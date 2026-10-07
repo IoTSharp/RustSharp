@@ -172,10 +172,15 @@ internal static class P1GateCoverageContract
             Bool(provenance, "candidateMatchesWorkingTree") && Int(provenance, "checkedFileCount") > 0 &&
             provenance.GetProperty("errors").GetArrayLength() == 0, "Working source does not bind to the requested candidate tree.");
         JsonElement summary = root.GetProperty("summary");
+        int schemaVersion = Int(root, "schemaVersion");
+        Require(schemaVersion is 1 or 2, "Unsupported harness evidence schema.");
+        int maximumTests = schemaVersion == 2 ? 4096 : 1024;
+        if (schemaVersion == 2)
+            Require(Int(root.GetProperty("bounds"), "maximumTests") == maximumTests, "Version 2 harness must declare its 4096 registration bound.");
         int denominator = Int(summary, "registeredDenominator");
-        Require(denominator is >= 464 and <= 1024 && Int(summary, "selected") == denominator && Int(summary, "executed") == denominator &&
+        Require(denominator >= 464 && denominator <= maximumTests && Int(summary, "selected") == denominator && Int(summary, "executed") == denominator &&
             Int(summary, "passed") == denominator && Int(summary, "failed") == 0 && Int(summary, "skipped") == 0 && Int(summary, "notExecuted") == 0, "Fresh registered denominator is not fully executed.");
-        string[] registered = Strings(root.GetProperty("registeredIds"), 1024);
+        string[] registered = Strings(root.GetProperty("registeredIds"), maximumTests);
         Require(registered.Length == denominator && Text(root, "registeredIdsSha256") == RawHash(string.Join('\n', registered)), "Fresh registration inventory was reduced or substituted.");
         JsonElement results = root.GetProperty("cases");
         Require(results.ValueKind == JsonValueKind.Array && results.GetArrayLength() == denominator, "Case execution denominator changed.");
@@ -185,11 +190,7 @@ internal static class P1GateCoverageContract
             Guard(started, cancellationToken);
             Require(executed.Add(Text(result, "id")) && Text(result, "status") == "passed" && result.GetProperty("error").ValueKind == JsonValueKind.Null, "Missing, duplicate or skipped implementation case.");
             JsonElement process = result.GetProperty("process");
-            JsonElement processStart = process.GetProperty("startedProcess");
-            Require(Int(processStart, "processId") > 0 && Int(processStart, "parentProcessId") > 0 &&
-                Text(processStart, "startedAt").Length > 0 && Text(processStart, "fileName").Length > 0 &&
-                processStart.GetProperty("arguments").GetArrayLength() > 0 && Int(process, "exitCode") == 0 &&
-                Int(process, "termination") == 0 && Bool(process, "processTreeCleanupAttempted") && !Bool(process, "processTreeCleanupIncomplete"), "Case has no successful owned worker execution record.");
+            ValidateWorkerExecution(process);
         }
         Require(executed.SetEquals(registered), "Execution cases disagree with fresh registrations.");
         var bound = new HashSet<string>(StringComparer.Ordinal);
@@ -274,6 +275,18 @@ internal static class P1GateCoverageContract
     private static bool Bool(JsonElement value, string field) => value.GetProperty(field).GetBoolean();
     internal static string Hash(string text) => RawHash(text.Replace("\r\n", "\n", StringComparison.Ordinal));
     private static string RawHash(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+    internal static void ValidateWorkerExecution(JsonElement process)
+    {
+        JsonElement started = process.GetProperty("startedProcess");
+        Require(Int(started, "processId") > 0 && Int(started, "parentProcessId") > 0 &&
+            Text(started, "startedAt").Length > 0 && Text(started, "fileName").Length > 0 &&
+            started.GetProperty("arguments").GetArrayLength() > 0 && Int(process, "exitCode") == 0 &&
+            Int(process, "termination") == 0 && Bool(process, "succeeded") &&
+            !Bool(process, "outputTruncated") && !Bool(process, "outputReadTimedOut") &&
+            !Bool(process, "outputDrainTimedOut") && !Bool(process, "outputReadLimitReached") &&
+            !Bool(process, "processTreeCleanupIncomplete"), "Case has no successful owned worker execution record.");
+    }
+
     private static void Require(bool condition, string message) { if (!condition) throw new ArgumentException(message); }
     private static void Guard(long started, CancellationToken cancellationToken)
     {
