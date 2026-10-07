@@ -2,6 +2,56 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
+## 当前检查点 — 2026-10-08
+
+接续以本节为准，后续章节保留历史检查点。P2 有 5/101 个 ✅ 已完成叶子：
+P2-04.01、P2-04.02、P2-04.03、P2-06.01 和 P2-08.01。P2 父项与阶段均未闭环。
+P1-GATE.01–.03 保持 🚧 进行中，.04–.06 保持 ⏳ 计划中。
+
+上一检查点后验收的提交为 `ef8bb36`（版本化测试容量）、`5358e9b`（实物新鲜构建
+绑定）、`7de0d94`（38/38 严格清单）、`5b1ab7f`（8/8 显式 Drop 策略传播）、
+`6725b04`（12/12 源码包验证器控制）、`93e60b2`（8/8 精确后端验证器控制）、
+`41c3f88`（Windows 后端证明）、`3495da6`（Windows 源码包证明）和 `ed0efde`
+（11/11 feature 解析）。当前测试容量为 schema 2／4,096 项注册，最新 Release
+清册有 1,104 项实际注册；冻结的 P1 分母保持不变。
+
+Windows 生产候选 `93e60b2e3881bb13e5a836271739aaae944e13af`、tree
+`adcf297f7780b2ada00e5f5f745c501f714a926c` 通过全部 19 个源码包、39 个原始 PE
+和本机 12 个精确后端单元。生产验证器重新读取保留实物，返回本机门禁为真。归档位于
+`docs/evidence/p1/source-package-native-win-v1*` 与 `backend-native-win-v1*`。
+100 个源码包子进程和 30 个后端子进程均退出，所属临时目录已不存在；另外 12 个
+Linux 后端单元和同 SHA 原生 CI 仍待收口。
+
+Feature 候选 `8a250d1bd1baf58bb75242e6d85172bed7fc01e4` 通过 SDK 10.0.401
+的新鲜零 warning／error 构建、11 项 feature、38 项清单和 5+3+2 项旧包检查。
+证据为 `docs/evidence/p2/P2-04.03*`。解析器执行全图 1,024 条原始边上限；loader
+的每包元数据上限仍为独立阶段规则。两个包 512+512 条成功，600+600 条拒绝。
+所有验收构建／测试启动器与隔离进程均已回收。初步失败保留于
+`artifacts/p2-supervision/features-v1/` 与 `features-v2/`，验收证据在 `features-v3/`。
+
+CI 实现提交为 `a4e62bd`（独立原生 job 与实物聚合）、`7ed3c3d`（Windows oracle
+显式路径）、`6510e6a`（Linux runtime sidecar 与有界诊断）、`5c2900d`（旧报告
+候选 SHA 绑定）。最终候选修复在 `4dc082b43d45583ba094ca1de9ea6add4dc3aae6`
+通过新鲜零 warning／error 构建和 6/6 差分控制。四项本地 CI 拒绝控制通过，但不是
+原生 CI 验收。推送这些可审阅提交，在同一个远程 SHA 调度 `p1-expanded.yml`、
+`p1-platform.yml`、`linux-native-aot.yml`，并核查自动 Windows P0 运行；精确 run ID、
+状态和来源存入 `artifacts/p1-supervision/`。生产门禁对旧七报告／15 检查 suite gate、
+双原生平台的 19 包／39 PE 回执及实物 24 单元后端矩阵取合取。完整测试、NativeV5
+Drop、精确覆盖和全部 P1 门禁仍需联合核对，不能由本机切片推导阶段闭环。
+
+当前 `cargo_p2` 仅预留 `artifacts/p1-supervision/prepared-cfg-v1/`，准备 P2-04.04
+草稿。冻结并审阅全部固定 cfg 场景后再集成，必须包括源码选择和条件依赖；仅有
+predicate helper 不能关闭叶子。`tooling_p2` 已冻结并交付 `prepared-native-ci-v1/`
+和 `prepared-legacy-ci-v1/` 的 CI 草稿。root 负责真实源码集成、构建、共享入口、
+验证及逐任务提交；空闲 worker 可接续依赖允许的 P2-06.02／P2-08.02，独占不同文件。
+
+旧 `tests/RustSharp.Tests/bin/Release/net10.0` Junction 已可逆移动到
+`net10.0.preexisting-link-20261008`；其 2026-09-24 目标及全部独有内容仍保留。
+canonical 输出现为普通的新鲜构建目录。不得删除旧目标或放宽重定向路径验证；
+恢复来源记录为 `artifacts/p1-supervision/native-trials-v1/preexisting-junction-recovery.json`。
+保留原有用户 `tmp/`、清理被拒绝的 ZIP 日志、候选 refs 和全部审阅产物。唯一
+`rustsharp-p2` heartbeat 保持每 30 分钟启用，先接续既有 worker，再创建替补。
+
 ## 授权与接续
 
 用户授权监督子智能体实现全部 15 个 P2 父任务、94 个实施叶子和 7 个门禁叶子，

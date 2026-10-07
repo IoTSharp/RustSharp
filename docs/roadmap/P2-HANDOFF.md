@@ -2,6 +2,72 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
+## Current checkpoint — 2026-10-08
+
+This section governs resumption; the later sections retain historical checkpoints.
+P2 has 5/101 ✅ Complete leaves: P2-04.01, P2-04.02, P2-04.03,
+P2-06.01 and P2-08.01. No P2 parent or phase is closed. P1-GATE.01–.03
+remain 🚧 In progress; .04–.06 remain ⏳ Planned.
+
+Accepted commits since the previous checkpoint are `ef8bb36` (versioned harness
+capacity), `5358e9b` (physical fresh-build bindings), `7de0d94` (38/38 strict
+manifests), `5b1ab7f` (8/8 explicit Drop-profile propagation), `6725b04`
+(12/12 source-package validator controls), `93e60b2` (8/8 exact backend
+validator controls), `41c3f88` (Windows backend proof), `3495da6` (Windows
+source-package proof), and `ed0efde` (11/11 feature resolution). The current
+harness capacity is schema 2 / 4,096 registrations; the latest Release inventory
+has 1,104 actual registrations. Frozen P1 denominators remain unchanged.
+
+Windows production candidate `93e60b2e3881bb13e5a836271739aaae944e13af`,
+tree `adcf297f7780b2ada00e5f5f745c501f714a926c`, passes all 19 source packages,
+39 original PEs and 12 local exact backend cells. Production validators reread
+physical retained bytes and return their local gates true. Archives are
+`docs/evidence/p1/source-package-native-win-v1*` and `backend-native-win-v1*`.
+All 100 source-package and 30 backend children exited; owned temporary directories
+are absent. The other 12 Linux backend cells and same-SHA native CI remain open.
+
+Feature candidate `8a250d1bd1baf58bb75242e6d85172bed7fc01e4` passes a fresh
+zero-warning/error SDK 10.0.401 build, 11 feature cases, 38 manifest cases and
+5+3+2 legacy package checks. Evidence is `docs/evidence/p2/P2-04.03*`.
+The resolver enforces 1,024 raw edges globally; the loader's per-package metadata
+ceiling remains separate. Two-package 512+512 passes and 600+600 rejects.
+All accepted build/test launchers and isolated processes were reclaimed.
+Preliminary failures remain in `artifacts/p2-supervision/features-v1/` and
+`features-v2/`; accepted evidence is in `features-v3/`.
+
+CI implementation commits are `a4e62bd` (independent native jobs and physical
+aggregate), `7ed3c3d` (explicit Windows oracle path), `6510e6a` (Linux runtime
+sidecar and bounded diagnostics), and `5c2900d` (legacy candidate SHA binding).
+The final candidate repair passes a fresh zero-warning/error build and 6/6
+differential controls at `4dc082b43d45583ba094ca1de9ea6add4dc3aae6`.
+Four local CI rejection controls pass; they are not native CI acceptance.
+Push these reviewable commits, dispatch `p1-expanded.yml`, `p1-platform.yml`
+and `linux-native-aot.yml` at one remote SHA, and inspect the automatic Windows
+P0 run. Store exact run IDs/status/provenance in `artifacts/p1-supervision/`.
+The production gate conjoins the old seven-report/15-check suite gate with
+two native 19-package/39-PE receipts and the physical 24-cell backend matrix.
+Full harness, NativeV5 Drop, exact coverage and all P1 gate requirements still
+need joint reconciliation; never infer whole-phase closure from a local slice.
+
+Current worker `cargo_p2` reserves only
+`artifacts/p1-supervision/prepared-cfg-v1/` for P2-04.04 drafts. Integrate only
+after freezing/reviewing all fixed cfg cases, including source selection and
+conditional dependencies; a predicate helper alone cannot close that leaf.
+`tooling_p2` has frozen and handed off CI drafts in `prepared-native-ci-v1/`
+and `prepared-legacy-ci-v1/`. Root owns real source integration, builds, shared
+entries, verification and one commit per accepted task. Reassign idle workers
+to dependency-allowed P2-06.02 / P2-08.02 with disjoint reservations.
+
+The old `tests/RustSharp.Tests/bin/Release/net10.0` junction was reversibly
+moved to `net10.0.preexisting-link-20261008`; its 2026-09-24 target and all
+unique contents remain preserved. The canonical output is now an ordinary
+fresh-built directory. Do not delete that old target or relax redirected-path
+validation. Recovery provenance is
+`artifacts/p1-supervision/native-trials-v1/preexisting-junction-recovery.json`.
+Keep original user `tmp/`, the rejected-cleanup ZIP log, candidate refs and all
+review artifacts. The sole `rustsharp-p2` heartbeat remains active every
+30 minutes; resume existing workers before creating replacements.
+
 ## Authorization and resumption
 
 The user authorized supervised subagents to implement all 15 P2 parents, 94
