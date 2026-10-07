@@ -40,8 +40,25 @@ jobs:
               $sqliteVersion -ne '3.53.4') {
             throw "Expected sqlite3 version 3.53.4, got '$sqliteVersion'."
           }
-      - name: Install rustc 1.98 oracle
-        run: rustup toolchain install 1.98.0 --profile minimal
+      - name: Install and bind rustc 1.98 oracle
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
+          $rustup = (Get-Command rustup -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath $rustup -ArgumentList @('toolchain','install','1.98.0','--profile','minimal') -TimeoutSeconds 180 -CapturePrefix artifacts/p0/oracle-install
+          # Resolve the rustup proxy, which accepts +1.98.0, through registered PATH.
+          # The generated Drop harness intentionally searches only 64 PATH entries.
+          $rustc = (Get-Command rustc -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          $dotnet = (Get-Command dotnet -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          if (-not [IO.Path]::IsPathFullyQualified($rustc) -or -not [IO.File]::Exists($rustc) -or
+              -not [IO.Path]::IsPathFullyQualified($dotnet) -or -not [IO.File]::Exists($dotnet)) { throw 'Explicit oracle/host paths are missing.' }
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath $rustc -ArgumentList @('+1.98.0','--version') -TimeoutSeconds 30 -CapturePrefix artifacts/p0/oracle-version
+          $version = [IO.File]::ReadAllText((Join-Path $PWD 'artifacts/p0/oracle-version.stdout.log')).Trim()
+          if (-not $version.StartsWith('rustc 1.98.0 (',[StringComparison]::Ordinal)) { throw 'The configured proxy did not select rustc 1.98.0.' }
+          "RUSTSHARP_RUSTC_PATH=$rustc" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RUSTSHARP_DOTNET_PATH=$dotnet" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Restore
         run: dotnet restore RustSharp.slnx
       - name: Build
