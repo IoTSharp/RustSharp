@@ -408,7 +408,7 @@ function Test-P1ReleaseArtifactBindings($Report, [string] $CandidateSha, [string
             $process = Get-P1Property $step 'process'
             $arguments = @(Get-P1Property $process 'Arguments')
             if ($name -cnotin @('restore','build') -or $arguments.Count -lt 4 -or $arguments[1] -cne $name -or
-                $arguments[2] -cne 'RustSharp.slnx' -or [IO.Path]::GetFileName([string](Get-P1Property $process 'FilePath')) -cnotin @('dotnet','dotnet.exe') -or
+                $arguments[2] -cne 'RustSharp.slnx' -or [IO.Path]::GetFileName(([string](Get-P1Property $process 'FilePath')).Replace('\','/')) -cnotin @('dotnet','dotnet.exe') -or
                 -not ([string]$arguments[0]).Replace('\','/').EndsWith('/sdk/'+[string](Get-P1Property $Report 'sdkVersion')+'/dotnet.dll',[StringComparison]::Ordinal) -or
                 [string]::IsNullOrWhiteSpace([string](Get-P1Property $process 'WorkingDirectory')) -or
                 '--disable-build-servers' -cnotin $arguments -or ($name -ceq 'build' -and ('Release' -cnotin $arguments -or '--no-restore' -cnotin $arguments))) { throw 'Release process command does not bind the selected SDK and solution.' }
