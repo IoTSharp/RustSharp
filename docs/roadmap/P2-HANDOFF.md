@@ -2,7 +2,52 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 07:25
+## Current checkpoint — 2026-10-08 07:55
+
+Accepted separately: `f213c3a` integrates the original-byte Drop transport
+component. Candidate `c950e0164719bdcf6309e944c2e0078d2ee5eafe`, tree
+`08ec300868804497bc985f547bd8679f88e8f5cf`,707 inputs, Release0/0,
+Windows/Ubuntu tiny1+utility12, two unauthenticated entry rejections and four
+AST checks pass. Root observes13 recorded launcher identities absent and four
+owned sandboxes/links removed. Actual native/ILVerify/AOT/formal joint controls
+remain0; workflow integration and trusted descendant containment remain open.
+See `docs/p1-drop-transport-v1.md` and its paired translation/archive.
+
+`894be1b` repairs the formatter Remaining double-clock race found in real Linux
+CI. Candidate `0004e750d80900d2881d7ea680ce9a1b26228aec`, tree
+`8c0e49054af4bff4da25c3a880ea19450744e68e`,707 inputs, Release0/0,
+Windows/Ubuntu tiny1+formatter59 pass; the existing budget case now contains32
+bounded one-tick assertions. Ubuntu uses the Windows-built portable assembly,
+not native CI build evidence. Root observes70 Windows and62 Ubuntu recorded
+identities absent. Windows MIR or-pattern diagnostic1 passes, but does not
+resolve its separate old CI failure. P2-08.02 remains 🚧 In progress; P2 remains
+8/101 ✅ Complete leaves. All six P1 gates and all P2 parents/phases remain open.
+See `docs/p2-formatter-budget-v1.md` and its paired translation/archive.
+
+CI v15 binds old4d33334/run37702329159: final ❌ Failed. Both expanded platforms
+execute1203/1203 with1202passed/1failed and zero unexecuted. Linux formatter58/59
+failed with the repaired parser-budget race; Windows formatter59/59 passed and
+MIR binding or-patterns failed with a type-analysis limit after6.0166s. Independent
+audit reconciles32 physical hashes,440 mapped IDs/platform and703 source blobs
+against883 Git entries;14 local launch identities exited. The aggregate originals
+remain separate pending evidence; v16 continues their exact artifact IDs. Do not
+promote production-native job success into physical matrix proof.
+
+Windows cancellation v2 builds but its tiny readiness cannot attach the suspended
+CLI console (Win32=6); CLI runtime0/signal0, six known PIDs absent and fixture
+removed. Containment v2 builds0/0; its sole tiny root exits0 and held Job reaches
+ActiveProcesses0, but TotalProcesses2 violates the one-root contract and the
+second identity is unknown. Lifecycle8 remains0. Ubuntu has no writable private
+cgroup delegation. Preserve both blocked drafts and failures; no standard is
+relaxed. Root follows their precise manifests and resource records.
+
+Latest Git/push/unique-CI state is in
+`artifacts/p2-supervision/formatter-budget-root-v1/resumption.json`. Next finish
+safe cancellation/containment, wire mandatory NativeV5/transport/joint gates,
+investigate the Windows MIR limit and reconcile fresh same-SHA CI. Preserve user
+tmp and the sole ACTIVE thirty-minute heartbeat.
+
+## Historical checkpoint — 2026-10-08 07:25
 
 Accepted separately: `ad813af` fixes Linux hidden receipt sandbox cleanup;
 Windows/Ubuntu each pass tiny1 and fixed3, four sandboxes removed. `6d3d428`

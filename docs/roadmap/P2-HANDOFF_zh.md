@@ -2,7 +2,45 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 07:25
+## 当前检查点 — 2026-10-08 07:55
+
+逐项验收提交：`f213c3a` 接入原始字节 Drop 传输组件。候选
+`c950e0164719bdcf6309e944c2e0078d2ee5eafe`、tree
+`08ec300868804497bc985f547bd8679f88e8f5cf`、707 输入、Release0/0、
+Windows/Ubuntu 各 tiny1+utility12、两个无认证上下文入口拒绝及四份 AST 检查通过。
+主监督者确认13个已记录启动进程身份消失，四个独占沙箱/链接已移除。真实 native/
+ILVerify/AOT/正式 joint 控制仍为0；工作流接入及可信完整后代隔离仍开放。
+见 `docs/p1-drop-transport-v1.md` 及其成对翻译/归档。
+
+`894be1b` 修复真实 Linux CI 发现的 formatter Remaining 两次时钟采样竞态。候选
+`0004e750d80900d2881d7ea680ce9a1b26228aec`、tree
+`8c0e49054af4bff4da25c3a880ea19450744e68e`、707 输入、Release0/0、
+Windows/Ubuntu 各 tiny1+formatter59 通过；既有预算案例现含32次有界单 tick 断言。
+Ubuntu 使用 Windows 构建的可移植程序集，不是原生 CI 构建证据。主监督者确认70个
+Windows 和62个 Ubuntu 已记录身份消失。Windows MIR or-pattern 诊断1通过，但
+不据此解决其独立旧 CI 故障。P2-08.02 仍为 🚧 进行中；P2 仍为8/101 ✅ 已完成
+叶项。P1 六门禁及 P2 全部父项/阶段仍开放。见 `docs/p2-formatter-budget-v1.md`
+及其成对翻译/归档。
+
+CI v15 绑定旧4d33334/run37702329159，最终 ❌ 失败。两个 expanded 平台均执行
+1203/1203、1202通过/1失败，未执行为零。Linux formatter58/59 因已修复的 parser
+预算竞态失败；Windows formatter59/59 通过，MIR binding or-patterns 在6.0166秒
+后触发类型分析限制。独立审计核对32次物理哈希、每平台440个映射 ID、703条源码 blob
+与883条 Git 清单；14个本地启动身份消失。aggregate 原件仍为独立待验收证据，v16
+接续其精确 artifact ID。不得把 production-native 作业成功提升为物理矩阵证明。
+
+Windows 取消 v2 构建通过，但 tiny 就绪无法附加挂起 CLI 的控制台（Win32=6）；
+CLI runtime0/signal0，六个已知 PID 消失，夹具移除。隔离 v2 构建0/0；唯一 tiny
+root 退出0且持有 Job 的 ActiveProcesses 达0，但 TotalProcesses2 违反单 root
+契约，第二个身份未知。lifecycle8 仍为0。Ubuntu 没有可写的独占 cgroup 委派。
+保留两份阻塞草稿及失败，不放宽标准。主监督者依据其精确 manifest 和资源记录接续。
+
+最新 Git/push/唯一 CI 状态保存在
+`artifacts/p2-supervision/formatter-budget-root-v1/resumption.json`。下一步完成安全
+取消/完整隔离，接入必需 NativeV5/transport/joint 门禁，调查 Windows MIR 限制，
+对账新鲜同 SHA CI。保留用户 tmp 和唯一 ACTIVE 三十分钟心跳。
+
+## 历史检查点 — 2026-10-08 07:25
 
 分别验收提交：`ad813af` 修复Linux隐藏回执沙箱清理，Windows/Ubuntu各通过
 tiny1及fixed3，四个沙箱已移除。`6d3d428` 添加剩余证据单调I/O接受检查：候选
