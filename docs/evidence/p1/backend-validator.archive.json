@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-implementation-checks-archive",
+  "candidateSha": "dfdd76155934e286b85979a28b053ce8ffc10547",
+  "scope": "six-exact-backend-runner-and-validator-controls",
+  "fullP1Closure": false,
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "denominator": 8,
+    "status": "passed"
+  },
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "sourcePath": "artifacts/p1-supervision/continuation-v3/backend-validator.harness.json",
+  "sourceSha256": "970CD18F0E7314E168C540936784F77B52E5990827F626D56B901EA4E4123A53",
+  "archivedPath": "docs/evidence/p1/backend-validator.harness.json",
+  "archivedSha256": "493CF50E4168B639F7208EC6833A216F75CC47D71FC50B52C209E173FB0AAC34"
+}

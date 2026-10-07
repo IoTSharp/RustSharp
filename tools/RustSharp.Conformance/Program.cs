@@ -28,6 +28,32 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length == 5 && args[0] is "--validate-p1-backend-native" or "--validate-p1-backend-matrix")
+        {
+            try
+            {
+                string root = FindRepositoryRoot();
+                P1BackendCoverageEvidence.ValidationResult validation = args[0] == "--validate-p1-backend-native"
+                    ? await P1BackendCoverageEvidence.ValidateNativeReportAsync(root, Path.GetFullPath(args[1], root),
+                        new(args[2], args[3], args[4])).ConfigureAwait(false)
+                    : await P1BackendCoverageEvidence.ValidateClosedMatrixAsync(root, Path.GetFullPath(args[1], root),
+                        Path.GetFullPath(args[2], root), args[3], args[4]).ConfigureAwait(false);
+                Console.WriteLine(new JsonObject
+                {
+                    ["Valid"] = validation.Valid, ["ArtifactContentVerified"] = validation.ArtifactContentVerified,
+                    ["ClosedCells"] = validation.ClosedCells, ["SatisfiesNativeGate"] = validation.SatisfiesNativeGate,
+                    ["SatisfiesMatrixGate"] = validation.SatisfiesMatrixGate,
+                    ["Errors"] = new JsonArray(validation.Errors.Select(error => (JsonNode?)JsonValue.Create(error)).ToArray())
+                }.ToJsonString());
+                return (args[0] == "--validate-p1-backend-native" ? validation.SatisfiesNativeGate : validation.SatisfiesMatrixGate) ? 0 : 1;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                ArgumentException or InvalidOperationException or JsonException or OperationCanceledException or Win32Exception)
+            {
+                Console.Error.WriteLine("Backend artifact validation failed: " + exception.Message);
+                return 2;
+            }
+        }
         if (args.Length == 5 && args[0] == "--validate-p1-source-package-candidate")
         {
             try
@@ -48,6 +74,27 @@ internal static class Program
                 ArgumentException or InvalidOperationException or JsonException or OperationCanceledException or Win32Exception)
             {
                 Console.Error.WriteLine("Source-package artifact validation failed: " + exception.Message);
+                return 2;
+            }
+        }
+        if (args.Length == 7 && args[0] == "--p1-backend-coverage-candidate")
+        {
+            if (!int.TryParse(args[3], NumberStyles.None, CultureInfo.InvariantCulture, out int maximumBackendFixtures) ||
+                maximumBackendFixtures is < 1 or > 6)
+            {
+                Console.Error.WriteLine("Candidate backend coverage requires 1..6 fixtures.");
+                return 2;
+            }
+            try
+            {
+                string backendRoot = FindRepositoryRoot();
+                return await P1BackendCoverageRunner.RunAsync(backendRoot, Path.GetFullPath(args[1], backendRoot), args[2],
+                    maximumBackendFixtures, new P1BackendCoverageRunner.Options(args[4], args[5], args[6])).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                ArgumentException or InvalidOperationException or JsonException or OperationCanceledException or Win32Exception)
+            {
+                Console.Error.WriteLine("Candidate backend coverage failed: " + exception.Message);
                 return 2;
             }
         }
