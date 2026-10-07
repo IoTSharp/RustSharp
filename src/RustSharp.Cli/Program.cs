@@ -329,10 +329,10 @@ internal static class Program
         if (string.Equals(Path.GetFileName(sourcePath), "Cargo.toml", StringComparison.OrdinalIgnoreCase))
         {
             CargoWorkspaceResult manifest = CargoWorkspace.Load(sourcePath);
-            if (manifest.IsSuccessful && manifest.RootPackage.Name.Length != 0)
+            if (manifest.IsSuccessful && manifest.RootPackageOrNull is { } rootPackage && rootPackage.Name.Length != 0)
             {
-                sourcePath = manifest.RootPackage.SourcePath;
-                return SanitizeAssemblyName(manifest.RootPackage.Name);
+                sourcePath = rootPackage.SourcePath;
+                return SanitizeAssemblyName(rootPackage.Name);
             }
         }
         return SanitizeAssemblyName(Path.GetFileNameWithoutExtension(sourcePath));

@@ -966,7 +966,13 @@ public sealed class CompilerDriver
             diagnostics = workspace.Diagnostics;
             return null;
         }
-        return workspace.RootPackage.SourcePath;
+        if (workspace.RootPackageOrNull is not { } rootPackage)
+        {
+            diagnostics = [new Diagnostic(CargoWorkspace.UnsupportedManifestDiagnostic,
+                "A virtual Cargo workspace requires an explicit package selection.", new TextSpan(0, 0)) { SourcePath = path }];
+            return null;
+        }
+        return rootPackage.SourcePath;
     }
 
     private static IReadOnlyList<Diagnostic> MapDiagnostics(

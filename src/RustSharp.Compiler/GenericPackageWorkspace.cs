@@ -22,6 +22,10 @@ public static class GenericPackageWorkspace
         var clock = Stopwatch.StartNew();
         CargoWorkspaceResult cargo = CargoWorkspace.Load(manifestPath, cancellationToken: cancellationToken);
         if (!cargo.IsSuccessful) return new(manifestPath, string.Empty, null, [], cargo.Diagnostics);
+        if (cargo.RootPackageOrNull is null)
+            return new(manifestPath, string.Empty, null, [], [new Diagnostic("RSCARGO1005",
+                "A virtual workspace requires an explicit package selection before source compilation.", new TextSpan(0, 0))
+                { SourcePath = cargo.RootManifestPath }]);
         var comparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         var packages = cargo.Packages.ToDictionary(static package => package.ManifestPath, comparer);
         string rootDirectory = Path.GetDirectoryName(cargo.RootPackage.ManifestPath)!;

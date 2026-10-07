@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p2-cargo-manifest-archive",
+  "leafId": "P2-04.02",
+  "candidateSha": "dfdd76155934e286b85979a28b053ce8ffc10547",
+  "fullP2Closure": false,
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "summary": {
+    "passed": 38,
+    "status": "passed",
+    "denominator": 38,
+    "compatibilityPassed": 10
+  },
+  "artifacts": [
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/cargo/P2-04.02.json",
+      "sourceSha256": "5A8E1638F7CB91DE91C189DDBFCC64F7C525E921228C6B7FDE8770A9BE47B0FF",
+      "archivedPath": "docs/evidence/p2/P2-04.02.json",
+      "archivedSha256": "5A8E1638F7CB91DE91C189DDBFCC64F7C525E921228C6B7FDE8770A9BE47B0FF"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/cargo/P2-04.02.harness.json",
+      "sourceSha256": "24AFBF98DB0FDC2D3A2441082E610B24AE5478F8067FE424DAF7CCA6AE4B3C28",
+      "archivedPath": "docs/evidence/p2/P2-04.02.harness.json",
+      "archivedSha256": "E68FDDC9F51653B11E701742B50A73A19751AC3B7A4B690F39D1EF99FA8B607E"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/legacy-generic-packages.harness.json",
+      "sourceSha256": "DAF4EE7245F1549426C9410326F4466F0BEBFC681DFC1F6A503094B247E1AF5A",
+      "archivedPath": "docs/evidence/p2/P2-04.02.legacy-generics.json",
+      "archivedSha256": "21138D0D3224612EA16E9FF33507F327871281166B15FA76DABEB0A79519ACE9"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/legacy-cargo-workspace.harness.json",
+      "sourceSha256": "AE73DF9A0D9727789D03128FFE1F5216CD26185FBA6DD56DBFD7DE54563BD6D2",
+      "archivedPath": "docs/evidence/p2/P2-04.02.legacy-workspace.json",
+      "archivedSha256": "653F9CFBE72754AAAD927221961D502285641614A70E7131680251BCAA4C208E"
+    },
+    {
+      "sourcePath": "artifacts/p1-supervision/continuation-v3/legacy-cargo-inputs.harness.json",
+      "sourceSha256": "87D45E50AFDAD5B0D2D551FB6E71302B5E8079E173126AA86090116C380E1F55",
+      "archivedPath": "docs/evidence/p2/P2-04.02.legacy-inputs.json",
+      "archivedSha256": "B75DF8A163CAF48C9F04596AC32F87C90FB7CF38D1F7208EEC13ECB7B6029A1E"
+    }
+  ]
+}
