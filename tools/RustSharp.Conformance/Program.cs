@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using RustSharp.Compiler;
 
 namespace RustSharp.Conformance;
@@ -27,6 +28,50 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length == 5 && args[0] == "--validate-p1-source-package-candidate")
+        {
+            try
+            {
+                string root = FindRepositoryRoot();
+                P1SourcePackageEvidenceValidator.ValidationResult validation =
+                    await P1SourcePackageEvidenceValidator.ValidateFileAsync(root, Path.GetFullPath(args[1], root),
+                        new(args[2], args[3], args[4])).ConfigureAwait(false);
+                Console.WriteLine(new JsonObject
+                {
+                    ["Valid"] = validation.Valid, ["ArtifactContentVerified"] = validation.ArtifactContentVerified,
+                    ["SatisfiesGate"] = validation.SatisfiesGate,
+                    ["Errors"] = new JsonArray(validation.Errors.Select(error => (JsonNode?)JsonValue.Create(error)).ToArray())
+                }.ToJsonString());
+                return validation.SatisfiesGate ? 0 : 1;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                ArgumentException or InvalidOperationException or JsonException or OperationCanceledException or Win32Exception)
+            {
+                Console.Error.WriteLine("Source-package artifact validation failed: " + exception.Message);
+                return 2;
+            }
+        }
+        if (args.Length == 7 && args[0] == "--p1-source-package-candidate")
+        {
+            if (!int.TryParse(args[3], NumberStyles.None, CultureInfo.InvariantCulture, out int maximumSourcePackages) ||
+                maximumSourcePackages is < 1 or > P1SourcePackagePlatformRunner.MaximumCases)
+            {
+                Console.Error.WriteLine($"Candidate source package evidence requires 1..{P1SourcePackagePlatformRunner.MaximumCases} cases.");
+                return 2;
+            }
+            try
+            {
+                P1SourcePackagePlatformRunner.Result packages = await P1SourcePackagePlatformRunner.RunCandidateAsync(
+                    FindRepositoryRoot(), args[1], args[2], maximumSourcePackages, args[4], args[5], args[6]).ConfigureAwait(false);
+                return packages.Succeeded ? 0 : 1;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                ArgumentException or InvalidOperationException or JsonException or OperationCanceledException or Win32Exception)
+            {
+                Console.Error.WriteLine("Candidate source package evidence failed: " + exception.Message);
+                return 2;
+            }
+        }
         if (args.Length == 4 && args[0] == "--p1-source-package-platform")
         {
             if (!int.TryParse(args[3], NumberStyles.None, CultureInfo.InvariantCulture, out int maximumSourcePackages) ||

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-implementation-checks-archive",
+  "candidateSha": "dfdd76155934e286b85979a28b053ce8ffc10547",
+  "scope": "source-package-runner-and-artifact-validator-controls",
+  "fullP1Closure": false,
+  "summary": {
+    "passed": 12,
+    "failed": 0,
+    "denominator": 12,
+    "status": "passed"
+  },
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "sourcePath": "artifacts/p1-supervision/continuation-v3/source-package-validator.harness.json",
+  "sourceSha256": "44D07AC03B76FC591D9EFE914695E074C00266D0E57EDB750B5B178643399BAF",
+  "archivedPath": "docs/evidence/p1/source-package-validator.harness.json",
+  "archivedSha256": "45E211EA1E82F7042A7A121D7D5328AE83BF1473C16E5C70A842E07AA2126C4A"
+}

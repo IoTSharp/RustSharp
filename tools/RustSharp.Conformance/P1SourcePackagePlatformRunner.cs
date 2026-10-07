@@ -25,6 +25,9 @@ internal static class P1SourcePackagePlatformRunner
     private static readonly TimeSpan PatternTimeout = TimeSpan.FromSeconds(1);
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private sealed record SourceSnapshot(string Path, byte[] Bytes, string Text, string Sha256);
+    private sealed record CandidateInputs(string Sha, string SnapshotPath, string ReleaseBuildPath);
+    internal const string NativeHostSource = "namespace RustSharp.NativeAotHost;\n" +
+        "internal static class EntryPoint { private static void Main() => global::RustSharp.Generated.Program.Main(); }\n";
 
     internal sealed record Result(string ReportPath, int Passed, int Failed, int Blocked,
         int NotExecuted, int Denominator, bool CleanupComplete)
@@ -34,8 +37,19 @@ internal static class P1SourcePackagePlatformRunner
             NotExecuted == 0 && CleanupComplete && DeadlineMet;
     }
 
-    internal static async Task<Result> RunAsync(string repositoryRoot, string manifestPath,
-        string reportPath, int maximumCasesToExecute, CancellationToken cancellationToken = default)
+    internal static Task<Result> RunAsync(string repositoryRoot, string manifestPath,
+        string reportPath, int maximumCasesToExecute, CancellationToken cancellationToken = default) =>
+        RunCoreAsync(repositoryRoot, manifestPath, reportPath, maximumCasesToExecute, null, cancellationToken);
+
+    /// <summary>The explicit candidate entry selects native Drop v2 only for MIR v2 source cases.</summary>
+    internal static Task<Result> RunCandidateAsync(string repositoryRoot, string manifestPath, string reportPath,
+        int maximumCasesToExecute, string candidateSha, string sourceSnapshotPath, string releaseBuildPath,
+        CancellationToken cancellationToken = default) => RunCoreAsync(repositoryRoot, manifestPath, reportPath,
+            maximumCasesToExecute, new(candidateSha, sourceSnapshotPath, releaseBuildPath), cancellationToken);
+
+    private static async Task<Result> RunCoreAsync(string repositoryRoot, string manifestPath,
+        string reportPath, int maximumCasesToExecute, CandidateInputs? candidate,
+        CancellationToken cancellationToken)
     {
         if (maximumCasesToExecute is < 1 or > MaximumCases)
             throw new ArgumentOutOfRangeException(nameof(maximumCasesToExecute));
@@ -89,20 +103,58 @@ internal static class P1SourcePackagePlatformRunner
         DateTimeOffset startedAt = DateTimeOffset.UtcNow;
         var outcomes = new JsonArray();
         var tools = new JsonObject();
+        P1SourcePackageEvidenceValidator.CandidateProvenance? provenance = null;
+        var implementationInputs = new JsonArray();
         bool hostsClean = true;
         string? harnessError = null, temporaryCleanupError = null;
         string dotnet = Environment.GetEnvironmentVariable("RUSTSHARP_P1_DOTNET_PATH") ?? "dotnet";
         string pwsh = Environment.GetEnvironmentVariable("RUSTSHARP_P1_PWSH_PATH") ??
             (OperatingSystem.IsWindows() ? @"C:\Program Files\PowerShell\7\pwsh.exe" : "pwsh");
         string runtimeIdentifier = OperatingSystem.IsWindows() ? "win-x64" : "linux-x64";
+        string? previousNativeSdk = Environment.GetEnvironmentVariable("RUSTSHARP_NATIVE_AOT_SDK_VERSION");
         string[] verifierPrefix = ["tool", "run", "ilverify", "--"];
         BoundedProcessResult? verifierProbe = null;
         try
         {
             await File.WriteAllBytesAsync(retainedManifest, manifestBytes, deadline.Token).ConfigureAwait(false);
+            if (candidate is not null)
+            {
+                P1SourcePackageEvidenceValidator.ValidateFrozenManifest(manifestBytes);
+                provenance = await P1SourcePackageEvidenceValidator.ValidateCandidateInputsAsync(root, candidate.Sha,
+                    ChildPath(root, candidate.SnapshotPath), ChildPath(root, candidate.ReleaseBuildPath), runtimeIdentifier,
+                    OnStarted, deadline.Token).ConfigureAwait(false);
+                processes.Add(provenance.Process);
+                foreach (string role in new[] { "source-snapshot", "release-build" })
+                {
+                    string input = role == "source-snapshot" ? ChildPath(root, candidate.SnapshotPath) : ChildPath(root, candidate.ReleaseBuildPath);
+                    File.Copy(input, Path.Combine(evidenceDirectory, role + ".json"));
+                }
+                string[] loaded = [typeof(CompilerDriver).Assembly.Location, typeof(P1SourcePackagePlatformRunner).Assembly.Location,
+                    typeof(RustSharp.Runtime.RustPanicBoundary).Assembly.Location, typeof(SafeCoreMirPipeline).Assembly.Location,
+                    typeof(ClrLirAssemblyEmitter).Assembly.Location, typeof(RustSharp.Syntax.SafeCoreSyntax).Assembly.Location];
+                var inputClock = Stopwatch.StartNew();
+                foreach (string assembly in loaded)
+                {
+                    deadline.Token.ThrowIfCancellationRequested();
+                    if (inputClock.Elapsed > TimeSpan.FromSeconds(30)) throw new InvalidOperationException("Implementation retention exceeded its time bound.");
+                    string name = Path.GetFileName(assembly);
+                    JsonObject output = provenance.ReleaseBuild["implementationAssemblies"]!.AsArray()
+                        .Select(static item => item!.AsObject()).Single(item => Path.GetFileName(Text(item, "path")) == name);
+                    if (Hash(assembly) != Text(output, "sha256")) throw new InvalidOperationException("Loaded implementation differs from the fresh Release build: " + name);
+                    string kept = Path.Combine(evidenceDirectory, name);
+                    File.Copy(assembly, kept);
+                    implementationInputs.Add(new JsonObject { ["name"] = name, ["loadedAssembly"] = Artifact(assembly),
+                        ["releaseOutput"] = output.DeepClone(), ["retainedAssembly"] = Artifact(kept) });
+                }
+            }
             Directory.CreateDirectory(Path.Combine(toolingDirectory, ".config"));
             File.Copy(Path.Combine(root, ".config", "dotnet-tools.json"), Path.Combine(toolingDirectory, ".config", "dotnet-tools.json"));
-            string? sdk = Environment.GetEnvironmentVariable("RUSTSHARP_NATIVE_AOT_SDK_VERSION");
+            string? sdk = candidate is not null ? provenance!.ReleaseBuild["sdkVersion"]!.GetValue<string>() : previousNativeSdk;
+            if (candidate is not null)
+            {
+                Environment.SetEnvironmentVariable("RUSTSHARP_NATIVE_AOT_SDK_VERSION", sdk);
+                tools["sdkVersion"] = sdk;
+            }
             if (sdk is not null)
             {
                 if (!Regex.IsMatch(sdk, "^[0-9]+\\.[0-9]+\\.[0-9]+$", RegexOptions.CultureInvariant, PatternTimeout))
@@ -172,6 +224,8 @@ internal static class P1SourcePackagePlatformRunner
                         "safe-core-mir-p1-v2" => CompilationProfile.SafeCoreMirV2,
                         _ => throw new ArgumentException("Unsupported source package compiler profile."),
                     };
+                    SafeCoreDropCleanupProfile dropProfile = candidate is not null && profile == CompilationProfile.SafeCoreMirV2
+                        ? SafeCoreDropCleanupProfile.NativeV2 : SafeCoreDropCleanupProfile.LegacyV1;
                     SafeCorePanicStrategy producerPanicStrategy = (fixture["producerPanicStrategy"]?.GetValue<string>() ?? "unwind") switch
                     {
                         "unwind" => SafeCorePanicStrategy.Unwind,
@@ -194,6 +248,7 @@ internal static class P1SourcePackagePlatformRunner
                     if (wrapperSource is not null)
                         outcome["sourceWrapper"] = new JsonObject { ["path"] = wrapperSource.Path, ["sha256"] = wrapperSource.Sha256 };
                     outcome["compilerProfile"] = Text(fixture, "compilerProfile");
+                    outcome["dropCleanupProfile"] = dropProfile == SafeCoreDropCleanupProfile.NativeV2 ? "native-v2" : "legacy-v1";
                     outcome["producerPanicStrategy"] = producerPanicStrategy == SafeCorePanicStrategy.Abort ? "abort" : "unwind";
                     outcome["expectedOutput"] = expectedOutput;
                     outcome["expectedOutcome"] = expectedOutcome;
@@ -211,12 +266,12 @@ internal static class P1SourcePackagePlatformRunner
                         string producer = Path.Combine(directory, producerName + ".dll");
                         string consumer = Path.Combine(directory, consumerName + ".dll");
                         string? wrapper = hasWrapper ? Path.Combine(directory, wrapperName + ".dll") : null;
-                        CompilationResult producerResult = CompilerDriver.CompileWithPanicStrategy(producerSource.Text,
-                            producerSource.Path, producer, producerPanicStrategy, producerName, profile, compileDeadline.Token);
+                        CompilationResult producerResult = CompilerDriver.CompileWithDropProfile(producerSource.Text,
+                            producerSource.Path, producer, dropProfile, producerPanicStrategy, producerName, profile, compileDeadline.Token);
                         var compilation = new JsonObject { ["producer"] = CompileEvidence(producerResult, producer) };
                         builds.Add(compilation);
                         if (!producerResult.Success) { outcome["status"] = "failed"; break; }
-                        RustSharpMetadataImportResult producerMetadata = RustSharpMetadataConsumer.ReadAssembly(producer,
+                        RustSharpMetadataImportResult producerMetadata = RustSharpMetadataConsumer.ReadAssembly(producer, dropProfile,
                             Text(fixture, "compilerProfile"), required, cancellationToken: compileDeadline.Token);
                         if (!producerMetadata.IsSuccessful || producerMetadata.Document!.SourceSha256 != producerSource.Sha256)
                             throw new InvalidOperationException("Fresh producer metadata does not reconcile with the frozen source: " +
@@ -229,11 +284,11 @@ internal static class P1SourcePackagePlatformRunner
                         if (wrapper is not null)
                         {
                             CompilationResult wrapperResult = CompilerDriver.CompileWithMetadataReferences(
-                                wrapperSource!.Text, wrapperSource.Path, wrapper, wrapperName!, profile,
+                                wrapperSource!.Text, wrapperSource.Path, wrapper, wrapperName!, profile, dropProfile,
                                 [producer], required, compileDeadline.Token);
                             compilation["wrapper"] = CompileEvidence(wrapperResult, wrapper);
                             if (!wrapperResult.Success) { outcome["status"] = "failed"; break; }
-                            wrapperMetadata = RustSharpMetadataConsumer.ReadAssembly(wrapper,
+                            wrapperMetadata = RustSharpMetadataConsumer.ReadAssembly(wrapper, dropProfile,
                                 Text(fixture, "compilerProfile"), wrapperRequired, [producer], compileDeadline.Token);
                             if (!wrapperMetadata.IsSuccessful || wrapperMetadata.Document!.SourceSha256 != wrapperSource.Sha256)
                                 throw new InvalidOperationException("Fresh wrapper metadata does not reconcile with the frozen source: " +
@@ -250,10 +305,10 @@ internal static class P1SourcePackagePlatformRunner
                         string[] dependencyPaths = wrapper is null ? [producer] : [producer, wrapper];
                         CompilationResult consumerResult = CompilerDriver.CompileWithMetadataReferences(
                             consumerSource.Text, consumerSource.Path,
-                            consumer, consumerName, profile, dependencyPaths, hasWrapper ? null : required, compileDeadline.Token);
+                            consumer, consumerName, profile, dropProfile, dependencyPaths, hasWrapper ? null : required, compileDeadline.Token);
                         compilation["consumer"] = CompileEvidence(consumerResult, consumer);
                         if (!consumerResult.Success) { outcome["status"] = "failed"; break; }
-                        RustSharpMetadataImportResult consumerMetadata = RustSharpMetadataConsumer.ReadAssembly(consumer,
+                        RustSharpMetadataImportResult consumerMetadata = RustSharpMetadataConsumer.ReadAssembly(consumer, dropProfile,
                             Text(fixture, "compilerProfile"), dependencyPaths: dependencyPaths, cancellationToken: compileDeadline.Token);
                         if (!consumerMetadata.IsSuccessful || consumerMetadata.Document!.SourceSha256 != consumerSource.Sha256)
                             throw new InvalidOperationException("Fresh consumer metadata does not reconcile with the frozen source: " +
@@ -321,17 +376,39 @@ internal static class P1SourcePackagePlatformRunner
                             processes, OnStarted, deadline.Token).ConfigureAwait(false);
                         outcome["wrapperIlVerify"] = wrapperVerify;
                     }
-                    const string nativeHost = "namespace RustSharp.NativeAotHost;\n" +
-                        "internal static class EntryPoint { private static void Main() => global::RustSharp.Generated.Program.Main(); }\n";
                     string hostSource = Path.Combine(retained, "native-host.cs");
-                    await File.WriteAllTextAsync(hostSource, nativeHost, deadline.Token).ConfigureAwait(false);
+                    await File.WriteAllTextAsync(hostSource, NativeHostSource, deadline.Token).ConfigureAwait(false);
                     outcome["nativeHostSource"] = Artifact(hostSource);
                     outcome["nativeAdditionalAssembly"] = Artifact(firstProducer);
                     string[] nativeReferences = firstWrapper is null ? [firstProducer] : [firstProducer, firstWrapper];
                     outcome["nativeAdditionalAssemblies"] = new JsonArray(nativeReferences.Select(Artifact).ToArray());
+                    void CaptureNativeInputs(BoundedProcessStarted start)
+                    {
+                        OnStarted(start);
+                        if (candidate is null) return;
+                        string hostRoot = Path.GetFullPath(start.WorkingDirectory);
+                        if (Path.GetDirectoryName(hostRoot) != Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.GetTempPath())) ||
+                            !Path.GetFileName(hostRoot).StartsWith("rsc-aot-" + Environment.ProcessId + "-", StringComparison.Ordinal))
+                            throw new InvalidOperationException("Native input capture rejected an unowned host directory.");
+                        string keptInputs = Path.Combine(retained, "native-inputs");
+                        Directory.CreateDirectory(keptInputs);
+                        string[] names = ["RustSharp.NativeAotHost.csproj", "Program.cs", Path.GetFileName(firstConsumer),
+                            "RustSharp.Runtime.dll", .. nativeReferences.Select(Path.GetFileName).Select(static name => name!)];
+                        var captureClock = Stopwatch.StartNew();
+                        var captured = new JsonArray();
+                        foreach (string name in names)
+                        {
+                            deadline.Token.ThrowIfCancellationRequested();
+                            if (captureClock.Elapsed > TimeSpan.FromSeconds(10)) throw new InvalidOperationException("Native input capture exceeded its time bound.");
+                            string input = Path.Combine(hostRoot, name), kept = Path.Combine(keptInputs, name);
+                            File.Copy(input, kept);
+                            captured.Add(new JsonObject { ["name"] = name, ["originalPath"] = input, ["retained"] = Artifact(kept) });
+                        }
+                        outcome["nativeInputs"] = captured;
+                    }
                     NativeAotPublishResult native = await new NativeAotPublisher(runner).PublishAsync(
                         new(firstConsumer, consumerName, runtimeIdentifier, Path.Combine(caseDirectory, "native"), PublishTimeout,
-                            OnStarted, AdditionalAssemblyPaths: nativeReferences) { HostSourceOverride = nativeHost }, deadline.Token).ConfigureAwait(false);
+                            CaptureNativeInputs, AdditionalAssemblyPaths: nativeReferences) { HostSourceOverride = NativeHostSource }, deadline.Token).ConfigureAwait(false);
                     processes.Add(native.ProcessResult);
                     hostsClean &= native.HostCleanupAttempted && !native.HostCleanupIncomplete && !Directory.Exists(native.HostDirectory);
                     outcome["nativePublish"] = Evidence(native.ProcessResult);
@@ -371,6 +448,7 @@ internal static class P1SourcePackagePlatformRunner
         catch (Exception exception) when (ExpectedFailure(exception)) { harnessError = exception.Message; }
         finally
         {
+            if (candidate is not null) Environment.SetEnvironmentVariable("RUSTSHARP_NATIVE_AOT_SDK_VERSION", previousNativeSdk);
             Console.CancelKeyPress -= cancel;
             temporaryCleanupError = await CleanupAsync(temporaryDirectory).ConfigureAwait(false);
         }
@@ -391,7 +469,7 @@ internal static class P1SourcePackagePlatformRunner
         var result = new Result(report, passed, failed, blocked, notExecuted, fixtures.Count, cleanup) { DeadlineMet = withinDeadline };
         var document = new JsonObject
         {
-            ["schemaVersion"] = 1, ["evidenceKind"] = "p1-source-package-original-pe-coreclr-ilverify-native-aot",
+            ["schemaVersion"] = candidate is null ? 1 : 2, ["evidenceKind"] = "p1-source-package-original-pe-coreclr-ilverify-native-aot",
             ["profile"] = Text(manifest, "profile"), ["manifestPath"] = manifestFile,
             ["manifestSha256"] = Convert.ToHexString(SHA256.HashData(manifestBytes)),
             ["retainedManifest"] = File.Exists(retainedManifest) ? Artifact(retainedManifest) : null,
@@ -422,6 +500,16 @@ internal static class P1SourcePackagePlatformRunner
             ["processResults"] = new JsonArray(processes.Select(static process => (JsonNode)Evidence(process)!).ToArray()),
             ["harnessError"] = harnessError,
         };
+        if (candidate is not null)
+        {
+            document["candidateSha"] = candidate.Sha;
+            document["candidateTreeSha"] = provenance?.Snapshot["treeSha"]?.DeepClone();
+            document["sourceSnapshot"] = provenance is null ? null : new JsonObject { ["artifact"] = Artifact(Path.Combine(evidenceDirectory, "source-snapshot.json")), ["raw"] = provenance.Snapshot.DeepClone() };
+            document["releaseBuild"] = provenance is null ? null : new JsonObject { ["artifact"] = Artifact(Path.Combine(evidenceDirectory, "release-build.json")), ["raw"] = provenance.ReleaseBuild.DeepClone() };
+            document["implementationInputs"] = implementationInputs;
+            document["candidateValidation"] = provenance is null ? null : Evidence(provenance.Process);
+            document["retainedArtifacts"] = IndexRetainedArtifacts(evidenceDirectory, fixtures, CancellationToken.None);
+        }
         string staging = report + ".tmp-" + Guid.NewGuid().ToString("N");
         try
         {
@@ -525,8 +613,22 @@ internal static class P1SourcePackagePlatformRunner
             raw?["Verification"]?["AdditionalReferencePath"] is JsonArray additional &&
             references.All(reference => additional.Any(value => value?.GetValue<string>() == reference));
         bool verified = process.Succeeded && Complete(process) && raw?["Succeeded"]?.GetValue<bool>() == true && clean && bound;
+        var verifiedReferences = new JsonArray();
+        if (raw?["Verification"]?["ReferenceArtifacts"] is JsonArray nativeReferenceArtifacts)
+            verifiedReferences = nativeReferenceArtifacts.DeepClone().AsArray();
+        else if (raw?["Verification"]?["ReferenceFiles"] is JsonArray referenceFiles && referenceFiles.Count is > 0 and <= 512)
+        {
+            var referenceClock = Stopwatch.StartNew();
+            foreach (JsonNode? reference in referenceFiles)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (referenceClock.Elapsed > TimeSpan.FromSeconds(10)) throw new InvalidOperationException("Verifier reference retention exceeded its time bound.");
+                verifiedReferences.Add(Artifact(reference!.GetValue<string>()));
+            }
+        }
         return new JsonObject { ["status"] = verified ? "passed" : raw is null || !Complete(process) ? "blocked" : "failed",
             ["originalAssembly"] = Artifact(assembly), ["additionalReferenceArtifacts"] = new JsonArray(references.Select(Artifact).ToArray()),
+            ["verificationReferenceArtifacts"] = verifiedReferences,
             ["process"] = Evidence(process), ["rawEvidence"] = raw, ["originalPeAndReferenceBindingMatches"] = bound,
             ["report"] = File.Exists(report) ? Artifact(report) : null };
     }
@@ -540,7 +642,7 @@ internal static class P1SourcePackagePlatformRunner
                 ["spanStart"] = value.Span.Start, ["spanLength"] = value.Span.Length }).ToArray()),
     };
 
-    private static JsonArray VerifyMemberRefs(string consumer, string producerName, RustSharpMetadataImportResult producer,
+    internal static JsonArray VerifyMemberRefs(string consumer, string producerName, RustSharpMetadataImportResult producer,
         string[] requiredFunctions, CancellationToken cancellationToken)
     {
         using var stream = File.OpenRead(consumer);
@@ -593,7 +695,7 @@ internal static class P1SourcePackagePlatformRunner
         return evidence;
     }
 
-    private static JsonArray VerifyRequiredOwners(JsonObject fixture, string requirementMember, RustSharpMetadataImportResult consumer,
+    internal static JsonArray VerifyRequiredOwners(JsonObject fixture, string requirementMember, RustSharpMetadataImportResult consumer,
         RustSharpMetadataImportResult producer, string producerPath, CancellationToken cancellationToken)
     {
         var result = new JsonArray();
@@ -729,7 +831,7 @@ internal static class P1SourcePackagePlatformRunner
         return required;
     }
 
-    private static string[] RequiredDropFunctions(JsonObject fixture, RustSharpMetadataImportResult producer,
+    internal static string[] RequiredDropFunctions(JsonObject fixture, RustSharpMetadataImportResult producer,
         CancellationToken cancellationToken)
     {
         string[] requiredTypes = RequiredFunctions(fixture, "requiredConsumerDropTypes");
@@ -768,6 +870,31 @@ internal static class P1SourcePackagePlatformRunner
         return Convert.ToHexString(SHA256.HashData(stream));
     }
     private static JsonObject Artifact(string path) => new() { ["path"] = path, ["sha256"] = Hash(path) };
+    private static JsonArray IndexRetainedArtifacts(string root, JsonArray fixtures, CancellationToken token)
+    {
+        var result = new JsonArray();
+        var clock = Stopwatch.StartNew();
+        var directories = new List<string>(MaximumCases * 4 + 1) { root };
+        foreach (JsonNode? fixture in fixtures)
+        {
+            string directory = Path.Combine(root, Text(fixture!.AsObject(), "id"));
+            directories.AddRange([directory, Path.Combine(directory, "build-0"), Path.Combine(directory, "build-1"), Path.Combine(directory, "native-inputs")]);
+        }
+        foreach (string directory in directories)
+        {
+            token.ThrowIfCancellationRequested();
+            if (clock.Elapsed > TimeSpan.FromSeconds(30)) throw new InvalidOperationException("Retained artifact indexing exceeded its time bound.");
+            if (!Directory.Exists(directory)) continue;
+            foreach (string file in Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly).Take(1025))
+            {
+                token.ThrowIfCancellationRequested();
+                if (result.Count >= 1024 || clock.Elapsed > TimeSpan.FromSeconds(30))
+                    throw new InvalidOperationException("Retained artifact indexing exceeded its item/time bound.");
+                result.Add(Artifact(file));
+            }
+        }
+        return result;
+    }
     private static bool Complete(BoundedProcessResult result) => result.Termination == BoundedProcessTermination.Exited &&
         !result.OutputTruncated && !result.OutputReadTimedOut && !result.OutputDrainTimedOut && !result.OutputReadLimitReached &&
         !result.ProcessTreeCleanupIncomplete;
