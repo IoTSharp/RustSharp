@@ -90,7 +90,7 @@ Release 构建零警告／零错误；当前注册数为 1005（继承的 969 �
 
 | 工作 | 状态 | 预留所有权 |
 | --- | --- | --- |
-| ILVerify 运行时引用 | 🚧 进行中 | `cargo_p2`：`eng/Invoke-ILVerify.ps1`、`eng/Test-ILVerifyRuntimeReference.ps1`；真实生成 PE、缺失／错误 sidecar 和旧案例。 |
+| ILVerify 运行时引用 | ✅ 已完成 | `cargo_p2`：`eng/Invoke-ILVerify.ps1`、`eng/Test-ILVerifyRuntimeReference.ps1`；10/10 项真实生成 PE 检查，包含冲突的重复 AssemblyRef。此修复不关闭 P1-GATE.03。 |
 | native Drop/展开闭环 | 🚧 进行中 | `prerequisite_audit`：CLR LIR/发射器及程序集元数据、MIR Drop 降低、`CompilerDriver.cs`、`GeneratedPanic.cs`、Drop 差分运行器、新 native-v2/v5 配置档／文档／测试。 |
 | 精确 P1 需求／证据映射 | 🚧 进行中 | `tooling_p2`：`P1GateCoverageContract.cs`、`p1-gate-coverage-v1-manifest.json`、`P1GateCoverageContractTests.cs`；最多十项新增注册。 |
 
@@ -100,3 +100,15 @@ Release 构建零警告／零错误；当前注册数为 1005（继承的 969 �
 缺失覆盖。REQ034 和 REQ040 是聚合／平台边界，不得引入前置依赖环。
 映射验收并单独提交后，将 `tooling_p2` 转到十九项源码包运行器的同 SHA 来源绑定和
 严格验证器。root 负责共享门禁／报告／CI／CLI 注册及串行验证。
+
+## 2026-10-08 验证检查点
+
+运行时引用修复在 Windows x64、ILVerify 10.0.11 上通过一项极小试运行和全部十项
+固定检查。报告归档于 `docs/evidence/p1/ilverify-runtime-reference.json`；它没有候选
+SHA，属于修复验证，不是同 SHA 平台／门禁证据。独占夹具目录已删除，全部十二次
+子进程调用均已退出，启动进程 PID 47404 已退出且 `CleanupComplete: true`。
+日志保留于 `artifacts/p1-supervision/ilverify-runtime-10*`。
+
+修正两处 CA1068 问题后，第三次严格 Release 构建以零警告／零错误通过。极小
+NativeV2 源码到 PE 程序也通过。NativeV2 和覆盖映射仍待完整定向验证及分别提交。
+共享运行器已有 1023 项注册，原上限为 1024；后续 P2 注册需要明确的容量／版本决策。

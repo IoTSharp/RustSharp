@@ -13,6 +13,10 @@ param(
     [string] $AdditionalReferencePath,
 
     [Parameter()]
+    [ValidatePattern('^[A-Fa-f0-9]{64}$')]
+    [string] $RuntimeReferenceSha256,
+
+    [Parameter()]
     [string] $SystemModule = 'System.Private.CoreLib',
 
     [Parameter()]
@@ -46,6 +50,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 $toolPackageId = 'dotnet-ilverify'
 $toolVersion = '10.0.11'
 $maximumAssemblyBytes = 256MB
+$maximumRuntimeReferenceBytes = 16MB
 $maximumReferenceAssemblies = 512
 $maximumOutputCharacters = 262144
 $pollMilliseconds = 250
@@ -64,6 +69,20 @@ $dotnetRoot = $null
 $referenceDirectoryFullPath = $null
 $referenceFiles = @()
 $systemModulePathFull = $null
+$runtimeReferenceStream = $null
+$runtimeReferenceEvidence = [ordered]@{
+    Declared = $false
+    Path = $null
+    Source = $null
+    ExpectedIdentity = $null
+    ActualIdentity = $null
+    Length = $null
+    Sha256 = $null
+    ExpectedSha256 = $RuntimeReferenceSha256
+    Sha256AfterVerification = $null
+    Validated = $false
+    MaximumBytes = $maximumRuntimeReferenceBytes
+}
 $manifestFullPath = $null
 $toolManifestForExecution = $null
 $toolWorkingDirectoryFullPath = $null
@@ -352,10 +371,13 @@ function Get-ReferenceFiles {
     )
 
     $files = [Collections.Generic.List[string]]::new()
+    $referenceClock = [Diagnostics.Stopwatch]::StartNew()
+    if (@($Paths).Count -gt $maximumReferenceAssemblies) { throw 'Reference path count exceeds its fixed bound.' }
     if (-not [string]::IsNullOrWhiteSpace($Directory)) {
         $enumerator = [IO.Directory]::EnumerateFiles($Directory, '*.dll', [IO.SearchOption]::TopDirectoryOnly).GetEnumerator()
         try {
             for ($index = 0; $index -le $maximumReferenceAssemblies; $index++) {
+                if ($script:CancellationRequested.Value -or $referenceClock.Elapsed.TotalSeconds -ge 10) { throw 'Reference inventory cancelled or exceeded its ten-second budget.' }
                 if (-not $enumerator.MoveNext()) {
                     break
                 }
@@ -376,6 +398,7 @@ function Get-ReferenceFiles {
     }
 
     foreach ($path in @($Paths)) {
+        if ($script:CancellationRequested.Value -or $referenceClock.Elapsed.TotalSeconds -ge 10) { throw 'Reference inventory cancelled or exceeded its ten-second budget.' }
         if ($files.Count -ge $maximumReferenceAssemblies) {
             throw "More than $maximumReferenceAssemblies reference assemblies were supplied."
         }
@@ -426,6 +449,140 @@ function Test-ManagedAssembly {
         if ($null -ne $reader) { $reader.Dispose() }
         if ($null -ne $stream) { $stream.Dispose() }
     }
+}
+
+function Get-DeclaredRuntimeReference {
+    param([Parameter(Mandatory = $true)][string] $Path)
+
+    $stream = $null
+    $reader = $null
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    try {
+        $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+        $reader = [Reflection.PortableExecutable.PEReader]::new($stream)
+        if (-not $reader.HasMetadata) { throw 'RSIL1002: Input PE has no managed metadata.' }
+        $metadata = [Reflection.Metadata.PEReaderExtensions]::GetMetadataReader($reader)
+        if ($metadata.AssemblyReferences.Count -gt $maximumReferenceAssemblies) {
+            throw 'RSIL1002: Input PE exceeds the assembly-reference limit.'
+        }
+        $runtime = $null
+        $enumerator = $metadata.AssemblyReferences.GetEnumerator()
+        # A maximum of 512 metadata rows and ten seconds bounds this non-recursive inventory.
+        for ($index = 0; $index -lt $maximumReferenceAssemblies; $index++) {
+            if ($script:CancellationRequested.Value -or $clock.Elapsed.TotalSeconds -ge 10) {
+                throw 'RSIL1002: Runtime reference inspection cancelled or exceeded its time limit.'
+            }
+            if (-not $enumerator.MoveNext()) { break }
+            $reference = $metadata.GetAssemblyReference($enumerator.Current)
+            if ($metadata.GetString($reference.Name) -cne 'RustSharp.Runtime') { continue }
+            $token = $metadata.GetBlobBytes($reference.PublicKeyOrToken)
+            if (($reference.Flags -band [Reflection.AssemblyFlags]::PublicKey) -ne 0 -and $token.Length -gt 0) {
+                $keyHash = [Security.Cryptography.SHA1]::HashData($token)
+                $token = $keyHash[($keyHash.Length - 8)..($keyHash.Length - 1)]
+                [Array]::Reverse($token)
+            }
+            $declared = [pscustomobject]@{
+                Name = 'RustSharp.Runtime'
+                Version = $reference.Version.ToString()
+                Culture = $metadata.GetString($reference.Culture)
+                PublicKeyToken = [Convert]::ToHexString([byte[]]$token)
+                DeclaredRows = 1
+            }
+            if ($null -eq $runtime) { $runtime = $declared }
+            elseif ($runtime.Name -ceq $declared.Name -and $runtime.Version -ceq $declared.Version -and
+                $runtime.Culture -ceq $declared.Culture -and $runtime.PublicKeyToken -ceq $declared.PublicKeyToken) {
+                # Production emission may repeat the same AssemblyRef for separate external call sites.
+                $runtime.DeclaredRows++
+            }
+            else { throw 'RSIL1003: Input PE declares conflicting RustSharp.Runtime identities.' }
+        }
+        return $runtime
+    }
+    catch [System.BadImageFormatException] { throw 'RSIL1002: Input PE has malformed managed metadata.' }
+    finally {
+        if ($null -ne $reader) { $reader.Dispose() }
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
+function Resolve-RuntimeReference {
+    param(
+        [Parameter(Mandatory = $true)][object] $Expected,
+        [Parameter(Mandatory = $true)][string] $InputAssembly,
+        [Parameter()][string[]] $ExplicitPaths
+    )
+
+    $runtimeReferenceEvidence.Declared = $true
+    $runtimeReferenceEvidence.ExpectedIdentity = $Expected
+    $selectedPath = $null
+    $ExplicitPaths = @($ExplicitPaths)
+    if ($ExplicitPaths.Count -gt $maximumReferenceAssemblies) { throw 'RSIL1002: Explicit reference count exceeds its bound.' }
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    # Only caller-named references are considered here; the output directory is never enumerated.
+    for ($index = 0; $index -lt $ExplicitPaths.Count -and $index -lt $maximumReferenceAssemblies; $index++) {
+        if ($script:CancellationRequested.Value -or $clock.Elapsed.TotalSeconds -ge 10) {
+            throw 'RSIL1002: Explicit runtime reference inspection cancelled or exceeded its time limit.'
+        }
+        $candidate = Resolve-FullPath $ExplicitPaths[$index] 'ReferencePath'
+        $isRuntime = [IO.Path]::GetFileName($candidate) -ieq 'RustSharp.Runtime.dll'
+        if (-not $isRuntime -and [IO.File]::Exists($candidate)) {
+            # Explicit references may have a different filename; retain their metadata identity semantics.
+            try { $isRuntime = [Reflection.AssemblyName]::GetAssemblyName($candidate).Name -ceq 'RustSharp.Runtime' }
+            catch [System.BadImageFormatException] { }
+            catch [System.IO.IOException] { }
+        }
+        if (-not $isRuntime) { continue }
+        if ($null -ne $selectedPath -and $selectedPath -cne $candidate) {
+            throw 'RSIL1003: Multiple explicit RustSharp.Runtime paths were supplied.'
+        }
+        $selectedPath = $candidate
+        $runtimeReferenceEvidence.Source = 'explicit-reference'
+    }
+    if ($null -eq $selectedPath) {
+        $selectedPath = Resolve-FullPath (Join-Path ([IO.Path]::GetDirectoryName($InputAssembly)) 'RustSharp.Runtime.dll') 'Runtime sidecar'
+        $runtimeReferenceEvidence.Source = 'declared-same-directory-sidecar'
+    }
+    $runtimeReferenceEvidence.Path = $selectedPath
+    if (-not [IO.File]::Exists($selectedPath)) { throw 'RSIL1001: Declared RustSharp.Runtime reference is missing.' }
+    $info = Get-Item -LiteralPath $selectedPath
+    $runtimeReferenceEvidence.Length = $info.Length
+    if ($info.Length -le 0 -or $info.Length -gt $maximumRuntimeReferenceBytes) {
+        throw 'RSIL1002: RustSharp.Runtime reference exceeds its managed-assembly size limit.'
+    }
+    if (($info.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw 'RSIL1002: RustSharp.Runtime reference must be an ordinary file.'
+    }
+    # Keep this file open until verification completes; record and recheck its hash afterwards.
+    $script:runtimeReferenceStream = [IO.File]::Open($selectedPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    $runtimeReader = $null
+    try {
+        $runtimeReader = [Reflection.PortableExecutable.PEReader]::new($script:runtimeReferenceStream, [Reflection.PortableExecutable.PEStreamOptions]::LeaveOpen)
+        if (-not $runtimeReader.HasMetadata) { throw 'RSIL1002: RustSharp.Runtime reference is not a managed assembly.' }
+        $runtimeMetadata = [Reflection.Metadata.PEReaderExtensions]::GetMetadataReader($runtimeReader)
+        if (-not $runtimeMetadata.IsAssembly) { throw 'RSIL1002: RustSharp.Runtime reference has no assembly identity.' }
+        $identity = [Reflection.AssemblyName]::GetAssemblyName($selectedPath)
+        $actual = [pscustomobject]@{
+            Name = $identity.Name
+            Version = $identity.Version.ToString()
+            Culture = $identity.CultureName
+            PublicKeyToken = [Convert]::ToHexString($identity.GetPublicKeyToken())
+        }
+        $runtimeReferenceEvidence.ActualIdentity = $actual
+        if ($actual.Name -cne $Expected.Name -or $actual.Version -cne $Expected.Version -or
+            $actual.Culture -cne $Expected.Culture -or $actual.PublicKeyToken -cne $Expected.PublicKeyToken) {
+            throw 'RSIL1003: RustSharp.Runtime reference identity does not match the input PE.'
+        }
+        $script:runtimeReferenceStream.Position = 0
+        $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($script:runtimeReferenceStream))
+        $runtimeReferenceEvidence.Sha256 = $hash
+        if (-not [string]::IsNullOrWhiteSpace($RuntimeReferenceSha256) -and $hash -ine $RuntimeReferenceSha256) {
+            throw 'RSIL1004: RustSharp.Runtime reference SHA256 does not match the required hash.'
+        }
+        $runtimeReferenceEvidence.Validated = $true
+        return $selectedPath
+    }
+    catch [System.BadImageFormatException] { throw 'RSIL1002: RustSharp.Runtime reference has malformed managed metadata.' }
+    finally { if ($null -ne $runtimeReader) { $runtimeReader.Dispose() } }
 }
 
 function Convert-ProcessEvidence {
@@ -585,7 +742,13 @@ try {
             throw 'AdditionalReferencePath must contain only non-empty semicolon-separated paths.'
         }
     }
-    $referenceFiles = @(Get-ReferenceFiles $referenceDirectoryFullPath (@($ReferencePath) + @($additionalReferencePaths)) $systemModulePathFull)
+    $explicitReferencePaths = @($ReferencePath) + @($additionalReferencePaths)
+    $declaredRuntime = Get-DeclaredRuntimeReference $assemblyFullPath
+    $automaticRuntimePaths = @()
+    if ($null -ne $declaredRuntime) {
+        $automaticRuntimePaths = @(Resolve-RuntimeReference $declaredRuntime $assemblyFullPath $explicitReferencePaths)
+    }
+    $referenceFiles = @(Get-ReferenceFiles $referenceDirectoryFullPath ($explicitReferencePaths + $automaticRuntimePaths) $systemModulePathFull)
 
     $sha256 = [Security.Cryptography.SHA256]::Create()
     try {
@@ -648,6 +811,12 @@ try {
 
     $allVerifyArguments = @('tool', 'run', 'ilverify', '--') + $verifyArguments.ToArray()
     $verifyResult = Invoke-BoundedProcess -FileName $dotnetPath -Arguments $allVerifyArguments -WorkingDirectory $toolWorkingDirectoryFullPath -TimeoutMilliseconds ($TimeoutSeconds * 1000)
+    if ($runtimeReferenceEvidence.Validated) {
+        $runtimeReferenceEvidence.Sha256AfterVerification = (Get-FileHash -LiteralPath $runtimeReferenceEvidence.Path -Algorithm SHA256).Hash
+        if ($runtimeReferenceEvidence.Sha256AfterVerification -cne $runtimeReferenceEvidence.Sha256) {
+            throw 'RSIL1004: RustSharp.Runtime reference changed during verification.'
+        }
+    }
     $succeeded = $verifyResult.Termination -eq 'Exited' -and
         $verifyResult.ExitCode -eq 0 -and
         -not $verifyResult.ProcessTreeCleanupIncomplete -and
@@ -665,6 +834,7 @@ catch {
     $succeeded = $false
 }
 finally {
+    if ($null -ne $runtimeReferenceStream) { $runtimeReferenceStream.Dispose() }
     [Console]::remove_CancelKeyPress($cancelHandler)
     $completedAt = [DateTimeOffset]::UtcNow
     $evidence = [ordered] @{
@@ -699,6 +869,7 @@ finally {
             ReferenceDirectory = $referenceDirectoryFullPath
             ReferenceFiles = @($referenceFiles)
             AdditionalReferencePath = @($additionalReferencePaths)
+            RuntimeReference = $runtimeReferenceEvidence
             RuntimeVersion = $RuntimeVersion
             TimeoutSeconds = $TimeoutSeconds
         }

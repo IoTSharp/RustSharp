@@ -106,7 +106,7 @@ leaves remain open. Three workers were explicitly reassigned to P1:
 
 | Work | Status | Reserved ownership |
 | --- | --- | --- |
-| ILVerify runtime reference | 🚧 In progress | `cargo_p2`: `eng/Invoke-ILVerify.ps1`, `eng/Test-ILVerifyRuntimeReference.ps1`; real generated PE, missing/wrong sidecar and legacy cases. |
+| ILVerify runtime reference | ✅ Complete | `cargo_p2`: `eng/Invoke-ILVerify.ps1`, `eng/Test-ILVerifyRuntimeReference.ps1`; 10/10 real generated-PE checks, including a conflicting duplicate AssemblyRef. This repair does not close P1-GATE.03. |
 | Native Drop/unwind closure | 🚧 In progress | `prerequisite_audit`: CLR LIR/emitter and assembly metadata, MIR Drop lowering, `CompilerDriver.cs`, `GeneratedPanic.cs`, Drop differential runner, new native-v2/v5 profile/docs/tests. |
 | Exact P1 requirement/evidence mapping | 🚧 In progress | `tooling_p2`: `P1GateCoverageContract.cs`, `p1-gate-coverage-v1-manifest.json`, `P1GateCoverageContractTests.cs`; at most ten new registrations. |
 
@@ -120,3 +120,19 @@ REQ040 are aggregate/platform boundaries and must not create prerequisite cycles
 After accepting and separately committing the mapping, reassign `tooling_p2`
 to the 19-case source-package runner's same-SHA provenance and strict validator.
 Root owns shared gate/report/CI/CLI registrations and serial validation.
+
+## 2026-10-08 verification checkpoint
+
+The runtime-reference repair passes its one-case trial and all 10 fixed checks
+on Windows x64 with ILVerify 10.0.11. Its report is archived at
+`docs/evidence/p1/ilverify-runtime-reference.json`; it has no candidate SHA and
+is repair validation, not same-SHA platform/gate evidence. The owned fixture
+directory was removed, all 12 child invocations exited, and launcher PID 47404
+exited with `CleanupComplete: true`. Logs remain under
+`artifacts/p1-supervision/ilverify-runtime-10*`.
+
+Strict Release build 3 passes with zero warnings/errors after correcting two
+CA1068 findings. A tiny NativeV2 source-to-PE program also passes. NativeV2 and
+coverage mapping still await their complete directed validation and separate
+commits. The shared runner has 1023 registrations against its existing 1024
+bound; future P2 registrations require an explicit capacity/version decision.
