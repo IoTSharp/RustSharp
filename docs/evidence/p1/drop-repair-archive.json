@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scope": "native-v2-and-legacy-repair-verification",
+  "candidateSha": "4bfe06016586775baa4df0385397fb1298d4b944",
+  "fullP1Closure": false,
+  "reports": [
+    {
+      "producer": "artifacts/p1-supervision/native-v2-4.harness.json",
+      "producerSha256": "F4792A7E7D66089F2ADB15E3207A8596C9E5C83B96878C81923871A0405EE348",
+      "archive": "docs/evidence/p1/native-v2.harness.json",
+      "archiveSha256": "05D4C4227D8BB5C9A3F5ADBD1991FED483EC969CC2E444055D1992C729BC82F4",
+      "transformation": "physical CRLF to LF only; JSON values unchanged"
+    },
+    {
+      "producer": "artifacts/p1-supervision/drop-v4-compatibility.harness.json",
+      "producerSha256": "2B91CC2178FC6CAF957F472701A9CDADA18F4DCC4EC06628602DDD8569D58554",
+      "archive": "docs/evidence/p1/drop-v4-compatibility.harness.json",
+      "archiveSha256": "2812D1E7DF936D7319EA0FA727882705718CFFC186B5176A2548E54AF2792763",
+      "transformation": "physical CRLF to LF only; JSON values unchanged"
+    }
+  ]
+}

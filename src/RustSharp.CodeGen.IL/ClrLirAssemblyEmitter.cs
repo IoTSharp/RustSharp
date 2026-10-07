@@ -251,6 +251,9 @@ public static partial class ClrLirAssemblyEmitter
         {
             AddRustSharpMetadataAttribute(metadata, assemblyDefinition, systemRuntime, metadataDocument.Json);
         }
+        if (methods.Any(static method => method.PanicHandling?.DropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2))
+            AddAssemblyMetadataAttribute(metadata, assemblyDefinition, systemRuntime, SafeCoreDropCleanupProfiles.MetadataKey,
+                SafeCoreDropCleanupProfiles.NativeV2MetadataValue);
         TypeReferenceHandle objectType = metadata.AddTypeReference(
             resolutionScope: systemRuntime,
             @namespace: metadata.GetOrAddString("System"),
@@ -506,10 +509,13 @@ public static partial class ClrLirAssemblyEmitter
         MetadataBuilder metadata,
         AssemblyDefinitionHandle assembly,
         AssemblyReferenceHandle runtime,
-        string json)
+        string json) => AddAssemblyMetadataAttribute(metadata, assembly, runtime, RustSharpMetadataReader.AttributeKey, json);
+
+    private static void AddAssemblyMetadataAttribute(MetadataBuilder metadata, AssemblyDefinitionHandle assembly,
+        AssemblyReferenceHandle systemRuntime, string key, string text)
     {
         TypeReferenceHandle attributeType = metadata.AddTypeReference(
-            resolutionScope: runtime,
+            resolutionScope: systemRuntime,
             @namespace: metadata.GetOrAddString("System.Reflection"),
             name: metadata.GetOrAddString("AssemblyMetadataAttribute"));
         var signature = new BlobBuilder();
@@ -529,8 +535,8 @@ public static partial class ClrLirAssemblyEmitter
             metadata.GetOrAddBlob(signature));
         var value = new BlobBuilder();
         value.WriteUInt16(1);
-        value.WriteSerializedString(RustSharpMetadataReader.AttributeKey);
-        value.WriteSerializedString(json);
+        value.WriteSerializedString(key);
+        value.WriteSerializedString(text);
         // ECMA-335 II.23.3 requires NumNamed even when it is zero. NativeAOT
         // decodes assembly attributes while rooting reflected value layouts.
         value.WriteUInt16(0);
@@ -936,9 +942,13 @@ public static partial class ClrLirAssemblyEmitter
         {
             _ = descriptor.Append('\0').Append("fault-cleanup");
             if (method.PanicHandling is { } panic)
+            {
                 _ = descriptor.Append(':').Append(panic.PanicLocalIndex).Append(':').Append(panic.CleanupFailureLocalIndex)
                     .Append(':').Append(panic.NormalCleanupLocalIndex).Append(':').Append(panic.IsEntryBoundary)
                     .Append(':').Append(panic.AbortWithoutUnwind).Append(':').Append(panic.UnwindStateLocalIndex);
+                if (panic.DropCleanupProfile != SafeCoreDropCleanupProfile.LegacyV1)
+                    _ = descriptor.Append(":drop-profile:").Append(panic.DropCleanupProfile).Append(':').Append(panic.IsDestructorBody);
+            }
             foreach (ClrLirCallSite cleanup in method.ExceptionCleanup)
             {
                 _ = descriptor.Append('\0');

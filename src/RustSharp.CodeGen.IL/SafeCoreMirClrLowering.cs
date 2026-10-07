@@ -23,9 +23,15 @@ public static partial class SafeCoreMirClrLowering
 
     public static SafeCoreClrResult Lower(
         SafeCoreMirProgram program,
+        CancellationToken cancellationToken = default) => Lower(program, SafeCoreDropCleanupProfile.LegacyV1, cancellationToken);
+
+    /// <summary>Explicitly selects a versioned cleanup contract while preserving the legacy overload.</summary>
+    public static SafeCoreClrResult Lower(SafeCoreMirProgram program, SafeCoreDropCleanupProfile dropCleanupProfile,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(program);
+        if (dropCleanupProfile is not (SafeCoreDropCleanupProfile.LegacyV1 or SafeCoreDropCleanupProfile.NativeV2))
+            throw new ArgumentOutOfRangeException(nameof(dropCleanupProfile));
         cancellationToken.ThrowIfCancellationRequested();
         try
         {
@@ -37,7 +43,7 @@ public static partial class SafeCoreMirClrLowering
             SafeCoreMirReferenceProvenanceResult provenance = SafeCoreMirReferenceProvenance.Analyze(program,
                 new() { CancellationToken = cancellationToken });
             if (!provenance.IsSuccessful) return new([], [], provenance.Diagnostics);
-            return new Lowerer(program, cancellationToken).Run();
+            return new Lowerer(program, dropCleanupProfile, cancellationToken).Run();
         }
         catch (LoweringFailure failure)
         {
@@ -54,8 +60,10 @@ public static partial class SafeCoreMirClrLowering
         public Diagnostic Diagnostic { get; } = diagnostic;
     }
 
-    private sealed partial class Lowerer(SafeCoreMirProgram program, CancellationToken cancellationToken)
+    private sealed partial class Lowerer(SafeCoreMirProgram program, SafeCoreDropCleanupProfile dropCleanupProfile,
+        CancellationToken cancellationToken)
     {
+        internal SafeCoreDropCleanupProfile DropCleanupProfile => dropCleanupProfile;
         private readonly Stopwatch _clock = Stopwatch.StartNew();
         private readonly Dictionary<string, ClrLirValueType> _layouts = new(StringComparer.Ordinal);
         private readonly HashSet<string> _activeLayouts = new(StringComparer.Ordinal);
@@ -369,7 +377,11 @@ public static partial class SafeCoreMirClrLowering
             _normalCleanupLocal = Temporary(ClrLirType.Bool, function.Source);
             int unwindStateLocal = Temporary(ClrLirType.Bool, function.Source);
             _panicHandling = new(panicLocal, cleanupFailureLocal, _normalCleanupLocal, IsEntryName(function.Name),
-                function.PanicStrategy == SafeCorePanicStrategy.Abort, unwindStateLocal);
+                function.PanicStrategy == SafeCorePanicStrategy.Abort, unwindStateLocal)
+            {
+                DropCleanupProfile = owner.DropCleanupProfile,
+                IsDestructorBody = function.IsDestructor,
+            };
 
             foreach (SafeCoreMirBlock mirBlock in ReachableBlocks())
             {

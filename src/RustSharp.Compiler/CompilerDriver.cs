@@ -205,12 +205,32 @@ public sealed class CompilerDriver
         SafeCorePanicStrategy panicStrategy,
         string? assemblyName = null,
         CompilationProfile profile = CompilationProfile.SafeCoreMirV2,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        CompileWithPolicies(source, sourcePath, outputPath, panicStrategy, SafeCoreDropCleanupProfile.LegacyV1,
+            assemblyName, profile, cancellationToken);
+
+    /// <summary>Emits a source program using an explicitly versioned Drop cleanup contract.</summary>
+    public static CompilationResult CompileWithDropProfile(string source, string sourcePath, string outputPath,
+        SafeCoreDropCleanupProfile dropCleanupProfile, SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind,
+        string? assemblyName = null, CompilationProfile profile = CompilationProfile.SafeCoreMirV2,
+        CancellationToken cancellationToken = default) =>
+        CompileWithPolicies(source, sourcePath, outputPath, panicStrategy, dropCleanupProfile,
+            assemblyName, profile, cancellationToken);
+
+    private static CompilationResult CompileWithPolicies(string source, string sourcePath, string outputPath,
+        SafeCorePanicStrategy panicStrategy, SafeCoreDropCleanupProfile dropCleanupProfile,
+        string? assemblyName, CompilationProfile profile, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         ValidatePanicStrategy(panicStrategy);
+        if (dropCleanupProfile is not (SafeCoreDropCleanupProfile.LegacyV1 or SafeCoreDropCleanupProfile.NativeV2))
+            throw new ArgumentOutOfRangeException(nameof(dropCleanupProfile));
+        if (dropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2 &&
+            profile is not (CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
+            return CompilationResult.Failed([new Diagnostic("RSC0010", "NativeV2 Drop cleanup requires a typed MIR compilation profile.",
+                new TextSpan(0, 0)) { SourcePath = sourcePath }]);
         if (panicStrategy != SafeCorePanicStrategy.Unwind &&
             profile is not (CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
             return RejectPanicStrategyProfile(sourcePath);
@@ -248,7 +268,7 @@ public sealed class CompilerDriver
             sourceBytes,
             profile,
             cancellationToken,
-            panicStrategy: panicStrategy);
+            panicStrategy: panicStrategy, dropCleanupProfile: dropCleanupProfile);
     }
 
     private static CompilationResult CompileCoreWithCrates(
@@ -316,7 +336,8 @@ public sealed class CompilerDriver
         CompilationProfile profile,
         CancellationToken cancellationToken,
         SafeCoreSourceMap? sourceMap = null, ImmutableArray<SafeCoreCrate> crates = default,
-        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
+        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind,
+        SafeCoreDropCleanupProfile dropCleanupProfile = SafeCoreDropCleanupProfile.LegacyV1)
     {
         cancellationToken.ThrowIfCancellationRequested();
         SyntaxTree? syntaxTree = null;
@@ -329,7 +350,7 @@ public sealed class CompilerDriver
         }
         else
         {
-            safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates, panicStrategy);
+            safeCore = AnalyzeSafeCore(source, sourcePath, profile, cancellationToken, crates, panicStrategy, dropCleanupProfile);
             if (!safeCore.IsSuccessful) return CompilationResult.Failed(MapDiagnostics(safeCore.Diagnostics, sourceMap));
         }
 
@@ -544,7 +565,8 @@ public sealed class CompilerDriver
 
     private static SafeCoreClrResult AnalyzeSafeCore(string source, string sourcePath,
         CompilationProfile profile, CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default,
-        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind)
+        SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind,
+        SafeCoreDropCleanupProfile dropCleanupProfile = SafeCoreDropCleanupProfile.LegacyV1)
     {
         if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
@@ -593,7 +615,7 @@ public sealed class CompilerDriver
             // observational only and could let backend behavior drift from the
             // source-to-MIR contract.
             SafeCoreClrResult emitted = SafeCoreMirClrLowering.Lower(
-                evidence.Mir!.Program!, cancellationToken);
+                evidence.Mir!.Program!, dropCleanupProfile, cancellationToken);
             return AttachMirEvidence(emitted, evidence, requireOwnershipMetadata: true, cancellationToken);
         }
         SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new SafeCoreHirLoweringOptions

@@ -299,7 +299,24 @@ public sealed record ClrLirGuardedCleanup
 /// <summary>Storage and policy for a generated, reusable panic catch boundary.</summary>
 public sealed record ClrLirPanicHandling(int PanicLocalIndex, int CleanupFailureLocalIndex,
     int NormalCleanupLocalIndex, bool IsEntryBoundary, bool AbortWithoutUnwind = false,
-    int UnwindStateLocalIndex = -1);
+    int UnwindStateLocalIndex = -1)
+{
+    public SafeCoreDropCleanupProfile DropCleanupProfile { get; init; }
+    public bool IsDestructorBody { get; init; }
+}
+
+/// <summary>Versioned generated cleanup semantics. The legacy entry points retain the frozen v1 policy.</summary>
+public enum SafeCoreDropCleanupProfile
+{
+    LegacyV1,
+    NativeV2,
+}
+
+public static class SafeCoreDropCleanupProfiles
+{
+    public const string MetadataKey = "RustSharp.DropCleanupProfile";
+    public const string NativeV2MetadataValue = "safe-core-drop-contract-p1-v2;selection=NativeV2;dispatch=runtime-native;normal=legacy-v1;source-packages=explicit-profile-required";
+}
 
 public abstract record ClrLirInstruction;
 
@@ -652,6 +669,7 @@ public sealed class ClrLirMethod
              !HasLocal(handling.CleanupFailureLocalIndex, ClrLirType.Any) ||
              !HasLocal(handling.NormalCleanupLocalIndex, ClrLirType.Bool) ||
              !HasLocal(handling.UnwindStateLocalIndex, ClrLirType.Bool) ||
+             handling.DropCleanupProfile is not (SafeCoreDropCleanupProfile.LegacyV1 or SafeCoreDropCleanupProfile.NativeV2) ||
              handling.PanicLocalIndex == handling.CleanupFailureLocalIndex || !ExceptionCleanup.IsEmpty))
             diagnostics.Add(new("LIR023", "Generated panic handling requires two object slots and a normal-cleanup bool slot.", null, -1));
 

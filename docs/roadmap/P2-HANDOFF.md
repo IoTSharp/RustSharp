@@ -107,7 +107,7 @@ leaves remain open. Three workers were explicitly reassigned to P1:
 | Work | Status | Reserved ownership |
 | --- | --- | --- |
 | ILVerify runtime reference | ✅ Complete | `cargo_p2`: `eng/Invoke-ILVerify.ps1`, `eng/Test-ILVerifyRuntimeReference.ps1`; 10/10 real generated-PE checks, including a conflicting duplicate AssemblyRef. This repair does not close P1-GATE.03. |
-| Native Drop/unwind closure | 🚧 In progress | `prerequisite_audit`: CLR LIR/emitter and assembly metadata, MIR Drop lowering, `CompilerDriver.cs`, `GeneratedPanic.cs`, Drop differential runner, new native-v2/v5 profile/docs/tests. |
+| Native Drop/unwind implementation | ✅ Complete | `prerequisite_audit`: explicit NativeV2 API/PE metadata and nested exception preservation; 8/8 directed Windows checks and 28 v5 cases (26 matches, the two inherited normal-cleanup differences). Linux/platform/CLI/package acceptance remains open. |
 | Exact P1 requirement/evidence mapping | 🚧 In progress | `tooling_p2`: `P1GateCoverageContract.cs`, `p1-gate-coverage-v1-manifest.json`, `P1GateCoverageContractTests.cs`; at most ten new registrations. |
 
 Preserve the old v1 Drop and v4 runner entry points. Native-v2 must be a named,
@@ -136,3 +136,17 @@ CA1068 findings. A tiny NativeV2 source-to-PE program also passes. NativeV2 and
 coverage mapping still await their complete directed validation and separate
 commits. The shared runner has 1023 registrations against its existing 1024
 bound; future P2 registrations require an explicit capacity/version decision.
+
+Final validation at source candidate `4bfe06016586775baa4df0385397fb1298d4b944`
+passes the zero-warning/error Release build, 8/8 NativeV2 process-isolated
+checks and 2/2 legacy v4 rustc checks. Both full Drop suites retain all 28 cases:
+26 exact Windows matches and the two existing normal-cleanup differences.
+The v5 report validator accepts either root separator form, rejects sibling
+prefixes and verifies actual PE policy metadata. Earlier failed checks remain
+in `artifacts/p1-supervision/`; they were not accepted as closure evidence.
+The final filtered harness reports are archived at
+`docs/evidence/p1/native-v2.harness.json` and
+`docs/evidence/p1/drop-v4-compatibility.harness.json`. They verify this repair;
+the 1023-test full harness and native Linux/ILVerify/AOT gates remain required.
+All validation launchers exited with complete cleanup. Preserve the candidate
+ref and the generated Drop artifacts referenced by the reports.

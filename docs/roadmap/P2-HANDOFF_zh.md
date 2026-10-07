@@ -91,7 +91,7 @@ Release 构建零警告／零错误；当前注册数为 1005（继承的 969 �
 | 工作 | 状态 | 预留所有权 |
 | --- | --- | --- |
 | ILVerify 运行时引用 | ✅ 已完成 | `cargo_p2`：`eng/Invoke-ILVerify.ps1`、`eng/Test-ILVerifyRuntimeReference.ps1`；10/10 项真实生成 PE 检查，包含冲突的重复 AssemblyRef。此修复不关闭 P1-GATE.03。 |
-| native Drop/展开闭环 | 🚧 进行中 | `prerequisite_audit`：CLR LIR/发射器及程序集元数据、MIR Drop 降低、`CompilerDriver.cs`、`GeneratedPanic.cs`、Drop 差分运行器、新 native-v2/v5 配置档／文档／测试。 |
+| native Drop/展开实现 | ✅ 已完成 | `prerequisite_audit`：显式 NativeV2 API／PE 元数据及嵌套异常保留；8/8 项 Windows 定向检查和 28 项 v5 用例（26 项匹配、继承的两项正常清理差异）。Linux／平台／CLI／包验收仍待完成。 |
 | 精确 P1 需求／证据映射 | 🚧 进行中 | `tooling_p2`：`P1GateCoverageContract.cs`、`p1-gate-coverage-v1-manifest.json`、`P1GateCoverageContractTests.cs`；最多十项新增注册。 |
 
 保留旧 v1 Drop 和 v4 运行器入口。Native-v2 必须是具名、可观察的生产选择，保留父／子
@@ -112,3 +112,13 @@ SHA，属于修复验证，不是同 SHA 平台／门禁证据。独占夹具目
 修正两处 CA1068 问题后，第三次严格 Release 构建以零警告／零错误通过。极小
 NativeV2 源码到 PE 程序也通过。NativeV2 和覆盖映射仍待完整定向验证及分别提交。
 共享运行器已有 1023 项注册，原上限为 1024；后续 P2 注册需要明确的容量／版本决策。
+
+最终源码候选 `4bfe06016586775baa4df0385397fb1298d4b944` 通过零警告／零错误
+Release 构建、8/8 项 NativeV2 进程隔离检查和 2/2 项旧 v4 rustc 检查。两套完整
+Drop 差分均保留全部 28 项：Windows 上 26 项精确匹配及既有的两项正常清理差异。
+v5 报告验证器接受两种根路径分隔符形式，拒绝同名前缀兄弟目录，并验证实际 PE
+策略元数据。此前失败的检查保留于 `artifacts/p1-supervision/`，没有用作闭环证据。
+最终过滤测试报告归档于 `docs/evidence/p1/native-v2.harness.json` 和
+`docs/evidence/p1/drop-v4-compatibility.harness.json`。它们验证此修复；仍需要
+1023 项完整测试及原生 Linux／ILVerify／AOT 门禁。全部验证启动进程已退出且清理完整。
+保留候选 ref 和报告引用的生成 Drop 制品。

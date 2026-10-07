@@ -56,6 +56,7 @@ internal static class Program
         tests = [.. tests, .. P2CargoContractTests.All];
         tests = [.. tests, .. P2ToolingContractTests.All];
         tests = [.. tests, .. P2InteropContractTests.All];
+        tests = [.. tests, .. P1NativeUnwindClosureTests.All];
         return await RegressionHarness.RunAsync(tests, args).ConfigureAwait(false);
     }
 }

@@ -52,6 +52,13 @@ public static class RustGeneratedPanic
 
     public static bool IsUnwinding() => unwinding;
 
+    /// <summary>
+    /// The v2 native unwind policy allows a destructor body's owned cleanup on Linux.
+    /// This selects a cleanup algorithm; it never examines program source or trace text.
+    /// Windows retains its native immediate double-panic edge.
+    /// </summary>
+    public static bool NativeV2UnwindsDestructorBody() => OperatingSystem.IsLinux();
+
     public static bool SwapUnwinding(bool value)
     {
         bool previous = unwinding;
@@ -63,6 +70,16 @@ public static class RustGeneratedPanic
 
     public static object DoublePanic(object panic, object cleanupFailure) =>
         new RustGeneratedAbortException(RequireException(panic), RequireException(cleanupFailure));
+
+    /// <summary>Preserves the caller panic when an owned destructor returns a nested abort.</summary>
+    public static object PreserveNestedAbort(object panic, object cleanupFailure)
+    {
+        Exception original = RequireException(panic);
+        Exception child = RequireException(cleanupFailure);
+        if (child is not RustGeneratedAbortException)
+            throw new ArgumentException("Nested abort composition requires an abort exception.", nameof(cleanupFailure));
+        return new RustGeneratedAbortException(original, child);
+    }
 
     public static object Abort(object panic) => panic is RustGeneratedAbortException
         ? panic : new RustGeneratedAbortException(RequireException(panic));

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Buffers.Binary;
 using System.Reflection.PortableExecutable;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,9 +19,11 @@ internal static class P1DropDifferentialRunner
 {
     internal const string OracleVersion = "rustc 1.98.0 (88d9e12ae 2026-08-18)";
     internal const string ClosureProfile = "p1-drop-closure-v4";
+    internal const string NativeClosureProfile = "p1-drop-closure-v5";
     internal const int MaximumCases = 28;
     private static readonly TimeSpan ProcessTimeout = TimeSpan.FromSeconds(20);
     private static readonly TimeSpan SuiteTimeout = TimeSpan.FromSeconds(300);
+    private static readonly TimeSpan NativeSuiteTimeout = TimeSpan.FromSeconds(240);
     private const string Prelude = """
         struct Marker { value: i32 }
         impl Drop for Marker { fn drop(&mut self) { println!("{}", self.value); } }
@@ -40,12 +43,13 @@ internal static class P1DropDifferentialRunner
         SafeCorePanicStrategy Strategy = SafeCorePanicStrategy.Unwind, string? OracleOutcome = null,
         string? OracleOutput = null);
 
-    private static Fixture PlatformFixture(int index, string platform) =>
+    private static Fixture PlatformFixture(int index, string platform, bool nativeV2 = false) =>
         platform == "linux-x64" && Fixtures[index].Id == "unwind-own-drop-body-failure"
-            ? Fixtures[index] with { OracleOutcome = "double-panic-abort", OracleOutput = "body\nowner\nbad\n" }
+            ? nativeV2 ? Fixtures[index] with { Output = "body\nowner\nbad\n" }
+                : Fixtures[index] with { OracleOutcome = "double-panic-abort", OracleOutput = "body\nowner\nbad\n" }
             : Fixtures[index];
 
-    private static int ContractDifferences(string platform) => platform == "linux-x64" ? 3 : 2;
+    private static int ContractDifferences(string platform, bool nativeV2 = false) => !nativeV2 && platform == "linux-x64" ? 3 : 2;
 
     private static string HostPlatform()
     {
@@ -152,7 +156,16 @@ internal static class P1DropDifferentialRunner
 
     internal static async Task<Result> RunAsync(string repositoryRoot, string reportPath,
         string rustcPath, string dotnetPath, int maximumCasesToExecute = MaximumCases,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) => await RunCoreAsync(repositoryRoot, reportPath, rustcPath, dotnetPath,
+            maximumCasesToExecute, nativeV2: false, cancellationToken).ConfigureAwait(false);
+
+    internal static async Task<Result> RunNativeV5Async(string repositoryRoot, string reportPath,
+        string rustcPath, string dotnetPath, int maximumCasesToExecute = MaximumCases,
+        CancellationToken cancellationToken = default) => await RunCoreAsync(repositoryRoot, reportPath, rustcPath, dotnetPath,
+            maximumCasesToExecute, nativeV2: true, cancellationToken).ConfigureAwait(false);
+
+    private static async Task<Result> RunCoreAsync(string repositoryRoot, string reportPath, string rustcPath,
+        string dotnetPath, int maximumCasesToExecute, bool nativeV2, CancellationToken cancellationToken)
     {
         string root = Path.GetFullPath(repositoryRoot);
         string report = Path.GetFullPath(reportPath, root);
@@ -167,7 +180,8 @@ internal static class P1DropDifferentialRunner
         string evidenceDirectory = Path.Combine(Path.GetDirectoryName(report)!, "evidence-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(evidenceDirectory);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        deadline.CancelAfter(SuiteTimeout);
+        TimeSpan suiteTimeout = nativeV2 ? NativeSuiteTimeout : SuiteTimeout;
+        deadline.CancelAfter(suiteTimeout);
         ConsoleCancelEventHandler cancelHandler = (_, args) => { args.Cancel = true; deadline.Cancel(); };
         Console.CancelKeyPress += cancelHandler;
         var clock = Stopwatch.StartNew();
@@ -182,9 +196,9 @@ internal static class P1DropDifferentialRunner
         {
             probe = await RunProcessAsync(runner, rustcPath, ["+1.98.0", "--version"], root, processes, deadline.Token).ConfigureAwait(false);
             bool oracleAvailable = Complete(probe) && probe.Succeeded && probe.StandardOutput.Trim() == OracleVersion;
-            for (int index = 0; index < maximumCasesToExecute && clock.Elapsed < SuiteTimeout; index++)
+            for (int index = 0; index < maximumCasesToExecute && clock.Elapsed < suiteTimeout; index++)
             {
-                Fixture fixture = PlatformFixture(index, platform);
+                Fixture fixture = PlatformFixture(index, platform, nativeV2);
                 if (fixture.OracleOutput is not null && fixture.OracleOutcome is null)
                     throw new InvalidOperationException("An expected oracle stdout difference must have an explicit contract-difference outcome.");
                 Console.WriteLine($"P1 Drop differential: {index + 1}/{MaximumCases} {fixture.Id}");
@@ -195,7 +209,7 @@ internal static class P1DropDifferentialRunner
                     continue;
                 }
                 JsonObject result = await RunFixtureAsync(runner, fixture, evidenceDirectory, root,
-                    rustcPath, dotnetPath, processes, deadline.Token).ConfigureAwait(false);
+                    rustcPath, dotnetPath, processes, nativeV2, deadline.Token).ConfigureAwait(false);
                 cases.Add(result);
                 switch (result["status"]!.GetValue<string>())
                 {
@@ -216,13 +230,13 @@ internal static class P1DropDifferentialRunner
         {
             if (index >= maximumCasesToExecute && harnessError is null && !deadline.IsCancellationRequested)
             {
-                JsonObject unexecuted = Blocked(PlatformFixture(index, platform), "Outside the deliberate smoke execution limit; this report cannot close the fixed suite.");
+                JsonObject unexecuted = Blocked(PlatformFixture(index, platform, nativeV2), "Outside the deliberate smoke execution limit; this report cannot close the fixed suite.");
                 unexecuted["status"] = "not-executed";
                 cases.Add(unexecuted);
                 skipped++;
                 continue;
             }
-            cases.Add(Blocked(PlatformFixture(index, platform), harnessError ?? "Suite deadline prevented execution."));
+            cases.Add(Blocked(PlatformFixture(index, platform, nativeV2), harnessError ?? "Suite deadline prevented execution."));
             blocked++;
         }
         bool cleanupComplete = processes.All(static process => !process.ProcessTreeCleanupIncomplete);
@@ -231,7 +245,7 @@ internal static class P1DropDifferentialRunner
         {
             ["schemaVersion"] = 1,
             ["evidenceKind"] = "p1-drop-source-generated-pe-rustc-differential",
-            ["profile"] = ClosureProfile,
+            ["profile"] = nativeV2 ? NativeClosureProfile : ClosureProfile,
             ["runPurpose"] = maximumCasesToExecute < MaximumCases ? "bounded-smoke-only" : "fixed-suite-closure",
             ["compilerSha256"] = HashFile(compilerPath),
             ["compilerPath"] = compilerPath,
@@ -243,9 +257,9 @@ internal static class P1DropDifferentialRunner
             ["runtimeIdentifier"] = runtimeIdentifier,
             ["hostContract"] = new JsonObject
             {
-                ["contractVersion"] = 1, ["platform"] = platform, ["nativeRuntimeIdentifier"] = runtimeIdentifier,
-                ["exactMatches"] = MaximumCases - ContractDifferences(platform),
-                ["contractDifferences"] = ContractDifferences(platform),
+                ["contractVersion"] = nativeV2 ? 2 : 1, ["platform"] = platform, ["nativeRuntimeIdentifier"] = runtimeIdentifier,
+                ["exactMatches"] = MaximumCases - ContractDifferences(platform, nativeV2),
+                ["contractDifferences"] = ContractDifferences(platform, nativeV2),
                 ["fullP1Closure"] = false, ["fullP1LanguageGateApproved"] = false,
                 ["platformBinding"] = "retained-rustc-native-executable-sha256-and-machine-header",
             },
@@ -264,7 +278,7 @@ internal static class P1DropDifferentialRunner
             ["execution"] = new JsonObject
             {
                 ["startedAtUtc"] = started, ["finishedAtUtc"] = DateTimeOffset.UtcNow,
-                ["elapsedMilliseconds"] = clock.Elapsed.TotalMilliseconds, ["deadlineSeconds"] = SuiteTimeout.TotalSeconds,
+                ["elapsedMilliseconds"] = clock.Elapsed.TotalMilliseconds, ["deadlineSeconds"] = suiteTimeout.TotalSeconds,
                 ["maximumCases"] = MaximumCases, ["processTimeoutSeconds"] = ProcessTimeout.TotalSeconds,
                 ["deadlineExpired"] = deadline.IsCancellationRequested,
             },
@@ -275,6 +289,11 @@ internal static class P1DropDifferentialRunner
             ["harnessError"] = harnessError,
             ["cases"] = cases,
         };
+        if (nativeV2)
+        {
+            document["dropCleanupProfile"] = SafeCoreDropCleanupProfiles.NativeV2MetadataValue;
+            document["contractDifference"] = "Native v2 retains the two previously frozen normal-cleanup continuation differences. Nested destructor body unwind now follows the native field-cleanup algorithm; no new semantic difference is approved and the full P1 gate remains independent.";
+        }
         string temporaryReport = report + ".tmp-" + Guid.NewGuid().ToString("N");
         try
         {
@@ -289,7 +308,7 @@ internal static class P1DropDifferentialRunner
 
     private static async Task<JsonObject> RunFixtureAsync(BoundedProcessRunner runner, Fixture fixture,
         string evidenceDirectory, string repositoryRoot, string rustcPath, string dotnetPath,
-        List<BoundedProcessResult> processes, CancellationToken cancellationToken)
+        List<BoundedProcessResult> processes, bool nativeV2, CancellationToken cancellationToken)
     {
         string directory = Path.Combine(evidenceDirectory, fixture.Id);
         Directory.CreateDirectory(directory);
@@ -307,8 +326,11 @@ internal static class P1DropDifferentialRunner
         DateTimeOffset compileStarted = DateTimeOffset.UtcNow;
         using var compileDeadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         compileDeadline.CancelAfter(ProcessTimeout);
-        CompilationResult compilation = CompilerDriver.CompileWithPanicStrategy(fixture.Source, sourcePath, managedOutput,
-            fixture.Strategy, "P1DropDifferential", CompilationProfile.SafeCoreMirV2, compileDeadline.Token);
+        CompilationResult compilation = nativeV2
+            ? CompilerDriver.CompileWithDropProfile(fixture.Source, sourcePath, managedOutput, SafeCoreDropCleanupProfile.NativeV2,
+                fixture.Strategy, "P1DropDifferential", CompilationProfile.SafeCoreMirV2, compileDeadline.Token)
+            : CompilerDriver.CompileWithPanicStrategy(fixture.Source, sourcePath, managedOutput,
+                fixture.Strategy, "P1DropDifferential", CompilationProfile.SafeCoreMirV2, compileDeadline.Token);
         BoundedProcessResult? managedRun = compilation.Success
             ? await RunProcessAsync(runner, dotnetPath, [managedOutput], directory, processes, cancellationToken).ConfigureAwait(false) : null;
         string expectedOracleOutcome = fixture.OracleOutcome ?? fixture.Outcome;
@@ -347,6 +369,38 @@ internal static class P1DropDifferentialRunner
             ["difference"] = status == "contract-difference" ? Difference(fixture) :
                 status == "failed" ? "Compilation, exact stdout or semantic exit classification did not match the declared fixture contract." : null,
         };
+    }
+
+    internal static string? ReadDropCleanupMetadata(string path, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (new FileInfo(path).Length > 16 * 1024 * 1024)
+            throw new InvalidOperationException("Drop profile metadata input exceeds 16 MiB.");
+        using var stream = File.OpenRead(path);
+        using var pe = new PEReader(stream);
+        MetadataReader metadata = pe.GetMetadataReader();
+        CustomAttributeHandleCollection attributes = metadata.GetAssemblyDefinition().GetCustomAttributes();
+        if (attributes.Count > 256) throw new InvalidOperationException("Drop profile metadata exceeds 256 assembly attributes.");
+        var clock = Stopwatch.StartNew();
+        string? result = null;
+        foreach (CustomAttributeHandle handle in attributes)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (clock.Elapsed > TimeSpan.FromSeconds(2)) throw new TimeoutException("Drop metadata validation exceeded two seconds.");
+            CustomAttribute attribute = metadata.GetCustomAttribute(handle);
+            if (attribute.Constructor.Kind != HandleKind.MemberReference) continue;
+            MemberReference constructor = metadata.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
+            if (constructor.Parent.Kind != HandleKind.TypeReference) continue;
+            TypeReference type = metadata.GetTypeReference((TypeReferenceHandle)constructor.Parent);
+            if (metadata.GetString(type.Namespace) != "System.Reflection" || metadata.GetString(type.Name) != "AssemblyMetadataAttribute") continue;
+            BlobReader blob = metadata.GetBlobReader(attribute.Value);
+            if (blob.ReadUInt16() != 1 || blob.ReadSerializedString() != SafeCoreDropCleanupProfiles.MetadataKey) continue;
+            if (result is not null) throw new InvalidOperationException("Drop profile metadata is duplicated.");
+            result = blob.ReadSerializedString();
+            if (result != SafeCoreDropCleanupProfiles.NativeV2MetadataValue || blob.ReadUInt16() != 0 || blob.RemainingBytes != 0)
+                throw new InvalidOperationException("Drop profile metadata is malformed or unknown.");
+        }
+        return result;
     }
 
     private static async Task<BoundedProcessResult> RunProcessAsync(BoundedProcessRunner runner, string executable,
@@ -398,9 +452,11 @@ internal static class P1DropDifferentialRunner
         var clock = Stopwatch.StartNew();
         var hashes = new Dictionary<string, string>(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
         CheckBudget();
+        bool nativeV2 = Text(document, "profile") == NativeClosureProfile;
+        Require(nativeV2 || document["dropCleanupProfile"] is null, "Legacy v4 evidence cannot relabel a native v2 profile.");
         Require(document["schemaVersion"]?.GetValue<int>() == 1 &&
             Text(document, "evidenceKind") == "p1-drop-source-generated-pe-rustc-differential" &&
-            Text(document, "profile") == ClosureProfile && Text(document, "runPurpose") == "fixed-suite-closure" &&
+            (Text(document, "profile") == ClosureProfile || nativeV2) && Text(document, "runPurpose") == "fixed-suite-closure" &&
             Text(document, "oracleVersion") == OracleVersion, "The input is not the current fixed-suite differential closure.");
         Require(document["cases"] is JsonArray { Count: MaximumCases }, "The input has a missing or extra fixed case.");
         JsonArray cases = (JsonArray)document["cases"]!;
@@ -414,8 +470,10 @@ internal static class P1DropDifferentialRunner
         CheckBudget();
         JsonObject hostContract = Object(document, "hostContract");
         string runtimeIdentifier = Text(document, "runtimeIdentifier");
-        int expectedDifferences = ContractDifferences(platform);
-        Require(hostContract["contractVersion"]?.GetValue<int>() == 1 && Text(hostContract, "platform") == platform &&
+        int expectedDifferences = ContractDifferences(platform, nativeV2);
+        if (nativeV2) Require(Text(document, "dropCleanupProfile") == SafeCoreDropCleanupProfiles.NativeV2MetadataValue,
+            "Native v5 evidence must name the explicitly selected v2 compiler contract.");
+        Require(hostContract["contractVersion"]?.GetValue<int>() == (nativeV2 ? 2 : 1) && Text(hostContract, "platform") == platform &&
             Text(hostContract, "nativeRuntimeIdentifier") == runtimeIdentifier &&
             (platform == "windows-x64" ? runtimeIdentifier == "win-x64" : runtimeIdentifier is "linux-x64" or "ubuntu.24.04-x64") &&
             hostContract["exactMatches"]?.GetValue<int>() == MaximumCases - expectedDifferences &&
@@ -469,7 +527,7 @@ internal static class P1DropDifferentialRunner
         for (int index = 0; index < MaximumCases; index++)
         {
             CheckBudget();
-            Fixture expected = PlatformFixture(index, platform);
+            Fixture expected = PlatformFixture(index, platform, nativeV2);
             Require(cases[index] is JsonObject, "A fixed case is not an object.");
             JsonObject item = (JsonObject)cases[index]!;
             string expectedSourceHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(expected.Source)));
@@ -501,6 +559,9 @@ internal static class P1DropDifferentialRunner
             RequireUnder(managedPath, artifactRoot);
             string managedHash = Text(compilation, "outputSha256");
             Require(IsHash(managedHash) && Hash(managedPath).Equals(managedHash, StringComparison.OrdinalIgnoreCase), "The original generated PE artifact has changed.");
+            Require(ReadDropCleanupMetadata(managedPath, cancellationToken) ==
+                (nativeV2 ? SafeCoreDropCleanupProfiles.NativeV2MetadataValue : null),
+                "The actual generated PE cleanup metadata disagrees with the selected differential profile.");
             string runtimePath = Path.Combine(Path.GetDirectoryName(managedPath)!, "RustSharp.Runtime.dll");
             Require(Hash(runtimePath).Equals(producerHashes["RustSharp.Runtime.dll"], StringComparison.OrdinalIgnoreCase), "The generated PE's runtime dependency differs from the producer.");
             JsonObject oracleCompile = Object(item, "rustcCompile"), oracleRun = Object(item, "rustcRun"), managedRun = Object(item, "rustSharpRun");
@@ -612,7 +673,11 @@ internal static class P1DropDifferentialRunner
     private static void RequireUnder(string path, string root)
     {
         StringComparison comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        Require(Path.GetFullPath(path).StartsWith(Path.GetFullPath(root) + Path.DirectorySeparatorChar, comparison), "A Drop artifact is outside its declared owned directory.");
+        string fullRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
+        string prefix = Path.EndsInDirectorySeparator(fullRoot) ? fullRoot : fullRoot + Path.DirectorySeparatorChar;
+        string fullPath = Path.GetFullPath(path);
+        Require(!string.Equals(Path.TrimEndingDirectorySeparator(fullPath), fullRoot, comparison) &&
+            fullPath.StartsWith(prefix, comparison), "A Drop artifact is outside its declared owned directory.");
     }
 
     internal static string ClassifyOracleFailure(int? rawExitCode, string error, SafeCorePanicStrategy strategy)

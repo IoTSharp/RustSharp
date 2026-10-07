@@ -346,11 +346,27 @@ public static class ClrLirEmitter
             encoder.LoadLocal(handling.PanicLocalIndex);
             CallPanic("IsAbort", ClrLirType.Bool, ClrLirType.Any);
             encoder.Branch(ILOpCode.Brtrue, propagate);
-            // Inspect the caller's mode before this handler starts cleanup. A
-            // failure during an existing unwind must reach that caller intact;
-            // its cleanup catch preserves the original panic and stops here.
-            CallPanic("IsUnwinding", ClrLirType.Bool);
-            encoder.Branch(ILOpCode.Brtrue, propagate);
+            // Legacy v1 and ordinary function bodies propagate a nested failure
+            // intact. Native v2 destructor bodies can finish their own owned
+            // obligations on the native Linux unwind path. A subsequent failure
+            // must stop that obligation list rather than use normal continuation.
+            if (handling.DropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2 &&
+                handling.IsDestructorBody && !handling.AbortWithoutUnwind)
+            {
+                LabelHandle beginCleanup = encoder.DefineLabel();
+                CallPanic("IsUnwinding", ClrLirType.Bool);
+                encoder.Branch(ILOpCode.Brfalse, beginCleanup);
+                CallPanic("NativeV2UnwindsDestructorBody", ClrLirType.Bool);
+                encoder.Branch(ILOpCode.Brfalse, propagate);
+                encoder.LoadConstantI4(0);
+                encoder.StoreLocal(handling.NormalCleanupLocalIndex);
+                encoder.MarkLabel(beginCleanup);
+            }
+            else
+            {
+                CallPanic("IsUnwinding", ClrLirType.Bool);
+                encoder.Branch(ILOpCode.Brtrue, propagate);
+            }
             if (handling.AbortWithoutUnwind)
             {
                 encoder.LoadLocal(handling.PanicLocalIndex);
@@ -405,7 +421,11 @@ public static class ClrLirEmitter
                     encoder.StoreLocal(handling.PanicLocalIndex);
                     encoder.Branch(ILOpCode.Leave, propagate);
                     encoder.MarkLabel(nestedAbort);
+                    if (handling.DropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2)
+                        encoder.LoadLocal(handling.PanicLocalIndex);
                     encoder.LoadLocal(handling.CleanupFailureLocalIndex);
+                    if (handling.DropCleanupProfile == SafeCoreDropCleanupProfile.NativeV2)
+                        CallPanic("PreserveNestedAbort", ClrLirType.Any, ClrLirType.Any, ClrLirType.Any);
                     encoder.StoreLocal(handling.PanicLocalIndex);
                     encoder.Branch(ILOpCode.Leave, propagate);
                     encoder.MarkLabel(normalFailure);
