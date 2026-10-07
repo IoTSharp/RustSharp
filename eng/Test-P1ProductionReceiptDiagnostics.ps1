@@ -160,7 +160,7 @@ catch { $primaryError = $_ }
 finally {
     if ($sandboxCreated) {
         try {
-            $item = Get-Item -LiteralPath $sandbox
+            $item = Get-Item -LiteralPath $sandbox -Force
             $owner = [IO.File]::ReadAllText((Join-Path $sandbox 'owner.json')) | ConvertFrom-Json
             if ($owner.TaskId -cne $taskId -or $owner.Pid -ne $PID -or $owner.Path -cne $sandbox -or [IO.Path]::GetDirectoryName($sandbox) -cne $delivery -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Exclusive utility sandbox ownership mismatch.' }
             $files = @(Get-ChildItem -LiteralPath $sandbox -Force)
@@ -174,7 +174,7 @@ finally {
                 if ($cleanupClock.ElapsedMilliseconds -ge 5000) { throw 'Utility cleanup deletion deadline expired.' }
                 Remove-Item -LiteralPath $files[$fileIndex].FullName -Force
             }
-            Remove-Item -LiteralPath $sandbox
+            Remove-Item -LiteralPath $sandbox -Force
         } catch { $cleanupFailures.Add($_.Exception.Message) }
     }
 }

@@ -23,6 +23,16 @@ PowerShell 7.6.6 通过一项极小试跑、全部三项固定诊断控制及全
 
 ## 复现与剩余闭环
 
+隐藏目录清理修复为 ✅ 已完成：`264416fc3898b63e1e6ed54d4c75c45c432572f6`
+的运行 `37699582503` 通过全部三项 Linux 工具断言，随后检查隐藏
+`.utility-owned-*` 沙箱时失败。两个准确沙箱操作现均使用 `-Force`，保留任务
+归属、PID、绝对路径、重解析点、五文件及五秒清理检查。候选
+`b630a6873383feb1ec09dafd970cca187fb0fc5c` 绑定 703 个输入。
+Windows 与 Ubuntu PowerShell 7.6.6 各通过极小试跑 1/1 和固定控制 3/3，
+四个沙箱全部移除。[清理归档](evidence/p1/receipt-cleanup-v1-archive.json)
+保留哈希和进程观察。这些是工具控制；仍须在推送后的修复 SHA 上取得新的
+Windows/Linux 原生 CI 证据。
+
 创建独占输出目录，然后使用 PowerShell 7 运行：
 
 ```powershell

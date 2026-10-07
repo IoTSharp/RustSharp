@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "scope": "P1 Linux hidden receipt utility sandbox cleanup repair",
+  "candidateSha": "b630a6873383feb1ec09dafd970cca187fb0fc5c",
+  "candidateTreeSha": "be914f520cc31576c0314da502677544f3607291",
+  "sourceInputCount": 703,
+  "utilityScriptSha256": "192F597C7C2101ECDE6CE933F7329B6A24F5263A8560890C6F89C1FA778901B8",
+  "failedCiCandidateSha": "264416fc3898b63e1e6ed54d4c75c45c432572f6",
+  "failedCiRunId": 37699582503,
+  "failedCiJobId": 113059571581,
+  "oldUtilityScriptSha256": "B521DC711B85E07F2BA76F79286525427B9AEBFE5884350AAAF32F3BBFE97D0B",
+  "windowsPowerShell": "7.6.6",
+  "linuxPowerShell": "7.6.6",
+  "reports": [
+    {
+      "path": "artifacts/p1-supervision/receipt-cleanup-root-v1/windows-tiny.json",
+      "sha256": "FD53643F9CEEBACEBA26940E50824F1AD613A48597B75B261777829717D76639",
+      "mode": "Tiny",
+      "expected": 1,
+      "passed": 1,
+      "sandboxRemoved": true,
+      "actualSandboxAbsent": true
+    },
+    {
+      "path": "artifacts/p1-supervision/receipt-cleanup-root-v1/windows-all.json",
+      "sha256": "3B35D59BC4BCC803C2A1D973D4D5012A3F4555A57896E4FA6B28D4427BD6213D",
+      "mode": "All",
+      "expected": 3,
+      "passed": 3,
+      "sandboxRemoved": true,
+      "actualSandboxAbsent": true
+    },
+    {
+      "path": "artifacts/p1-supervision/receipt-cleanup-root-v1/linux-tiny.json",
+      "sha256": "FE06A0CCF13F84D42F5077727233DCC522DD6C66BA2698AA6DEEF176A23864DD",
+      "mode": "Tiny",
+      "expected": 1,
+      "passed": 1,
+      "sandboxRemoved": true,
+      "actualSandboxAbsent": true
+    },
+    {
+      "path": "artifacts/p1-supervision/receipt-cleanup-root-v1/linux-all.json",
+      "sha256": "D675F71F7BF0DD8E377993366B81071D2CFCF0120A38521C96B83654B6D86A2C",
+      "mode": "All",
+      "expected": 3,
+      "passed": 3,
+      "sandboxRemoved": true,
+      "actualSandboxAbsent": true
+    }
+  ],
+  "processObservations": [
+    {
+      "ledger": "windows-tiny-launch.process.json",
+      "pid": 77532,
+      "startedAt": "2026-10-08T07:09:50.1237892+08:00",
+      "filePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-File",
+        "eng/Test-P1ProductionReceiptDiagnostics.ps1",
+        "-ResultPath",
+        "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\receipt-cleanup-root-v1/windows-tiny.json",
+        "-Mode",
+        "Tiny"
+      ],
+      "parentPid": 41432,
+      "parentStartedAt": "2026-10-08T07:09:49.4592915+08:00",
+      "parentCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\n$PSVersionTable.PSVersion.ToString()\n$base='D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\receipt-cleanup-root-v1'\nif([IO.Directory]::Exists($base)){throw 'Fresh delivery already exists'}\n$null=[IO.Directory]::CreateDirectory($base)\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Test-P1ProductionReceiptDiagnostics.ps1','-ResultPath',($base+'/windows-tiny.json'),'-Mode','Tiny') -TimeoutSeconds 40 -MaximumOutputBytes 1MB -CapturePrefix ($base+'/windows-tiny-launch') 6>$null\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Test-P1ProductionReceiptDiagnostics.ps1','-ResultPath',($base+'/windows-all.json'),'-Mode','All') -TimeoutSeconds 40 -MaximumOutputBytes 1MB -CapturePrefix ($base+'/windows-all-launch') 6>$null\n$results=@('windows-tiny.json','windows-all.json')|ForEach-Object{Get-Content ($base+'/'+$_) -Raw|ConvertFrom-Json}\n$results|Select-Object Mode,ExpectedControls,PassedControls,SandboxRemoved,CleanupFailures,PrimaryFailure|ConvertTo-Json -Depth 4\"",
+      "pidAbsent": true
+    },
+    {
+      "ledger": "windows-all-launch.process.json",
+      "pid": 72972,
+      "startedAt": "2026-10-08T07:09:51.0017275+08:00",
+      "filePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-File",
+        "eng/Test-P1ProductionReceiptDiagnostics.ps1",
+        "-ResultPath",
+        "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\receipt-cleanup-root-v1/windows-all.json",
+        "-Mode",
+        "All"
+      ],
+      "parentPid": 41432,
+      "parentStartedAt": "2026-10-08T07:09:49.4592915+08:00",
+      "parentCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\n$PSVersionTable.PSVersion.ToString()\n$base='D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\receipt-cleanup-root-v1'\nif([IO.Directory]::Exists($base)){throw 'Fresh delivery already exists'}\n$null=[IO.Directory]::CreateDirectory($base)\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Test-P1ProductionReceiptDiagnostics.ps1','-ResultPath',($base+'/windows-tiny.json'),'-Mode','Tiny') -TimeoutSeconds 40 -MaximumOutputBytes 1MB -CapturePrefix ($base+'/windows-tiny-launch') 6>$null\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Test-P1ProductionReceiptDiagnostics.ps1','-ResultPath',($base+'/windows-all.json'),'-Mode','All') -TimeoutSeconds 40 -MaximumOutputBytes 1MB -CapturePrefix ($base+'/windows-all-launch') 6>$null\n$results=@('windows-tiny.json','windows-all.json')|ForEach-Object{Get-Content ($base+'/'+$_) -Raw|ConvertFrom-Json}\n$results|Select-Object Mode,ExpectedControls,PassedControls,SandboxRemoved,CleanupFailures,PrimaryFailure|ConvertTo-Json -Depth 4\"",
+      "pidAbsent": true
+    },
+    {
+      "ledger": "linux-launch.process.json",
+      "pid": 87516,
+      "startedAt": "2026-10-08T07:10:19.3671778+08:00",
+      "filePath": "C:\\Windows\\System32\\wsl.exe",
+      "arguments": [
+        "-d",
+        "Ubuntu",
+        "--",
+        "/usr/bin/pwsh",
+        "-NoLogo",
+        "-NoProfile",
+        "-File",
+        "/mnt/d/GitHub/RustSharp/artifacts/p1-supervision/receipt-cleanup-root-v1/Invoke-LinuxControls.ps1"
+      ],
+      "parentPid": 89268,
+      "parentStartedAt": "2026-10-08T07:10:18.7957047+08:00",
+      "parentCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\n$PSVersionTable.PSVersion.ToString()\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Windows\\System32\\wsl.exe' -ArgumentList @('-d','Ubuntu','--','/usr/bin/pwsh','-NoLogo','-NoProfile','-File','/mnt/d/GitHub/RustSharp/artifacts/p1-supervision/receipt-cleanup-root-v1/Invoke-LinuxControls.ps1') -TimeoutSeconds 80 -MaximumOutputBytes 1MB -CapturePrefix artifacts/p1-supervision/receipt-cleanup-root-v1/linux-launch 6>$null\nGet-Content artifacts/p1-supervision/receipt-cleanup-root-v1/linux-launch.stdout.log\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Get-P1SourceSnapshot.ps1','-CreateCandidate','-EvidencePath','artifacts/p1-supervision/receipt-cleanup-root-v1/source-snapshot.json','-DeadlineSeconds','60') -TimeoutSeconds 65 -MaximumOutputBytes 1MB -CapturePrefix artifacts/p1-supervision/receipt-cleanup-root-v1/snapshot-launch 6>$null\n$s=Get-Content artifacts/p1-supervision/receipt-cleanup-root-v1/source-snapshot.json -Raw|ConvertFrom-Json\n[ordered]@{candidateSha=$s.candidateSha;treeSha=$s.treeSha;inputCount=$s.files.Count}|ConvertTo-Json\"",
+      "pidAbsent": true
+    },
+    {
+      "ledger": "snapshot-launch.process.json",
+      "pid": 47552,
+      "startedAt": "2026-10-08T07:10:25.2003631+08:00",
+      "filePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-File",
+        "eng/Get-P1SourceSnapshot.ps1",
+        "-CreateCandidate",
+        "-EvidencePath",
+        "artifacts/p1-supervision/receipt-cleanup-root-v1/source-snapshot.json",
+        "-DeadlineSeconds",
+        "60"
+      ],
+      "parentPid": 89268,
+      "parentStartedAt": "2026-10-08T07:10:18.7957047+08:00",
+      "parentCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\n$PSVersionTable.PSVersion.ToString()\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Windows\\System32\\wsl.exe' -ArgumentList @('-d','Ubuntu','--','/usr/bin/pwsh','-NoLogo','-NoProfile','-File','/mnt/d/GitHub/RustSharp/artifacts/p1-supervision/receipt-cleanup-root-v1/Invoke-LinuxControls.ps1') -TimeoutSeconds 80 -MaximumOutputBytes 1MB -CapturePrefix artifacts/p1-supervision/receipt-cleanup-root-v1/linux-launch 6>$null\nGet-Content artifacts/p1-supervision/receipt-cleanup-root-v1/linux-launch.stdout.log\n& eng/Invoke-BoundedProcess.ps1 -FilePath 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Get-P1SourceSnapshot.ps1','-CreateCandidate','-EvidencePath','artifacts/p1-supervision/receipt-cleanup-root-v1/source-snapshot.json','-DeadlineSeconds','60') -TimeoutSeconds 65 -MaximumOutputBytes 1MB -CapturePrefix artifacts/p1-supervision/receipt-cleanup-root-v1/snapshot-launch 6>$null\n$s=Get-Content artifacts/p1-supervision/receipt-cleanup-root-v1/source-snapshot.json -Raw|ConvertFrom-Json\n[ordered]@{candidateSha=$s.candidateSha;treeSha=$s.treeSha;inputCount=$s.files.Count}|ConvertTo-Json\"",
+      "pidAbsent": true
+    }
+  ],
+  "syntheticUtilityControls": true,
+  "nativeProgramsExecuted": 0,
+  "nativeCiGateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "sourceSnapshot": {
+    "path": "artifacts/p1-supervision/receipt-cleanup-root-v1/source-snapshot.json",
+    "sha256": "37148F0EF2C33463C3B5312E5E5811989D0D49A0E196027BA2EA41DBBE18106A"
+  }
+}

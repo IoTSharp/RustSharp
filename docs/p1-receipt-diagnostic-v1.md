@@ -28,6 +28,17 @@ preserves the observed before/after messages and their explicit utility scope.
 
 ## Reproduction and remaining closure
 
+✅ Complete for the hidden-directory cleanup repair: run `37699582503` at
+`264416fc3898b63e1e6ed54d4c75c45c432572f6` passed all three Linux utility
+assertions, then failed to inspect its hidden `.utility-owned-*` sandbox.
+Both exact sandbox operations now use `-Force`, preserving the task owner,
+PID, absolute path, reparse-point, five-file and five-second cleanup checks.
+Candidate `b630a6873383feb1ec09dafd970cca187fb0fc5c` binds 703 inputs.
+Windows and Ubuntu PowerShell 7.6.6 each pass trial 1/1 and fixed controls 3/3,
+with all four sandboxes removed. The [cleanup archive](evidence/p1/receipt-cleanup-v1-archive.json)
+retains hashes and process observations. These are utility checks; fresh native
+Windows/Linux CI at the pushed repair SHA remains required.
+
 Create an exclusive output directory, then run with PowerShell 7:
 
 ```powershell
