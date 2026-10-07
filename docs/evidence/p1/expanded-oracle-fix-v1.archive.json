@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "candidateSha": "ed2ad9b0b3ab4e95aed98c60565a709cc956a7a9",
+  "scope": "CI oracle tool-path repair and two real generated Drop checks",
+  "fullP1Closure": false,
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "artifacts": [
+    {
+      "archivedPath": "docs/evidence/p1/expanded-windows-oracle-failure-v1.json",
+      "archivedSha256": "ACC02CA9090DD0BE05C6E907F1756C00502EFB0F5A90B4A04F3C6529C5800CBC",
+      "sourceSha256": "18AAE1CF4AF51EDE5F3F48C0B2E3EA21D2E1CE7098A4FE3AA78946BAD1B2B09A",
+      "sourcePath": "artifacts/p1-supervision/ci-followup-v4/windows-expanded-failure-summary.json"
+    },
+    {
+      "archivedPath": "docs/evidence/p1/native-ci-subset-review-v1.json",
+      "archivedSha256": "33BF05EFF62D28E0299FCA08D64EC458A24019CE2D1EBC86FD03011A04E52703",
+      "sourceSha256": "25F50032488157DC2BBFB2E14E904B7C260DEE3C4A3C7A2FADB4462D1CCF8EB1",
+      "sourcePath": "artifacts/p1-supervision/ci-followup-v4/downloaded-native-subset-review.json"
+    },
+    {
+      "archivedPath": "docs/evidence/p1/expanded-oracle-fix-v1.harness.json",
+      "archivedSha256": "7395DBDBF59697B598F7188DCB0512717A3685746EB3A040B41849110751EDF9",
+      "sourceSha256": "8D40030B01096B0914CBDA1C197DC551D750BC80A019DB852D6A346475B14704",
+      "sourcePath": "artifacts/p1-supervision/expanded-oracle-fix-v1/drop.harness.json"
+    }
+  ],
+  "build": {
+    "sha256": "1CB5B2C2DFB0D6658EC07C2EB0C3DF673D9FF31508D9F48D396110D87DFB490A",
+    "errors": 0,
+    "path": "artifacts/p1-supervision/expanded-oracle-fix-v1/release-build.json",
+    "sdkVersion": "10.0.401",
+    "warnings": 0
+  },
+  "summary": {
+    "failed": 0,
+    "passed": 2,
+    "skipped": 0
+  },
+  "cleanupComplete": true
+}

@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-downloaded-native-subset-review",
+  "candidateSha": "bb1c062906f7bd581f98d45f8b14791c2595215e",
+  "candidateTreeSha": "7716b073b6d03958fc847dd28ab00231e5d1908a",
+  "runId": "37675251918",
+  "runAttempt": "1",
+  "hosts": [
+    {
+      "platformName": "linux-x64",
+      "runtimeIdentifier": "linux-x64",
+      "sourcePackages": 19,
+      "sourceOriginalPe": 39,
+      "sourceProcessResults": 99,
+      "backendFixtures": 6,
+      "backendLocalPassedCells": 12,
+      "backendProcessResults": 30,
+      "sourceRetainedArtifacts": 785,
+      "backendRetainedArtifacts": 103,
+      "candidateInputJsonReconciled": true,
+      "nativeValidatorProofsReconciled": true,
+      "backendDropCleanupProfile": "legacy-v1",
+      "allTransportedRetainedBytesVerifiedLocally": false
+    },
+    {
+      "platformName": "windows-x64",
+      "runtimeIdentifier": "win-x64",
+      "sourcePackages": 19,
+      "sourceOriginalPe": 39,
+      "sourceProcessResults": 100,
+      "backendFixtures": 6,
+      "backendLocalPassedCells": 12,
+      "backendProcessResults": 30,
+      "sourceRetainedArtifacts": 785,
+      "backendRetainedArtifacts": 103,
+      "candidateInputJsonReconciled": true,
+      "nativeValidatorProofsReconciled": true,
+      "backendDropCleanupProfile": "legacy-v1",
+      "allTransportedRetainedBytesVerifiedLocally": false
+    }
+  ],
+  "hashes": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-source-linux\\source-package-v2.json",
+      "sha256": "1C0CA02A3C3330CB745F9AF0F4D2F85744562DB96BA9E22418675772393204A2",
+      "expectedSha256": "1C0CA02A3C3330CB745F9AF0F4D2F85744562DB96BA9E22418675772393204A2",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-backend-linux\\backend-coverage-v1.json",
+      "sha256": "F484ABE5C8ABD98FCE8BE8E6240DFFBCEE6C1A7A2688592AF0571C1E5650CC0E",
+      "expectedSha256": "F484ABE5C8ABD98FCE8BE8E6240DFFBCEE6C1A7A2688592AF0571C1E5650CC0E",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\release-build.json",
+      "sha256": "42AFB26323613132F5FD80D66B038F46B24EA39C0DA2E2F57452D453C6300B9C",
+      "expectedSha256": "42AFB26323613132F5FD80D66B038F46B24EA39C0DA2E2F57452D453C6300B9C",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\source-snapshot.json",
+      "sha256": "4E6D587F1AA282A47732FD6F3AAE8D1ACA391ED3E29D0BC953B202D94E556708",
+      "expectedSha256": "4E6D587F1AA282A47732FD6F3AAE8D1ACA391ED3E29D0BC953B202D94E556708",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\RustSharp.Conformance.dll",
+      "sha256": "81976EC4421632C4E04F1D75B567209AB94FC1B2E1FF41B56848A1E6AFCEE990",
+      "expectedSha256": "81976EC4421632C4E04F1D75B567209AB94FC1B2E1FF41B56848A1E6AFCEE990",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\dotnet-host",
+      "sha256": "7DDA7A639BC35FBA05C40D308B0296450AA4E628D109245A6312C385DA9B0931",
+      "expectedSha256": "7DDA7A639BC35FBA05C40D308B0296450AA4E628D109245A6312C385DA9B0931",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\.github\\workflows\\p1-expanded.yml",
+      "sha256": "A8C86317F990EE41BE34D1697562B955214431B469478A5BC7622E88BB517E32",
+      "expectedSha256": "A8C86317F990EE41BE34D1697562B955214431B469478A5BC7622E88BB517E32",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\eng\\Invoke-P1ProductionNativeEvidence.ps1",
+      "sha256": "82D99F19D791FF1297B79BF595935ED1107AE15B41617628E280840A6396BE45",
+      "expectedSha256": "82D99F19D791FF1297B79BF595935ED1107AE15B41617628E280840A6396BE45",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\eng\\Test-P1ProductionCiGate.ps1",
+      "sha256": "BF690167145CEC3BF7A6690B59EEAC55E11CE7303BDD39422B32C90EC38FF4F0",
+      "expectedSha256": "BF690167145CEC3BF7A6690B59EEAC55E11CE7303BDD39422B32C90EC38FF4F0",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\eng\\Invoke-BoundedProcess.ps1",
+      "sha256": "28A0742E5868C3A24E9F23FAEEF79F7979284B711B245A3D39302601046D4672",
+      "expectedSha256": "28A0742E5868C3A24E9F23FAEEF79F7979284B711B245A3D39302601046D4672",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\eng\\Invoke-P1ReleaseBuild.ps1",
+      "sha256": "4431282A68A528529FCDDE7BE71F2FC46B344C204ADF2DE31A6B024321AADF26",
+      "expectedSha256": "4431282A68A528529FCDDE7BE71F2FC46B344C204ADF2DE31A6B024321AADF26",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\eng\\Get-P1SourceSnapshot.ps1",
+      "sha256": "C61974EFE53CF9E4000545A3E10D08D0BF63EE6BC2DE2744666F96F9DF20E68B",
+      "expectedSha256": "C61974EFE53CF9E4000545A3E10D08D0BF63EE6BC2DE2744666F96F9DF20E68B",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\eng\\P1SuiteEvidenceValidation.ps1",
+      "sha256": "6214C3E03882D8295B75C642C25D8E7C1DF5820CF838C3D6E4B5ECA2C0CC3ABC",
+      "expectedSha256": "6214C3E03882D8295B75C642C25D8E7C1DF5820CF838C3D6E4B5ECA2C0CC3ABC",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\tools\\RustSharp.Conformance\\Program.cs",
+      "sha256": "825B349BEF1E597A4C70715169C83F1B54D09F7D99078AE2D39106E478D32852",
+      "expectedSha256": "825B349BEF1E597A4C70715169C83F1B54D09F7D99078AE2D39106E478D32852",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\tools\\RustSharp.Conformance\\P1SourcePackagePlatformRunner.cs",
+      "sha256": "AD7902D77714A1C2A097FDC7B9E7FE01A485B95D166B9BB2D9D5CE49C5ECBBC1",
+      "expectedSha256": "AD7902D77714A1C2A097FDC7B9E7FE01A485B95D166B9BB2D9D5CE49C5ECBBC1",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\tools\\RustSharp.Conformance\\P1SourcePackageEvidenceValidator.cs",
+      "sha256": "6EEB821254A3AE7F41A12162FA646921F6CCD76A6BDAD73CF5055F21F82725AD",
+      "expectedSha256": "6EEB821254A3AE7F41A12162FA646921F6CCD76A6BDAD73CF5055F21F82725AD",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\tools\\RustSharp.Conformance\\P1BackendCoverageRunner.cs",
+      "sha256": "D68C4D75A444B813B83BB2296BCA3B98C1CDC00F3FCC8B97FE891FACFB916B0A",
+      "expectedSha256": "D68C4D75A444B813B83BB2296BCA3B98C1CDC00F3FCC8B97FE891FACFB916B0A",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\sources\\tools\\RustSharp.Conformance\\P1BackendCoverageEvidence.cs",
+      "sha256": "610273C5C2025A27C034F0F0A3D30AD2E9EC0F3089BF50F2F0D14ECCCE2F7F63",
+      "expectedSha256": "610273C5C2025A27C034F0F0A3D30AD2E9EC0F3089BF50F2F0D14ECCCE2F7F63",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\source-run.process.json",
+      "sha256": "02A37E4202E0B59037EF6778175D7D3FCC884853195A3CD42550D28A5E51E79D",
+      "expectedSha256": "02A37E4202E0B59037EF6778175D7D3FCC884853195A3CD42550D28A5E51E79D",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\source-run.stdout.log",
+      "sha256": "7D495D508AA561F2933CD2E4D350C4427E40FBEFF5FBC53B3DC061269092C559",
+      "expectedSha256": "7D495D508AA561F2933CD2E4D350C4427E40FBEFF5FBC53B3DC061269092C559",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\source-run.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\source-validate.process.json",
+      "sha256": "B9A893E91F15E2C84D87B31E01C9F1B5EEFA1DA6855A72C0080AF3C2EC8DD3F7",
+      "expectedSha256": "B9A893E91F15E2C84D87B31E01C9F1B5EEFA1DA6855A72C0080AF3C2EC8DD3F7",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\source-validate.stdout.log",
+      "sha256": "8C80CFB934533958AC8DCF8D98E87A28756B0E8EAA16CE3A2537E7C006527A22",
+      "expectedSha256": "8C80CFB934533958AC8DCF8D98E87A28756B0E8EAA16CE3A2537E7C006527A22",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\source-validate.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\backend-run.process.json",
+      "sha256": "033286E66657F11E061D25A342077922C099F4A4F2D570FB8EB62FFCB9B3D16B",
+      "expectedSha256": "033286E66657F11E061D25A342077922C099F4A4F2D570FB8EB62FFCB9B3D16B",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\backend-run.stdout.log",
+      "sha256": "2BB468E7940529D512B70E33C531E876EBA79E309A155E387070E12ABD13928F",
+      "expectedSha256": "2BB468E7940529D512B70E33C531E876EBA79E309A155E387070E12ABD13928F",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\backend-run.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\backend-validate.process.json",
+      "sha256": "C13F53F6660D4618D1F12319644820B555B22903951DE8C6657F2CA59AE5376A",
+      "expectedSha256": "C13F53F6660D4618D1F12319644820B555B22903951DE8C6657F2CA59AE5376A",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\backend-validate.stdout.log",
+      "sha256": "8F7612885A90EE35055572644AC46E0FAA099780A7B60045CA94B729B435ABF8",
+      "expectedSha256": "8F7612885A90EE35055572644AC46E0FAA099780A7B60045CA94B729B435ABF8",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-linux\\backend-validate.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-source-linux\\evidence-bba9a2ee0e2e4f3c973432fd6a537fbd\\scalar-positional-copy\\SourceProducer.dll",
+      "sha256": "F520DDAD94E9A4F0A3386BDD56D68C70A834B3E24012C8CE7A065275DC6B3C57",
+      "expectedSha256": "F520DDAD94E9A4F0A3386BDD56D68C70A834B3E24012C8CE7A065275DC6B3C57",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-source-linux\\evidence-bba9a2ee0e2e4f3c973432fd6a537fbd\\scalar-positional-copy\\SourceConsumer.dll",
+      "sha256": "211B1F1257750CCC0899EE3112870DB8806A2B499946406FD12AD37EB5D80D36",
+      "expectedSha256": "211B1F1257750CCC0899EE3112870DB8806A2B499946406FD12AD37EB5D80D36",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-source-windows\\source-package-v2.json",
+      "sha256": "5353EFE9D5226293EAD77F8C167184E4AA04D74988352D280E5B0B41EAEAF2AA",
+      "expectedSha256": "5353EFE9D5226293EAD77F8C167184E4AA04D74988352D280E5B0B41EAEAF2AA",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-backend-windows\\backend-coverage-v1.json",
+      "sha256": "51F6E20D76E1406E4A78EC5D3806CE15591CF603D1C191E4A196381CF0BF89CD",
+      "expectedSha256": "51F6E20D76E1406E4A78EC5D3806CE15591CF603D1C191E4A196381CF0BF89CD",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\release-build.json",
+      "sha256": "943AECDC98EC0CFC6847F5746DA5C092EF1DC73C4CB657717F9B1D96664455AB",
+      "expectedSha256": "943AECDC98EC0CFC6847F5746DA5C092EF1DC73C4CB657717F9B1D96664455AB",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\source-snapshot.json",
+      "sha256": "E684020C879A669DDE41941B4778B73ACC128EE6B83662FBAD7C8611EDB491E7",
+      "expectedSha256": "E684020C879A669DDE41941B4778B73ACC128EE6B83662FBAD7C8611EDB491E7",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\RustSharp.Conformance.dll",
+      "sha256": "C9BCC9A5867FA6403F0D3D20C39DF30D8A140542D144E260799581167028B4FA",
+      "expectedSha256": "C9BCC9A5867FA6403F0D3D20C39DF30D8A140542D144E260799581167028B4FA",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\dotnet-host",
+      "sha256": "AB1B71FD3DD71062E074C9FAB8312081A81B7F2B3E0327C48C4D249C8D1A3135",
+      "expectedSha256": "AB1B71FD3DD71062E074C9FAB8312081A81B7F2B3E0327C48C4D249C8D1A3135",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\.github\\workflows\\p1-expanded.yml",
+      "sha256": "A8C86317F990EE41BE34D1697562B955214431B469478A5BC7622E88BB517E32",
+      "expectedSha256": "A8C86317F990EE41BE34D1697562B955214431B469478A5BC7622E88BB517E32",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\eng\\Invoke-P1ProductionNativeEvidence.ps1",
+      "sha256": "82D99F19D791FF1297B79BF595935ED1107AE15B41617628E280840A6396BE45",
+      "expectedSha256": "82D99F19D791FF1297B79BF595935ED1107AE15B41617628E280840A6396BE45",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\eng\\Test-P1ProductionCiGate.ps1",
+      "sha256": "BF690167145CEC3BF7A6690B59EEAC55E11CE7303BDD39422B32C90EC38FF4F0",
+      "expectedSha256": "BF690167145CEC3BF7A6690B59EEAC55E11CE7303BDD39422B32C90EC38FF4F0",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\eng\\Invoke-BoundedProcess.ps1",
+      "sha256": "28A0742E5868C3A24E9F23FAEEF79F7979284B711B245A3D39302601046D4672",
+      "expectedSha256": "28A0742E5868C3A24E9F23FAEEF79F7979284B711B245A3D39302601046D4672",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\eng\\Invoke-P1ReleaseBuild.ps1",
+      "sha256": "4431282A68A528529FCDDE7BE71F2FC46B344C204ADF2DE31A6B024321AADF26",
+      "expectedSha256": "4431282A68A528529FCDDE7BE71F2FC46B344C204ADF2DE31A6B024321AADF26",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\eng\\Get-P1SourceSnapshot.ps1",
+      "sha256": "C61974EFE53CF9E4000545A3E10D08D0BF63EE6BC2DE2744666F96F9DF20E68B",
+      "expectedSha256": "C61974EFE53CF9E4000545A3E10D08D0BF63EE6BC2DE2744666F96F9DF20E68B",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\eng\\P1SuiteEvidenceValidation.ps1",
+      "sha256": "6214C3E03882D8295B75C642C25D8E7C1DF5820CF838C3D6E4B5ECA2C0CC3ABC",
+      "expectedSha256": "6214C3E03882D8295B75C642C25D8E7C1DF5820CF838C3D6E4B5ECA2C0CC3ABC",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\tools\\RustSharp.Conformance\\Program.cs",
+      "sha256": "825B349BEF1E597A4C70715169C83F1B54D09F7D99078AE2D39106E478D32852",
+      "expectedSha256": "825B349BEF1E597A4C70715169C83F1B54D09F7D99078AE2D39106E478D32852",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\tools\\RustSharp.Conformance\\P1SourcePackagePlatformRunner.cs",
+      "sha256": "AD7902D77714A1C2A097FDC7B9E7FE01A485B95D166B9BB2D9D5CE49C5ECBBC1",
+      "expectedSha256": "AD7902D77714A1C2A097FDC7B9E7FE01A485B95D166B9BB2D9D5CE49C5ECBBC1",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\tools\\RustSharp.Conformance\\P1SourcePackageEvidenceValidator.cs",
+      "sha256": "6EEB821254A3AE7F41A12162FA646921F6CCD76A6BDAD73CF5055F21F82725AD",
+      "expectedSha256": "6EEB821254A3AE7F41A12162FA646921F6CCD76A6BDAD73CF5055F21F82725AD",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\tools\\RustSharp.Conformance\\P1BackendCoverageRunner.cs",
+      "sha256": "D68C4D75A444B813B83BB2296BCA3B98C1CDC00F3FCC8B97FE891FACFB916B0A",
+      "expectedSha256": "D68C4D75A444B813B83BB2296BCA3B98C1CDC00F3FCC8B97FE891FACFB916B0A",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\sources\\tools\\RustSharp.Conformance\\P1BackendCoverageEvidence.cs",
+      "sha256": "610273C5C2025A27C034F0F0A3D30AD2E9EC0F3089BF50F2F0D14ECCCE2F7F63",
+      "expectedSha256": "610273C5C2025A27C034F0F0A3D30AD2E9EC0F3089BF50F2F0D14ECCCE2F7F63",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\source-run.process.json",
+      "sha256": "4C1A238524D4EE2159904C4A57082089948C6E283AF46F2A9DE9116F2EDEF3BA",
+      "expectedSha256": "4C1A238524D4EE2159904C4A57082089948C6E283AF46F2A9DE9116F2EDEF3BA",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\source-run.stdout.log",
+      "sha256": "E88FCE725799B7FD85772D41C466D70EAA979E2A1EF5423ED50CBB31DA7AA111",
+      "expectedSha256": "E88FCE725799B7FD85772D41C466D70EAA979E2A1EF5423ED50CBB31DA7AA111",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\source-run.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\source-validate.process.json",
+      "sha256": "8B02B73BA5C475EC6A337855CC302AC27F03E160884A9D10C365C648D0A7D075",
+      "expectedSha256": "8B02B73BA5C475EC6A337855CC302AC27F03E160884A9D10C365C648D0A7D075",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\source-validate.stdout.log",
+      "sha256": "83B40C6339CB9B5F3B60541FA30090CAB761926A659887E4335065AEE282D90A",
+      "expectedSha256": "83B40C6339CB9B5F3B60541FA30090CAB761926A659887E4335065AEE282D90A",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\source-validate.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\backend-run.process.json",
+      "sha256": "CA606A575AF6DA54EA1A9EFBF8F13BE674CF648886C74365B92ECCAE7AC26437",
+      "expectedSha256": "CA606A575AF6DA54EA1A9EFBF8F13BE674CF648886C74365B92ECCAE7AC26437",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\backend-run.stdout.log",
+      "sha256": "22091579AFE0C78D2852B381A8C2A2C36BB9625C564C7CE21CC64E638D3B85AF",
+      "expectedSha256": "22091579AFE0C78D2852B381A8C2A2C36BB9625C564C7CE21CC64E638D3B85AF",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\backend-run.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\backend-validate.process.json",
+      "sha256": "244D59CE413DB575F03B8636437DAAE857EA6E697F93BCDD74ADAC274282A4A2",
+      "expectedSha256": "244D59CE413DB575F03B8636437DAAE857EA6E697F93BCDD74ADAC274282A4A2",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\backend-validate.stdout.log",
+      "sha256": "696BBFE86BFBE7327BFF0AFAC74410E62C54E540442F5C065146D8F04DC6601D",
+      "expectedSha256": "696BBFE86BFBE7327BFF0AFAC74410E62C54E540442F5C065146D8F04DC6601D",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-receipt-windows\\backend-validate.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "expectedSha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-source-windows\\evidence-932ed67f2ecc44f3889f824029ece57c\\scalar-positional-copy\\SourceProducer.dll",
+      "sha256": "57AC540F9CECDF652AA4D1C31B5212FD3C6A067A94E482023ED3853F34F8E8F7",
+      "expectedSha256": "57AC540F9CECDF652AA4D1C31B5212FD3C6A067A94E482023ED3853F34F8E8F7",
+      "matches": true
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v4\\download-source-windows\\evidence-932ed67f2ecc44f3889f824029ece57c\\scalar-positional-copy\\SourceConsumer.dll",
+      "sha256": "8C3E1D664711096341FEAB307E036CE9EE8546B509328CB247E4E59963B70C90",
+      "expectedSha256": "8C3E1D664711096341FEAB307E036CE9EE8546B509328CB247E4E59963B70C90",
+      "matches": true
+    }
+  ],
+  "summary": {
+    "subsetVerified": true,
+    "fullP1Closure": false,
+    "localExecution": false,
+    "completeRetainedByteAudit": false
+  },
+  "failures": [],
+  "bounds": {
+    "maximumHosts": 2,
+    "maximumFileHashes": 64,
+    "timeoutSeconds": 60,
+    "elapsedSeconds": 1.9923859
+  },
+  "remaining": [
+    "Trusted same-run suite and production aggregate gates",
+    "All 785 source + 103 backend retained byte rows per native platform",
+    "Actual transported backend matrix validation for 24 cells",
+    "Complete P1 gate conjunction including NativeV5 Drop and exact full-suite coverage"
+  ]
+}

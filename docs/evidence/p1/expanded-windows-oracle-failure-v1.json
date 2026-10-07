@@ -1,0 +1,97 @@
+{
+  "candidateSha": "bb1c062906f7bd581f98d45f8b14791c2595215e",
+  "runtimeIdentifier": "win-x64",
+  "startedAtUtc": "2026-10-08T03:41:37.4202863+08:00",
+  "finishedAtUtc": "2026-10-08T03:50:11.572564+08:00",
+  "fullSuite": true,
+  "suiteSucceeded": false,
+  "summary": {
+    "registeredDenominator": 1104,
+    "selected": 1104,
+    "executed": 1104,
+    "passed": 1102,
+    "failed": 2,
+    "skipped": 0,
+    "notExecuted": 0
+  },
+  "deadlineExpired": false,
+  "cancelled": false,
+  "harnessError": null,
+  "cleanupComplete": true,
+  "failedCases": [
+    {
+      "id": "P1 generated Drop rustc 1.98 bounded smoke records one real case",
+      "status": "failed",
+      "durationMilliseconds": 201.0182,
+      "error": "Worker Exited, exit 1: System.InvalidOperationException: rustc was not found within 64 PATH entries and two seconds; configure RUSTSHARP_RUSTC_PATH explicitly.\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ResolveTool(String configurationName, String command) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 241\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ExecuteAsync(Int32 maximumCasesToExecute) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 215\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.SmokeAsync() in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 36\r\n   at RustSharp.Tests.RegressionHarness.RunAsync(TestCase[] registered, String[] args) in /_/tests/RustSharp.Tests/RegressionHarness.cs:line 107\r\n",
+      "process": {
+        "startedProcess": {
+          "processId": 6580,
+          "parentProcessId": 6608,
+          "startedAt": "2026-10-08T03:48:22.5333143+08:00",
+          "fileName": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "arguments": [
+            "D:\\a\\RustSharp\\RustSharp\\tests\\RustSharp.Tests\\bin\\Release\\net10.0\\RustSharp.Tests.dll",
+            "--rustsharp-test-worker",
+            "892"
+          ],
+          "workingDirectory": "D:\\a\\RustSharp\\RustSharp",
+          "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\tests\\RustSharp.Tests\\bin\\Release\\net10.0\\RustSharp.Tests.dll --rustsharp-test-worker 892"
+        },
+        "exitCode": 1,
+        "standardOutput": "",
+        "standardError": "System.InvalidOperationException: rustc was not found within 64 PATH entries and two seconds; configure RUSTSHARP_RUSTC_PATH explicitly.\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ResolveTool(String configurationName, String command) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 241\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ExecuteAsync(Int32 maximumCasesToExecute) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 215\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.SmokeAsync() in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 36\r\n   at RustSharp.Tests.RegressionHarness.RunAsync(TestCase[] registered, String[] args) in /_/tests/RustSharp.Tests/RegressionHarness.cs:line 107\r\n",
+        "termination": 0,
+        "elapsed": "00:00:00.1993623",
+        "succeeded": false,
+        "standardOutputTruncated": false,
+        "standardErrorTruncated": false,
+        "outputTruncated": false,
+        "outputReadTimedOut": false,
+        "outputDrainTimedOut": false,
+        "outputReadLimitReached": false,
+        "processTreeCleanupAttempted": false,
+        "processTreeCleanupIncomplete": false,
+        "outputDiagnostic": null,
+        "processTreeCleanupDiagnostic": null
+      }
+    },
+    {
+      "id": "P1 generated Drop rustc 1.98 differential records equality and frozen contract differences",
+      "status": "failed",
+      "durationMilliseconds": 174.5732,
+      "error": "Worker Exited, exit 1: System.InvalidOperationException: rustc was not found within 64 PATH entries and two seconds; configure RUSTSHARP_RUSTC_PATH explicitly.\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ResolveTool(String configurationName, String command) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 241\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ExecuteAsync(Int32 maximumCasesToExecute) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 215\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.RunAsync() in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 24\r\n   at RustSharp.Tests.RegressionHarness.RunAsync(TestCase[] registered, String[] args) in /_/tests/RustSharp.Tests/RegressionHarness.cs:line 107\r\n",
+      "process": {
+        "startedProcess": {
+          "processId": 3700,
+          "parentProcessId": 6608,
+          "startedAt": "2026-10-08T03:48:22.7344747+08:00",
+          "fileName": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "arguments": [
+            "D:\\a\\RustSharp\\RustSharp\\tests\\RustSharp.Tests\\bin\\Release\\net10.0\\RustSharp.Tests.dll",
+            "--rustsharp-test-worker",
+            "893"
+          ],
+          "workingDirectory": "D:\\a\\RustSharp\\RustSharp",
+          "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\tests\\RustSharp.Tests\\bin\\Release\\net10.0\\RustSharp.Tests.dll --rustsharp-test-worker 893"
+        },
+        "exitCode": 1,
+        "standardOutput": "",
+        "standardError": "System.InvalidOperationException: rustc was not found within 64 PATH entries and two seconds; configure RUSTSHARP_RUSTC_PATH explicitly.\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ResolveTool(String configurationName, String command) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 241\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.ExecuteAsync(Int32 maximumCasesToExecute) in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 215\r\n   at RustSharp.Tests.P1DropDifferentialCodegenTests.RunAsync() in /_/tests/RustSharp.Tests/P1DropDifferentialCodegenTests.cs:line 24\r\n   at RustSharp.Tests.RegressionHarness.RunAsync(TestCase[] registered, String[] args) in /_/tests/RustSharp.Tests/RegressionHarness.cs:line 107\r\n",
+        "termination": 0,
+        "elapsed": "00:00:00.1744969",
+        "succeeded": false,
+        "standardOutputTruncated": false,
+        "standardErrorTruncated": false,
+        "outputTruncated": false,
+        "outputReadTimedOut": false,
+        "outputDrainTimedOut": false,
+        "outputReadLimitReached": false,
+        "processTreeCleanupAttempted": false,
+        "processTreeCleanupIncomplete": false,
+        "outputDiagnostic": null,
+        "processTreeCleanupDiagnostic": null
+      }
+    }
+  ]
+}
