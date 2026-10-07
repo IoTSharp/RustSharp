@@ -16,8 +16,11 @@ function Invoke-P1ValidationGit([string] $Root, [string[]] $Arguments, [string] 
     $process = [Diagnostics.Process]::new(); $process.StartInfo=$info
     $record=[ordered]@{pid=$null;parentPid=$PID;startedAtUtc=$null;filePath=$git;arguments=$Arguments;workingDirectory=$Root;exitCode=$null;cleanupComplete=$false}
     try {
+        # Record the launch clock before Start. A short-lived Git process may
+        # exit before Linux can retrieve its operating-system StartTime.
+        $record.startedAtUtc=[DateTimeOffset]::UtcNow.ToString('O')
         if (-not $process.Start()) { throw 'Cannot start candidate Git verification.' }
-        $record.pid=$process.Id; $record.startedAtUtc=([DateTimeOffset]$process.StartTime).ToUniversalTime().ToString('O')
+        $record.pid=$process.Id
         $stdout=$process.StandardOutput.ReadToEndAsync(); $stderr=$process.StandardError.ReadToEndAsync()
         $process.StandardInput.Write($InputText); $process.StandardInput.Close()
         $remaining=[Math]::Max(1,[Math]::Min(10000,[int](110000-$script:P1SnapshotValidationClock.ElapsedMilliseconds)))
@@ -34,6 +37,7 @@ function Invoke-P1ValidationGit([string] $Root, [string[]] $Arguments, [string] 
         # structured arguments are retained before any tree termination.
         if ($null -ne $record.pid -and -not $process.HasExited) { $process.Kill($true); $null=$process.WaitForExit(5000) }
         $record.cleanupComplete=$null -ne $record.pid -and $process.HasExited
+        $record.finishedAtUtc=[DateTimeOffset]::UtcNow.ToString('O')
         $script:P1SnapshotValidationProcesses.Add([pscustomobject]$record)
         $process.Dispose()
     }
