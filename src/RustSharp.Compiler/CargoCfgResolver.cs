@@ -15,7 +15,11 @@ public static class CargoCfgResolver
         cancellationToken.ThrowIfCancellationRequested();
         CargoWorkspaceOptions normalized = CargoWorkspace.NormalizeV1Options(limits ?? new());
         var budget = new CargoLoadBudget(normalized, cancellationToken);
-        string path = Path.GetFullPath(manifestPath);
+        return ResolveV1Core(Path.GetFullPath(manifestPath), cfg, features, normalized, budget, cancellationToken);
+    }
+    internal static CargoCfgResolutionResult ResolveV1Core(string path, CargoCfgOptions cfg,
+        CargoFeatureOptions? features, CargoWorkspaceOptions normalized, CargoLoadBudget budget, CancellationToken cancellationToken)
+    {
         try
         {
             budget.Step(path, default);

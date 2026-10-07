@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "leafId": "P2-04.05",
+  "candidateSha": "064f5c54600b5a6b0c7feaafd564b2cdf2fb8421",
+  "profile": "cargo-v1",
+  "fullP2Closure": false,
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "summary": {
+    "manifestCompatibilityPassed": 38,
+    "implementationPassed": 10,
+    "implementationDenominator": 10,
+    "featureCompatibilityPassed": 11,
+    "legacyCompatibilityPassed": 10,
+    "cfgCompatibilityPassed": 12,
+    "skipped": 0
+  },
+  "freshBuild": {
+    "warnings": 0,
+    "sha256": "4354996421BB66154ECAF0E20CF9732CB22D4B50163688621D8A498CFE9DF78A",
+    "sdkVersion": "10.0.401",
+    "errors": 0,
+    "path": "artifacts/p2-supervision/lock-v3/release-build.json",
+    "registered": 1126
+  },
+  "artifacts": [
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/acceptance/P2-04.05.json",
+      "sourceSha256": "BB356EDB280BB6D826FA0E2A1DE9E06A1550FFC9C4E7F5998A2E59D908C2AF98",
+      "archivedPath": "docs/evidence/p2/P2-04.05.json",
+      "archivedSha256": "BB356EDB280BB6D826FA0E2A1DE9E06A1550FFC9C4E7F5998A2E59D908C2AF98"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/acceptance/P2-04.05.harness.json",
+      "sourceSha256": "6D3634417A6479A1820576463C281414C0FE2797292C3330D098DA78D288AC02",
+      "archivedPath": "docs/evidence/p2/P2-04.05.harness.json",
+      "archivedSha256": "E09B2249E1AEE17677E1BB5E3E29504B170BA393840EDCE312DD4F3CE61398AF"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/cfg.harness.json",
+      "sourceSha256": "E525CD67632863701FCE609619D350D4F6FA80B69CE784BCFD705F82673BBB56",
+      "archivedPath": "docs/evidence/p2/P2-04.05.cfg.json",
+      "archivedSha256": "ABDE3063DE4B3C6EDF3A8C670E83554EBF2FC02127BD0FE6DD8F8CF88D676387"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/features.harness.json",
+      "sourceSha256": "39519D32F520E6A760964BF6D55FCFA944BF8E714247586280026CBECE892903",
+      "archivedPath": "docs/evidence/p2/P2-04.05.features.json",
+      "archivedSha256": "D157F46BB75E6459408BDD804CCE9D3894F0ABA4F96323495442ECED99AF716C"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/manifests.harness.json",
+      "sourceSha256": "E17EF0E581066510E7BE4F4CE8E1F01B0983A94FE82C7F8E94729D35E49B1BB4",
+      "archivedPath": "docs/evidence/p2/P2-04.05.manifests.json",
+      "archivedSha256": "32D836F0319B2E10FB7E48858247D559037CD98CBC6215AD60AD959CA88788A6"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/legacy-workspace.harness.json",
+      "sourceSha256": "CB7830016FD1AEF65492FAD739AD802DB7F298C49FADB76A8F25D67C7B12A933",
+      "archivedPath": "docs/evidence/p2/P2-04.05.legacy-workspace.json",
+      "archivedSha256": "2DCB304A27F823CCB42D30863FF8C9ABF472718E94C6AD6BD616DC909ACDFE50"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/legacy-packages.harness.json",
+      "sourceSha256": "69E0E990AB825D1ED109BF189E98053783751E190F56A7D508A567733B5ED1A5",
+      "archivedPath": "docs/evidence/p2/P2-04.05.legacy-generics.json",
+      "archivedSha256": "1983CEFE61685F5A18CF923DBE6C0F1D6D8803384E26D7D7D5BB4EC61E000431"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/lock-v3/legacy-inputs.harness.json",
+      "sourceSha256": "F8A918141594F76B46DA0F090EAF183DAA31CA5B4514023694690101B190BCAA",
+      "archivedPath": "docs/evidence/p2/P2-04.05.legacy-inputs.json",
+      "archivedSha256": "CE64D5FC381D97E7A4A81D40E8391D434ACF54A5965423F79967BBBDE905944D"
+    }
+  ]
+}

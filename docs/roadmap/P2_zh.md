@@ -82,7 +82,7 @@ VS Code、CLI 和应用平台门槛覆盖 Windows 与 Linux x64。
 | P2-04.02 | ✅ 已完成 | 包/工作区清单加载器；`src/RustSharp.Compiler/CargoWorkspace.cs`。 | P2-04.01 | 包、成员、目标和路径依赖确定解析；重复身份、成员缺失及畸形 TOML 给出带范围的失败。 | `test:cargo-manifests`：38/38 真实文件系统场景与 10/10 旧版兼容测试；[绑定 SHA 的报告](../evidence/p2/P2-04.02.json)。 |
 | P2-04.03 | ✅ 已完成 | Feature 图与合并；编译器包解析。 | P2-04.02 | 声明的默认/可选/传递 feature 按冻结规则合并；未知或循环输入产生诊断，图预算保证终止。 | `test:cargo-features`；解析器差分报告。 |
 | P2-04.04 | ✅ 已完成 | 目标 `cfg` 求值；编译器目标选择。 | P2-04.02 | 具名平台/feature cfg 谓词选择精确条目；不支持谓词及无效组合明确拒绝，不静默忽略。 | `test:cargo-cfg`：12/12 绑定 SHA 的 cfg 场景、11/11 feature 及 38/38 清单回归；[报告](../evidence/p2/P2-04.04.json)和[实现](../p2-cargo-cfg-v1_zh.md)。 |
-| P2-04.05 | ⏳ 计划中 | 锁定序列化与确定性依赖顺序；编译器包解析。 | P2-04.03, P2-04.04 | 输入重排产生相同锁定/顺序；`--locked` 拒绝缺失/陈旧/不兼容锁定及依赖环。 | `test:cargo-lock`；可复现性与负向报告。 |
+| P2-04.05 | ✅ 已完成 | 锁定序列化与确定性依赖顺序；编译器包解析。 | P2-04.03, P2-04.04 | 输入重排产生相同锁定/顺序；`--locked` 拒绝缺失/陈旧/不兼容锁定及依赖环。 | `test:cargo-lock`：10/10 绑定 SHA 的文件系统场景及 71/71 兼容场景；[报告](../evidence/p2/P2-04.05.json)和[实现](../p2-cargo-lock-v1_zh.md)。Locked API 边界已验收；CLI 路由属于 P2-07。 |
 | P2-04.06 | ⏳ 计划中 | 多包源码到程序集集成；`tests/workspaces/`。 | P2-04.05, P1-09 | 双包/多包夹具以锁定 feature/cfg 编译运行；缺失/私有/不兼容导出在执行前失败。 | `test:cargo-workspaces`；依赖图/构建/运行报告。 |
 
 <a id="p2-05"></a>

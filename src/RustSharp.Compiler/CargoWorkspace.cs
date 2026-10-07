@@ -48,6 +48,7 @@ public static class CargoWorkspace
         {
             MaximumPackages = Math.Clamp(options.MaximumPackages, 1, 64),
             MaximumManifestBytes = Math.Clamp(options.MaximumManifestBytes, 1, 1_000_000),
+            MaximumLockBytes = Math.Clamp(options.MaximumLockBytes, 1, 1_000_000),
             MaximumDependenciesPerPackage = Math.Clamp(options.MaximumDependenciesPerPackage, 1, 64),
             MaximumTargets = Math.Clamp(options.MaximumTargets, 1, 32),
             MaximumFeaturesPerPackage = Math.Clamp(options.MaximumFeaturesPerPackage, 1, 128),

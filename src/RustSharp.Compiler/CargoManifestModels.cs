@@ -8,6 +8,7 @@ public sealed record CargoWorkspaceOptions
 {
     public int MaximumPackages { get; init; } = 64;
     public int MaximumManifestBytes { get; init; } = 1_000_000;
+    public int MaximumLockBytes { get; init; } = 1_000_000;
     public int MaximumDependenciesPerPackage { get; init; } = 64;
     public int MaximumTargets { get; init; } = 32;
     public int MaximumFeaturesPerPackage { get; init; } = 128;

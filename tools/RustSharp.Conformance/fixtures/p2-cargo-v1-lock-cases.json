@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "profile": "cargo-v1",
+  "leafId": "P2-04.05",
+  "entryPoint": "CargoLockResolver.ResolveV1",
+  "registration": "P2CargoLockTests.All",
+  "denominator": 10,
+  "inventoryKind": "runtime-test-case-map-not-execution-result",
+  "contractContentSha256": "CB890EA7A2C96CC3BA8618DD7E6C0DF490B3A2802B14211A0074AA6027DF1731",
+  "contractNormalizedLfSha256": "CB890EA7A2C96CC3BA8618DD7E6C0DF490B3A2802B14211A0074AA6027DF1731",
+  "timeResourceLimits": {
+    "scenarioTimeoutMilliseconds": 20000,
+    "maximumFixtureWrites": 128,
+    "maximumTrackedFiles": 130,
+    "maximumOwnedDirectories": 256,
+    "maximumOwnedDirectoryDepth": 16,
+    "maximumRootDiscoveryFiles": 32,
+    "maximumVariantInputs": 5,
+    "cleanupTimeoutMilliseconds": 20000,
+    "callerCancellation": true
+  },
+  "cases": [
+    {
+      "id": "lock-serialize",
+      "testName": "P2 cargo lock lock-serialize",
+      "expectedDiagnostic": "",
+      "covers": [
+        "lock.version",
+        "lock.package.name",
+        "lock.package.version",
+        "lock.package.dependencies",
+        "lock-format"
+      ],
+      "scenario": "Cargo.lock version 4 serializes local package identities and sorted name version dependency strings with LF."
+    },
+    {
+      "id": "lock-reordered",
+      "testName": "P2 cargo lock lock-reordered",
+      "expectedDiagnostic": "",
+      "covers": [
+        "lock-determinism"
+      ],
+      "scenario": "Reordered manifest/member/dependency inputs produce byte-identical locks and ordinal topological order."
+    },
+    {
+      "id": "locked-current",
+      "testName": "P2 cargo lock locked-current",
+      "expectedDiagnostic": "",
+      "covers": [
+        "locked-mode"
+      ],
+      "scenario": "Existing exact lock succeeds without modifying it; feature/cfg selections are fixed in normalized resolution metadata."
+    },
+    {
+      "id": "locked-missing",
+      "testName": "P2 cargo lock locked-missing",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "locked-mode"
+      ],
+      "scenario": "Locked resolution without Cargo.lock fails without writing any files."
+    },
+    {
+      "id": "locked-stale",
+      "testName": "P2 cargo lock locked-stale",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "locked-mode"
+      ],
+      "scenario": "Changed package version/dependency/selected feature or cfg metadata rejects stale lock."
+    },
+    {
+      "id": "lock-version",
+      "testName": "P2 cargo lock lock-version",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "lock-format"
+      ],
+      "scenario": "Lock versions other than 4 and registry source/checksum entries reject."
+    },
+    {
+      "id": "lock-duplicate",
+      "testName": "P2 cargo lock lock-duplicate",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "lock-format"
+      ],
+      "scenario": "Duplicate lock identities or edges and unknown lock keys reject."
+    },
+    {
+      "id": "lock-identity",
+      "testName": "P2 cargo lock lock-identity",
+      "expectedDiagnostic": "RSCARGO1010",
+      "covers": [
+        "lock-format"
+      ],
+      "scenario": "Missing/unexpected lock packages and incompatible dependency identities reject."
+    },
+    {
+      "id": "graph-cycle",
+      "testName": "P2 cargo lock graph-cycle",
+      "expectedDiagnostic": "RSCARGO1003",
+      "covers": [
+        "dependency-cycles"
+      ],
+      "scenario": "Self dependency and multi-package path cycles fail even when nodes are already discovered."
+    },
+    {
+      "id": "lock-byte-boundary",
+      "testName": "P2 cargo lock lock-byte-boundary",
+      "expectedDiagnostic": "RSCARGO1004",
+      "covers": [
+        "maximumLockBytes"
+      ],
+      "scenario": "Exactly configured lock-byte limit passes; one byte beyond rejects before parsing."
+    }
+  ]
+}

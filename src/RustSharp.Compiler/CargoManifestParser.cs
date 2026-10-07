@@ -4,7 +4,7 @@ using RustSharp.Syntax;
 namespace RustSharp.Compiler;
 
 /// <summary>A position-preserving parser for the deliberately closed, single-physical-line cargo-v1 TOML subset.</summary>
-internal sealed class CargoManifestParser(string path, string text, CargoLoadBudget budget)
+internal sealed class CargoManifestParser(string path, string text, CargoLoadBudget budget, bool lockFormat = false)
 {
     private readonly List<CargoTomlTable> _tables = [];
     private readonly HashSet<string> _declaredTables = new(StringComparer.Ordinal);
@@ -15,6 +15,11 @@ internal sealed class CargoManifestParser(string path, string text, CargoLoadBud
 
     internal CargoParsedManifest Parse()
     {
+        if (lockFormat)
+        {
+            _table = new(Array.Empty<string>(), default, false);
+            _tables.Add(_table);
+        }
         for (int start = 0; start < text.Length;)
         {
             budget.Step(path, new(start, 0));
@@ -69,8 +74,8 @@ internal sealed class CargoManifestParser(string path, string text, CargoLoadBud
             _position++;
         }
         TextSpan headerSpan = Span(start, _position - start);
-        if (array && (components.Count != 1 || components[0] != "bin"))
-            Fail(CargoWorkspace.UnsupportedManifestDiagnostic, "Only [[bin]] array tables are admitted in cargo-v1 manifests.", headerSpan);
+        if (array && (components.Count != 1 || components[0] != (lockFormat ? "package" : "bin")))
+            Fail(CargoWorkspace.UnsupportedManifestDiagnostic, lockFormat ? "Only [[package]] array tables are admitted in cargo-v1 locks." : "Only [[bin]] array tables are admitted in cargo-v1 manifests.", headerSpan);
         string identity = string.Join('\0', components);
         if (!array && !_declaredTables.Add(identity))
             Fail(CargoWorkspace.ManifestDiagnostic, "Duplicate singleton TOML table.", headerSpan);
@@ -135,6 +140,7 @@ internal sealed class CargoManifestParser(string path, string text, CargoLoadBud
             if ((_position & 255) == 0) budget.Check(path, Span(_position, 1));
         string token = _line[start.._position];
         if (token is "true" or "false") return new(token == "true", Span(start, _position - start));
+        if (lockFormat && token == "4") return new(4, Span(start, _position - start));
         Fail(CargoWorkspace.UnsupportedManifestDiagnostic, "Only strings, booleans, single-line string arrays and flat dependency tables are admitted.", Span(start, _position - start));
         throw new InvalidOperationException();
     }
