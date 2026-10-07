@@ -2,9 +2,24 @@
 
 # Lossless formatter — P2-08.02
 
-🚧 In progress: integrated implementation passes 59/59 fixed cases, 18/18 inherited controls and actual Windows/Ubuntu CLI 8/8 each; runtime cancellation/deadline/source-change controls remain open.
+🚧 In progress: integrated implementation passes 59/59 fixed cases, 18/18 inherited controls and actual Windows/Ubuntu CLI 8/8 each; Windows directed CTRL+C and actual asynchronous I/O interruption remain open; Linux supplementary runtime results are recorded below.
 
 ## Fixed scope
+
+✅ Complete for the CLI limit-diagnostic repair at candidate
+`eb0598f39c3797e29b3c9d0332a179a03aeac9f1`, tree
+`ee500132a72b60022f2c689ac74dc2038d67cdbc` (703 source inputs): source
+growth now reports `RSTF0001` and exits 1 instead of an unhandled exception.
+Fresh Release has zero warnings/errors; fixed formatter 59/59 and Windows
+standard CLI 8/8 pass. Real Ubuntu controls pass for source growth, source
+changes, directed SIGINT cancellation (exit 130) and the shared managed
+scheduling deadline (exit 1). A separate owned FIFO worker check passes its
+external termination deadline; it is not normal CLI cancellation or an I/O
+interruption proof. All six Linux CLI identities and owned fixtures are absent.
+See the [runtime archive](../evidence/p2/P2-08.02-limit-v1-archive.json).
+The original exit-134 race and missed event are preserved. Windows directed
+CTRL+C, actual asynchronous I/O interruption and phase gates remain open;
+P2-08.02 remains 🚧 In progress with `leafClosed=false`.
 
 The immutable `tools/RustSharp.Conformance/fixtures/p2-tooling-v1-manifest.json` defines 49 real-source formatting cases (34 accepted, 15 rejected) and 10 formatter scenarios. The formatter denominator is **59**, while the entire tooling contract denominator remains **91**. No corpus source, expectation, source hash, or diagnostic is substituted. `P2-08.02-mapping.json` records every frozen case and the exact contract hash.
 

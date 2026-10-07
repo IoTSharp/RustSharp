@@ -2,9 +2,20 @@
 
 # 无损格式化器 — P2-08.02
 
-🚧 进行中：已接入实现通过59/59固定用例、18/18既有控制及Windows/Ubuntu真实CLI各8/8；运行时取消/截止/源码变化控制仍开放。
+🚧 进行中：已接入实现通过59/59固定用例、18/18既有控制及Windows/Ubuntu真实CLI各8/8；Windows定向CTRL+C及实际异步I/O中断仍开放；Linux运行时补证结果见下文。
 
 ## 固定范围
+
+CLI 限制诊断修复在候选 `eb0598f39c3797e29b3c9d0332a179a03aeac9f1`、tree
+`ee500132a72b60022f2c689ac74dc2038d67cdbc`（703 个源码输入）为 ✅ 已完成：
+源码增长现报告 `RSTF0001` 并退出 1，避免未捕获异常。新鲜 Release 零警告、
+零错误；固定 formatter 59/59 及 Windows 标准 CLI 8/8 通过。真实 Ubuntu 控制
+通过源码增长、源码变化、定向 SIGINT 取消（退出 130）及共享托管调度截止检查
+（退出 1）。独立自有 FIFO worker 控制通过外部终止截止检查；它不是正常 CLI
+取消或 I/O 中断证明。六个 Linux CLI 身份及自有夹具均已不存在。
+参见[运行时归档](../evidence/p2/P2-08.02-limit-v1-archive.json)。保留原退出 134
+的竞争失败及未命中事件。Windows 定向 CTRL+C、实际异步 I/O 中断和阶段门禁
+仍开放；P2-08.02 保持 🚧 进行中，`leafClosed=false`。
 
 不可变的 `tools/RustSharp.Conformance/fixtures/p2-tooling-v1-manifest.json` 定义 49 个真实源码格式化用例（34 个接受、15 个拒绝）及 10 个格式化场景。格式化器分母为 **59**，整个工具契约分母仍为 **91**。不替换任何语料源码、预期、源码哈希或诊断。`P2-08.02-mapping.json` 记录全部冻结用例及精确契约哈希。
 

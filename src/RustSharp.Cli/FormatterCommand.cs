@@ -219,7 +219,7 @@ internal static class FormatterCommand
             Console.Error.WriteLine("rsc fmt: operation cancelled.");
             exitCode = 130;
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or DecoderFallbackException or TimeoutException)
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or DecoderFallbackException or TimeoutException)
         {
             primaryFailure = error;
             Console.Error.WriteLine($"rsc fmt: {FormatterDiagnosticCodes.LimitReached}: {error.Message}");

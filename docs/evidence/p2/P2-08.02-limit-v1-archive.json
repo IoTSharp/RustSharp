@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "scope": "P2-08.02 formatter CLI limit diagnostics repair and Linux runtime controls",
+  "candidateSha": "eb0598f39c3797e29b3c9d0332a179a03aeac9f1",
+  "candidateTreeSha": "ee500132a72b60022f2c689ac74dc2038d67cdbc",
+  "sourceInputCount": 703,
+  "buildSummary": {
+    "warnings": 0,
+    "errors": 0,
+    "status": "passed"
+  },
+  "cliSha256": "A5175C246D5B87116D3E350E7380B2D89E72CE2431F414F94250288E93DABE36",
+  "formatterSummary": {
+    "registeredDenominator": 1203,
+    "selected": 59,
+    "executed": 59,
+    "passed": 59,
+    "failed": 0,
+    "skipped": 0,
+    "notExecuted": 0
+  },
+  "windowsStandardCliControls": 8,
+  "linuxSupplementaryControls": 5,
+  "linuxActualCliControls": 4,
+  "linuxExternalWorkerControls": 1,
+  "tinyControls": 1,
+  "linuxSignalCancellationPassed": true,
+  "linuxManagedSchedulingDeadlinePassed": true,
+  "actualAsyncIoInterruptionProven": false,
+  "windowsDirectedCtrlCProven": false,
+  "independentDescendantContainmentProven": false,
+  "runtimeDeadlineCancellationProof": false,
+  "leafClosed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "baselineFailedCandidate": "a434f5bbdf74e3e2b81c368f9bf12a1fd36c20af",
+  "baselineSourceGrowthExitCode": 134,
+  "baselineRawReport": "artifacts/p2-supervision/formatter-runtime-controls-v1/source-growth-53e4d6412d7f4df5ac70546f4530633a.json",
+  "reports": [
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/source-snapshot.json",
+      "sha256": "789B5B6E2D7284CD4F82DF6BDD9CA0B4AF842DAB2586099B8BECAFE7BD7E285A"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/release-build.json",
+      "sha256": "8A8B89FAAD8EF76347B57D430A1D7BE0F5F6CA59D0767EACE24E7E1929536499"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/formatter-harness.json",
+      "sha256": "4D31551DFBFBEAA18B5272E6B357584BA394CFD6B5D0A1233B561B0C396315C7"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/linux-runtime-batch.json",
+      "sha256": "45B41AD10580997BF3E2A7FC045712E8DB43E122525509C330B91EBAD4634963"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/linux-root-resource-audit.json",
+      "sha256": "4433DC7327C8DA6E858ADE4201FD5E7F193556932E6B69BE434F9AF26F46801E"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/source-growth-dad433e1ba1145049b295c8b17d63cd6.json",
+      "sha256": "C957C2D093B69CAC83DB1E96CE3A1A5CB9D4F7051198361FAEC1D56198C59CA6",
+      "control": "source-growth",
+      "tiny": true,
+      "exitCode": 1,
+      "workerWasKilled": false,
+      "managedSchedulingScope": null
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/source-growth-915858c3f71b49098cf4b8f4b8a2412b.json",
+      "sha256": "C16EE0955ABD4D6B78BCC92AC4ED7852962D2298812C0DF61E24FE057EE8DAEC",
+      "control": "source-growth",
+      "tiny": false,
+      "exitCode": 1,
+      "workerWasKilled": false,
+      "managedSchedulingScope": null
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/source-change-72cd3793502b4412b8b49b75be434750.json",
+      "sha256": "F648FAC08B5265C07FD13C033E569CA6A5122B6D9726737AB118EC1E60D9E1FC",
+      "control": "source-change",
+      "tiny": false,
+      "exitCode": 1,
+      "workerWasKilled": false,
+      "managedSchedulingScope": null
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/cli-sigint-54efd3ab166d497eb940ad0e8dc454e3.json",
+      "sha256": "7B4CAE09E5535D04F99DB879EFF83124F0ACD5BCDFBC81FC85B4149C49EA330A",
+      "control": "cli-sigint",
+      "tiny": false,
+      "exitCode": 130,
+      "workerWasKilled": false,
+      "managedSchedulingScope": null
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/managed-deadline-cf0f8ec3d631427f8eac66618db5e28e.json",
+      "sha256": "AD24C3DC49B814B616A069A97CE202AD34953FB371AC400F395187E9FDDB470D",
+      "control": "managed-deadline",
+      "tiny": false,
+      "exitCode": 1,
+      "workerWasKilled": false,
+      "managedSchedulingScope": "shared managed scheduling clock after observed stage creation and verified stopped process state; asynchronous I/O interruption is not proved"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/external-worker-deadline-764fd90e8d8142689d141949f7262269.json",
+      "sha256": "5DE005F831A0582FDE479C0D95A03084068BC4FE2339C3903E27F19BDA267181",
+      "control": "external-worker-deadline",
+      "tiny": false,
+      "exitCode": 137,
+      "workerWasKilled": true,
+      "managedSchedulingScope": null
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/windows-cli/formatter-cli-controls-1ff1c377424d4b46873ca4af5f275c3d.json",
+      "sha256": "4642E895B3E7CD297506C873D951BF5A1FAF5FB03FF17DE04A7BEE81E2C030D4"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-limit-root-v1/windows-root-resource-audit.json",
+      "sha256": "9A586760F4914D3AEE310FCAB4CC741206D1317C691763A5F51F7011D687D543"
+    }
+  ],
+  "windowsRecordedLauncherPidsAbsent": 18
+}
