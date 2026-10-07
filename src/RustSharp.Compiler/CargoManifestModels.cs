@@ -34,6 +34,7 @@ public sealed record CargoDependency(string Name, string? Path)
     public string? PackageName { get; init; }
     public string? Version { get; init; }
     public IReadOnlyList<string> Features { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<TextSpan> FeatureSpans { get; init; } = Array.Empty<TextSpan>();
     public bool Optional { get; init; }
     public bool DefaultFeatures { get; init; } = true;
     public string? CfgCondition { get; init; }
@@ -51,6 +52,8 @@ public sealed record CargoPackage(string ManifestPath, string Name, string Versi
         new ReadOnlyDictionary<string, IReadOnlyList<string>>(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
     public IReadOnlyDictionary<string, TextSpan> FeatureSpans { get; init; } =
         new ReadOnlyDictionary<string, TextSpan>(new Dictionary<string, TextSpan>(StringComparer.Ordinal));
+    public IReadOnlyDictionary<string, IReadOnlyList<TextSpan>> FeatureMemberSpans { get; init; } =
+        new ReadOnlyDictionary<string, IReadOnlyList<TextSpan>>(new Dictionary<string, IReadOnlyList<TextSpan>>(StringComparer.Ordinal));
     public TextSpan DeclarationSpan { get; init; }
     public CargoWorkspaceManifest? Workspace { get; init; }
 }
@@ -91,6 +94,7 @@ internal sealed class CargoLoadBudget(CargoWorkspaceOptions options, Cancellatio
 {
     private readonly long _startedAt = Stopwatch.GetTimestamp();
     private int _operations;
+    internal int OperationsConsumed => _operations;
 
     internal void Step(string path, TextSpan span)
     {

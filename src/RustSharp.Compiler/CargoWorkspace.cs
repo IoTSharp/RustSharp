@@ -33,9 +33,18 @@ public static class CargoWorkspace
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
         cancellationToken.ThrowIfCancellationRequested();
-        options ??= new CargoWorkspaceOptions();
+        options = NormalizeV1Options(options ?? new CargoWorkspaceOptions());
+        return LoadV1Core(Path.GetFullPath(manifestPath), options, new CargoLoadBudget(options, cancellationToken), cancellationToken);
+    }
+
+    internal static CargoWorkspaceResult LoadV1Core(string fullManifestPath, CargoWorkspaceOptions options,
+        CargoLoadBudget budget, CancellationToken cancellationToken) =>
+        new CargoWorkspaceLoader(fullManifestPath, options, budget, cancellationToken).Run();
+
+    internal static CargoWorkspaceOptions NormalizeV1Options(CargoWorkspaceOptions options)
+    {
         ValidateTimeout(options);
-        options = options with
+        return options with
         {
             MaximumPackages = Math.Clamp(options.MaximumPackages, 1, 64),
             MaximumManifestBytes = Math.Clamp(options.MaximumManifestBytes, 1, 1_000_000),
@@ -47,7 +56,6 @@ public static class CargoWorkspace
             MaximumGraphDepth = Math.Clamp(options.MaximumGraphDepth, 1, 32),
             MaximumOperations = Math.Clamp(options.MaximumOperations, 1, 20_000),
         };
-        return new CargoWorkspaceLoader(Path.GetFullPath(manifestPath), options, cancellationToken).Run();
     }
 
     private static void ValidateTimeout(CargoWorkspaceOptions options)

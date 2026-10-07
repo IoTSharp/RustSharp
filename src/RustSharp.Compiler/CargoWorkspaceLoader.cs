@@ -4,11 +4,11 @@ using RustSharp.Syntax;
 
 namespace RustSharp.Compiler;
 
-internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOptions options, CancellationToken cancellationToken)
+internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOptions options, CargoLoadBudget? sharedBudget, CancellationToken cancellationToken)
 {
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private static readonly StringComparer PathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-    private readonly CargoLoadBudget _budget = new(options, cancellationToken);
+    private readonly CargoLoadBudget _budget = sharedBudget ?? new(options, cancellationToken);
     private readonly Dictionary<string, CargoPackage> _packages = new(PathComparer);
     private readonly Dictionary<string, string> _identities = new(StringComparer.Ordinal);
     private readonly HashSet<string> _active = new(PathComparer);
@@ -166,6 +166,7 @@ internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOp
         ReadOnlyCollection<CargoTarget> targets = BuildTargets(manifest, name, table.Span);
         var features = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         var featureSpans = new Dictionary<string, TextSpan>(StringComparer.Ordinal);
+        var featureMemberSpans = new Dictionary<string, IReadOnlyList<TextSpan>>(StringComparer.Ordinal);
         CargoTomlTable? featureTable = Singleton(manifest, "features");
         int featureEdges = 0;
         if (featureTable is not null)
@@ -182,6 +183,7 @@ internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOp
                     Fail(CargoWorkspace.LimitDiagnostic, "Cargo feature metadata exceeds its edge limit.", manifest.Path, entry.Value.Span);
                 features.Add(entry.Key, System.Array.AsReadOnly(values.Select(static item => (string)item.Value).ToArray()));
                 featureSpans.Add(entry.Key, entry.Value.Span);
+                featureMemberSpans.Add(entry.Key, System.Array.AsReadOnly(values.Select(static item => item.Span).ToArray()));
             }
         }
         CargoTarget? library = targets.FirstOrDefault(static target => target.Kind == CargoTargetKind.Library);
@@ -195,6 +197,7 @@ internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOp
             Targets = targets,
             Features = new ReadOnlyDictionary<string, IReadOnlyList<string>>(features),
             FeatureSpans = new ReadOnlyDictionary<string, TextSpan>(featureSpans),
+            FeatureMemberSpans = new ReadOnlyDictionary<string, IReadOnlyList<TextSpan>>(featureMemberSpans),
             DeclarationSpan = table.Span,
             Workspace = Singleton(manifest, "workspace") is CargoTomlTable workspace ? new(
                 System.Array.AsReadOnly(OptionalArray(workspace, "members", manifest.Path).Select(static item => (string)item.Value).ToArray()),
@@ -262,14 +265,16 @@ internal sealed class CargoWorkspaceLoader(string manifestPath, CargoWorkspaceOp
         if (packageName is not null) ValidateName(packageName, path, packageEntry!.Value.Span);
         string? version = entries.TryGetValue("version", out CargoTomlEntry? versionEntry) ? String(versionEntry.Value, path) : null;
         if (version is not null) ValidateVersion(version, path, versionEntry!.Value.Span, dependency: true);
-        IReadOnlyList<string> features = entries.TryGetValue("features", out CargoTomlEntry? featuresEntry)
-            ? System.Array.AsReadOnly(Array(featuresEntry.Value, path).Select(static item => (string)item.Value).ToArray()) : System.Array.Empty<string>();
+        IReadOnlyList<CargoTomlValue> featureValues = entries.TryGetValue("features", out CargoTomlEntry? featuresEntry)
+            ? Array(featuresEntry.Value, path) : System.Array.Empty<CargoTomlValue>();
+        IReadOnlyList<string> features = System.Array.AsReadOnly(featureValues.Select(static item => (string)item.Value).ToArray());
         bool optional = entries.TryGetValue("optional", out CargoTomlEntry? optionalEntry) && Boolean(optionalEntry.Value, path);
         bool defaultFeatures = !entries.TryGetValue("default-features", out CargoTomlEntry? defaultsEntry) || Boolean(defaultsEntry.Value, path);
         string target = FullPath(Path.Combine(Path.GetDirectoryName(path)!, relative, "Cargo.toml"), path, pathEntry.Value.Span, CargoWorkspace.UnsupportedDependencyDiagnostic);
         return new(alias, relative)
         {
             PackageName = packageName, Version = version, Features = features, Optional = optional,
+            FeatureSpans = System.Array.AsReadOnly(featureValues.Select(static item => item.Span).ToArray()),
             DefaultFeatures = defaultFeatures, CfgCondition = condition, DeclarationSpan = span,
             PathSpan = pathEntry.Value.Span, ResolvedManifestPath = target,
         };

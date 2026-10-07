@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "leafId": "P2-04.03",
+  "candidateSha": "8a250d1bd1baf58bb75242e6d85172bed7fc01e4",
+  "profile": "cargo-v1",
+  "fullP2Closure": false,
+  "scope": "strict-local-feature-graph-execution-and-legacy-compatibility",
+  "normalization": "Physical CRLF to LF only; literal JSON escapes preserved",
+  "summary": {
+    "skipped": 0,
+    "implementationPassed": 11,
+    "legacyCompatibilityPassed": 10,
+    "manifestCompatibilityPassed": 38,
+    "implementationDenominator": 11
+  },
+  "artifacts": [
+    {
+      "sourcePath": "artifacts/p2-cargo-features/supervision-v1/P2-04.03.json",
+      "sourceSha256": "C4BF827785659130137C3E695D39FAF8A6D76C6047BDB81706FFC36F1F78AD5E",
+      "archivedPath": "docs/evidence/p2/P2-04.03.json",
+      "archivedSha256": "C4BF827785659130137C3E695D39FAF8A6D76C6047BDB81706FFC36F1F78AD5E"
+    },
+    {
+      "sourcePath": "artifacts/p2-cargo-features/supervision-v1/P2-04.03.harness.json",
+      "sourceSha256": "6A842D89CD8B80FC879C94EA40EFD662A11C8F6F94C7D25988944563A75BB011",
+      "archivedPath": "docs/evidence/p2/P2-04.03.harness.json",
+      "archivedSha256": "2214F6D59576293DBCAC49D3BFD069F3180C08A649DDA9B756FE9B11EF1F255D"
+    },
+    {
+      "sourcePath": "artifacts/p2-cargo-manifests/feature-compatibility-v1/P2-04.02.harness.json",
+      "sourceSha256": "3A58A580D6BA1573F6E8A9E2AC44C28FD7DDD4F6405DB12FDCFD8A2D41428D18",
+      "archivedPath": "docs/evidence/p2/P2-04.03.manifests.json",
+      "archivedSha256": "B2768B0E06A8DB01A7285004E303526C32BA8F4588DD55B4DB63B469F9808D57"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/features-v3/legacy-workspace.harness.json",
+      "sourceSha256": "1D050CBA7621FEB49ADDEEE3CB10D54062B83977220D886CF4EF097C71B67AA3",
+      "archivedPath": "docs/evidence/p2/P2-04.03.legacy-workspace.json",
+      "archivedSha256": "B2AF0B5F596E63D4DE61044BA8CAFD5DE43F5A00B675B3F0FE375251E713244B"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/features-v3/legacy-packages.harness.json",
+      "sourceSha256": "075C72362D3F93C2F336A4F4A542343BCA63DB580F8F357045417E4F2F384A4F",
+      "archivedPath": "docs/evidence/p2/P2-04.03.legacy-generics.json",
+      "archivedSha256": "95848601557ED9F51031492D41171F75905EAC101F789202FAD675C9D518A150"
+    },
+    {
+      "sourcePath": "artifacts/p2-supervision/features-v3/legacy-inputs.harness.json",
+      "sourceSha256": "778C7B5A0BA575B4563CFF86B5E8CEC5D3EF96B601FDA7079CB3A99691FD5833",
+      "archivedPath": "docs/evidence/p2/P2-04.03.legacy-inputs.json",
+      "archivedSha256": "C33D1DEBD9C4691E3C5B12C6E7852725E6E35BB06BB2F231F736FC6915363FAC"
+    }
+  ]
+}

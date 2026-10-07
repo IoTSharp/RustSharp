@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "profile": "cargo-v1",
+  "leafId": "P2-04.03",
+  "entryPoint": "CargoFeatureResolver.ResolveV1",
+  "denominator": 11,
+  "inventoryKind": "runtime-test-case-map-not-execution-result",
+  "contractContentSha256": "97D95FF1CDBFF523F52B694AC6D47C445668BAD77C471CF7710532C88A40DB44",
+  "registration": "P2CargoFeatureTests.All",
+  "fixtureKind": "unique-owned-real-filesystem",
+  "timeResourceLimits": {
+    "scenarioTimeoutMilliseconds": 20000,
+    "maximumFixtureWrites": 512,
+    "maximumVariantInputs": 10,
+    "maximumBoundaryFeatures": 129,
+    "maximumBoundaryReferencesPerFeature": 17,
+    "maximumOwnedDirectories": 1024,
+    "maximumOwnedDirectoryDepth": 16,
+    "cleanupTimeoutMilliseconds": 20000,
+    "callerCancellation": true
+  },
+  "cleanup": "Remove only tracked files and empty directories within fixed item counts and an independent 20-second wall deadline. Verify the unique absolute root and assert it is gone. Exclusive reopen checks verify manifest handles are released. Resolution creates no build, restore, network, child process or persistent output.",
+  "cases": [
+    { "id": "feature-default", "testName": "P2 cargo features feature-default", "expectedDiagnostic": "", "assertions": ["11 registrations match the frozen contract", "default local closure activates transitively", "missing default is valid", "shared operation count is exposed"] },
+    { "id": "feature-no-default", "testName": "P2 cargo features feature-no-default", "expectedDiagnostic": "", "assertions": ["root no-default-features produces empty activation", "explicit requests remain active", "explicit default request still activates its closure"] },
+    { "id": "feature-optional-dependency", "testName": "P2 cargo features feature-optional-dependency", "expectedDiagnostic": "", "assertions": ["optional edge is initially inactive", "implicit same-name feature activates its dependency", "any explicit dep:name occurrence suppresses implicit feature", "explicit named feature takes precedence", "dependency defaults activate only after edge activation"] },
+    { "id": "feature-transitive", "testName": "P2 cargo features feature-transitive", "expectedDiagnostic": "", "assertions": ["local names recurse", "renamed dependency/feature activates optional edge", "dependency-declared feature reaches third package", "sorted active edges retain alias and exact identity"] },
+    { "id": "feature-unification", "testName": "P2 cargo features feature-unification", "expectedDiagnostic": "", "assertions": ["diamond joins by exact package identity", "feature union retains both contributions", "declaration reordering yields identical activation and dependency snapshots"] },
+    { "id": "feature-unknown", "testName": "P2 cargo features feature-unknown", "expectedDiagnostic": "RSCARGO1008", "assertions": ["unknown option retains explicit origin/span", "unknown local member retains original CRLF/Unicode token span", "dependency feature array retains exact member span", "unknown dependency alias/export rejects", "virtual root requires exact member selection"] },
+    { "id": "feature-cycle", "testName": "P2 cargo features feature-cycle", "expectedDiagnostic": "RSCARGO1008", "assertions": ["local cycle rejects", "acyclic package edge reaching downstream feature cycle rejects", "self feature cycle rejects", "real package cycle retains RSCARGO1003 priority"] },
+    { "id": "feature-weak-unsupported", "testName": "P2 cargo features feature-weak-unsupported", "expectedDiagnostic": "RSCARGO1008", "assertions": ["weak dep?/feature rejects", "malformed and unsupported expressions reject", "dep:name must name optional dependency", "cfg dependency requires later selection with RSCARGO1005"] },
+    { "id": "feature-dependency-default", "testName": "P2 cargo features feature-dependency-default", "expectedDiagnostic": "", "assertions": ["all-false dependency edges suppress defaults", "either true edge contributes defaults without being erased", "root no-default does not suppress dependency defaults", "inactive optional edge contributes neither defaults nor features"] },
+    { "id": "feature-empty", "testName": "P2 cargo features feature-empty", "expectedDiagnostic": "", "assertions": ["empty named feature survives in activation output", "duplicate option request unifies", "null request rejects", "pre-cancel propagates OperationCanceledException", "subsequent resolution and exclusive reopen succeed"] },
+    { "id": "feature-edge-budget", "testName": "P2 cargo features feature-edge-budget", "expectedDiagnostic": "RSCARGO1004", "assertions": ["tiny configured feature boundary", "128 features and 1024 raw references pass", "129 features or 1025 references reject", "implicit features consume feature count", "dependency requested features consume global raw edge count", "exact shared operation budget passes and one less rejects", "tiny deadline rejects without partial result", "timeout above ten seconds rejects"] }
+  ]
+}
