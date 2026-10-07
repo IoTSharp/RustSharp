@@ -2,7 +2,41 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 05:22
+## Current checkpoint — 2026-10-08 05:54
+
+P2 remains 8/101 ✅ Complete leaves. All six P1 phase gates remain open. Root
+integrated the process wrapper cancellation/error-retention repair; final Windows
+PowerShell utility acceptance is tiny1, fixed6, failure-tiny1, failure2 and legacy
+publication8. Candidate `2e38438404e112b6afe3ae39d635cc5d670f55cc` binds 693 inputs.
+See `docs/p1-process-wrapper-v1.md` and its paired translation and acceptance
+archive. CleanupComplete remains parent-exit-only, no descendant closure claim.
+Retain the worker's failed final here-string call and root's failed scalar-array
+trial; neither belongs to successful evidence. Root owns the final guard/dispose
+changes and independent failure controls. Resource audit and exact Git result
+are retained under `artifacts/p1-supervision/process-wrapper-root-v1/`.
+
+Previous remote `e6ee4e6140d5776c376af59bc94ed0766faf806a`, tree
+`8e303078c582e8548cc9f74ecca9fc6ad400fa99`, run `37689531739` has a Windows
+production-native failure: source package17/19 with scalar-positional-copy and
+reference-shared-mutable-origin blocked by verifier reference retention10s.
+CI follow-up v11 reconciles28 hashes/13 reports, both1140 harnesses,691 source
+inputs, actual mapped440/pending24 and suite15. Four original PE hashes survive.
+The source report matches receipt hash AA1503D77CF86F6BEC840950AF032E31C1D815A1BC6DA02B6003B50BA0C28F2C;
+the receipt's bytes-changed message has no demonstrated artifact mismatch.
+Windows backend validates12 cells; complete24/native closure is still open.
+Actions reported reclaiming orphan vctip PID3328; do not confuse local download
+process absence with CI subtree closure. Keep v11 originals and failure audit.
+
+Next: safely fix the10s verifier-reference retention path and misleading failed
+validator diagnostic; continue the existing run without mixing candidate proofs.
+NativeV5 receipt/joint transport integration remains open. Formatter v2 saved
+partial copies/CLI controls in `formatter-read-fix-v2/`; runtime0, fixed59 and
+parent91, patch/final hash review missing after a registration-count script error.
+Apply original7 files/registrations, formatter-review-v1 guards, then v2 copies
+only after whole-draft review and fresh source-bound59 acceptance. Preserve user
+tmp and sole ACTIVE thirty-minute heartbeat. No phase completion is claimed.
+
+## Historical checkpoint — 2026-10-08 05:22
 
 P2-06.02 now passes final candidate `29a8edaa6d63f1b7601159dedbe04decbeef989a`,
 tree `f4709c042009cf8da47a837dbfdb0014519f05ce`: fresh SDK401 Release zero

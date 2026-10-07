@@ -77,7 +77,7 @@ IL 有效性、AOT 兼容性或语义兼容性。
 | BASE-01 | ✅ 已完成 | 已存在 `.slnx`、集中式构建/包文件、.NET 10 项目、CLI/编译器/语法/代码生成边界、示例以及测试项目骨架。 |
 | BASE-02 | ✅ 已完成 | ADR 0001 固定 Rust 1.98/Edition 2024；ADR 0002 固定 C#/.NET 10 和 IL 输出；ADR 0003 固定首个纵向切片。 |
 | BASE-03 | ✅ 已完成 | `docs/compatibility.md` 定义了初始 `vertical-slice-v1` 配置档和明确的非兼容边界。 |
-| BASE-04 | ✅ 已完成 | `BoundedProcessRunner` 实现有界执行、进程元数据、输出限制、取消和自有进程树清理；`eng/Invoke-BoundedProcess.ps1` 是有界的根进程冒烟测试辅助脚本。可执行测试工具记录了超时、取消、输出限制和子进程用例。 |
+| BASE-04 | ✅ 已完成 | `BoundedProcessRunner` 实现有界执行、进程元数据、输出限制、取消和自有进程树清理；有界根进程辅助脚本现接受取消并保留原始/清理错误（[修复验收](docs/p1-process-wrapper-v1_zh.md)：六项控制及两项故障控制）。其 `CleanupComplete` 仅证明父进程退出。可执行测试工具记录超时、取消、输出限制和子进程用例；独立后代回收仍开放。 |
 | BASE-05 | ✅ 已完成 | 解析器识别范围有限的 `fn main()`/`println!(string)` 配置档并发出稳定的源码诊断；纵向切片语法以及转义/注释回归用例在可执行测试工具中通过。 |
 | BASE-06 | ✅ 已完成 | 下文记录了直接发出 PE/Portable PDB、元数据检查、CoreCLR 执行、Windows x64 Native AOT 执行、磁盘输出确定性检查以及独立 ILVerify 运行。 |
 
