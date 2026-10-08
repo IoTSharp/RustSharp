@@ -2,7 +2,42 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 11:44
+## Current checkpoint — 2026-10-08 12:18
+
+Windows private-console fixture component is ✅ Complete in commit `fb90c4c`:
+fresh SDK10.0.401 csc compilation has zero diagnostics and its sole actual
+no-signal tiny passes. Controller/helper/real formatter CLI naturally exit0;
+strict inner3/outer4 include the real conhost, reach zero and close all handles
+without cleanup/publication errors. Root observes all five recorded runtime
+PIDs absent and the owned fixture removed. Detached raw console0/error6,
+allocated1 and final1 are retained; live membership2 is recorded as an array,
+without a separate live raw LastError receipt. Portable acceptance:
+`docs/evidence/p2/formatter-private-console-port-v1.json`. Its real production
+binding is `aee97ccdc2509fb64693631979fa4e93c3a31578` / tree
+`4fd94a69ca4659fac8fc9be5e4283caf450df6d9`, not current-HEAD acceptance.
+This is not a repository Release/analyzer check. Actual CTRL+C, pending kernel
+file-I/O, stdio completeness and upstream system ancestry remain open;
+P2-08.02 remains 🚧 In progress, with59/91 cases unchanged. v8 failure and v9
+separate successful component originals remain retained.
+
+All four missing source/backend ZIPs for CI37710305713/candidate `afb0988`
+are now physically retained with transport hashes. v24 reconciles the small
+receipts and exact-candidate manifest; expanded actual SDK10.0.400 remains
+distinct from production10.0.401. v25 retains1572 source files (each RID785,
+19 packages/39 PE bindings); v26 retains234 backend files (each RID103 bound
+retained objects). Their physical hashes match; complete verifier/header/
+semantic and formal joint acceptance remain open. No downloaded program ran.
+v7 containment adapter/driver/tiny sources are frozen but uncompiled/unrun;
+its launch count only counts verified roots after identity failures.
+
+P2 remains8/101 ✅ Complete leaves; all six P1 gates and every P2 parent/phase
+remain open. Workers have stopped new work and saved their frozen checkpoints.
+Root reviewed recorded download/compiler/runtime/worker process identities;
+no process was killed or original/user file deleted during closeout. Resume:
+`artifacts/p1-supervision/resume-root-v4/resumption.json`. The user's latest
+instruction requests termination of `rustsharp-p2` after this closeout, even
+though P1/P2 remain open. Do not resume scheduled supervision automatically.
+## Historical checkpoint — 2026-10-08 11:44
 
 The same-SHA Drop physical-original component is ✅ Complete for CI run
 [37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713),

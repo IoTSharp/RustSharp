@@ -2,7 +2,35 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 11:44
+## 当前检查点 — 2026-10-08 12:18
+
+Windows 私有控制台夹具组件在提交 `fb90c4c` 中 ✅ 已完成：全新
+SDK10.0.401 csc 编译零诊断，唯一真实无信号 tiny 通过。controller/helper/
+真实 formatter CLI 自然退出0；严格 inner3/outer4 包含实际 conhost，归零并
+关闭全部句柄，无清理/发布错误。root 核实五个记录运行 PID 全部不存在，
+拥有的 fixture 已移除。保留 detached raw console0/error6、allocated1 和
+final1；live 成员2记录为数组，未另存 live raw LastError 回执。便携验收：
+`docs/evidence/p2/formatter-private-console-port-v1.json`。真实生产绑定为
+`aee97ccdc2509fb64693631979fa4e93c3a31578` / tree
+`4fd94a69ca4659fac8fc9be5e4283caf450df6d9`，不能作为当前 HEAD 验收。
+本项不是仓库 Release/analyzer 检查。实际 CTRL+C、挂起 kernel 文件 I/O、
+stdio 完整性及上游系统祖先仍未闭环；P2-08.02 仍 🚧 进行中，59/91 分母
+不变。v8 失败与 v9 独立成功组件的原件均保留。
+
+CI37710305713/候选 `afb0988` 缺少的四个 source/backend ZIP 现均完整保留
+并记录传输哈希。v24 对账小回执和精确候选 manifest；expanded 实际
+SDK10.0.400 与 production10.0.401 保持区分。v25 保留1572个 source 文件
+（各 RID785、19包/39 PE 绑定）；v26 保留234个 backend 文件（各 RID103个
+绑定保留对象）。物理哈希匹配，完整 verifier/header/语义与正式 joint 验收
+仍未闭环。未执行下载程序。v7 containment adapter/driver/tiny 源码已冻结，
+未编译/运行；身份失败时启动计数仅统计已验证 root。
+
+P2 保持8/101 ✅ 已完成叶项；六个 P1 门禁及全部 P2 父项/阶段仍开放。
+子智能体已停止新增工作并保存冻结检查点。root 核查记录的下载/编译/运行/
+worker 进程身份；本轮收尾未杀进程，未删除原件或用户文件。续接入口：
+`artifacts/p1-supervision/resume-root-v4/resumption.json`。用户最新要求本轮
+收尾后终止 `rustsharp-p2`，即使 P1/P2 仍未闭环；不得自动恢复定时监督。
+## 历史检查点 — 2026-10-08 11:44
 
 同SHA Drop物理原件组件为 ✅ 已完成，绑定CI run
 [37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713)，
