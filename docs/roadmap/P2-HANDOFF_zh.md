@@ -2,7 +2,36 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 11:20
+## 当前检查点 — 2026-10-08 11:44
+
+同SHA Drop物理原件组件为 ✅ 已完成，绑定CI run
+[37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713)，
+候选 `afb0988bb74e698a685adde93bacdd2b82b8c932`、tree
+`387d2ae7af9bfbd1a963dff481de3968fb7c24ae`。Windows原3250项失败报告保留：
+复用3242项通过检查及401哈希，余下八项过程记录已逐字段/UTC ticks核对通过。
+Linux通过3261项检查及373物理哈希。每个平台完整保留28生成案例、
+30 PE/ILVerify10.0.11、28 AOT、两个callable交付物/七案例及36阶段；
+保留606个payload成员。原额外Linux unwind案例此次真实rustc/CoreCLR/AOT输出
+及结果已一致，未批准新语义差异。便携归档：
+`docs/evidence/p1/drop-original-bytes-afb0988.json`。
+
+原生GUI夹具提交 `90e376e` 已推送并独立核实与远程master一致。其四个独占构建
+GUID目录（共31对象）已回收；root复核均不存在，未终止进程，保留原源码/DLL/PE。
+历史compiler父链/捕获缺口仍明确保留。Formatter v8修正的18文件嵌套manifest及
+两轮SDK编译通过独立字节/元数据审计。唯一无信号tiny为 ⛔ 已阻塞：严格inner计数
+发现helper、新建conhost及挂起CLI（三成员），outer Job记录四成员。
+CLI未恢复执行且未发信号。两个held Jobs均归零；root另核全部五个记录PID不存在后
+精准回收带lease夹具。原失败报告不可变。v9已冻结十个源码/契约文件，纳入console-host完整身份及计数；
+仍需root源码审计、编译及真实运行。真实CTRL+C及内核待完成I/O取消仍开放；P2-08.02仍为 🚧 进行中。
+
+双方expanded及production-receipt小ZIP均已持有，绑定同一CI SHA；首次Linux
+receipt超时/partial与唯一完整重试同时保留。v23启动独立冻结审计范围。
+source/backend payload、完整后代隔离、正式joint12、legacy/policy权限及
+candidate-gate验收仍开放。P2仍为8/101个 ✅ 已完成叶项；全部六个P1门禁及所有
+P2父项/阶段仍开放。从 `artifacts/p1-supervision/resume-root-v3/resumption.json`
+接续；心跳保持ACTIVE。
+
+## 历史检查点 — 2026-10-08 11:20
 
 Windows隔离v6原生GUI夹具在其组件范围为 ✅ 已完成：真实tiny1及全部八项固定
 生命周期控制通过，严格1/2/3成员计数，并独立证明未分配挂起root负控制退出。
@@ -15,7 +44,7 @@ Linux委派及正式joint12仍开放。
 核对3242/3250项；八项ISO时间精度差异仍待独立tick对账。Linux ZIP仍未解包。
 未执行任何下载程序。Formatter v6唯一tiny在Helper/CLI执行前失败，因为内置编译器
 使用随机私有程序集名。v7改用两轮固定SDK编译器，私有AssemblyDef/Ref闭包正确，
-冻结17文件包；runtime0，CTRL+C及待完成异步I/O证据仍开放。P2仍为8/101个完成
+冻结17文件包；runtime0，CTRL+C及待完成异步I/O证据仍开放。P2仍为8/101个 ✅ 已完成
 叶项；没有关闭P1门禁、P2父项或阶段。从
 `artifacts/p1-supervision/resume-root-v2/resumption.json`接续；心跳保持ACTIVE。
 

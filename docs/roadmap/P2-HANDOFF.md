@@ -2,7 +2,43 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 11:20
+## Current checkpoint — 2026-10-08 11:44
+
+The same-SHA Drop physical-original component is ✅ Complete for CI run
+[37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713),
+candidate `afb0988bb74e698a685adde93bacdd2b82b8c932`, tree
+`387d2ae7af9bfbd1a963dff481de3968fb7c24ae`. Windows retains its prior failed
+3250-check report: 3242 passing checks and 401 hashes are reused, and all eight
+remaining envelopes now pass exact field/UTC-tick reconciliation. Linux passes
+3261 checks with 373 physical hashes. Each platform retains all28 generated,
+30 PE/ILVerify10.0.11, 28 AOT, two callable artifacts/seven cases and36 stages;
+606 payload members were retained. The former extra Linux unwind case now has
+matching real rustc/CoreCLR/AOT output and outcome; no new divergence is approved.
+Portable archive: `docs/evidence/p1/drop-original-bytes-afb0988.json`.
+
+Native GUI fixture commit `90e376e` is pushed and independently matches remote
+master. Its four owned build GUID directories (31 objects total) are removed;
+root verified absence, with no process killed and original source/DLL/PE retained.
+Historical compiler parent-chain/capture gaps remain explicit. Formatter v8's
+corrected18-file nested manifest and two SDK compiler phases pass independent
+byte/metadata review. Its sole no-signal tiny is ⛔ Blocked: strict inner accounting
+finds helper, newly created conhost and suspended CLI (three members), while the
+outer Job records four. No CLI resume or signal occurred. Both held Jobs reach
+zero; root separately recovers the leased fixture after verifying all five
+recorded process PIDs absent. Original failed reports remain immutable. v9 freezes ten source/contract files including console-host identity and complete
+counts; root source review, compilation and runtime remain required.
+Actual CTRL+C and kernel pending-I/O cancellation remain open; P2-08.02 stays
+🚧 In progress.
+
+Both expanded and production-receipt small ZIPs are now physically held for the
+same CI SHA; the initial Linux receipt timeout/partial is retained alongside its
+one complete retry. v23 starts a separate frozen audit scope. Source/backend
+payloads, full descendant containment, formal joint12, legacy/policy authority
+and candidate-gate acceptance remain open. P2 stays8/101 ✅ Complete leaves;
+all six P1 gates and every P2 parent/phase remain open. Resume from
+`artifacts/p1-supervision/resume-root-v3/resumption.json`; heartbeat stays ACTIVE.
+
+## Historical checkpoint — 2026-10-08 11:20
 
 Windows containment v6 native GUI fixture is ✅ Complete for its component:
 actual tiny1 and all eight frozen lifecycle controls pass, with exact1/2/3
@@ -20,7 +56,7 @@ Linux ZIP remains unextracted. No downloaded program was executed. Formatter
 v6 sole tiny fails before Helper/CLI execution because its in-process compiler
 used a random private assembly name. v7 uses two fixed SDK compilers, has
 correct private AssemblyDef/Ref closure and a frozen17-file package; runtime0,
-CTRL+C and pending asynchronous-I/O evidence remain open. P2 stays8/101 complete
+CTRL+C and pending asynchronous-I/O evidence remain open. P2 stays8/101 ✅ Complete
 leaves; no P1 gate, P2 parent or phase closes. Resume from
 `artifacts/p1-supervision/resume-root-v2/resumption.json`; heartbeat stays ACTIVE.
 

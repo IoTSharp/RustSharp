@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-08T11:38:25.6718488+08:00",
+  "candidateSha": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "treeSha": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "runId": "37710305713",
+  "runAttempt": 1,
+  "componentPhysicalOriginalsAccepted": true,
+  "platforms": [
+    {
+      "platform": "windows-x64",
+      "componentPhysicalOriginalsAccepted": true,
+      "generatedCases": 28,
+      "rustcExact": 26,
+      "frozenExistingContractDifferences": 2,
+      "originalPEsAndILVerify": 30,
+      "ilVerifyVersion": "10.0.11",
+      "nativeAotCases": 28,
+      "callableArtifacts": 2,
+      "callableCases": 7,
+      "indexedWitnesses": 150,
+      "orderedStages": 36,
+      "retainedUnindexedFiles": 167,
+      "allRetainedPayloadFilesPhysicallyHashed": true,
+      "descendantContainmentVerified": false,
+      "processCleanupVerification": "parent-exit-only",
+      "fullP1Closure": false
+    },
+    {
+      "platform": "linux-x64",
+      "componentPhysicalOriginalsAccepted": true,
+      "generatedCases": 28,
+      "rustcExact": 26,
+      "frozenExistingContractDifferences": 2,
+      "originalPEsAndILVerify": 30,
+      "ilVerifyVersion": "10.0.11",
+      "nativeAotCases": 28,
+      "callableArtifacts": 2,
+      "callableCases": 7,
+      "indexedWitnesses": 150,
+      "orderedStages": 36,
+      "retainedUnindexedFiles": 139,
+      "allRetainedPayloadFilesPhysicallyHashed": true,
+      "descendantContainmentVerified": false,
+      "processCleanupVerification": "parent-exit-only",
+      "fullP1Closure": false
+    }
+  ],
+  "windowsAcceptance": "Retained 3242/3250 previous passing checks + eight exact field/tick equivalence reconciliations; 401 physical hash records reused. Previous failed report immutable.",
+  "windowsTimestampPrecisionRows": 8,
+  "linuxPassedChecks": 3261,
+  "linuxPhysicalHashRecords": 373,
+  "linuxTimestampPrecisionRows": 3,
+  "combinedPayloadMembers": 606,
+  "linuxHistoricalAdditionalDifference": {
+    "id": "unwind-own-drop-body-failure",
+    "currentGeneratedStatus": "passed",
+    "rustcCoreClrAotOutput": "body\nowner\nbad\n",
+    "rustcCoreClrAotOutcome": "double-panic-abort",
+    "newDivergenceApproved": false,
+    "originalFailedEvidenceRetained": true
+  },
+  "inputs": [
+    {
+      "name": "windows-eight",
+      "repositoryPath": "artifacts/p1-supervision/ci-followup-v22/windows-eight-reconciliation.json",
+      "sha256": "280CA6DF850AFE29D0D1DC72C018F8F07FF80D9FB15C25B39EF0DB894E04DDE8",
+      "bytes": 62571
+    },
+    {
+      "name": "windows-prior-audit",
+      "repositoryPath": "artifacts/p1-supervision/ci-followup-v21/original-program-byte-review-windows-attempt2.json",
+      "sha256": "1FE3CFAA7AEE8A22106297B8D0EBF704BE3226AB8E9C67C0F5D84A8B02E1FFA7",
+      "bytes": 1362877
+    },
+    {
+      "name": "linux-audit",
+      "repositoryPath": "artifacts/p1-supervision/ci-followup-v22/linux-original-program-byte-review.json",
+      "sha256": "799BD42F420D6CBDFC9E8462C49FB170061D1B940DDDC850D0A2EBC21DEE5448",
+      "bytes": 1509140
+    },
+    {
+      "name": "windows-expansion",
+      "repositoryPath": "artifacts/p1-supervision/ci-followup-v21/original-expansion.json",
+      "sha256": "DEF67ED17ED73494D662B9636B428FCD09E0B6DA92A7652CC5B46B3B86C300EB",
+      "bytes": 122430
+    },
+    {
+      "name": "linux-expansion",
+      "repositoryPath": "artifacts/p1-supervision/ci-followup-v22/linux-expansion.json",
+      "sha256": "DE1E9B1443E8A8CBC656EDD78CE3F6A6ED266F9DACC2B97094D717A9340E0A12",
+      "bytes": 110195
+    },
+    {
+      "name": "prior-gate-preflight",
+      "repositoryPath": "artifacts/p1-supervision/ci-followup-v21/remaining-gate-preflight.json",
+      "sha256": "DA35232BD79B845902CEC67E6C4BE4D1C4C405775511C7731ECFE492F7E0F61A",
+      "bytes": 4187
+    }
+  ],
+  "productionNineInputs": "Not provided to this audit except previously held aggregate fresh-build; Drop build/snapshot do not replace production inputs.",
+  "formalJointNineReports": [
+    "coverage-win",
+    "coverage-linux",
+    "production",
+    "suite",
+    "old-exit",
+    "expanded-exit",
+    "drop-win",
+    "drop-linux",
+    "legacy-ci"
+  ],
+  "formalJointRequiredNegativeControls": [
+    "missing-joint-input",
+    "stale-SHA-or-tree",
+    "wrong-run-attempt-or-artifact",
+    "failed-cancelled-skipped-upstream",
+    "filtered-reduced-or-model-harness",
+    "missing-one-exact-backend-cell",
+    "legacy-v4-or-extra-Linux-difference",
+    "reduced-28-30-28-7-Drop-denominator",
+    "retained-PE-native-byte-or-machine-tamper",
+    "process-PID-parent-exit-cleanup-ledger-tamper",
+    "old6-expanded4-suite15-missing-or-reduced",
+    "absent-unverified-policy-or-premature-completion"
+  ],
+  "formalJointPositivePacketAccepted": false,
+  "formalJointNegativeControlsExecuted": 0,
+  "sameShaLegacyAttestationAccepted": false,
+  "independentVersionedPolicyAuthorityAcceptedByThisAudit": false,
+  "completeDescendantContainmentAccepted": false,
+  "candidateGateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "noNetwork": true,
+  "downloadedProgramsExecuted": 0,
+  "externalChildrenLaunched": 0
+}
