@@ -2,7 +2,24 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 10:53
+## 当前检查点 — 2026-10-08 11:20
+
+Windows隔离v6原生GUI夹具在其组件范围为 ✅ 已完成：真实tiny1及全部八项固定
+生命周期控制通过，严格1/2/3成员计数，并独立证明未分配挂起root负控制退出。
+夹具无CLR/CRT/console imports。归档：`docs/evidence/p1/windows-gui-lifecycle-v6.json`；
+已跟踪源码：`tests/fixtures/processes/WindowsGuiLifecycle.c`。Compiler Jobs归零；
+历史compiler身份/捕获限制及独占构建目录待回收仍明确保留。原取消6、保留2、
+Linux委派及正式joint12仍开放。
+
+双方大型Drop ZIP现已完整下载，按准确HTTP206 Range重组。Windows317文件/401哈希
+核对3242/3250项；八项ISO时间精度差异仍待独立tick对账。Linux ZIP仍未解包。
+未执行任何下载程序。Formatter v6唯一tiny在Helper/CLI执行前失败，因为内置编译器
+使用随机私有程序集名。v7改用两轮固定SDK编译器，私有AssemblyDef/Ref闭包正确，
+冻结17文件包；runtime0，CTRL+C及待完成异步I/O证据仍开放。P2仍为8/101个完成
+叶项；没有关闭P1门禁、P2父项或阶段。从
+`artifacts/p1-supervision/resume-root-v2/resumption.json`接续；心跳保持ACTIVE。
+
+## 历史检查点 — 2026-10-08 10:53
 
 CI run [37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713)
 准确绑定已推送 `afb0988bb74e698a685adde93bacdd2b82b8c932`，全部八个作业

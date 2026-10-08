@@ -2,7 +2,29 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 10:53
+## Current checkpoint — 2026-10-08 11:20
+
+Windows containment v6 native GUI fixture is ✅ Complete for its component:
+actual tiny1 and all eight frozen lifecycle controls pass, with exact1/2/3
+member counts and separate held unassigned-root negative controls. The fixture
+has no CLR/CRT/console imports. Archive: `docs/evidence/p1/windows-gui-lifecycle-v6.json`;
+tracked source: `tests/fixtures/processes/WindowsGuiLifecycle.c`. Compiler Jobs
+reach zero; historical compiler identity/capture limitations and pending owned
+build-directory cleanup remain explicit. Original cancellation6, retention2,
+Linux delegation and formal joint12 remain open.
+
+Both large Drop ZIPs are now fully downloaded and reconstructed from exact
+HTTP206 ranges. Windows317 files/401 hashes reconcile3242/3250 checks; eight
+ISO timestamp precision differences still await independent tick reconciliation.
+Linux ZIP remains unextracted. No downloaded program was executed. Formatter
+v6 sole tiny fails before Helper/CLI execution because its in-process compiler
+used a random private assembly name. v7 uses two fixed SDK compilers, has
+correct private AssemblyDef/Ref closure and a frozen17-file package; runtime0,
+CTRL+C and pending asynchronous-I/O evidence remain open. P2 stays8/101 complete
+leaves; no P1 gate, P2 parent or phase closes. Resume from
+`artifacts/p1-supervision/resume-root-v2/resumption.json`; heartbeat stays ACTIVE.
+
+## Historical checkpoint — 2026-10-08 10:53
 
 CI run [37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713)
 at exact pushed `afb0988bb74e698a685adde93bacdd2b82b8c932` is ✅ Complete

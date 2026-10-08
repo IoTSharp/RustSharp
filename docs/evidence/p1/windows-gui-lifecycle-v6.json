@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "component": "Windows native GUI lifecycle fixture",
+  "source": "tests/fixtures/processes/WindowsGuiLifecycle.c",
+  "sourceSha": "082061812D383B8401A2B16B2E3BC8FC85C9F90B90877AEC0AE71402CDE9C3F0",
+  "nativePeSha": "A10121A89DA1A325780EED228C99ABE8A2D99389BF1D05B5DC7231E4849D7A6B",
+  "controllerDllSha": "5729C8E134B297A9892A57B9A036FFFC5A8F1269B57D4636D6C2A8547E707B8F",
+  "frozenScopeSha": "0DA47E8E5FAD334FE9F6B052139FFDA5E90BF78E395449F44E9B8C7447D8E08F",
+  "tiny": 1,
+  "lifecycleExecuted": 8,
+  "lifecycleDenominator": 8,
+  "lifecyclePassed": true,
+  "caseResults": [
+    {
+      "id": "natural-exit",
+      "accepted": true,
+      "rootPid": 13780,
+      "jobTotal": 1,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    },
+    {
+      "id": "exception-exit",
+      "accepted": true,
+      "rootPid": 61912,
+      "jobTotal": 1,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    },
+    {
+      "id": "timeout",
+      "accepted": true,
+      "rootPid": 65564,
+      "jobTotal": 1,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    },
+    {
+      "id": "cancellation",
+      "accepted": true,
+      "rootPid": 52832,
+      "jobTotal": 1,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    },
+    {
+      "id": "descendants-survive-root",
+      "accepted": true,
+      "rootPid": 22424,
+      "jobTotal": 2,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    },
+    {
+      "id": "nested-grandchild",
+      "accepted": true,
+      "rootPid": 9452,
+      "jobTotal": 3,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    },
+    {
+      "id": "assignment-or-capability-failure",
+      "accepted": true,
+      "rootPid": 61044,
+      "jobTotal": 0,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    },
+    {
+      "id": "identity-reuse-rejection",
+      "accepted": true,
+      "rootPid": 13380,
+      "jobTotal": 0,
+      "finalActive": 0,
+      "cleanupErrors": 0
+    }
+  ],
+  "rawSuite": "artifacts/p1-supervision/descendant-containment-draft-v6/lifecycle-root-result.json",
+  "rawSuiteSha": "D52CEEC031E0063CC0F30303342C7CA0E7BA64ED4B84789D29ACF7F6FBEE4D32",
+  "compilerHistoryComplete": false,
+  "stdoutCompilerCapture": false,
+  "ownedBuildCleanupPending": true,
+  "originalCancel6Accepted": false,
+  "originalRetention2Accepted": false,
+  "formalJoint12Accepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}
