@@ -2,7 +2,51 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 08:25
+## 当前检查点 — 2026-10-08 08:55
+
+逐项验收提交：`5139902` 从第一条真实Git命令启动现有snapshot验证时钟，保留
+共享110秒/24命令预算及账本。候选 `aee97ccdc2509fb64693631979fa4e93c3a31578`、
+tree `4fd94a69ca4659fac8fc9be5e4283caf450df6d9`、708输入、新鲜SDK10.0.401
+Release0/0、Windows/Ubuntu tiny1+固定6及构建绑定tiny1+固定9均通过。root观察
+60个已记录Windows PID和17个Ubuntu验证Git PID均已不存在；这是已记录身份
+证据，不是完整后代隔离证明。见 `docs/p1-snapshot-budget-v1.md` 及其成对翻译/归档。
+
+CI v18独立绑定 `d115737`/run37707754165：最终 ❌ 失败。双方expanded及
+production-native作业、suite-gate成功；双方Drop作业在原生执行前失败，
+production-gate拒绝缺失Drop字节。Windows/Linux新鲜构建0/0、源码707/707通过，
+但构建分别消耗122.418/115.750秒，验证时钟此前在导入辅助脚本时已启动。双方
+receipt仅保留2/36成功stage，generated/AOT/callable报告为null，original-PE
+bindings为零。实际Drop/ILVerify/AOT/callable计数均为0。原始前置证据对账95项
+绑定/62个哈希，不能闭环原生验收。对新推送SHA的时钟修复唯一调度一次，独立
+核对新原始字节。
+
+旧 `a911113`/run37705178320 production receipt原件现对账118项绑定/114个
+哈希，无不一致：transport2/2，aggregate原始报告5/9。仍缺Windows/Linux
+source-package及backend四份报告和完整payload字节。5/9由同一SHA的aggregate
+build及双方native build/snapshot组成，不得加入新 `d115737` 的前置证据。
+旧4d33334/run37702329159 production原件仍独立待核。准确清单及缺失哈希保留在
+`artifacts/p1-supervision/ci-followup-v18/`。
+
+Containment v4修复审计错误留存、不可变身份与可变命令观察的区分、持有root的
+最终等待及publication错误留存。两次托管构建0/0和固定MSVC原生GUI夹具构建
+通过；唯一tiny1前冻结8份源码、DLL和PE。真实tiny以准确JobTotalProcesses1、
+完整成员审计、root退出0和持有作业最终active0通过；lifecycle8实际执行为0。
+root审查草案变更，本轮不授权生命周期运行。新增可执行驱动器必须重新冻结
+程序集并执行tiny；句柄关闭失败路径仍需审查。Linux独占可写cgroup delegation
+仍为 ⛔ 已阻塞。
+
+Windows取消v4针对真实aee97cc候选、新鲜报告和CLI2B84FDA冻结已编译审查包。
+两轮警告视为错误的编译通过；controller/helper/CLI/signal实际运行计数均为0。
+新运行模型区分活跃任务归属与不完整上游系统祖先，仅允许未来事件作用于已证明
+的新私有控制台。唯一无信号tiny前，root须审查准确源码/包及新鲜活跃主机身份；
+真实CTRL+C和异步I/O取消仍开放。P2-08.02仍为 🚧 进行中。
+
+P2仍为8/101个 ✅ 已完成叶项；全部六个P1门禁及所有P2父项/阶段均开放。
+Git/推送/唯一CI状态、子智能体manifest和回收范围保留在
+`artifacts/p1-supervision/snapshot-budget-root-v1/resumption.json`。接续现有三个
+独占任务，保留失败证据/用户tmp及唯一ACTIVE半小时心跳。
+
+## 历史检查点 — 2026-10-08 08:25
 
 逐项验收提交：`959f463` 添加必需的原生 Windows/Ubuntu `drop-native` 作业，上传
 原始生成程序/验证器字节，并在 production 聚合前对账双方物理传输包。候选

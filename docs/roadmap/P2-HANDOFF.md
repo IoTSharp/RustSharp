@@ -2,7 +2,63 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 08:25
+## Current checkpoint — 2026-10-08 08:55
+
+Accepted separately: `5139902` starts the existing snapshot validation clock
+with the first actual Git command, preserving the shared110-second/24-command
+budget and ledger. Candidate `aee97ccdc2509fb64693631979fa4e93c3a31578`, tree
+`4fd94a69ca4659fac8fc9be5e4283caf450df6d9`,708 inputs, fresh SDK10.0.401
+Release0/0, Windows/Ubuntu tiny1+fixed6 and build-binding tiny1+fixed9 pass.
+Root observes60 recorded Windows PIDs and17 Ubuntu validation Git PIDs absent;
+this is recorded-identity evidence, not complete descendant containment. See
+`docs/p1-snapshot-budget-v1.md` and its paired translation/archive.
+
+CI v18 independently binds `d115737`/run37707754165: final ❌ Failed. Expanded
+and production-native jobs on both platforms and suite-gate succeed; both
+Drop jobs fail before native execution and production-gate rejects missing
+Drop bytes. Windows/Linux fresh builds0/0 and source707/707 pass, but the builds
+spend122.418/115.750 seconds on a validation clock started at helper import.
+Both receipts retain only2/36 successful stages, null generated/AOT/callable
+reports and zero original-PE bindings. All actual Drop/ILVerify/AOT/callable
+counts are0. Their original preconditions reconcile95 bindings/62 hashes;
+they cannot close native acceptance. Dispatch the timing repair once at the
+new pushed SHA and reconcile new original bytes separately.
+
+The older `a911113`/run37705178320 production receipt originals now reconcile
+118 bindings/114 hashes with no mismatches: transport2/2 and aggregate
+original reports5/9. Missing are the Windows/Linux source-package and backend
+reports plus their complete payload bytes. The5/9 count comprises that same
+SHA's aggregate build and both native build/snapshot pairs; never add the new
+`d115737` preconditions. The old4d33334/run37702329159 production original
+remains separately pending. Exact inventories and missing hashes are retained
+under `artifacts/p1-supervision/ci-followup-v18/`.
+
+Containment v4 repairs retained audit errors, immutable identity versus mutable
+command observations, held-root final waiting and publication error retention.
+Two managed builds0/0 and fixed MSVC native GUI fixture build pass; source8,
+DLL and PE are frozen before its sole tiny1. The actual tiny passes with exact
+JobTotalProcesses1, complete member audit, root exit0 and held final active0;
+no lifecycle8 case runs. Root reviews the draft changes but does not authorize
+lifecycle execution this slice. A new executable driver requires a new frozen
+assembly and tiny; handle-close failure paths still require review. Linux
+private writable cgroup delegation remains ⛔ Blocked.
+
+Windows cancellation v4 freezes a compiled review package against the actual
+aee97cc candidate, fresh report and CLI2B84FDA. Two warn-as-error compiler
+passes succeed; controller/helper/CLI/signal runtime counts remain0. Its new
+runtime model separates live task ownership from incomplete upstream system
+ancestry and permits a future event only in a proven new private console.
+Root must review the exact source/package and fresh live-host identity before
+the sole no-signal tiny; actual CTRL+C and async-I/O cancellation remain open.
+P2-08.02 remains 🚧 In progress.
+
+P2 remains8/101 ✅ Complete leaves; all six P1 gates and all P2 parents/phases
+remain open. Git/push/unique-CI state, worker manifests and cleanup limits are
+in `artifacts/p1-supervision/snapshot-budget-root-v1/resumption.json`. Continue
+the existing three disjoint assignments, preserve failed evidence/user tmp,
+and keep the sole ACTIVE thirty-minute heartbeat.
+
+## Historical checkpoint — 2026-10-08 08:25
 
 Accepted separately: `959f463` adds the mandatory native Windows/Ubuntu
 `drop-native` jobs, uploads original generated/verifier bytes, and reconciles
