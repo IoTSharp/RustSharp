@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "owner": "/root/windows_cancel_review",
+  "lease": "tracked-port-v10-01b3baf1ef4f4b78a4fc4dbf2abb6769",
+  "trackedRoot": "D:\\GitHub\\RustSharp\\tests\\fixtures\\processes\\FormatterPrivateConsole",
+  "scope": [
+    "Complete Native/Launcher/Helper/Run tracked reusable fixture",
+    "Parameter TaskRoot and reviewed candidate manifest",
+    "Exact root/nonce/native-owner lease and reparse ancestry",
+    "Actual raw console-query receipts",
+    "Every cleanup/publication error in passed predicates"
+  ],
+  "excluded": [
+    "shared harness/roadmaps/git/stage/commit",
+    "worker compiler/runtime/signal",
+    "CTRL+C and formatter pending regular-file I/O closure"
+  ],
+  "fixedLeafDenominator": 59,
+  "fixedParentDenominator": 91,
+  "supplementaryTiny": 1,
+  "supplementaryActualCancel": 1,
+  "historicalV9IsNotPortRuntimeEvidence": true,
+  "workerCompiler": 0,
+  "workerRuntime": 0,
+  "signals": 0,
+  "sourceFreezeDeadline": "2026-10-08T12:10:00+08:00",
+  "finalDeadline": "2026-10-08T12:15:00+08:00",
+  "maximumFilesPerBatch": 40,
+  "secondsPerBatch": 30
+}

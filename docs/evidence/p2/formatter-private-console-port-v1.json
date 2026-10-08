@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-08T12:16:55.7126931+08:00",
+  "componentStatus": "✅ Complete / ✅ 已完成",
+  "component": "Tracked Windows private-console no-signal fixture",
+  "scope": "SDK csc compilation and sole actual no-signal tiny; no repository Release/analyzer or cancellation acceptance",
+  "sourceManifestSha256": "265ED4CC56A410E3CFAB039F2904962F9983E5D6A1F95B50B4F426FD8BC9B93A",
+  "manifestSha256": "F8E4A87034EBDCB6F59D697EB34A5CD9A4BFE28A38C94DA22B2C92C654BA662E",
+  "candidateSha": "aee97ccdc2509fb64693631979fa4e93c3a31578",
+  "treeSha": "4fd94a69ca4659fac8fc9be5e4283caf450df6d9",
+  "compiler": "SDK10.0.401, fixed Launcher/Helper AssemblyDef, zero diagnostics, compiler Jobs reaped",
+  "noSignalTinyCount": 1,
+  "cliRuntimeCount": 1,
+  "signals": 0,
+  "naturalExitCodes": [
+    0,
+    0,
+    0
+  ],
+  "innerHistoricalMembers": 3,
+  "outerHistoricalMembers": 4,
+  "consoleRawBefore": 0,
+  "consoleBeforeLastError": 6,
+  "consoleRawAfter": 1,
+  "liveConsoleMembers": 2,
+  "consoleRawFinal": 1,
+  "freeConsoleSucceeded": true,
+  "fixtureAbsent": true,
+  "allJobMembersFinalZero": true,
+  "allCleanupPublicationErrorsZero": true,
+  "recordedRuntimeIdentities": [
+    {
+      "absent": true,
+      "identity": {
+        "Pid": 46764,
+        "CreationFileTime": 134359065036524967,
+        "ParentPid": 9900,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -File D:\\GitHub\\RustSharp\\tests\\fixtures\\processes\\FormatterPrivateConsole\\Run.ps1 -TaskRoot D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1 -ReviewedManifestSha256 F8E4A87034EBDCB6F59D697EB34A5CD9A4BFE28A38C94DA22B2C92C654BA662E -ReviewedLiveHostIdentityPath D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v4\\formatter-port-live-host.json -ReviewedLiveHostIdentitySha256 402AEA14BA66A84571B6A086F6E338766215A04E3FC7C38998FEA04D633CC8CC"
+      }
+    },
+    {
+      "absent": true,
+      "identity": {
+        "Pid": 32968,
+        "CreationFileTime": 134359065044380118,
+        "ParentPid": 46764,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\Helper.dll\" \"--role\" \"controller\" \"--request\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\trial-request.json\""
+      }
+    },
+    {
+      "absent": true,
+      "identity": {
+        "Pid": 66320,
+        "CreationFileTime": 134359065046472166,
+        "ParentPid": 32968,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\Helper.dll\" \"--role\" \"helper\" \"--request\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\trial-request.json\""
+      }
+    },
+    {
+      "absent": true,
+      "identity": {
+        "Pid": 28520,
+        "CreationFileTime": 134359065098957167,
+        "ParentPid": 66320,
+        "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+      }
+    },
+    {
+      "absent": true,
+      "identity": {
+        "Pid": 54748,
+        "CreationFileTime": 134359065150256928,
+        "ParentPid": 66320,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\src\\RustSharp.Cli\\bin\\Release\\net10.0\\rsc.dll\" \"fmt\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\fixture-1578f5967ebb4a488f3c4e9328f6580e\""
+      }
+    }
+  ],
+  "originals": [
+    {
+      "name": "manifest.json",
+      "bytes": 7254,
+      "sha256": "F8E4A87034EBDCB6F59D697EB34A5CD9A4BFE28A38C94DA22B2C92C654BA662E"
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 3219,
+      "sha256": "265ED4CC56A410E3CFAB039F2904962F9983E5D6A1F95B50B4F426FD8BC9B93A"
+    },
+    {
+      "name": "build-root-report.json",
+      "bytes": 16911,
+      "sha256": "9B571BD75793D701DA7A32DFD9A8888CBD0C231C92985F0C5B0EFE85B76DB126"
+    },
+    {
+      "name": "root-result.json",
+      "bytes": 12341,
+      "sha256": "8792C1ABD259A3C6C5D8389E285034DA54501B5B55DE256E1D1FE940B727961E"
+    },
+    {
+      "name": "controller-result.json",
+      "bytes": 11702,
+      "sha256": "6B136C16A6C35C1FF06FFCC917DCB336EE2D01ACF964E9EC014201C4A64A859E"
+    },
+    {
+      "name": "helper-result.json",
+      "bytes": 10990,
+      "sha256": "3273C485E57A9CEB50216AEF782488C2D043863C26B1EAEF3A3AD46646A818F3"
+    },
+    {
+      "name": "ready-console.json",
+      "bytes": 855,
+      "sha256": "7BF524E87BE565C7751CB03C9612E792178420DB23114211DDA30EAF4557914C"
+    },
+    {
+      "name": "inner-proof-console.json",
+      "bytes": 2320,
+      "sha256": "78899212DD101822C5FE30D7AFE1ABD10CE653D479E48CE9AB7860FDE4A2B90D"
+    },
+    {
+      "name": "ready-cli.json",
+      "bytes": 976,
+      "sha256": "A29F4E5E49133FEEC188F69A54A54456567FA66D79075358C6AD18F49133E19D"
+    },
+    {
+      "name": "inner-proof-cli.json",
+      "bytes": 3171,
+      "sha256": "4CBA8C97F1673B2F285B1C5C57B018EC71896979F631A50B85878F0BEAACD6AA"
+    }
+  ],
+  "artifactRoot": "artifacts/p2-supervision/formatter-private-console-port-v1",
+  "fixedLeafDenominator": 59,
+  "fixedParentDenominator": 91,
+  "P20802Status": "🚧 In progress / 🚧 进行中",
+  "leafClosed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "systemAncestorsComplete": false,
+  "stdioCompletenessProven": false,
+  "actualCtrlCProven": false,
+  "formatterPendingKernelIOProven": false,
+  "readmeAcceptanceUpdateAfterFreeze": true
+}

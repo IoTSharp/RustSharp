@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Helper</AssemblyName>
+    <StartupObject>Bootstrap</StartupObject>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup><Compile Include="Helper.cs" /><ProjectReference Include="FormatterPrivateConsole.Launcher.csproj" /></ItemGroup>
+</Project>
