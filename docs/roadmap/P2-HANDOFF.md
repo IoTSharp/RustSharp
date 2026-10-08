@@ -2,7 +2,59 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 07:55
+## Current checkpoint — 2026-10-08 08:25
+
+Accepted separately: `959f463` adds the mandatory native Windows/Ubuntu
+`drop-native` jobs, uploads original generated/verifier bytes, and reconciles
+both physical transport packets before the production aggregate. Candidate
+`04a1a15f05f28f05471fe48816544600d0c5038f`, tree
+`3a6946d9077ca956c6c9feb24bca66eb83510586`,707 inputs, Release0/0,
+workflow tiny1+utility8 and six PowerShell AST blocks pass. These utility checks
+execute zero native programs, ILVerify/AOT cases or formal joint controls. Root
+observes nine recorded launch identities absent; the cleanup check covers
+recorded roots. Formal joint12, legacy API attestation, policy authority and
+trusted complete descendant containment remain open. See
+`docs/p1-drop-workflow-v1.md` and its paired translation/archive.
+
+CI v17 binds `a911113`/run37705178320 independently of the new workflow.
+Both expanded and production-native jobs and suite-gate are ✅ Complete.
+The downloaded originals reconcile60 physical hashes; each expanded platform
+has1203 unique ordered passing cases, formatter59 and707 independent Git
+source blobs. Suite15/15 and both publication8 reports pass. The production
+gate JSON and original matrix stdout agree on24 cells, but its27-member ZIP
+omits the two native receipts and their eight input reports. The nine aggregate
+input bytes and two transport receipts therefore still require independent
+physical reconciliation. Obtain exact native-receipt artifact IDs from v17's
+final inventory; the final run conclusion remains separately pending.
+The old4d33334/run37702329159 suite originals now reconcile12passed/2failed/
+1blocked; its production original remains independently pending.
+
+Windows cancellation v3 compiles both helpers with warnings treated as errors.
+Root freezes actual04a1a15/CLI17E836 and executes one no-signal controller trial.
+Its upstream chain stops at an inaccessible system ancestor, so it blocks
+before helper creation: helper0/CLI0/signal0, no fixture created, controller
+exit1. Retain the original draft and root runtime manifest separately; the
+draft's zero-execution account is historical. The isolated v4 design must
+resolve the ownership boundary without asserting a complete inaccessible
+chain or signaling an existing application console. Windows CTRL+C and actual
+asynchronous I/O interruption remain open; P2-08.02 is 🚧 In progress.
+
+Containment v3 builds0/0 twice and its sole tiny is ❌ Failed. Held Job evidence
+identifies this run's additional conhost member, observes its command line
+changing, and records TotalProcesses2 against the fixed one-member contract.
+Final held Job ActiveProcesses0 and cleanup errors0 do not make tiny pass.
+The MemberAuditFailures omission and RootExited observation race must be fixed
+in a new version; lifecycle8 remains0. Do not backfill v2's unknown member.
+Ubuntu writable private cgroup delegation remains ⛔ Blocked.
+
+P2 remains8/101 ✅ Complete leaves; all six P1 gates and all P2 parents/phases
+remain open. Latest Git/push/unique-CI state and resource review are in
+`artifacts/p1-supervision/drop-workflow-root-v1/resumption.json`. Reconcile the
+new pushed workflow SHA once, finish formal joint and containment wiring, and
+continue dependency-permitted work. Preserve user tmp, all failed evidence and
+the sole ACTIVE thirty-minute heartbeat.
+
+## Historical checkpoint — 2026-10-08 07:55
 
 Accepted separately: `f213c3a` integrates the original-byte Drop transport
 component. Candidate `c950e0164719bdcf6309e944c2e0078d2ee5eafe`, tree

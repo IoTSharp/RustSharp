@@ -2,7 +2,48 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 07:55
+## 当前检查点 — 2026-10-08 08:25
+
+逐项验收提交：`959f463` 添加必需的原生 Windows/Ubuntu `drop-native` 作业，上传
+原始生成程序/验证器字节，并在 production 聚合前对账双方物理传输包。候选
+`04a1a15f05f28f05471fe48816544600d0c5038f`、tree
+`3a6946d9077ca956c6c9feb24bca66eb83510586`、707 输入、Release0/0、
+workflow tiny1+utility8及六份 PowerShell AST 检查通过。这些 utility 检查实际执行的
+native 程序、ILVerify/AOT 用例和正式 joint 控制均为零。主监督者观察九个已记录
+启动身份消失；清理核验范围为已记录 root。正式 joint12、旧 API attestation、策略
+authority及可信完整后代隔离仍开放。见 `docs/p1-drop-workflow-v1.md` 及其成对
+翻译/归档。
+
+CI v17 独立绑定 `a911113`/run37705178320，不作为新工作流证据。双方 expanded、
+production-native作业及suite-gate均为 ✅ 已完成。下载原件对账60次物理哈希；每个
+expanded平台有1203个唯一有序通过用例、formatter59及707条独立Git源码blob。
+suite15/15及双方publication8报告通过。production gate JSON与原始matrix stdout
+对24个单元格一致，但其27成员ZIP缺少两份native receipt及它们的八份输入报告。
+因此九份aggregate输入字节和两份transport receipt仍需独立物理对账。依据v17
+最终清单取得准确native-receipt artifact ID；run最终结论仍为独立pending。
+旧4d33334/run37702329159的suite原件现对账12passed/2failed/1blocked；其production
+原件仍为独立pending。
+
+Windows取消v3以警告视为错误编译双方helper。root冻结真实04a1a15/CLI17E836并
+执行唯一无信号Controller trial。上游父链在无法访问的系统祖先处停止，因此在
+helper创建前阻塞：helper0/CLI0/signal0，未创建夹具，Controller退出1。分别保留
+原始草稿与root运行manifest；草稿的零执行记录属于历史时点。独占v4设计必须解决
+归属边界，不得声称不可访问父链完整，也不得向现有应用控制台发信号。Windows
+CTRL+C和实际异步I/O中断仍开放；P2-08.02为 🚧 进行中。
+
+隔离v3两次构建0/0，唯一tiny为 ❌ 失败。持有Job的证据识别本次额外conhost成员，
+观察到其命令行变化，TotalProcesses2违反固定单成员契约。最终持有Job的
+ActiveProcesses0和cleanup errors0不使tiny通过。MemberAuditFailures遗漏及
+RootExited观察竞态须在新版本修复；lifecycle8仍为0。不得回填v2的未知成员身份。
+Ubuntu可写独占cgroup委派仍为 ⛔ 已阻塞。
+
+P2仍为8/101个 ✅ 已完成叶项；P1六门禁及P2全部父项/阶段仍开放。最新Git/push/
+唯一CI状态及资源复核保存在
+`artifacts/p1-supervision/drop-workflow-root-v1/resumption.json`。新推送工作流SHA只
+调度一次并对账，完成正式joint和完整隔离接线，继续依赖允许事项。保留用户tmp、
+全部失败证据及唯一ACTIVE三十分钟心跳。
+
+## 历史检查点 — 2026-10-08 07:55
 
 逐项验收提交：`f213c3a` 接入原始字节 Drop 传输组件。候选
 `c950e0164719bdcf6309e944c2e0078d2ee5eafe`、tree
