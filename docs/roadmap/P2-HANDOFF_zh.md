@@ -2,7 +2,40 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 08:55
+## 当前检查点 — 2026-10-08 10:53
+
+CI run [37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713)
+准确绑定已推送 `afb0988bb74e698a685adde93bacdd2b82b8c932`，全部八个作业
+均为 ✅ 已完成。root下载四份原始ZIP：Windows/Linux Drop receipts、production-gate
+及suite-gate。四份传输哈希全部匹配，安全解包371个成员。审计450项核对无差异：
+双方receipt各有36/36成功阶段及30份原始verifier报告，suite15/15及production24个
+闭合单元。Windows Drop报告计数为
+固定28、rustc26加2项差异、原始PE ILVerify30、AOT28及callable2/7；receipt明确
+保留fullP1Closure=false。双方大型Drop字节包仍未下载，因此报告执行不能充当物理
+PE/AOT验收。新SHA与全部历史run独立留存；最新审计位于
+`artifacts/p1-supervision/ci-followup-v20/`。
+
+Containment v5冻结8份源码/DLL/原生PE。唯一真实tiny1通过；lifecycle仅执行1/8
+即 ❌ 失败：真实额外conhost使JobTotalProcesses2且成员审计不完整。持有Job最终
+active0及成功audit disposal不能使该案例通过。不得重试或改变分母。v6仅设计：采用
+原生GUI生命周期夹具，并为重复句柄释放加入admission barrier。root独立观察全部
+11个已记录build/runtime身份不存在；范围限于记录身份，不证明历史compiler完整
+后代树。v4两个独占构建root已删除共26对象，未触碰已复用PID52820或保留交付物。
+v5两个构建root独立回收42对象、剩余root0、错误0，未终止进程且交付字节全部保留。
+
+Windows取消v4独立审查匹配32/32包/输入哈希并识别源码缺陷。新v5包以警告视为
+错误编译；最初挂起compiler参数绑定失败完整保留，随后唯一真实Helper编译退出0、
+诊断0。持有compiler Jobs归零；runtime helper/CLI/signal/tiny计数均为0。
+原子发布清理仍可能覆盖主要filesystem失败，任何运行trial前必须继续硬化。
+P2-08.02仍为 🚧 进行中。
+
+P2仍为8/101个 ✅ 已完成叶项；六个P1门禁及全部P2父项/阶段仍开放。准确下载、
+子智能体哈希、归属核验及下一委派保存于
+`artifacts/p1-supervision/resume-root-v1/resumption.json`。保留唯一ACTIVE半小时
+心跳及用户 `tmp/`；下一步对账缺失物理字节、完成原生隔离和取消审查，再继续依赖
+允许事项。不得重跑已验收snapshot-budget构建，也不因本次纯文档检查点再调度CI。
+
+## 历史检查点 — 2026-10-08 08:55
 
 逐项验收提交：`5139902` 从第一条真实Git命令启动现有snapshot验证时钟，保留
 共享110秒/24命令预算及账本。候选 `aee97ccdc2509fb64693631979fa4e93c3a31578`、

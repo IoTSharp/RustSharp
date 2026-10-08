@@ -2,7 +2,50 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 08:55
+## Current checkpoint — 2026-10-08 10:53
+
+CI run [37710305713](https://github.com/IoTSharp/RustSharp/actions/runs/37710305713)
+at exact pushed `afb0988bb74e698a685adde93bacdd2b82b8c932` is ✅ Complete
+for all eight jobs. Root downloaded four original ZIPs: Windows/Linux Drop
+receipts, production-gate and suite-gate. All four transport hashes match;
+371 members were safely extracted. The audit reconciles450 checks without
+differences: each receipt has36/36 successful stages and30 original verifier
+reports; suite15/15 and production24 closed cells. Reported Windows Drop counts are fixed28,
+rustc26 plus2 differences, original-PE ILVerify30, AOT28 and callable2/7;
+the receipt explicitly keeps fullP1Closure=false. Both large Drop byte packets
+remain undownloaded, so reported execution is not physical PE/AOT acceptance.
+Preserve the new SHA separately from every historical run. The latest audit
+is under `artifacts/p1-supervision/ci-followup-v20/`.
+
+Containment v5 freezes source8/DLL/native PE. Its sole actual tiny1 passes;
+lifecycle executes only1/8 and is ❌ Failed: a real additional conhost makes
+JobTotalProcesses2 and member audit incomplete. Held Job final active0 and
+successful audit disposal do not make this case pass. No retry or denominator
+change is permitted. v6 is design only: use native GUI lifecycle fixtures and
+an admission barrier for duplicate-handle disposal. Root independently observes
+all11 recorded build/runtime identities absent; this covers recorded identities,
+not the complete historical compiler descendant tree. Two v4 owned build roots
+were removed,26 objects, without touching reused PID52820 or retained payloads.
+v5's two build roots were separately removed:42 objects, remaining roots0,
+errors0, no process kills and all delivery bytes retained.
+
+Windows cancellation v4 independent review matches32/32 package/input hashes
+and identifies source defects. The new v5 package compiles with warnings as
+errors; the initial suspended compiler argument-binding failure is preserved,
+then the sole actual Helper compilation exits0 with0 diagnostics. Held compiler
+Jobs reach zero; runtime helper/CLI/signal/tiny counts remain0. Atomic-publication
+cleanup can still overwrite a primary filesystem failure and requires further
+hardening before any runtime trial. P2-08.02 remains 🚧 In progress.
+
+P2 remains8/101 ✅ Complete leaves; all six P1 gates and every P2 parent/phase
+remain open. Save exact downloads, worker hashes, ownership checks and next
+assignments in `artifacts/p1-supervision/resume-root-v1/resumption.json`.
+Keep the sole ACTIVE thirty-minute heartbeat and user `tmp/`; next reconcile
+the missing physical bytes, finish native containment and cancellation review,
+then continue dependency-allowed work. Do not rerun the accepted snapshot-budget
+build or dispatch another CI solely for this documentation checkpoint.
+
+## Historical checkpoint — 2026-10-08 08:55
 
 Accepted separately: `5139902` starts the existing snapshot validation clock
 with the first actual Git command, preserving the shared110-second/24-command
