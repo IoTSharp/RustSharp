@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-native-drop-workflow-local-acceptance",
+  "candidateSha": "04a1a15f05f28f05471fe48816544600d0c5038f",
+  "candidateTreeSha": "3a6946d9077ca956c6c9feb24bca66eb83510586",
+  "compilerSourceInputCount": 707,
+  "workflow": {
+    "path": ".github/workflows/p1-expanded.yml",
+    "sha256": "9DB430A338C6C04718C1A3F8AA4EAF72512E6B49C9F8F8DF6A050EBF43CF08C8",
+    "snapshotMatched": true
+  },
+  "reports": [
+    {
+      "path": "artifacts/p1-supervision/drop-workflow-root-v1/source-snapshot.json",
+      "sha256": "A7419880DF42F9505FCE79A850133108D5FF8CA18E50375853D01FFDC9908748"
+    },
+    {
+      "path": "artifacts/p1-supervision/drop-workflow-root-v1/release-build.json",
+      "sha256": "AF35A08C7BCF2BBD17811CD2B56BE6D3DE4D276076B24C7DFC0015D03BD9A437"
+    },
+    {
+      "path": "artifacts/p1-supervision/drop-workflow-root-v1/workflow-tiny.json",
+      "sha256": "0AED82FCAC2EB48BC60C82AC9C58662FCDF728634E86B5DDA4143817EBBEC7A9"
+    },
+    {
+      "path": "artifacts/p1-supervision/drop-workflow-root-v1/workflow-all.json",
+      "sha256": "7522AD40DC087100694F3431123997C421DB663D8932CD3170DF07575F1D1A77"
+    },
+    {
+      "path": "artifacts/p1-supervision/drop-workflow-root-v1/workflow-ast.json",
+      "sha256": "79A14A1360E53C17ACF70701E393E139322BFBB4137C824F99ED61E7084012FA"
+    },
+    {
+      "path": "artifacts/p1-supervision/drop-workflow-root-v1/resource-review.json",
+      "sha256": "C86560CA98515448FE593C6BE500C2BB96ABFB651D28C835525191B1B66DD3F8"
+    }
+  ],
+  "release": {
+    "sdkVersion": "10.0.401",
+    "warnings": 0,
+    "errors": 0,
+    "registeredDenominator": 1203,
+    "executedHarness": 0
+  },
+  "utility": {
+    "yamlVersion": "6.0.1",
+    "tiny": 1,
+    "fixed": 8,
+    "negativeMutations": 7,
+    "astBlocks": 6,
+    "staticOnly": true,
+    "runtimeExecuted": 0,
+    "nativeIlVerifyExecuted": 0,
+    "nativeAotExecuted": 0,
+    "formalJointControlsExecuted": 0
+  },
+  "fixedNative": {
+    "generated": 28,
+    "exactRustcMatches": 26,
+    "inheritedDifferences": 2,
+    "originalPeIlVerify": 30,
+    "nativeAot": 28,
+    "callableArtifacts": 2,
+    "callableCases": 7,
+    "stages": 36
+  },
+  "aggregate": {
+    "requiredJob": "drop-native",
+    "requiredPlatforms": [
+      "windows-x64",
+      "linux-x64"
+    ],
+    "originalPathsRequired": true,
+    "transportValidators": 2,
+    "maximumBatchSeconds": 250,
+    "perProcessSeconds": 120,
+    "formalJointProducerIntegrated": false
+  },
+  "recordedRootIdentitiesAbsent": 9,
+  "processCleanupVerification": "parent-exit-only",
+  "descendantContainmentVerified": false,
+  "p1GateClosed": false,
+  "p2LeafClosed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}

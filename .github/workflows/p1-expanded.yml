@@ -265,9 +265,90 @@ jobs:
           path: artifacts/p1-production-preflight/${{ matrix.name }}
           if-no-files-found: warn
           retention-days: 30
+  drop-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            runner: windows-2025
+          - name: linux-x64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    env:
+      GITHUB_SHA: ${{ github.sha }}
+      CI_COMMIT_SHA: ${{ github.sha }}
+      RUSTSHARP_NATIVE_AOT_SDK_VERSION: '10.0.401'
+      DOTNET_CLI_USE_MSBUILD_SERVER: '0'
+      DOTNET_CLI_UI_LANGUAGE: en-US
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.400
+            10.0.401
+      - name: Verify PowerShell 7 and bind rustc 1.98 oracle
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
+          $rustup = (Get-Command rustup -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath $rustup -ArgumentList @('toolchain','install','1.98.0','--profile','minimal') -TimeoutSeconds 180 -CapturePrefix 'artifacts/p1-drop-preflight/${{ matrix.name }}/oracle-install'
+          $rustc = (Get-Command rustc -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath $rustc -ArgumentList @('+1.98.0','--version') -TimeoutSeconds 30 -CapturePrefix 'artifacts/p1-drop-preflight/${{ matrix.name }}/oracle-version'
+          $version = [IO.File]::ReadAllText((Join-Path $PWD 'artifacts/p1-drop-preflight/${{ matrix.name }}/oracle-version.stdout.log')).Trim()
+          if (-not $version.StartsWith('rustc 1.98.0 (',[StringComparison]::Ordinal)) { throw 'The configured proxy did not select rustc 1.98.0.' }
+      - name: Restore ILVerify 10.0.11 tool
+        shell: pwsh
+        run: ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @('tool','restore','--tool-manifest','.config/dotnet-tools.json') -TimeoutSeconds 180 -CapturePrefix 'artifacts/p1-drop-preflight/${{ matrix.name }}/tools'
+      - name: Install Linux Native AOT prerequisites
+        if: matrix.name == 'linux-x64'
+        shell: pwsh
+        run: |
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath sudo -ArgumentList @('timeout','--kill-after=10s','180s','apt-get','update') -TimeoutSeconds 200 -CapturePrefix 'artifacts/p1-drop-preflight/${{ matrix.name }}/apt-update'
+          ./eng/Invoke-BoundedProcess.ps1 -FilePath sudo -ArgumentList @('timeout','--kill-after=10s','180s','apt-get','install','--no-install-recommends','-y','clang','zlib1g-dev') -TimeoutSeconds 200 -CapturePrefix 'artifacts/p1-drop-preflight/${{ matrix.name }}/apt-install'
+      - name: Execute fixed NativeV5, original-PE ILVerify, AOT and callable evidence
+        shell: pwsh
+        run: ./eng/Invoke-P1NativeDropEvidence.ps1 -CandidateSha $env:GITHUB_SHA -PlatformName '${{ matrix.name }}' -RunId '${{ github.run_id }}' -RunAttempt '${{ github.run_attempt }}' -Repository '${{ github.repository }}'
+      - name: Bind original receipt and retained Drop bytes into transport index
+        shell: pwsh
+        run: ./eng/Write-P1DropTransport.ps1 -CandidateSha $env:GITHUB_SHA -PlatformName '${{ matrix.name }}' -RunId '${{ github.run_id }}' -RunAttempt '${{ github.run_attempt }}'
+      - name: Upload Drop receipt, original verifier reports and process ledgers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-drop-receipt-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: artifacts/p1-drop-ci/${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload all retained original PE, oracle and native Drop bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-drop-bytes-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: artifacts/p1-drop/${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Drop native preflight diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-drop-preflight-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-drop-preflight/${{ matrix.name }}
+          if-no-files-found: warn
+          retention-days: 30
+
   production-gate:
     if: always()
-    needs: [suite-gate, production-native]
+    needs: [suite-gate, production-native, drop-native]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -334,6 +415,49 @@ jobs:
         run: |
           if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
           ./eng/Invoke-P1ReleaseBuild.ps1 -CandidateSha $env:GITHUB_SHA -SdkVersion 10.0.401 -ReportPath artifacts/p1-candidate/production-aggregate-release-build.json
+      - name: Download Windows Drop receipt and original verifier reports
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-drop-receipt-windows-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-drop-ci/windows-x64
+      - name: Download Linux Drop receipt and original verifier reports
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-drop-receipt-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-drop-ci/linux-x64
+      - name: Download Windows retained original PE and native Drop bytes
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-drop-bytes-windows-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-drop/windows-x64
+      - name: Download Linux retained original PE and native Drop bytes
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: p1-drop-bytes-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/p1-drop/linux-x64
+      - name: Require both native Drop jobs and reconcile transferred original bytes
+        if: always()
+        shell: pwsh
+        env:
+          DROP_JOB_RESULT: ${{ needs.drop-native.result }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
+          $clock = [Diagnostics.Stopwatch]::StartNew()
+          $failed = $env:DROP_JOB_RESULT -cne 'success'
+          foreach ($platform in @('windows-x64','linux-x64')) {
+            if ($clock.Elapsed.TotalSeconds -ge 250) { throw 'Two-platform transport validation exceeded its batch deadline.' }
+            try { ./eng/Invoke-BoundedProcess.ps1 -FilePath pwsh -ArgumentList @('-NoLogo','-NoProfile','-File','eng/Test-P1DropTransport.ps1','-CandidateSha',$env:GITHUB_SHA,'-PlatformName',$platform,'-RunId','${{ github.run_id }}','-RunAttempt','${{ github.run_attempt }}') -TimeoutSeconds 120 -CapturePrefix ('artifacts/p1-candidate/drop-transport-'+$platform+'-launch') } catch { $failed = $true; Write-Warning $_.Exception.Message }
+          }
+          if ($failed) { throw 'Both native Drop jobs and physical transport validations must pass.' }
       - name: Require suite gate and complete native production evidence
         if: always()
         shell: pwsh
