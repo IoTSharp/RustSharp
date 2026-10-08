@@ -2,11 +2,14 @@
 Set-StrictMode -Version 3.0
 . (Join-Path $PSScriptRoot 'P1EvidenceValidation.ps1')
 $script:P1SnapshotValidationProcesses = [Collections.Generic.List[object]]::new()
-$script:P1SnapshotValidationClock = [Diagnostics.Stopwatch]::StartNew()
+$script:P1SnapshotValidationClock = $null
 
 function Invoke-P1ValidationGit([string] $Root, [string[]] $Arguments, [string] $InputText = '') {
     # A native candidate checks its main and two build snapshots (12 calls).
     # The two-RID suite checks six snapshots (24); all share a 110-second bound.
+    # Importing helpers before a fresh build must not spend that validation
+    # budget. Start it with the first real Git check and never restart it.
+    if ($null -eq $script:P1SnapshotValidationClock) { $script:P1SnapshotValidationClock = [Diagnostics.Stopwatch]::StartNew() }
     if ($script:P1SnapshotValidationProcesses.Count -ge 24 -or $script:P1SnapshotValidationClock.Elapsed.TotalSeconds -ge 110 -or $Arguments.Count -gt 12 -or $InputText.Length -gt 1MB) { throw 'Snapshot Git item/input/time bound exceeded.' }
     $git = (Get-Command git -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
     $info = [Diagnostics.ProcessStartInfo]::new($git)

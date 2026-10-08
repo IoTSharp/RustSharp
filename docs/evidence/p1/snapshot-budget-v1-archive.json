@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "p1-snapshot-validation-budget-local-repair",
+  "candidateSha": "aee97ccdc2509fb64693631979fa4e93c3a31578",
+  "candidateTreeSha": "4fd94a69ca4659fac8fc9be5e4283caf450df6d9",
+  "compilerSourceInputCount": 708,
+  "implementation": [
+    {
+      "sha256": "4964CDC8D69D2B3ADC761C6BB77E49133A1A24DE74C2647FE4347D940097B662",
+      "path": "eng/P1SuiteEvidenceValidation.ps1"
+    },
+    {
+      "sha256": "99C60A4E76773B38751DC4598EAD061061E5B1563E417BADBBD6558E973F6C54",
+      "path": "eng/Test-P1SnapshotValidationBudget.ps1"
+    }
+  ],
+  "reports": [
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/all-launch.process.json",
+      "sha256": "AFF26B92721D91636EBA1D92BB5A36A8708912923A2D1F0E4D379FF5D582F7BD"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/all-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/all-launch.stdout.log",
+      "sha256": "02CA69315898A138B463E977380EB22494226667BFB3C017834E933AC8615336"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/bindings-all-launch.process.json",
+      "sha256": "39FFF652C154FFB5325C1949F4E2797963E40E160E4824E058A6E01F063D31DE"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/bindings-all-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/bindings-all-launch.stdout.log",
+      "sha256": "779F0C18D5C22BF002C5F807E9279202936071FC6C147BD1D4E8E6048C64DD78"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/bindings-tiny-launch.process.json",
+      "sha256": "62B1DAD6B1FCCEABDB70A457871CFA7D570D4BBAD825734520213C119BC2B783"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/bindings-tiny-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/bindings-tiny-launch.stdout.log",
+      "sha256": "1B9E19A9F5BB589C42438FF0C8486115D781E78E3A6CDC232A7E42EDEA975DCB"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/budget-all.json",
+      "sha256": "AC5FAA89BD4E49FDCE1084545748DCB8E30CC7F51691E574EB3528E21A389D8C"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/budget-tiny.json",
+      "sha256": "013EF28DCC7100E149A4C592119C6BBE5C163B5475CAAF6482C5A155FD8786D2"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-build.process.json",
+      "sha256": "2FBA7271029B7F5785A998DB36C725826F3BCDA6314B02A25D70BD2B08573C4F"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-build.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-build.stdout.log",
+      "sha256": "DBD46A25DEBB3476F4D36CBEA1026A23695F30229A7FC4D122CA9A55AE0157C9"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-launch.process.json",
+      "sha256": "F48984F02725539A493CB3D99B0ABA270714E0DF8ED23ACBEEDD1423CB4B102A"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-launch.stdout.log",
+      "sha256": "F44C9C6F9FDD86389628FD6B15C4DA8E50FF075DCFDD936B208FE594DAF118F6"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-registration-inventory.process.json",
+      "sha256": "9C1DE90B80A2906FEC145774F85437E96F3AE361847FAC69AA8BAF82AE0649E8"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-registration-inventory.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-registration-inventory.stdout.log",
+      "sha256": "603DADF7137FC9FF5FF3E57C9E8462D1A8035F543EB1B42EE38190290D26D223"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-restore.process.json",
+      "sha256": "5CD997CF75C91BC6C563989B0C3103C8B8D2CE4C66B3FC6BC3CA315F51E3E382"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-restore.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-restore.stdout.log",
+      "sha256": "2AD9967F2280D0195AD457A92FE6A353A8492625846632386DF6DFC446EFE4BC"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-sdk.process.json",
+      "sha256": "BEAC9AC5DB68540CA0714B029DF35929CA11AF4091F150E4ECB2FCB09EB13430"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-sdk.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-sdk.stdout.log",
+      "sha256": "3DB6BCA4B50618B2E0D2D55D23B3D0541FE039AB6F731DF0E9C47317B400CE52"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-source-after.json",
+      "sha256": "D4F262E92B940E9C3C7D1C6911400B41AE41B3604511E03B96A4105DCECFA646"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/build-source-before.json",
+      "sha256": "AF2BB1D4F3B5F12D9BBFC882F2A8D397B94120222EFA6821D5A943A192EA277F"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-all-launch.process.json",
+      "sha256": "1C03BACD42FACC83F0AF930410703DB4BF8EF14D41E725BFB6333E66B2B725AA"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-all-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-all-launch.stdout.log",
+      "sha256": "FD5A7B2FD25584C6F883E9FF038E222B30040AE36128D026A77804991C8FE37D"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-budget-all.json",
+      "sha256": "555FA6CA0176E1BDB471787DBE2E2EF68F93BE2217F5F8879B14A9E6A4C4A279"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-budget-tiny.json",
+      "sha256": "A48C075F6FC446123290DF472B4E72147EFF07D0B22EA70139D5DFBCC3E44FB7"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-tiny-launch.process.json",
+      "sha256": "AC429ACB589FFF2BB26AE7D4185DFBBE7ED9A400EED4B27EBC97600DD2FA873B"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-tiny-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-tiny-launch.stdout.log",
+      "sha256": "DA3DD68DB3326FCEE70E97C5AA879DB3D0FE6AAABB72C362B778F5BA47036429"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/release-build.json",
+      "sha256": "CD883417CA8292544A015EC91608B61F16D9C6072C05CE3B63A61D4FA572E434"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/scope.json",
+      "sha256": "9B12876147063B7EFC3B192434FC40355B1B8244860E7E1CFA86A9B33FC2D7DC"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/snapshot-launch.process.json",
+      "sha256": "32570112AAFE255154428A2A04963E078BBCA2E4CA64FB1355B831500592D1B8"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/snapshot-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/snapshot-launch.stdout.log",
+      "sha256": "8B48E18F93E5BB4FFABC4CEBA7DF12D80960397D109C1FEA086FC788EA031811"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/source-snapshot.json",
+      "sha256": "F21E3C2FFE3E82E1DEC4102AEF107293730EC5637BC944806CDC423E6520DB3F"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/tiny-launch.process.json",
+      "sha256": "24B235C85C7CA30A52FEA24ED8BB0444C4A57A1A2FD2E0381216548B4DB752A4"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/tiny-launch.stderr.log",
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/tiny-launch.stdout.log",
+      "sha256": "D139AF4162D6FE8B71499766F07C144F139B1BA7FD42C01AFDD4F5C489A67FE6"
+    },
+    {
+      "sha256": "7EEF79AA5C70B6069763B9086E1C291C5FB8269F05C228D15C8EB1C9D1D7D9F2",
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/resource-review.json"
+    },
+    {
+      "sha256": "1CB5020796255A247CEED6000144372A015CF8874DAD12DA9E7D1EC3684726D4",
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-resource-launch.process.json"
+    },
+    {
+      "sha256": "5008A880EBEC32EA500C4B8D80C9CF43827494AAB2D68138D6CD4D6073E40C57",
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-resource-launch.stdout.log"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p1-supervision/snapshot-budget-root-v1/linux-resource-launch.stderr.log"
+    }
+  ],
+  "release": {
+    "succeeded": true,
+    "warnings": 0,
+    "sdkVersion": "10.0.401",
+    "compilerSha256": "2B84FDA6674D2EECCAB9333A75A38471FDFF987B701A7FDB13338042B87B50B4",
+    "errors": 0
+  },
+  "utility": {
+    "releaseBindingsFixed": 9,
+    "ubuntuFixed": 6,
+    "windowsFixed": 6,
+    "negativeClockAndCountAreUtilityInputs": true,
+    "maximumValidationSeconds": 110,
+    "releaseBindingsTiny": 1,
+    "actualGitCallsPerTiny": 4,
+    "ubuntuTiny": 1,
+    "actualGitCallsPerFull": 13,
+    "maximumUtilitySeconds": 75,
+    "windowsTiny": 1,
+    "maximumGitCommands": 24
+  },
+  "nativeGeneratedExecuted": 0,
+  "originalPeIlVerifyExecuted": 0,
+  "nativeAotExecuted": 0,
+  "formalJointExecuted": 0,
+  "nativeDenominatorUnchanged": "28/30/28/2/7/36",
+  "formalJointDenominator": 12,
+  "processCleanupVerification": "recorded-roots-and-recorded-Git-PIDs-only",
+  "descendantContainmentVerified": false,
+  "p1GateClosed": false,
+  "p2LeafClosed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "linuxRecordedValidationPidsAbsent": true,
+  "linuxRecordedValidationPidCount": 17
+}
