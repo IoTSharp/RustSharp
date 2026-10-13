@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.02.kernel-io-foundation-v1",
+  "componentAccepted": true,
+  "wholeLeafAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "cliNativePendingProven": false,
+  "cliNativeCancellationProven": false,
+  "scope": "One real Windows ordinary-file helper oplock IRP request/cancel/nativecompletion/storage+handle lifetime only; no CLI open/read pending IO or59/91 gate",
+  "actualSupervisor": {
+    "taskId": "P2-08.02.CTRL-v2",
+    "version": 5,
+    "state": "HELPER_FOUNDATION_PASS_PENDING_ROOT_REVIEW",
+    "nonce": "c7d2448c23484ab1be22aa7d6d683309",
+    "nativeCaseDenominator": 1,
+    "driverSha256": "B4FD1B6E719C25021A81D5E43A91E884A387F985781B52FABD69C087CAF33E1C",
+    "pdbSha256": "99AB2A709FF8B070612487F20008F4034BDBBFC9FE6BB38E3701712640945B9A",
+    "driverMvid": "274f70ac-ea95-4d21-82db-236ca0d578c0",
+    "exactAbsoluteDriver": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll",
+    "exactAbsolutePdb": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.pdb",
+    "borrowedSha256": "509EE571F815F6E0428E61CCEB6C21B5F3642537DFB3F11FCA97A063AFE0DAE9",
+    "cliLaunched": false,
+    "cliNativePendingProven": false,
+    "cliNativeCancellationProven": false,
+    "errors": [],
+    "cleanupErrors": [],
+    "host": {
+      "pid": 48572,
+      "nativeBirthFileTime": "134364085174132812",
+      "parentPid": 13884,
+      "fullCommand": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop';$taskBase='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5';$taskSarif=Get-Content -LiteralPath (Join-Path $taskBase 'root-build/compiler.sarif') -Raw|ConvertFrom-Json -DateKind String;if($taskSarif.runs.Count -ne 1 -or $taskSarif.runs[0].results.Count -ne 0){throw 'Actual all-level diagnostics nonzero'};$taskDll=Join-Path $taskBase 'root-build/bin/KernelIoFoundation.dll';$taskNonce=[Guid]::NewGuid().ToString('N');$taskRequest=@{root=$taskBase;nonce=$taskNonce;driver=$taskDll;sha256=(Get-FileHash -LiteralPath $taskDll).Hash;sourceManifestSha256=(Get-FileHash -LiteralPath (Join-Path $taskBase 'manifest.json')).Hash;cliNativeProof=$false;startedAt=[DateTimeOffset]::Now.ToString('o')};[IO.File]::WriteAllText([IO.Path]::GetFullPath('artifacts/p1-supervision/resume-root-v29/kernel5-native-request.json'),($taskRequest|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));& ./artifacts/p2-supervision/formatter-kernel-io-v5/Run-Foundation.ps1 -Nonce $taskNonce -DriverDll $taskDll -ExpectedDriverSha256 $taskRequest.sha256 |Out-Null;Get-Date -Format o\""
+    },
+    "hostParentChain": {
+      "Nodes": [
+        {
+          "Pid": 48572,
+          "CreationFileTime": 134364085174132812,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop';$taskBase='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5';$taskSarif=Get-Content -LiteralPath (Join-Path $taskBase 'root-build/compiler.sarif') -Raw|ConvertFrom-Json -DateKind String;if($taskSarif.runs.Count -ne 1 -or $taskSarif.runs[0].results.Count -ne 0){throw 'Actual all-level diagnostics nonzero'};$taskDll=Join-Path $taskBase 'root-build/bin/KernelIoFoundation.dll';$taskNonce=[Guid]::NewGuid().ToString('N');$taskRequest=@{root=$taskBase;nonce=$taskNonce;driver=$taskDll;sha256=(Get-FileHash -LiteralPath $taskDll).Hash;sourceManifestSha256=(Get-FileHash -LiteralPath (Join-Path $taskBase 'manifest.json')).Hash;cliNativeProof=$false;startedAt=[DateTimeOffset]::Now.ToString('o')};[IO.File]::WriteAllText([IO.Path]::GetFullPath('artifacts/p1-supervision/resume-root-v29/kernel5-native-request.json'),($taskRequest|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));& ./artifacts/p2-supervision/formatter-kernel-io-v5/Run-Foundation.ps1 -Nonce $taskNonce -DriverDll $taskDll -ExpectedDriverSha256 $taskRequest.sha256 |Out-Null;Get-Date -Format o\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        },
+        {
+          "Pid": 39640,
+          "CreationFileTime": 134363303677828900,
+          "ParentPid": 12544,
+          "CommandLine": "\"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\" "
+        },
+        {
+          "Pid": 12544,
+          "CreationFileTime": 134363301892520825,
+          "ParentPid": 3816,
+          "CommandLine": "sihost.exe"
+        }
+      ],
+      "Complete": false,
+      "StopReason": "Win32Exception: OpenProcess query-only ancestor"
+    },
+    "child": {
+      "pid": 55652,
+      "nativeBirthFileTime": "134364085179996980",
+      "parentPid": 48572,
+      "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll\" \"--child\" \"c7d2448c23484ab1be22aa7d6d683309\" \"EEF6340660782530A1873D3F708977D8AD1FC442976AFE447E88ACD6AA89DA85\""
+    },
+    "launchSha256": "8441ECB31E90C76E369938577C53697A4FDE4C71FC27E1F12F14BB6911C02854",
+    "actualChildExitCode": 0,
+    "childReportSha256": "42E22672DF96C8BF4489C7B7E3862119519364A2D3298764C632994D2138749F",
+    "childReport": {
+      "taskId": "P2-08.02.CTRL-v2",
+      "version": 5,
+      "caseDenominator": 1,
+      "cliNativePendingProven": false,
+      "cliNativeCancellationProven": false,
+      "cliLaunched": false,
+      "state": "HELPER_FOUNDATION_PASS",
+      "errors": [],
+      "cleanupErrors": [],
+      "actualDriver": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll",
+      "actualPdb": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.pdb",
+      "actualDriverSha256": "B4FD1B6E719C25021A81D5E43A91E884A387F985781B52FABD69C087CAF33E1C",
+      "actualPdbSha256": "99AB2A709FF8B070612487F20008F4034BDBBFC9FE6BB38E3701712640945B9A",
+      "actualDriverMvid": "274f70ac-ea95-4d21-82db-236ca0d578c0",
+      "owner": {
+        "pid": 55652,
+        "nativeBirthFileTime": "134364085179996980",
+        "parentPid": 48572,
+        "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll\" \"--child\" \"c7d2448c23484ab1be22aa7d6d683309\" \"EEF6340660782530A1873D3F708977D8AD1FC442976AFE447E88ACD6AA89DA85\""
+      },
+      "host": {
+        "pid": 48572,
+        "nativeBirthFileTime": "134364085174132812",
+        "parentPid": 13884,
+        "fullCommand": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop';$taskBase='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5';$taskSarif=Get-Content -LiteralPath (Join-Path $taskBase 'root-build/compiler.sarif') -Raw|ConvertFrom-Json -DateKind String;if($taskSarif.runs.Count -ne 1 -or $taskSarif.runs[0].results.Count -ne 0){throw 'Actual all-level diagnostics nonzero'};$taskDll=Join-Path $taskBase 'root-build/bin/KernelIoFoundation.dll';$taskNonce=[Guid]::NewGuid().ToString('N');$taskRequest=@{root=$taskBase;nonce=$taskNonce;driver=$taskDll;sha256=(Get-FileHash -LiteralPath $taskDll).Hash;sourceManifestSha256=(Get-FileHash -LiteralPath (Join-Path $taskBase 'manifest.json')).Hash;cliNativeProof=$false;startedAt=[DateTimeOffset]::Now.ToString('o')};[IO.File]::WriteAllText([IO.Path]::GetFullPath('artifacts/p1-supervision/resume-root-v29/kernel5-native-request.json'),($taskRequest|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false));& ./artifacts/p2-supervision/formatter-kernel-io-v5/Run-Foundation.ps1 -Nonce $taskNonce -DriverDll $taskDll -ExpectedDriverSha256 $taskRequest.sha256 |Out-Null;Get-Date -Format o\""
+      },
+      "launchSha256": "8441ECB31E90C76E369938577C53697A4FDE4C71FC27E1F12F14BB6911C02854",
+      "parentBoundaryVerified": true,
+      "systemAncestorsComplete": false,
+      "source": {
+        "volume": "12462597171130787332",
+        "fileIdLow": "4",
+        "fileIdHigh": "1871250",
+        "nativeBirth": "134364085181129840",
+        "attributes": 32,
+        "absoluteFinalPath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\runtime\\c7d2448c23484ab1be22aa7d6d683309\\source.rs"
+      },
+      "sourceSha256": "536E506BB90914C243A12B397B9A998F85AE2CBD9BA02DFD03A9E155CA5CA0F4",
+      "sourceLeaseSha256": "122B2FC4C08549666411D5EBE4F6C26E4D194C964E237364C105BDDFB6C185E6",
+      "nativeRequestStatus": 259,
+      "helperOplockPending": true,
+      "eventBeforeCancellation": 258,
+      "cancelReturn": 1,
+      "cancelLastError": 0,
+      "nativeCompletionSignaled": true,
+      "nativeCompletionStatus": -1073741536,
+      "nativeInformation": 0,
+      "helperNativeCancellationProven": true,
+      "casePassedBeforeCleanup": true,
+      "nativeCompletedBeforeFree": true,
+      "fileHandleClosed": true,
+      "eventHandleClosed": true,
+      "nativeStorageFreed": true,
+      "ownedSourceRetainedAsArtifact": true,
+      "ownedSourceIdentityVerified": true,
+      "ownedSourceDeletionAttempted": false,
+      "elapsedMilliseconds": 32,
+      "exitCode": 0
+    },
+    "launchReceipt": {
+      "Pid": 55652,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll\" \"--child\" \"c7d2448c23484ab1be22aa7d6d683309\" \"EEF6340660782530A1873D3F708977D8AD1FC442976AFE447E88ACD6AA89DA85\"",
+      "Identity": {
+        "Pid": 55652,
+        "CreationFileTime": 134364085179996980,
+        "ParentPid": 48572,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll\" \"--child\" \"c7d2448c23484ab1be22aa7d6d683309\" \"EEF6340660782530A1873D3F708977D8AD1FC442976AFE447E88ACD6AA89DA85\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": [],
+      "ActualExitCode": 0,
+      "ExitCodeReadReturn": 1,
+      "ExitCodeReadLastError": 0
+    },
+    "privateJobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "resourceClosure": true,
+    "cliProof": "NO_NATIVE_CLI_PROOF"
+  },
+  "request": {
+    "root": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5",
+    "cliNativeProof": false,
+    "startedAt": "2026-10-14T07:41:57.8439763+08:00",
+    "nonce": "c7d2448c23484ab1be22aa7d6d683309",
+    "sourceManifestSha256": "731F7B6BF9A65E6A3E9158ABC1539A531F9EB1DE8EBBF387AED85957F77A5D62",
+    "driver": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll",
+    "sha256": "B4FD1B6E719C25021A81D5E43A91E884A387F985781B52FABD69C087CAF33E1C"
+  },
+  "retainedSource": {
+    "disposition": "DELIVERED_ARTIFACT_RETAINED",
+    "bytes": 13,
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\runtime\\c7d2448c23484ab1be22aa7d6d683309\\source.rs",
+    "sha256": "536E506BB90914C243A12B397B9A998F85AE2CBD9BA02DFD03A9E155CA5CA0F4"
+  },
+  "driverSources": {
+    "taskId": "P2-08.02.CTRL-v2",
+    "round": 25,
+    "version": 5,
+    "worker": "/root/formatter_control_v12",
+    "codeDeadline": "2026-10-14T07:37:00+08:00",
+    "sourceState": "FROZEN_CANDIDATE",
+    "build": "NOT_RUN",
+    "runner": "NOT_RUN",
+    "native": "NOT_RUN",
+    "nativeProcessesCreated": 0,
+    "nativeCaseDenominator": 1,
+    "cliNativePendingProven": false,
+    "cliNativeCancellationProven": false,
+    "sourceDisposition": "DELIVERED_ARTIFACT_RETAINED",
+    "fix": "CA1068-token-last-private-signature-and-two-calls",
+    "priorBuild": "v4-strict-FAIL-CA1068-original-SARIF-log-preserved",
+    "hashes": [
+      {
+        "Path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\Driver.cs",
+        "Hash": "4778C9325D8417E2F47A4949CE1A9AED9FE76F4CEA4B7D525EC6A444200219B2"
+      },
+      {
+        "Path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\Run-Foundation.ps1",
+        "Hash": "411FD28F132549D87FC3D784171A256205C9A5ED3070B19DE84374A101A2B2E8"
+      },
+      {
+        "Path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\KernelIoFoundation.csproj",
+        "Hash": "5B301A3DD363CDB185191072C95ABADFEAD73D5717EBC39150733E37959CC1BE"
+      },
+      {
+        "Path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\HANDOFF.md",
+        "Hash": "24FA134167905FF04451074A64E327426AC0BFC0C916D6BBD4F5EE86F95C746E"
+      },
+      {
+        "Path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\HANDOFF_zh.md",
+        "Hash": "3DED3D8C0D090CC8EA67BBEBBA1521CE75442BE1557E8CF44E698718DD9348DE"
+      }
+    ],
+    "originalsPreserved": true
+  },
+  "nativeReport": {
+    "sha256": "A6A522E373D11316B827C29D228AE7D0A2ED1AE1C2B1F2806F7EC93212454990",
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\runtime\\c7d2448c23484ab1be22aa7d6d683309\\supervisor-report.json"
+  },
+  "actualBuild": {
+    "sarifSha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B",
+    "allLevelDiagnostics": 0,
+    "sarifPath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\compiler.sarif",
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\kernel5-build-owned.json",
+    "sha256": "537D6C83F1BD83A9351D8957D3BB51AA74139B45DE99F67019D63DBEB1B7F5F2"
+  },
+  "previousFailure": {
+    "suppression": false,
+    "rule": "CA1068",
+    "path": "artifacts/p2-supervision/formatter-kernel-io-v4/root-build/compiler.sarif",
+    "sha256": "8B0804FE870A087A1C6E34F78FF6213F1A828B988948E49288B4E85EF5DF1BE4"
+  },
+  "independentResourceReview": {
+    "identity": {
+      "Pid": 55652,
+      "CreationFileTime": 134364085179996980,
+      "ParentPid": 48572,
+      "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-kernel-io-v5\\root-build\\bin\\KernelIoFoundation.dll\" \"--child\" \"c7d2448c23484ab1be22aa7d6d683309\" \"EEF6340660782530A1873D3F708977D8AD1FC442976AFE447E88ACD6AA89DA85\""
+    },
+    "foreignReusePreserved": false,
+    "nativeCaseDenominator": 1,
+    "liveOwned": 0
+  },
+  "at": "2026-10-14T07:44:45.8535513+08:00"
+}
