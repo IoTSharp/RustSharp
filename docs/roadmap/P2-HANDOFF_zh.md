@@ -8,7 +8,7 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v6/resumption.json`。
+`artifacts/p1-supervision/resume-root-v7/resumption.json`。
 
 三名全新 worker 独占互斥冻结范围：`P1-GATE.03.CISEM-v1`
 （source 1572文件，每RID 19 packages/39 PE/785 retained；backend 234文件，
@@ -22,6 +22,8 @@ worker完成声明仍待独立源码、运行证据及资源复核。
 加6门禁叶项、P2的94实施叶项加7门禁叶项；P2仍为8/101叶项 ✅ 已完成。
 本入口不声明当前切片、父项或阶段已通过验收。实际测试、失败、缺项、
 提交及资源记录以持久检查点为准。
+
+v29 真实保留字节审计通过10052项检查、0个问题，保留1806文件／144机器头／52案例及92 PE/PDB；绑定708候选Git blob及14个后端PDB文档。完整签名语义与全部阶段门禁仍开放，首次零长度blob失败及archive启动器资源缺项均保留，仍须监督者独立验收。
 
 ## 历史检查点 — 2026-10-08 12:18
 

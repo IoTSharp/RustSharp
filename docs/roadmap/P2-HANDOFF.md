@@ -8,7 +8,7 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v6/resumption.json`.
+`artifacts/p1-supervision/resume-root-v7/resumption.json`.
 
 Three fresh workers own disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
 (source 1572 files, 19 packages/39 PE/785 retained per RID; backend 234 files,
@@ -24,6 +24,8 @@ retains P1's 85 implementation plus 6 gate leaves and P2's 94 implementation
 plus 7 gate leaves; P2 remains 8/101 leaves ✅ Complete. This entry makes no
 claim that a current slice, parent or phase passed acceptance. Actual tests,
 failures, gaps, commits and resource records belong to the persistent checkpoint.
+
+The v29 actual retained-byte audit passes10052 checks with0 issues, preserving1806 files/144 headers/52 cases and92 PE/PDB. It binds708 candidate Git blobs and14 backend PDB documents; complete signature semantics and all phase gates remain open. The first zero-length-blob failure and archive launcher resource gaps are retained. Root independent acceptance remains required.
 
 ## Historical checkpoint — 2026-10-08 12:18
 
