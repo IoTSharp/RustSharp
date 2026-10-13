@@ -8,7 +8,7 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v7/resumption.json`。
+`artifacts/p1-supervision/resume-root-v8/resumption.json`。
 
 三名全新 worker 独占互斥冻结范围：`P1-GATE.03.CISEM-v1`
 （source 1572文件，每RID 19 packages/39 PE/785 retained；backend 234文件，
