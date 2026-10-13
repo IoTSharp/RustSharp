@@ -13,7 +13,7 @@ internal static class Program
     public static async Task<int> Main(string[] args)
     {
         if (args.Length > 0 && args[0] == "fmt")
-            return FormatterCommand.Run(args);
+            return FormatterCancellationProbe.Run(args);
         var parseResult = CommandLineParser.Parse(args);
         if (!parseResult.Success)
         {

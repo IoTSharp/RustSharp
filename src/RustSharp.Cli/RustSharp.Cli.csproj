@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>rsc</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>RustSharp compiler command-line tool.</Description>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>rsc</ToolCommandName>

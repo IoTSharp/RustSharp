@@ -21,6 +21,23 @@ hash保持不变。可移植检查无法关闭所有并发filesystem TOCTOU窗�
 CLI／workspace、已有目标更新及完整documentation profile仍开放，因此P2保持
 8/101，P1六门禁仍开放；唯一heartbeat保持ACTIVE。
 
+第22轮新formatter opt-in控制组件在真实Windows限定范围内 ✅ 已完成：同一新
+CLI及Helper24／Launcher21先无信号、后CTRL+C；实际注册handler的ready回执
+绑定nonce／PID／birth／source lease。GenerateConsoleCtrlEvent返回1、event0／group0，
+CLI未被native termination而自然exit130。两次完整6角色图、事件对账、源码保护及
+Job0／句柄清理均通过。Candidate36f699仅为显式private source snapshot；编译
+metadata仍为43859c4，dirty worktree match保持false。Git规范换行不代表新的
+source／PDB／remote-SHA执行门禁。
+[真实控制证据](../evidence/p2/formatter-v26-real-control.json)保留Capture25静态调用
+失败及精确raw build／snapshot／DLL／PDB。Pending kernel IO、完整stdio／upstream
+祖先、原default-handler案例、formatter59／tooling91及完整叶项验收仍开放。
+P1 host-command v3 held-terminal transitions在78cdc29的限定范围内 ✅ 已完成，
+但body ❌ 失败：pwsh exit0、双流空、body文件缺失。
+[真实terminal／body证明](../evidence/p1/host-command-body-v3-terminal-failure.json)
+保留v2 image-query失败；原flags／helper0／caps／全部分母不变。下一单包
+documentation CLI artifact仅为partial，tests／build全部NOT_RUN／NOT_ACCEPTED。
+P1六门禁及P2的8/101计数均保持不变。
+
 第21轮Helper24严格构建在 `01c56bd` 的限定范围内 ✅ 已完成：显式private访问
 修复Helper23真实CS8796失败；精确compiler response、全部3个原生身份／退出、
 所有级别SARIF诊断0及Job0／句柄关闭均通过。

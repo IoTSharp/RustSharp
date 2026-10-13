@@ -24,6 +24,24 @@ concurrent filesystem TOCTOU window. CLI/workspace, existing-target updates and
 the complete documentation profile remain open, so P2 remains8/101 and all six
 P1 gates stay open. The unique heartbeat remains ACTIVE.
 
+Round22 new formatter opt-in control component is ✅ Complete for actual Windows
+no-signal followed by CTRL+C on the same newly built CLI and Helper24/Launcher21:
+the actual registered-handler readiness receipt binds nonce/PID/birth/source lease;
+GenerateConsoleCtrlEvent returns1 with event0/group0 and the CLI naturally exits130
+without native termination. Both complete six-role graphs, event accounting, source
+preservation and Job0/handle cleanup pass. Candidate36f699 is an explicit private
+source snapshot; compiled metadata still identifies43859c4 and the dirty worktree
+match remains false. Canonical Git newline normalization does not constitute a new
+source/PDB/remote-SHA execution gate. [Actual control evidence](../evidence/p2/formatter-v26-real-control.json)
+retains the Capture25 static-call failure and exact raw builds/snapshot/DLL/PDB.
+Pending kernel IO, complete stdio/upstream ancestry, original default-handler cases,
+formatter59/tooling91 and whole-leaf acceptance remain open. P1 host-command v3
+held-terminal transitions are ✅ Complete at78cdc29, but body is ❌ Failed: pwsh
+exit0, empty streams and absent body file. [Actual terminal/body proof](../evidence/p1/host-command-body-v3-terminal-failure.json)
+retains v2 image-query failure; original flags/helpers0/caps/denominators stay unchanged.
+The next single-package documentation CLI artifact is partial, tests/build NOT_RUN
+and NOT_ACCEPTED. P1's six gates and P2's8/101 counts remain unchanged.
+
 Round21 Helper24 strict build is ✅ Complete at `01c56bd`: explicit private access
 fixes Helper23's actual CS8796 failure; exact compiler response, all three native
 identities/exits, zero SARIF diagnostics at every level and Job0/closed handles

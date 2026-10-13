@@ -16,6 +16,17 @@ internal static class FormatterCommand
     private static readonly UTF8Encoding Utf8 = new(false, true);
 
     public static int Run(string[] args, CancellationToken cancellationToken = default)
+        => RunCore(args, null, cancellationToken);
+
+    internal static int RunWithCancellationHandlerReady(string[] args,
+        Action<CancellationToken> cancellationHandlerReady, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(cancellationHandlerReady);
+        return RunCore(args, cancellationHandlerReady, cancellationToken);
+    }
+
+    private static int RunCore(string[] args, Action<CancellationToken>? cancellationHandlerReady,
+        CancellationToken cancellationToken)
     {
         bool checkOnly = args.Length == 3 && args[1] == "--check";
         if (!(args.Length == 2 || checkOnly) || args[^1].StartsWith('-'))
@@ -125,6 +136,11 @@ internal static class FormatterCommand
         int exitCode;
         try
         {
+            // An internal control fixture can observe the actual registered handler
+            // before file discovery or the first write. Production callers omit it.
+            Guard();
+            cancellationHandlerReady?.Invoke(ioCancellation.Token);
+            Guard();
             string root = Path.GetFullPath(args[^1]);
             List<string> paths = Discover(root, Guard);
             var prepared = new List<(string Path, byte[] Original, byte[] Output, FileAttributes Attributes, UnixFileMode? Mode)>();
