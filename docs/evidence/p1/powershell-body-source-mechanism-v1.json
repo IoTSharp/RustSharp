@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.body-cause-v1",
+  "sourceMechanismReviewed": true,
+  "actualRuntimeCauseProved": false,
+  "wholeGateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "actualProductVersion": "7.6.6 SHA: 078a44214be21d0b816adb9fe8a5f1f63a85236a+078a44214be21d0b816adb9fe8a5f1f63a85236a",
+  "actualPwshSha256": "BFB46AF89433268872DDB43D1CA7A3F433452EE91ED356A9786940F90118E285",
+  "frozenFiles": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-body-cause-v1\\BASELINE.json",
+      "sha256": "89CD4F39C0BF96DAEA595F3B2F83DC9F69E86BB62F3F201AAC6EB1486469A2D4"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-body-cause-v1\\ManagedEntrance.cs",
+      "sha256": "B57FE9EADDEDFF9130013EE8DDAA18651AB7122C564732472CCF9A4BBE8D8E2E"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-body-cause-v1\\SOURCE-RECEIPT.json",
+      "sha256": "F20D0EEA385B9B091604966C82174FA1AD2AC510724E1CD07ADCFF173F26F617"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-body-cause-v1\\CAUSE-EVIDENCE.json",
+      "sha256": "B2D219B4D744EC51597884078765833BE59DAEC4737E13692403C6C53F016245"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-body-cause-v1\\HANDOFF.md",
+      "sha256": "45B6AF0F9B97ED79E6AD0500AB3A153D7DF17331DABBFEBFEF2466E01C07B8A9"
+    }
+  ],
+  "sourceReceipt": {
+    "url": "https://raw.githubusercontent.com/PowerShell/PowerShell/078a44214be21d0b816adb9fe8a5f1f63a85236a/src/Microsoft.PowerShell.ConsoleHost/host/msh/ManagedEntrance.cs",
+    "file": "ManagedEntrance.cs",
+    "attempts": [
+      {
+        "proxy": false,
+        "status": 200
+      }
+    ],
+    "fetched": true,
+    "sha256": "B57FE9EADDEDFF9130013EE8DDAA18651AB7122C564732472CCF9A4BBE8D8E2E"
+  },
+  "actualEvidence": {
+    "taskId": "P1-GATE.02.CONTAIN-v8",
+    "status": "SOURCE_MECHANISM_FOUND_RUNTIME_CAUSE_UNCONFIRMED",
+    "installedVersion": "7.6.6",
+    "commit": "078a44214be21d0b816adb9fe8a5f1f63a85236a",
+    "entrySourcePath": "ManagedEntrance.cs",
+    "entrySourceSha256": "B57FE9EADDEDFF9130013EE8DDAA18651AB7122C564732472CCF9A4BBE8D8E2E",
+    "facts": [
+      "Official managedentry initializes exitCode0 before ConsoleHost.Start",
+      "HostException with innerWin32 error6 or1236 returns initialized exitCode without ordinarycommandexecution",
+      "ConsoleHost ctor createsRawUI; RawUI ctor readsForeground/Background viaGetBufferInfo/CONOUT$ OpenExisting",
+      "Successful retainedformatter StdIoLauncher usesactualflags0x08080004 despite boolparameterdetached",
+      "Failing nativePowerShellFile/Command diagnostics use0x0008000C; realSTDINNULchar2/OUTERRpipe3/inherit1/Startup112/flags256/attribhandlelist24",
+      "True heldidentity/privateJob1/nativeexit0 established; bodyfile missing/2streamsempty/NaturalRootRuntime0"
+    ],
+    "inference": "Detached process lacks console, RawUI consolebuffer lookup may fail withWin32error6; managedentry catches andreturns0 before dispatch. This matches observed body0+exit0 but actual exception stack not captured",
+    "runtimeCauseProved": false,
+    "actualExceptionCode": "UNKNOWN",
+    "actualAllocationCaller": "UNKNOWN",
+    "originalScopePassed": false,
+    "noFlagChange": true,
+    "noFixtureChange": true,
+    "noHelperApproval": true,
+    "nextProof": "Capture actual target firstchance HostException/innerWin32code and stack against exactPID/birth/cmd/flags/STDIO; keep allcaps/no body remainsFAIL",
+    "rejectedWorkaround": "No ServerMode/NamedPipe/managedinprocess substitute for originalpwsh-body contract",
+    "originalTiny": 1,
+    "identityFailure": 1,
+    "cancel": 6,
+    "retention": 2,
+    "linux": 12,
+    "helper0": true,
+    "workerBuild": 0,
+    "workerNative": 0,
+    "workerGit": 0,
+    "fullP1Closure": false
+  },
+  "reviewedSourceLines": {
+    "interpretation": "Specific earlyreturn mechanism is primary-source fact; attribution to actual target remains inference/UNKNOWN",
+    "entry": "ManagedEntrance.cs86-110 exitCode initial0, ConsoleHost.Start, HostException innerWin32error6/1236 earlyreturn",
+    "runtimeLimit": "No actual target firstchance exception/stack. Different observed/source-bound NO_WINDOW versus DETACHED flags do not approve a flag/helper/cap change or completeoriginalfixture"
+  },
+  "resourceReview": {
+    "cleanupRequired": false,
+    "workerBuild": 0,
+    "longProcessesCreated": 0,
+    "workerNative": 0,
+    "originalsRetained": true
+  },
+  "at": "2026-10-14T06:45:37.8991800+08:00"
+}
