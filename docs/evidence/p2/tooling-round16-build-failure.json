@@ -1,0 +1,2922 @@
+{
+  "taskId": "P2-08.03",
+  "round": 16,
+  "candidateBuild": "FAIL",
+  "newDocumentationCasesExecuted": 0,
+  "documentationDenominator": 12,
+  "newFormatterRuntime": "NOT_RUN",
+  "productsAccepted": false,
+  "sourceFreezePath": "artifacts/p2-supervision/documentation-v2/SOURCE-FROZEN.json",
+  "buildReceiptPath": "artifacts/p1-supervision/resume-root-v20/product-build-v3-owned.json",
+  "buildReceiptSha256": "37599D8CA1C447B2BCE0B8B362013870BA001076C54B91530095DF1C4E3CCE58",
+  "buildLogPath": "artifacts/p1-supervision/resume-root-v20/product-build-v2.log",
+  "buildLogSha256": "120DB96623603597ABB6053BED03686BFBAED186D0E6D186866F68C8851C03C0",
+  "buildReceipt": {
+    "name": "product-build-v3",
+    "purpose": "Supervision command only; no original containment or phase acceptance",
+    "startedAt": "2026-10-14T03:17:28.7489612+08:00",
+    "arguments": [
+      "C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll",
+      "@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp"
+    ],
+    "timeoutSeconds": 90,
+    "maximumMembers": 32,
+    "snapshots": [
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 3740,
+            "CreationFileTime": 134363926496780316,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp8a1fbc4348764782954ca8411e471d61.rsp\""
+          },
+          {
+            "Pid": 40028,
+            "CreationFileTime": 134363926496834863,
+            "ParentPid": 3740,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 3,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 5,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 25264,
+            "CreationFileTime": 134363926535593594,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmp32fcbeb2c2274231865674c74781ebd1.rsp\""
+          },
+          {
+            "Pid": 28252,
+            "CreationFileTime": 134363926535640740,
+            "ParentPid": 25264,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 5,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 7,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 39016,
+            "CreationFileTime": 134363926731183017,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpd262bd10c5a545d698992bb139b6ebee.rsp\""
+          },
+          {
+            "Pid": 11792,
+            "CreationFileTime": 134363926731248903,
+            "ParentPid": 39016,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 7,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 39016,
+            "CreationFileTime": 134363926731183017,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpd262bd10c5a545d698992bb139b6ebee.rsp\""
+          },
+          {
+            "Pid": 11792,
+            "CreationFileTime": 134363926731248903,
+            "ParentPid": 39016,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 7,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 39016,
+            "CreationFileTime": 134363926731183017,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpd262bd10c5a545d698992bb139b6ebee.rsp\""
+          },
+          {
+            "Pid": 11792,
+            "CreationFileTime": 134363926731248903,
+            "ParentPid": 39016,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 7,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 39016,
+            "CreationFileTime": 134363926731183017,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpd262bd10c5a545d698992bb139b6ebee.rsp\""
+          },
+          {
+            "Pid": 11792,
+            "CreationFileTime": 134363926731248903,
+            "ParentPid": 39016,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 7,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 39016,
+            "CreationFileTime": 134363926731183017,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpd262bd10c5a545d698992bb139b6ebee.rsp\""
+          },
+          {
+            "Pid": 11792,
+            "CreationFileTime": 134363926731248903,
+            "ParentPid": 39016,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 7,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 39016,
+            "CreationFileTime": 134363926731183017,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpd262bd10c5a545d698992bb139b6ebee.rsp\""
+          },
+          {
+            "Pid": 11792,
+            "CreationFileTime": 134363926731248903,
+            "ParentPid": 39016,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 7,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 39016,
+            "CreationFileTime": 134363926731183017,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpd262bd10c5a545d698992bb139b6ebee.rsp\""
+          },
+          {
+            "Pid": 11792,
+            "CreationFileTime": 134363926731248903,
+            "ParentPid": 39016,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 9,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 29732,
+            "CreationFileTime": 134363926750666233,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpb7814fad3f5342d29d2750f040a23354.rsp\""
+          },
+          {
+            "Pid": 22532,
+            "CreationFileTime": 134363926750725745,
+            "ParentPid": 29732,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 9,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 29732,
+            "CreationFileTime": 134363926750666233,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpb7814fad3f5342d29d2750f040a23354.rsp\""
+          },
+          {
+            "Pid": 22532,
+            "CreationFileTime": 134363926750725745,
+            "ParentPid": 29732,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 9,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 29732,
+            "CreationFileTime": 134363926750666233,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpb7814fad3f5342d29d2750f040a23354.rsp\""
+          },
+          {
+            "Pid": 22532,
+            "CreationFileTime": 134363926750725745,
+            "ParentPid": 29732,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 9,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 29732,
+            "CreationFileTime": 134363926750666233,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpb7814fad3f5342d29d2750f040a23354.rsp\""
+          },
+          {
+            "Pid": 22532,
+            "CreationFileTime": 134363926750725745,
+            "ParentPid": 29732,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 9,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 29732,
+            "CreationFileTime": 134363926750666233,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpb7814fad3f5342d29d2750f040a23354.rsp\""
+          },
+          {
+            "Pid": 22532,
+            "CreationFileTime": 134363926750725745,
+            "ParentPid": 29732,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 9,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 29732,
+            "CreationFileTime": 134363926750666233,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpb7814fad3f5342d29d2750f040a23354.rsp\""
+          },
+          {
+            "Pid": 22532,
+            "CreationFileTime": 134363926750725745,
+            "ParentPid": 29732,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 9,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          },
+          {
+            "Pid": 29732,
+            "CreationFileTime": 134363926750666233,
+            "ParentPid": 7660,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempbzuhwxw3.oug\\tmpb7814fad3f5342d29d2750f040a23354.rsp\""
+          },
+          {
+            "Pid": 22532,
+            "CreationFileTime": 134363926750725745,
+            "ParentPid": 29732,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 9,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 7660,
+            "CreationFileTime": 134363926487663402,
+            "ParentPid": 54920,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 0,
+        "Total": 9,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      }
+    ],
+    "passed": false,
+    "errors": [
+      "Supervision command exit nonzero"
+    ],
+    "fullP1Closure": false,
+    "fullP2Closure": false,
+    "launch": {
+      "Pid": 7660,
+      "IntendedCommand": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\"",
+      "Identity": {
+        "Pid": 7660,
+        "CreationFileTime": 134363926487663402,
+        "ParentPid": 54920,
+        "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "parentChain": {
+      "Nodes": [
+        {
+          "Pid": 7660,
+          "CreationFileTime": 134363926487663402,
+          "ParentPid": 54920,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+        },
+        {
+          "Pid": 54920,
+          "CreationFileTime": 134363926483084597,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\nif ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }\n$ErrorActionPreference='Stop'\n$taskArgs=@('C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll',('@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp'))\nif($taskArgs.Count -ne 2 -or -not $taskArgs[1].StartsWith('@D:/')){throw 'Exact two MSBuild arguments required'}\n& ./artifacts/p1-supervision/resume-root-v20/Invoke-OwnedRootCommand.ps1 -Name product-build-v3 -Arguments $taskArgs -TimeoutSeconds 90 -MaximumMembers 32\nGet-Date -Format o\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        },
+        {
+          "Pid": 39640,
+          "CreationFileTime": 134363303677828900,
+          "ParentPid": 12544,
+          "CommandLine": "\"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\" "
+        },
+        {
+          "Pid": 12544,
+          "CreationFileTime": 134363301892520825,
+          "ParentPid": 3816,
+          "CommandLine": "sihost.exe"
+        }
+      ],
+      "Complete": false,
+      "StopReason": "Win32Exception: OpenProcess query-only ancestor"
+    },
+    "exitCode": 1,
+    "jobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 9,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 9,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "processCleanup": {
+      "Pid": 7660,
+      "IntendedCommand": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\"",
+      "Identity": {
+        "Pid": 7660,
+        "CreationFileTime": 134363926487663402,
+        "ParentPid": 54920,
+        "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v20/product-build-v2.rsp\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "jobClosed": true,
+    "elapsedSeconds": 28.4210802,
+    "finishedAt": "2026-10-14T03:17:57.1672804+08:00"
+  },
+  "outputJunction": {
+    "path": "D:\\GitHub\\RustSharp\\src\\RustSharp.Semantics\\bin\\Release\\net10.0",
+    "attributes": "Directory, ReparsePoint",
+    "linkType": "Junction",
+    "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharp-p1-06-20260924\\evidence\\adt-projections\\relocated-build-output\\semantics",
+    "targetExists": false,
+    "linkPreserved": true,
+    "owner": "UNKNOWN"
+  },
+  "next": "Root serial fresh isolated build output paths; do not delete unknown junction or temp target; then strict SDK/sourcegen/analyzer, all12 doc cases and actual formatter newready chain",
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "at": "2026-10-14T03:22:22.1275932+08:00"
+}

@@ -8,7 +8,33 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v19/resumption.json`.
+`artifacts/p1-supervision/resume-root-v20/resumption.json`.
+
+Round16's rejected-overflow native diagnostic component is ✅ Complete:
+strict v28 Build/SARIF0, all3 actual held identities/images/hashes/direct parents,
+command history and valid native exit proofs, diagnostic0.086s/errors0, Job0 and
+independent22-PID zero survivors. Original tiny remains ❌ Failed with cap2 versus
+actual3; innerroot1/helpers0 and all original denominators remain unchanged.
+The actual console-allocation caller is `UNKNOWN`. [Original rejection diagnostic](../evidence/p1/containment-v28-overflow-diagnostic.json)
+is committed at `613c0ff08fc5176822bbde9e2bd97bd79c580af6`.
+
+Round16 documentation v2 contains actual model/renderer fixes and12 real
+parser/sourceMap/model/render test seeds, registered under the current4096 bound.
+The whole candidate build is ❌ Failed: MSB3026/3027/3021 dependency copies reached
+10 retries because the Semantics output directory is a Junction with a missing
+temporary target. The existing unowned link is preserved; next use fresh isolated
+build outputs. [Product build failure evidence](../evidence/p2/tooling-round16-build-failure.json)
+retains the actual native Job9 cleanup and failed command receipts. No new doc case
+executed; tests/runtime remain `NOT_RUN`, and CLI/source pages/Markdown/reexports/
+complete budget boundaries remain open. Tests landed03:14:45 under the explicitly
+extended03:16 window; old03:10/03:12 guard refusals remain recorded.
+
+Formatter v18 has compatible Run and an opt-in PID/nonce/handler-ready probe;
+root integrated Program dispatch and CLI AllowUnsafeBlocks. Its full helper/observer
+manifest/build/new-candidate packaging and corrected fresh cwd literals are still
+`NOT_READY`, so no new formatter runtime is authorized. The03:14 packaging write
+was refused at03:14:42, with no late write. All product/shared-entry changes remain
+unaccepted and uncommitted. P1's6 gates stay open; P2 remains8/101 ✅ Complete.
 
 Round15 starts `P2-08.03` product implementation. The frozen tooling91 scope
 (49 corpus plus42 scenarios) retains all12 documentation scenarios. Actual

@@ -8,7 +8,29 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v19/resumption.json`。
+`artifacts/p1-supervision/resume-root-v20/resumption.json`。
+
+第16轮拒绝溢出的原生诊断组件 ✅ 已完成：v28严格Build／SARIF0，全部3个
+真实held身份／image／hash／directparent、命令历史及有效原生退出证明，诊断
+0.086秒／error0、Job0，独立核22个PID均无遗留。原tiny仍 ❌ 失败，cap2
+对应actual3；innerroot1／helpers0及全部原分母不变。实际console allocation
+调用方仍为 `UNKNOWN`。[原拒绝诊断](../evidence/p1/containment-v28-overflow-diagnostic.json)
+已提交于 `613c0ff08fc5176822bbde9e2bd97bd79c580af6`。
+
+第16轮documentation v2包含实际model／renderer修复和12个真实parser／
+sourceMap／model／render测试seed，已在当前4096上限内注册。整个candidate
+build ❌ 失败：Semantics输出目录是指向缺失临时目标的Junction，依赖复制
+MSB3026／3027／3021达到10次重试。现有不明owner链接保留，下轮使用独立
+新build输出。[产品构建失败证据](../evidence/p2/tooling-round16-build-failure.json)
+保留真实native Job9清理及失败命令回执。未执行新doc案例，tests／runtime仍
+`NOT_RUN`，CLI／source pages／Markdown／reexports／完整预算边界仍开放。
+测试于03:14:45在明确延长至03:16的窗口落盘；旧03:10／03:12 guard拒绝均保留。
+
+Formatter v18已实现兼容Run及opt-in PID／nonce／handler-ready探针；root接入
+Program dispatch及CLI AllowUnsafeBlocks。完整helper／observer manifest／build／
+新candidate包装和正确新cwd literal仍为 `NOT_READY`，未授权新formatter runtime。
+03:14包装写入于03:14:42被拒，未迟写。全部产品／共享入口改动仍未验收、未提交。
+P1六门禁仍开放；P2仍8/101叶项 ✅ 已完成。
 
 第15轮开始 `P2-08.03` 产品实现。冻结tooling91范围（49个corpus加42个scenario）
 保留全部12个documentation scenario。真实syntax文档属性及原UTF-16源码映射
