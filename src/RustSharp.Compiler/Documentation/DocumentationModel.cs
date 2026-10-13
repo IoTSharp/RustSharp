@@ -9,6 +9,7 @@ public sealed record DocumentationOptions
     public int MaximumLinks { get; init; } = 20_000;
     public int MaximumOutputBytes { get; init; } = 16_777_216;
     public int MaximumOperations { get; init; } = 1_000_000;
+    public int MaximumFiles { get; init; } = 1024;
     public string? SourceRoot { get; init; }
 }
 public sealed record DocumentationItem(string Identity, string Name, string Kind, string Signature, string Comment, SafeCoreSourceLocation Source)
@@ -22,14 +23,15 @@ internal sealed class DocumentationBudget
 {
     private readonly DocumentationOptions options; private readonly CancellationToken cancellation; private readonly long started = Stopwatch.GetTimestamp(); private int operations;
     internal DocumentationBudget(DocumentationOptions options, CancellationToken cancellation)
-    { if(options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromSeconds(10) || options.MaximumItems is <1 or >10_000 || options.MaximumLinks is <1 or >20_000 || options.MaximumOutputBytes is <1 or >16_777_216 || options.MaximumOperations is <1 or >1_000_000) throw new DocumentationLimitException(); this.options=options;this.cancellation=cancellation;Step(); }
+    { if(options.Timeout <= TimeSpan.Zero || options.Timeout > TimeSpan.FromSeconds(10) || options.MaximumItems is <1 or >10_000 || options.MaximumLinks is <1 or >20_000 || options.MaximumOutputBytes is <1 or >16_777_216 || options.MaximumOperations is <1 or >1_000_000 || options.MaximumFiles is <1 or >1024) throw new DocumentationLimitException(); this.options=options;this.cancellation=cancellation;Step(); }
     internal void Step() { cancellation.ThrowIfCancellationRequested();if(++operations > options.MaximumOperations || Stopwatch.GetElapsedTime(started)>options.Timeout)throw new DocumentationLimitException(); }
 }
 public sealed class DocumentationModel
 {
-    private DocumentationModel(IReadOnlyList<DocumentationItem> items, IReadOnlyDictionary<string,IReadOnlyList<DocumentationItem>> aliases){Items=items;Aliases=aliases;}
+    private DocumentationModel(IReadOnlyList<DocumentationItem> items, IReadOnlyDictionary<string,IReadOnlyList<DocumentationItem>> aliases,IReadOnlyList<SafeCoreSourceDocument> sources){Items=items;Aliases=aliases;Sources=sources;}
     public IReadOnlyList<DocumentationItem> Items { get; }
     internal IReadOnlyDictionary<string,IReadOnlyList<DocumentationItem>> Aliases { get; }
+    internal IReadOnlyList<SafeCoreSourceDocument> Sources { get; }
     public static DocumentationResult Create(SafeCoreSyntaxResult syntax,SafeCoreSourceMap sourceMap,DocumentationOptions options,CancellationToken cancellationToken=default)
     {
         ArgumentNullException.ThrowIfNull(syntax);ArgumentNullException.ThrowIfNull(sourceMap);ArgumentNullException.ThrowIfNull(options);
@@ -43,14 +45,15 @@ public sealed class DocumentationModel
         foreach(var use in uses){budget.Step();if(!use.Visible)continue;Use(use.Use.Tree,use.Use.Path,use.Use.Alias,use.Parent,use.Use.Span,[],0);}
         Promote();
         foreach(var entry in impls){budget.Step();string type=entry.Impl.SelfType is SafeCorePathTypeSyntax path?string.Join("::",path.Segments.Select(static p=>p.Name)):syntax.GetText(entry.Impl.SelfType.Span);string id=Normalize(type,entry.Parent);var owner=all.FirstOrDefault(e=>e.Visible&&(e.Item.Identity==id||e.Item.Name==type)&&e.Item.Kind is "struct" or "enum" or "type-alias");if(owner.Item is not null)Associated(entry.Impl.Items,owner.Item.Identity,entry.Impl.Trait is not null,true);}
-        Promote();if(errors.Count>0)return new(null,errors.AsReadOnly());return new(new(Array.AsReadOnly(all.Where(static e=>e.Visible).Select(static e=>e.Item).OrderBy(static i=>i.Identity,StringComparer.Ordinal).ThenBy(static i=>i.Kind,StringComparer.Ordinal).ToArray()),new ReadOnlyDictionary<string,IReadOnlyList<DocumentationItem>>(aliases)),Array.Empty<Diagnostic>());
+        Promote();if(errors.Count>0)return new(null,errors.AsReadOnly());return new(new(Array.AsReadOnly(all.Where(static e=>e.Visible).Select(static e=>e.Item).OrderBy(static i=>i.Identity,StringComparer.Ordinal).ThenBy(static i=>i.Kind,StringComparer.Ordinal).ToArray()),new ReadOnlyDictionary<string,IReadOnlyList<DocumentationItem>>(aliases),map.Documents),Array.Empty<Diagnostic>());
         void Add(string name,string kind,TextSpan span,IReadOnlyList<SafeCoreAttributeSyntax> attrs,string parent,bool pub,bool visible,int? end=null){budget.Step();if(all.Count>=options.MaximumItems)throw new DocumentationLimitException();all.Add((new(parent+"::"+name,name,kind,syntax.GetText(new(span.Start,Math.Max(0,(end??span.End)-span.Start))).Trim(),string.Join("\n",attrs.Where(static a=>a.IsDocumentation).Select(static a=>a.DocumentationText??string.Empty)),map.MapSpan(span)),parent,pub,visible));}
+        TextSpan DeclarationSpan(SafeCoreItemSyntax item){budget.Step();var modifier=item.Visibility.Span;return modifier.Length>0&&modifier.Start<item.Span.Start&&modifier.End<=item.Span.Start?new(modifier.Start,item.Span.End-modifier.Start):item.Span;}
         int Header(TextSpan span){int nested=0;foreach(var token in syntax.LexResult.Tokens){budget.Step();if(token.Span.Start<span.Start)continue;if(token.Span.Start>=span.End)break;if(token.Text is "(" or "[" or "<")nested++;else if(token.Text is ")" or "]" or ">")nested=Math.Max(0,nested-1);else if(token.Text=="{"&&nested==0)return token.Span.Start;}return span.End;}
         void Visit(IReadOnlyList<SafeCoreItemSyntax> nodes,string parent,bool inherited,int depth){budget.Step();if(depth>128)throw new DocumentationLimitException();foreach(var node in nodes){budget.Step();bool pub=node.Visibility.Kind==SafeCoreVisibilityKind.Public;bool visible=inherited&&pub;switch(node){
             case SafeCoreUseSyntax u:uses.Add((u,parent,visible));break;
             case SafeCoreImplSyntax i:impls.Add((i,parent));break;
             case SafeCoreModuleSyntax m:Add(m.Name,"module",m.Span,m.Attributes.Concat(m.InnerAttributes).ToArray(),parent,pub,visible,Header(m.Span));if(m.IsExternal&&visible)Error("RSTD1001","External module must be expanded.",m.Span);else Visit(m.Items,parent+"::"+m.Name,visible,depth+1);break;
-            case SafeCoreFunctionSyntax f:Add(f.Name,"function",f.Span,f.Attributes,parent,pub,visible,f.Body.Span.Start);break;
+            case SafeCoreFunctionSyntax f:Add(f.Name,"function",DeclarationSpan(f),f.Attributes,parent,pub,visible,f.Body.Span.Start);break;
             case SafeCoreStructSyntax s:Add(s.Name,"struct",s.Span,s.Attributes,parent,pub,visible,Header(s.Span));for(int n=0;n<s.Fields.Count;n++){budget.Step();var field=s.Fields[n];bool fp=field.Visibility?.Kind==SafeCoreVisibilityKind.Public||field.Visibility is null&&field.IsPublic;Add(field.Name??n.ToString(System.Globalization.CultureInfo.InvariantCulture),"public-field",field.Span,field.Attributes,parent+"::"+s.Name,fp,visible&&fp);}break;
             case SafeCoreEnumSyntax e:Add(e.Name,"enum",e.Span,e.Attributes,parent,pub,visible,Header(e.Span));foreach(var v in e.Variants){budget.Step();Add(v.Name,"variant",v.Span,v.Attributes,parent+"::"+e.Name,true,visible);for(int n=0;n<v.Fields.Count;n++){budget.Step();var field=v.Fields[n];Add(field.Name??n.ToString(System.Globalization.CultureInfo.InvariantCulture),"public-field",field.Span,field.Attributes,parent+"::"+e.Name+"::"+v.Name,true,visible);}}break;
             case SafeCoreTypeAliasSyntax a:Add(a.Name,"type-alias",a.Span,a.Attributes,parent,pub,visible);break;
