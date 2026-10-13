@@ -1,0 +1,379 @@
+{
+  "aggregateValidationRecords": 0,
+  "wholeGateAccepted": false,
+  "at": "2026-10-14T07:18:22.1647429+08:00",
+  "candidateSha": "9d43072c62d6c18b3cc1bf336559d1dd0f18f159",
+  "inputs": [
+    {
+      "platform": {
+        "Name": "windows-x64",
+        "RuntimeIdentifier": "win-x64",
+        "OperatingSystem": "Microsoft Windows 10.0.26100",
+        "Architecture": "X64",
+        "ProcessArchitecture": "X64",
+        "RuntimeIdentifierObserved": "win-x64"
+      },
+      "shaMatched": true,
+      "cleanup": {
+        "Completed": true,
+        "Diagnostic": null
+      },
+      "candidateSha": "9d43072c62d6c18b3cc1bf336559d1dd0f18f159",
+      "path": "artifacts/p1-supervision/resume-root-v28/ci-artifacts/p1-platform-windows-x64/windows-x64.json",
+      "summary": {
+        "Status": "passed",
+        "ExitCode": 0,
+        "Denominator": 12,
+        "Executed": 12,
+        "Passed": 12,
+        "Failed": 0,
+        "Blocked": 0,
+        "Skipped": 0
+      },
+      "toolVersions": {
+        "Dotnet": "10.0.400",
+        "Rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+        "ILVerify": "10.0.11-servicing.26373.116+e2f47b0110ed922f21a1522da67279133ce28f32",
+        "SdkVersion": "10.0.400"
+      },
+      "name": "windows-platform",
+      "caseCount": 12,
+      "sha256": "0E88E782D09263CF0217F3E3F4964908EA924E7B5F4D62DFCE3698D38C83AF65"
+    },
+    {
+      "platform": {
+        "Name": "linux-x64",
+        "RuntimeIdentifier": "linux-x64",
+        "OperatingSystem": "Ubuntu 24.04.5 LTS",
+        "Architecture": "X64",
+        "ProcessArchitecture": "X64",
+        "RuntimeIdentifierObserved": "linux-x64"
+      },
+      "shaMatched": true,
+      "cleanup": {
+        "Completed": true,
+        "Diagnostic": null
+      },
+      "candidateSha": "9d43072c62d6c18b3cc1bf336559d1dd0f18f159",
+      "path": "artifacts/p1-supervision/resume-root-v28/ci-artifacts/p1-platform-linux-x64/linux-x64.json",
+      "summary": {
+        "Status": "passed",
+        "ExitCode": 0,
+        "Denominator": 12,
+        "Executed": 12,
+        "Passed": 12,
+        "Failed": 0,
+        "Blocked": 0,
+        "Skipped": 0
+      },
+      "toolVersions": {
+        "Dotnet": "10.0.400",
+        "Rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+        "ILVerify": "10.0.11-servicing.26373.116+e2f47b0110ed922f21a1522da67279133ce28f32",
+        "SdkVersion": "10.0.400"
+      },
+      "name": "linux-platform",
+      "caseCount": 12,
+      "sha256": "F193A5AA5AA351D6CE52A456C36A3EF86F0F715DCB2C5790F4393F0FF87D5149"
+    },
+    {
+      "platform": {
+        "name": "win-x64",
+        "runtimeIdentifier": "win-x64"
+      },
+      "shaMatched": true,
+      "cleanup": {
+        "completed": true,
+        "diagnostic": null
+      },
+      "candidateSha": "9d43072c62d6c18b3cc1bf336559d1dd0f18f159",
+      "path": "artifacts/p1-supervision/resume-root-v28/ci-artifacts/p1-platform-windows-x64-differential-v2/windows-x64-differential-v2.json",
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 16,
+        "executed": 16,
+        "passed": 16,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "borrowDenominator": 10,
+        "dropDenominator": 6
+      },
+      "toolVersions": {
+        "dotnet": "rsc 0.1.0-dev (Rust 1.98 / Edition 2024 vertical-slice-v1)",
+        "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+        "sdkVersion": "unknown"
+      },
+      "name": "windows-differential-v2",
+      "caseCount": 16,
+      "sha256": "AE44E768DD296DF5FC2E99333C6A2411F111791528E2464FCEEE68FA6C1A34C6"
+    },
+    {
+      "platform": {
+        "name": "linux-x64",
+        "runtimeIdentifier": "linux-x64"
+      },
+      "shaMatched": true,
+      "cleanup": {
+        "completed": true,
+        "diagnostic": null
+      },
+      "candidateSha": "9d43072c62d6c18b3cc1bf336559d1dd0f18f159",
+      "path": "artifacts/p1-supervision/resume-root-v28/ci-artifacts/p1-platform-linux-x64-differential-v2/linux-x64-differential-v2.json",
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 16,
+        "executed": 16,
+        "passed": 16,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "borrowDenominator": 10,
+        "dropDenominator": 6
+      },
+      "toolVersions": {
+        "dotnet": "rsc 0.1.0-dev (Rust 1.98 / Edition 2024 vertical-slice-v1)",
+        "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+        "sdkVersion": "unknown"
+      },
+      "name": "linux-differential-v2",
+      "caseCount": 16,
+      "sha256": "92B6774EC6CB571B3CF6A70A967678A391A361A643C22DAD2AACF3FF47FDD990"
+    },
+    {
+      "platform": null,
+      "shaMatched": true,
+      "cleanup": null,
+      "candidateSha": "9d43072c62d6c18b3cc1bf336559d1dd0f18f159",
+      "path": "artifacts/p1-supervision/resume-root-v28/ci-artifacts/p1-platform-windows-x64-safe-core-regression-v3/windows-x64-safe-core-regression-v3.json",
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 26,
+        "executed": 26,
+        "passed": 26,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "coverage": {
+          "compile-pass": 1,
+          "compile-fail": 4,
+          "run-pass": 17,
+          "differential": 4,
+          "legacy": 8,
+          "typed-mir": 14,
+          "borrow": 2,
+          "drop": 2
+        }
+      },
+      "toolVersions": null,
+      "name": "windows-safe-core-regression-v3",
+      "caseCount": 26,
+      "sha256": "27BB393A474436EF64E35BBA3D4B52821F0537F8F05A3BBCC0DEA5B66B5AC934"
+    },
+    {
+      "platform": null,
+      "shaMatched": true,
+      "cleanup": null,
+      "candidateSha": "9d43072c62d6c18b3cc1bf336559d1dd0f18f159",
+      "path": "artifacts/p1-supervision/resume-root-v28/ci-artifacts/p1-platform-linux-x64-safe-core-regression-v3/linux-x64-safe-core-regression-v3.json",
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 26,
+        "executed": 26,
+        "passed": 26,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "coverage": {
+          "compile-pass": 1,
+          "compile-fail": 4,
+          "run-pass": 17,
+          "differential": 4,
+          "legacy": 8,
+          "typed-mir": 14,
+          "borrow": 2,
+          "drop": 2
+        }
+      },
+      "toolVersions": null,
+      "name": "linux-safe-core-regression-v3",
+      "caseCount": 26,
+      "sha256": "10E968F3E7EB99B51687443E76BC613559FAF9DF819B0CAF41241358A0C3CCDC"
+    }
+  ],
+  "archiveDigestsMatched": 7,
+  "aggregateSummary": {
+    "Status": "passed",
+    "ExitCode": 0,
+    "Denominator": 6,
+    "Executed": 6,
+    "Passed": 6,
+    "Failed": 0,
+    "Blocked": 0,
+    "Skipped": 0
+  },
+  "archiveDigestDenominator": 7,
+  "fullP1Closure": false,
+  "scope": "Current frozen CIprofile evidence only; six phase gates/original expanded denominator controls remain separately open",
+  "inputDenominator": 6,
+  "archiveReceipts": [
+    {
+      "failure": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "proxy": false,
+      "id": 11857198737,
+      "attempt": 0,
+      "name": "p1-platform-linux-x64-safe-core-regression-v3"
+    },
+    {
+      "digestMatched": true,
+      "archivePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-linux-x64-safe-core-regression-v3.zip",
+      "archiveSha256": "2FE7A8A75EFAC06539FEEF8704E593467869D35C5AE4C98442CD073410C4C7C1",
+      "id": 11857198737,
+      "githubDigest": "sha256:2fe7a8a75efac06539feef8704e593467869d35c5ae4c98442cd073410c4c7c1",
+      "files": [
+        {
+          "bytes": 137492,
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-linux-x64-safe-core-regression-v3\\linux-x64-safe-core-regression-v3.json",
+          "sha256": "10E968F3E7EB99B51687443E76BC613559FAF9DF819B0CAF41241358A0C3CCDC"
+        }
+      ],
+      "name": "p1-platform-linux-x64-safe-core-regression-v3"
+    },
+    {
+      "failure": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "proxy": false,
+      "id": 11857044275,
+      "attempt": 0,
+      "name": "p1-platform-windows-x64-safe-core-regression-v3"
+    },
+    {
+      "digestMatched": true,
+      "archivePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-windows-x64-safe-core-regression-v3.zip",
+      "archiveSha256": "9B50159BA254EEDD88B6D35C5FA7B2B9AB934EBB098651742CE3362DC2BCCED7",
+      "id": 11857044275,
+      "githubDigest": "sha256:9b50159ba254eedd88b6d35c5fa7b2b9ab934ebb098651742ce3362dc2bcced7",
+      "files": [
+        {
+          "bytes": 138802,
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-windows-x64-safe-core-regression-v3\\windows-x64-safe-core-regression-v3.json",
+          "sha256": "27BB393A474436EF64E35BBA3D4B52821F0537F8F05A3BBCC0DEA5B66B5AC934"
+        }
+      ],
+      "name": "p1-platform-windows-x64-safe-core-regression-v3"
+    },
+    {
+      "failure": "Unable to read data from the transport connection: 远程主机强迫关闭了一个现有的连接。.",
+      "proxy": false,
+      "id": 11856798691,
+      "attempt": 0,
+      "name": "p1-platform-windows-x64"
+    },
+    {
+      "digestMatched": true,
+      "archivePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-windows-x64.zip",
+      "archiveSha256": "BE484D200A96A923560267FE10CE9DDCD2C1CFC54370F8079C58B5628001623B",
+      "id": 11856798691,
+      "githubDigest": "sha256:be484d200a96a923560267fe10ce9ddcd2c1cfc54370f8079c58b5628001623b",
+      "files": [
+        {
+          "bytes": 402534,
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-windows-x64\\windows-x64.json",
+          "sha256": "0E88E782D09263CF0217F3E3F4964908EA924E7B5F4D62DFCE3698D38C83AF65"
+        }
+      ],
+      "name": "p1-platform-windows-x64"
+    },
+    {
+      "failure": "Unable to read data from the transport connection: 远程主机强迫关闭了一个现有的连接。.",
+      "proxy": false,
+      "id": 11856703466,
+      "attempt": 0,
+      "name": "p1-platform-linux-x64"
+    },
+    {
+      "digestMatched": true,
+      "archivePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-linux-x64.zip",
+      "archiveSha256": "E69CE33D3DBC4ABBDF5CAD453CBA1517847F502DD4B489B591EAEB5DA1F6ABD3",
+      "id": 11856703466,
+      "githubDigest": "sha256:e69ce33d3dbc4abbdf5cad453cba1517847f502dd4b489b591eaeb5da1f6abd3",
+      "files": [
+        {
+          "bytes": 339354,
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-linux-x64\\linux-x64.json",
+          "sha256": "F193A5AA5AA351D6CE52A456C36A3EF86F0F715DCB2C5790F4393F0FF87D5149"
+        }
+      ],
+      "name": "p1-platform-linux-x64"
+    },
+    {
+      "failure": "Unable to read data from the transport connection: 远程主机强迫关闭了一个现有的连接。.",
+      "proxy": false,
+      "id": 11856523460,
+      "attempt": 0,
+      "name": "p1-platform-linux-x64-differential-v2"
+    },
+    {
+      "digestMatched": true,
+      "archivePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-linux-x64-differential-v2.zip",
+      "archiveSha256": "AE1B0703DA9731ED2F92EEBB564BFC6C6C5A24646A1B5E81970D8D314BFDE9C6",
+      "id": 11856523460,
+      "githubDigest": "sha256:ae1b0703da9731ed2f92eebb564bfc6c6c5a24646a1b5e81970d8d314bfde9c6",
+      "files": [
+        {
+          "bytes": 85068,
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-linux-x64-differential-v2\\linux-x64-differential-v2.json",
+          "sha256": "92B6774EC6CB571B3CF6A70A967678A391A361A643C22DAD2AACF3FF47FDD990"
+        }
+      ],
+      "name": "p1-platform-linux-x64-differential-v2"
+    },
+    {
+      "failure": "Unable to read data from the transport connection: 远程主机强迫关闭了一个现有的连接。.",
+      "proxy": false,
+      "id": 11855863892,
+      "attempt": 0,
+      "name": "p1-exit-gate"
+    },
+    {
+      "digestMatched": true,
+      "archivePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-exit-gate.zip",
+      "archiveSha256": "5102C09376971FEA671E0A6A51702AFF1E53F77E623B81012B8CEB3DABE33C2D",
+      "id": 11855863892,
+      "githubDigest": "sha256:5102c09376971fea671e0a6a51702aff1e53f77e623b81012b8ceb3dabe33c2d",
+      "files": [
+        {
+          "bytes": 3181,
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-exit-gate\\p1-exit-gate.json",
+          "sha256": "4E4105C4C06C419308D68EDD2232518E68885BA5C44DB79313BF10F9979B886E"
+        }
+      ],
+      "name": "p1-exit-gate"
+    },
+    {
+      "failure": "Unable to read data from the transport connection: 远程主机强迫关闭了一个现有的连接。.",
+      "proxy": false,
+      "id": 11855723890,
+      "attempt": 0,
+      "name": "p1-platform-windows-x64-differential-v2"
+    },
+    {
+      "digestMatched": true,
+      "archivePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-windows-x64-differential-v2.zip",
+      "archiveSha256": "B5DA3F7FDEEB4FF02DFD924FE1DE74EE4C025404E161E4B73662CF4A624F116E",
+      "id": 11855723890,
+      "githubDigest": "sha256:b5da3f7fdeeb4ff02dfd924fe1de74ee4c025404e161e4b73662cf4a624f116e",
+      "files": [
+        {
+          "bytes": 85852,
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\ci-artifacts\\p1-platform-windows-x64-differential-v2\\windows-x64-differential-v2.json",
+          "sha256": "AE44E768DD296DF5FC2E99333C6A2411F111791528E2464FCEEE68FA6C1A34C6"
+        }
+      ],
+      "name": "p1-platform-windows-x64-differential-v2"
+    }
+  ]
+}
