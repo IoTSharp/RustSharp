@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v23/resumption.json`。
+`artifacts/p1-supervision/resume-root-v24/resumption.json`。
+
+第20轮comparisonv3启动诊断 ✅ 已完成：3个JSON DTO字段已修且原生ABI不变，实际严格Build／SARIF0及完整2个held进程身份／退出。真实body ❌ 失败：pwsh exit0、双流空、无子marker、NaturalRootRuntimeExecuted0。[实际诊断／失败](../evidence/p1/detached-comparison-v3-startup-failure.json)保留于30cf996，原NO_WINDOW／helpers0／cap2及全部分母不变。Helper22已匹配独立审查的精确213-token RSP且nativecompiler3已清理，但因10项SARIF note ❌ 失败；[失败原件](../evidence/p2/formatter-v22-helper-notes-failure.json)保留于36c5bb6，未执行新CTRL+C runtime。Helper23 API／finally修复已保存冻结，build／runtime NOT_RUN。Documentation initial-publish源码及测试已保存；审查发现目录身份及未知staging提交缺口，新源码已修，保留原18并新增2个真实案例、固定20。发布build／tests全部NOT_RUN／NOT_ACCEPTED，未stage任何新候选产品；已有目标更新／CLI／完整叶项仍开放。P1六门禁开放、P2仍8/101、唯一heartbeat保持ACTIVE。追加交接写入超时被拒且未修改，resume-root-v24最终原件／hash检查点绑定这些新候选。
 
 第19轮源码页组件在commit1c7d24f的限定范围内 ✅ 已完成：真实新solution构建0警告／错误、原12扩充案例全通过。原Expected7断言保留，使用parser真实Visibility.Span，另核actualfn11；初始CA2249及11/12失败均保留。证据披露执行后仅CRLF→LF源码规范化及精确source／PDB绑定限制，未声称当前SHA阶段门禁。CLI／atomic／workspace及完整叶项仍开放。Launcher21 strict3／SARIF0在55ea12f ✅ 已完成；Helper因精确RSP不匹配 ❌ 失败，原生退出证明secondary失败保留、Job3已回收。新CTRL+C为NOT_RUN。Comparisonv2因3个nuint DTO不能JSON序列化而NOT_READY，v3写入被拒、未构建候选。P1六门禁仍开放，P2仍8/101、唯一heartbeat保持ACTIVE。
 
