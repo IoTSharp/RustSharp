@@ -8,7 +8,29 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v28/resumption.json`.
+`artifacts/p1-supervision/resume-root-v29/resumption.json`.
+
+Round25 actual ordinary-file kernel-IO foundation is ✅ Complete at `e07d099`:
+one helper's real oplock request returns STATUS_PENDING, cancellation completes
+with signaled STATUS_CANCELLED, storage/file/event handles close, fileID/hash/lease
+and independent child cleanup pass. The13-byte source is retained as a verified
+delivery artifact. [Actual foundation](../evidence/p2/kernel-io-foundation-v1.json)
+retains the CA1068 build failure; no CLI pending/open/read cancellation or59/91
+acceptance is claimed. Repaired documentation DLL's full17 actual CLI cases and
+five page hashes pass at `050ad0f`; [actual subprocess proof](../evidence/p2/documentation-depth-cli17-v1.json)
+preserves its exact source/DLL bindings.
+
+FirstChance v2 Hook/controller strict builds pass with SARIF0, but the instrumented
+target still has no body/init/event files. Its environment restoration receipt is
+false; the process-local environment dies with the owned host. [Actual failed
+instrumentation](../evidence/p1/firstchance-v2-no-init-failure.json) retains complete
+held2/Job0 cleanup. v3 initialization journal/null restoration sources are partial;
+freeze was refused at07:45:30 and its Observe cwd guard needs repair. It is
+⛔ Blocked and must not run. Workspace implementation/link patch/seven test drafts
+are saved in artifacts only, build/runtime NOT_RUN. Remote050ad0f is independently
+read back; Roadmap CI succeeds while the other three runs remain in progress at
+the checkpoint. CI9d108 remains historical frozen evidence. All six P1 gates and
+P2's8/101 count remain unchanged; unique heartbeat stays ACTIVE.
 
 Round24 deeper documentation component is ✅ Complete after a real3/7 failure:
 glob aliases now retain their distinct canonical items and labelled links parse

@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.firstchance-v2",
+  "instrumentationAccepted": false,
+  "causeProven": false,
+  "bodyAccepted": false,
+  "wholeGateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "Actual instrumented pwsh target attempted after strict2stage build; no init/event/body evidence, not originalfixture pass",
+  "hookBinding": {
+    "mvid": "61735637-c4a1-446b-b522-033eaf0bb05b",
+    "hookPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\hook-runtime\\StartupHook.dll",
+    "fullP1Closure": false,
+    "allLevelSarifCount": 0,
+    "sha256": "B907B46A772192097346569E100D203569FDAA2F0B95DF0D3EBC7492BB8FEFD8",
+    "at": "2026-10-14T07:37:01.7672152+08:00",
+    "reviewOnlyPriorNestedArrayFalsePositive": true
+  },
+  "controllerBinding": {
+    "sourceManifestSha256": "3D98E9407D0D212E79A9B435EE0435F475F0BBFA00F11996FFF69920DC3285A4",
+    "sdk": "10.0.401",
+    "assemblySha256": "FD718E4B8514F55404BB5364878ECB6275EB4FC1C3599A7D94E34DA1597B707F",
+    "runtimeconfigSha256": "C230A317A54DD960BCBEB5F347F52E18DC665A26F7EFDA2159FCED9A5AC7E097",
+    "sarifSha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B",
+    "diagnostics": 0,
+    "fullP1Closure": false
+  },
+  "manifestSha256": "6B3A0E5DC0D94B6DCABEAAE2AE96CF908DADC8ACC85EDF51502AD562FC875840",
+  "actualRuntime": {
+    "failure": "Actual phase exit nonzero; original report retained",
+    "actualExit": 1,
+    "allIdentitiesComplete": true,
+    "identities": [
+      {
+        "Pid": 65932,
+        "CreationFileTime": 134364082609392221,
+        "ParentPid": 41932,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\tiny-root-result.json\""
+      },
+      {
+        "Pid": 46416,
+        "CreationFileTime": 134364082611587628,
+        "ParentPid": 65932,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='aa3f93493d024d479c6b9b158cdbc053';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:aa3f93493d024d479c6b9b158cdbc053');[Console]::Error.WriteLine('HOST_BODY_ERR:aa3f93493d024d479c6b9b158cdbc053')}finally{$self.Dispose()}\""
+      }
+    ],
+    "sha256": "4D5CBE1243FD32A8228B42DC483EAFA0C317C0B1680A6C53D16211F244536DA7",
+    "exits": [
+      {
+        "identity": {
+          "Pid": 65932,
+          "CreationFileTime": 134364082609392221,
+          "ParentPid": 41932,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\tiny-root-result.json\""
+        },
+        "nativeExit": {
+          "waitLastError": 0,
+          "wrapperNeverClosesOriginal": true,
+          "getTimesLastError": 0,
+          "getTimesReturn": 1,
+          "exitUtc": "2026-10-13T23:37:41.5710888Z",
+          "birth100ns": 134364082609392221,
+          "exit100ns": 134364082615710888,
+          "borrowedOriginalHandle": true,
+          "waitReturn": 0
+        },
+        "exited": true
+      },
+      {
+        "identity": {
+          "Pid": 46416,
+          "CreationFileTime": 134364082611587628,
+          "ParentPid": 65932,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='aa3f93493d024d479c6b9b158cdbc053';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v2\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:aa3f93493d024d479c6b9b158cdbc053');[Console]::Error.WriteLine('HOST_BODY_ERR:aa3f93493d024d479c6b9b158cdbc053')}finally{$self.Dispose()}\""
+        },
+        "nativeExit": {
+          "waitLastError": 0,
+          "wrapperNeverClosesOriginal": true,
+          "getTimesLastError": 0,
+          "getTimesReturn": 1,
+          "exitUtc": "2026-10-13T23:37:41.4486638Z",
+          "birth100ns": 134364082611587628,
+          "exit100ns": 134364082614486638,
+          "borrowedOriginalHandle": true,
+          "waitReturn": 0
+        },
+        "exited": true
+      }
+    ],
+    "path": "artifacts/p1-supervision/powershell-firstchance-v2/root-nativetiny-outer.json",
+    "cleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 2,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 2,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "passed": false
+  },
+  "environmentReceipt": {
+    "Nonce": "ae2c50d8021247a486f1f4a97da02838",
+    "EnvironmentErrors": [],
+    "Lease": "203c174ea17f405699c2efc712177638",
+    "ActualHookSha256": "B907B46A772192097346569E100D203569FDAA2F0B95DF0D3EBC7492BB8FEFD8",
+    "Instrumented": true,
+    "PrimaryRuntimeError": "Held-job phase rejected; no automatic retry",
+    "RootReadHookMvid": "61735637-c4a1-446b-b522-033eaf0bb05b",
+    "HookBound": "Target actualtypeof assemblyMVID + uniquepath/fileSHA; strictactualpwsh/requestfullcmd/nativebirth",
+    "EnvironmentRestored": false,
+    "OriginalScopePassed": false
+  },
+  "environmentScope": "Process only; actualrestorationfalse remainsfailure, owningPowerShell exited and no user/machine environment was modified",
+  "hookInitFiles": 0,
+  "hookExceptionFiles": 0,
+  "v3Partial": "20inputs andjournal/restore sources saved44:04/44:53, finalfreeze rejected45:30. NoMANIFEST/sourcefreeze, Observemissingcwdguard; NATIVE_RUN_PROHIBITED",
+  "originalScopePassed": false,
+  "at": "2026-10-14T07:48:45.1060100+08:00"
+}

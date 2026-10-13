@@ -8,7 +8,25 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v28/resumption.json`。
+`artifacts/p1-supervision/resume-root-v29/resumption.json`。
+
+第25轮真实普通文件kernel-IO基础组件在 `e07d099` 的限定范围内 ✅ 已完成：
+单helper真实oplock请求返回STATUS_PENDING，取消后原生事件signaled且状态为
+STATUS_CANCELLED，存储／file／event句柄关闭，fileID／hash／lease及独立子进程
+回收复核通过。13-byte source作为已验证交付原件保留。
+[真实基础证明](../evidence/p2/kernel-io-foundation-v1.json)保留CA1068构建失败，未声称
+CLI pending／open／read取消或59/91验收。修复后documentation DLL的全部17个
+真实CLI案例及5个页hash在 `050ad0f` 通过；
+[真实子进程证明](../evidence/p2/documentation-depth-cli17-v1.json)保留精确source／DLL绑定。
+
+FirstChance v2 Hook／controller严格构建SARIF0通过，但instrumented target仍无
+body／init／event文件，环境恢复回执为false；该process-local环境随自有host退出。
+[实际失败取证](../evidence/p1/firstchance-v2-no-init-failure.json)保留完整held2／Job0
+回收。v3初始化journal／null恢复源码仅为partial，冻结被07:45:30截止检查拒绝，
+Observe cwd guard还需补回，状态 ⛔ 已阻塞，禁止运行。Workspace实现／link补丁／
+7个测试draft仅保存于artifact，build／runtime全部NOT_RUN。远端050ad0f已独立
+读回；检查点时Roadmap CI成功，其余3条仍进行中。CI9d108仅为历史冻结证据。
+P1六门禁及P2的8/101计数均不变，唯一heartbeat保持ACTIVE。
 
 第24轮documentation深度组件在真实3/7失败后限定范围 ✅ 已完成：glob alias
 现在保留各自canonical item，带标签链接独立解析destination／title并HTML编码、
