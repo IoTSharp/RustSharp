@@ -8,7 +8,35 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v17/resumption.json`.
+`artifacts/p1-supervision/resume-root-v18/resumption.json`.
+
+Round14's immutable REPORT4 v3 limited original-report reconciliation component
+is ✅ Complete after actual tiny/full:4 reports,52 scoped records,78 source PE
+and14 backend PE bindings,595 checks/0 issues, and3 report/cell/replacement
+negative controls rejected. V2's24 null-hash failures remain retained; v3 binds
+static inventory `sha256` to the independently accepted prior `freshSha256`
+by exact path, without rehashing large payloads. Source native-execution flags
+and native-report run/attempt remain `UNKNOWN`; each backend's12 foreign
+blocked cells and complete-process/semantic/current-SHA gaps remain open.
+
+Original-native v25 compilation retains exact compiler identities/exits and Job
+cleanup, but11 SARIF notes make its strict stage ❌ Failed; no binding or original
+tiny exists. V26 repairs remain partial and `NOT_READY`. The next real chains are
+original native tiny1 then cancellation6/retention2 and Linux/joint12; source
+alias/call ABI and imported-panic behavior through actual generated programs;
+then the same-candidate nine-input joint and12 negatives. The detailed cases and
+fixed denominators are in
+`artifacts/p1-supervision/report4-reconcile-v3/NEXT-RUNTIME-CHAINS.md`.
+
+Formatter v16's strict build has SARIF0; its new same-assembly no-signal control
+passes in21.761s with all6 role identities and borrowed-resource cleanup bound.
+Actual CTRL+C is ❌ Failed against its130 contract: Event0/Group0 succeeds with
+RawReturn1/LastError0, but the real CLI naturally exits3221225786 (0xC000013A),
+not130; helper/controller/driver exit1. TerminationReturn is null, Wait0 and owned
+reclamation is true; complete identity/event/cleanup evidence does not turn this
+runtime failure into a pass. stdio/system ancestry, kernel I/O,59/91 cases and
+every leaf/gate remain open. Native source26 is partial `NOT_READY`, with no new
+build or runtime; all v16 trials, leases and failures remain retained.
 
 Round13's `P1-GATE.03.REPORT4-v1` freezes four original source/backend reports,
 52 scoped records, source39 PE per RID and backend24 cells per report, including

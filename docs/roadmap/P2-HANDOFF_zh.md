@@ -8,7 +8,30 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v17/resumption.json`。
+`artifacts/p1-supervision/resume-root-v18/resumption.json`。
+
+第14轮不可变 REPORT4 v3 限定原报告对账组件经真实tiny／full后 ✅ 已完成：
+4份报告、52条作用域记录、78份源码PE及14份后端PE绑定、595项检查／0问题，
+3个报告／格／替换负控被拒绝。v2 的24个空哈希失败保留；v3 按精确路径将
+静态inventory的 `sha256` 绑定到独立已验收旧证明的 `freshSha256`，未重哈希
+大型payload。source原生执行flag及原报告run／attempt仍为 `UNKNOWN`；
+每后端12个外平台blocked及完整进程／语义／当前SHA缺口继续开放。
+
+原native v25编译保留精确编译器身份／退出及Job清理，但11项SARIF note使
+严格阶段 ❌ 失败，无binding或original tiny；v26修复仍不完整，为 `NOT_READY`。
+后续真实链是original native tiny1后接cancellation6／retention2及Linux／joint12；
+通过实际生成程序核源码alias／call ABI与imported-panic行为；再接同候选九输入
+joint及12个负控。具体案例与固定分母保留于
+`artifacts/p1-supervision/report4-reconcile-v3/NEXT-RUNTIME-CHAINS.md`。
+
+Formatter v16 严格构建为SARIF0；同一新程序集的无信号控制在21.761秒通过，
+六个role身份及借用资源回收已绑定。真实CTRL+C针对130契约 ❌ 失败：Event0／
+Group0发送成功、RawReturn1／LastError0，但真实CLI自然退出3221225786
+（0xC000013A），不是130；helper／controller／driver均exit1。TerminationReturn为
+null、Wait0、拥有资源回收为true；完整身份／event／cleanup证据不能把运行失败
+计为通过。stdio／系统祖先、kernel I/O、59／91案例及全部叶项／门禁继续开放。
+Native source26仍为部分 `NOT_READY`，未新build或runtime；v16全部trial、lease
+与失败均保留。
 
 第13轮 `P1-GATE.03.REPORT4-v1` 冻结四份原始 source／backend 报告、52条
 作用域记录、每 RID 39份源码 PE，以及每报告24后端格，包含12外平台 blocked。
