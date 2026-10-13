@@ -8,7 +8,39 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v18/resumption.json`.
+`artifacts/p1-supervision/resume-root-v19/resumption.json`.
+
+Round15 starts `P2-08.03` product implementation. The frozen tooling91 scope
+(49 corpus plus42 scenarios) retains all12 documentation scenarios. Actual
+syntax documentation attributes and original UTF-16 source maps are available;
+the new additive model/renderer draft is 🚧 In progress and `NOT_READY`, with
+build/runtime/tests `NOT_RUN` and no shared CLI/test registration integration.
+Its current local-link classification, source-href safety/span encoding and
+budget-diagnostic/final-output checks require repair; trait/reexport/associated
+items/fields/variants remain incomplete. A later repair command was rejected
+before any edit by the02:42 hard code guard. No documentation case or P2 leaf
+is accepted; the unreviewed product file remains uncommitted. Resume gaps:
+`artifacts/p2-supervision/documentation-v1/IMPLEMENTATION-HANDOFF.json`.
+
+Round15's original-native v27 strict build component is ✅ Complete: SDK10.0.401,
+compiler exit0, SARIF0 and exact frozen source/runtime binding. Its actual original
+native tiny is ❌ Failed: outer member limit2 observed dotnet50932 → pwsh65320 →
+conhost69104, total3, before admission. No body receipt exists; inner root1/helpers0
+and original tiny1/identity1/cancel6/retention2/Linux12 remain unchanged. Finally
+records Active/Assigned/Listed0 and no cleanup errors; root independently found
+zero survivors across the8 exact observed PIDs. Extra-helper held identity/image/
+hash/history proof and explicit scope resolution remain open; no cap is raised.
+[Bound strict-build and native-tiny evidence](../evidence/p1/containment-v27-build-tiny.json)
+is committed at `1bc7717bfd1be7f03eab2060ae3e853a2579d41d`.
+
+Round15 formatter work is 🚧 In progress and `NOT_READY`: the optional callback
+is placed after actual managed CTRL+C handler subscription, but Program wiring,
+exact PID/nonce lease validation, private-console readiness handshake, new helper,
+new candidate build and meaningful tests are absent. Startup timing is a hypothesis.
+The two-parameter Run API compatibility repair was rejected by the02:42 clock guard;
+the untested source change was written at02:36:32 after the02:36 internal cutoff.
+No signal failure is reinterpreted; preserve the partial uncommitted source and
+v16 failure. P1's6 gates remain open and P2 remains8/101 ✅ Complete leaves.
 
 Round14's immutable REPORT4 v3 limited original-report reconciliation component
 is ✅ Complete after actual tiny/full:4 reports,52 scoped records,78 source PE

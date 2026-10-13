@@ -8,7 +8,33 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v18/resumption.json`。
+`artifacts/p1-supervision/resume-root-v19/resumption.json`。
+
+第15轮开始 `P2-08.03` 产品实现。冻结tooling91范围（49个corpus加42个scenario）
+保留全部12个documentation scenario。真实syntax文档属性及原UTF-16源码映射
+均可用；新增model／renderer草稿 🚧 进行中且为 `NOT_READY`，build／runtime／
+tests均 `NOT_RUN`，未接共享CLI或测试注册。当前local-link分类、source-href安全／
+span编码、预算诊断及完整输出检查仍需修；trait／reexport／associated items／
+fields／variants尚不完整。后续修复命令被02:42硬code guard在任何编辑前拒绝。
+未验收任何doc案例或P2叶项，未审产品文件保持未提交。续接缺口：
+`artifacts/p2-supervision/documentation-v1/IMPLEMENTATION-HANDOFF.json`。
+
+第15轮原native v27严格编译组件 ✅ 已完成：SDK10.0.401、编译器exit0、
+SARIF0及精确冻结源码／runtime绑定。实际original native tiny ❌ 失败：
+outer成员上限2，却在admission前观测dotnet50932 → pwsh65320 →
+conhost69104、total3。无body receipt；inner root1／helpers0与原分母
+ tiny1／identity1／cancel6／retention2／Linux12均不变。finally记录
+Active／Assigned／Listed0、cleanup error0；root独立核8个精确PID均无遗留。
+额外helper的held identity／image／hash／history证明及明确scope决议仍开放，
+未提高上限。[严格编译与native tiny绑定证据](../evidence/p1/containment-v27-build-tiny.json)
+已提交于 `1bc7717bfd1be7f03eab2060ae3e853a2579d41d`。
+
+第15轮formatter工作 🚧 进行中且 `NOT_READY`：可选callback位于真实托管
+CTRL+C handler订阅之后，但Program接线、精确PID／nonce lease校验、私有console
+readiness handshake、新helper、新candidate build及有意义tests均缺失。
+启动时序仅为假设。两参数Run API兼容性修复被02:42 clock guard拒绝；
+未测源码改动于02:36:32写入，超过02:36内部截止。未重新解释signal失败；
+保留未提交的partial源码和v16失败。P1六门禁均开放，P2仍8/101叶项 ✅ 已完成。
 
 第14轮不可变 REPORT4 v3 限定原报告对账组件经真实tiny／full后 ✅ 已完成：
 4份报告、52条作用域记录、78份源码PE及14份后端PE绑定、595项检查／0问题，
