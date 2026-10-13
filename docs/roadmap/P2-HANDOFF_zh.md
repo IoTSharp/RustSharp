@@ -8,7 +8,25 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v20/resumption.json`。
+`artifacts/p1-supervision/resume-root-v21/resumption.json`。
+
+第17轮documentation基础组件在限定范围内 ✅ 已完成：独立新输出的SDK10.0.401
+全solution Build0警告／错误、源码前后hash不变，实际12／12个seed均通过，
+failed／not-run0、未过滤。case报告耗时82.252毫秒；native outer0.334秒，
+Job1→0、句柄关闭。[基础实现及实际证明](../evidence/p2/documentation-foundation-v1.json)
+已提交于 `51367dd3bb53d0f0f21ba218f6f4a6c63524dfd4`。12个完整scenario的深度
+仍开放：source pages／真实anchors、CLI／workspace、完整Markdown／reexports
+及预算边界。P2仍8/101叶项 ✅ 已完成。保留不明owner输出Junction，使用新
+OutDir绕开，未删除；首次真实IL3000／CA1861编译失败记录保留。
+
+Formatter v18源码及observer严格包装已冻结；IL3000未抑制而已修复，产品
+solution已编译，但必需的严格Launcher／Helper双组件驱动仍缺失。03:43窗口
+写入于03:43:13被拒，未执行新formatter无信号／CTRL+C；包装、source／Git快照
+绑定、kernel I/O及完整叶项验收仍开放。精确版本PowerShell调查保留4份官方源码／
+网络回执及具体初始化路径，但console allocation调用方仍 `UNKNOWN`；未改
+flags／helper／fixture，未生成新native候选。研究超时4.692秒已记录，最终
+packet冻结被03:37 guard拒绝。P1六门禁仍开放。下一doc source-page patch
+已派入独立artifact目录，03:47之后无新runtime。
 
 第16轮拒绝溢出的原生诊断组件 ✅ 已完成：v28严格Build／SARIF0，全部3个
 真实held身份／image／hash／directparent、命令历史及有效原生退出证明，诊断

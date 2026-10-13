@@ -8,7 +8,30 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v20/resumption.json`.
+`artifacts/p1-supervision/resume-root-v21/resumption.json`.
+
+Round17 documentation foundation is ✅ Complete at the limited component scope:
+fresh isolated-output SDK10.0.401 solution Build0 warnings/errors, source-before/
+after hashes unchanged, and actual12/12 seed cases pass with0 failed/not-run and
+no filter. The case report takes82.252ms; native outer0.334s, Job1→0, handles
+closed. [Foundation implementation and actual proof](../evidence/p2/documentation-foundation-v1.json)
+are committed at `51367dd3bb53d0f0f21ba218f6f4a6c63524dfd4`. The12 complete
+scenario depths remain open: source pages/real anchors, CLI/workspace, complete
+Markdown/reexports and budget boundaries. P2 stays8/101 ✅ Complete leaves.
+The preserved unknown-owner output Junction is bypassed by fresh OutDir rather
+than removed; the first actual IL3000/CA1861 compile failure remains retained.
+
+Formatter v18 sources and observer strict wrapper are frozen; IL3000 is repaired
+without suppression and the production solution compiles, but the required strict
+two-component Launcher/Helper driver is still absent. Its03:43 window write was
+refused at03:43:13. No new formatter no-signal/CTRL+C is executed; packaging,
+source/Git snapshot binding, kernel I/O and whole-leaf acceptance stay open.
+Exact-version PowerShell investigation retained4 official source files/network
+receipts and concrete initialization paths, but the console-allocation caller
+remains `UNKNOWN`; no flags/helpers/fixture changes or new native candidate exist.
+The research overrun4.692s is recorded, and final packet freezing was refused by
+the03:37 guard. P1's6 gates remain open. Next documentation source-page patch is
+assigned to an isolated artifact directory, with no new runtime after03:47.
 
 Round16's rejected-overflow native diagnostic component is ✅ Complete:
 strict v28 Build/SARIF0, all3 actual held identities/images/hashes/direct parents,
