@@ -8,7 +8,18 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v21/resumption.json`。
+`artifacts/p1-supervision/resume-root-v23/resumption.json`。
+
+第19轮源码页组件在commit1c7d24f的限定范围内 ✅ 已完成：真实新solution构建0警告／错误、原12扩充案例全通过。原Expected7断言保留，使用parser真实Visibility.Span，另核actualfn11；初始CA2249及11/12失败均保留。证据披露执行后仅CRLF→LF源码规范化及精确source／PDB绑定限制，未声称当前SHA阶段门禁。CLI／atomic／workspace及完整叶项仍开放。Launcher21 strict3／SARIF0在55ea12f ✅ 已完成；Helper因精确RSP不匹配 ❌ 失败，原生退出证明secondary失败保留、Job3已回收。新CTRL+C为NOT_RUN。Comparisonv2因3个nuint DTO不能JSON序列化而NOT_READY，v3写入被拒、未构建候选。P1六门禁仍开放，P2仍8/101、唯一heartbeat保持ACTIVE。
+
+第18轮实际回执恢复：Observer18严格构建 ✅ 已完成（3个原生身份／退出、
+SARIF0／Job0），commit9002906。Launcher20虽exit0仍因22项SARIF note而
+❌ 失败，Helper／CTRL runtime NOT_RUN，commitd2f3b6d。独立DETACHED tiny
+❌ 失败：outer2／inner1、双流空、子marker缺失及短子身份回执不完整，commit93c7cbc。
+原NO_WINDOW失败及cap2／inner1／helper0不变。源页代码／扩充原12案例已冻结，
+但仍NOT_READY，04:17进程创建前guard拒绝后build／tests NOT_RUN。上轮最终
+台账／docs写入被拒且未修改；真实raw回执及这些精确commit优先于过期worker-running
+字段。第19轮开始实际验证，P1六门禁及P2的8/101叶项计数不变。
 
 第17轮documentation基础组件在限定范围内 ✅ 已完成：独立新输出的SDK10.0.401
 全solution Build0警告／错误、源码前后hash不变，实际12／12个seed均通过，
