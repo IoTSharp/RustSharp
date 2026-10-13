@@ -8,7 +8,7 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v9/resumption.json`.
+`artifacts/p1-supervision/resume-root-v10/resumption.json`.
 
 Three fresh workers own disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
 (source 1572 files, 19 packages/39 PE/785 retained per RID; backend 234 files,
