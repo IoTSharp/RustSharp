@@ -8,9 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v12/resumption.json`。
+`artifacts/p1-supervision/resume-root-v13/resumption.json`。
 
-三名全新 worker 独占互斥冻结范围：`P1-GATE.03.CISEM-v1`
+第9轮已派出三名 worker 负责互斥冻结范围：`P1-GATE.03.CISEM-v1`
 （source 1572文件，每RID 19 packages/39 PE/785 retained；backend 234文件，
 24 matrix cells/每RID 103 retained）、`P1-GATE.02.CONTAIN-v8`
 （v7的11份冻结源码；tiny1、cancellation6、retention2及Linux/joint12），
@@ -24,6 +24,23 @@ worker完成声明仍待独立源码、运行证据及资源复核。
 提交及资源记录以持久检查点为准。
 
 v29 真实保留字节审计通过10052项检查、0个问题，保留1806文件／144机器头／52案例及92 PE/PDB；绑定708候选Git blob及14个后端PDB文档。完整签名语义与全部阶段门禁仍开放，首次零长度blob失败及archive启动器资源缺项均保留，仍须监督者独立验收。
+
+本轮保留 formatter v12 两次解析失败：❌ 失败，未形成有效候选。
+V11 声明审计草稿 ❌ 失败：源码冻结超过 worker 截止时间，解析报缺右大括号，
+第三个真实字段字节负控尚未编写。源码 SHA256 为
+`860E5624B2B9318C187530E48211853829049DD4EC00AD384C240CE760CA12B7`；
+tiny 与 full78 仍为 `NOT_RUN`。固定 source 范围保持78 PE／88 value types／
+76字段／56非零记录加22零记录。Containment v18 冻结 manifest SHA256 为
+`528315543534DFFC4BCF9159672D895CB6301403AC457148EA5F617ED65AE9C3`；
+受控构建 ❌ 失败：MSBuild 报0 warning／0 error，但 SARIF 保留5个 note 诊断
+（CA1822×3、CA1862×1、CA1513×1），未满足冻结的零诊断要求。脚本 exit1，
+未生成 `BUILD-BINDING`；managed `tiny`、`pre-cancel` 及 `pending-cancel` controls 仍为
+`NOT_RUN`。已绑定三个 MSBuild／csc／conhost 身份及父链；最终私有 Job 为
+Total3、Active／Assigned／Listed0，全部句柄关闭且无清理错误，监督者 CIM
+回读未发现记录 PID 存活。不降低标准或删除诊断；新不可变源码须修复全部5项
+诊断后再单次全新构建。结果保留于当前检查点。
+这些草稿和失败记录未关闭任何 P1 门禁或 P2 叶项；六个 P1 门禁全部保持开放，
+P2 仍为8/101叶项 ✅ 已完成。
 
 ## 历史检查点 — 2026-10-08 12:18
 

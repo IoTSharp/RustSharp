@@ -8,9 +8,9 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v12/resumption.json`.
+`artifacts/p1-supervision/resume-root-v13/resumption.json`.
 
-Three fresh workers own disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
+Round9 dispatched three workers to disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
 (source 1572 files, 19 packages/39 PE/785 retained per RID; backend 234 files,
 24 matrix cells/103 retained per RID), `P1-GATE.02.CONTAIN-v8`
 (v7's 11 frozen source files; tiny1, cancellation6, retention2 and Linux/joint12),
@@ -26,6 +26,27 @@ claim that a current slice, parent or phase passed acceptance. Actual tests,
 failures, gaps, commits and resource records belong to the persistent checkpoint.
 
 The v29 actual retained-byte audit passes10052 checks with0 issues, preserving1806 files/144 headers/52 cases and92 PE/PDB. It binds708 candidate Git blobs and14 backend PDB documents; complete signature semantics and all phase gates remain open. The first zero-length-blob failure and archive launcher resource gaps are retained. Root independent acceptance remains required.
+
+This round retains two formatter v12 parsing failures: ❌ Failed, with no valid
+candidate produced. The V11 declaration-audit draft is ❌ Failed: its source
+freeze exceeded the worker cutoff, parsing reports a missing closing brace,
+and the third actual field-byte negative control is unwritten. Its source SHA256
+is `860E5624B2B9318C187530E48211853829049DD4EC00AD384C240CE760CA12B7`;
+tiny and full78 remain `NOT_RUN`. The fixed source scope remains78 PE/88 value
+types/76 fields/56 nonzero records plus22 zero records. Containment v18 freezes
+manifest SHA256
+`528315543534DFFC4BCF9159672D895CB6301403AC457148EA5F617ED65AE9C3`;
+its controlled build is ❌ Failed: MSBuild reports0 warnings/0 errors, but SARIF
+retains5 note diagnostics (CA1822×3, CA1862×1, CA1513×1) against the frozen
+zero-diagnostic requirement. The script exits1 and produces no `BUILD-BINDING`;
+managed `tiny`, `pre-cancel` and `pending-cancel` controls remain `NOT_RUN`. The three
+observed MSBuild/csc/conhost identities and parent chain are bound; the final
+private Job records Total3 and Active/Assigned/Listed0, all handles close without
+cleanup errors, and supervisor CIM readback finds no recorded PID alive.
+No standard is lowered or diagnostic removed; a new immutable source must fix
+all5 diagnostics before one fresh build. Results remain in the checkpoint. These draft/failure
+records close no P1 gate or P2 leaf; all six P1 gates remain open and P2 remains
+8/101 leaves ✅ Complete.
 
 ## Historical checkpoint — 2026-10-08 12:18
 

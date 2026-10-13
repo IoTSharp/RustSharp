@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.CONTAIN-v8",
+  "version": 18,
+  "status": "failed",
+  "sourceFreezeSha256": "528315543534DFFC4BCF9159672D895CB6301403AC457148EA5F617ED65AE9C3",
+  "sourceVersion": 15,
+  "productionHead": "90f72c5524417d82e95a5a230c5c2bc4a46d64f1",
+  "buildCommandExit": 1,
+  "msbuildExit": 0,
+  "msbuildWarnings": 0,
+  "msbuildErrors": 0,
+  "sarifDiagnostics": [
+    {
+      "count": 3,
+      "level": "note",
+      "id": "CA1822"
+    },
+    {
+      "count": 1,
+      "level": "note",
+      "id": "CA1862"
+    },
+    {
+      "count": 1,
+      "level": "note",
+      "id": "CA1513"
+    }
+  ],
+  "strictBuildAccepted": false,
+  "buildBindingExists": false,
+  "managedControls": [
+    {
+      "id": "tiny",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "pre-cancel",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "pending-cancel",
+      "status": "NOT_RUN"
+    }
+  ],
+  "observedProcessDenominator": 3,
+  "observedProcessIdentities": [
+    {
+      "Pid": 46840,
+      "CreationFileTime": 134363798061700052,
+      "ParentPid": 6376,
+      "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v18\\root-build.rsp\""
+    },
+    {
+      "Pid": 66516,
+      "CreationFileTime": 134363798074161455,
+      "ParentPid": 46840,
+      "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd30wefzs.nn5\\tmpfb81a9f6d9bd4d4e804fce3f89724f41.rsp\""
+    },
+    {
+      "Pid": 69176,
+      "CreationFileTime": 134363798074221948,
+      "ParentPid": 66516,
+      "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    }
+  ],
+  "observedIdentityLayerComplete": true,
+  "finalPrivateJob": {
+    "Active": 0,
+    "Total": 3,
+    "Assigned": 0,
+    "Listed": 0,
+    "ReturnedBytes": 8,
+    "Members": [],
+    "Failures": [],
+    "Overflow": false,
+    "Coherent": true
+  },
+  "processAndThreadHandlesClosed": true,
+  "jobHandleClosed": true,
+  "cleanupErrorCount": 0,
+  "independentCimSurvivors": 0,
+  "rootReviewPath": "artifacts/p1-supervision/resume-root-v13/containment-v18-root-review.json",
+  "rootReviewSha256": "FBB7011A29D96105ADC90B5F0F4E9F1F4F30CF2C36C64A514984B94A3A929104",
+  "retainedOriginalFiles": [
+    {
+      "bytes": 1387,
+      "sha256": "528315543534DFFC4BCF9159672D895CB6301403AC457148EA5F617ED65AE9C3",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v18\\MANIFEST.json"
+    },
+    {
+      "bytes": 20140,
+      "sha256": "4B4E71E1E79B45D968F2E579816762E742E16326CB2597D0C062B0A6B649E806",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v18\\Invoke-RootHeldManagedMicro.ps1"
+    },
+    {
+      "bytes": 23065,
+      "sha256": "BF06A85111D9645BB3FE21262D554D7E53A1BECFA52C7785C4389647CF3537BD",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v18\\root-build-outer.json"
+    },
+    {
+      "bytes": 4628552,
+      "sha256": "79D00EF42D619A0CD1B03695B5A94928CC6AC7559790C2AC61947CFA9D3D0E48",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v18\\root-build.log"
+    },
+    {
+      "bytes": 7367,
+      "sha256": "7331EA6F21519C805290D416827CA505D54DB35CBCF156C0AF89860F7FBD718A",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v18\\root-build.sarif"
+    },
+    {
+      "bytes": 26442,
+      "sha256": "34BD65E45FABFEAE05305631A113D37FBA78B2868B36F7F4C69DF08F295AF37A",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v18\\COMPILER-RESPONSE-OBSERVED.json"
+    }
+  ],
+  "nativeCancellationDenominator": 6,
+  "nativeRetentionDenominator": 2,
+  "linuxJointDenominator": 12,
+  "originalFormatterAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "sourceAndFailureOutputsPreserved": true,
+  "next": "New immutable source fixes five analyzer diagnostics; re-freeze exact source/response template before one new root-held Build. No standard lowered and no automatic retry of v18."
+}
