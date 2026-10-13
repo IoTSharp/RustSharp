@@ -1,0 +1,132 @@
+{
+  "taskId": "P1-GATE.03.REPORT4-v1",
+  "version": 3,
+  "status": "passed",
+  "rootAcceptedLimitedOriginalReportReconciliation": true,
+  "sourceSha256": "111C677C81A87340A543E123D24A1D1AECCE93EBEB337C4D8745C3EF1586C9CF",
+  "inputsSha256": "94254FBEE8096C634F73B04AB713F706B95A0F4A505752A6A92059F5435F2ACE",
+  "candidateSha": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "treeSha": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "runId": "37710305713",
+  "attempt": 1,
+  "rootTinyReportSha256": "2D80B09D4797EF7BB7B81E349EFE0C4C3813448C388C4BD0A1EA12B95570CFCD",
+  "rootFullReportSha256": "A2C13F4E62178B0DB0DED82613D6D138E36570A8859C592736351E3AB20071B9",
+  "rootExecutionPid": "UNKNOWN_NO_V3_IDENTITY_RECEIPT",
+  "rootFullChecks": 595,
+  "rootFullIssues": 0,
+  "reports": [
+    {
+      "group": "backend",
+      "rid": "linux-x64",
+      "reportSha256": "21BCFCD712A4C612F7E612A40A24C666B3E511812D7A8FB551F562281FE794F3",
+      "cases": 7,
+      "originalPE": 7,
+      "headerProbe": {
+        "valid": true,
+        "errors": []
+      },
+      "nativeExecutionFlag": true,
+      "runInsideOriginalReport": "UNKNOWN_NOT_PRESENT",
+      "runIdentityOrigin": "independently hashed production receipt CI",
+      "completeProcessTreeProof": "NOT_ACCEPTED: original PID/parent/command/time receipts do not establish every descendant",
+      "foreignBlockedCells": 12,
+      "semanticAccepted": false
+    },
+    {
+      "group": "backend",
+      "rid": "win-x64",
+      "reportSha256": "EA0794422F45588E3D17BF9E948198FB695F8468F84C61CDFC8A0D6E153288E0",
+      "cases": 7,
+      "originalPE": 7,
+      "headerProbe": {
+        "valid": true,
+        "errors": []
+      },
+      "nativeExecutionFlag": true,
+      "runInsideOriginalReport": "UNKNOWN_NOT_PRESENT",
+      "runIdentityOrigin": "independently hashed production receipt CI",
+      "completeProcessTreeProof": "NOT_ACCEPTED: original PID/parent/command/time receipts do not establish every descendant",
+      "foreignBlockedCells": 12,
+      "semanticAccepted": false
+    },
+    {
+      "group": "source",
+      "rid": "linux-x64",
+      "reportSha256": "711ABE91E487F1EC0A9AD8446A096E624D04D8F477AB13A6D0A0D3F19997AA8E",
+      "cases": 19,
+      "originalPE": 39,
+      "headerProbe": {
+        "valid": true,
+        "errors": []
+      },
+      "nativeExecutionFlag": "UNKNOWN_NOT_IN_SOURCE_SCHEMA",
+      "runInsideOriginalReport": "UNKNOWN_NOT_PRESENT",
+      "runIdentityOrigin": "independently hashed production receipt CI",
+      "completeProcessTreeProof": "NOT_ACCEPTED: original PID/parent/command/time receipts do not establish every descendant",
+      "foreignBlockedCells": 0,
+      "semanticAccepted": false
+    },
+    {
+      "group": "source",
+      "rid": "win-x64",
+      "reportSha256": "D9FE2E96F28EE936FD4264D271F36FDAFC645ABCF029865ABF6D5B89B698069E",
+      "cases": 19,
+      "originalPE": 39,
+      "headerProbe": {
+        "valid": true,
+        "errors": []
+      },
+      "nativeExecutionFlag": "UNKNOWN_NOT_IN_SOURCE_SCHEMA",
+      "runInsideOriginalReport": "UNKNOWN_NOT_PRESENT",
+      "runIdentityOrigin": "independently hashed production receipt CI",
+      "completeProcessTreeProof": "NOT_ACCEPTED: original PID/parent/command/time receipts do not establish every descendant",
+      "foreignBlockedCells": 0,
+      "semanticAccepted": false
+    }
+  ],
+  "actualNegativeControls": [
+    {
+      "mutation": "candidate-report-field",
+      "rejected": true,
+      "errors": [
+        "report header identity"
+      ]
+    },
+    {
+      "mutation": "foreign-cell-scope",
+      "rejected": true,
+      "errors": [
+        "foreign cell scope/status"
+      ]
+    },
+    {
+      "mutation": "report-replacement",
+      "rejected": true,
+      "errors": [
+        "report header identity",
+        "backend7/24",
+        "local12/foreign12"
+      ]
+    }
+  ],
+  "sourcePeTotal": 78,
+  "backendPeTotal": 14,
+  "scopedCases": 52,
+  "reportCount": 4,
+  "actualFullFinishedAt": "2026-10-14T02:04:58.1194346+08:00",
+  "actualFullElapsedMilliseconds": 1418,
+  "acceptedPriorPhysicalMetadataEntriesIndexed": 1806,
+  "largePayloadFilesRehashed": 0,
+  "sourceSchemaNativeFlag": "UNKNOWN_NOT_IN_SOURCE_SCHEMA",
+  "nativeReportRunAttempt": "UNKNOWN_NOT_PRESENT",
+  "runIdentityOrigin": "hashed production receipt CI",
+  "foreignBlockedCellsRetainedPerBackendReport": 12,
+  "candidateProgramsExecuted": 0,
+  "fullSemanticsAccepted": false,
+  "wholeProcessTreeAccepted": false,
+  "combinedWitnessSemanticMatrixAccepted": false,
+  "currentCandidateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "at": "2026-10-14T02:08:11.8577163+08:00"
+}
