@@ -4,6 +4,8 @@ internal static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--p2-documentation-component")
+            return await P2DocumentationComponentRunner.RunAsync(args[1]).ConfigureAwait(false);
         if (BoundedProcessTests.IsChildInvocation(args))
         {
             return await BoundedProcessTests.RunChildModeAsync(args).ConfigureAwait(false);
@@ -55,6 +57,7 @@ internal static class Program
         tests = [.. tests, .. P1HarnessEvidenceTests.All];
         tests = [.. tests, .. P2CargoContractTests.All];
         tests = [.. tests, .. P2ToolingContractTests.All];
+        tests = [.. tests, .. P2DocumentationTests.All];
         tests = [.. tests, .. P2FormatterTests.All];
         tests = [.. tests, .. P2InteropContractTests.All];
         tests = [.. tests, .. P1NativeUnwindClosureTests.All];

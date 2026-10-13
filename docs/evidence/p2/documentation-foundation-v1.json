@@ -1,0 +1,388 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.03",
+  "component": "documentation model and renderer foundation v1",
+  "componentAccepted": true,
+  "wholeLeafAccepted": false,
+  "fixedDocumentationScenarios": 12,
+  "fullScenariosClosed": 0,
+  "toolingDenominator": 91,
+  "actualSeedDenominator": 12,
+  "actualSeedPassed": 12,
+  "sourceFiles": [
+    {
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationModel.cs",
+      "sha256": "5EA784AD59785BF0ACBC9E2200EFE154BEAB750BBFB056C7583C183D1729293A"
+    },
+    {
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationRenderer.cs",
+      "sha256": "D62A1E2341FBE05111D1953EFFFDC50127CD19E697A630FAA412BE4A9E7EC106"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationTests.cs",
+      "sha256": "8B04C148F51D69393CDB338BF54CED928DBE3BD34FAAA735BDFFB28E6981D31D"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationComponentRunner.cs",
+      "sha256": "F12760907CD0C1AA74E59FA537E55728073E843216851196CABC7F8E46E08DAD"
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "2F885CD91ACCF1A906786A819DA7EB6BB51E3045A7102ED78CDF0AAB903A1581"
+    }
+  ],
+  "dllBindings": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll",
+      "sha256": "12A39759CE19659ED05B8B0F67D7DEA13A3BC36E5845131C3A00BA1E8E4C53DD"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\rsc.dll",
+      "sha256": "8BC7BE46FFF7853753D09A70ED339C37B08A868858C7F5B1E8BC2DE6FB9C61C1"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Compiler.dll",
+      "sha256": "F9567330F1C89349BA7DF692EDF0B003498B0A51279CCB1B55974D6A74C9E751"
+    }
+  ],
+  "build": {
+    "sdk": "10.0.401",
+    "warnings": 0,
+    "errors": 0,
+    "exitCode": 0,
+    "elapsedSeconds": 40.4376769,
+    "privateJobFinal": {
+      "Active": 0,
+      "Total": 15,
+      "Assigned": 0,
+      "Listed": 0,
+      "ReturnedBytes": 8,
+      "Members": [],
+      "Failures": [],
+      "Overflow": false,
+      "Coherent": true
+    },
+    "privateJobClosed": true
+  },
+  "actualReport": {
+    "schemaVersion": 1,
+    "taskId": "P2-08.03",
+    "evidenceKind": "actual-documentation-twelve-seed-component",
+    "denominator": 12,
+    "toolingDenominator": 91,
+    "executed": 12,
+    "passed": 12,
+    "failed": 0,
+    "notRun": 0,
+    "componentPassed": true,
+    "fullLeafAccepted": false,
+    "fullP2Closure": false,
+    "elapsedMilliseconds": 82.2515,
+    "cases": [
+      {
+        "name": "P2-08.03 doc-public-items",
+        "status": "passed",
+        "elapsedMilliseconds": 57.8551,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-private-items",
+        "status": "passed",
+        "elapsedMilliseconds": 0.6146,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-generics-signatures",
+        "status": "passed",
+        "elapsedMilliseconds": 4.6218,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-source-links",
+        "status": "passed",
+        "elapsedMilliseconds": 0.07,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-local-links",
+        "status": "passed",
+        "elapsedMilliseconds": 1.7345,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-cross-module-links",
+        "status": "passed",
+        "elapsedMilliseconds": 8.9416,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-missing-link",
+        "status": "passed",
+        "elapsedMilliseconds": 0.4995,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-ambiguous-link",
+        "status": "passed",
+        "elapsedMilliseconds": 0.1632,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-malformed-comment",
+        "status": "passed",
+        "elapsedMilliseconds": 0.2376,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-escape-markup",
+        "status": "passed",
+        "elapsedMilliseconds": 0.1521,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-unsafe-link",
+        "status": "passed",
+        "elapsedMilliseconds": 0.695,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 doc-budget",
+        "status": "passed",
+        "elapsedMilliseconds": 2.6403,
+        "exception": null
+      }
+    ]
+  },
+  "actualRuntimeReceipt": {
+    "name": "documentation-twelve-v1",
+    "purpose": "Supervision command only; no original containment or phase acceptance",
+    "startedAt": "2026-10-14T03:42:52.1610642+08:00",
+    "arguments": [
+      "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll",
+      "--p2-documentation-component",
+      "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\documentation-twelve-actual.json"
+    ],
+    "timeoutSeconds": 20,
+    "maximumMembers": 4,
+    "snapshots": [
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 49632,
+            "CreationFileTime": 134363941721750872,
+            "ParentPid": 29136,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll\" \"--p2-documentation-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\documentation-twelve-actual.json\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      }
+    ],
+    "passed": true,
+    "errors": [],
+    "fullP1Closure": false,
+    "fullP2Closure": false,
+    "launch": {
+      "Pid": 49632,
+      "IntendedCommand": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll\" \"--p2-documentation-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\documentation-twelve-actual.json\"",
+      "Identity": {
+        "Pid": 49632,
+        "CreationFileTime": 134363941721750872,
+        "ParentPid": 29136,
+        "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll\" \"--p2-documentation-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\documentation-twelve-actual.json\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "parentChain": {
+      "Nodes": [
+        {
+          "Pid": 49632,
+          "CreationFileTime": 134363941721750872,
+          "ParentPid": 29136,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll\" \"--p2-documentation-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\documentation-twelve-actual.json\""
+        },
+        {
+          "Pid": 29136,
+          "CreationFileTime": 134363941716814800,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\nif ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }\n$ErrorActionPreference='Stop'\n$taskRoot='D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v21'\n$taskBefore=Get-Content (Join-Path $taskRoot 'product-build-v2-source-before.json') -Raw|ConvertFrom-Json -DateKind String\n$taskWatch=[Diagnostics.Stopwatch]::StartNew();$taskAfter=@()\nforeach($taskInput in $taskBefore.actualSources){if($taskWatch.Elapsed.TotalSeconds -gt 8){throw 'Source9/8s consistency bound'};$taskHash=(Get-FileHash -LiteralPath $taskInput.path).Hash;if($taskHash -cne $taskInput.sha256){throw 'Product sources changed during accepted Build'};$taskAfter+=@([ordered]@{path=$taskInput.path;sha256=$taskHash})}\n[IO.File]::WriteAllText((Join-Path $taskRoot 'product-build-v2-source-after.json'),([ordered]@{matched=$true;actualSources=$taskAfter;at=[DateTimeOffset]::Now.ToString('o')}|ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))\n$taskTests=Join-Path $taskRoot 'product-build-v2/bin/RustSharp.Tests.dll'\n$taskCli=Join-Path $taskRoot 'product-build-v2/bin/rsc.dll'\n$taskDllRows=@();foreach($taskDll in @($taskTests,$taskCli,(Join-Path $taskRoot 'product-build-v2/bin/RustSharp.Compiler.dll'))){$taskDllRows+=@([ordered]@{path=$taskDll;sha256=(Get-FileHash -LiteralPath $taskDll).Hash})}\n[IO.File]::WriteAllText((Join-Path $taskRoot 'actual-build-dll-bindings.json'),($taskDllRows|ConvertTo-Json -Depth 4),[Text.UTF8Encoding]::new($false))\n# Reviewed generated fixed12/60s/case5s loop uses comparisons/cancellation, tiny source strings and no file/process fixtures. Outer timeout20s.\n$taskReport=Join-Path $taskRoot 'documentation-twelve-actual.json'\n& ./artifacts/p1-supervision/resume-root-v21/Invoke-OwnedRootCommand.ps1 -Name documentation-twelve-v1 -Arguments @($taskTests,'--p2-documentation-component',$taskReport) -TimeoutSeconds 20 -MaximumMembers 4\nGet-Content -LiteralPath $taskReport -Raw\nGet-Date -Format o\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        },
+        {
+          "Pid": 39640,
+          "CreationFileTime": 134363303677828900,
+          "ParentPid": 12544,
+          "CommandLine": "\"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\" "
+        },
+        {
+          "Pid": 12544,
+          "CreationFileTime": 134363301892520825,
+          "ParentPid": 3816,
+          "CommandLine": "sihost.exe"
+        }
+      ],
+      "Complete": false,
+      "StopReason": "Win32Exception: OpenProcess query-only ancestor"
+    },
+    "exitCode": 0,
+    "jobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "processCleanup": {
+      "Pid": 49632,
+      "IntendedCommand": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll\" \"--p2-documentation-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\documentation-twelve-actual.json\"",
+      "Identity": {
+        "Pid": 49632,
+        "CreationFileTime": 134363941721750872,
+        "ParentPid": 29136,
+        "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\product-build-v2\\bin\\RustSharp.Tests.dll\" \"--p2-documentation-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v21\\documentation-twelve-actual.json\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "jobClosed": true,
+    "elapsedSeconds": 0.3338806,
+    "finishedAt": "2026-10-14T03:42:52.4923385+08:00"
+  },
+  "originalBindings": [
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/product-build-v1-owned.json",
+      "sha256": "24FD40889F6CF977E76CE57513514AFF302773A89DC35521E2F84B101CE259B0"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/product-build-v1.log",
+      "sha256": "80294996EBCD3884379E7DAAB37F7A8A32351F43B893A2A375FA92A74BED98C7"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/product-build-v2-owned.json",
+      "sha256": "016D4B8173A4BAF12CD7EBA4B5D29A694E479A0EE74AF222A79079ECA004C714"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/product-build-v2.log",
+      "sha256": "A09A7576C71F31EC4CEDA2C64A58FBCFCB59B0690634DFC110C006CC8B188486"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/product-build-v2-source-before.json",
+      "sha256": "713845661E4D5FDFBD3F55F5C562CAB7A5E57B701D38A286C2FA510559FFE707"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/product-build-v2-source-after.json",
+      "sha256": "D9401ADCE43D37295BC059A64990BDD0C789C51B6DC29F893BF956BDAC42BE3D"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/actual-build-dll-bindings.json",
+      "sha256": "12E7D436A56ACE72CF235885FE6EB047A4B2D631A31F5E2A0FCC5EB9A247CC8D"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/documentation-twelve-v1-owned.json",
+      "sha256": "76B152DE930DB35B32B5C9CB802F76C45938369CEC01DB046D84E7FA926384D8"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v21/documentation-twelve-actual.json",
+      "sha256": "5DD316CB9B43A393C7E86637AFA1A62175A244D22D191A46EBCC0AC1C8C4D13A"
+    }
+  ],
+  "baseGitContext": "7e50302a798a53046e34d8ccd6ec065e1bfc0a5d",
+  "workingTreeMatchesBase": false,
+  "binding": "Actual source hashes, exact compiled assembly and full12 seed execution only; not a current-SHA phase gate",
+  "priorFailuresRetained": [
+    "Round16 MSB3026/3027/3021 preserved junction failure",
+    "Round17 IL3000 and CA1861 actual SDK errors retained"
+  ],
+  "knownRemaining": [
+    "Actual emitted source pages/fragment anchors and external module expansion/SourceRoot integration",
+    "rsc doc Cargo/workspace CLI integration and actual Windows/Linux workflows",
+    "Full Markdown labelled/title links and public reexport glob/self/absolute/cycle semantics",
+    "Complete file/aggregate/link/operation/time/cancellation boundary cases within unchanged12 scenarios"
+  ],
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "P2CompleteLeaves": 8,
+  "P2LeafDenominator": 101,
+  "reviewedAt": "2026-10-14T03:47:40.1427034+08:00"
+}
