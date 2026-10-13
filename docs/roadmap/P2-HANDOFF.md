@@ -8,7 +8,18 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v16/resumption.json`.
+`artifacts/p1-supervision/resume-root-v17/resumption.json`.
+
+Round13's `P1-GATE.03.REPORT4-v1` freezes four original source/backend reports,
+52 scoped records, source39 PE per RID and backend24 cells per report, including
+12 foreign blocked cells. V1's requirement that every report contain a true
+nativeExecution flag is ❌ Failed as a schema assumption: source schema2 has
+no such field; only backend schema1 declares it. Immutable v2 preserves source
+`UNKNOWN_NOT_IN_SOURCE_SCHEMA` and native-report run/attempt `UNKNOWN`, binding
+run identity through hashed production-receipt CI fields. Its new header/hash/
+output reconciliation is data-only and remains pending root acceptance here;
+full semantics, combined-cell witness closure, whole descendants and current-SHA
+acceptance remain open. No candidate program or previously accepted audit ran.
 
 Round12's `P1-GATE.04.MAP52-v1` structural mapping component is ✅ Complete:
 root tiny/full validates52 distinct scoped records (19/19 source packages and
@@ -126,6 +137,18 @@ and root CIM readback finds no recorded PID alive; these facts do not establish
 complete identity or exit acceptance. The supervisor started v20 at00:16:51,
 after its own00:16 stop-new-operations boundary; this violation is retained.
 The accepted V13 declaration component is committed separately as `1cd77ef`.
+The original v15 formatter no-signal component is ✅ Complete in `099cad7`.
+Separate fresh PowerShell processes capture the reviewed persistent native host,
+prepare the immutable original source10/Launcher package, and run the original
+SOURCE-FROZEN entry. Actual CLI1, driver exit0 and six exact roles have reconciled
+held identity/image/command/parent/exit and Job events; Total6 finishes with
+Active/Assigned/Listed0, borrowed references and native handles close, nested
+cleanup errors are0, and independent recorded-PID readback finds0 survivors.
+The CLI remains truthfully bound to historical `aee97ccdc2509fb64693631979fa4e93c3a31578`.
+No signal is sent. stdio completeness and upstream system ancestry are false;
+actual CTRL+C, kernel I/O, the59/91 corpora, the leaf and all phase gates remain
+open. REPORT4 v2 and original native v25 are frozen but `NOT_RUN`, because the
+01:45 guard defers new trials. All failed sources and partial trials are retained.
 ## Historical checkpoint — 2026-10-08 12:18
 
 Windows private-console fixture component is ✅ Complete in commit `fb90c4c`:

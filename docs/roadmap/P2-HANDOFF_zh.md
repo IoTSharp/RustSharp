@@ -8,7 +8,16 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v16/resumption.json`。
+`artifacts/p1-supervision/resume-root-v17/resumption.json`。
+
+第13轮 `P1-GATE.03.REPORT4-v1` 冻结四份原始 source／backend 报告、52条
+作用域记录、每 RID 39份源码 PE，以及每报告24后端格，包含12外平台 blocked。
+v1 要求所有报告都有true nativeExecution字段的假设 ❌ 失败：source schema2
+没有该字段，仅backend schema1明确声明。不可变 v2 保留source的
+`UNKNOWN_NOT_IN_SOURCE_SCHEMA`，原报告run／attempt为 `UNKNOWN`，通过已哈希
+绑定的production-receipt CI字段确定运行身份。新header／hash／输出对账只核
+数据，在此仍待root验收；完整语义、联合格witness闭环、完整后代及当前SHA
+验收继续开放。本轮未执行候选程序或重跑已验收审计。
 
 第12轮 `P1-GATE.04.MAP52-v1` 结构映射组件 ✅ 已完成：root tiny／full 验证
 52条不同作用域记录（19／19个源码包及7／7个后端 witness），缺项／重复／
@@ -108,6 +117,15 @@ v20 因 console 命令变化期间的精确 held 身份变化而拒绝；完整�
 回读未发现记录 PID 存活；这些事实不构成完整身份或退出验收。监督者在00:16:51
 启动 v20，超过自己00:16的停止新操作边界；该违约记录保留。
 V13 限定声明组件已单独提交为 `1cd77ef`。
+原 v15 formatter 无信号组件在 `099cad7` 中 ✅ 已完成。三个独立的新 PowerShell
+进程分别捕获已核持久原生 host、准备不可变原 source10／Launcher 包、运行原
+SOURCE-FROZEN 入口。实际 CLI1、driver exit0，以及六个精确角色的 held 身份／
+映像／命令／父链／退出与 Job 事件已对账；Total6 最终 Active／Assigned／Listed0，
+借用引用与原生句柄关闭，嵌套清理错误0，独立记录 PID 回读无存活。CLI 如实绑定
+历史 `aee97ccdc2509fb64693631979fa4e93c3a31578`。没有发送信号；stdio 完整性与
+上游系统祖先完整性为 false，真实 CTRL+C、内核 I/O、59／91语料、叶项及全部阶段
+门禁仍开放。REPORT4 v2 与原生 v25 已冻结但为 `NOT_RUN`，01:45 guard 将新的试验
+推迟；全部失败源码与部分 trial 保留。
 ## 历史检查点 — 2026-10-08 12:18
 
 Windows 私有控制台夹具组件在提交 `fb90c4c` 中 ✅ 已完成：全新
