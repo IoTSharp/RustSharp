@@ -1,0 +1,1457 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.02.CTRL-v2",
+  "component": "v18 Observer strict build only",
+  "artifactVersion": 18,
+  "literalOriginalBuildReportVersion": 16,
+  "versionNote": "Original frozen builder report literal16 retained; actualdirectory/type/output/source all version18",
+  "componentAccepted": true,
+  "actualCompilerMembers": 3,
+  "sourceManifestSha256": "5E55B14D87FE2B781F8FCF5172F9EA1C8A708C198CA3B66A2B19A0F1A916C1C7",
+  "strictFreezeSha256": "0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F",
+  "buildReport": {
+    "taskId": "P2-08.02.CTRL-v2",
+    "version": 16,
+    "supplement": "strict-builder-v4",
+    "buildPassed": true,
+    "buildIdentityComplete": true,
+    "diagnostics": 0,
+    "sdk": "10.0.401",
+    "assemblyPath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\bin\\FormatterObserverV18.dll",
+    "assemblySha256": "048F6A3E474B5A82FB93E75B7D2B5B861AC47BBF1E2983140318C3BA474C3F81",
+    "sourceManifestSha256": "5E55B14D87FE2B781F8FCF5172F9EA1C8A708C198CA3B66A2B19A0F1A916C1C7",
+    "outerReceiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\root-build-outer.json",
+    "outerReceiptSha256": "EC10FF7C726C18DB4D862B772CEBF9A03728F0D12D49939D4826D2B195E1452F",
+    "bridgeSha256": "350E1F3BAF5F1D1F51E89830ACF2048E9B4FF965B690288B1F90EBD75473C987",
+    "errors": [],
+    "fullP1Closure": false,
+    "fullP2Closure": false,
+    "summaryWarnings": 0,
+    "summaryErrors": 0,
+    "sarifDiagnostics": 0,
+    "logSha256": "206F5DD3551110474C9E9B7A6C7A0761C90E294F6B5FFA4D2F4B112C50DD86C2",
+    "sarifSha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B"
+  },
+  "actualCompilerReceipt": {
+    "mode": "Build",
+    "startedAt": "2026-10-14T04:05:13.2684263+08:00",
+    "sourceFreezeSha256": "0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F",
+    "bootstrap": [
+      {
+        "sha256": "214B705AAC5DBDE7ACB0FAEF73ECCFC2B02C3956ED3EFB14188B87F74DC0F1E6",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Launcher.dll"
+      },
+      {
+        "sha256": "12D7A1B9F2AEDA64879F9F6537821A85C0F1964A08734B57001A655AEB881273",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Launcher.cs"
+      },
+      {
+        "sha256": "E90E174B218388069D7F972FD9BA3DDBF52F720EC106F31A2D9FBD42BDD50216",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Native.cs"
+      },
+      {
+        "sha256": "CA87506EA3943CEED0B9578A06581FE1401857CDB2787FA37537AB58EF3B88C0",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\manifest.json"
+      },
+      {
+        "sha256": "25B1E1488E9226E526D5A1D0F79A6726348F151FE89C051632F0B2975A372714",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\source-manifest.json"
+      }
+    ],
+    "owner": {
+      "Pid": 4748,
+      "CreationFileTime": 134363955127700428,
+      "ParentPid": 13884,
+      "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\nif ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }\n$ErrorActionPreference='Stop'\nif([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T04:17:00+08:00')){throw 'No new nativeBuild'}\n$taskManifest='D:/GitHub/RustSharp/artifacts/p2-supervision/formatter-control-v18/strict-build/MANIFEST.json'\nif((Get-FileHash -LiteralPath $taskManifest).Hash -cne '0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F'){throw 'Reviewed observer strict freeze changed'}\n& ./artifacts/p2-supervision/formatter-control-v18/strict-build/Strict-BuildV18.ps1 -Mode Build -ReviewedSourceFreezeSha256 '0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F' -RootReviewedSources|Out-Null\nGet-Content artifacts/p2-supervision/formatter-control-v18/build/build-report.json -Raw\nGet-Date -Format o\""
+    },
+    "parent": {
+      "Pid": 13884,
+      "CreationFileTime": 134363303724309614,
+      "ParentPid": 39640,
+      "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+    },
+    "boundary": {
+      "Nodes": [
+        {
+          "Pid": 4748,
+          "CreationFileTime": 134363955127700428,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\nif ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }\n$ErrorActionPreference='Stop'\nif([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T04:17:00+08:00')){throw 'No new nativeBuild'}\n$taskManifest='D:/GitHub/RustSharp/artifacts/p2-supervision/formatter-control-v18/strict-build/MANIFEST.json'\nif((Get-FileHash -LiteralPath $taskManifest).Hash -cne '0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F'){throw 'Reviewed observer strict freeze changed'}\n& ./artifacts/p2-supervision/formatter-control-v18/strict-build/Strict-BuildV18.ps1 -Mode Build -ReviewedSourceFreezeSha256 '0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F' -RootReviewedSources|Out-Null\nGet-Content artifacts/p2-supervision/formatter-control-v18/build/build-report.json -Raw\nGet-Date -Format o\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        }
+      ],
+      "BoundaryVerified": true,
+      "SystemAncestorsComplete": false,
+      "StopReason": "Reviewed host boundary reached; upstream system ancestry remains separately incomplete"
+    },
+    "snapshots": [
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      }
+    ],
+    "launch": {
+      "Pid": 52640,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+      "Identity": {
+        "Pid": 52640,
+        "CreationFileTime": 134363955134289967,
+        "ParentPid": 4748,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "actualExit": 0,
+    "failure": null,
+    "cleanupErrors": [],
+    "passed": true,
+    "fullP1Closure": false,
+    "allObservedMemberIdentitiesComplete": true,
+    "imageQueryAssembly": {
+      "mvid": "8e90d6af-59a4-4b5d-875f-937f9a15744b",
+      "rawSuccessLastErrorAvailable": false,
+      "role": "FormatterPrivateConsoleFixture.ProcessAudit.ImagePath(FormatterPrivateConsoleFixture.ProcessIdentity)",
+      "scope": "Original image query only; no formatter acceptance",
+      "identityDoubleChecked": true,
+      "nativeApi": "QueryFullProcessImageNameW",
+      "fixedFlags": 0,
+      "sha256": "509EE571F815F6E0428E61CCEB6C21B5F3642537DFB3F11FCA97A063AFE0DAE9",
+      "bufferChars": 32768,
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\Launcher.dll"
+    },
+    "arguments": [
+      "C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll",
+      "@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp"
+    ],
+    "intermediate": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\obj",
+    "microCase": "tiny",
+    "observedIdentities": [
+      {
+        "Pid": 52640,
+        "CreationFileTime": 134363955134289967,
+        "ParentPid": 4748,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+      },
+      {
+        "Pid": 70104,
+        "CreationFileTime": 134363955148053803,
+        "ParentPid": 52640,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+      },
+      {
+        "Pid": 49500,
+        "CreationFileTime": 134363955148206680,
+        "ParentPid": 70104,
+        "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+      }
+    ],
+    "stdoutCaptured": false,
+    "managedOnly": true,
+    "memberImageReceipts": [
+      {
+        "heldHandle": true,
+        "commandHistoryRequired": true,
+        "parent": {
+          "Pid": 4748,
+          "CreationFileTime": 134363955127700428,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\nif ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required' }\n$ErrorActionPreference='Stop'\nif([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T04:17:00+08:00')){throw 'No new nativeBuild'}\n$taskManifest='D:/GitHub/RustSharp/artifacts/p2-supervision/formatter-control-v18/strict-build/MANIFEST.json'\nif((Get-FileHash -LiteralPath $taskManifest).Hash -cne '0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F'){throw 'Reviewed observer strict freeze changed'}\n& ./artifacts/p2-supervision/formatter-control-v18/strict-build/Strict-BuildV18.ps1 -Mode Build -ReviewedSourceFreezeSha256 '0673F4E3FF399D0A6DE948DE4B88BD3D7DA08D1C599330DD5920F232E4668F3F' -RootReviewedSources|Out-Null\nGet-Content artifacts/p2-supervision/formatter-control-v18/build/build-report.json -Raw\nGet-Date -Format o\""
+        },
+        "nativeAfter": {
+          "imageLastError": 0,
+          "before": {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          "imageChars": 34,
+          "after": {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955134289967,
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        },
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "sha256": "21A46F1E5235CF4E844B9DE5429F0E198B9C97A41F0503A66442F1D639CA3EE6",
+        "identity": {
+          "Pid": 52640,
+          "CreationFileTime": 134363955134289967,
+          "ParentPid": 4748,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+        },
+        "creation100ns": 134363955134289967,
+        "nativeBefore": {
+          "imageLastError": 0,
+          "before": {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          "imageChars": 34,
+          "after": {
+            "Pid": 52640,
+            "CreationFileTime": 134363955134289967,
+            "ParentPid": 4748,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+          },
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955134289967,
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        }
+      },
+      {
+        "heldHandle": true,
+        "commandHistoryRequired": true,
+        "parent": {
+          "Pid": 52640,
+          "CreationFileTime": 134363955134289967,
+          "ParentPid": 4748,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+        },
+        "nativeAfter": {
+          "imageLastError": 0,
+          "before": {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          "imageChars": 59,
+          "after": {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955148053803,
+          "image": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        },
+        "image": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe",
+        "sha256": "A9C51E4F24019487A57FF4AF181483011966C314F54337395C38B083DC1ACBDA",
+        "identity": {
+          "Pid": 70104,
+          "CreationFileTime": 134363955148053803,
+          "ParentPid": 52640,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+        },
+        "creation100ns": 134363955148053803,
+        "nativeBefore": {
+          "imageLastError": 0,
+          "before": {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          "imageChars": 59,
+          "after": {
+            "Pid": 70104,
+            "CreationFileTime": 134363955148053803,
+            "ParentPid": 52640,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+          },
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955148053803,
+          "image": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        }
+      },
+      {
+        "heldHandle": true,
+        "commandHistoryRequired": true,
+        "parent": {
+          "Pid": 70104,
+          "CreationFileTime": 134363955148053803,
+          "ParentPid": 52640,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+        },
+        "nativeAfter": {
+          "imageLastError": 0,
+          "before": {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "imageChars": 31,
+          "after": {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955148206680,
+          "image": "C:\\Windows\\System32\\conhost.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        },
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "sha256": "C86146188B78E484F32CC29E2331689659943B47689A85570342044F499938AC",
+        "identity": {
+          "Pid": 49500,
+          "CreationFileTime": 134363955148206680,
+          "ParentPid": 70104,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "creation100ns": 134363955148206680,
+        "nativeBefore": {
+          "imageLastError": 0,
+          "before": {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "imageChars": 31,
+          "after": {
+            "Pid": 49500,
+            "CreationFileTime": 134363955148206680,
+            "ParentPid": 70104,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955148206680,
+          "image": "C:\\Windows\\System32\\conhost.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        }
+      }
+    ],
+    "heldMemberExits": [
+      {
+        "identity": {
+          "Pid": 52640,
+          "CreationFileTime": 134363955134289967,
+          "ParentPid": 4748,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+        },
+        "exited": true,
+        "nativeExit": {
+          "waitReturn": 0,
+          "getTimesReturn": 1,
+          "getTimesLastError": 0,
+          "waitLastError": 0,
+          "exitUtc": "2026-10-13T20:05:17.1006974Z",
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955134289967,
+          "exit100ns": 134363955171006974,
+          "wrapperNeverClosesOriginal": true
+        }
+      },
+      {
+        "identity": {
+          "Pid": 70104,
+          "CreationFileTime": 134363955148053803,
+          "ParentPid": 52640,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\""
+        },
+        "exited": true,
+        "nativeExit": {
+          "waitReturn": 0,
+          "getTimesReturn": 1,
+          "getTimesLastError": 0,
+          "waitLastError": 0,
+          "exitUtc": "2026-10-13T20:05:16.9889068Z",
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955148053803,
+          "exit100ns": 134363955169889068,
+          "wrapperNeverClosesOriginal": true
+        }
+      },
+      {
+        "identity": {
+          "Pid": 49500,
+          "CreationFileTime": 134363955148206680,
+          "ParentPid": 70104,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "exited": true,
+        "nativeExit": {
+          "waitReturn": 0,
+          "getTimesReturn": 1,
+          "getTimesLastError": 0,
+          "waitLastError": 0,
+          "exitUtc": "2026-10-13T20:05:16.9907291Z",
+          "borrowedOriginalHandle": true,
+          "birth100ns": 134363955148206680,
+          "exit100ns": 134363955169907291,
+          "wrapperNeverClosesOriginal": true
+        }
+      }
+    ],
+    "commandHistory": [
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.4609357+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.5052184+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.5060938+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.5103593+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.5104302+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.5378965+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.5392652+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:13.5393720+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:14.0527520+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:14.0534615+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:14.0535670+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:14.5771795+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:14.5779880+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:14.5781009+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:15.0953523+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:15.0962105+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:15.0963327+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1232136+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1237946+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1238644+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1253717+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1254401+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1501565+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1507331+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.1508021+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1601777+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1637169+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1644841+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1674204+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1679953+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1687254+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1697574+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.1703588+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:15.6863008+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:15.6870638+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:15.6870995+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.6879439+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.6883060+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:15.6883356+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.6894467+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.6901495+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:15.6905286+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:16.2034747+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:16.2039151+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:16.2039412+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:16.2055153+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:16.2059574+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:16.2059886+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:16.2077525+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:16.2090340+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:16.2098756+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:16.7219647+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:16.7226081+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955134289967,
+        "parentPid": 4748,
+        "at": "2026-10-13T20:05:16.7226677+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+        "pid": 52640
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:16.7238430+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:16.7244122+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": false,
+        "birth100ns": 134363955148053803,
+        "parentPid": 52640,
+        "at": "2026-10-13T20:05:16.7244728+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempd20hwpy5.edf\\tmp963dee7196544f589c3332fec1eabd31.rsp\"",
+        "pid": 70104
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:16.7261796+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:16.7274645+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      },
+      {
+        "console": true,
+        "birth100ns": 134363955148206680,
+        "parentPid": 70104,
+        "at": "2026-10-13T20:05:16.7282875+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "pid": 49500
+      }
+    ],
+    "nativeReadAttempts": [
+      {
+        "at": "2026-10-13T20:05:13.4870514+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:13.5098014+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:13.5389159+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:14.0530874+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:14.5775085+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:15.0956972+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:15.1234276+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148053803,
+        "exit100ns": 0,
+        "pid": 70104
+      },
+      {
+        "at": "2026-10-13T20:05:15.1250227+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148053803,
+        "exit100ns": 0,
+        "pid": 70104
+      },
+      {
+        "at": "2026-10-13T20:05:15.1503768+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148053803,
+        "exit100ns": 0,
+        "pid": 70104
+      },
+      {
+        "at": "2026-10-13T20:05:15.1605378+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148206680,
+        "exit100ns": 0,
+        "pid": 49500
+      },
+      {
+        "at": "2026-10-13T20:05:15.1665633+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148206680,
+        "exit100ns": 0,
+        "pid": 49500
+      },
+      {
+        "at": "2026-10-13T20:05:15.1689124+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148206680,
+        "exit100ns": 0,
+        "pid": 49500
+      },
+      {
+        "at": "2026-10-13T20:05:15.6867465+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:15.6880810+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148053803,
+        "exit100ns": 0,
+        "pid": 70104
+      },
+      {
+        "at": "2026-10-13T20:05:15.6895799+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148206680,
+        "exit100ns": 0,
+        "pid": 49500
+      },
+      {
+        "at": "2026-10-13T20:05:16.2036359+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:16.2057010+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148053803,
+        "exit100ns": 0,
+        "pid": 70104
+      },
+      {
+        "at": "2026-10-13T20:05:16.2079637+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148206680,
+        "exit100ns": 0,
+        "pid": 49500
+      },
+      {
+        "at": "2026-10-13T20:05:16.7222041+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 0,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:16.7240604+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148053803,
+        "exit100ns": 0,
+        "pid": 70104
+      },
+      {
+        "at": "2026-10-13T20:05:16.7264140+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": false,
+        "waitLastError": 0,
+        "waitReturn": 258,
+        "birth100ns": 134363955148206680,
+        "exit100ns": 0,
+        "pid": 49500
+      },
+      {
+        "at": "2026-10-13T20:05:17.2518426+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": true,
+        "waitLastError": 0,
+        "waitReturn": 0,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 134363955171006974,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:17.2690165+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": true,
+        "waitLastError": 0,
+        "waitReturn": 0,
+        "birth100ns": 134363955134289967,
+        "exit100ns": 134363955171006974,
+        "pid": 52640
+      },
+      {
+        "at": "2026-10-13T20:05:17.2708515+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": true,
+        "waitLastError": 0,
+        "waitReturn": 0,
+        "birth100ns": 134363955148053803,
+        "exit100ns": 134363955169889068,
+        "pid": 70104
+      },
+      {
+        "at": "2026-10-13T20:05:17.2711062+00:00",
+        "timesLastError": 0,
+        "timesReturn": 1,
+        "requireExit": true,
+        "waitLastError": 0,
+        "waitReturn": 0,
+        "birth100ns": 134363955148206680,
+        "exit100ns": 134363955169907291,
+        "pid": 49500
+      }
+    ],
+    "initialJob": {
+      "Active": 0,
+      "Total": 0,
+      "Assigned": 0,
+      "Listed": 0,
+      "ReturnedBytes": 8,
+      "Members": [],
+      "Failures": [],
+      "Overflow": false,
+      "Coherent": true
+    },
+    "finalBeforeCleanup": {
+      "Active": 0,
+      "Total": 3,
+      "Assigned": 0,
+      "Listed": 0,
+      "ReturnedBytes": 8,
+      "Members": [],
+      "Failures": [],
+      "Overflow": false,
+      "Coherent": true
+    },
+    "rootBeforeDisposeExit": {
+      "waitReturn": 0,
+      "getTimesReturn": 1,
+      "getTimesLastError": 0,
+      "waitLastError": 0,
+      "exitUtc": "2026-10-13T20:05:17.1006974Z",
+      "borrowedOriginalHandle": true,
+      "birth100ns": 134363955134289967,
+      "exit100ns": 134363955171006974,
+      "wrapperNeverClosesOriginal": true
+    },
+    "processCleanup": {
+      "Pid": 52640,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\"",
+      "Identity": {
+        "Pid": 52640,
+        "CreationFileTime": 134363955134289967,
+        "ParentPid": 4748,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v18\\build\\msbuild.rsp\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "jobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "jobHandleClosed": true,
+    "finishedAt": "2026-10-14T04:05:17.2821202+08:00"
+  },
+  "actualAssemblySha256": "048F6A3E474B5A82FB93E75B7D2B5B861AC47BBF1E2983140318C3BA474C3F81",
+  "remaining": [
+    "Actual newLauncher/Helper stricttwo-phase compile",
+    "Actual matchingCLI/package/sourceSnapshot/Git binding",
+    "SameDLLNoSignal then realprivateConsoleCTRL natural130",
+    "Kernel pendingIO/stdio/systemparent/59formatter91tooling/fullleaf"
+  ],
+  "runtime": "NOT_RUN",
+  "fullLeafAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "at": "2026-10-14T04:07:19.9475506+08:00"
+}
