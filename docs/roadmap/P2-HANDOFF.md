@@ -8,7 +8,33 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v24/resumption.json`.
+`artifacts/p1-supervision/resume-root-v25/resumption.json`.
+
+Round21 Helper24 strict build is ✅ Complete at `01c56bd`: explicit private access
+fixes Helper23's actual CS8796 failure; exact compiler response, all three native
+identities/exits, zero SARIF diagnostics at every level and Job0/closed handles
+pass. [Actual build and retained Helper23 failure](../evidence/p2/formatter-v24-helper-strict-build.json)
+bind the new DLL `634F255A22F92D6A4146134AC7B0A14BD6F493E85071DEC84B808EE539CCBF96`.
+Launcher21/Helper24 packaging succeeds with truthful source10; new product/Git
+binding and same-binary no-signal/CTRL+C remain NOT_RUN, not whole-leaf acceptance.
+The independent PowerShell `-Command` diagnostic strict build passes, but its
+native tiny is ❌ Failed at `bca4c2c`: a terminating child returns NT command-query
+`0xC000010A`, so no body/result receipt proves execution. Complete two held
+identities/exits and Job0 cleanup are retained in the [actual failure](../evidence/p1/host-command-body-diagnostic-v1-failure.json).
+Original fixtures, flags, helper0 and all denominators remain unchanged.
+
+Documentation publication remains 🚧 In progress: the real mid-stage reparse
+ancestor gap is corrected, retaining original20 plus one real multi-source case,
+fixed21. First fresh solution build fails two CA1859 errors; their private-signature
+repair is saved. Second build is ❌ Failed by runner CA1869/IL2026/IL3050, without
+suppression. All21 cases are NOT_RUN; the 05:44:05 runner-repair deadline refused
+the late write before mutation. New publisher/tests/runner/shared test entry stay
+unaccepted and uncommitted. [Both actual build failures](../evidence/p2/documentation-publication-round21-build-failure.json)
+retain originals and exact source hashes. Portable ancestor checks do not close
+every concurrent filesystem TOCTOU window; existing-target updates and CLI/workspace
+integration remain open. Independent review of six command receipts finds zero
+survivors across39 exact process identities. P1's six gates remain open, P2 stays
+8/101, and the unique heartbeat remains ACTIVE.
 
 Round20 comparisonv3 startup diagnostic is ✅ Complete: three JSON DTO fields repaired without native ABI changes, actual strictBuild/SARIF0 and complete2 held process identities/exits. Actual body is ❌ Failed: pwsh exit0, empty stdout/stderr, no child marker and NaturalRootRuntimeExecuted0. [Actual diagnostic/failure](../evidence/p1/detached-comparison-v3-startup-failure.json) is retained at30cf996; original NO_WINDOW/helpers0/cap2 and all denominators unchanged. Helper22 now matches independently reviewed exact213-token RSP and nativecompiler3 cleanup, but is ❌ Failed by10 SARIF notes; [failure originals](../evidence/p2/formatter-v22-helper-notes-failure.json) are retained at36c5bb6. No new CTRL+C runtime executed. Helper23 API/finally repairs are saved and frozen, build/runtime NOT_RUN. Documentation initial-publish code and tests are saved; review found folder-identity and unknown-staging commit gaps, now corrected in source with original18 plus2 real cases fixed20. All publication build/tests NOT_RUN/NOT_ACCEPTED, and no product is staged from these new candidates. Existing target updates/CLI/whole leaf remain open. P1's6 gates stay open, P2 remains8/101, unique heartbeat active. Final original/hash checkpoints in resume-root-v24 bind the new candidates because their late extra handoff writes were refused before mutation.
 

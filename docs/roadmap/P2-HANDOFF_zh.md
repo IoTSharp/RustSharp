@@ -8,7 +8,29 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v24/resumption.json`。
+`artifacts/p1-supervision/resume-root-v25/resumption.json`。
+
+第21轮Helper24严格构建在 `01c56bd` 的限定范围内 ✅ 已完成：显式private访问
+修复Helper23真实CS8796失败；精确compiler response、全部3个原生身份／退出、
+所有级别SARIF诊断0及Job0／句柄关闭均通过。
+[实际构建及保留的Helper23失败](../evidence/p2/formatter-v24-helper-strict-build.json)
+绑定新DLL `634F255A22F92D6A4146134AC7B0A14BD6F493E85071DEC84B808EE539CCBF96`。
+Launcher21／Helper24已包装并绑定真实source10；新product／Git绑定及同一二进制
+无信号／CTRL+C仍为NOT_RUN，未验收完整叶项。独立PowerShell `-Command`诊断严格
+构建通过，但原生tiny在 `bca4c2c` ❌ 失败：退出中的子进程NT command-query返回
+`0xC000010A`，没有body／result回执证明执行。完整2个held身份／退出及Job0清理
+保留于[实际失败](../evidence/p1/host-command-body-diagnostic-v1-failure.json)。
+原fixture、flags、helper0及全部分母不变。
+
+Documentation publication仍 🚧 进行中：真实mid-stage reparse祖先缺口已修，
+保留原20并新增1个真实多源案例，固定21。首次新solution构建因2项CA1859失败，
+私有签名修复已保存；第二次构建因runner CA1869／IL2026／IL3050 ❌ 失败，未抑制。
+全部21案例NOT_RUN，05:44:05 runner修复截止检查在任何修改前拒绝迟写。
+新publisher／tests／runner／共享test入口均未验收、未提交。
+[两次真实构建失败](../evidence/p2/documentation-publication-round21-build-failure.json)
+保留原件及精确source hash。可移植祖先检查无法关闭所有并发filesystem TOCTOU窗口；
+已有目标更新及CLI／workspace集成仍开放。独立复核6份command回执、39个精确进程
+身份，均无遗留。P1六门禁仍开放，P2保持8/101，唯一heartbeat保持ACTIVE。
 
 第20轮comparisonv3启动诊断 ✅ 已完成：3个JSON DTO字段已修且原生ABI不变，实际严格Build／SARIF0及完整2个held进程身份／退出。真实body ❌ 失败：pwsh exit0、双流空、无子marker、NaturalRootRuntimeExecuted0。[实际诊断／失败](../evidence/p1/detached-comparison-v3-startup-failure.json)保留于30cf996，原NO_WINDOW／helpers0／cap2及全部分母不变。Helper22已匹配独立审查的精确213-token RSP且nativecompiler3已清理，但因10项SARIF note ❌ 失败；[失败原件](../evidence/p2/formatter-v22-helper-notes-failure.json)保留于36c5bb6，未执行新CTRL+C runtime。Helper23 API／finally修复已保存冻结，build／runtime NOT_RUN。Documentation initial-publish源码及测试已保存；审查发现目录身份及未知staging提交缺口，新源码已修，保留原18并新增2个真实案例、固定20。发布build／tests全部NOT_RUN／NOT_ACCEPTED，未stage任何新候选产品；已有目标更新／CLI／完整叶项仍开放。P1六门禁开放、P2仍8/101、唯一heartbeat保持ACTIVE。追加交接写入超时被拒且未修改，resume-root-v24最终原件／hash检查点绑定这些新候选。
 
