@@ -8,7 +8,30 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v14/resumption.json`。
+`artifacts/p1-supervision/resume-root-v15/resumption.json`。
+
+第11轮由 `P1-GATE.02.LINUXDROP-v1` 负责保留原件对账，与继续进行的
+containment 和 formatter worker 并行。NativeV5 候选
+`afb0988bb74e698a685adde93bacdd2b82b8c932` 已记录 Linux
+`unwind-own-drop-body-failure` 的 rustc／CoreCLR／AOT 输出均为
+`body\nowner\nbad\n`，双重 panic abort、raw exit134。source／PE／runtime／
+oracle／AOT／snapshot 六个物理哈希一致。三个相关 emitter／runtime／runner
+Git blob 还与 `64021fb6b6ed65587538839c6aba592112717f92` 源码相同；
+提交身份仍不同，源码相同不授予当前 SHA 的构建／运行／CI 或门禁验收。
+测试变异负控中的相反轨迹是污染，不是新观测到的执行。历史 legacy
+`p1-drop-closure-v4` 与 NativeV5 的28案例分开保留：后者为26项完全一致加
+相同2项正常清理差异。本轮未做产品修复，也未重复已验收执行；原始 MIR／LIR
+中间件及完整语义／joint／containment 证据仍缺失。剩余52案例范围与全部门禁
+保持不变。证据：`artifacts/p1-supervision/linux-drop-repair-v1/`。
+
+v22 编译器／原生退出构建组件经 root 单次真实构建验收后 ✅ 已完成：summary／
+SARIF 诊断均0，三个原生编译器身份绑定并有有效退出 FILETIME，Job Total3 后
+Active／Assigned／Listed0，全部句柄关闭、nested cleanup 无错误；监督者 CIM
+核实四个记录 PID 全部退出。仅观察到控制台历史0x4，ForceV1 转换仍未证明。
+00:44 启动 guard 在启动前拒绝 managed3（0 child／0 body）；`tiny`、
+`pre-cancel`、`pending-cancel` 仍为 `NOT_RUN`，下一轮复用已验收 v22 构建。
+v21 源码审查拒绝及 formatter v2／v3 `NOT_READY` 均保留；完整 containment
+和全部门禁保持开放。
 
 第10轮已派出三名 worker 负责互斥冻结范围：`P1-GATE.03.CISEM-v1`
 （source 1572文件，每RID 19 packages/39 PE/785 retained；backend 234文件，
@@ -42,7 +65,7 @@ Total3、Active／Assigned／Listed0，全部句柄关闭且无清理错误，�
 这些草稿和失败记录未关闭任何 P1 门禁或 P2 叶项；六个 P1 门禁全部保持开放，
 P2 仍为8/101叶项 ✅ 已完成。
 
-本轮 V12 tiny 在比较任何 PE 前 ❌ 失败：把 worker V10 报告哈希绑定到了
+第10轮 V12 tiny 在比较任何 PE 前 ❌ 失败：把 worker V10 报告哈希绑定到了
 root 报告路径。两份报告原件保持完整；root 独立核实 emitter 文本相同，
 均通过9项检查。不可变 V13 仅修改已核 root 哈希、版本与 packet。
 限定声明组件经 root 验收后 ✅ 已完成：真实 tiny1 及3个合法单字节

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.LINUXDROP-v1",
+  "status": "passed",
+  "scope": "Existing accepted NativeV5 Linux case and source provenance reconciliation only",
+  "rootIndependentPhysicalHashes": 6,
+  "rootIndependentSourceBlobs": 3,
+  "acceptedCandidate": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "acceptedTree": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "currentSourceCandidate": "64021fb6b6ed65587538839c6aba592112717f92",
+  "caseId": "unwind-own-drop-body-failure",
+  "rustcCoreClrAotOutput": "body\nowner\nbad\n",
+  "outcome": "double-panic-abort",
+  "rawExit": 134,
+  "physicalBindings": [
+    {
+      "kind": "source",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v22\\originals\\linux-x64\\evidence-fbafb998533d43f3a1e57c4862713dec\\unwind-own-drop-body-failure\\program.rs",
+      "expectedSha256": "52AB01715A75699F15068189BEFDA73E615ADBD0259BEBD632A35E9C3D0B13A7",
+      "actualSha256": "52AB01715A75699F15068189BEFDA73E615ADBD0259BEBD632A35E9C3D0B13A7",
+      "matches": true
+    },
+    {
+      "kind": "originalPe",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v22\\originals\\linux-x64\\evidence-fbafb998533d43f3a1e57c4862713dec\\unwind-own-drop-body-failure\\program.dll",
+      "expectedSha256": "95C1EF2C4A9F630BE6473CE9ACE44229172027519139702036AD7E7DC35A044C",
+      "actualSha256": "95C1EF2C4A9F630BE6473CE9ACE44229172027519139702036AD7E7DC35A044C",
+      "matches": true
+    },
+    {
+      "kind": "runtimeCompanion",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v22\\originals\\linux-x64\\evidence-fbafb998533d43f3a1e57c4862713dec\\unwind-own-drop-body-failure\\RustSharp.Runtime.dll",
+      "expectedSha256": "28578DFF872AB30FF742D82D9FEDE802303590B56216883C0F4B12C1A37A5C7A",
+      "actualSha256": "28578DFF872AB30FF742D82D9FEDE802303590B56216883C0F4B12C1A37A5C7A",
+      "matches": true
+    },
+    {
+      "kind": "rustcOracle",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v22\\originals\\linux-x64\\evidence-fbafb998533d43f3a1e57c4862713dec\\unwind-own-drop-body-failure\\oracle",
+      "expectedSha256": "8E556843CBC9682A52BDD28C89ED5CCA6A1014CF419373129F07A104E2C5FB53",
+      "actualSha256": "8E556843CBC9682A52BDD28C89ED5CCA6A1014CF419373129F07A104E2C5FB53",
+      "matches": true
+    },
+    {
+      "kind": "nativeAot",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v22\\originals\\linux-x64\\native-evidence-820e6053a61a41e3b52c900482339be9\\case-25\\P1DropDifferential.NativeAotHost",
+      "expectedSha256": "8E7D87B7D4DE4DC12F441BA4BE5B2B700608B642F583E9796A83C0A7565B41BF",
+      "actualSha256": "8E7D87B7D4DE4DC12F441BA4BE5B2B700608B642F583E9796A83C0A7565B41BF",
+      "matches": true
+    },
+    {
+      "kind": "candidateSnapshot",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v20\\originals\\drop-receipt-linux\\source-snapshot.json",
+      "expectedSha256": "92D6837134E326A50081D696BA959040798F07FBC411FE3640FAE231F136B59A",
+      "actualSha256": "92D6837134E326A50081D696BA959040798F07FBC411FE3640FAE231F136B59A",
+      "matches": true
+    }
+  ],
+  "sourceBindings": [
+    {
+      "path": "src/RustSharp.CodeGen.IL/ClrLirEmitter.cs",
+      "acceptedGitBlobOid": "f611932a1e5b19956e9a5f25ee5b4d106fc807e3",
+      "currentGitBlobOid": "f611932a1e5b19956e9a5f25ee5b4d106fc807e3",
+      "workingFileGitBlobOid": "f611932a1e5b19956e9a5f25ee5b4d106fc807e3",
+      "sourceSame": true,
+      "currentSourceSha256": "AAC6D49BD897CC008E568F308011A548DC84079DE779164D30BAB0EB8B0CF420"
+    },
+    {
+      "path": "src/RustSharp.Runtime/GeneratedPanic.cs",
+      "acceptedGitBlobOid": "9b789337553e662c86989ab0b1a3f37f978fbcd7",
+      "currentGitBlobOid": "9b789337553e662c86989ab0b1a3f37f978fbcd7",
+      "workingFileGitBlobOid": "9b789337553e662c86989ab0b1a3f37f978fbcd7",
+      "sourceSame": true,
+      "currentSourceSha256": "8BDB6E809AF2F387DA069630D60B5CC42D1ACA7806316C5F3879106E600BF8DC"
+    },
+    {
+      "path": "tools/RustSharp.Conformance/P1DropDifferentialRunner.cs",
+      "acceptedGitBlobOid": "9d57fef641b76f376a6dd3226dfb5e542cb66199",
+      "currentGitBlobOid": "9d57fef641b76f376a6dd3226dfb5e542cb66199",
+      "workingFileGitBlobOid": "9d57fef641b76f376a6dd3226dfb5e542cb66199",
+      "sourceSame": true,
+      "currentSourceSha256": "669C43F1E9FCD59FF83068FAEA5FC9C21FACDBEF9DB5DFA033A27E7173499018"
+    }
+  ],
+  "originalCaseProofSha256": "E883E814294856EA3DED33E36A1C7075E29CF664F91DBB7A4E11570C6B8EFF72",
+  "physicalProofSha256": "8CDFF55EFCCF871BDB2999070E7D677A833292815A4108A8A01E5E683E38A763",
+  "sourceProofSha256": "6827414E7F6E76627F0C88C6B4BF16638B000CB0F0F92D53FEA7BB6F9E6FA1B5",
+  "originalIntermediateMirLirRetained": false,
+  "candidateProgramsRerun": 0,
+  "productSourcesChanged": 0,
+  "currentCandidateGatePassed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "limitations": "Three source blobs are equal; this does not validate all current compiler inputs, build/runtime/CI, original descendant containment, or the complete52-case gate."
+}

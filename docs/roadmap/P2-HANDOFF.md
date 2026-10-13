@@ -8,7 +8,33 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v14/resumption.json`.
+`artifacts/p1-supervision/resume-root-v15/resumption.json`.
+
+Round11 assigns `P1-GATE.02.LINUXDROP-v1` to retained-original reconciliation,
+alongside the continuing containment and formatter workers. NativeV5 candidate
+`afb0988bb74e698a685adde93bacdd2b82b8c932` already records Linux
+`unwind-own-drop-body-failure` rustc/CoreCLR/AOT output `body\nowner\nbad\n`,
+double-panic abort and raw exit134. Six source/PE/runtime/oracle/AOT/snapshot
+physical hashes match. The three relevant emitter/runtime/runner Git blobs also
+match source at `64021fb6b6ed65587538839c6aba592112717f92`; commit identities
+remain distinct and source equality grants no current-SHA build/runtime/CI or
+gate acceptance. The opposite trace in test mutation controls is contamination,
+not an observed new execution. Historical legacy `p1-drop-closure-v4` remains
+separate from NativeV5's28 cases:26 exact matches and the same2 normal-cleanup
+differences. No product repair or repeated accepted execution was performed;
+original MIR/LIR intermediates and complete semantic/joint/containment evidence
+remain missing. The remaining52-case scope and all gates are unchanged.
+Evidence: `artifacts/p1-supervision/linux-drop-repair-v1/`.
+
+The v22 compiler/native-exit build component is ✅ Complete after root's single
+actual build:0 summary/SARIF diagnostics, three bound native compiler identities
+with valid exit FILETIME, Job Total3 then Active/Assigned/Listed0, all handles
+closed and no nested cleanup error. Supervisor CIM confirms all four recorded
+PIDs exited. Only console history0x4 was observed; ForceV1 transition remains
+unproved. The00:44 launch guard rejects managed3 before launch (0 children/0
+body); `tiny`, `pre-cancel` and `pending-cancel` remain `NOT_RUN`. The next round
+reuses the accepted v22 build. v21 source-review rejection and formatter v2/v3
+`NOT_READY` remain retained; complete containment and all gates stay open.
 
 Round10 dispatched three workers to disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
 (source 1572 files, 19 packages/39 PE/785 retained per RID; backend 234 files,
@@ -48,7 +74,7 @@ all5 diagnostics before one fresh build. Results remain in the checkpoint. These
 records close no P1 gate or P2 leaf; all six P1 gates remain open and P2 remains
 8/101 leaves ✅ Complete.
 
-The current round's V12 tiny is ❌ Failed before any PE comparison: it bound
+Round10's V12 tiny is ❌ Failed before any PE comparison: it bound
 the worker V10 report hash to the root report path. Both reports remain intact;
 root independently verifies their identical emitter text and passed9 checks.
 The immutable V13 successor changes only that verified root hash, version and
