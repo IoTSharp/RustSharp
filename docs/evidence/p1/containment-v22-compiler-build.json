@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.CONTAIN-v8",
+  "version": 22,
+  "status": "passed",
+  "scope": "Exact native compiler subtree and strict build only",
+  "rootAcceptedBoundedComponent": true,
+  "headAtRun": "64021fb6b6ed65587538839c6aba592112717f92",
+  "sourceFreezeSha256": "EC937943A07DA97BF950424CB4ADBF24D932A3555EB41E6E71D9E274BBD1E9AB",
+  "sourceManifestSha256": "468fefe49ae16f259441beedf6ac2812079460304063e35e3d8031074688d650",
+  "started": "2026-10-14T00:43:40.6102627+08:00",
+  "finished": "2026-10-14T00:43:44.5764744+08:00",
+  "actualCompilerExit": 0,
+  "summaryWarnings": 0,
+  "summaryErrors": 0,
+  "sarifDiagnostics": 0,
+  "compilerSubtreeDenominator": 3,
+  "observedIdentities": [
+    {
+      "Pid": 63932,
+      "CreationFileTime": 134363834207378242,
+      "ParentPid": 67832,
+      "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v22\\root-build.rsp\""
+    },
+    {
+      "Pid": 28692,
+      "CreationFileTime": 134363834220982808,
+      "ParentPid": 63932,
+      "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTemp5pyxfpdq.p1w\\tmpc9ee0b66dbb340658a338742f050e0f1.rsp\""
+    },
+    {
+      "Pid": 7960,
+      "CreationFileTime": 134363834221128714,
+      "ParentPid": 28692,
+      "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    }
+  ],
+  "nativeHeldExits": [
+    {
+      "identity": {
+        "Pid": 63932,
+        "CreationFileTime": 134363834207378242,
+        "ParentPid": 67832,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v22\\root-build.rsp\""
+      },
+      "nativeExit": {
+        "wrapperNeverClosesOriginal": true,
+        "waitReturn": 0,
+        "exitUtc": "2026-10-13T16:43:44.3390795Z",
+        "borrowedOriginalHandle": true,
+        "waitLastError": 0,
+        "getTimesReturn": 1,
+        "getTimesLastError": 0,
+        "birth100ns": 134363834207378242,
+        "exit100ns": 134363834243390795
+      },
+      "exited": true
+    },
+    {
+      "identity": {
+        "Pid": 28692,
+        "CreationFileTime": 134363834220982808,
+        "ParentPid": 63932,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTemp5pyxfpdq.p1w\\tmpc9ee0b66dbb340658a338742f050e0f1.rsp\""
+      },
+      "nativeExit": {
+        "wrapperNeverClosesOriginal": true,
+        "waitReturn": 0,
+        "exitUtc": "2026-10-13T16:43:44.1714025Z",
+        "borrowedOriginalHandle": true,
+        "waitLastError": 0,
+        "getTimesReturn": 1,
+        "getTimesLastError": 0,
+        "birth100ns": 134363834220982808,
+        "exit100ns": 134363834241714025
+      },
+      "exited": true
+    },
+    {
+      "identity": {
+        "Pid": 7960,
+        "CreationFileTime": 134363834221128714,
+        "ParentPid": 28692,
+        "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+      },
+      "nativeExit": {
+        "wrapperNeverClosesOriginal": true,
+        "waitReturn": 0,
+        "exitUtc": "2026-10-13T16:43:44.1729941Z",
+        "borrowedOriginalHandle": true,
+        "waitLastError": 0,
+        "getTimesReturn": 1,
+        "getTimesLastError": 0,
+        "birth100ns": 134363834221128714,
+        "exit100ns": 134363834241729941
+      },
+      "exited": true
+    }
+  ],
+  "imageBindings": [
+    {
+      "pid": 63932,
+      "parentPid": 67832,
+      "sha256": "21A46F1E5235CF4E844B9DE5429F0E198B9C97A41F0503A66442F1D639CA3EE6",
+      "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+    },
+    {
+      "pid": 28692,
+      "parentPid": 63932,
+      "sha256": "A9C51E4F24019487A57FF4AF181483011966C314F54337395C38B083DC1ACBDA",
+      "image": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe"
+    },
+    {
+      "pid": 7960,
+      "parentPid": 28692,
+      "sha256": "C86146188B78E484F32CC29E2331689659943B47689A85570342044F499938AC",
+      "image": "C:\\Windows\\System32\\conhost.exe"
+    }
+  ],
+  "commandHistoryRows": 60,
+  "consoleActualCommands": [
+    "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+  ],
+  "consoleForceV1TransitionActuallyObserved": false,
+  "actualManagedControls": 0,
+  "managedControlDenominator": 3,
+  "managedControlsStatus": "NOT_RUN",
+  "newManagedAttemptGuard": "Refused before process creation past00:44 boundary",
+  "finalJob": {
+    "Active": 0,
+    "Total": 3,
+    "Assigned": 0,
+    "Listed": 0,
+    "ReturnedBytes": 8,
+    "Members": [],
+    "Failures": [],
+    "Overflow": false,
+    "Coherent": true
+  },
+  "rootProcessHandleClosed": true,
+  "rootThreadHandleClosed": true,
+  "jobHandleClosed": true,
+  "allNestedCleanupErrors": 0,
+  "independentKnownPids": [
+    63932,
+    28692,
+    7960,
+    67832
+  ],
+  "independentKnownPidSurvivors": 0,
+  "reportPath": "artifacts/p1-supervision/descendant-containment-draft-v22/root-build-outer.json",
+  "reportSha256": "BDC125F874B523324CFDB901D336FCC9ED140B2356322DA76A306C10E2CEC744",
+  "bindingPath": "artifacts/p1-supervision/descendant-containment-draft-v22/BUILD-BINDING.json",
+  "bindingSha256": "7F8C482049A89872B917F7D3F4B8D543E117928865D46C33827C41E9AB23A15A",
+  "assemblySha256": "D5D847CB2760F667476DB566C12710D6213C1B99FE6DB8D29F7FCC39D12868C0",
+  "runtimeconfigSha256": "C230A317A54DD960BCBEB5F347F52E18DC665A26F7EFDA2159FCED9A5AC7E097",
+  "sarifSha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B",
+  "nativeCancellationDenominator": 6,
+  "nativeRetentionDenominator": 2,
+  "linuxJointDenominator": 12,
+  "originalFormatter": "NOT_RUN",
+  "actualCtrlC": "NOT_RUN",
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "originalFailuresPreserved": true,
+  "next": "Reuse accepted v22 Build for same-source managed tiny/pre-cancel/pending-cancel; native original full gates remain independent."
+}
