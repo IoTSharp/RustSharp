@@ -8,7 +8,25 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v27/resumption.json`。
+`artifacts/p1-supervision/resume-root-v28/resumption.json`。
+
+第24轮documentation深度组件在真实3/7失败后限定范围 ✅ 已完成：glob alias
+现在保留各自canonical item，带标签链接独立解析destination／title并HTML编码、
+诊断不安全scheme。新构建零警告／错误，全部7个depth案例及受影响的12个source-page、
+21个publication和20个command函数案例全部通过，未过滤；原失败保留。
+[实际修复及回归](../evidence/p2/documentation-depth-v1.json)不声称新的17个子进程／
+remote-SHA或完整documentation叶项门禁通过。
+
+精确9d43072的4条CI workflow成功。7份原始archive均匹配GitHub digest，6项
+aggregate input hash／SHA已对账；每个原生平台12个platform、16个differential和
+26个regression案例通过，合计108。6/6 aggregate含0条validation record，仅覆盖
+冻结profiles，不能关闭全部P1六门禁。
+[原始CI对账](../evidence/p1/ci-9d43072-original-reconcile.json)保留原报告及所有更大
+范围缺口。FirstChance hook v2目前只有2个core源文件，controller／MVID环境／
+lease／RSP／manifest绑定 ⛔ 已阻塞，build／native全部NOT_RUN，真实target cause
+仍UNKNOWN。Kernel-IO v3 driver已保存，但build／native仍NOT_RUN，report写失败
+后的closure状态还需修，未将helper pending请求算作CLI取消。P2保持8/101，
+P1六门禁仍开放，唯一heartbeat保持ACTIVE。
 
 第23轮单包documentation CLI组件在限定范围内 ✅ 已完成：新solution构建
 零警告／错误，全部20个真实command函数案例通过，另行冻结的17个真实CLI子进程

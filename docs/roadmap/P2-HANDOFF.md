@@ -8,7 +8,27 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v27/resumption.json`.
+`artifacts/p1-supervision/resume-root-v28/resumption.json`.
+
+Round24 deeper documentation component is ✅ Complete after a real3/7 failure:
+glob aliases now retain their distinct canonical items and labelled links parse
+destination/title separately with HTML encoding and unsafe-scheme diagnostics.
+Fresh build has zero warnings/errors; all7 depth cases and affected12 source-page,
+21 publication and20 command-function cases pass without filtering. The original
+failure is retained. [Actual repair and regressions](../evidence/p2/documentation-depth-v1.json)
+do not claim a new17 subprocess/remote-SHA or whole documentation-leaf gate.
+
+Exact9d43072 CI's four workflows succeed. Seven original archives match GitHub
+digests; six aggregate input hashes/SHA reconcile, with each native platform's
+12 platform,16 differential and26 regression cases passed (108 total). The6/6
+aggregate contains zero validation records and covers only its frozen profiles;
+it does not close all six P1 gates. [Original CI reconciliation](../evidence/p1/ci-9d43072-original-reconcile.json)
+preserves the reports and all broader gaps. FirstChance hook v2 has only two core
+source files; controller/MVID environment/lease/RSP/manifest binding is ⛔ Blocked,
+so build/native NOT_RUN and actual target cause remains UNKNOWN. Kernel-IO v3
+driver is saved, but build/native NOT_RUN and report-write failure closure still
+needs repair; no helper pending request is counted as CLI cancellation. P2 stays
+8/101, all P1 gates remain open and the unique heartbeat stays ACTIVE.
 
 Round23 single-package documentation CLI component is ✅ Complete: fresh solution
 build has zero warnings/errors, all20 actual command-function cases pass, and all17

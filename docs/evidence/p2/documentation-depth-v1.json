@@ -1,0 +1,644 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.03.depth-v1",
+  "componentAccepted": true,
+  "wholeLeafAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "Actual documented metadata/link repair component, fixed7 plus affected12/21/20 API regressions; no new CLI17 or currentremoteSHA phase claim",
+  "sources": [
+    {
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationModel.cs",
+      "sha256": "83EAA034A25930B5F40DE6CA875C15E99F68141887D1CE8194362027793EAC73"
+    },
+    {
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationRenderer.cs",
+      "sha256": "BA483EE02443990A1A303684F45F971FA86E4549B921EA9E895B2724F5F8CA84"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationDepthTests.cs",
+      "sha256": "AB5A852C184730FEE699474DBCD6B683A496D39D71AE5DDAB0C5DB73C4C4B817"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationDepthRunner.cs",
+      "sha256": "343FB1E167A060ABEEE5DF4460D385DA7794E4A288CD081E8FDED4ACFAF1CDF6"
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "CD108CEB208A07D15AEC0980ED832E1DA0283AE349FDAB3776226A9AC8F1A8BC"
+    }
+  ],
+  "actualReports": [
+    {
+      "nativeReceiptSha256": "A0E77926062CBBC7980C5A7F4FF695C83DD8698F76DBBBDA42669DE40D24141D",
+      "nativeReceiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-depth-tests-v2-owned.json",
+      "nativeCleanup": {
+        "TerminationReturn": null,
+        "TerminationLastError": null,
+        "Before": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "Final": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "AccountingZero": true,
+        "HandleClosed": true,
+        "HandleCloseLastError": 0,
+        "Errors": [],
+        "Error": null
+      },
+      "actualReport": {
+        "schemaVersion": 1,
+        "taskId": "P2-08.03",
+        "evidenceKind": "actual-documentation-seven-depth-component",
+        "denominator": 7,
+        "toolingDenominator": 91,
+        "executed": 7,
+        "passed": 7,
+        "failed": 0,
+        "notRun": 0,
+        "componentPassed": true,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 109.9547,
+        "cases": [
+          {
+            "name": "P2-08.03 depth public-field-visibility",
+            "status": "passed",
+            "elapsedMilliseconds": 77.832,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth enum-variants-fields",
+            "status": "passed",
+            "elapsedMilliseconds": 2.3586,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth trait-associated-items",
+            "status": "passed",
+            "elapsedMilliseconds": 4.0893,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth glob-reexport-distinct-links",
+            "status": "passed",
+            "elapsedMilliseconds": 12.4225,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth labelled-local-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.2365,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth labelled-https-title",
+            "status": "passed",
+            "elapsedMilliseconds": 4.4611,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth labelled-unsafe-scheme",
+            "status": "passed",
+            "elapsedMilliseconds": 1.8865,
+            "exception": null
+          }
+        ]
+      }
+    },
+    {
+      "nativeReceiptSha256": "020CF3FA2EDCE221ED901FE746E745BAC19243A85DC3E93B94EDEA528FE57840",
+      "nativeReceiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-source-regression-v2-owned.json",
+      "nativeCleanup": {
+        "TerminationReturn": null,
+        "TerminationLastError": null,
+        "Before": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "Final": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "AccountingZero": true,
+        "HandleClosed": true,
+        "HandleCloseLastError": 0,
+        "Errors": [],
+        "Error": null
+      },
+      "actualReport": {
+        "schemaVersion": 1,
+        "taskId": "P2-08.03",
+        "evidenceKind": "actual-documentation-twelve-seed-component",
+        "denominator": 12,
+        "toolingDenominator": 91,
+        "executed": 12,
+        "passed": 12,
+        "failed": 0,
+        "notRun": 0,
+        "componentPassed": true,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 102.828,
+        "cases": [
+          {
+            "name": "P2-08.03 doc-public-items",
+            "status": "passed",
+            "elapsedMilliseconds": 72.4269,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-private-items",
+            "status": "passed",
+            "elapsedMilliseconds": 0.8161,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-generics-signatures",
+            "status": "passed",
+            "elapsedMilliseconds": 6.9195,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-source-links",
+            "status": "passed",
+            "elapsedMilliseconds": 3.0451,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-local-links",
+            "status": "passed",
+            "elapsedMilliseconds": 1.3359,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-cross-module-links",
+            "status": "passed",
+            "elapsedMilliseconds": 8,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-missing-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.4861,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-ambiguous-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.2047,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-malformed-comment",
+            "status": "passed",
+            "elapsedMilliseconds": 0.2512,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-escape-markup",
+            "status": "passed",
+            "elapsedMilliseconds": 0.1519,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-unsafe-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.829,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-budget",
+            "status": "passed",
+            "elapsedMilliseconds": 4.1387,
+            "exception": null
+          }
+        ]
+      }
+    },
+    {
+      "nativeReceiptSha256": "BC972D41882811F353F8D9B8AD512E64F8DB1CF9BF4457C35CF84B9A1897926E",
+      "nativeReceiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-publication-regression-v2-owned.json",
+      "nativeCleanup": {
+        "TerminationReturn": null,
+        "TerminationLastError": null,
+        "Before": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "Final": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "AccountingZero": true,
+        "HandleClosed": true,
+        "HandleCloseLastError": 0,
+        "Errors": [],
+        "Error": null
+      },
+      "actualReport": {
+        "taskId": "P2-08.03.atomic-output-v1",
+        "evidenceKind": "actual-new-directory-publication-component",
+        "denominator": 21,
+        "executed": 21,
+        "passed": 21,
+        "failed": 0,
+        "notRun": 0,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 362.6718,
+        "cases": [
+          {
+            "name": "P2-08.03 publication success-files-hashes",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication success-unicode-crlf",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication escape-path",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication absolute-file-path",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication unsafe-scheme",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication missing-file",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication missing-fragment",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication reparse-parent",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication case-path-conflict",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication existing-target-unchanged",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication pre-cancel",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication mid-failure-cleanup",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication mid-cancel-cleanup",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication aggregate-budget",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication operation-budget",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication cleanup-identity",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication foreign-lease-object",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication target-race-unchanged",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication unknown-no-throw",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication empty-folder-replacement-identity",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication mid-stage-reparse-no-external-write",
+            "status": "passed"
+          }
+        ],
+        "receiptRoots": [
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-527e963ae0414f558387fff1690450ae",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-a0cf59dffed2408c8440e1da4a760005",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-b1356d28aae84f25958ecdd5a4183007",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-b3ce419d15f4457788caa801a6f0c67d",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-edb98dc9ed714699a7dbf27a7758d7a9",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-6d5ec63774854a659eb263b089f1bbe1",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-8d29cf248bf04783a12adfb54c57d397",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-af42cd88578748ee87c61e103939aea7",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-476bf7548aa446aeabb09b226c497b1d",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-1c997863e52347c79e3d37ebabd92279",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-3660019fb8c44aaaae0ebda99a53ce62",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-58631ed34fc24302933523de29a04bd0",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-101a73d6a4c844a3a3484ef291957835",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-219f252ecbb34ca3b442ed7e986315f3",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-34390c9e9ce340d2a9a15ccd77939675",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-c3dded2c7c8c473999bde5b599a9f7b2",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-5757fd5b1db44226b9b016bf4f572e1f",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-53f9e78c53924b2796cfe8f6fc05f5bb",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-986de4f9a2ad4356bf21658228cd55d9",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-eb073a16f1de4b20b7a48b8310a89c0b",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-8743598f4efc488394fbf09b1c7c5921"
+        ]
+      }
+    },
+    {
+      "nativeReceiptSha256": "CF171036B95B2C75FC0AB18CBE9E12C4350EB3BF13468E9C5D9CEACC18EE23A2",
+      "nativeReceiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-cli-regression-v2-owned.json",
+      "nativeCleanup": {
+        "TerminationReturn": null,
+        "TerminationLastError": null,
+        "Before": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "Final": {
+          "Active": 0,
+          "Total": 1,
+          "Assigned": 0,
+          "Listed": 0,
+          "ReturnedBytes": 8,
+          "Members": [],
+          "Failures": [],
+          "Overflow": false,
+          "Coherent": true
+        },
+        "AccountingZero": true,
+        "HandleClosed": true,
+        "HandleCloseLastError": 0,
+        "Errors": [],
+        "Error": null
+      },
+      "actualReport": {
+        "taskId": "P2-08.03.cli-v1",
+        "evidenceKind": "actual-command-function-cargo-workspace-documentation-component",
+        "denominator": 20,
+        "executed": 20,
+        "passed": 20,
+        "failed": 0,
+        "notRun": 0,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 896.8878,
+        "cases": [
+          {
+            "name": "P2-08.03 CLI initial-success-hashes",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI nested-modules-source-hashes",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI existing-target-unchanged",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI missing-manifest",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI virtual-workspace-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI dependency-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI feature-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI multiple-targets-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI invalid-arguments",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI invalid-option",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI noncargo-input",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI unsafe-module-path",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI missing-module",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI malformed-source",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI pre-cancel",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI mid-workspace-cancel",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI deadline-after-workspace",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI unsafe-output-parent",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI unsafe-documentation-scheme",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI missing-documentation-symbol",
+            "status": "passed"
+          }
+        ],
+        "receiptRoots": [
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-78907e56893b4b9bac4427e59ae49ff4",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-77f7c305fcc6422296818f10940f30dd",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-e57f51f946bb4580ad6a670601dcaa57",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-b5ac5aae74af4a8cb692002839c29625",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-13dfcd1fd4454e11a9415c95401a86fb",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-5436ab5693ad4445a32aaf5c15b13e14",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-852d1a501b8144528022584ee21524c4",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-6538910bf00640de8f80971e5ba57a6b",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-953518bdc24d412eac612a0e41090979",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-d1a5bc408ba54db69a38c1150a5dd06d",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-7cc33634c42b466390e3941a1a151dc7",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-3c9d91f8301844d88cf7db6933ff04af",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-692423194b2c4628b4c56888effb1cb5",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-2229c09400fc431b99bebd917d75f7e6",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-f9e541306e184168b975139422d384e0",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-11bc76c23ebb40a7a0c5f3e8716f8b12",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-70ef6e6060074628b122f710454a778e",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-a7d1405be0da4ae0bcec402aa72d0773",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-3669948878fc4418affc96015c250cef",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-d0e6d0af1ecc42e69b5f779a0777831f"
+        ]
+      }
+    }
+  ],
+  "beforeFailure": {
+    "schemaVersion": 1,
+    "taskId": "P2-08.03",
+    "evidenceKind": "actual-documentation-seven-depth-component",
+    "denominator": 7,
+    "toolingDenominator": 91,
+    "executed": 7,
+    "passed": 3,
+    "failed": 4,
+    "notRun": 0,
+    "componentPassed": false,
+    "fullLeafAccepted": false,
+    "fullP2Closure": false,
+    "elapsedMilliseconds": 96.2535,
+    "cases": [
+      {
+        "name": "P2-08.03 depth public-field-visibility",
+        "status": "passed",
+        "elapsedMilliseconds": 62.2337,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 depth enum-variants-fields",
+        "status": "passed",
+        "elapsedMilliseconds": 1.4623,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 depth trait-associated-items",
+        "status": "passed",
+        "elapsedMilliseconds": 3.8481,
+        "exception": null
+      },
+      {
+        "name": "P2-08.03 depth glob-reexport-distinct-links",
+        "status": "failed",
+        "elapsedMilliseconds": 9.6697,
+        "exception": "System.InvalidOperationException: Real renderer did not satisfy depth contract: glob-reexport-distinct-links RSTD1002:Missing or ambiguous documentation link: crate::W; RSTD1002:Missing or ambiguous documentation link: crate::V\r\n   at RustSharp.Tests.AssertEx.True(Boolean condition, String message) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\AssertEx.cs:line 9\r\n   at RustSharp.Tests.P2DocumentationDepthTests.Run(Int32 index) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 26\r\n   at RustSharp.Tests.P2DocumentationDepthTests.<>c__DisplayClass5_0.<.cctor>b__1() in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 16\r\n   at System.Threading.Tasks.Task`1.InnerInvoke()\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n--- End of stack trace from previous location ---\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)\r\n--- End of stack trace from previous location ---\r\n   at RustSharp.Tests.P2DocumentationDepthRunner.RunAsync(String reportPath, CancellationToken cancellationToken) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthRunner.cs:line 33"
+      },
+      {
+        "name": "P2-08.03 depth labelled-local-link",
+        "status": "failed",
+        "elapsedMilliseconds": 0.3477,
+        "exception": "System.InvalidOperationException: Real renderer did not satisfy depth contract: labelled-local-link RSTD1001:Missing or ambiguous documentation link: label\r\n   at RustSharp.Tests.AssertEx.True(Boolean condition, String message) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\AssertEx.cs:line 9\r\n   at RustSharp.Tests.P2DocumentationDepthTests.Run(Int32 index) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 26\r\n   at RustSharp.Tests.P2DocumentationDepthTests.<>c__DisplayClass5_0.<.cctor>b__1() in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 16\r\n   at System.Threading.Tasks.Task`1.InnerInvoke()\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n--- End of stack trace from previous location ---\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)\r\n--- End of stack trace from previous location ---\r\n   at RustSharp.Tests.P2DocumentationDepthRunner.RunAsync(String reportPath, CancellationToken cancellationToken) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthRunner.cs:line 33"
+      },
+      {
+        "name": "P2-08.03 depth labelled-https-title",
+        "status": "failed",
+        "elapsedMilliseconds": 0.4331,
+        "exception": "System.InvalidOperationException: Real renderer did not satisfy depth contract: labelled-https-title RSTD1001:Missing or ambiguous documentation link: site\r\n   at RustSharp.Tests.AssertEx.True(Boolean condition, String message) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\AssertEx.cs:line 9\r\n   at RustSharp.Tests.P2DocumentationDepthTests.Run(Int32 index) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 26\r\n   at RustSharp.Tests.P2DocumentationDepthTests.<>c__DisplayClass5_0.<.cctor>b__1() in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 16\r\n   at System.Threading.Tasks.Task`1.InnerInvoke()\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n--- End of stack trace from previous location ---\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)\r\n--- End of stack trace from previous location ---\r\n   at RustSharp.Tests.P2DocumentationDepthRunner.RunAsync(String reportPath, CancellationToken cancellationToken) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthRunner.cs:line 33"
+      },
+      {
+        "name": "P2-08.03 depth labelled-unsafe-scheme",
+        "status": "failed",
+        "elapsedMilliseconds": 0.2524,
+        "exception": "System.InvalidOperationException: Unsafe target must produce source-spanned RSTD1003 without publication.\r\n   at RustSharp.Tests.AssertEx.True(Boolean condition, String message) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\AssertEx.cs:line 9\r\n   at RustSharp.Tests.P2DocumentationDepthTests.Run(Int32 index) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 25\r\n   at RustSharp.Tests.P2DocumentationDepthTests.<>c__DisplayClass5_0.<.cctor>b__1() in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthTests.cs:line 16\r\n   at System.Threading.Tasks.Task`1.InnerInvoke()\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n--- End of stack trace from previous location ---\r\n   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)\r\n   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)\r\n--- End of stack trace from previous location ---\r\n   at RustSharp.Tests.P2DocumentationDepthRunner.RunAsync(String reportPath, CancellationToken cancellationToken) in D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationDepthRunner.cs:line 33"
+      }
+    ]
+  },
+  "build": {
+    "summary": [
+      "    0 个警告",
+      "    0 个错误"
+    ],
+    "sha256": "61E2CD3BD98664437DD3B4BE10ACEF875F6EDC269992A283E581CDE64F9DE32B",
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-depth-build-v2-owned.json"
+  },
+  "compiledFiles": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-depth-bin-v2\\RustSharp.Compiler.dll",
+      "sha256": "B81389CF6A6856D916FE0E4415FA1D65F51B7B3E3404FBF0C83AC333C9C105C2"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-depth-bin-v2\\RustSharp.Compiler.pdb",
+      "sha256": "E79D08911FB35293B5A8CFC3FBEED7FEBA24C53D0C29ACB2D9F1417DBB1DE4A4"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-depth-bin-v2\\RustSharp.Tests.dll",
+      "sha256": "A4D518D311C03970E2467D88ACE30197532B22A35B046985E2FB1170EEE2678D"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-depth-bin-v2\\RustSharp.Tests.pdb",
+      "sha256": "D7A0DCDFEEAD9FCFF2FE92CF9155FB99EE151301AB9F81808C13C9293616847E"
+    }
+  ],
+  "at": "2026-10-14T07:19:57.9024433+08:00"
+}

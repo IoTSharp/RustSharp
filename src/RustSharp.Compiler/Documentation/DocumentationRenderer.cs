@@ -52,7 +52,20 @@ public static class DocumentationRenderer
    int cursor=0;while(cursor<item.Comment.Length)
    {
     budget.Step();int open=item.Comment.IndexOf('[',cursor);if(open<0){html.Encoded(item.Comment[cursor..]);break;}html.Encoded(item.Comment[cursor..open]);int close=item.Comment.IndexOf(']',open+1);if(close<0){html.Encoded(item.Comment[open..]);break;}
-    Link();string target=item.Comment[(open+1)..close];string? href=null;foreach(char character in target){budget.Step();}
+    Link();string label=item.Comment[(open+1)..close];string target=label;string? title=null;int linkEnd=close+1;
+    if(linkEnd<item.Comment.Length&&item.Comment[linkEnd]=='(')
+    {
+     int depth=1,end=-1;char quote='\0';bool escaped=false;
+     for(int position=linkEnd+1;position<item.Comment.Length;position++)
+     {
+      budget.Step();char character=item.Comment[position];if(escaped){escaped=false;continue;}if(character=='\\'){escaped=true;continue;}if(quote!='\0'){if(character==quote)quote='\0';continue;}if(character is '"' or '\''){quote=character;continue;}if(character=='('){if(++depth>32)throw new DocumentationLimitException();}else if(character==')'&&--depth==0){end=position;break;}
+     }
+     if(end<0){Error("RSTD1001","Malformed documentation link destination.",item.Source.Document,item.Source.Span);cursor=item.Comment.Length;continue;}
+     string destination=item.Comment[(linkEnd+1)..end].Trim();int separator=-1;for(int position=0;position<destination.Length;position++){budget.Step();if(char.IsWhiteSpace(destination[position])){separator=position;break;}}
+     target=separator<0?destination:destination[..separator];if(separator>=0){string suffix=destination[separator..].Trim();if(suffix.Length<2||suffix[0] is not ('"' or '\'')||suffix[^1]!=suffix[0]){Error("RSTD1001","Malformed documentation link title.",item.Source.Document,item.Source.Span);cursor=end+1;continue;}title=suffix[1..^1];}
+     linkEnd=end+1;
+    }
+    string? href=null;foreach(char character in target){budget.Step();}
     if(!target.Contains("::",StringComparison.Ordinal)&&Uri.TryCreate(target,UriKind.Absolute,out Uri? uri)){if(uri.Scheme==Uri.UriSchemeHttps)href=uri.AbsoluteUri;else Error("RSTD1003","Unsafe documentation link scheme.",item.Source.Document,item.Source.Span);}
     else
     {
@@ -60,7 +73,7 @@ public static class DocumentationRenderer
      string identity=target.StartsWith("::",StringComparison.Ordinal)?"crate"+target:target;foreach(var candidate in model.Items){budget.Step();if(candidate.Identity==identity||candidate.Name==target)matches.Add(candidate);}
      if(matches.Count==1)href="#"+matches.Single().Anchor;else Error(matches.Count==0?"RSTD1001":"RSTD1002","Missing or ambiguous documentation link: "+target,item.Source.Document,item.Source.Span);
     }
-    if(href is not null){html.Raw("<a href=\"");html.Encoded(href);html.Raw("\">");html.Encoded(target);html.Raw("</a>");}cursor=close+1;
+    if(href is not null){html.Raw("<a href=\"");html.Encoded(href);html.Raw("\"");if(title is not null){html.Raw(" title=\"");html.Encoded(title);html.Raw("\"");}html.Raw(">");html.Encoded(label);html.Raw("</a>");}cursor=linkEnd;
    }
    html.Raw("</p></section>");
   }
