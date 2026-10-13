@@ -1,0 +1,878 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.CONTAIN-v8",
+  "version": 3,
+  "heldTerminalComponentAccepted": true,
+  "bodyDiagnosticAccepted": false,
+  "wholeGateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "Actual previously verified held member terminal transitions only; no new live command success or body/generated-program/platform/cancellation claim",
+  "manifestSha256": "23E4F3111CB9CC4ADF821BAFB80CB9E6F4E79A30DEC6C9917817D1A98A39D451",
+  "sourceFreeze": {
+    "version": "host-body-diagnostic-v3",
+    "files": [
+      {
+        "path": "WindowsPrivateJobRunner.cs",
+        "sha256": "6A9AAE78849A11B3EEBB049D5B133A397CD378B31424378ED0A9F2CBC456EB00",
+        "bytes": 43982
+      },
+      {
+        "path": "JobMemberAudit.cs",
+        "sha256": "DCEAFB8BA7A555A32C7A2BF7A4F5F4900103B0AEF8ACF83DC6516D7825F7A997",
+        "bytes": 27158
+      },
+      {
+        "path": "BoundedImageHash.cs",
+        "sha256": "1506016ECAE10CBBD7964BB3F9923BA53600F3803CE8A9C3D170D1D547E2C815",
+        "bytes": 2527
+      },
+      {
+        "path": "EvidencePublisher.cs",
+        "sha256": "DB8EC68FF8E55E79E51ACEEBFC3325820F0B31785147676B5995599CABD33331",
+        "bytes": 3817
+      },
+      {
+        "path": "ContainedProcessController.cs",
+        "sha256": "62333A0B512BD2FAFAA4F273E074808D81D8E05279BF7D6B188AA6513EB66F83",
+        "bytes": 9595
+      },
+      {
+        "path": "ScopeValidator.cs",
+        "sha256": "D13033DD246C6199B5E4E8890916565B08BC62F958CD0FFF577EA95619D9CA91",
+        "bytes": 7343
+      },
+      {
+        "path": "OriginalControlsDriver.cs",
+        "sha256": "826EA8B5BAC1074CD419BE108DCA2B8B848BAB7D0F30146B2807E54CE0780800",
+        "bytes": 10673
+      },
+      {
+        "path": "Program.cs",
+        "sha256": "469F601A873C912C900D083CBD8C08F6093B921966BA21F380FC9A42DB87E584",
+        "bytes": 3725
+      },
+      {
+        "path": "PrivateJobLauncher.csproj",
+        "sha256": "91BF28788A74DB6B56AC90CBB34DFD2B97AD5798B8286E37AFF09D9DA8975036",
+        "bytes": 921
+      },
+      {
+        "path": "global.json",
+        "sha256": "289E45AAFD6EB59ADCC4B7DDA4D6FE5F1924065345AA8AB75BE4A0C2B9CB00DB",
+        "bytes": 79
+      },
+      {
+        "path": "OriginalCancellationChild.ps1",
+        "sha256": "74C4288FE09066DBBDB2CD8078F521A8B6DC3F31A60105D2021D6A1D28C0891A",
+        "bytes": 1267
+      },
+      {
+        "path": "OriginalRetentionChild.ps1",
+        "sha256": "D8FF90BC076A56854B06E36781A3F3CFE9038A59C2EB23608679A80F67C4713E",
+        "bytes": 408
+      }
+    ],
+    "originalTiny": 1,
+    "identityFailure": 1,
+    "cancel": 6,
+    "retention": 2,
+    "linux": 12,
+    "runtime": "NOT_RUN"
+  },
+  "buildBinding": {
+    "sourceManifestSha256": "49197183ea4c11dc36739cd653432028788528490a89b5fa66f716258fb721da",
+    "sdk": "10.0.401",
+    "assemblySha256": "3D882CC2C56D182480D884C5B0242B432AB69FAE582D13CE4293DF78BB10AB64",
+    "runtimeconfigSha256": "C230A317A54DD960BCBEB5F347F52E18DC665A26F7EFDA2159FCED9A5AC7E097",
+    "sarifSha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B",
+    "diagnostics": 0,
+    "fullP1Closure": false
+  },
+  "actualBuild": {
+    "nativeExits": [
+      {
+        "nativeExit": {
+          "wrapperNeverClosesOriginal": true,
+          "getTimesReturn": 1,
+          "waitLastError": 0,
+          "exit100ns": 134364031311542317,
+          "exitUtc": "2026-10-13T22:12:11.1542317Z",
+          "getTimesLastError": 0,
+          "waitReturn": 0,
+          "birth100ns": 134364031274297192,
+          "borrowedOriginalHandle": true
+        },
+        "exited": true,
+        "identity": {
+          "Pid": 2288,
+          "CreationFileTime": 134364031274297192,
+          "ParentPid": 59208,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\root-build.rsp\""
+        }
+      },
+      {
+        "nativeExit": {
+          "wrapperNeverClosesOriginal": true,
+          "getTimesReturn": 1,
+          "waitLastError": 0,
+          "exit100ns": 134364031309438396,
+          "exitUtc": "2026-10-13T22:12:10.9438396Z",
+          "getTimesLastError": 0,
+          "waitReturn": 0,
+          "birth100ns": 134364031286574592,
+          "borrowedOriginalHandle": true
+        },
+        "exited": true,
+        "identity": {
+          "Pid": 20212,
+          "CreationFileTime": 134364031286574592,
+          "ParentPid": 2288,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgjeidg5u.bpa\\tmp0033eaf979fa40f1868b803c0003189e.rsp\""
+        }
+      },
+      {
+        "nativeExit": {
+          "wrapperNeverClosesOriginal": true,
+          "getTimesReturn": 1,
+          "waitLastError": 0,
+          "exit100ns": 134364031309455122,
+          "exitUtc": "2026-10-13T22:12:10.9455122Z",
+          "getTimesLastError": 0,
+          "waitReturn": 0,
+          "birth100ns": 134364031286644309,
+          "borrowedOriginalHandle": true
+        },
+        "exited": true,
+        "identity": {
+          "Pid": 41696,
+          "CreationFileTime": 134364031286644309,
+          "ParentPid": 20212,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        }
+      }
+    ],
+    "sha256": "381759633F18173F2C36B28632CDC76DE3A0B7E41BC60C6E64C1D5BCC1BA62C4",
+    "path": "artifacts/p1-supervision/console-host-body-diagnostic-v3/root-build-outer.json",
+    "passed": true,
+    "identities": [
+      {
+        "Pid": 2288,
+        "CreationFileTime": 134364031274297192,
+        "ParentPid": 59208,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\root-build.rsp\""
+      },
+      {
+        "Pid": 20212,
+        "CreationFileTime": 134364031286574592,
+        "ParentPid": 2288,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgjeidg5u.bpa\\tmp0033eaf979fa40f1868b803c0003189e.rsp\""
+      },
+      {
+        "Pid": 41696,
+        "CreationFileTime": 134364031286644309,
+        "ParentPid": 20212,
+        "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+      }
+    ],
+    "cleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    }
+  },
+  "terminalTransitions": [
+    {
+      "cachedCommandHistoricalOnly": true,
+      "identity": {
+        "Pid": 38172,
+        "CreationFileTime": 134364031423399449,
+        "ParentPid": 65116,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+      },
+      "at": "2026-10-13T22:12:22.6263955+00:00",
+      "originalQueryFailure": "调用“Invoke”并传入“2”个参数时发生异常：“NT command query status=0xC000010A”",
+      "newLiveCommandQuerySucceeded": false,
+      "priorLiveReceipt": {
+        "sha256": "BFB46AF89433268872DDB43D1CA7A3F433452EE91ED356A9786940F90118E285",
+        "image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "nativeBefore": {
+          "after": {
+            "Pid": 38172,
+            "CreationFileTime": 134364031423399449,
+            "ParentPid": 65116,
+            "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+          },
+          "imageLastError": 0,
+          "imageReturn": 1,
+          "before": {
+            "Pid": 38172,
+            "CreationFileTime": 134364031423399449,
+            "ParentPid": 65116,
+            "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+          },
+          "image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageChars": 38,
+          "birth100ns": 134364031423399449,
+          "borrowedOriginalHandle": true
+        },
+        "creation100ns": 134364031423399449,
+        "identity": {
+          "Pid": 38172,
+          "CreationFileTime": 134364031423399449,
+          "ParentPid": 65116,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+        },
+        "heldHandle": true,
+        "parent": {
+          "Pid": 65116,
+          "CreationFileTime": 134364031421462009,
+          "ParentPid": 25840,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+        },
+        "commandHistoryRequired": true,
+        "nativeAfter": {
+          "after": {
+            "Pid": 38172,
+            "CreationFileTime": 134364031423399449,
+            "ParentPid": 65116,
+            "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+          },
+          "imageLastError": 0,
+          "imageReturn": 1,
+          "before": {
+            "Pid": 38172,
+            "CreationFileTime": 134364031423399449,
+            "ParentPid": 65116,
+            "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+          },
+          "image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageChars": 38,
+          "birth100ns": 134364031423399449,
+          "borrowedOriginalHandle": true
+        }
+      },
+      "freshTerminalAccounting": {
+        "Active": 1,
+        "Total": 2,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 65116,
+            "CreationFileTime": 134364031421462009,
+            "ParentPid": 25840,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "nativeTerminal": {
+        "wrapperNeverClosesOriginal": true,
+        "exit100ns": 134364031425963741,
+        "borrowedOriginalHandle": true,
+        "waitReturn": 0,
+        "waitLastError": 0,
+        "birth100ns": 134364031423399449,
+        "exitUtc": "2026-10-13T22:12:22.5963741Z",
+        "getTimesLastError": 0,
+        "getTimesReturn": 1
+      }
+    },
+    {
+      "nativeTerminal": {
+        "wrapperNeverClosesOriginal": true,
+        "exit100ns": 134364031427152616,
+        "borrowedOriginalHandle": true,
+        "waitReturn": 0,
+        "waitLastError": 0,
+        "birth100ns": 134364031421462009,
+        "exitUtc": "2026-10-13T22:12:22.7152616Z",
+        "getTimesLastError": 0,
+        "getTimesReturn": 1
+      },
+      "newLiveCommandQuerySucceeded": false,
+      "originalQueryFailure": "NT command query status=0xC000010A",
+      "priorLiveReceipt": {
+        "sha256": "21A46F1E5235CF4E844B9DE5429F0E198B9C97A41F0503A66442F1D639CA3EE6",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "nativeBefore": {
+          "after": {
+            "Pid": 65116,
+            "CreationFileTime": 134364031421462009,
+            "ParentPid": 25840,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+          },
+          "imageLastError": 0,
+          "imageReturn": 1,
+          "before": {
+            "Pid": 65116,
+            "CreationFileTime": 134364031421462009,
+            "ParentPid": 25840,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+          },
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageChars": 34,
+          "birth100ns": 134364031421462009,
+          "borrowedOriginalHandle": true
+        },
+        "creation100ns": 134364031421462009,
+        "identity": {
+          "Pid": 65116,
+          "CreationFileTime": 134364031421462009,
+          "ParentPid": 25840,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+        },
+        "heldHandle": true,
+        "parent": {
+          "Pid": 25840,
+          "CreationFileTime": 134364031415636426,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n& ./artifacts/p1-supervision/console-host-body-diagnostic-v3/Invoke-OriginalNativeTiny.ps1 -Mode NativeTiny -ReviewedSourceFreezeSha256 '23E4F3111CB9CC4ADF821BAFB80CB9E6F4E79A30DEC6C9917817D1A98A39D451' -RootReviewedSources -RootRuntimeApproved | Out-Null; Get-Date -Format o\""
+        },
+        "commandHistoryRequired": true,
+        "nativeAfter": {
+          "after": {
+            "Pid": 65116,
+            "CreationFileTime": 134364031421462009,
+            "ParentPid": 25840,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+          },
+          "imageLastError": 0,
+          "imageReturn": 1,
+          "before": {
+            "Pid": 65116,
+            "CreationFileTime": 134364031421462009,
+            "ParentPid": 25840,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+          },
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "wrapperNeverClosesOriginal": true,
+          "imageChars": 34,
+          "birth100ns": 134364031421462009,
+          "borrowedOriginalHandle": true
+        }
+      },
+      "at": "2026-10-13T22:12:22.7241747+00:00",
+      "identity": {
+        "Pid": 65116,
+        "CreationFileTime": 134364031421462009,
+        "ParentPid": 25840,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+      },
+      "cachedCommandHistoricalOnly": true
+    }
+  ],
+  "actualTiny": {
+    "nativeExits": [
+      {
+        "exited": true,
+        "identity": {
+          "Pid": 65116,
+          "CreationFileTime": 134364031421462009,
+          "ParentPid": 25840,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+        },
+        "nativeExit": {
+          "wrapperNeverClosesOriginal": true,
+          "exit100ns": 134364031427152616,
+          "borrowedOriginalHandle": true,
+          "waitReturn": 0,
+          "waitLastError": 0,
+          "birth100ns": 134364031421462009,
+          "exitUtc": "2026-10-13T22:12:22.7152616Z",
+          "getTimesLastError": 0,
+          "getTimesReturn": 1
+        }
+      },
+      {
+        "exited": true,
+        "identity": {
+          "Pid": 38172,
+          "CreationFileTime": 134364031423399449,
+          "ParentPid": 65116,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+        },
+        "nativeExit": {
+          "wrapperNeverClosesOriginal": true,
+          "exit100ns": 134364031425963741,
+          "borrowedOriginalHandle": true,
+          "waitReturn": 0,
+          "waitLastError": 0,
+          "birth100ns": 134364031423399449,
+          "exitUtc": "2026-10-13T22:12:22.5963741Z",
+          "getTimesLastError": 0,
+          "getTimesReturn": 1
+        }
+      }
+    ],
+    "cleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 2,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 2,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "sha256": "A5BD6E045E168D118F9892FC581F4F99EB2EC0FE6515797A93D23342B76D757F",
+    "path": "artifacts/p1-supervision/console-host-body-diagnostic-v3/root-nativetiny-outer.json",
+    "actualExit": 1,
+    "identities": [
+      {
+        "Pid": 65116,
+        "CreationFileTime": 134364031421462009,
+        "ParentPid": 25840,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+      },
+      {
+        "Pid": 38172,
+        "CreationFileTime": 134364031423399449,
+        "ParentPid": 65116,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+      }
+    ],
+    "failure": "Actual phase exit nonzero; original report retained",
+    "passed": false
+  },
+  "actualBodyReport": {
+    "Suite": "host-command-diagnostic",
+    "Expected": 1,
+    "Executed": 1,
+    "Passed": false,
+    "OriginalScopePassed": false,
+    "ScopeFreezeSha256": "31FFE054CA19EFC178F7A90C76C93BB22ADA75552E65369BC0167158264543BE",
+    "AssemblySha256": "3D882CC2C56D182480D884C5B0242B432AB69FAE582D13CE4293DF78BB10AB64",
+    "Lease": "7de883d6e07242379cd1200d99f6ee25",
+    "Nonce": "ad0e7c7b294845ccb2241383cf59d41f",
+    "BodyPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json",
+    "BodySha256": null,
+    "ActualBody": null,
+    "BodyMatched": false,
+    "BodyFailure": "System.IO.FileNotFoundException: Could not find file 'D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json'.\r\nFile name: 'D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json'\r\n   at System.IO.FileInfo.get_Length()\r\n   at Program.<Main>$(String[] args) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\Program.cs:line 24",
+    "ActualArguments": [
+      "-NoLogo",
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}"
+    ],
+    "Result": {
+      "TaskId": "03708a0bedac433cb902b26fa68a1f37",
+      "Platform": "windows-x64",
+      "LauncherPid": 65116,
+      "LauncherCommandLine": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll --tiny D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json",
+      "LauncherCreationTime": "2026-10-13T22:12:22.1462009Z",
+      "LauncherAssemblySha256": "3D882CC2C56D182480D884C5B0242B432AB69FAE582D13CE4293DF78BB10AB64",
+      "LauncherOsIdentity": {
+        "Pid": 65116,
+        "ParentPid": 25840,
+        "CreationUtc": "2026-10-13T22:12:22.1462009+00:00",
+        "ExitUtc": null,
+        "Image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "ImageSha256": "21a46f1e5235cf4e844b9de5429f0e198b9c97a41f0503a66442f1d639ca3ee6",
+        "CreationFileTime100ns": 134364031421462009,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\"",
+        "Source": "owned-controller",
+        "HeldHandleIdentityVerified": true,
+        "PrivateJobMembershipVerified": false,
+        "ParentChainVerified": false,
+        "Failure": null,
+        "DeclaredScopeMatched": false
+      },
+      "Members": [
+        {
+          "Pid": 38172,
+          "ParentPid": 65116,
+          "CreationUtc": "2026-10-13T22:12:22.3399449+00:00",
+          "ExitUtc": "2026-10-13T22:12:22.5963741+00:00",
+          "Image": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+          "ImageSha256": "bfb46af89433268872ddb43d1ca7a3f433452ee91ed356a9786940f90118e285",
+          "CreationFileTime100ns": 134364031423399449,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\"",
+          "Source": "CreateProcess-held-suspended-root",
+          "HeldHandleIdentityVerified": true,
+          "PrivateJobMembershipVerified": true,
+          "ParentChainVerified": true,
+          "Failure": null,
+          "DeclaredScopeMatched": true
+        }
+      ],
+      "IdentityAttempts": [],
+      "InitialHandleAttempts": [],
+      "CommandLineObservations": [
+        {
+          "Pid": 38172,
+          "CreationUtc": "2026-10-13T22:12:22.3399449+00:00",
+          "ReceiptUtc": "2026-10-13T22:12:22.4432348+00:00",
+          "Source": "CreateProcess-held-suspended-root",
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\"",
+          "Changed": false
+        }
+      ],
+      "JobEvents": [
+        {
+          "Sequence": 1,
+          "ReceiptUtc": "2026-10-13T22:12:22.4454149+00:00",
+          "Message": 6,
+          "PayloadPid": 38172,
+          "Meaning": "new-process"
+        },
+        {
+          "Sequence": 2,
+          "ReceiptUtc": "2026-10-13T22:12:22.5973816+00:00",
+          "Message": 7,
+          "PayloadPid": 38172,
+          "Meaning": "exit-process"
+        },
+        {
+          "Sequence": 3,
+          "ReceiptUtc": "2026-10-13T22:12:22.6023048+00:00",
+          "Message": 4,
+          "PayloadPid": 0,
+          "Meaning": "active-process-zero"
+        }
+      ],
+      "JobSnapshots": [
+        {
+          "ReceiptUtc": "2026-10-13T22:12:22.4440131+00:00",
+          "Assigned": 1,
+          "Listed": 1,
+          "Pids": [
+            38172
+          ]
+        },
+        {
+          "ReceiptUtc": "2026-10-13T22:12:22.4476448+00:00",
+          "Assigned": 1,
+          "Listed": 1,
+          "Pids": [
+            38172
+          ]
+        },
+        {
+          "ReceiptUtc": "2026-10-13T22:12:22.4807206+00:00",
+          "Assigned": 1,
+          "Listed": 1,
+          "Pids": [
+            38172
+          ]
+        },
+        {
+          "ReceiptUtc": "2026-10-13T22:12:22.5128481+00:00",
+          "Assigned": 1,
+          "Listed": 1,
+          "Pids": [
+            38172
+          ]
+        },
+        {
+          "ReceiptUtc": "2026-10-13T22:12:22.5452066+00:00",
+          "Assigned": 1,
+          "Listed": 1,
+          "Pids": [
+            38172
+          ]
+        },
+        {
+          "ReceiptUtc": "2026-10-13T22:12:22.5779404+00:00",
+          "Assigned": 1,
+          "Listed": 1,
+          "Pids": [
+            38172
+          ]
+        },
+        {
+          "ReceiptUtc": "2026-10-13T22:12:22.6041551+00:00",
+          "Assigned": 0,
+          "Listed": 0,
+          "Pids": []
+        }
+      ],
+      "MemberAuditFailures": [],
+      "CaptureFailures": [],
+      "MemberAccountingReconciled": true,
+      "MemberAuditComplete": true,
+      "AuditPumpEnded": true,
+      "AuditPumpStarted": true,
+      "AuditPumpManagedThreadId": 11,
+      "AuditDisposeAttempted": true,
+      "AuditDisposeCompleted": true,
+      "AuditAdmissionBarrierClosed": true,
+      "AuditOwnedHandlesAtDisposal": [],
+      "AuditLateAdmissionPids": [],
+      "AuditHandleCloseAttempts": [
+        "completion-port",
+        "stop-source",
+        "borrowed-handle-reference-release"
+      ],
+      "ScopeFreezeSha256": null,
+      "PublicationFailure": null,
+      "CleanupElapsedSeconds": 0.0614774,
+      "CreatedRootHeldIdentityVerified": true,
+      "ActualNativeRootCreations": 1,
+      "NativeRootHandlesRetained": true,
+      "NativeRootCreatedAtUtc": "2026-10-13T22:12:22.3462173+00:00",
+      "RootThreadId": 48808,
+      "IntendedRootImage": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "IntendedRootCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\"",
+      "RootIdentityValidationAttempted": true,
+      "RootIdentityValidationFailure": null,
+      "CleanupRootIdentityVerified": false,
+      "CleanupRootIdentityFailure": null,
+      "HeldRootFinalCreationUtc": "2026-10-13T22:12:22.3399449+00:00",
+      "ExpectedCreationUtc": null,
+      "RootFinalExitUtc": "2026-10-13T22:12:22.5963741+00:00",
+      "RootCleanupKind": "held-private-job-and-held-root",
+      "UnassignedSuspendedRootTerminationRequested": false,
+      "UnassignedSuspendedRootExitVerified": false,
+      "EmptyUnassignedJobVerified": false,
+      "DiagnosticActualCreationFlags": 524300,
+      "CallerConsoleChecks": [
+        {
+          "Phase": "before-detached-create",
+          "CallerPid": 65116,
+          "RawCount": 0,
+          "LastError": 6,
+          "Window": 0,
+          "Listed": [],
+          "Stdin": 0,
+          "Stdout": 0,
+          "Stderr": 0
+        },
+        {
+          "Phase": "after-detached-create",
+          "CallerPid": 65116,
+          "RawCount": 0,
+          "LastError": 6,
+          "Window": 0,
+          "Listed": [],
+          "Stdin": 0,
+          "Stdout": 0,
+          "Stderr": 0
+        }
+      ],
+      "TargetConsoleState": "UNKNOWN",
+      "RootPid": 38172,
+      "RootParentPid": 65116,
+      "RootCreationTime": "2026-10-14T06:12:22.3399449+08:00",
+      "RootImage": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "RootCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\"",
+      "Arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}"
+      ],
+      "WorkingDirectory": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3",
+      "IdentityVerifiedWhileSuspended": true,
+      "AssignedBeforeResume": true,
+      "ContainmentKind": "private-windows-job",
+      "JobAssignedAtUtc": "2026-10-13T22:12:22.4427995+00:00",
+      "ResumedAtUtc": "2026-10-13T22:12:22.4474235+00:00",
+      "JobTotalProcesses": 1,
+      "FinalActiveProcesses": 0,
+      "ExitCode": 0,
+      "RootExited": true,
+      "TerminationRequested": true,
+      "HeldJobFinalZeroVerified": true,
+      "CaptureCompleted": true,
+      "KernelExitAndCleanupPassed": false,
+      "TinyPassed": false,
+      "NativeRootsResumed": 1,
+      "ActualFixtureBodyExecuted": false,
+      "DiagnosticStartup": {
+        "StartupBytes": 112,
+        "StartupFlags": 256,
+        "CreationFlags": 524300,
+        "InheritHandles": 1,
+        "AttributeListBytes": 48,
+        "HandleListKind": 131074,
+        "HandleListBytes": 24,
+        "ActualCommand": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\"",
+        "ActualArguments": [
+          "-NoLogo",
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          "$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}"
+        ],
+        "WorkingDirectory": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3",
+        "Stdin": {
+          "Handle": 924,
+          "FileType": 2,
+          "FileTypeLastError": 0,
+          "HandleInfoReturn": 1,
+          "HandleFlags": 1,
+          "HandleInfoLastError": 0
+        },
+        "Stdout": {
+          "Handle": 912,
+          "FileType": 3,
+          "FileTypeLastError": 0,
+          "HandleInfoReturn": 1,
+          "HandleFlags": 1,
+          "HandleInfoLastError": 0
+        },
+        "Stderr": {
+          "Handle": 920,
+          "FileType": 3,
+          "FileTypeLastError": 0,
+          "HandleInfoReturn": 1,
+          "HandleFlags": 1,
+          "HandleInfoLastError": 0
+        }
+      },
+      "NaturalRootRuntimeExecuted": 0,
+      "WindowsLifecycleControlsExecuted": 0,
+      "FullDescendantContainmentProved": false,
+      "FullP1Closure": false,
+      "PrimaryFailure": null,
+      "CleanupFailures": [],
+      "Stdout": "",
+      "Stderr": "",
+      "OutputBytes": 0,
+      "ElapsedSeconds": 0.3314069,
+      "TaskLease": "7de883d6e07242379cd1200d99f6ee25",
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "JobHandleClosed": true,
+      "StdioDisposedWithoutException": true,
+      "CaptureTasksJoined": true,
+      "CancellationObservedAtUtc": null,
+      "ActualOutputBudgetViolation": false,
+      "ActualExecutionTimeout": false,
+      "PrimaryExceptionType": null
+    },
+    "FullP1Closure": false
+  },
+  "previousV2Failure": {
+    "failure": "Actual native image query failed/bounded: 0/5/32768",
+    "sha256": "99415243A1EB26F54E8C0498A9BD7E785286A23E95C86C3DFD7EFDD12129EE8C",
+    "path": "artifacts/p1-supervision/console-host-body-diagnostic-v2/root-nativetiny-outer.json"
+  },
+  "unknownFirstOrOtherQueryFailuresRejected": true,
+  "unchanged": {
+    "outerMaximum": 2,
+    "innerExpected": 1,
+    "linux": 12,
+    "identity": 1,
+    "flags": 524300,
+    "helpers": 0,
+    "cancel": 6,
+    "originalTiny": 1,
+    "retention": 2
+  },
+  "at": "2026-10-14T06:17:00.8025922+08:00",
+  "independentResourceReview": {
+    "liveOwned": 0,
+    "rows": [
+      {
+        "identity": {
+          "Pid": 2288,
+          "CreationFileTime": 134364031274297192,
+          "ParentPid": 59208,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\root-build.rsp\""
+        },
+        "foreignReusePreserved": false,
+        "liveOwned": false
+      },
+      {
+        "identity": {
+          "Pid": 20212,
+          "CreationFileTime": 134364031286574592,
+          "ParentPid": 2288,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgjeidg5u.bpa\\tmp0033eaf979fa40f1868b803c0003189e.rsp\""
+        },
+        "foreignReusePreserved": false,
+        "liveOwned": false
+      },
+      {
+        "identity": {
+          "Pid": 41696,
+          "CreationFileTime": 134364031286644309,
+          "ParentPid": 20212,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "foreignReusePreserved": false,
+        "liveOwned": false
+      },
+      {
+        "identity": {
+          "Pid": 65116,
+          "CreationFileTime": 134364031421462009,
+          "ParentPid": 25840,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\tiny-root-result.json\""
+        },
+        "foreignReusePreserved": false,
+        "liveOwned": false
+      },
+      {
+        "identity": {
+          "Pid": 38172,
+          "CreationFileTime": 134364031423399449,
+          "ParentPid": 65116,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='ad0e7c7b294845ccb2241383cf59d41f';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\console-host-body-diagnostic-v3\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:ad0e7c7b294845ccb2241383cf59d41f');[Console]::Error.WriteLine('HOST_BODY_ERR:ad0e7c7b294845ccb2241383cf59d41f')}finally{$self.Dispose()}\""
+        },
+        "foreignReusePreserved": false,
+        "liveOwned": false
+      }
+    ],
+    "identityCount": 5
+  }
+}
