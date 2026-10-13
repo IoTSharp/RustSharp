@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.02.CTRL-v2",
+  "version": 14,
+  "scope": "Strict observer compile and full native compiler3 only",
+  "status": "passed",
+  "rootAcceptedBoundedBuild": true,
+  "sourceManifestSha256": "D4894539A62BF6627AE921D3EF232F6E7FAC4F8D281B6883E3056AFE12988DC8",
+  "strictManifestSha256": "9458746465028ABCD21BC45D34DDBBF752DA5AAFCB404DB5E1607B9564788A27",
+  "assemblyPath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v14\\build\\bin\\FormatterObserverV14.dll",
+  "assemblySha256": "326CC45E32B540B01091F9D3CB634B50E4553DB4146F548C14CE8F815BBC7A90",
+  "summaryWarnings": 0,
+  "summaryErrors": 0,
+  "sarifDiagnostics": 0,
+  "compilerRootCscConsoleDenominator": 3,
+  "observedIdentities": [
+    {
+      "Pid": 38976,
+      "CreationFileTime": 134363851732275965,
+      "ParentPid": 46752,
+      "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v14\\build\\msbuild.rsp\""
+    },
+    {
+      "Pid": 59052,
+      "CreationFileTime": 134363851745533014,
+      "ParentPid": 38976,
+      "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTemp0i5t2b5r.pcg\\tmp5f6f1a6638974d80a2ffbec53b7e6544.rsp\""
+    },
+    {
+      "Pid": 54928,
+      "CreationFileTime": 134363851745583943,
+      "ParentPid": 59052,
+      "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    }
+  ],
+  "nativeHeldExits": [
+    {
+      "identity": {
+        "Pid": 38976,
+        "CreationFileTime": 134363851732275965,
+        "ParentPid": 46752,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-control-v14\\build\\msbuild.rsp\""
+      },
+      "nativeExit": {
+        "getTimesLastError": 0,
+        "borrowedOriginalHandle": true,
+        "waitLastError": 0,
+        "getTimesReturn": 1,
+        "exitUtc": "2026-10-13T17:12:56.7742988Z",
+        "exit100ns": 134363851767742988,
+        "waitReturn": 0,
+        "wrapperNeverClosesOriginal": true,
+        "birth100ns": 134363851732275965
+      },
+      "exited": true
+    },
+    {
+      "identity": {
+        "Pid": 59052,
+        "CreationFileTime": 134363851745533014,
+        "ParentPid": 38976,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTemp0i5t2b5r.pcg\\tmp5f6f1a6638974d80a2ffbec53b7e6544.rsp\""
+      },
+      "nativeExit": {
+        "getTimesLastError": 0,
+        "borrowedOriginalHandle": true,
+        "waitLastError": 0,
+        "getTimesReturn": 1,
+        "exitUtc": "2026-10-13T17:12:56.6718890Z",
+        "exit100ns": 134363851766718890,
+        "waitReturn": 0,
+        "wrapperNeverClosesOriginal": true,
+        "birth100ns": 134363851745533014
+      },
+      "exited": true
+    },
+    {
+      "identity": {
+        "Pid": 54928,
+        "CreationFileTime": 134363851745583943,
+        "ParentPid": 59052,
+        "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+      },
+      "nativeExit": {
+        "getTimesLastError": 0,
+        "borrowedOriginalHandle": true,
+        "waitLastError": 0,
+        "getTimesReturn": 1,
+        "exitUtc": "2026-10-13T17:12:56.6735518Z",
+        "exit100ns": 134363851766735518,
+        "waitReturn": 0,
+        "wrapperNeverClosesOriginal": true,
+        "birth100ns": 134363851745583943
+      },
+      "exited": true
+    }
+  ],
+  "finalJob": {
+    "Active": 0,
+    "Total": 3,
+    "Assigned": 0,
+    "Listed": 0,
+    "ReturnedBytes": 8,
+    "Members": [],
+    "Failures": [],
+    "Overflow": false,
+    "Coherent": true
+  },
+  "allNestedCleanupErrors": 0,
+  "rootProcessHandleClosed": true,
+  "rootThreadHandleClosed": true,
+  "jobHandleClosed": true,
+  "independentKnownPids": [
+    38976,
+    59052,
+    54928,
+    46752
+  ],
+  "knownPidSurvivors": 0,
+  "buildReportPath": "artifacts/p2-supervision/formatter-control-v14/build/build-report.json",
+  "buildReportSha256": "48212892624FA08E023FD4FC3DD056E91FB76792FCB1405F5FC173BBE37BCF6D",
+  "outerReportPath": "artifacts/p2-supervision/formatter-control-v14/build/root-build-outer.json",
+  "outerReportSha256": "7D564486C50CF5C6C75DE8EC862B61A3ECE8F246A3A57047E2611986B3635E1B",
+  "logSha256": "989507E10463EBF45C831CDFA570CF09E60FF77A336583568B7C95E3DCB83817",
+  "sarifSha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B",
+  "runtimePreparation": "failed",
+  "runtimePreparationError": "Prepare-FormatterV14.ps1 line32 Add-Type trial Launcher.dll rejected: assembly with same simple name already loaded; baseline root shell had loaded original port Launcher.dll",
+  "partiallyPreparedTrialPreserved": true,
+  "trialManifestExists": false,
+  "trialConfigExists": false,
+  "formatterNativeProcessesCreated": 0,
+  "originalNoSignal": "NOT_RUN",
+  "actualCtrlC": "NOT_RUN",
+  "pendingKernelFileIO": "NOT_RUN",
+  "formatterCaseDenominator": 59,
+  "toolingCaseDenominator": 91,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "source13FailurePreserved": true,
+  "next": "Keep v14 failed partial trial; prepare a new immutable runtime in fresh PowerShell process with persisted reviewed live host parent baseline; do not preload conflicting Launcher identity."
+}
