@@ -8,7 +8,29 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v15/resumption.json`。
+`artifacts/p1-supervision/resume-root-v16/resumption.json`。
+
+第12轮 `P1-GATE.04.MAP52-v1` 结构映射组件 ✅ 已完成：root tiny／full 验证
+52条不同作用域记录（19／19个源码包及7／7个后端 witness），缺项／重复／
+错误 group-RID 负控被拒绝。这是26种唯一 group／ID 用途，不是统一52案例
+CLI 或完整 P1 语料。每份后端报告保留24格：12本机及12外平台 blocked。
+报告哈希非空不证明物理字节或执行；全部门禁仍开放。
+
+复用 v22 构建的真实 managed3 控制在
+`cb1d751c37aa56fda8cc39b2cdef84064bc57240` 中 ✅ 已完成，包括 PID／nonce／
+hash、有效退出时间／wait、pending started1／completed1、nested cleanup全0；
+CIM 核实四个记录 PID 均已退出。原 native 控制仍为 `NOT_RUN`。
+Formatter v4 编译器／响应／退出证据保留，但严格阶段因5项 SARIF note
+（CA1050、CA1822×3、CA1869）❌ 失败。新不可变 v14 和部分 native-cancellation
+v23 在此尚无已验收运行结果。
+
+Formatter v14 随后仅通过严格构建范围：warning／error均0、SARIF0、三个
+编译器原生退出及cleanup0。Prepare 在原生 formatter 启动前 ❌ 失败：预载
+baseline `Launcher` 与原 port 克隆的程序集同名但身份不同，Add-Type 拒绝
+第二次加载。18份已复制文件保留，未形成manifest／config；formatterActualCLI0，
+无信号为 `NOT_RUN`，01:15后不重试。CTRL+C、kernel I/O及59／91案例仍开放；
+native23 仅有11份部分 typed源码，`NOT_READY` 且无运行。P1六门及P2的8／101
+保持不变。后续须用全新 PowerShell 和不可变新版本并保留本失败。
 
 第11轮由 `P1-GATE.02.LINUXDROP-v1` 负责保留原件对账，与继续进行的
 containment 和 formatter worker 并行。NativeV5 候选

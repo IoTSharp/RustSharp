@@ -8,7 +8,32 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v15/resumption.json`.
+`artifacts/p1-supervision/resume-root-v16/resumption.json`.
+
+Round12's `P1-GATE.04.MAP52-v1` structural mapping component is ✅ Complete:
+root tiny/full validates52 distinct scoped records (19/19 source packages and
+7/7 backend witnesses), with missing/duplicate/wrong-group-RID controls rejected.
+These are26 unique group/ID purposes, not one52-case CLI or the complete P1
+corpus. Each backend report keeps24 cells:12 local and12 foreign blocked.
+Report-hash presence proves no physical bytes or execution; all gates stay open.
+
+The reused v22 build's actual managed3 controls are ✅ Complete in
+`cb1d751c37aa56fda8cc39b2cdef84064bc57240`, including PID/nonce/hash, valid exit
+times/waits, pending started1/completed1 and zero nested cleanup; CIM finds all
+four recorded PIDs absent. Original native controls remain `NOT_RUN`.
+Formatter v4 retains compiler/response/exit evidence, but its strict stage is
+❌ Failed with5 SARIF notes (CA1050, CA1822×3, CA1869). New immutable v14 and
+partial native-cancellation v23 have no accepted runtime result recorded here.
+
+Formatter v14 subsequently passes only its strict build scope:0 warnings/errors,
+SARIF0, all3 compiler native exits and cleanup0. Prepare is ❌ Failed before
+native formatter launch: preloaded baseline `Launcher` and the cloned original
+port share an assembly name with different identities; Add-Type rejects the
+second load. The18 copied files remain retained, without manifest/config;
+formatterActualCLI0 and no-signal `NOT_RUN`. No retry occurs after01:15.
+CTRL+C, kernel I/O and59/91 cases remain open; native23 is an11-file partial
+typed source, `NOT_READY`, with no runtime. P1's six gates and P2's8/101 remain
+unchanged. A fresh PowerShell and immutable successor must preserve this failure.
 
 Round11 assigns `P1-GATE.02.LINUXDROP-v1` to retained-original reconciliation,
 alongside the continuing containment and formatter workers. NativeV5 candidate

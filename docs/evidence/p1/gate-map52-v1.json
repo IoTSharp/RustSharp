@@ -1,0 +1,76 @@
+{
+  "taskId": "P1-GATE.04.MAP52-v1",
+  "status": "passed",
+  "rootAcceptedStructuralMappingOnly": true,
+  "sourceSha256": "963E6174F7D513E294333C6891434E0AC350DA04FF3024D8431362555DD9F8E5",
+  "frozenMapSha256": "7F531FEB14CD9916B7E951C62079F9FE0BEBAFD8903BFE19CE4333B3D368EC5F",
+  "candidateSha": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "treeSha": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "runId": "37710305713",
+  "attempt": 1,
+  "definition": "52 scoped retained records=(source19 packages+backend7 witnesses)x2 RID;26 unique group/id;not single52 CLI or complete P1 corpus",
+  "scopedRows": 52,
+  "scopedUnique": 52,
+  "uniqueGroupIds": 26,
+  "layoutCounts": {
+    "backend/linux-x64": 7,
+    "backend/win-x64": 7,
+    "source/win-x64": 19,
+    "source/linux-x64": 19
+  },
+  "sourcePePerRid": 39,
+  "backendFixtureFamiliesPerRid": 6,
+  "backendWitnessesPerRid": 7,
+  "backendCellsPerOriginalReport": 24,
+  "backendLocalCellsPerReport": 12,
+  "backendForeignBlockedCellsPerReport": 12,
+  "rootTinyReportPath": "artifacts/p1-supervision/gate-map52-v1/root-tiny1.json",
+  "rootTinyReportSha256": "6D4D53D30C9038947245655F140402A06B63CB559D74DFA3DA774B254C24F59B",
+  "rootFullReportPath": "artifacts/p1-supervision/gate-map52-v1/root-map1.json",
+  "rootFullReportSha256": "3CCE2AB61CE67CF38DF99A49113D610A9EC5CEC525A2B8E8C0E2FB9CF33A908D",
+  "rootRunPid": "UNKNOWN_NOT_IN_MAPPING_PAYLOAD",
+  "rootPidCreationAndParentChain": "Supervisor process receipt required;mapping output does not contain native identities",
+  "actualMissingDuplicateWrongScopeNegatives": [
+    {
+      "mutation": "missing",
+      "rejected": true,
+      "errors": [
+        "missing or changed52",
+        "scope count source/win-x64"
+      ]
+    },
+    {
+      "mutation": "duplicate",
+      "rejected": true,
+      "errors": [
+        "duplicate source/win-x64/scalar-positional-copy"
+      ]
+    },
+    {
+      "mutation": "wrong-group-rid",
+      "rejected": true,
+      "errors": [
+        "foreign scope source/foreign-rid/scalar-positional-copy",
+        "scope count source/win-x64"
+      ]
+    }
+  ],
+  "actualNegativeCount": 3,
+  "tinyElapsedMilliseconds": 1535,
+  "fullElapsedMilliseconds": 2916,
+  "rootFullFinishedAt": "2026-10-14T01:10:22.1905811+08:00",
+  "validatorChecksOriginalReportHashPhysicalBinding": false,
+  "reportHashNonemptyIsPhysicalAcceptance": false,
+  "commandArgumentTemplatesAndGateRemainders": "artifacts/p1-supervision/gate-map52-v1/COMMANDS-AND-GATES.json",
+  "scope52IsWholeP1": false,
+  "candidateProgramsExecuted": 0,
+  "completeSemanticsAccepted": false,
+  "completeNativeContainmentAccepted": false,
+  "currentCandidateGateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "sourceFrozenAt": "2026-10-14T01:05:56.1981408+08:00",
+  "hardSourceCutoffMet": true,
+  "sourceReadyTargetMissedSeconds": 116.1981408,
+  "at": "2026-10-14T01:14:22.2957833+08:00"
+}
