@@ -2,7 +2,30 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current checkpoint — 2026-10-08 12:18
+## Current supervision entry — 2026-10-13
+
+🚧 In progress: the sole new supervisor is chat
+`01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
+heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
+The persistent dispatch and acceptance checkpoint is
+`artifacts/p1-supervision/resume-root-v5/resumption.json`.
+
+Three fresh workers own disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
+(source 1572 files, 19 packages/39 PE/785 retained per RID; backend 234 files,
+24 matrix cells/103 retained per RID), `P1-GATE.02.CONTAIN-v8`
+(v7's 11 frozen source files; tiny1, cancellation6, retention2 and Linux/joint12),
+and `P2-08.02.CTRL-v2` (real Windows CTRL+C; unchanged 59/91 cases).
+The supervisor serializes shared build output, final acceptance, index and
+each accepted task's commit. Worker completion remains pending independent
+code, runtime-evidence and resource review.
+
+All six P1 gates and all 15 P2 parents remain open. The latest roadmap check
+retains P1's 85 implementation plus 6 gate leaves and P2's 94 implementation
+plus 7 gate leaves; P2 remains 8/101 leaves ✅ Complete. This entry makes no
+claim that a current slice, parent or phase passed acceptance. Actual tests,
+failures, gaps, commits and resource records belong to the persistent checkpoint.
+
+## Historical checkpoint — 2026-10-08 12:18
 
 Windows private-console fixture component is ✅ Complete in commit `fb90c4c`:
 fresh SDK10.0.401 csc compilation has zero diagnostics and its sole actual

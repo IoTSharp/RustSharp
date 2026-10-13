@@ -2,7 +2,28 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前检查点 — 2026-10-08 12:18
+## 当前监督入口 — 2026-10-13
+
+🚧 进行中：唯一新监督者为会话
+`01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
+heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
+持久派单与验收检查点为
+`artifacts/p1-supervision/resume-root-v5/resumption.json`。
+
+三名全新 worker 独占互斥冻结范围：`P1-GATE.03.CISEM-v1`
+（source 1572文件，每RID 19 packages/39 PE/785 retained；backend 234文件，
+24 matrix cells/每RID 103 retained）、`P1-GATE.02.CONTAIN-v8`
+（v7的11份冻结源码；tiny1、cancellation6、retention2及Linux/joint12），
+以及 `P2-08.02.CTRL-v2`（真实Windows CTRL+C；59/91案例分母不变）。
+监督者串行管理共享构建输出、最终验收、索引与每项验收后的独立提交。
+worker完成声明仍待独立源码、运行证据及资源复核。
+
+六个P1门禁与15个P2父项仍全部开放。最新路线图检查保持P1的85实施叶项
+加6门禁叶项、P2的94实施叶项加7门禁叶项；P2仍为8/101叶项 ✅ 已完成。
+本入口不声明当前切片、父项或阶段已通过验收。实际测试、失败、缺项、
+提交及资源记录以持久检查点为准。
+
+## 历史检查点 — 2026-10-08 12:18
 
 Windows 私有控制台夹具组件在提交 `fb90c4c` 中 ✅ 已完成：全新
 SDK10.0.401 csc 编译零诊断，唯一真实无信号 tiny 通过。controller/helper/
