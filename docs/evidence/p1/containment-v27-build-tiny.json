@@ -1,0 +1,2053 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.CONTAIN-v8",
+  "version": 27,
+  "reviewedAt": "2026-10-14T02:49:35.9262758+08:00",
+  "candidateHead": "722a3f34f0b9ac1e4b08277f024a3ac38c808e55",
+  "buildStage": "PASS",
+  "originalNativeTiny": "FAIL",
+  "fullP1Closure": false,
+  "denominators": {
+    "tiny": 1,
+    "identityFailure": 1,
+    "cancel": 6,
+    "retention": 2,
+    "linux": 12
+  },
+  "unchangedLimits": {
+    "outerMembers": 2,
+    "innerRoots": 1,
+    "innerHelpers": 0
+  },
+  "originals": [
+    {
+      "path": "artifacts/p1-supervision/descendant-containment-draft-v27/MANIFEST.json",
+      "sha256": "DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B"
+    },
+    {
+      "path": "artifacts/p1-supervision/descendant-containment-draft-v27/SOURCE-FROZEN.json",
+      "sha256": "818F7F2A8753CEA2594AEB4AE3783ECBBB1282D0DFC41A4DE930BC435B1102A9"
+    },
+    {
+      "path": "artifacts/p1-supervision/descendant-containment-draft-v27/BUILD-BINDING.json",
+      "sha256": "853A38C4B84626BC5E147583F3C349605F3FE1ADA712CCDC569BBD222AFAB9F9"
+    },
+    {
+      "path": "artifacts/p1-supervision/descendant-containment-draft-v27/root-build-outer.json",
+      "sha256": "B8AC88A7EB9B2F965C890C0379AFE47232165400BD386288056B5BBE280663FA"
+    },
+    {
+      "path": "artifacts/p1-supervision/descendant-containment-draft-v27/root-build.sarif",
+      "sha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B"
+    },
+    {
+      "path": "artifacts/p1-supervision/descendant-containment-draft-v27/root-nativetiny-outer.json",
+      "sha256": "D9A98753E76C59764488CCD02555240212D06DBEA5127C13C59E77AF049459DD"
+    },
+    {
+      "path": "artifacts/p1-supervision/descendant-containment-draft-v27/SCOPE-RUN-FROZEN.json",
+      "sha256": "D76DB2DC1F3DB28CAE5B4BC6690DE5CF21FAB52032E6D2F0E599CD21C428CE8D"
+    }
+  ],
+  "verifiedFrozenFiles": [
+    {
+      "path": "Invoke-OriginalNativeTiny.ps1",
+      "sha256": "F75A4B275FF31052D5D464BC32D8072E73E3B55DAAE728B0C113B68E0E7FC307",
+      "bytes": 25479
+    },
+    {
+      "path": "OWNER.json",
+      "sha256": "F3F606424BD6972A373B9FCFB3E9C9A72B223EE0E2BFE9FDFC479402EBFFAB21",
+      "bytes": 277
+    },
+    {
+      "path": "ROOT-RUN-PARAMETERS.md",
+      "sha256": "6387A7A5B9FF096BBFDC66DC09F59D72580A4A7D39DDD75F67095B28655CBCEB",
+      "bytes": 2184
+    },
+    {
+      "path": "CompilerResponseTemplate.rsp",
+      "sha256": "6EF7DE54DF12D8C9C65183CB95E08EE8348884262CDEF5443FF6906D74EF99A2",
+      "bytes": 24185
+    },
+    {
+      "path": "Native-Bridge.ps1",
+      "sha256": "350E1F3BAF5F1D1F51E89830ACF2048E9B4FF965B690288B1F90EBD75473C987",
+      "bytes": 7427
+    },
+    {
+      "path": "WindowsPrivateJobRunner.cs",
+      "sha256": "D12CD522519E395D0B80C7DABA9C4CD5F3B4FAC118621E5C2B2D5008B76A0D0A",
+      "bytes": 40850
+    },
+    {
+      "path": "JobMemberAudit.cs",
+      "sha256": "DCEAFB8BA7A555A32C7A2BF7A4F5F4900103B0AEF8ACF83DC6516D7825F7A997",
+      "bytes": 27158
+    },
+    {
+      "path": "BoundedImageHash.cs",
+      "sha256": "1506016ECAE10CBBD7964BB3F9923BA53600F3803CE8A9C3D170D1D547E2C815",
+      "bytes": 2527
+    },
+    {
+      "path": "EvidencePublisher.cs",
+      "sha256": "DB8EC68FF8E55E79E51ACEEBFC3325820F0B31785147676B5995599CABD33331",
+      "bytes": 3817
+    },
+    {
+      "path": "ContainedProcessController.cs",
+      "sha256": "62333A0B512BD2FAFAA4F273E074808D81D8E05279BF7D6B188AA6513EB66F83",
+      "bytes": 9595
+    },
+    {
+      "path": "ScopeValidator.cs",
+      "sha256": "24DB3B1F230379BB5C2BF353FA530BEDF70B93C5535051F651A24E963E69A142",
+      "bytes": 7277
+    },
+    {
+      "path": "OriginalControlsDriver.cs",
+      "sha256": "ACD48089737DE39B0DA46AAA2F4807777582130A82D76483F96DCB36CA16B793",
+      "bytes": 10431
+    },
+    {
+      "path": "Program.cs",
+      "sha256": "E9C5C818AACD4D8EE5D85BAEDF1B49ADED0AC0CB11B2CBBE081F33814EC30D39",
+      "bytes": 2025
+    },
+    {
+      "path": "PrivateJobLauncher.csproj",
+      "sha256": "91BF28788A74DB6B56AC90CBB34DFD2B97AD5798B8286E37AFF09D9DA8975036",
+      "bytes": 921
+    },
+    {
+      "path": "global.json",
+      "sha256": "289E45AAFD6EB59ADCC4B7DDA4D6FE5F1924065345AA8AB75BE4A0C2B9CB00DB",
+      "bytes": 79
+    },
+    {
+      "path": "OriginalCancellationChild.ps1",
+      "sha256": "74C4288FE09066DBBDB2CD8078F521A8B6DC3F31A60105D2021D6A1D28C0891A",
+      "bytes": 1267
+    },
+    {
+      "path": "OriginalRetentionChild.ps1",
+      "sha256": "D8FF90BC076A56854B06E36781A3F3CFE9038A59C2EB23608679A80F67C4713E",
+      "bytes": 408
+    }
+  ],
+  "buildBinding": {
+    "sourceManifestSha256": "818f7f2a8753cea2594aeb4ae3783ecbbb1282d0dfc41a4de930bc435b1102a9",
+    "sdk": "10.0.401",
+    "assemblySha256": "AEEE06A17B90494348214E282E346666180079731051DFB7DB82A0481594D997",
+    "runtimeconfigSha256": "C230A317A54DD960BCBEB5F347F52E18DC665A26F7EFDA2159FCED9A5AC7E097",
+    "sarifSha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B",
+    "diagnostics": 0,
+    "fullP1Closure": false
+  },
+  "buildReceipt": {
+    "mode": "Build",
+    "startedAt": "2026-10-14T02:36:40.2391619+08:00",
+    "sourceFreezeSha256": "DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B",
+    "bootstrap": [
+      {
+        "sha256": "214B705AAC5DBDE7ACB0FAEF73ECCFC2B02C3956ED3EFB14188B87F74DC0F1E6",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Launcher.dll"
+      },
+      {
+        "sha256": "12D7A1B9F2AEDA64879F9F6537821A85C0F1964A08734B57001A655AEB881273",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Launcher.cs"
+      },
+      {
+        "sha256": "E90E174B218388069D7F972FD9BA3DDBF52F720EC106F31A2D9FBD42BDD50216",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Native.cs"
+      },
+      {
+        "sha256": "CA87506EA3943CEED0B9578A06581FE1401857CDB2787FA37537AB58EF3B88C0",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\manifest.json"
+      },
+      {
+        "sha256": "25B1E1488E9226E526D5A1D0F79A6726348F151FE89C051632F0B2975A372714",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\source-manifest.json"
+      }
+    ],
+    "owner": {
+      "Pid": 35308,
+      "CreationFileTime": 134363901997596664,
+      "ParentPid": 13884,
+      "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$PSVersionTable.PSVersion.ToString();$ErrorActionPreference='Stop';$taskRoot='artifacts/p1-supervision/descendant-containment-draft-v27';Get-Content -LiteralPath (Join-Path $taskRoot 'EvidencePublisher.cs');Get-Content -LiteralPath (Join-Path $taskRoot 'WindowsPrivateJobRunner.cs')|Select-Object -Skip 222 -First 74;Get-Content -LiteralPath (Join-Path $taskRoot 'PrivateJobLauncher.csproj');Get-Content -LiteralPath (Join-Path $taskRoot 'MANIFEST.json') -Raw;if([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T02:45:00+08:00')){throw 'Stop newnative'};& (Join-Path $taskRoot 'Invoke-OriginalNativeTiny.ps1') -Mode Build -ReviewedSourceFreezeSha256 'DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B' -RootReviewedSources|Out-Null;Get-Content -LiteralPath (Join-Path $taskRoot 'BUILD-BINDING.json') -Raw;[DateTimeOffset]::Now.ToString('o')\""
+    },
+    "parent": {
+      "Pid": 13884,
+      "CreationFileTime": 134363303724309614,
+      "ParentPid": 39640,
+      "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+    },
+    "boundary": {
+      "Nodes": [
+        {
+          "Pid": 35308,
+          "CreationFileTime": 134363901997596664,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$PSVersionTable.PSVersion.ToString();$ErrorActionPreference='Stop';$taskRoot='artifacts/p1-supervision/descendant-containment-draft-v27';Get-Content -LiteralPath (Join-Path $taskRoot 'EvidencePublisher.cs');Get-Content -LiteralPath (Join-Path $taskRoot 'WindowsPrivateJobRunner.cs')|Select-Object -Skip 222 -First 74;Get-Content -LiteralPath (Join-Path $taskRoot 'PrivateJobLauncher.csproj');Get-Content -LiteralPath (Join-Path $taskRoot 'MANIFEST.json') -Raw;if([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T02:45:00+08:00')){throw 'Stop newnative'};& (Join-Path $taskRoot 'Invoke-OriginalNativeTiny.ps1') -Mode Build -ReviewedSourceFreezeSha256 'DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B' -RootReviewedSources|Out-Null;Get-Content -LiteralPath (Join-Path $taskRoot 'BUILD-BINDING.json') -Raw;[DateTimeOffset]::Now.ToString('o')\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        }
+      ],
+      "BoundaryVerified": true,
+      "SystemAncestorsComplete": false,
+      "StopReason": "Reviewed host boundary reached; upstream system ancestry remains separately incomplete"
+    },
+    "snapshots": [
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      }
+    ],
+    "launch": {
+      "Pid": 58644,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+      "Identity": {
+        "Pid": 58644,
+        "CreationFileTime": 134363902003708930,
+        "ParentPid": 35308,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "actualExit": 0,
+    "failure": null,
+    "cleanupErrors": [],
+    "passed": true,
+    "fullP1Closure": false,
+    "allObservedMemberIdentitiesComplete": true,
+    "imageQueryAssembly": {
+      "fixedFlags": 0,
+      "mvid": "8e90d6af-59a4-4b5d-875f-937f9a15744b",
+      "identityDoubleChecked": true,
+      "bufferChars": 32768,
+      "role": "FormatterPrivateConsoleFixture.ProcessAudit.ImagePath(FormatterPrivateConsoleFixture.ProcessIdentity)",
+      "sha256": "509EE571F815F6E0428E61CCEB6C21B5F3642537DFB3F11FCA97A063AFE0DAE9",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\Launcher.dll",
+      "nativeApi": "QueryFullProcessImageNameW",
+      "rawSuccessLastErrorAvailable": false,
+      "scope": "Original image query only; no formatter acceptance"
+    },
+    "arguments": [
+      "C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll",
+      "@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp"
+    ],
+    "intermediate": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\intermediate-ce0b3af4d8344aba8149098e5ff68bf6",
+    "microCase": "tiny",
+    "observedIdentities": [
+      {
+        "Pid": 58644,
+        "CreationFileTime": 134363902003708930,
+        "ParentPid": 35308,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+      },
+      {
+        "Pid": 63072,
+        "CreationFileTime": 134363902016947780,
+        "ParentPid": 58644,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+      },
+      {
+        "Pid": 46500,
+        "CreationFileTime": 134363902017009281,
+        "ParentPid": 63072,
+        "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+      }
+    ],
+    "stdoutCaptured": false,
+    "managedOnly": false,
+    "memberImageReceipts": [
+      {
+        "nativeAfter": {
+          "birth100ns": 134363902003708930,
+          "after": {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          "imageChars": 34,
+          "wrapperNeverClosesOriginal": true,
+          "before": {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          "imageReturn": 1,
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "imageLastError": 0,
+          "borrowedOriginalHandle": true
+        },
+        "parent": {
+          "Pid": 35308,
+          "CreationFileTime": 134363901997596664,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$PSVersionTable.PSVersion.ToString();$ErrorActionPreference='Stop';$taskRoot='artifacts/p1-supervision/descendant-containment-draft-v27';Get-Content -LiteralPath (Join-Path $taskRoot 'EvidencePublisher.cs');Get-Content -LiteralPath (Join-Path $taskRoot 'WindowsPrivateJobRunner.cs')|Select-Object -Skip 222 -First 74;Get-Content -LiteralPath (Join-Path $taskRoot 'PrivateJobLauncher.csproj');Get-Content -LiteralPath (Join-Path $taskRoot 'MANIFEST.json') -Raw;if([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T02:45:00+08:00')){throw 'Stop newnative'};& (Join-Path $taskRoot 'Invoke-OriginalNativeTiny.ps1') -Mode Build -ReviewedSourceFreezeSha256 'DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B' -RootReviewedSources|Out-Null;Get-Content -LiteralPath (Join-Path $taskRoot 'BUILD-BINDING.json') -Raw;[DateTimeOffset]::Now.ToString('o')\""
+        },
+        "creation100ns": 134363902003708930,
+        "nativeBefore": {
+          "birth100ns": 134363902003708930,
+          "after": {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          "imageChars": 34,
+          "wrapperNeverClosesOriginal": true,
+          "before": {
+            "Pid": 58644,
+            "CreationFileTime": 134363902003708930,
+            "ParentPid": 35308,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+          },
+          "imageReturn": 1,
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "imageLastError": 0,
+          "borrowedOriginalHandle": true
+        },
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "heldHandle": true,
+        "commandHistoryRequired": true,
+        "identity": {
+          "Pid": 58644,
+          "CreationFileTime": 134363902003708930,
+          "ParentPid": 35308,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+        },
+        "sha256": "21A46F1E5235CF4E844B9DE5429F0E198B9C97A41F0503A66442F1D639CA3EE6"
+      },
+      {
+        "nativeAfter": {
+          "birth100ns": 134363902016947780,
+          "after": {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          "imageChars": 59,
+          "wrapperNeverClosesOriginal": true,
+          "before": {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          "imageReturn": 1,
+          "image": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe",
+          "imageLastError": 0,
+          "borrowedOriginalHandle": true
+        },
+        "parent": {
+          "Pid": 58644,
+          "CreationFileTime": 134363902003708930,
+          "ParentPid": 35308,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+        },
+        "creation100ns": 134363902016947780,
+        "nativeBefore": {
+          "birth100ns": 134363902016947780,
+          "after": {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          "imageChars": 59,
+          "wrapperNeverClosesOriginal": true,
+          "before": {
+            "Pid": 63072,
+            "CreationFileTime": 134363902016947780,
+            "ParentPid": 58644,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+          },
+          "imageReturn": 1,
+          "image": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe",
+          "imageLastError": 0,
+          "borrowedOriginalHandle": true
+        },
+        "image": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe",
+        "heldHandle": true,
+        "commandHistoryRequired": true,
+        "identity": {
+          "Pid": 63072,
+          "CreationFileTime": 134363902016947780,
+          "ParentPid": 58644,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+        },
+        "sha256": "A9C51E4F24019487A57FF4AF181483011966C314F54337395C38B083DC1ACBDA"
+      },
+      {
+        "nativeAfter": {
+          "birth100ns": 134363902017009281,
+          "after": {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "imageChars": 31,
+          "wrapperNeverClosesOriginal": true,
+          "before": {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "imageReturn": 1,
+          "image": "C:\\Windows\\System32\\conhost.exe",
+          "imageLastError": 0,
+          "borrowedOriginalHandle": true
+        },
+        "parent": {
+          "Pid": 63072,
+          "CreationFileTime": 134363902016947780,
+          "ParentPid": 58644,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+        },
+        "creation100ns": 134363902017009281,
+        "nativeBefore": {
+          "birth100ns": 134363902017009281,
+          "after": {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "imageChars": 31,
+          "wrapperNeverClosesOriginal": true,
+          "before": {
+            "Pid": 46500,
+            "CreationFileTime": 134363902017009281,
+            "ParentPid": 63072,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          },
+          "imageReturn": 1,
+          "image": "C:\\Windows\\System32\\conhost.exe",
+          "imageLastError": 0,
+          "borrowedOriginalHandle": true
+        },
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "heldHandle": true,
+        "commandHistoryRequired": true,
+        "identity": {
+          "Pid": 46500,
+          "CreationFileTime": 134363902017009281,
+          "ParentPid": 63072,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "sha256": "C86146188B78E484F32CC29E2331689659943B47689A85570342044F499938AC"
+      }
+    ],
+    "heldMemberExits": [
+      {
+        "nativeExit": {
+          "birth100ns": 134363902003708930,
+          "waitReturn": 0,
+          "exit100ns": 134363902040472250,
+          "wrapperNeverClosesOriginal": true,
+          "getTimesReturn": 1,
+          "borrowedOriginalHandle": true,
+          "exitUtc": "2026-10-13T18:36:44.0472250Z",
+          "waitLastError": 0,
+          "getTimesLastError": 0
+        },
+        "identity": {
+          "Pid": 58644,
+          "CreationFileTime": 134363902003708930,
+          "ParentPid": 35308,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+        },
+        "exited": true
+      },
+      {
+        "nativeExit": {
+          "birth100ns": 134363902016947780,
+          "waitReturn": 0,
+          "exit100ns": 134363902038655810,
+          "wrapperNeverClosesOriginal": true,
+          "getTimesReturn": 1,
+          "borrowedOriginalHandle": true,
+          "exitUtc": "2026-10-13T18:36:43.8655810Z",
+          "waitLastError": 0,
+          "getTimesLastError": 0
+        },
+        "identity": {
+          "Pid": 63072,
+          "CreationFileTime": 134363902016947780,
+          "ParentPid": 58644,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\""
+        },
+        "exited": true
+      },
+      {
+        "nativeExit": {
+          "birth100ns": 134363902017009281,
+          "waitReturn": 0,
+          "exit100ns": 134363902038674392,
+          "wrapperNeverClosesOriginal": true,
+          "getTimesReturn": 1,
+          "borrowedOriginalHandle": true,
+          "exitUtc": "2026-10-13T18:36:43.8674392Z",
+          "waitLastError": 0,
+          "getTimesLastError": 0
+        },
+        "identity": {
+          "Pid": 46500,
+          "CreationFileTime": 134363902017009281,
+          "ParentPid": 63072,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "exited": true
+      }
+    ],
+    "commandHistory": [
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4000835+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4599276+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4607230+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4650871+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4651445+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4888488+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4900216+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4900777+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.0111911+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.0118119+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.0119053+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.5262565+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.5270648+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.5271996+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.0424757+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.0430629+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.0431291+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0609579+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0615173+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0615882+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0626724+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0627185+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0844746+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0849154+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0849681+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0910589+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0928312+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0933533+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0955605+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0960061+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0965840+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0973556+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0978826+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.6071421+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.6078905+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.6079849+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.6088454+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.6091642+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.6091883+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.6101433+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.6107047+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.6110361+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.1255145+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.1260452+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.1260794+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.1275744+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.1279577+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.1279863+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.1295564+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.1306397+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.1313543+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.6473003+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.6480102+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 35308,
+        "console": false,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.6480690+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+        "birth100ns": 134363902003708930
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.6494698+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.6500256+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 58644,
+        "console": false,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.6500634+00:00",
+        "command": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempntq0bh3s.z2k\\tmp22aa793941fd4156804030c2ae248096.rsp\"",
+        "birth100ns": 134363902016947780
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.6516876+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.6597621+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      },
+      {
+        "parentPid": 63072,
+        "console": true,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.6604216+00:00",
+        "command": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "birth100ns": 134363902017009281
+      }
+    ],
+    "nativeReadAttempts": [
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4237022+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4645966+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:40.4897280+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.0113938+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:41.5265841+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.0426578+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902016947780,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0611589+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902016947780,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0624259+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902016947780,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.0846430+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902017009281,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0912569+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902017009281,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0948733+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902017009281,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.0967338+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:42.6075305+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902016947780,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:42.6089751+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902017009281,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:42.6102570+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.1256775+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902016947780,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.1277139+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902017009281,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.1297240+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:43.6475904+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902016947780,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:43.6496818+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": false,
+        "birth100ns": 134363902017009281,
+        "waitReturn": 258,
+        "exit100ns": 0,
+        "timesReturn": 1,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:43.6519010+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": true,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 0,
+        "exit100ns": 134363902040472250,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:44.1749623+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": true,
+        "birth100ns": 134363902003708930,
+        "waitReturn": 0,
+        "exit100ns": 134363902040472250,
+        "timesReturn": 1,
+        "pid": 58644,
+        "at": "2026-10-13T18:36:44.1907466+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": true,
+        "birth100ns": 134363902016947780,
+        "waitReturn": 0,
+        "exit100ns": 134363902038655810,
+        "timesReturn": 1,
+        "pid": 63072,
+        "at": "2026-10-13T18:36:44.1925023+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      },
+      {
+        "requireExit": true,
+        "birth100ns": 134363902017009281,
+        "waitReturn": 0,
+        "exit100ns": 134363902038674392,
+        "timesReturn": 1,
+        "pid": 46500,
+        "at": "2026-10-13T18:36:44.1927535+00:00",
+        "waitLastError": 0,
+        "timesLastError": 0
+      }
+    ],
+    "initialJob": {
+      "Active": 0,
+      "Total": 0,
+      "Assigned": 0,
+      "Listed": 0,
+      "ReturnedBytes": 8,
+      "Members": [],
+      "Failures": [],
+      "Overflow": false,
+      "Coherent": true
+    },
+    "finalBeforeCleanup": {
+      "Active": 0,
+      "Total": 3,
+      "Assigned": 0,
+      "Listed": 0,
+      "ReturnedBytes": 8,
+      "Members": [],
+      "Failures": [],
+      "Overflow": false,
+      "Coherent": true
+    },
+    "rootBeforeDisposeExit": {
+      "birth100ns": 134363902003708930,
+      "waitReturn": 0,
+      "exit100ns": 134363902040472250,
+      "wrapperNeverClosesOriginal": true,
+      "getTimesReturn": 1,
+      "borrowedOriginalHandle": true,
+      "exitUtc": "2026-10-13T18:36:44.0472250Z",
+      "waitLastError": 0,
+      "getTimesLastError": 0
+    },
+    "processCleanup": {
+      "Pid": 58644,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\"",
+      "Identity": {
+        "Pid": 58644,
+        "CreationFileTime": 134363902003708930,
+        "ParentPid": 35308,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\dotnet\\sdk\\10.0.401\\MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\root-build.rsp\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "jobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "jobHandleClosed": true,
+    "finishedAt": "2026-10-14T02:36:44.1973763+08:00"
+  },
+  "tinyFailureReceipt": {
+    "mode": "NativeTiny",
+    "startedAt": "2026-10-14T02:38:02.5807190+08:00",
+    "sourceFreezeSha256": "DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B",
+    "bootstrap": [
+      {
+        "sha256": "214B705AAC5DBDE7ACB0FAEF73ECCFC2B02C3956ED3EFB14188B87F74DC0F1E6",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Launcher.dll"
+      },
+      {
+        "sha256": "12D7A1B9F2AEDA64879F9F6537821A85C0F1964A08734B57001A655AEB881273",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Launcher.cs"
+      },
+      {
+        "sha256": "E90E174B218388069D7F972FD9BA3DDBF52F720EC106F31A2D9FBD42BDD50216",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Native.cs"
+      },
+      {
+        "sha256": "CA87506EA3943CEED0B9578A06581FE1401857CDB2787FA37537AB58EF3B88C0",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\manifest.json"
+      },
+      {
+        "sha256": "25B1E1488E9226E526D5A1D0F79A6726348F151FE89C051632F0B2975A372714",
+        "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\source-manifest.json"
+      }
+    ],
+    "owner": {
+      "Pid": 28416,
+      "CreationFileTime": 134363902821298849,
+      "ParentPid": 13884,
+      "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$PSVersionTable.PSVersion.ToString();$ErrorActionPreference='Stop';if([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T02:45:00+08:00')){throw 'Stop new originalnative trial'};$taskRoot='D:/GitHub/RustSharp/artifacts/p1-supervision/descendant-containment-draft-v27';$taskBinding=Get-Content -LiteralPath (Join-Path $taskRoot 'BUILD-BINDING.json') -Raw|ConvertFrom-Json -DateKind String;if($taskBinding.diagnostics -ne 0 -or $taskBinding.assemblySha256 -cne 'AEEE06A17B90494348214E282E346666180079731051DFB7DB82A0481594D997'){throw 'Accepted newnative build changed'};& (Join-Path $taskRoot 'Invoke-OriginalNativeTiny.ps1') -Mode NativeTiny -ReviewedSourceFreezeSha256 'DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B' -RootReviewedSources -RootRuntimeApproved|Out-Null;Get-Content -LiteralPath (Join-Path $taskRoot 'root-nativetiny-outer.json') -Raw|ConvertFrom-Json -DateKind String|Select-Object passed,actualExit,failure,cleanupErrors,bodyReceipt,finalBeforeCleanup,heldMemberExits|ConvertTo-Json -Depth 6\""
+    },
+    "parent": {
+      "Pid": 13884,
+      "CreationFileTime": 134363303724309614,
+      "ParentPid": 39640,
+      "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+    },
+    "boundary": {
+      "Nodes": [
+        {
+          "Pid": 28416,
+          "CreationFileTime": 134363902821298849,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$PSVersionTable.PSVersion.ToString();$ErrorActionPreference='Stop';if([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T02:45:00+08:00')){throw 'Stop new originalnative trial'};$taskRoot='D:/GitHub/RustSharp/artifacts/p1-supervision/descendant-containment-draft-v27';$taskBinding=Get-Content -LiteralPath (Join-Path $taskRoot 'BUILD-BINDING.json') -Raw|ConvertFrom-Json -DateKind String;if($taskBinding.diagnostics -ne 0 -or $taskBinding.assemblySha256 -cne 'AEEE06A17B90494348214E282E346666180079731051DFB7DB82A0481594D997'){throw 'Accepted newnative build changed'};& (Join-Path $taskRoot 'Invoke-OriginalNativeTiny.ps1') -Mode NativeTiny -ReviewedSourceFreezeSha256 'DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B' -RootReviewedSources -RootRuntimeApproved|Out-Null;Get-Content -LiteralPath (Join-Path $taskRoot 'root-nativetiny-outer.json') -Raw|ConvertFrom-Json -DateKind String|Select-Object passed,actualExit,failure,cleanupErrors,bodyReceipt,finalBeforeCleanup,heldMemberExits|ConvertTo-Json -Depth 6\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        }
+      ],
+      "BoundaryVerified": true,
+      "SystemAncestorsComplete": false,
+      "StopReason": "Reviewed host boundary reached; upstream system ancestry remains separately incomplete"
+    },
+    "snapshots": [
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 50932,
+            "CreationFileTime": 134363902827192521,
+            "ParentPid": 28416,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 3,
+        "Total": 3,
+        "Assigned": 3,
+        "Listed": 3,
+        "ReturnedBytes": 32,
+        "Members": [
+          {
+            "Pid": 50932,
+            "CreationFileTime": 134363902827192521,
+            "ParentPid": 28416,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+          },
+          {
+            "Pid": 65320,
+            "CreationFileTime": 134363902828788734,
+            "ParentPid": 50932,
+            "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-File\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\OriginalCancellationChild.ps1\" \"-Mode\" \"normal\" \"-Marker\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny.launched.json\" \"-ParentPid\" \"50932\""
+          },
+          {
+            "Pid": 69104,
+            "CreationFileTime": 134363902829943629,
+            "ParentPid": 65320,
+            "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      }
+    ],
+    "launch": {
+      "Pid": 50932,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+      "Identity": {
+        "Pid": 50932,
+        "CreationFileTime": 134363902827192521,
+        "ParentPid": 28416,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "actualExit": null,
+    "failure": "Fixed member bound exceeded before admission",
+    "cleanupErrors": [],
+    "passed": false,
+    "fullP1Closure": false,
+    "allObservedMemberIdentitiesComplete": true,
+    "imageQueryAssembly": {
+      "role": "FormatterPrivateConsoleFixture.ProcessAudit.ImagePath(FormatterPrivateConsoleFixture.ProcessIdentity)",
+      "bufferChars": 32768,
+      "fixedFlags": 0,
+      "rawSuccessLastErrorAvailable": false,
+      "scope": "Original image query only; no formatter acceptance",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-private-console-port-v1\\Launcher.dll",
+      "mvid": "8e90d6af-59a4-4b5d-875f-937f9a15744b",
+      "nativeApi": "QueryFullProcessImageNameW",
+      "sha256": "509EE571F815F6E0428E61CCEB6C21B5F3642537DFB3F11FCA97A063AFE0DAE9",
+      "identityDoubleChecked": true
+    },
+    "arguments": [
+      "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll",
+      "--tiny",
+      "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json",
+      "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json"
+    ],
+    "intermediate": null,
+    "microCase": "tiny",
+    "observedIdentities": [
+      {
+        "Pid": 50932,
+        "CreationFileTime": 134363902827192521,
+        "ParentPid": 28416,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+      }
+    ],
+    "stdoutCaptured": false,
+    "managedOnly": false,
+    "memberImageReceipts": [
+      {
+        "nativeBefore": {
+          "before": {
+            "Pid": 50932,
+            "CreationFileTime": 134363902827192521,
+            "ParentPid": 28416,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+          },
+          "birth100ns": 134363902827192521,
+          "after": {
+            "Pid": 50932,
+            "CreationFileTime": 134363902827192521,
+            "ParentPid": 28416,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+          },
+          "imageLastError": 0,
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "imageChars": 34,
+          "borrowedOriginalHandle": true,
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        },
+        "creation100ns": 134363902827192521,
+        "heldHandle": true,
+        "nativeAfter": {
+          "before": {
+            "Pid": 50932,
+            "CreationFileTime": 134363902827192521,
+            "ParentPid": 28416,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+          },
+          "birth100ns": 134363902827192521,
+          "after": {
+            "Pid": 50932,
+            "CreationFileTime": 134363902827192521,
+            "ParentPid": 28416,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+          },
+          "imageLastError": 0,
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "imageChars": 34,
+          "borrowedOriginalHandle": true,
+          "wrapperNeverClosesOriginal": true,
+          "imageReturn": 1
+        },
+        "identity": {
+          "Pid": 50932,
+          "CreationFileTime": 134363902827192521,
+          "ParentPid": 28416,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+        },
+        "commandHistoryRequired": true,
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "sha256": "21A46F1E5235CF4E844B9DE5429F0E198B9C97A41F0503A66442F1D639CA3EE6",
+        "parent": {
+          "Pid": 28416,
+          "CreationFileTime": 134363902821298849,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$PSVersionTable.PSVersion.ToString();$ErrorActionPreference='Stop';if([DateTimeOffset]::Now -ge [DateTimeOffset]::Parse('2026-10-14T02:45:00+08:00')){throw 'Stop new originalnative trial'};$taskRoot='D:/GitHub/RustSharp/artifacts/p1-supervision/descendant-containment-draft-v27';$taskBinding=Get-Content -LiteralPath (Join-Path $taskRoot 'BUILD-BINDING.json') -Raw|ConvertFrom-Json -DateKind String;if($taskBinding.diagnostics -ne 0 -or $taskBinding.assemblySha256 -cne 'AEEE06A17B90494348214E282E346666180079731051DFB7DB82A0481594D997'){throw 'Accepted newnative build changed'};& (Join-Path $taskRoot 'Invoke-OriginalNativeTiny.ps1') -Mode NativeTiny -ReviewedSourceFreezeSha256 'DC87DAAC072B019B289DC9A5C71F09F9690867D777029261EAC732450C46396B' -RootReviewedSources -RootRuntimeApproved|Out-Null;Get-Content -LiteralPath (Join-Path $taskRoot 'root-nativetiny-outer.json') -Raw|ConvertFrom-Json -DateKind String|Select-Object passed,actualExit,failure,cleanupErrors,bodyReceipt,finalBeforeCleanup,heldMemberExits|ConvertTo-Json -Depth 6\""
+        }
+      }
+    ],
+    "heldMemberExits": [
+      {
+        "identity": {
+          "Pid": 50932,
+          "CreationFileTime": 134363902827192521,
+          "ParentPid": 28416,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+        },
+        "exited": true,
+        "nativeExit": {
+          "exitUtc": "2026-10-13T18:38:03.3662865Z",
+          "birth100ns": 134363902827192521,
+          "getTimesLastError": 0,
+          "getTimesReturn": 1,
+          "waitReturn": 0,
+          "waitLastError": 0,
+          "borrowedOriginalHandle": true,
+          "exit100ns": 134363902833662865,
+          "wrapperNeverClosesOriginal": true
+        }
+      }
+    ],
+    "commandHistory": [
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.7473656+00:00"
+      },
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.7835619+00:00"
+      },
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.7842387+00:00"
+      },
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.7877573+00:00"
+      },
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.7878117+00:00"
+      },
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.8189615+00:00"
+      },
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.8202996+00:00"
+      },
+      {
+        "pid": 50932,
+        "command": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+        "birth100ns": 134363902827192521,
+        "parentPid": 28416,
+        "console": false,
+        "at": "2026-10-13T18:38:02.8203817+00:00"
+      }
+    ],
+    "nativeReadAttempts": [
+      {
+        "pid": 50932,
+        "birth100ns": 134363902827192521,
+        "waitLastError": 0,
+        "timesReturn": 1,
+        "waitReturn": 258,
+        "timesLastError": 0,
+        "at": "2026-10-13T18:38:02.7693938+00:00",
+        "exit100ns": 0,
+        "requireExit": false
+      },
+      {
+        "pid": 50932,
+        "birth100ns": 134363902827192521,
+        "waitLastError": 0,
+        "timesReturn": 1,
+        "waitReturn": 258,
+        "timesLastError": 0,
+        "at": "2026-10-13T18:38:02.7872851+00:00",
+        "exit100ns": 0,
+        "requireExit": false
+      },
+      {
+        "pid": 50932,
+        "birth100ns": 134363902827192521,
+        "waitLastError": 0,
+        "timesReturn": 1,
+        "waitReturn": 258,
+        "timesLastError": 0,
+        "at": "2026-10-13T18:38:02.8198945+00:00",
+        "exit100ns": 0,
+        "requireExit": false
+      },
+      {
+        "pid": 50932,
+        "birth100ns": 134363902827192521,
+        "waitLastError": 0,
+        "timesReturn": 1,
+        "waitReturn": 258,
+        "timesLastError": 0,
+        "at": "2026-10-13T18:38:03.3645959+00:00",
+        "exit100ns": 0,
+        "requireExit": true
+      },
+      {
+        "pid": 50932,
+        "birth100ns": 134363902827192521,
+        "waitLastError": 0,
+        "timesReturn": 1,
+        "waitReturn": 0,
+        "timesLastError": 0,
+        "at": "2026-10-13T18:38:03.3891779+00:00",
+        "exit100ns": 134363902833662865,
+        "requireExit": true
+      }
+    ],
+    "initialJob": {
+      "Active": 0,
+      "Total": 0,
+      "Assigned": 0,
+      "Listed": 0,
+      "ReturnedBytes": 8,
+      "Members": [],
+      "Failures": [],
+      "Overflow": false,
+      "Coherent": true
+    },
+    "rootNativeTermination": {
+      "identity": {
+        "Pid": 50932,
+        "CreationFileTime": 134363902827192521,
+        "ParentPid": 28416,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+      },
+      "return": 1,
+      "lastError": 0
+    },
+    "rootBeforeDisposeExit": {
+      "exitUtc": "2026-10-13T18:38:03.3662865Z",
+      "birth100ns": 134363902827192521,
+      "getTimesLastError": 0,
+      "getTimesReturn": 1,
+      "waitReturn": 0,
+      "waitLastError": 0,
+      "borrowedOriginalHandle": true,
+      "exit100ns": 134363902833662865,
+      "wrapperNeverClosesOriginal": true
+    },
+    "processCleanup": {
+      "Pid": 50932,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\"",
+      "Identity": {
+        "Pid": 50932,
+        "CreationFileTime": 134363902827192521,
+        "ParentPid": 28416,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\runtime\\PrivateJobLauncher.dll\" \"--tiny\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\SCOPE-RUN-FROZEN.json\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\descendant-containment-draft-v27\\tiny-root-result.json\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "jobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 3,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "jobHandleClosed": true,
+    "finishedAt": "2026-10-14T02:38:03.3965648+08:00"
+  },
+  "independentFinalResourceCheck": {
+    "at": "2026-10-14T02:48:43.9677543+08:00",
+    "checkedPids": [
+      58644,
+      63072,
+      46500,
+      50932,
+      65320,
+      69104,
+      35308,
+      28416
+    ],
+    "survivors": [],
+    "count": 0
+  },
+  "unresolved": [
+    "NativeTiny body receipt absent; no original cancellation/retention/Linux acceptance",
+    "Extra conhost has snapshot identity but no admitted held image/hash/history proof; diagnose before any explicit infrastructure scope decision",
+    "No cap increase or semantic difference approval"
+  ]
+}
