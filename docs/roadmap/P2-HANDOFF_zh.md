@@ -8,7 +8,18 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v25/resumption.json`。
+`artifacts/p1-supervision/resume-root-v26/resumption.json`。
+
+第22轮文档首次发布组件在限定范围内 ✅ 已完成：报告写入器改用显式
+Utf8JsonWriter，无反射序列化或警告抑制。新独立solution构建零警告／错误；
+全部21个真实Windows文件系统案例执行并通过，failed／not-run均为0。Root独立
+复核全部21个目录、中途reparse替换后的外部原件保护、精确source／DLL／PDB
+hash及22个进程身份，均无自有遗留。
+[实现及真实证据](../evidence/p2/documentation-publication-v1.json)仅覆盖向不存在目标
+首次整批发布。此前两次真实构建失败继续保留。本次构建前已LF规范化，当前源码
+hash保持不变。可移植检查无法关闭所有并发filesystem TOCTOU窗口。
+CLI／workspace、已有目标更新及完整documentation profile仍开放，因此P2保持
+8/101，P1六门禁仍开放；唯一heartbeat保持ACTIVE。
 
 第21轮Helper24严格构建在 `01c56bd` 的限定范围内 ✅ 已完成：显式private访问
 修复Helper23真实CS8796失败；精确compiler response、全部3个原生身份／退出、

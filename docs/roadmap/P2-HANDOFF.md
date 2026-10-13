@@ -8,7 +8,21 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v25/resumption.json`.
+`artifacts/p1-supervision/resume-root-v26/resumption.json`.
+
+Round22 documentation first-publication component is ✅ Complete: the report
+writer now uses explicit Utf8JsonWriter with no reflection serializer or warning
+suppression. A fresh isolated solution build has zero warnings/errors; all21 real
+Windows filesystem cases execute and pass, zero failed/not-run. Root independently
+reviews all21 directories, external original protection after the mid-stage reparse
+replacement, exact source/DLL/PDB hashes and22 process identities with zero owned
+survivors. [Implementation and actual evidence](../evidence/p2/documentation-publication-v1.json)
+cover only whole-batch first publication to an absent target. The two actual
+previous build failures remain retained. LF normalization precedes this build and
+current source hashes remain unchanged. Portable checks cannot close every
+concurrent filesystem TOCTOU window. CLI/workspace, existing-target updates and
+the complete documentation profile remain open, so P2 remains8/101 and all six
+P1 gates stay open. The unique heartbeat remains ACTIVE.
 
 Round21 Helper24 strict build is ✅ Complete at `01c56bd`: explicit private access
 fixes Helper23's actual CS8796 failure; exact compiler response, all three native
