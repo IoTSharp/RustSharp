@@ -2,15 +2,15 @@
 
 [English](P2-HANDOFF.md) | 简体中文 | [P2 契约](P2_zh.md)
 
-## 当前监督入口 — 2026-10-13
+## 当前监督入口 — 2026-10-14
 
 🚧 进行中：唯一新监督者为会话
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v13/resumption.json`。
+`artifacts/p1-supervision/resume-root-v14/resumption.json`。
 
-第9轮已派出三名 worker 负责互斥冻结范围：`P1-GATE.03.CISEM-v1`
+第10轮已派出三名 worker 负责互斥冻结范围：`P1-GATE.03.CISEM-v1`
 （source 1572文件，每RID 19 packages/39 PE/785 retained；backend 234文件，
 24 matrix cells/每RID 103 retained）、`P1-GATE.02.CONTAIN-v8`
 （v7的11份冻结源码；tiny1、cancellation6、retention2及Linux/joint12），
@@ -25,7 +25,7 @@ worker完成声明仍待独立源码、运行证据及资源复核。
 
 v29 真实保留字节审计通过10052项检查、0个问题，保留1806文件／144机器头／52案例及92 PE/PDB；绑定708候选Git blob及14个后端PDB文档。完整签名语义与全部阶段门禁仍开放，首次零长度blob失败及archive启动器资源缺项均保留，仍须监督者独立验收。
 
-本轮保留 formatter v12 两次解析失败：❌ 失败，未形成有效候选。
+上一轮保留 formatter v12 两次解析失败：❌ 失败，未形成有效候选。
 V11 声明审计草稿 ❌ 失败：源码冻结超过 worker 截止时间，解析报缺右大括号，
 第三个真实字段字节负控尚未编写。源码 SHA256 为
 `860E5624B2B9318C187530E48211853829049DD4EC00AD384C240CE760CA12B7`；
@@ -42,6 +42,27 @@ Total3、Active／Assigned／Listed0，全部句柄关闭且无清理错误，�
 这些草稿和失败记录未关闭任何 P1 门禁或 P2 叶项；六个 P1 门禁全部保持开放，
 P2 仍为8/101叶项 ✅ 已完成。
 
+本轮 V12 tiny 在比较任何 PE 前 ❌ 失败：把 worker V10 报告哈希绑定到了
+root 报告路径。两份报告原件保持完整；root 独立核实 emitter 文本相同，
+均通过9项检查。不可变 V13 仅修改已核 root 哈希、版本与 packet。
+限定声明组件经 root 验收后 ✅ 已完成：真实 tiny1 及3个合法单字节
+TypeFlags／BaseType／FieldSignature 克隆被拒绝，原件哈希保持不变；
+full78 PE／88 value types／76字段／56非零加22零记录通过1090项检查，
+0 issues／0 pending。这是候选 `afb0988bb74e698a685adde93bacdd2b82b8c932`、
+run `37710305713` attempt1 的证据。V13 源码冻结超过00:13截止28.3307573秒，
+时间纪律失败单独保留。完整 ABI、递归字段作用域、泛型、backend24及全部门禁
+仍开放。Containment v19 在原5个 note 修复后保留 CA2219 失败；v20 构建
+在 held-Job 阶段 ❌ 失败，未生成 `BUILD-BINDING`，managed3 controls 为
+`NOT_RUN`。Formatter v13 严格 builder 为 `NOT_READY`，缺响应文件、三个
+编译器身份和真实诊断；11份冻结文件保留，build／runtime 为 `NOT_RUN`。
+实际截止超时事实及监督者详细资源记录保留于当前检查点。
+
+v20 因 console 命令变化期间的精确 held 身份变化而拒绝；完整身份层为 false。
+保留的 csc／console 退出时间无效，process cleanup 保留 NT 命令查询错误
+`0xC000010A`。私有 Job 回收达到 Total3、Active／Assigned／Listed0，root CIM
+回读未发现记录 PID 存活；这些事实不构成完整身份或退出验收。监督者在00:16:51
+启动 v20，超过自己00:16的停止新操作边界；该违约记录保留。
+V13 限定声明组件已单独提交为 `1cd77ef`。
 ## 历史检查点 — 2026-10-08 12:18
 
 Windows 私有控制台夹具组件在提交 `fb90c4c` 中 ✅ 已完成：全新

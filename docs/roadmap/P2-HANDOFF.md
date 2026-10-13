@@ -2,15 +2,15 @@
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
-## Current supervision entry — 2026-10-13
+## Current supervision entry — 2026-10-14
 
 🚧 In progress: the sole new supervisor is chat
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v13/resumption.json`.
+`artifacts/p1-supervision/resume-root-v14/resumption.json`.
 
-Round9 dispatched three workers to disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
+Round10 dispatched three workers to disjoint frozen scopes: `P1-GATE.03.CISEM-v1`
 (source 1572 files, 19 packages/39 PE/785 retained per RID; backend 234 files,
 24 matrix cells/103 retained per RID), `P1-GATE.02.CONTAIN-v8`
 (v7's 11 frozen source files; tiny1, cancellation6, retention2 and Linux/joint12),
@@ -27,7 +27,7 @@ failures, gaps, commits and resource records belong to the persistent checkpoint
 
 The v29 actual retained-byte audit passes10052 checks with0 issues, preserving1806 files/144 headers/52 cases and92 PE/PDB. It binds708 candidate Git blobs and14 backend PDB documents; complete signature semantics and all phase gates remain open. The first zero-length-blob failure and archive launcher resource gaps are retained. Root independent acceptance remains required.
 
-This round retains two formatter v12 parsing failures: ❌ Failed, with no valid
+The preceding round retains two formatter v12 parsing failures: ❌ Failed, with no valid
 candidate produced. The V11 declaration-audit draft is ❌ Failed: its source
 freeze exceeded the worker cutoff, parsing reports a missing closing brace,
 and the third actual field-byte negative control is unwritten. Its source SHA256
@@ -48,6 +48,33 @@ all5 diagnostics before one fresh build. Results remain in the checkpoint. These
 records close no P1 gate or P2 leaf; all six P1 gates remain open and P2 remains
 8/101 leaves ✅ Complete.
 
+The current round's V12 tiny is ❌ Failed before any PE comparison: it bound
+the worker V10 report hash to the root report path. Both reports remain intact;
+root independently verifies their identical emitter text and passed9 checks.
+The immutable V13 successor changes only that verified root hash, version and
+packet. Its bounded declaration component is ✅ Complete after root acceptance:
+actual tiny1 plus3 legal single-byte TypeFlags/BaseType/FieldSignature clones
+are rejected while original hashes remain unchanged; full78 PE/88 value types/
+76 fields/56 nonzero plus22 zero records passes1090 checks with0 issues/0 pending.
+This is candidate `afb0988bb74e698a685adde93bacdd2b82b8c932`, run `37710305713`
+attempt1 evidence. V13 source freeze exceeds its00:13 cutoff by28.3307573s;
+the timing failure is retained separately. Full ABI, recursive field scopes,
+generics, backend24 and all gates remain open. Containment v19 retains its
+CA2219 failure after the former5 notes were fixed; v20 build is ❌ Failed in
+the held-Job phase, without `BUILD-BINDING`, and managed3 controls are `NOT_RUN`.
+Formatter v13's strict builder is `NOT_READY`, missing its response file,
+three compiler identities and actual diagnostics; its11 frozen files remain
+retained, with build/runtime `NOT_RUN`. Actual late-cutoff facts and the
+supervisor's detailed resources remain in the current checkpoint.
+
+The v20 rejection is an exact held-identity change during the console's command
+transition. Its complete identity layer is false; the retained csc/console exit
+timestamps are invalid, and process cleanup retains NT command-query error
+`0xC000010A`. Private Job reaping reaches Total3 with Active/Assigned/Listed0,
+and root CIM readback finds no recorded PID alive; these facts do not establish
+complete identity or exit acceptance. The supervisor started v20 at00:16:51,
+after its own00:16 stop-new-operations boundary; this violation is retained.
+The accepted V13 declaration component is committed separately as `1cd77ef`.
 ## Historical checkpoint — 2026-10-08 12:18
 
 Windows private-console fixture component is ✅ Complete in commit `fb90c4c`:
