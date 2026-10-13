@@ -1,0 +1,229 @@
+{
+  "executed": 17,
+  "cases": [
+    {
+      "name": "P2-08.03 CLI initial-success-hashes",
+      "caseId": 0,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-0-owned.json",
+      "expected": 0,
+      "passed": true,
+      "outputs": [
+        {
+          "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-78907e56893b4b9bac4427e59ae49ff4\\shell-round25\\index.html",
+          "sha256": "2871319588A393115AD3D4C10E0A652FCA0D29B755B59E687B007D2D8EE672BF"
+        },
+        {
+          "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-78907e56893b4b9bac4427e59ae49ff4\\shell-round25\\source\\src\\lib.rs.html",
+          "sha256": "079C9D4CB35E077B52C5DCD5D06092C308F5F5E41A76567B11B86B1AA49D9030"
+        }
+      ],
+      "actual": 0,
+      "receiptSha256": "CCB3FDB1100A7B7CAA20B26B041D24C2189091F956850D7A92A76023356B9547"
+    },
+    {
+      "name": "P2-08.03 CLI nested-modules-source-hashes",
+      "caseId": 1,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-1-owned.json",
+      "expected": 0,
+      "passed": true,
+      "outputs": [
+        {
+          "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-77f7c305fcc6422296818f10940f30dd\\shell-round25\\index.html",
+          "sha256": "E7ADAD9F8CF9054EF6669A6BC8F17166AB72FCA3F7AC3A8B89B0EB3C43ACA33F"
+        },
+        {
+          "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-77f7c305fcc6422296818f10940f30dd\\shell-round25\\source\\src\\lib.rs.html",
+          "sha256": "8CB22158E754B8FA10961633BF564EF856F8F632286E93B94BDBA4FF26F7D7A8"
+        },
+        {
+          "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-77f7c305fcc6422296818f10940f30dd\\shell-round25\\source\\src\\child.rs.html",
+          "sha256": "5E17F6FB55FAE428E80E48503C7C9612BDC799DF99DBDD3FA8B8AB42430A3DBC"
+        }
+      ],
+      "actual": 0,
+      "receiptSha256": "2CB4061C80A223E55F019ABEA6D4398941B7AD6CF8071A3705E2742612CF62E8"
+    },
+    {
+      "name": "P2-08.03 CLI existing-target-unchanged",
+      "caseId": 2,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-2-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "E9021AEC74DCDB0BE3F283A0A63F378CD77CE90BE5596AFCCC7A279B95F78809"
+    },
+    {
+      "name": "P2-08.03 CLI missing-manifest",
+      "caseId": 3,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-3-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "11B2818BE5317E49461D83A1B6477EEFAC43C40689076DAD60B2781A000784DE"
+    },
+    {
+      "name": "P2-08.03 CLI virtual-workspace-unsupported",
+      "caseId": 4,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-4-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "667A65D5600D5E6B1AE00216F73205A99F54A8CB0F4BF4D884FA14474113483C"
+    },
+    {
+      "name": "P2-08.03 CLI dependency-unsupported",
+      "caseId": 5,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-5-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "6E86166428BDA5694CF30AB3F4093B09AC234DC1EC0E605AEC9F46692F8B3575"
+    },
+    {
+      "name": "P2-08.03 CLI feature-unsupported",
+      "caseId": 6,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-6-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "F57D4E4FCFD49157A323704067D4493F65106338664F42C9CE3A2B9D90CD2226"
+    },
+    {
+      "name": "P2-08.03 CLI multiple-targets-unsupported",
+      "caseId": 7,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-7-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "126AD411F6B4504B4B301AA33F05FF0C052835BE3C17E026109A642264894952"
+    },
+    {
+      "name": "P2-08.03 CLI invalid-arguments",
+      "caseId": 8,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-8-owned.json",
+      "expected": 2,
+      "passed": true,
+      "outputs": [],
+      "actual": 2,
+      "receiptSha256": "764E5475CB2CBD9B7B9B1F99174ADCD9EBD62B2657DD82EDD128F531B4D52BD1"
+    },
+    {
+      "name": "P2-08.03 CLI invalid-option",
+      "caseId": 9,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-9-owned.json",
+      "expected": 2,
+      "passed": true,
+      "outputs": [],
+      "actual": 2,
+      "receiptSha256": "45B9987E920978C3CF67B1EA84E16EC4BAA6F082179B0A699DC9CDD3019BED65"
+    },
+    {
+      "name": "P2-08.03 CLI noncargo-input",
+      "caseId": 10,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-10-owned.json",
+      "expected": 2,
+      "passed": true,
+      "outputs": [],
+      "actual": 2,
+      "receiptSha256": "2DC89534A66C58B6BD083AB5FBAF77022DDE12197763F10584A61DF02D4213D2"
+    },
+    {
+      "name": "P2-08.03 CLI unsafe-module-path",
+      "caseId": 11,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-11-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "CF0F12EA484EE96BA47D6FC6445D42FB1104ED8BD9F52EABEE2F37CC78A961B7"
+    },
+    {
+      "name": "P2-08.03 CLI missing-module",
+      "caseId": 12,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-12-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "0CC2FFCC8FD501F6DCCFA64084B8EDD0CB055B44C70833D28372F4429534CC5C"
+    },
+    {
+      "name": "P2-08.03 CLI malformed-source",
+      "caseId": 13,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-13-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "72B896D86A663CCD0FE2814BA28F2CD3FFA13345A46E25BBEEF0BFA67A907B41"
+    },
+    {
+      "name": "P2-08.03 CLI unsafe-output-parent",
+      "caseId": 17,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-17-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "C6788C0B2655EAB9919B790FA06ACDD22587D97D5A65EFAE66E83155E2336CCE"
+    },
+    {
+      "name": "P2-08.03 CLI unsafe-documentation-scheme",
+      "caseId": 18,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-18-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "4CEA675CF96333AEABCBCBFE8788CD1A0C7B26C3F54C5A8180BD6757022F9F8D"
+    },
+    {
+      "name": "P2-08.03 CLI missing-documentation-symbol",
+      "caseId": 19,
+      "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v29\\doc-cli-deeper-19-owned.json",
+      "expected": 1,
+      "passed": true,
+      "outputs": [],
+      "actual": 1,
+      "receiptSha256": "0D5659D6CB2F6EAEF62EEB90778B5BF45141B644DBF55E9230925DD78C88C5F0"
+    }
+  ],
+  "fullP1Closure": false,
+  "sourceByteFreeze": [
+    {
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationModel.cs",
+      "sha256": "83EAA034A25930B5F40DE6CA875C15E99F68141887D1CE8194362027793EAC73"
+    },
+    {
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationRenderer.cs",
+      "sha256": "BA483EE02443990A1A303684F45F971FA86E4549B921EA9E895B2724F5F8CA84"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationDepthTests.cs",
+      "sha256": "AB5A852C184730FEE699474DBCD6B683A496D39D71AE5DDAB0C5DB73C4C4B817"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationDepthRunner.cs",
+      "sha256": "343FB1E167A060ABEEE5DF4460D385DA7794E4A288CD081E8FDED4ACFAF1CDF6"
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "CD108CEB208A07D15AEC0980ED832E1DA0283AE349FDAB3776226A9AC8F1A8BC"
+    }
+  ],
+  "actualCliSha256": "3BE3371FB40B59391F641B6A26E930EBE75044F06DC0FA1AB4E812B42565855F",
+  "denominator": 17,
+  "elapsedSeconds": 5.4694369,
+  "fullP2Closure": false,
+  "actualCliPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v28\\doc-depth-bin-v2\\rsc.dll",
+  "wholeLeafAccepted": false,
+  "passed": 17,
+  "taskId": "P2-08.03.depth-cli17-v1",
+  "componentAccepted": true
+}
