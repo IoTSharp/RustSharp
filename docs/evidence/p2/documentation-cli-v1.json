@@ -1,0 +1,1063 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.03.cli-v1",
+  "componentAccepted": true,
+  "wholeLeafAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "Single root package/one target/no dependency or features: actual command-function20 plus actual CLI entry/nativeprocess/file-effects17. Callback token/deadline3 have no shell signal cancellation claim",
+  "sourceFiles": [
+    {
+      "path": "src/RustSharp.Cli/DocumentationCommand.cs",
+      "sha256": "F60CEFD567F455E3506A08DBEC623AFFACBAE67B37D65814EA9BA32C33CD993C"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationCliTests.cs",
+      "sha256": "E1FDF9AD0CDDC2BF620CC8168A3616412ED37BA195F9940B6EB1DC005ECD4A7B"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationCliRunner.cs",
+      "sha256": "9970FB350AFD3AC63DEB6B6AD6196DCAF538B3DBE7524881AD000D35243863C8"
+    },
+    {
+      "path": "src/RustSharp.Cli/Program.cs",
+      "sha256": "AC166405AA4A79E30894771BDE551B71484F30C41730DEB7161306D8C8F515C1"
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "0689E8E86D9CF80598EE82354895779069BF0A95BFA42420FB62329386CBA116"
+    },
+    {
+      "path": "tests/RustSharp.Tests/RustSharp.Tests.csproj",
+      "sha256": "ADD6BB4478CE080B20A07E982D103F08862CB7D244272E39CA87076F97E56AD7"
+    }
+  ],
+  "sourceByteBinding": "LF before fresh build; frozen sources unchanged after API20 and actualCLI17; no currentremoteSHA phase gate",
+  "actualApiCases": {
+    "taskId": "P2-08.03.cli-v1",
+    "evidenceKind": "actual-command-function-cargo-workspace-documentation-component",
+    "denominator": 20,
+    "executed": 20,
+    "passed": 20,
+    "failed": 0,
+    "notRun": 0,
+    "fullLeafAccepted": false,
+    "fullP2Closure": false,
+    "elapsedMilliseconds": 797.6406,
+    "cases": [
+      {
+        "name": "P2-08.03 CLI initial-success-hashes",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI nested-modules-source-hashes",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI existing-target-unchanged",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI missing-manifest",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI virtual-workspace-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI dependency-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI feature-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI multiple-targets-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI invalid-arguments",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI invalid-option",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI noncargo-input",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI unsafe-module-path",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI missing-module",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI malformed-source",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI pre-cancel",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI mid-workspace-cancel",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI deadline-after-workspace",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI unsafe-output-parent",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI unsafe-documentation-scheme",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI missing-documentation-symbol",
+        "status": "passed"
+      }
+    ],
+    "receiptRoots": [
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-197b7033b00a4e28b7f26c5fefacd9b3",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-28675f8c484445fe873c5d6eac734437",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-97e46ccf8ea54b67a65f519976493ab1",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-49818ce0ec8849a79ab195cf7622cf68",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-575a416548df491e98fbd5548ba2c6d5",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-94fb0b24322749fcafe1545839a83d18",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-d7b7a40bddf342b894cb79b4ce69e8e3",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-99af685310bd4bb7b5aca6967cc03113",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-978b1a8b6c8a46e8994c1ff18d64b9c9",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-09e868fb8dc748e3adaea080b648a2f6",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-210fa16a1afb4d179aab64b948286239",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-5a5ca1ab2a7d46ffb64bc54caacd7cc3",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-31a4daa8cc05468caec14686419378bb",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-02b3327e147e4f3d8ec2ed3e4cfe1842",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-aae7e63c4605466cbdfe9d520b59d1e5",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-578243adeb49419e8294cbbbb0c0bfcc",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-2c4cc829c2274718b323e1f949e65db5",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-142d8db8059341b5bdd3bbe698bbbeb5",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-7dc00cf430fd43cdb8a0cfaad22b4a07",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-e5c9e9c0bc064d1493640a9161aa5965"
+    ]
+  },
+  "actualShellCases": {
+    "passed": 17,
+    "elapsedSeconds": 5.6848576,
+    "denominator": 17,
+    "scope": "Actual process entry and file effects17; cancellation/deadline3 are separate actual function cases, no shell signal/cancel claim",
+    "fullP2Closure": false,
+    "fullLeafAccepted": false,
+    "cases": [
+      {
+        "receiptSha256": "CCACF8A5AD0340BDE17E096CE274721257B13864292E8290B603F1EE67E18667",
+        "passed": true,
+        "fixedShellCaseId": 0,
+        "actualExit": 0,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-0-owned.json",
+        "name": "P2-08.03 CLI initial-success-hashes",
+        "expectedExit": 0,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-197b7033b00a4e28b7f26c5fefacd9b3\\shell-published"
+      },
+      {
+        "receiptSha256": "E3EDB2679ADA4167DF81763C180F08783A636EE97B997BDC7ECD98EBBAD9525D",
+        "passed": true,
+        "fixedShellCaseId": 1,
+        "actualExit": 0,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-1-owned.json",
+        "name": "P2-08.03 CLI nested-modules-source-hashes",
+        "expectedExit": 0,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-28675f8c484445fe873c5d6eac734437\\shell-published"
+      },
+      {
+        "receiptSha256": "535238BBE9B245F469B7F3CC63D3AEBAB2739B036EDB89818025ABF4AEF49B15",
+        "passed": true,
+        "fixedShellCaseId": 2,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-2-owned.json",
+        "name": "P2-08.03 CLI existing-target-unchanged",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-97e46ccf8ea54b67a65f519976493ab1\\published"
+      },
+      {
+        "receiptSha256": "24AA1CA0AB178911C57EC023C7EEBCAEE21D2D9DBBC0B7FE98DA7916255F6119",
+        "passed": true,
+        "fixedShellCaseId": 3,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-3-owned.json",
+        "name": "P2-08.03 CLI missing-manifest",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-49818ce0ec8849a79ab195cf7622cf68\\shell-published"
+      },
+      {
+        "receiptSha256": "2D7F04B5BAA55C3DA32A7977E05A26C6BF0FCEA8F525F376F47A00590A318F33",
+        "passed": true,
+        "fixedShellCaseId": 4,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-4-owned.json",
+        "name": "P2-08.03 CLI virtual-workspace-unsupported",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-575a416548df491e98fbd5548ba2c6d5\\shell-published"
+      },
+      {
+        "receiptSha256": "1C5D236AB6097AB3D042FC48377D29B0CCA913F91EF4FEC116CC1CD6D7E43C0E",
+        "passed": true,
+        "fixedShellCaseId": 5,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-5-owned.json",
+        "name": "P2-08.03 CLI dependency-unsupported",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-94fb0b24322749fcafe1545839a83d18\\shell-published"
+      },
+      {
+        "receiptSha256": "2E304AADD82EDCAA84B402E6A57093CB5C4C32355DAB5CE5C8C592280DFA4DB5",
+        "passed": true,
+        "fixedShellCaseId": 6,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-6-owned.json",
+        "name": "P2-08.03 CLI feature-unsupported",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-d7b7a40bddf342b894cb79b4ce69e8e3\\shell-published"
+      },
+      {
+        "receiptSha256": "9E2530BFBD96C246CA5D473E72FA9A611694DA89837AD45BE73EC5FD0EBAEA38",
+        "passed": true,
+        "fixedShellCaseId": 7,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-7-owned.json",
+        "name": "P2-08.03 CLI multiple-targets-unsupported",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-99af685310bd4bb7b5aca6967cc03113\\shell-published"
+      },
+      {
+        "receiptSha256": "7C09078D1F50D1B3B7460EFD814C408352DDEA5E96EDBCB1E1133C7E81AF7448",
+        "passed": true,
+        "fixedShellCaseId": 8,
+        "actualExit": 2,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-8-owned.json",
+        "name": "P2-08.03 CLI invalid-arguments",
+        "expectedExit": 2,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-978b1a8b6c8a46e8994c1ff18d64b9c9\\shell-published"
+      },
+      {
+        "receiptSha256": "9220CF0E325958BFFFC88D6699D448EC410B9946B8118D3884CE8F782BAD1E09",
+        "passed": true,
+        "fixedShellCaseId": 9,
+        "actualExit": 2,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-9-owned.json",
+        "name": "P2-08.03 CLI invalid-option",
+        "expectedExit": 2,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-09e868fb8dc748e3adaea080b648a2f6\\shell-published"
+      },
+      {
+        "receiptSha256": "C9BF4753336B8CD51B3C4D1127DA8E0DD9A1BCBFC2C8298B0BFC447F710346A9",
+        "passed": true,
+        "fixedShellCaseId": 10,
+        "actualExit": 2,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-10-owned.json",
+        "name": "P2-08.03 CLI noncargo-input",
+        "expectedExit": 2,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-210fa16a1afb4d179aab64b948286239\\shell-published"
+      },
+      {
+        "receiptSha256": "B64B515F413E357089762F8CD065AA5BC1475EFC0132D2B80402FA7DD808A16A",
+        "passed": true,
+        "fixedShellCaseId": 11,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-11-owned.json",
+        "name": "P2-08.03 CLI unsafe-module-path",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-5a5ca1ab2a7d46ffb64bc54caacd7cc3\\shell-published"
+      },
+      {
+        "receiptSha256": "3DAE87CDDDBADBEA94B9F38B27C4DFB21551D161C75F5291DC94A6E9AC26FFFA",
+        "passed": true,
+        "fixedShellCaseId": 12,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-12-owned.json",
+        "name": "P2-08.03 CLI missing-module",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-31a4daa8cc05468caec14686419378bb\\shell-published"
+      },
+      {
+        "receiptSha256": "E1A8C7AA6282D563BAB27621CA81189B9F7412BB248E28E3D5F55B8025769C6B",
+        "passed": true,
+        "fixedShellCaseId": 13,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-13-owned.json",
+        "name": "P2-08.03 CLI malformed-source",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-02b3327e147e4f3d8ec2ed3e4cfe1842\\shell-published"
+      },
+      {
+        "receiptSha256": "44BC83AE96D2E73357646EDFA22D56DDE15F161F9763684189FD6A3575B41518",
+        "passed": true,
+        "fixedShellCaseId": 17,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-17-owned.json",
+        "name": "P2-08.03 CLI unsafe-output-parent",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-142d8db8059341b5bdd3bbe698bbbeb5\\linked\\shell-published"
+      },
+      {
+        "receiptSha256": "07A71C6EB75E7766E51C3FD57AC77CC98C8E6924FE9E4D137174C5465623D454",
+        "passed": true,
+        "fixedShellCaseId": 18,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-18-owned.json",
+        "name": "P2-08.03 CLI unsafe-documentation-scheme",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-7dc00cf430fd43cdb8a0cfaad22b4a07\\shell-published"
+      },
+      {
+        "receiptSha256": "ABFBAE0CB87A166BC4B749D3A5B4C70E0DB985E42146A6133FA2675C76064B2D",
+        "passed": true,
+        "fixedShellCaseId": 19,
+        "actualExit": 1,
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-shell-19-owned.json",
+        "name": "P2-08.03 CLI missing-documentation-symbol",
+        "expectedExit": 1,
+        "target": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-e5c9e9c0bc064d1493640a9161aa5965\\shell-published"
+      }
+    ],
+    "executed": 17
+  },
+  "actualOutputHashes": [
+    {
+      "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-197b7033b00a4e28b7f26c5fefacd9b3\\shell-published\\index.html",
+      "case": 0,
+      "sha256": "2871319588A393115AD3D4C10E0A652FCA0D29B755B59E687B007D2D8EE672BF"
+    },
+    {
+      "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-197b7033b00a4e28b7f26c5fefacd9b3\\shell-published\\source\\src\\lib.rs.html",
+      "case": 0,
+      "sha256": "079C9D4CB35E077B52C5DCD5D06092C308F5F5E41A76567B11B86B1AA49D9030"
+    },
+    {
+      "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-28675f8c484445fe873c5d6eac734437\\shell-published\\index.html",
+      "case": 1,
+      "sha256": "E7ADAD9F8CF9054EF6669A6BC8F17166AB72FCA3F7AC3A8B89B0EB3C43ACA33F"
+    },
+    {
+      "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-28675f8c484445fe873c5d6eac734437\\shell-published\\source\\src\\lib.rs.html",
+      "case": 1,
+      "sha256": "8CB22158E754B8FA10961633BF564EF856F8F632286E93B94BDBA4FF26F7D7A8"
+    },
+    {
+      "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-28675f8c484445fe873c5d6eac734437\\shell-published\\source\\src\\child.rs.html",
+      "case": 1,
+      "sha256": "5E17F6FB55FAE428E80E48503C7C9612BDC799DF99DBDD3FA8B8AB42430A3DBC"
+    }
+  ],
+  "actualBuild": {
+    "passed": true,
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-build-owned.json",
+    "jobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 21,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 21,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "exitCode": 0,
+    "sha256": "9C227B073864CA6A712E261D184E094AED34BF420D88241359516B3AEC395997"
+  },
+  "actualApiProcess": {
+    "name": "doc-cli-tests",
+    "purpose": "Supervision command only; no original containment or phase acceptance",
+    "startedAt": "2026-10-14T06:39:27.4327615+08:00",
+    "arguments": [
+      "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll",
+      "--p2-doc-cli-component",
+      "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json"
+    ],
+    "timeoutSeconds": 100,
+    "maximumMembers": 1,
+    "snapshots": [
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 12200,
+            "CreationFileTime": 134364047674507221,
+            "ParentPid": 49280,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 12200,
+            "CreationFileTime": 134364047674507221,
+            "ParentPid": 49280,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 12200,
+            "CreationFileTime": 134364047674507221,
+            "ParentPid": 49280,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 1,
+        "Total": 1,
+        "Assigned": 1,
+        "Listed": 1,
+        "ReturnedBytes": 16,
+        "Members": [
+          {
+            "Pid": 12200,
+            "CreationFileTime": 134364047674507221,
+            "ParentPid": 49280,
+            "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+          }
+        ],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      }
+    ],
+    "passed": true,
+    "errors": [],
+    "fullP1Closure": false,
+    "fullP2Closure": false,
+    "launch": {
+      "Pid": 12200,
+      "IntendedCommand": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\"",
+      "Identity": {
+        "Pid": 12200,
+        "CreationFileTime": 134364047674507221,
+        "ParentPid": 49280,
+        "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "parentChain": {
+      "Nodes": [
+        {
+          "Pid": 12200,
+          "CreationFileTime": 134364047674507221,
+          "ParentPid": 49280,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+        },
+        {
+          "Pid": 49280,
+          "CreationFileTime": 134364047669819770,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop';$taskRoot='D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v27'; & ./artifacts/p1-supervision/resume-root-v27/Invoke-OwnedRootCommand.ps1 -Name 'doc-cli-tests' -Arguments @((Join-Path $taskRoot 'doc-cli-bin/RustSharp.Tests.dll'),'--p2-doc-cli-component',(Join-Path $taskRoot 'doc-cli-case-result.json')) -TimeoutSeconds 100 -MaximumMembers 1; Get-Content -LiteralPath (Join-Path $taskRoot 'doc-cli-case-result.json') -Raw;Get-Date -Format o\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        },
+        {
+          "Pid": 39640,
+          "CreationFileTime": 134363303677828900,
+          "ParentPid": 12544,
+          "CommandLine": "\"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\" "
+        },
+        {
+          "Pid": 12544,
+          "CreationFileTime": 134363301892520825,
+          "ParentPid": 3816,
+          "CommandLine": "sihost.exe"
+        }
+      ],
+      "Complete": false,
+      "StopReason": "Win32Exception: OpenProcess query-only ancestor"
+    },
+    "exitCode": 0,
+    "jobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "processCleanup": {
+      "Pid": 12200,
+      "IntendedCommand": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\"",
+      "Identity": {
+        "Pid": 12200,
+        "CreationFileTime": 134364047674507221,
+        "ParentPid": 49280,
+        "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": []
+    },
+    "jobClosed": true,
+    "elapsedSeconds": 1.1499312,
+    "finishedAt": "2026-10-14T06:39:28.5801858+08:00"
+  },
+  "buildLog": {
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-build.log",
+    "summary": [
+      "    0 个警告",
+      "    0 个错误"
+    ],
+    "sha256": "590D23A17BA3A71AF55533CE8D8E431EA71BF62FF7FDB9EC15E53D466B72AE2C"
+  },
+  "compiledFiles": [
+    {
+      "sha256": "C64E42A4BCBF46DEAA7A289CFE50B80B5C1D60105F1DC03DAD465C3EC25670B3",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll"
+    },
+    {
+      "sha256": "3EDB0A170F00608415A3433212FC9EA26C26C95236475A95D1AA8D52D065371C",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.pdb"
+    },
+    {
+      "sha256": "A8B07E6D2F0889A0EF5DFA5AAC128AC53F3C0B1E4A543CF2A19F94FE26D8B143",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll"
+    },
+    {
+      "sha256": "5B97EBABBBCE7379A1ADDB5ED39EF0BCBB1A43CCF603E0DDE63F265090187462",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.pdb"
+    },
+    {
+      "sha256": "6989F1704B33EA1259C2D04DC066BF8572F87DA08C61ED356C7BEE6326D44DBF",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Compiler.dll"
+    }
+  ],
+  "remaining": [
+    "complete originaldocumentation12/tooling91",
+    "workspace/package selection",
+    "dependencies/features/multi-target",
+    "existing destination update",
+    "real shell CTRL+C/pendingIO completeprofile",
+    "completeMarkdown/publicitems/reexports",
+    "Windows/Linux CoreCLR/AOT/ILVerify/currentSHA phase gates"
+  ],
+  "at": "2026-10-14T06:41:27.9093649+08:00",
+  "independentResourceReview": {
+    "rows": [
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 30604,
+          "CreationFileTime": 134364046327336361,
+          "ParentPid": 49432,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-build.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 28092,
+          "CreationFileTime": 134364046345677997,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp3b60ac9f0ce44086a9bcb054492de87d.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 70872,
+          "CreationFileTime": 134364046345730902,
+          "ParentPid": 28092,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 25812,
+          "CreationFileTime": 134364046384409475,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp68bf6f770d02426f86c6f8e818854a4b.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 48280,
+          "CreationFileTime": 134364046384462564,
+          "ParentPid": 25812,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 67572,
+          "CreationFileTime": 134364046482700422,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmpdfdc7cb9f0454011ba80e226338b65e4.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 50644,
+          "CreationFileTime": 134364046482789248,
+          "ParentPid": 67572,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 49176,
+          "CreationFileTime": 134364046501449103,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp4c9928508d434a3a92e93a81b5945926.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 44084,
+          "CreationFileTime": 134364046501515306,
+          "ParentPid": 49176,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 29636,
+          "CreationFileTime": 134364046551809939,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp4818bd10d7aa41659acd7734c752cf8d.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 67140,
+          "CreationFileTime": 134364046551869604,
+          "ParentPid": 29636,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 28552,
+          "CreationFileTime": 134364046632417185,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp4901f7dec7b745c08ec035885c584021.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 34984,
+          "CreationFileTime": 134364046632473702,
+          "ParentPid": 28552,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 41836,
+          "CreationFileTime": 134364046663978193,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp5884031e7dd641919393490a954f88f4.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 4452,
+          "CreationFileTime": 134364046664031344,
+          "ParentPid": 41836,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 4520,
+          "CreationFileTime": 134364046680701625,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp8d2bc768cc7e4b6d83660d98a68f64b4.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 4488,
+          "CreationFileTime": 134364046680754407,
+          "ParentPid": 4520,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 8136,
+          "CreationFileTime": 134364046724653449,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmpfd5171897f674a4da9a723a5a4ae2b00.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 72096,
+          "CreationFileTime": 134364046724727163,
+          "ParentPid": 8136,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 12436,
+          "CreationFileTime": 134364046811718346,
+          "ParentPid": 30604,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempxy0cfvmm.ndf\\tmp2eb7d4b5a4bc4b228bfa0ce40a164943.rsp\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 24260,
+          "CreationFileTime": 134364046811771751,
+          "ParentPid": 12436,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 12200,
+          "CreationFileTime": 134364047674507221,
+          "ParentPid": 49280,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-case-result.json\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 64764,
+          "CreationFileTime": 134364048323280447,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-197b7033b00a4e28b7f26c5fefacd9b3\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-197b7033b00a4e28b7f26c5fefacd9b3\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 48524,
+          "CreationFileTime": 134364048326990807,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-28675f8c484445fe873c5d6eac734437\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-28675f8c484445fe873c5d6eac734437\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 26224,
+          "CreationFileTime": 134364048330285376,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-97e46ccf8ea54b67a65f519976493ab1\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-97e46ccf8ea54b67a65f519976493ab1\\published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 71800,
+          "CreationFileTime": 134364048333447951,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-49818ce0ec8849a79ab195cf7622cf68\\missing\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-49818ce0ec8849a79ab195cf7622cf68\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 29632,
+          "CreationFileTime": 134364048336585252,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-575a416548df491e98fbd5548ba2c6d5\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-575a416548df491e98fbd5548ba2c6d5\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 23448,
+          "CreationFileTime": 134364048339725661,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-94fb0b24322749fcafe1545839a83d18\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-94fb0b24322749fcafe1545839a83d18\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 56248,
+          "CreationFileTime": 134364048342948799,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-d7b7a40bddf342b894cb79b4ce69e8e3\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-d7b7a40bddf342b894cb79b4ce69e8e3\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 58524,
+          "CreationFileTime": 134364048346172201,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-99af685310bd4bb7b5aca6967cc03113\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-99af685310bd4bb7b5aca6967cc03113\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 54280,
+          "CreationFileTime": 134364048349327941,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 10304,
+          "CreationFileTime": 134364048353898215,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-09e868fb8dc748e3adaea080b648a2f6\\Cargo.toml\" \"--invalid\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-09e868fb8dc748e3adaea080b648a2f6\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 68340,
+          "CreationFileTime": 134364048357038263,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-210fa16a1afb4d179aab64b948286239\\src\\lib.rs\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 41108,
+          "CreationFileTime": 134364048360185943,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-5a5ca1ab2a7d46ffb64bc54caacd7cc3\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-5a5ca1ab2a7d46ffb64bc54caacd7cc3\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 68872,
+          "CreationFileTime": 134364048363360248,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-31a4daa8cc05468caec14686419378bb\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-31a4daa8cc05468caec14686419378bb\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 20540,
+          "CreationFileTime": 134364048366493586,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-02b3327e147e4f3d8ec2ed3e4cfe1842\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-02b3327e147e4f3d8ec2ed3e4cfe1842\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 11832,
+          "CreationFileTime": 134364048369749166,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-142d8db8059341b5bdd3bbe698bbbeb5\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-142d8db8059341b5bdd3bbe698bbbeb5\\linked\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 72500,
+          "CreationFileTime": 134364048373005021,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-7dc00cf430fd43cdb8a0cfaad22b4a07\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-7dc00cf430fd43cdb8a0cfaad22b4a07\\shell-published\""
+        },
+        "liveOwned": false
+      },
+      {
+        "foreignReusePreserved": false,
+        "identity": {
+          "Pid": 62148,
+          "CreationFileTime": 134364048376146640,
+          "ParentPid": 55088,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v27\\doc-cli-bin\\rsc.dll\" \"doc\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-e5c9e9c0bc064d1493640a9161aa5965\\Cargo.toml\" \"--output\" \"C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-e5c9e9c0bc064d1493640a9161aa5965\\shell-published\""
+        },
+        "liveOwned": false
+      }
+    ],
+    "identityCount": 39,
+    "liveOwned": 0
+  }
+}

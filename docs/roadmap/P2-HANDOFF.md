@@ -8,7 +8,29 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v26/resumption.json`.
+`artifacts/p1-supervision/resume-root-v27/resumption.json`.
+
+Round23 single-package documentation CLI component is ✅ Complete: fresh solution
+build has zero warnings/errors, all20 actual command-function cases pass, and all17
+separately frozen actual CLI subprocess cases match exits and publication/original
+file effects. Five published-page hashes agree with the actual API/rendered bytes;
+LF normalization precedes build and source/DLL/PDB bindings are retained.
+[Actual implementation and evidence](../evidence/p2/documentation-cli-v1.json)
+keep the three callback cancellation/deadline cases separate from subprocess
+signal proof. Workspace/dependency/feature/multi-target selection, updates and the
+complete original12 documentation scenarios/tooling91 remain open. P2 stays8/101.
+
+Round23 P1 startup investigation finds an exact installed-PowerShell-source early
+exit mechanism: the managed entry returns initial0 for specific console HostException
+errors6/1236; successful formatter uses NO_WINDOW while the failed diagnostic uses
+DETACHED. This explains a plausible path to absent body/empty streams, but no target
+exception stack has been captured, so the runtime cause/caller remains UNKNOWN and
+all six P1 gates remain open. [Source mechanism and limits](../evidence/p1/powershell-body-source-mechanism-v1.json)
+preserve original flags/helpers0/caps/denominators. The ordinary-file oplock draft
+is ⛔ Blocked / NOT_READY: lease/FileID/complete parent ownership/native driver and
+timeout recovery are incomplete; build/native NOT_RUN, no CLI pending-IO/cancel
+claim. The accepted real CTRL+C component is preserved; the unique heartbeat stays
+ACTIVE.
 
 Round22 documentation first-publication component is ✅ Complete: the report
 writer now uses explicit Utf8JsonWriter with no reflection serializer or warning

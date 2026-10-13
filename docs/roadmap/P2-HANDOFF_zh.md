@@ -8,7 +8,24 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v26/resumption.json`。
+`artifacts/p1-supervision/resume-root-v27/resumption.json`。
+
+第23轮单包documentation CLI组件在限定范围内 ✅ 已完成：新solution构建
+零警告／错误，全部20个真实command函数案例通过，另行冻结的17个真实CLI子进程
+案例均匹配退出码及发布／原件文件效果。5个已发布页hash与真实API／渲染字节一致；
+构建前已LF规范化，source／DLL／PDB绑定均保留。
+[实际实现及证据](../evidence/p2/documentation-cli-v1.json)将3个callback取消／deadline
+案例与子进程signal证明明确分开。Workspace／dependency／feature／multi-target
+选择、更新及原12个完整documentation scenario／tooling91仍开放，P2保持8/101。
+
+第23轮P1启动调查找到与本机PowerShell源码精确匹配的早退出机制：managed entry
+遇特定控制台HostException错误6／1236返回初始0；成功formatter使用NO_WINDOW，
+失败诊断使用DETACHED。这给出了body缺失／双流空的合理解释路径，但尚未取得
+目标exception stack，真实runtime cause／caller仍为UNKNOWN，P1六门禁仍开放。
+[源码机制及限制](../evidence/p1/powershell-body-source-mechanism-v1.json)保留原flags／
+helper0／caps／全部分母。普通文件oplock草稿为 ⛔ 已阻塞／NOT_READY：lease／FileID／
+完整父归属／native driver及超时回收均不完整，build／native全部NOT_RUN，未声称
+CLI pending-IO／cancel已证明。已验收真实CTRL+C组件继续保留；唯一heartbeat保持ACTIVE。
 
 第22轮文档首次发布组件在限定范围内 ✅ 已完成：报告写入器改用显式
 Utf8JsonWriter，无反射序列化或警告抑制。新独立solution构建零警告／错误；

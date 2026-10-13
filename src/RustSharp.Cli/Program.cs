@@ -12,6 +12,8 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "doc")
+            return await DocumentationCommand.RunAsync(args, Console.Out, Console.Error).ConfigureAwait(false);
         if (args.Length > 0 && args[0] == "fmt")
             return FormatterCancellationProbe.Run(args);
         var parseResult = CommandLineParser.Parse(args);
