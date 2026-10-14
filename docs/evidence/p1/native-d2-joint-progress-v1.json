@@ -1,0 +1,35 @@
+{
+  "backendWitnessesPerRid": 7,
+  "fullP1Closure": false,
+  "sourceCasesPerRid": 19,
+  "nativeLocalUniqueCells": 24,
+  "attempt": 1,
+  "latestHeadProved": false,
+  "manualMirSourceKindsPreserved": true,
+  "archives": "docs/evidence/p1/raw-ci-originals-v1.json",
+  "wholeGateAccepted": false,
+  "foreignPlaceholderCellsRetained": 24,
+  "runId": 38494398708,
+  "originalProductionGate": "passed/satisfiesGate=true and matrix24; fullP1Closure=false",
+  "candidateSha": "d2ee24f44e850bab14a02670b6da7e07a8fd67c1",
+  "linuxThirdDropDifferenceApproved": false,
+  "fullP2Closure": false,
+  "candidateTree": "e8cf414bb9b8842baf96924b4fc544d177d50bfc",
+  "taskId": "P1-GATE.03.native-d2-joint-progress-v1",
+  "sourceFailures": 0,
+  "originalResult": {
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\gate-native-round31-actual\\ACTUAL-NATIVE-RESULT.json",
+    "sha256": "23B5C3526537D315192E17F14126459A92D7BB587385DE9FC738E8FC67B01E7B"
+  },
+  "physicalRehashes": {
+    "originalZIP": 5,
+    "backendPE": 14,
+    "total": 95,
+    "sourceProducerConsumerPE": 76
+  },
+  "sourceExtra39thPePerRid": "Recorded verified by original native production validator; NOT independently rehashed in this review",
+  "physicalResult": {
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\gate-native-round31-actual\\PHYSICAL-95-HASHES.json",
+    "sha256": "8B52E2AB2768CC0B2FF029055206E911EC54FFBD3416799658AAC92F0B6F451D"
+  }
+}
