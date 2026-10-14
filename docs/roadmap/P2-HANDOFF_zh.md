@@ -1101,3 +1101,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第52轮P3重复原型在限定子集内 ✅ 已完成：严格Release及16/16测试通过，支持单规则整个matcher为单层ident的star/plus/optional和逗号分隔。[原型证明](../evidence/p3/macros-repetition-prototype-v1.json)保留不支持形式显式拒绝及精确资源测试范围。不验收模板求值/卫生性/编译器；82完整场景NOT_RUN，正式叶子0/38、门禁0/4。
 
 第52轮双输出预算候选验收 ❌ 失败：新增真实预算控制3/3通过，但受影响旧控制7/8。timeout-three在超时前因不完整原生成员快照按失败关闭；之后Job0仅证明回收。[保留失败](../evidence/p1/dual-output-limits-round52-failure.json)对应候选源码未提交，没有重跑至绿、改时序/上限或借cleanup回填证明。P1-GATE.04仍 🚧 进行中。
+
+第52轮固定FUSE头文件查询在只读WSL证据范围内 ✅ 已完成：4组查询显示libfuse3-dev未登记、两个指定FUSE3头文件不存在；现有kernel头文件声明协议7.39，运行库3.14.0路径已绑定。[真实查询](../evidence/p2/formatter-fuse-headers-v1.json)不证明provider、安装、挂载或取消案例；P2保持8/101，完整闭环false。

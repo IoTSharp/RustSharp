@@ -1,0 +1,20 @@
+{
+  "kernelFuseHeader": "/usr/include/linux/fuse.h",
+  "nativeCiAccepted": false,
+  "kernelProtocol": "7.39",
+  "runtimeLibrarySymlink": "/lib/x86_64-linux-gnu/libfuse3.so.3",
+  "groups": 4,
+  "rawSha256": "2CCE6F9329D30D55E8D344395E77435F0F55C36154DCB1C7C5B7ADFD9936B031",
+  "fullP2Closure": false,
+  "mountPerformed": false,
+  "fullLinuxContainment": "UNKNOWN",
+  "controlledProvider": "UNKNOWN_NOT_RUN",
+  "taskId": "P2-08.02.fuse-header-discovery",
+  "installPerformed": false,
+  "formatterIoCases": 0,
+  "scope": "Read-only Ubuntu WSL fixed packages and paths",
+  "raw": "artifacts/p1-supervision/resume-root-v52/headers-real/stdout.bin",
+  "runtimeLibrary": "/lib/x86_64-linux-gnu/libfuse3.so.3.14.0",
+  "knownFuse3HeadersPresent": false,
+  "libfuse3Dev": "not registered by dpkg-query"
+}
