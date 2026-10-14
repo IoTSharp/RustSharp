@@ -8,7 +8,13 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v31/resumption.json`。
+`artifacts/p1-supervision/resume-root-v32/resumption.json`。
+
+第28轮workspace CLI组件在 `d2ee24f` 的限定范围内 ✅ 已完成：全部8个真实child案例、20个command-API回归及17个保留实际CLI案例通过，旧5页hash全部一致。[精确组件证明](../evidence/p2/documentation-workspace-cli-v1.json)保留首轮cap16失败及完整回收后有界17重跑。默认virtual拒绝、dependency／feature诊断、existing-target保留、byte budget和真实child timeout130均不代替CTRL+C／阶段验收。P2-08.03及完整12/91仍开放。
+
+推送后已读回精确远端 `d2ee24f44e850bab14a02670b6da7e07a8fd67c1`。手动P1 expanded run38494398708现以此SHA在原生Windows／Linux执行；09:13时为 🚧 进行中。Roadmap38494102292及Linux AOT38494102314通过，Windows38494102359与platform38494102473仍进行中。此前精确c4的4条workflow成功，但本轮尚未对账其原件。徽章或旧108 profile不关闭P1六门禁。覆盖审查保留6个backend family／24个唯一原生ILVerify／AOT格；各历史本地report为12个local passed加12个foreign blocked。Map52及历史source19／39PE不替代当前执行。Linux unwind-own-drop-body-failure第三项差异仍未获语言批准。
+
+Windows formatter源码open集成仍 🚧 进行中及NOT_READY：新native owner／Windows opening seam已冻结，Unix／其余读取逻辑不变。short-name alias／正常错误兼容仍需审查，真实CLI driver未保存，build／59／91／nativeCLI／CTRL signal检查全部NOT_RUN。未重复已验收4e17072 standalone基础组件。拟独立documentation Windows／Linux8+20 CI workflow未创建：两次worker写窗均在保存前截止，既有P1 workflow／product未改。worker实现停点保留于v32。P1六门禁仍开放，P2保持8/101，fullP1Closure／fullP2Closure仍false，唯一heartbeat保持ACTIVE。
 
 第27轮真实FirstChance诊断在 `e064897` 的限定范围内 ✅ 已完成：Hook／controller严格构建及单次精确instrumented target取得4条body执行前的HostException／原生错误6栈。PID／native birth／原始全串命令／Hook SHA／MVID一致；安装产品078a的精确ManagedEntrance catch路径返回初始0。DETACHED到buffer的OS边仍为推断；原tiny／body／identity／cancel6／retention2／Linux12验收 ⛔ 已阻塞。[真实异常栈](../evidence/p1/firstchance-v5-actual-hostexception.json)保留body失败、flags524300／helper0／caps，以及held2→Job0／环境5项恢复。
 
