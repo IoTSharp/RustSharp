@@ -14,9 +14,11 @@ internal static partial class FormatterNativeOpenProbe
     internal static void HandlerReady(string[] args)
     {
         string leasePath=Path.GetFullPath(Environment.GetEnvironmentVariable("RUSTSHARP_FMT_OPEN_PROBE_LEASE")??throw new InvalidDataException("Probe lease absent"));
-        const string root=@"D:\GitHub\RustSharp\artifacts\p2-supervision\formatter-fresh-round37\runtime";
+        const string originalRoot=@"D:\GitHub\RustSharp\artifacts\p2-supervision\formatter-fresh-round37\runtime";
+        const string deadlineRoot=@"D:\GitHub\RustSharp\artifacts\p2-supervision\formatter-deadline-round44\runtime";
         string dir=Path.GetDirectoryName(leasePath)!;
-        if(Path.GetFileName(leasePath)!="cli-probe-lease.json"||Path.GetDirectoryName(dir)!=root||!Guid.TryParseExact(Path.GetFileName(dir),"N",out _)||args.Length!=2||args[0]!="fmt")
+        string root=Path.GetDirectoryName(dir)??throw new InvalidDataException("Probe runtime root absent");
+        if(Path.GetFileName(leasePath)!="cli-probe-lease.json"||root is not (originalRoot or deadlineRoot)||!Guid.TryParseExact(Path.GetFileName(dir),"N",out _)||args.Length!=2||args[0]!="fmt")
             throw new InvalidDataException("Exact actual CLI probe scope required");
         var clock=Stopwatch.StartNew();DirectoryInfo? parent=new(dir);
         for(int depth=0;parent is not null&&depth<128&&clock.ElapsedMilliseconds<2000;depth++)

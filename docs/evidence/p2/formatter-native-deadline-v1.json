@@ -1,0 +1,175 @@
+{
+  "bindings": [
+    {
+      "path": "src/RustSharp.Cli/FormatterNativeOpenProbe.cs",
+      "sha256": "6F905B84F2A4DBAC97BA925C5E233D572CB1A5D7285BB28806288F4E4DD2561A"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-deadline-round44/Driver.cs",
+      "sha256": "D5C0EF2FEC46391A34687DE78B1E1B2636575600700E3C5EFADD1FF6A26AD019"
+    },
+    {
+      "path": "artifacts/p2-supervision/formatter-deadline-round44/Run-Cli.ps1",
+      "sha256": "FAEED8F7DBD7916BE7825ED519F36BFC0FE4BADD39634274B29FF16DD5D28870"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\cli-bin\\rsc.dll",
+      "sha256": "E4AFBF7E8E02E7F12D33383F41CB3D5D6364855CA06049000C1E80E454350EAC"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\root-build\\bin\\CliOpenDriver.dll",
+      "sha256": "D3AE26A03D828B55E24BD6D28DE86A80C71CCCA2653542B49B5B9D4DB5A1EE88"
+    },
+    {
+      "path": "artifacts\\p2-supervision\\formatter-deadline-round44\\runtime\\2c1d5f8710964af3b86fa81f9efdc94c\\child-report.json",
+      "sha256": "FD1342B0ECDCEC619730F963115C6D0AF478209E8563480EEE4EC0C821F827D3"
+    },
+    {
+      "path": "artifacts\\p2-supervision\\formatter-deadline-round44\\runtime\\2c1d5f8710964af3b86fa81f9efdc94c\\open-finished.json",
+      "sha256": "497630A32F3131E31E51111F60B7BF2F5C6F9FF4D22130FAA7A226259972E7FA"
+    },
+    {
+      "path": "artifacts\\p2-supervision\\formatter-deadline-round44\\runtime\\2c1d5f8710964af3b86fa81f9efdc94c\\supervisor-report.json",
+      "sha256": "3F634E9087C3E8F31CFCCB8CCB82B801FB5F7B27497EF82529E9204B8023BDBD"
+    }
+  ],
+  "taskId": "P2-08.02.native-deadline",
+  "outerActualChildExit": 0,
+  "fixedFormatterDenominator": 59,
+  "caseRoot": "artifacts/p2-supervision/formatter-deadline-round44/runtime/2c1d5f8710964af3b86fa81f9efdc94c",
+  "scope": "WORKING_TREE_NATIVE_COMPONENT",
+  "sourceBytes": 13,
+  "passed": 1,
+  "actualChild": {
+    "taskId": "P2-08.02.native-deadline-v1",
+    "version": 2,
+    "caseDenominator": 1,
+    "cliNativePendingProven": true,
+    "cliNativeCancellationProven": true,
+    "cliLaunched": true,
+    "state": "CLI_OPEN_DEADLINE_PASS",
+    "errors": [],
+    "cleanupErrors": [],
+    "actualDriver": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\root-build\\bin\\CliOpenDriver.dll",
+    "actualPdb": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\root-build\\bin\\CliOpenDriver.pdb",
+    "actualDriverSha256": "D3AE26A03D828B55E24BD6D28DE86A80C71CCCA2653542B49B5B9D4DB5A1EE88",
+    "actualPdbSha256": "D4073EBD03736C09D0B75AB9FBA45F4C8A75D85CD31768A67C87B2E0DC639198",
+    "actualDriverMvid": "088abea1-8e97-4500-a3c3-c636aed61416",
+    "owner": {
+      "pid": 81820,
+      "nativeBirthFileTime": "134364357049344191",
+      "parentPid": 11440,
+      "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\root-build\\bin\\CliOpenDriver.dll\" \"--child\" \"2c1d5f8710964af3b86fa81f9efdc94c\" \"4561DB131A40BD7B202CCDCD04912FAEE16FF7A877C756F8311EACF89E351F8B\""
+    },
+    "host": {
+      "pid": 11440,
+      "nativeBirthFileTime": "134364357043390244",
+      "parentPid": 50472,
+      "fullCommand": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoProfile\" \"-File\" \"D:/GitHub/RustSharp/artifacts/p2-supervision/formatter-deadline-round44/Run-Cli.ps1\" \"-Nonce\" \"2c1d5f8710964af3b86fa81f9efdc94c\" \"-DriverDll\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\root-build\\bin\\CliOpenDriver.dll\" \"-CliDll\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\cli-bin\\rsc.dll\" \"-ExpectedCliSha256\" \"E4AFBF7E8E02E7F12D33383F41CB3D5D6364855CA06049000C1E80E454350EAC\" \"-ExpectedDriverSha256\" \"D3AE26A03D828B55E24BD6D28DE86A80C71CCCA2653542B49B5B9D4DB5A1EE88\""
+    },
+    "launchSha256": "E3430FF2CDE2873B1C05C0028B8B47E68F586F1F4181C14C0C736885A46BAB36",
+    "parentBoundaryVerified": true,
+    "systemAncestorsComplete": false,
+    "source": {
+      "volume": "12462597171130787332",
+      "fileIdLow": "4",
+      "fileIdHigh": "1875441",
+      "nativeBirth": "134364357050657703",
+      "attributes": 32,
+      "absoluteFinalPath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\runtime\\2c1d5f8710964af3b86fa81f9efdc94c\\source.rs"
+    },
+    "sourceSha256": "536E506BB90914C243A12B397B9A998F85AE2CBD9BA02DFD03A9E155CA5CA0F4",
+    "sourceLeaseSha256": "7422DA9DC9F61F7D6E295B2F3F07FE442A8F82A86061F2DDC9A5F26112134AB1",
+    "nativeRequestStatus": 259,
+    "helperOplockPending": true,
+    "holderAccess": "Read",
+    "holderShare": "ReadWriteDelete",
+    "holdKind": "BATCH",
+    "consoleBeforeGuardSha256": "2496E19A93EE3558C3CEDCB41B4A55CFECF086C2629F83EB2B9AFE827CED3C1C",
+    "windowOwnerIsDriver": true,
+    "conhostDiscoveryIdentity": {
+      "pid": 23772,
+      "nativeBirthFileTime": "134364357050752276",
+      "parentPid": 81820,
+      "fullCommand": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    },
+    "conhostDiscoveryImage": "C:\\Windows\\System32\\conhost.exe",
+    "conhostDiscoveryImageSha256": "C86146188B78E484F32CC29E2331689659943B47689A85570342044F499938AC",
+    "conhostDiscovery": "Actual current owned job + native image/identity/parent",
+    "conhostImage": "C:\\Windows\\System32\\conhost.exe",
+    "conhostImageSha256": "C86146188B78E484F32CC29E2331689659943B47689A85570342044F499938AC",
+    "conhost": {
+      "pid": 23772,
+      "nativeBirthFileTime": "134364357050752276",
+      "parentPid": 81820,
+      "fullCommand": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    },
+    "cli": {
+      "pid": 84048,
+      "nativeBirthFileTime": "134364357051299901",
+      "parentPid": 81820,
+      "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\cli-bin\\rsc.dll\" \"fmt\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\runtime\\2c1d5f8710964af3b86fa81f9efdc94c\\source.rs\""
+    },
+    "controlSignalCalls": 0,
+    "cancellationSource": "Production fmt10second internal linked deadline; no control event sent",
+    "cliRuntimeMilliseconds": 10080,
+    "productionFinish": {
+      "nonce": "2c1d5f8710964af3b86fa81f9efdc94c",
+      "pid": 84048,
+      "processBirth": "134364357051299901",
+      "source": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\runtime\\2c1d5f8710964af3b86fa81f9efdc94c\\source.rs",
+      "threadId": 72732,
+      "threadBirth": "134364357052243207",
+      "tokenRegistered": true,
+      "handlerRegistered": true,
+      "createError": 995,
+      "nativeExitAndJoin": true,
+      "threadHandleClosed": true
+    },
+    "casePassedBeforeCleanup": true,
+    "cliActualExit": 1,
+    "cliProcessReclaimed": true,
+    "cliJobCumulativeTotal": 1,
+    "cliJobZero": true,
+    "cliJobClosed": true,
+    "conhostExited": true,
+    "observerThreadHandleClosed": true,
+    "retainedConhostHandleClosed": true,
+    "holdReleaseAfterFailedCase": false,
+    "nativeCompletedBeforeFree": true,
+    "fileHandleClosed": true,
+    "eventHandleClosed": true,
+    "nativeStorageFreed": true,
+    "ownedSourceRetainedAsArtifact": true,
+    "ownedSourceIdentityVerified": true,
+    "ownedSourceDeletionAttempted": false,
+    "elapsedMilliseconds": 10181,
+    "exitCode": 0
+  },
+  "priorRejectedScopePreserved": "artifacts/p1-supervision/resume-root-v44/deadline-binding.json",
+  "failed": 0,
+  "actualNativeFinished": {
+    "nonce": "2c1d5f8710964af3b86fa81f9efdc94c",
+    "pid": 84048,
+    "processBirth": "134364357051299901",
+    "source": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-deadline-round44\\runtime\\2c1d5f8710964af3b86fa81f9efdc94c\\source.rs",
+    "threadId": 72732,
+    "threadBirth": "134364357052243207",
+    "tokenRegistered": true,
+    "handlerRegistered": true,
+    "createError": 995,
+    "nativeExitAndJoin": true,
+    "threadHandleClosed": true
+  },
+  "fullP2Closure": false,
+  "outerCumulative": 3,
+  "fixedParentDenominator": 91,
+  "executed": 1,
+  "schemaVersion": 1,
+  "fullLeafAccepted": false,
+  "diagnosticStderrCaptured": false,
+  "outerResourceClosure": true,
+  "baseHead": "08d522f69f93649aa551651ff51f3644ef9d3305",
+  "denominator": 1,
+  "consoleSignalCallsInReviewedDriver": 0
+}
