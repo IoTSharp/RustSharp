@@ -1,0 +1,22 @@
+{
+  "state": "NOT_ACCEPTED_LEGACY_FAILURE",
+  "newReport": "artifacts/p1-supervision/resume-root-v52/output-controls/controls.json",
+  "newRuntimePassed": 3,
+  "newRuntimeDenominator": 3,
+  "failedCase": "timeout-three",
+  "candidateLibrarySha256": "C3D70067D54D7E440F61894A69FF9B7D28746EE1B104B0D5C61556454A690E6F",
+  "legacyReportSha256": "011901457E625AE69C558196A391D79972E2ECC30E73487E9F74258F6D7C58B7",
+  "legacyDenominator": 8,
+  "actualFailure": "Incomplete native member snapshot before timeout;Total3 retained2; later cleanup sees3 identities, Job0 and handles closed; no cleanup backfill as full proof",
+  "rerunToGreen": false,
+  "diagnosis": "artifacts/p1-supervision/output-limits-round52/GROWTH-RACE-CONTRACT.md",
+  "componentAccepted": false,
+  "legacyReport": "artifacts/p1-supervision/resume-root-v52/production-controls/controls.json",
+  "taskId": "P1-GATE.04.dual-output-limits",
+  "legacyPassed": 7,
+  "fullP1Closure": false,
+  "cause": "Birth-growth race is consistent with source/timing but exact failed before/list/after snapshot was not retained; predicate remains unknown",
+  "codeCommitted": false,
+  "newReportSha256": "CF61B792F69A614A2B85E2BF9D9D80AE03A2966B512290DE447822BBC2E9788E",
+  "candidateSourceSha256": "31391B70CBDBEB23A09C1C81A170176253ED51875B67E916C4A6B8345F531508"
+}

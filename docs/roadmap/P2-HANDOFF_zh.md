@@ -1099,3 +1099,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第52轮源码范围组件 ✅ 已完成：实际Parse/HIR/types/MIR/LIR身份匹配全部12个Rust源码案例/16个原始点，48项点变异及显式const选择负例被拒绝。完整14清单保留2个手工案例UNKNOWN；四项手工来源/结构组件仍开放。[真实pipeline证明](../evidence/p1/f463-ast-pipeline-review-v1.json)保留IL3000失败。没有加载/执行原始生成程序；P1门禁仍开放。
 
 第52轮P3重复原型在限定子集内 ✅ 已完成：严格Release及16/16测试通过，支持单规则整个matcher为单层ident的star/plus/optional和逗号分隔。[原型证明](../evidence/p3/macros-repetition-prototype-v1.json)保留不支持形式显式拒绝及精确资源测试范围。不验收模板求值/卫生性/编译器；82完整场景NOT_RUN，正式叶子0/38、门禁0/4。
+
+第52轮双输出预算候选验收 ❌ 失败：新增真实预算控制3/3通过，但受影响旧控制7/8。timeout-three在超时前因不完整原生成员快照按失败关闭；之后Job0仅证明回收。[保留失败](../evidence/p1/dual-output-limits-round52-failure.json)对应候选源码未提交，没有重跑至绿、改时序/上限或借cleanup回填证明。P1-GATE.04仍 🚧 进行中。
