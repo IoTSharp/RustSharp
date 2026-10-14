@@ -76,6 +76,7 @@ internal static class Program
         tests = [.. tests, .. P3MacroBuiltinPrototypeTests.All];
         tests = [.. tests, .. P3MacroConcatPrototypeTests.All];
         tests = [.. tests, .. P3MacroLocationPrototypeTests.All];
+        tests = [.. tests, .. P3MacroScopePrototypeTests.All];
         tests = [.. tests, .. P2InteropContractTests.All];
         tests = [.. tests, .. P1NativeUnwindClosureTests.All];
         tests = [.. tests, .. P1GateCoverageContractTests.All];

@@ -1,0 +1,15 @@
+{
+  "testSourceSha256": "FC889FB8922EBD47D57DE4D55E355D4884F56EA3EA3D9C54C436BAFBC372EBFD",
+  "tests": "artifacts/p1-supervision/resume-root-v48/calls/p3-scope-tests-720a42216a68426b83ca6613c542a66a/capture-receipt.json",
+  "formalAcceptedLeaves": 0,
+  "productionExpansions": 0,
+  "taskId": "P3-01.scope-prototype",
+  "scope": "Tiny local lexical declarations and context-preserving token resolution; no macro-name scope or compiler integration",
+  "executed": 19,
+  "sourceSha256": "974C3596B90BA3BB49C785D297CC41E0BCA093F967EF9D41CE9EC7B202E843AE",
+  "passed": 19,
+  "fullCandidateCasesExecuted": 0,
+  "fullCandidateDenominator": 82,
+  "fullP3Closure": false,
+  "fixedTests": 19
+}
