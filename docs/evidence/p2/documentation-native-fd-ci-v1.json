@@ -1,0 +1,148 @@
+{
+  "run": "38537496119",
+  "fullLeafAccepted": false,
+  "sdk": "10.0.400",
+  "laterHeadAccepted": false,
+  "workspaceCliCases": 16,
+  "linuxFdAfter": 67,
+  "sourceSnapshotTiming": "Before/after documentation stage; FD then uses the same retained bound test DLL",
+  "candidate": "884f1c5ef0ce4e7d3970db3f791c27782a994e6c",
+  "nativeLinuxFdMeasured": 12,
+  "cleanupVerification": "parent-exit-only; independent Linux full containment still UNKNOWN",
+  "linuxFdBefore": 67,
+  "fullP2Closure": false,
+  "binaryBindings": 12,
+  "apiCases": 40,
+  "taskId": "P2-08.03.native-fd-ci",
+  "sourceRecordsPerHost": 1039,
+  "actual": [
+    {
+      "fd": {
+        "warmup": 6,
+        "after": 67,
+        "cleanupVerification": "parent-exit-only",
+        "processSha256": "117E13145DF692075A7A34F3DCE43859291CB7E85259F01D7EEDAA4FF536D2FD",
+        "measured": 12,
+        "reportSha256": "F41B18AFA0E018B3FED37119F0A5EF4736FF66FC1B3FC7C45D774D3B68CE33AF",
+        "before": 67,
+        "pid": 2924
+      },
+      "sdk": "10.0.400",
+      "rid": "linux-x64",
+      "reports": [
+        {
+          "file": "workspace-cli-eight.json",
+          "count": 8,
+          "sha256": "90F3C24A7D6AE90E76F47915C95A32A0A20E446BBE878D18555A6BF613A74ABB"
+        },
+        {
+          "file": "command-api-twenty.json",
+          "count": 20,
+          "sha256": "3687C6C5FDB20BBAEF5DE018CBE2420F4E82635711148D737C87AC6FB40A6282"
+        }
+      ],
+      "sourceCount": 1039,
+      "binaries": [
+        {
+          "sha256": "14E19CC2E6CED1204DBD3630ED85E75595DDFE9B547B9D249E4EFF69ED14817D",
+          "name": "RustSharp.Tests.dll"
+        },
+        {
+          "sha256": "765E57F832981572A0AAAE72E9F0DB28814FAF626C01685CA6C21B18D2207F81",
+          "name": "RustSharp.Tests.pdb"
+        },
+        {
+          "sha256": "6C811368A834C8D7B655EBFC78D79B9CAB20BFD2AB3E8983208E96025B91D6CA",
+          "name": "rsc.dll"
+        },
+        {
+          "sha256": "D569CB1439DF51AE5FF6AA31A443BAB2662DFFAF894CB8A845CADA464746A034",
+          "name": "rsc.pdb"
+        },
+        {
+          "sha256": "CC3E9CEFBF02370D9B7467A091ACFA3441F082D87F80276D3EA3219E7297B4CC",
+          "name": "RustSharp.Compiler.dll"
+        },
+        {
+          "sha256": "AC86371DF839A0D1597680BF1CF71F86707C3D3B263C0A204661BCEB89D19AD9",
+          "name": "RustSharp.Compiler.pdb"
+        }
+      ],
+      "candidate": "884f1c5ef0ce4e7d3970db3f791c27782a994e6c",
+      "candidateBindingSha256": "7239D8E828C8662AF27C55E5061D513BCBAA0642689CB5B3E9CEB0781C95D939"
+    },
+    {
+      "candidateBindingSha256": "3768720848D47968DCA925B644508E1F1421F5EC1B3CFD4603B7A29D5FB0CE37",
+      "sourceCount": 1039,
+      "rid": "win-x64",
+      "sdk": "10.0.400",
+      "binaries": [
+        {
+          "sha256": "AD4A8B5D5FD6904622539A3230EACE6138E2C014130F563B9637764028E87245",
+          "name": "RustSharp.Tests.dll"
+        },
+        {
+          "sha256": "A7E23AD5A7FC4B8E20608C55E2A05CAD9D213292742E3F00E13EE63DE2B14919",
+          "name": "RustSharp.Tests.pdb"
+        },
+        {
+          "sha256": "6C9C66DD6BEB361C144C01ED5B2A80F250F072867753219769B22C6167C6FD57",
+          "name": "rsc.dll"
+        },
+        {
+          "sha256": "AD3A2675AB8B393ED14F79F73BE7E4EDEFB4B9B0254724D249AF77D5DF81759D",
+          "name": "rsc.pdb"
+        },
+        {
+          "sha256": "4421F373D48E6E68390D9A9F0F9F379C648CBA49A01B40CA0DA9DE35C3B6A0A7",
+          "name": "RustSharp.Compiler.dll"
+        },
+        {
+          "sha256": "B3D248DFA7EC3203F206646D157977FB7E9145D1291F73F2BF6D10E3375BC03F",
+          "name": "RustSharp.Compiler.pdb"
+        }
+      ],
+      "candidate": "884f1c5ef0ce4e7d3970db3f791c27782a994e6c",
+      "reports": [
+        {
+          "file": "workspace-cli-eight.json",
+          "count": 8,
+          "sha256": "BBDD627FE2D85A6BAE7CE26D7C846B629DA18F2ECEF79C315353AF07C1226EA2"
+        },
+        {
+          "file": "command-api-twenty.json",
+          "count": 20,
+          "sha256": "A5FA0C861598A07D9291FA3AB44926B097AE5C55FABEB270E885E9325F55EAF7"
+        }
+      ]
+    }
+  ],
+  "originalArchives": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v48\\originals\\linux-x64",
+      "entries": 171,
+      "sourcesStable": true,
+      "sourceCount": 1039,
+      "zip": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v48\\calls\\p2-original-linux-b75f291286f34231a9add41c4f7978b1\\stdout.bin",
+      "zipSha256": "E4E903CF553C68D960D4808F1FC59FCEF686CA8B582250AAF5A3ED384BE64075",
+      "actualSdk": "10.0.400",
+      "status": "COMPONENTS_PASSED",
+      "uncompressed": 9124242,
+      "rid": "linux-x64",
+      "bindingCandidate": "884f1c5ef0ce4e7d3970db3f791c27782a994e6c"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v48\\originals\\win-x64",
+      "entries": 58,
+      "sourcesStable": true,
+      "sourceCount": 1039,
+      "zip": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v48\\calls\\p2-original-windows-14a90f7b624a49b1830ee88c6aa5af5b\\stdout.bin",
+      "zipSha256": "AFDF749E25D99BED95D7F2068047403924FB8F167F473499160411E414E40B70",
+      "actualSdk": "10.0.400",
+      "status": "COMPONENTS_PASSED",
+      "uncompressed": 8688059,
+      "rid": "win-x64",
+      "bindingCandidate": "884f1c5ef0ce4e7d3970db3f791c27782a994e6c"
+    }
+  ]
+}
