@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v33/resumption.json`。
+`artifacts/p1-supervision/resume-root-v34/resumption.json`。
+
+第30轮仍 🚧 进行中。待推送983b765／45f9e22已于10:00推送并触发documentation native CI，当前run／结果尚未读回。Windows native-open候选以已有BasicAsync黄金字面量通过2/2实际基础CLI检查；此前空函数预期是监督者oracle错误，其1/2失败已保留，不能据此验收取消／CTRL／完整59／91。实际CLI driver、probe源码及精确patch已保存，生产尚未应用，ready原子发布／conhost／嵌套Job及完整native单例仍需复核。新原始字节capture helper已有实物，但首次严格构建失败10个analyzer；未关闭任何analyzer，原始archive仍0、native24格仍未对账。当前v34检查点保留全部失败及资源缺口。P1门禁仍开放，P2保持8/101，fullP1Closure／fullP2Closure仍false，唯一heartbeat保持ACTIVE。
 
 第29轮仍 🚧 进行中。精确d2ee24f的expanded run38494398708 attempt1回报success，但jobs接口返回HTTP500，尚未对账任何原始archive／native24格，P1门禁仍开放。未鉴权API403及拒绝的exit0／无body helper尝试均保留。Windows open owner9A06D4DA／FormatterCommandFD46F6B0通过新严格0警告／错误构建，进程21→0回收；实际CLI driver／pending995／CTRL／59／91均NOT_RUN，basic验证被09:41截止拒绝且无运行回执，native源码仍未提交。documentation Windows／Linux8+20 workflow及严格source／case／SDK／DLL／PDB binding驱动经parser／源码审查提交于983b765；推送被09:48截止拒绝，因此真实CI仍NOT_RUN。parent-exit-only工具不证明完整子树containment。本地检查点为v33，P2保持8/101、fullP1Closure／fullP2Closure仍false，唯一heartbeat保持ACTIVE。
 
