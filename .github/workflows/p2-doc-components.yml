@@ -1,0 +1,41 @@
+name: P2 documentation native components
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  documentation:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            rid: win-x64
+          - os: ubuntu-24.04
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.400
+      - name: Native documentation components and exact candidate evidence
+        shell: pwsh
+        timeout-minutes: 22
+        env:
+          CANDIDATE_SHA: ${{ github.sha }}
+          TOOL_RID: ${{ matrix.rid }}
+        run: ./artifacts/p2-supervision/documentation-native-ci-v1/Invoke-DocumentationNativeCi.ps1
+      - name: Upload complete component and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p2-doc-native-${{ matrix.rid }}-${{ github.sha }}
+          path: artifacts/p2-doc-native/${{ matrix.rid }}/
+          if-no-files-found: error
