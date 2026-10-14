@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.05.raw-ci-originals-v1",
+  "componentAccepted": true,
+  "originalScopePassed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "Windows diagnostic transport captures byte-exact stdout/stderr with native suspended identity/Job lifecycle; not generated Rust behavior or original console/signal scope",
+  "strictBuildReceipt": "artifacts/p1-supervision/resume-root-v35/capture-strict-build-owned.json",
+  "sourceFreezeSha256": "114F25FE063448C6886A176AB913A918A82C3CBD1CDA0EB05E479FB59CA38081",
+  "sourceFreeze": "artifacts/p1-supervision/gate-native-round30/capture-v1/SOURCE-FROZEN.json",
+  "binaryMicro": {
+    "observedNativeMembers": [
+      {
+        "Pid": 45632,
+        "CreationFileTime": 134364189748731625,
+        "ParentPid": 51512,
+        "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+      },
+      {
+        "Pid": 51512,
+        "CreationFileTime": 134364189748303039,
+        "ParentPid": 6412,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-File\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\binary-micro-47ab33dc35b94dcea7680350c59f4d96\\Producer.ps1\""
+      }
+    ],
+    "jobClosed": true,
+    "actualRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\binary-micro-tree2-3a7047d749154a08b3d0a7874f5112d1",
+    "actualExit": 0,
+    "passed": true,
+    "errHex": "00FF",
+    "priorFailedMicroRetained": "capture-micro-result.json",
+    "originalScopePassed": false,
+    "assemblySha256": "BB4E01C5A202F13D23209BD64AA955541ECE1DC521FFBED32CAE99F51C2D094C",
+    "jobZero": true,
+    "outHex": "00017F80FEFF0A0D",
+    "originalFixtureCapsUnchanged": true,
+    "fullP1Closure": false,
+    "taskId": "capture-binary-micro-v2"
+  },
+  "failedFirstMicroRetained": "artifacts/p1-supervision/resume-root-v35/capture-micro-result.json",
+  "priorTenAnalyzerFailures": "artifacts/p1-supervision/resume-root-v34/capture-first-build-errors-original.log",
+  "archiveDenominator": 7,
+  "archiveDigestsMatched": 7,
+  "archives": [
+    {
+      "githubDigest": "sha256:3126ec3a8878b302e20d495770083f7c1ff2df8c472159b460bd12888a3f01d0",
+      "raw": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\zip-11865190638-75d2ff0dfae048e6bd85f0fb3e9a956e\\stdout.bin",
+      "id": 11865190638,
+      "name": "p2-doc-native-win-x64-45f9e2209b81c818385bed31f762dedd247f3c72",
+      "receiptSha256": "771EEC37D9E5B0F6BCE7529FC7C879B642070879ACE73187AFA1F299018B007B",
+      "extractRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p2-doc-native-win-x64-45f9e2209b81c818385bed31f762dedd247f3c72",
+      "jobZero": true,
+      "rawSha256": "3126EC3A8878B302E20D495770083F7C1FF2DF8C472159B460BD12888A3F01D0",
+      "expandedBytes": 8478847,
+      "entries": 58,
+      "digestMatched": true
+    },
+    {
+      "githubDigest": "sha256:5334e0a8f243e3bbd423da6874f1a4ad2175be4616b90362c4f08d34d98a2854",
+      "raw": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\zip-11864976464-2b2bdef4cfde498fb85ff6ad46cdf397\\stdout.bin",
+      "id": 11864976464,
+      "name": "p2-doc-native-linux-x64-45f9e2209b81c818385bed31f762dedd247f3c72",
+      "receiptSha256": "88C0550A6D3CF68F3C3F62CDCBE6E3787CC62E5ED8BE7A38D1B6FDDFEC017C09",
+      "extractRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p2-doc-native-linux-x64-45f9e2209b81c818385bed31f762dedd247f3c72",
+      "jobZero": true,
+      "rawSha256": "5334E0A8F243E3BBD423DA6874F1A4AD2175BE4616B90362C4F08D34D98A2854",
+      "expandedBytes": 8124881,
+      "entries": 54,
+      "digestMatched": true
+    },
+    {
+      "githubDigest": "sha256:1a53f4fe8985845f4040daad6d018cb6f39f37cca7a5a349cea8f455b8aa89f5",
+      "raw": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\zip-11864360127-4fab4d26d0504b2db43fa0750ac94c65\\stdout.bin",
+      "id": 11864360127,
+      "name": "p1-production-gate-38494398708-1",
+      "receiptSha256": "3B7BEF5497AA48DBEA2B67D52C19CE85222331D61A64E6EEEEA05E39B0ABD41E",
+      "extractRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-gate-38494398708-1",
+      "jobZero": true,
+      "rawSha256": "1A53F4FE8985845F4040DAAD6D018CB6F39F37CCA7A5A349CEA8F455B8AA89F5",
+      "expandedBytes": 6711549,
+      "entries": 35,
+      "digestMatched": true
+    },
+    {
+      "githubDigest": "sha256:3b522b204490a3070e1481316acd112818a07104502b0329101385f7966c001d",
+      "raw": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\zip-11863398854-02f31cc38635447c987c6a6284f6a1bc\\stdout.bin",
+      "id": 11863398854,
+      "name": "p1-production-backend-windows-x64-38494398708-1",
+      "receiptSha256": "A41B862B9D574E354AFF435E73588EF9416E5F10673D13ECD1F54A87ABC4B78F",
+      "extractRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-backend-windows-x64-38494398708-1",
+      "jobZero": true,
+      "rawSha256": "3B522B204490A3070E1481316ACD112818A07104502B0329101385F7966C001D",
+      "expandedBytes": 78645490,
+      "entries": 117,
+      "digestMatched": true
+    },
+    {
+      "githubDigest": "sha256:6706b74ef4c45a7207d965c23b3c934ca987a3f91d695e48857aa370b49f0b64",
+      "raw": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\zip-11863353865-3942c449bfdb41ea8e0d036cd7a82813\\stdout.bin",
+      "id": 11863353865,
+      "name": "p1-production-source-windows-x64-38494398708-1",
+      "receiptSha256": "4FD18047FB7357243A4CEBF47A65F92A919E192A37DD2D3EB9F703611929015D",
+      "extractRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-windows-x64-38494398708-1",
+      "jobZero": true,
+      "rawSha256": "6706B74EF4C45A7207D965C23B3C934CA987A3F91D695E48857AA370B49F0B64",
+      "expandedBytes": 50614499,
+      "entries": 786,
+      "digestMatched": true
+    },
+    {
+      "githubDigest": "sha256:f106f9d30450bc05588b6d64848c5b4cbfbd260c5416f545d6c2535fe4f36a57",
+      "raw": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\zip-11862899671-39b799831c8f4ea68aeb101b5bb0c433\\stdout.bin",
+      "id": 11862899671,
+      "name": "p1-production-source-linux-x64-38494398708-1",
+      "receiptSha256": "0B1D4F05D640F9D0BD16B64BC7145F18D059F1884B49766F1FAEA48754ABF99B",
+      "extractRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-linux-x64-38494398708-1",
+      "jobZero": true,
+      "rawSha256": "F106F9D30450BC05588B6D64848C5B4CBFBD260C5416F545D6C2535FE4F36A57",
+      "expandedBytes": 50283930,
+      "entries": 786,
+      "digestMatched": true
+    },
+    {
+      "githubDigest": "sha256:69244646e4b5c04ac1798a2031633646ac2fe2decde7d1dbc3dad0dc1ee6488b",
+      "raw": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\zip-11862669953-8cf4dc038768491ca7df2a91ccae8353\\stdout.bin",
+      "id": 11862669953,
+      "name": "p1-production-backend-linux-x64-38494398708-1",
+      "receiptSha256": "64B668AA347A3BA0F0DDF8B46816F13E673DA105396DC8A012D0D90D9030E8EF",
+      "extractRoot": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-backend-linux-x64-38494398708-1",
+      "jobZero": true,
+      "rawSha256": "69244646E4B5C04AC1798A2031633646AC2FE2DECDE7D1DBC3DAD0DC1EE6488B",
+      "expandedBytes": 45659431,
+      "entries": 117,
+      "digestMatched": true
+    }
+  ],
+  "reportContractsAccepted": false,
+  "native24Accepted": false,
+  "source19Accepted": false,
+  "remaining": [
+    "Independently validate each native report/input/physical PE and full denominator",
+    "Inspect actual Linux doc workflow failure and retain all failed/not-run cases",
+    "No retroactive repair of historical GH tree identity gap or original console fixture scope"
+  ],
+  "acceptedSourceOriginalArchive": {
+    "path": "docs/evidence/p1/raw-ci-capture-source-v1.zip",
+    "files": 7,
+    "reason": "Retain exact frozen source bytes, including original mixed line endings; no source normalization after accepted build",
+    "originalBytesPreserved": true,
+    "sha256": "6BC55FFA93D28D89CFCA2CDFC3C9BBC017D20F92306831BEC3F74A89B2FBF29B"
+  }
+}
