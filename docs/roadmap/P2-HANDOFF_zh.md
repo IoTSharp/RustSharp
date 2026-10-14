@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v32/resumption.json`。
+`artifacts/p1-supervision/resume-root-v33/resumption.json`。
+
+第29轮仍 🚧 进行中。精确d2ee24f的expanded run38494398708 attempt1回报success，但jobs接口返回HTTP500，尚未对账任何原始archive／native24格，P1门禁仍开放。未鉴权API403及拒绝的exit0／无body helper尝试均保留。Windows open owner9A06D4DA／FormatterCommandFD46F6B0通过新严格0警告／错误构建，进程21→0回收；实际CLI driver／pending995／CTRL／59／91均NOT_RUN，basic验证被09:41截止拒绝且无运行回执，native源码仍未提交。documentation Windows／Linux8+20 workflow及严格source／case／SDK／DLL／PDB binding驱动经parser／源码审查提交于983b765；推送被09:48截止拒绝，因此真实CI仍NOT_RUN。parent-exit-only工具不证明完整子树containment。本地检查点为v33，P2保持8/101、fullP1Closure／fullP2Closure仍false，唯一heartbeat保持ACTIVE。
 
 第28轮workspace CLI组件在 `d2ee24f` 的限定范围内 ✅ 已完成：全部8个真实child案例、20个command-API回归及17个保留实际CLI案例通过，旧5页hash全部一致。[精确组件证明](../evidence/p2/documentation-workspace-cli-v1.json)保留首轮cap16失败及完整回收后有界17重跑。默认virtual拒绝、dependency／feature诊断、existing-target保留、byte budget和真实child timeout130均不代替CTRL+C／阶段验收。P2-08.03及完整12/91仍开放。
 

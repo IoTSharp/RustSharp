@@ -8,7 +8,9 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v32/resumption.json`.
+`artifacts/p1-supervision/resume-root-v33/resumption.json`.
+
+Round29 remains 🚧 In progress. Exact d2ee24f expanded run38494398708 attempt1 reports success, but the jobs endpoint returned HTTP500 and no original archive/native24 cell has been reconciled; P1 gates remain open. Unauthenticated API403 and the rejected exit0/no-body helper attempt are retained. Windows open owner9A06D4DA/FormatterCommandFD46F6B0 pass a fresh strict0-warning/error build with21→0 process cleanup, but actual CLI driver/pending995/CTRL/59/91 are NOT_RUN; basic validation was refused after09:41 and produced no runtime receipt. Native source stays uncommitted. Documentation Windows/Linux8+20 workflow and strict source/case/SDK/DLL/PDB binding driver are committed at983b765 after parser/source review; push was refused after09:48, so actual CI is NOT_RUN. Parent-exit-only tooling does not prove full subtree containment. The local checkpoint is v33; P2 stays8/101 and fullP1Closure/fullP2Closure remain false. The unique heartbeat stays ACTIVE.
 
 Round28 workspace CLI component is ✅ Complete at `d2ee24f`: all8 actual child cases,20 command-API regressions and17 preserved actual CLI cases pass; all5 legacy page hashes agree. [Exact component proof](../evidence/p2/documentation-workspace-cli-v1.json) retains the initial cap16 failure and complete reaping before the bounded17 retry. Default virtual rejection, dependency/feature diagnostics, existing-target preservation, byte budget and real child timeout130 remain distinct from CTRL+C/phase acceptance. P2-08.03 and full12/91 remain open.
 
