@@ -1,0 +1,46 @@
+{
+  "scope": "ISOLATED_STRINGIFY_INVOCATION_PROTOTYPE",
+  "candidateUnchanged": true,
+  "fullCandidateDenominator": 82,
+  "formalAcceptanceAllowed": false,
+  "build": "artifacts/p1-supervision/resume-root-v45/calls/solution-build2-1a495d8b6cd042878edcccd01e5d146f/capture-receipt.json",
+  "failed": 0,
+  "tests": "artifacts/p1-supervision/resume-root-v45/calls/p3-builtin-tests-5a35fdd9ade0442cbc921bb658d24c79/capture-receipt.json",
+  "acceptedP3Leaves": 0,
+  "passed": 21,
+  "schemaVersion": 1,
+  "fullP3Closure": false,
+  "productionMacroExpansionsExecuted": 0,
+  "acceptedP3Gates": 0,
+  "taskId": "P3-01.stringify-prototype",
+  "fullCandidateCasesExecuted": 0,
+  "bindings": [
+    {
+      "path": "tools/RustSharp.Conformance/P3MacroBuiltinPrototype.cs",
+      "sha256": "29ED856CED058B69FCC4FA9FF17A707B383A045204D30C00516DB790918381E0"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P3MacroBuiltinPrototypeTests.cs",
+      "sha256": "276E9EDA07D9FE94ED6AB8588987FB972793F97C4B30F56E2A0A6B126E1514F3"
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "05B3E0510AC96E7C1DA1D03351F789367FC492EEC1F41B99444BE2200D31A5B4"
+    },
+    {
+      "path": "artifacts/p3-supervision/macros-round45/CANDIDATE-MAPPING.json",
+      "sha256": "71B0F98D461ACA95AFCE5290599F85B8C29BD02BF6C1D6DE472DC0C3AAE5E2CB"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v45/validation/bin/RustSharp.Tests.dll",
+      "sha256": "60E46123ED8EE1D3BFB72259F40977F548107CAB6176A85372DB84250087FAF5"
+    },
+    {
+      "path": "artifacts/p1-supervision/resume-root-v45/validation/bin/RustSharp.Conformance.dll",
+      "sha256": "77790BE1944BEC8F7BFBA62B23E872767DD62D523E765BD764588CBB50A44A74"
+    }
+  ],
+  "baseHead": "2fb3d41",
+  "executed": 21,
+  "fixedTests": 21
+}
