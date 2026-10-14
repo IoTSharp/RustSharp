@@ -1,0 +1,225 @@
+{
+  "originalAndCopiedHashesReconciled": true,
+  "archiveSha256": "5FE06D0CDA1F62DB6CA2B10DAAB39234EC575FE522130F57077B6932AAADF2AC",
+  "caseDenominator": 3,
+  "wholeLeafAccepted": false,
+  "archive": "linux-directory-identity-native-v1.zip",
+  "archiveFiles": [
+    {
+      "sha256": "80313CA7E9C5FFD0E958451646184317BB6E2F1F781C1FE5F42024C047E1DEAB",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/header-1.txt"
+    },
+    {
+      "sha256": "B888E1BF09A09021432B6DA66F0D9FC2C0612F2C8A7D525A86D3A357EA547BA4",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/identity-tiny-ae9815b5e86e4a028fadd2261f0d1a4d.json"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/tiny.stderr.log"
+    },
+    {
+      "sha256": "AD9138A668663DECC3C4A164B77720C03AAB35073FE229549077381D0138BC5A",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/headers.json"
+    },
+    {
+      "sha256": "67476B3A4DD6B51FFC4D44838EDCDB5275AE053434F032A4AF888380349827DF",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/guest-receipt.json"
+    },
+    {
+      "sha256": "6EEF5A5898AFB6937CC0723775884996530E57D27CA8C2AD2786A6CDD763AFDB",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/filesystem.json"
+    },
+    {
+      "sha256": "D0C1DAC6077C26AD81165320B9499344F8B2EE856A6162FA9602AB22B38DC87B",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/owner.lease"
+    },
+    {
+      "sha256": "B806CF2C7AB3F8A23FA1496EC3BE0AC6DF25D6ECB3E607CFCAEE6B8F5428C939",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/invocation.json"
+    },
+    {
+      "sha256": "6B2B03F6AB2BB2950DDC0DD60A552761F206ED23BCEA35F70084345CD278D269",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/tiny.stdout.log"
+    },
+    {
+      "sha256": "CE9D3EEF2A4DC0873830741072790A8E585EB3BD3A1EC997CFA26CB521F3BF5F",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/header-0.txt"
+    },
+    {
+      "sha256": "36D25D3D80F8431614DEECE844A6DEF69FB24B92310156CE7847BA1D9595DB57",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/identity-tiny-ae9815b5e86e4a028fadd2261f0d1a4d/child/payload.txt"
+    },
+    {
+      "sha256": "C5CBBE651A5AB14257D2F5B46D7A712FF21A01A441654063924885B6FBCE53ED",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/runtime-originals/identity-native-v4-60c2ee1a360d4266b424699c594b58ca/transfer.json"
+    },
+    {
+      "sha256": "DF1BF3BF49180A1565F406FCC809F7716F810D7554E33FE60F392DDB729A23C1",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/LinuxDirectoryIdentityTiny.cs"
+    },
+    {
+      "sha256": "F2EFC76774ABBAA4EDB456B5BBE8465375EA9474324E9E4ED3CC8E7DCD561E69",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/LinuxDirectoryIdentityTiny.csproj"
+    },
+    {
+      "sha256": "E8612A283E29A21861456D1416415A58054BDCFDE12BE5DF99F3AB2017FF5192",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/Invoke-LinuxIdentityGuest.ps1"
+    },
+    {
+      "sha256": "6B17A102D2DF03ABBA1876B31922AAAFA020D9813FA3348C73FAF2B27AAD070E",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/Invoke-LinuxIdentityGuest.sh"
+    },
+    {
+      "sha256": "A8EFD5ED4D10BDDBD17CF73BF346E3522B85D7EB58DF13DE53A06FEC9676834C",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/FROZEN-INPUTS.json"
+    },
+    {
+      "sha256": "C8CB9DEE851C53EF8D4B8901D34CB4F9475EB53A02C64A33FD0DE325259FBF2B",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/root-build/bin/LinuxDirectoryIdentityTiny.dll"
+    },
+    {
+      "sha256": "7A7A70E42607C1C97AD42D151BDF252438C1208755950B485BC496F31BF4612B",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/root-build/bin/LinuxDirectoryIdentityTiny.pdb"
+    },
+    {
+      "sha256": "88B2C8C82585CA6C2A2ED1E6F68C90219A14BDE5F2CF6E75663883B43074B023",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/root-build/bin/LinuxDirectoryIdentityTiny.deps.json"
+    },
+    {
+      "sha256": "C230A317A54DD960BCBEB5F347F52E18DC665A26F7EFDA2159FCED9A5AC7E097",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v4/root-build/bin/LinuxDirectoryIdentityTiny.runtimeconfig.json"
+    },
+    {
+      "sha256": "3050281254F0F2EC06F3DE7F16E7789B676FE08EDBEEF0567BD46B0A46E42EF3",
+      "path": "artifacts/p1-supervision/resume-root-v37/linux-statx-tiny-build-owned.json"
+    },
+    {
+      "sha256": "1445FE2DE4B6B6703FD56B0DB8D2121D0043EA476DFE754DABEE0D0A5A516E4E",
+      "path": "artifacts/p1-supervision/resume-root-v37/linux-statx-tiny-build.log"
+    },
+    {
+      "sha256": "CEAB8DD4C372CD37482CE9FD3EAB07523091BE7CE903F7D01E17C813EF1A90A4",
+      "path": "artifacts/p1-supervision/resume-root-v37/linux-statx-binding.json"
+    },
+    {
+      "sha256": "F655D112245F3BE06761189F57AB44D9C02691095305D9E122B314D835270F1C",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v3/runtime-originals/identity-native-v3-89abf7c78dc44257a1f6591bffd5c62b/identity-tiny-2d5b07d06b4843e4800ab6111b650124.json"
+    },
+    {
+      "sha256": "F16741D80B02A4A21749E6145DF9DD35A05F093FECA16B651371D515313DEB1A",
+      "path": "artifacts/p2-supervision/documentation-linux-identity-v3/runtime-originals/identity-native-v3-89abf7c78dc44257a1f6591bffd5c62b/guest-receipt.json"
+    }
+  ],
+  "strictBuildZeroWarningsErrors": true,
+  "failed": 0,
+  "candidateBaseHead": "ccc95dcb22245cefeb8d9cea9f3f59d7c0ab5f7b",
+  "observed": 3,
+  "guestSurvivors": 0,
+  "nativeDeviceInodeTypeBirthStable": true,
+  "nativeHost": "WSL Ubuntu x64; /tmp filesystem actualstat reports ext2/ext3",
+  "result": "LOCAL_NATIVE_MECHANISM_OBSERVED",
+  "productionStableIdentityPatchApplied": false,
+  "fullP1Closure": false,
+  "sourceSha256": "DF1BF3BF49180A1565F406FCC809F7716F810D7554E33FE60F392DDB729A23C1",
+  "snapshots": [
+    {
+      "step": 0,
+      "operation": "parent-created",
+      "path": "/tmp/rustsharp-identity-v4-60c2ee1a360d4266b424699c594b58ca/identity-tiny-ae9815b5e86e4a028fadd2261f0d1a4d",
+      "netCreationUtc": "2026-10-14T03:47:35.4635493Z",
+      "netCreationTicks": 639275464554635493,
+      "native": {
+        "mask": 8191,
+        "deviceMajor": 8,
+        "deviceMinor": 80,
+        "inode": 466849,
+        "type": 16384,
+        "nativeBirth": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 463549344
+        },
+        "ctime": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 463549344
+        },
+        "mtime": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 463549344
+        }
+      },
+      "elapsedMs": 17.2043
+    },
+    {
+      "step": 1,
+      "operation": "child-directory-created",
+      "path": "/tmp/rustsharp-identity-v4-60c2ee1a360d4266b424699c594b58ca/identity-tiny-ae9815b5e86e4a028fadd2261f0d1a4d",
+      "netCreationUtc": "2026-10-14T03:47:35.4934881Z",
+      "netCreationTicks": 639275464554934881,
+      "native": {
+        "mask": 8191,
+        "deviceMajor": 8,
+        "deviceMinor": 80,
+        "inode": 466849,
+        "type": 16384,
+        "nativeBirth": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 463549344
+        },
+        "ctime": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 493488154
+        },
+        "mtime": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 493488154
+        }
+      },
+      "elapsedMs": 44.5306
+    },
+    {
+      "step": 2,
+      "operation": "child-file-written",
+      "path": "/tmp/rustsharp-identity-v4-60c2ee1a360d4266b424699c594b58ca/identity-tiny-ae9815b5e86e4a028fadd2261f0d1a4d",
+      "netCreationUtc": "2026-10-14T03:47:35.4934881Z",
+      "netCreationTicks": 639275464554934881,
+      "native": {
+        "mask": 8191,
+        "deviceMajor": 8,
+        "deviceMinor": 80,
+        "inode": 466849,
+        "type": 16384,
+        "nativeBirth": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 463549344
+        },
+        "ctime": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 493488154
+        },
+        "mtime": {
+          "available": true,
+          "seconds": 1791949655,
+          "nanoseconds": 493488154
+        }
+      },
+      "elapsedMs": 72.096
+    }
+  ],
+  "skipped": 0,
+  "preservedFirstFailure": "v3 externalstat exited before StartTime capture; zero samples; originalretained",
+  "netCreationTicksEqualsChangingNativeCtime": true,
+  "at": "2026-10-14T11:49:54.8350949+08:00",
+  "taskId": "P2-08.03.LINUX-DIRECTORY-IDENTITY-NATIVE-V1",
+  "guestObservedOwnedProcesses": 2,
+  "ciFailureCausality": "Mechanism supports45f9 Linux RSTD2001 diagnosis; exactCI repair/WindowsLinux regression NOT_RUN",
+  "fullP2Closure": false,
+  "statxBufferBytes": 256
+}

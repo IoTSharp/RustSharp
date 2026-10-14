@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v36/resumption.json`。
+`artifacts/p1-supervision/resume-root-v37/resumption.json`。
+
+第33轮仍为 🚧 进行中。Linux目录身份诊断组件为 ✅ 已完成：直接statx最小程序通过严格零警告/零错误构建，真实Ubuntu /tmp三次采样3/3；设备号/inode/类型/原生出生时间保持固定，创建子目录后.NET CreationTimeUtc随ctime变化。[原生机制证据](../evidence/p2/linux-directory-identity-native-v1.json)保留精确源码/二进制/头文件/原件传输哈希及短stat竞态失败。这支持RSTD2001假说，但生产稳定身份修复与精确CI8+20回归仍为NOT_RUN。新WSL capture通过严格构建及精确21字节printf，仅属于监督设施。真实CLI和driver严格构建在保留超时/还原/AOT失败后通过，但实际formatter案例因无法确立独立私有conhost PID，在CLI启动前失败；CTRL/pending995/自然130/完整59/91仍未证明。检查点v37；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
 第32轮仍为 🚧 进行中。精确 d2ee24f/run38494398708/attempt1 的留存文件组件为 ✅ 已完成：1776个唯一留存清单文件（每个RID源码785、后端103）全部与物理哈希记录对齐，缺失/不一致/未核均为0。监督者独立关联完整分母，重核四份原始报告与此前未核的两个第39个wrapper PE。[限定范围的监督复核](../evidence/p1/d2-retained-manifest-root-review-v1.json)保留手工MIR/源码区别、外平台后端单元格和未获批准的Linux第三项Drop差异；不证明后续HEAD或关闭P1。171b1be/efc2dce/8e5383e已推送。Linux身份最小程序在保留IL2026/IL3050和CA1852失败后，通过零警告/零错误构建；两次WSL启动失败已保留，真实Linux执行仍为NOT_RUN。始终加引号并非已证实的WSL原因。稳定Linux身份补丁仍未应用，等待实际statx头和复现。Formatter driver的进程/源码/线程出生字段检查已冻结，但生产原子probe/构建/原生信号验收仍为NOT_RUN。检查点v36；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
