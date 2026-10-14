@@ -10,7 +10,7 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13917-a6b4-78e0-bd31-44600dd87b79`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v54/resumption.json`.
+`artifacts/p1-supervision/resume-root-v56/resumption.json`.
 
 Round38 fresh Windows formatter integration is ✅ Complete as a bounded component: strict solution/driver builds0 warnings/errors, full formatter59/59 and contract18/18, actual Windows CLI8/8 and real native signal1/1 pass. [Fresh integration proof](../evidence/p2/formatter-fresh-native-integration-v1.json) binds exact working-source/DLL/PDB/driver hashes, actual pending995, natural130, native Join/close and outer3→0; three exact process identities are independently absent. Legacy outer skeleton proof flags remain false and are not substituted for the hashed child proof. The earlier provenance rejection remains unresolved despite actual compiled GitAsync returning997 entries with the original raw hash; no cap increased. New clean-SHA CI/Linux/full cancellation/containment and complete59/91 leaf contracts remain open; P2 stays8/101.
 
@@ -1339,3 +1339,5 @@ Round53 repeated-template prototype is ✅ Complete within its subset: strict Re
 Round54 hand-MIR structure component is ✅ Complete: tiny1/full2 match230 canonical rows per host; eight real MIR variants are emitted/decoded and rejected. [Proof](../evidence/p1/f463-hand-mir-structure-v1.json) binds original PE hashes and frozen factory source. No original code was loaded/executed. Synthetic Source(0,1),x is hand-MIR provenance, not a Rust AST claim; phase/runtime acceptance remains separate.
 
 Round54 independent native growth input component is ✅ Complete: held/transient2/2 pass with actual creator receipts and explicit event done barrier; native birth/full-command/parent/Job proofs and owned handles are audited. [Input proof](../evidence/p1/controlled-growth-input-v1.json) preserves the old missing-receipt trial. Cross-birth raw accounting differs from separate stable production Inspect. Production reconciliation and dual-budget acceptance remain open; no legacy8 retry or core commit occurred. P1 six gates, P2 8/101 and P3 0/38+0/4 remain unchanged.
+
+Round56 P1-GATE.02 inventory component is ✅ Complete: strict local build and11 fixed checks pass (four original reports/112 ordered ID+source hashes, proposal28 and six new mutations). Prior baseline/eight mutations are retained without rerun. [Exact inventory proof](../evidence/p1/strict-cleanup-inventory-v1.json) preserves the unapproved proposal and unchanged28/168/56/callable7+2 denominators. This is inventory validation only; generated cleanup semantics and all six P1 gates stay open.

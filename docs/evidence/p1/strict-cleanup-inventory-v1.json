@@ -1,0 +1,38 @@
+{
+  "priorContractMutations": 8,
+  "productionImplemented": false,
+  "fullP1Closure": false,
+  "inventorySha256": "5FAA8F8772F250C28EF9A71E29D29266DC4D539E6E517969D7FE2ED3997184A1",
+  "bindings": [
+    {
+      "path": "eng/prototypes/CleanupInventoryV1/Program.cs",
+      "sha256": "E5D3C03B9248B0A0EE6B7F5A9A6BA32B8EF68F0401376D1E93039E7AEDC69C60"
+    },
+    {
+      "path": "eng/prototypes/CleanupInventoryV1/InventoryVerifier.csproj",
+      "sha256": "830246B855199009731B8FB1A6CD68344D0E8BD0665C27C208824FD90C2F3B2A"
+    },
+    {
+      "path": "eng/prototypes/CleanupInventoryV1/ORIGINAL-INVENTORIES.json",
+      "sha256": "CC407241A4E7F1F89FBD77520BFCC0B262E95E9CCBF638BE40E7CBA5D23E97F9"
+    },
+    {
+      "path": "eng/prototypes/CleanupInventoryV1/manifest.json",
+      "sha256": "532153F87BA98DB2EECF3EDDE6853BEA11A097D944F59AC24EC8F3E83396F53C"
+    }
+  ],
+  "proposalRows": 28,
+  "integration": "Byte-identical isolated validated sources; new-SHA CI pending",
+  "report": "artifacts/p1-supervision/resume-root-v56/inventory-exact28.json",
+  "originalReports": 4,
+  "reportSha256": "1DD6E00D6A76D96E9E77E10C033AA0A46CB7D063C4FC8E4BBAEEB1C747550A17",
+  "originalRows": 112,
+  "newMutationsRejected": 6,
+  "priorContractReport": "artifacts/p1-supervision/resume-root-v55/cleanup-contract.json",
+  "repositorySdk": "10.0.400",
+  "taskId": "P1-GATE.02.exact28-contract-binding",
+  "localSdk": "10.0.402",
+  "proposalApproved": false,
+  "fixedChecks": 11,
+  "scope": "PROPOSAL_INVENTORY_ONLY"
+}

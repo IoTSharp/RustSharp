@@ -10,7 +10,7 @@
 `01a13917-a6b4-78e0-bd31-44600dd87b79`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v54/resumption.json`。
+`artifacts/p1-supervision/resume-root-v56/resumption.json`。
 
 第38轮新鲜Windows formatter集成在限定组件范围内为 ✅ 已完成：严格solution/driver构建零警告/零错误，完整formatter59/59、契约18/18、真实Windows CLI8/8及原生信号1/1通过。[新鲜集成证据](../evidence/p2/formatter-fresh-native-integration-v1.json)绑定精确工作树源码/DLL/PDB/driver哈希、实际pending995、自然130、原生Join/close及outer3→0；三个精确进程身份已独立确认不存在。旧outer骨架proof字段仍为false，不用它们替代已核哈希child证据。此前provenance拒绝仍未定位，尽管实际编译GitAsync返回997项且匹配原始raw哈希；未提高cap。新clean-SHA CI/Linux、完整取消/containment及完整59/91叶项合同仍开放，P2保持8/101。
 
@@ -1109,3 +1109,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第54轮手工MIR结构组件 ✅ 已完成：tiny1/full2匹配每host的230条canonical记录；8个真实MIR变体经Emit/Decode后被拒绝。[证明](../evidence/p1/f463-hand-mir-structure-v1.json)绑定原PE哈希与冻结factory源码。没有加载/执行原始代码。synthetic Source(0,1),x属于手工MIR来源，不声称Rust AST；阶段/运行时验收保持独立。
 
 第54轮独立原生growth输入组件 ✅ 已完成：held/transient2/2通过，具备真实creator回执与明确event done屏障，已审查native birth/full-command/parent/Job及自有句柄。[输入证明](../evidence/p1/controlled-growth-input-v1.json)保留旧缺回执试验。跨birth原始计数与另一次稳定production Inspect不同。生产reconciliation和双预算验收仍开放；没有重试旧8或提交core。P1六门禁、P2 8/101、P3 0/38+0/4均不变。
+
+Round56 P1-GATE.02库存组件 ✅ 已完成：本地严格构建及11项固定检查通过（四份原报告／112条有序ID与源码哈希、28项提案及六项新变异）。历史基线／八项变异保留且未重跑。[精确库存证据](../evidence/p1/strict-cleanup-inventory-v1.json)保留未批准提案及原28／168／56／callable7+2分母。这仅验证库存；生成清理语义与P1六门禁仍开放。

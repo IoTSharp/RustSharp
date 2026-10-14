@@ -1,0 +1,615 @@
+{
+  "attempt": 1,
+  "candidate": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "reportDenominator": 4,
+  "orderedRowsPerReport": 28,
+  "sourceProposal": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\cleanup-contract-round55\\manifest.json",
+  "hashFormat": "UTF8(ID+TAB+uppercaseSourceSHA256+LF) for28 orderedrows",
+  "originalCodeExecuted": false,
+  "sourceProposalSha256": "532153F87BA98DB2EECF3EDDE6853BEA11A097D944F59AC24EC8F3E83396F53C",
+  "runId": "38515250985",
+  "rowDenominator": 112,
+  "fullP1Closure": false,
+  "reports": [
+    {
+      "runtimeIdentifier": "linux-x64",
+      "kind": "native-v5.json",
+      "reportSha256": "E031787E1806CFE2C09BB7AE891240C27C58A69C3DA029827004F0C443E10850",
+      "platform": "linux-x64",
+      "rows": [
+        {
+          "ordinal": 0,
+          "id": "array-order",
+          "sourceSha256": "9A65DC1C32999F90B54B1501F837375335486FDBF4A925C7537E53AA476D8AEE"
+        },
+        {
+          "ordinal": 1,
+          "id": "aggregate-order",
+          "sourceSha256": "FD3B259FF36FBADD7064FFC6A46D4B4DE8E7B02EFF6AACA8ED41BB4E7EA23C10"
+        },
+        {
+          "ordinal": 2,
+          "id": "enum-active",
+          "sourceSha256": "E11FCF837FBE9557FDE97DE93DA9E7118A8F7ACC1F0E5C58EA131E3805512AD8"
+        },
+        {
+          "ordinal": 3,
+          "id": "partial-move",
+          "sourceSha256": "BDC7E65FF722D899B16F41CB5FFE6953AC0373D0D22B15365BBBA17B10B12718"
+        },
+        {
+          "ordinal": 4,
+          "id": "aggregate-replacement",
+          "sourceSha256": "39DB2F301972C64C37154BE6F2E289291D55B9F39E87FE05C1128BB8EDAB1D38"
+        },
+        {
+          "ordinal": 5,
+          "id": "field-replacement",
+          "sourceSha256": "5FC005E2A2989B3343AF0D1D238613D4133DA0EA2277C04666F01F680B12FDD3"
+        },
+        {
+          "ordinal": 6,
+          "id": "replacement-rhs-panic",
+          "sourceSha256": "4C7FDC8C5CD762E4A247B5822E155D33A1FEFD6308D4ADBAAB28D16D24281845"
+        },
+        {
+          "ordinal": 7,
+          "id": "statement-temporary",
+          "sourceSha256": "E6C734E04C67AC7ECADDC503074DF9E9812AEB3EB0DE9B89235829404783BD4F"
+        },
+        {
+          "ordinal": 8,
+          "id": "wildcard-temporary",
+          "sourceSha256": "BFFBE2D94E2C8E17D2E2E33B2F8A46B68E05E33197A9D6CEA525B90375E2AE17"
+        },
+        {
+          "ordinal": 9,
+          "id": "extended-temporary-borrow",
+          "sourceSha256": "E5630448F41AB04102A91FC627BBCAA8921FBB0EFD7C6DCF8DE4997623B73F46"
+        },
+        {
+          "ordinal": 10,
+          "id": "partial-construction-panic",
+          "sourceSha256": "2E0FBE7CC77C5028247FA424F61B019E838F55849344C0D3C6E9170326AE0A5E"
+        },
+        {
+          "ordinal": 11,
+          "id": "body-unwind",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 12,
+          "id": "normal-single-drop-panic",
+          "sourceSha256": "B847C1579F489FB81661E2236FAD6DB12D47CEEF023E31CD14E2DBFF621BC38E"
+        },
+        {
+          "ordinal": 13,
+          "id": "body-double-panic",
+          "sourceSha256": "A18B0CC513767D26514C0EBFBDC9A1C377D73DBA5106504E20C3A7C69E24AE58"
+        },
+        {
+          "ordinal": 14,
+          "id": "explicit-abort",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 15,
+          "id": "normal-multiple-drop-panic-contract",
+          "sourceSha256": "85FF70C38591D883748C7872B7F21E2F69DB7A8DF0CF400561B9971DC135165D"
+        },
+        {
+          "ordinal": 16,
+          "id": "owned-return",
+          "sourceSha256": "7ED088596152F1F26B10DFBD5079CAF3D7E323ECEC73E16C4CD9A8AD75DE620B"
+        },
+        {
+          "ordinal": 17,
+          "id": "loop-continue",
+          "sourceSha256": "24DFEEC5DB342771EB06834740116E7D43CE6E733C39870C6FA3AA3E52EE08A5"
+        },
+        {
+          "ordinal": 18,
+          "id": "labelled-break",
+          "sourceSha256": "606D2A64E00BBD775B7B2DED8CEEA71FFD5CC0322AF89384C266C39F39CE13B8"
+        },
+        {
+          "ordinal": 19,
+          "id": "moved-unwind",
+          "sourceSha256": "D944AF4D85274E59D4A5C4DEA050F3886B8573FCD7CAE7A92D69EA95C8DFA0C9"
+        },
+        {
+          "ordinal": 20,
+          "id": "active-enum-unwind",
+          "sourceSha256": "E351CD7B742A4D062D4E642EF6B84583144838202DA9278A6D996A2182602E3D"
+        },
+        {
+          "ordinal": 21,
+          "id": "expired-array-unwind",
+          "sourceSha256": "F9E8F61DC52270EBDA301135C69BB4D2FF95687118086AA310E2C25E6D17F1F3"
+        },
+        {
+          "ordinal": 22,
+          "id": "zero-sized-construction-panic",
+          "sourceSha256": "4CF361310B9769BA1893D01C0A61AE694BE422E35D48DA6A737A892DA5B5241C"
+        },
+        {
+          "ordinal": 23,
+          "id": "owned-closure-capture",
+          "sourceSha256": "A0F0938759BA676EE30AC9614EAE57A90462AC9987D5F29243D3E4BA7E9D6056"
+        },
+        {
+          "ordinal": 24,
+          "id": "normal-own-drop-body-and-field-failure-contract",
+          "sourceSha256": "E673C316AFD5336FCD0C9A5D721A16F21CB85609F755DC915D86FEF0C0D40E66"
+        },
+        {
+          "ordinal": 25,
+          "id": "unwind-own-drop-body-failure",
+          "sourceSha256": "52AB01715A75699F15068189BEFDA73E615ADBD0259BEBD632A35E9C3D0B13A7"
+        },
+        {
+          "ordinal": 26,
+          "id": "enum-mutable-call-replacement",
+          "sourceSha256": "2B6DDEFFF804E0D63E89BCCBFDEE653CFE69CDAC7CB3AD9B26EE9BC9DAE30560"
+        },
+        {
+          "ordinal": 27,
+          "id": "enum-mutable-call-replacement-unwind",
+          "sourceSha256": "DE7075900C7319624CF9BE7797B4F426AB30F90C1C61FB339DCFB1DFBE39E0A0"
+        }
+      ],
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\originals\\p1-drop-bytes-linux-x64-38515250985-1\\native-v5.json",
+      "orderedInventorySha256": "5FAA8F8772F250C28EF9A71E29D29266DC4D539E6E517969D7FE2ED3997184A1"
+    },
+    {
+      "runtimeIdentifier": "linux-x64",
+      "kind": "native-aot-v1.json",
+      "reportSha256": "17151CA4FF3605E4681D38459017BD460C6E6E0FF22CDCE53672FE73A8DA11A6",
+      "platform": "linux-x64",
+      "rows": [
+        {
+          "ordinal": 0,
+          "id": "array-order",
+          "sourceSha256": "9A65DC1C32999F90B54B1501F837375335486FDBF4A925C7537E53AA476D8AEE"
+        },
+        {
+          "ordinal": 1,
+          "id": "aggregate-order",
+          "sourceSha256": "FD3B259FF36FBADD7064FFC6A46D4B4DE8E7B02EFF6AACA8ED41BB4E7EA23C10"
+        },
+        {
+          "ordinal": 2,
+          "id": "enum-active",
+          "sourceSha256": "E11FCF837FBE9557FDE97DE93DA9E7118A8F7ACC1F0E5C58EA131E3805512AD8"
+        },
+        {
+          "ordinal": 3,
+          "id": "partial-move",
+          "sourceSha256": "BDC7E65FF722D899B16F41CB5FFE6953AC0373D0D22B15365BBBA17B10B12718"
+        },
+        {
+          "ordinal": 4,
+          "id": "aggregate-replacement",
+          "sourceSha256": "39DB2F301972C64C37154BE6F2E289291D55B9F39E87FE05C1128BB8EDAB1D38"
+        },
+        {
+          "ordinal": 5,
+          "id": "field-replacement",
+          "sourceSha256": "5FC005E2A2989B3343AF0D1D238613D4133DA0EA2277C04666F01F680B12FDD3"
+        },
+        {
+          "ordinal": 6,
+          "id": "replacement-rhs-panic",
+          "sourceSha256": "4C7FDC8C5CD762E4A247B5822E155D33A1FEFD6308D4ADBAAB28D16D24281845"
+        },
+        {
+          "ordinal": 7,
+          "id": "statement-temporary",
+          "sourceSha256": "E6C734E04C67AC7ECADDC503074DF9E9812AEB3EB0DE9B89235829404783BD4F"
+        },
+        {
+          "ordinal": 8,
+          "id": "wildcard-temporary",
+          "sourceSha256": "BFFBE2D94E2C8E17D2E2E33B2F8A46B68E05E33197A9D6CEA525B90375E2AE17"
+        },
+        {
+          "ordinal": 9,
+          "id": "extended-temporary-borrow",
+          "sourceSha256": "E5630448F41AB04102A91FC627BBCAA8921FBB0EFD7C6DCF8DE4997623B73F46"
+        },
+        {
+          "ordinal": 10,
+          "id": "partial-construction-panic",
+          "sourceSha256": "2E0FBE7CC77C5028247FA424F61B019E838F55849344C0D3C6E9170326AE0A5E"
+        },
+        {
+          "ordinal": 11,
+          "id": "body-unwind",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 12,
+          "id": "normal-single-drop-panic",
+          "sourceSha256": "B847C1579F489FB81661E2236FAD6DB12D47CEEF023E31CD14E2DBFF621BC38E"
+        },
+        {
+          "ordinal": 13,
+          "id": "body-double-panic",
+          "sourceSha256": "A18B0CC513767D26514C0EBFBDC9A1C377D73DBA5106504E20C3A7C69E24AE58"
+        },
+        {
+          "ordinal": 14,
+          "id": "explicit-abort",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 15,
+          "id": "normal-multiple-drop-panic-contract",
+          "sourceSha256": "85FF70C38591D883748C7872B7F21E2F69DB7A8DF0CF400561B9971DC135165D"
+        },
+        {
+          "ordinal": 16,
+          "id": "owned-return",
+          "sourceSha256": "7ED088596152F1F26B10DFBD5079CAF3D7E323ECEC73E16C4CD9A8AD75DE620B"
+        },
+        {
+          "ordinal": 17,
+          "id": "loop-continue",
+          "sourceSha256": "24DFEEC5DB342771EB06834740116E7D43CE6E733C39870C6FA3AA3E52EE08A5"
+        },
+        {
+          "ordinal": 18,
+          "id": "labelled-break",
+          "sourceSha256": "606D2A64E00BBD775B7B2DED8CEEA71FFD5CC0322AF89384C266C39F39CE13B8"
+        },
+        {
+          "ordinal": 19,
+          "id": "moved-unwind",
+          "sourceSha256": "D944AF4D85274E59D4A5C4DEA050F3886B8573FCD7CAE7A92D69EA95C8DFA0C9"
+        },
+        {
+          "ordinal": 20,
+          "id": "active-enum-unwind",
+          "sourceSha256": "E351CD7B742A4D062D4E642EF6B84583144838202DA9278A6D996A2182602E3D"
+        },
+        {
+          "ordinal": 21,
+          "id": "expired-array-unwind",
+          "sourceSha256": "F9E8F61DC52270EBDA301135C69BB4D2FF95687118086AA310E2C25E6D17F1F3"
+        },
+        {
+          "ordinal": 22,
+          "id": "zero-sized-construction-panic",
+          "sourceSha256": "4CF361310B9769BA1893D01C0A61AE694BE422E35D48DA6A737A892DA5B5241C"
+        },
+        {
+          "ordinal": 23,
+          "id": "owned-closure-capture",
+          "sourceSha256": "A0F0938759BA676EE30AC9614EAE57A90462AC9987D5F29243D3E4BA7E9D6056"
+        },
+        {
+          "ordinal": 24,
+          "id": "normal-own-drop-body-and-field-failure-contract",
+          "sourceSha256": "E673C316AFD5336FCD0C9A5D721A16F21CB85609F755DC915D86FEF0C0D40E66"
+        },
+        {
+          "ordinal": 25,
+          "id": "unwind-own-drop-body-failure",
+          "sourceSha256": "52AB01715A75699F15068189BEFDA73E615ADBD0259BEBD632A35E9C3D0B13A7"
+        },
+        {
+          "ordinal": 26,
+          "id": "enum-mutable-call-replacement",
+          "sourceSha256": "2B6DDEFFF804E0D63E89BCCBFDEE653CFE69CDAC7CB3AD9B26EE9BC9DAE30560"
+        },
+        {
+          "ordinal": 27,
+          "id": "enum-mutable-call-replacement-unwind",
+          "sourceSha256": "DE7075900C7319624CF9BE7797B4F426AB30F90C1C61FB339DCFB1DFBE39E0A0"
+        }
+      ],
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\originals\\p1-drop-bytes-linux-x64-38515250985-1\\native-aot-v1.json",
+      "orderedInventorySha256": "5FAA8F8772F250C28EF9A71E29D29266DC4D539E6E517969D7FE2ED3997184A1"
+    },
+    {
+      "runtimeIdentifier": "win-x64",
+      "kind": "native-v5.json",
+      "reportSha256": "443E70A3193E30A4B1DE1F652D5F06586A1E1EAC2265861F7578C1A783FD1B7A",
+      "platform": "windows-x64",
+      "rows": [
+        {
+          "ordinal": 0,
+          "id": "array-order",
+          "sourceSha256": "9A65DC1C32999F90B54B1501F837375335486FDBF4A925C7537E53AA476D8AEE"
+        },
+        {
+          "ordinal": 1,
+          "id": "aggregate-order",
+          "sourceSha256": "FD3B259FF36FBADD7064FFC6A46D4B4DE8E7B02EFF6AACA8ED41BB4E7EA23C10"
+        },
+        {
+          "ordinal": 2,
+          "id": "enum-active",
+          "sourceSha256": "E11FCF837FBE9557FDE97DE93DA9E7118A8F7ACC1F0E5C58EA131E3805512AD8"
+        },
+        {
+          "ordinal": 3,
+          "id": "partial-move",
+          "sourceSha256": "BDC7E65FF722D899B16F41CB5FFE6953AC0373D0D22B15365BBBA17B10B12718"
+        },
+        {
+          "ordinal": 4,
+          "id": "aggregate-replacement",
+          "sourceSha256": "39DB2F301972C64C37154BE6F2E289291D55B9F39E87FE05C1128BB8EDAB1D38"
+        },
+        {
+          "ordinal": 5,
+          "id": "field-replacement",
+          "sourceSha256": "5FC005E2A2989B3343AF0D1D238613D4133DA0EA2277C04666F01F680B12FDD3"
+        },
+        {
+          "ordinal": 6,
+          "id": "replacement-rhs-panic",
+          "sourceSha256": "4C7FDC8C5CD762E4A247B5822E155D33A1FEFD6308D4ADBAAB28D16D24281845"
+        },
+        {
+          "ordinal": 7,
+          "id": "statement-temporary",
+          "sourceSha256": "E6C734E04C67AC7ECADDC503074DF9E9812AEB3EB0DE9B89235829404783BD4F"
+        },
+        {
+          "ordinal": 8,
+          "id": "wildcard-temporary",
+          "sourceSha256": "BFFBE2D94E2C8E17D2E2E33B2F8A46B68E05E33197A9D6CEA525B90375E2AE17"
+        },
+        {
+          "ordinal": 9,
+          "id": "extended-temporary-borrow",
+          "sourceSha256": "E5630448F41AB04102A91FC627BBCAA8921FBB0EFD7C6DCF8DE4997623B73F46"
+        },
+        {
+          "ordinal": 10,
+          "id": "partial-construction-panic",
+          "sourceSha256": "2E0FBE7CC77C5028247FA424F61B019E838F55849344C0D3C6E9170326AE0A5E"
+        },
+        {
+          "ordinal": 11,
+          "id": "body-unwind",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 12,
+          "id": "normal-single-drop-panic",
+          "sourceSha256": "B847C1579F489FB81661E2236FAD6DB12D47CEEF023E31CD14E2DBFF621BC38E"
+        },
+        {
+          "ordinal": 13,
+          "id": "body-double-panic",
+          "sourceSha256": "A18B0CC513767D26514C0EBFBDC9A1C377D73DBA5106504E20C3A7C69E24AE58"
+        },
+        {
+          "ordinal": 14,
+          "id": "explicit-abort",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 15,
+          "id": "normal-multiple-drop-panic-contract",
+          "sourceSha256": "85FF70C38591D883748C7872B7F21E2F69DB7A8DF0CF400561B9971DC135165D"
+        },
+        {
+          "ordinal": 16,
+          "id": "owned-return",
+          "sourceSha256": "7ED088596152F1F26B10DFBD5079CAF3D7E323ECEC73E16C4CD9A8AD75DE620B"
+        },
+        {
+          "ordinal": 17,
+          "id": "loop-continue",
+          "sourceSha256": "24DFEEC5DB342771EB06834740116E7D43CE6E733C39870C6FA3AA3E52EE08A5"
+        },
+        {
+          "ordinal": 18,
+          "id": "labelled-break",
+          "sourceSha256": "606D2A64E00BBD775B7B2DED8CEEA71FFD5CC0322AF89384C266C39F39CE13B8"
+        },
+        {
+          "ordinal": 19,
+          "id": "moved-unwind",
+          "sourceSha256": "D944AF4D85274E59D4A5C4DEA050F3886B8573FCD7CAE7A92D69EA95C8DFA0C9"
+        },
+        {
+          "ordinal": 20,
+          "id": "active-enum-unwind",
+          "sourceSha256": "E351CD7B742A4D062D4E642EF6B84583144838202DA9278A6D996A2182602E3D"
+        },
+        {
+          "ordinal": 21,
+          "id": "expired-array-unwind",
+          "sourceSha256": "F9E8F61DC52270EBDA301135C69BB4D2FF95687118086AA310E2C25E6D17F1F3"
+        },
+        {
+          "ordinal": 22,
+          "id": "zero-sized-construction-panic",
+          "sourceSha256": "4CF361310B9769BA1893D01C0A61AE694BE422E35D48DA6A737A892DA5B5241C"
+        },
+        {
+          "ordinal": 23,
+          "id": "owned-closure-capture",
+          "sourceSha256": "A0F0938759BA676EE30AC9614EAE57A90462AC9987D5F29243D3E4BA7E9D6056"
+        },
+        {
+          "ordinal": 24,
+          "id": "normal-own-drop-body-and-field-failure-contract",
+          "sourceSha256": "E673C316AFD5336FCD0C9A5D721A16F21CB85609F755DC915D86FEF0C0D40E66"
+        },
+        {
+          "ordinal": 25,
+          "id": "unwind-own-drop-body-failure",
+          "sourceSha256": "52AB01715A75699F15068189BEFDA73E615ADBD0259BEBD632A35E9C3D0B13A7"
+        },
+        {
+          "ordinal": 26,
+          "id": "enum-mutable-call-replacement",
+          "sourceSha256": "2B6DDEFFF804E0D63E89BCCBFDEE653CFE69CDAC7CB3AD9B26EE9BC9DAE30560"
+        },
+        {
+          "ordinal": 27,
+          "id": "enum-mutable-call-replacement-unwind",
+          "sourceSha256": "DE7075900C7319624CF9BE7797B4F426AB30F90C1C61FB339DCFB1DFBE39E0A0"
+        }
+      ],
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\originals\\p1-drop-bytes-windows-x64-38515250985-1\\native-v5.json",
+      "orderedInventorySha256": "5FAA8F8772F250C28EF9A71E29D29266DC4D539E6E517969D7FE2ED3997184A1"
+    },
+    {
+      "runtimeIdentifier": "win-x64",
+      "kind": "native-aot-v1.json",
+      "reportSha256": "85CBEFDB7D830B0EF238A4059EA68C766EA92FC4C7543CF3D761CEF2DA5646EB",
+      "platform": "windows-x64",
+      "rows": [
+        {
+          "ordinal": 0,
+          "id": "array-order",
+          "sourceSha256": "9A65DC1C32999F90B54B1501F837375335486FDBF4A925C7537E53AA476D8AEE"
+        },
+        {
+          "ordinal": 1,
+          "id": "aggregate-order",
+          "sourceSha256": "FD3B259FF36FBADD7064FFC6A46D4B4DE8E7B02EFF6AACA8ED41BB4E7EA23C10"
+        },
+        {
+          "ordinal": 2,
+          "id": "enum-active",
+          "sourceSha256": "E11FCF837FBE9557FDE97DE93DA9E7118A8F7ACC1F0E5C58EA131E3805512AD8"
+        },
+        {
+          "ordinal": 3,
+          "id": "partial-move",
+          "sourceSha256": "BDC7E65FF722D899B16F41CB5FFE6953AC0373D0D22B15365BBBA17B10B12718"
+        },
+        {
+          "ordinal": 4,
+          "id": "aggregate-replacement",
+          "sourceSha256": "39DB2F301972C64C37154BE6F2E289291D55B9F39E87FE05C1128BB8EDAB1D38"
+        },
+        {
+          "ordinal": 5,
+          "id": "field-replacement",
+          "sourceSha256": "5FC005E2A2989B3343AF0D1D238613D4133DA0EA2277C04666F01F680B12FDD3"
+        },
+        {
+          "ordinal": 6,
+          "id": "replacement-rhs-panic",
+          "sourceSha256": "4C7FDC8C5CD762E4A247B5822E155D33A1FEFD6308D4ADBAAB28D16D24281845"
+        },
+        {
+          "ordinal": 7,
+          "id": "statement-temporary",
+          "sourceSha256": "E6C734E04C67AC7ECADDC503074DF9E9812AEB3EB0DE9B89235829404783BD4F"
+        },
+        {
+          "ordinal": 8,
+          "id": "wildcard-temporary",
+          "sourceSha256": "BFFBE2D94E2C8E17D2E2E33B2F8A46B68E05E33197A9D6CEA525B90375E2AE17"
+        },
+        {
+          "ordinal": 9,
+          "id": "extended-temporary-borrow",
+          "sourceSha256": "E5630448F41AB04102A91FC627BBCAA8921FBB0EFD7C6DCF8DE4997623B73F46"
+        },
+        {
+          "ordinal": 10,
+          "id": "partial-construction-panic",
+          "sourceSha256": "2E0FBE7CC77C5028247FA424F61B019E838F55849344C0D3C6E9170326AE0A5E"
+        },
+        {
+          "ordinal": 11,
+          "id": "body-unwind",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 12,
+          "id": "normal-single-drop-panic",
+          "sourceSha256": "B847C1579F489FB81661E2236FAD6DB12D47CEEF023E31CD14E2DBFF621BC38E"
+        },
+        {
+          "ordinal": 13,
+          "id": "body-double-panic",
+          "sourceSha256": "A18B0CC513767D26514C0EBFBDC9A1C377D73DBA5106504E20C3A7C69E24AE58"
+        },
+        {
+          "ordinal": 14,
+          "id": "explicit-abort",
+          "sourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8"
+        },
+        {
+          "ordinal": 15,
+          "id": "normal-multiple-drop-panic-contract",
+          "sourceSha256": "85FF70C38591D883748C7872B7F21E2F69DB7A8DF0CF400561B9971DC135165D"
+        },
+        {
+          "ordinal": 16,
+          "id": "owned-return",
+          "sourceSha256": "7ED088596152F1F26B10DFBD5079CAF3D7E323ECEC73E16C4CD9A8AD75DE620B"
+        },
+        {
+          "ordinal": 17,
+          "id": "loop-continue",
+          "sourceSha256": "24DFEEC5DB342771EB06834740116E7D43CE6E733C39870C6FA3AA3E52EE08A5"
+        },
+        {
+          "ordinal": 18,
+          "id": "labelled-break",
+          "sourceSha256": "606D2A64E00BBD775B7B2DED8CEEA71FFD5CC0322AF89384C266C39F39CE13B8"
+        },
+        {
+          "ordinal": 19,
+          "id": "moved-unwind",
+          "sourceSha256": "D944AF4D85274E59D4A5C4DEA050F3886B8573FCD7CAE7A92D69EA95C8DFA0C9"
+        },
+        {
+          "ordinal": 20,
+          "id": "active-enum-unwind",
+          "sourceSha256": "E351CD7B742A4D062D4E642EF6B84583144838202DA9278A6D996A2182602E3D"
+        },
+        {
+          "ordinal": 21,
+          "id": "expired-array-unwind",
+          "sourceSha256": "F9E8F61DC52270EBDA301135C69BB4D2FF95687118086AA310E2C25E6D17F1F3"
+        },
+        {
+          "ordinal": 22,
+          "id": "zero-sized-construction-panic",
+          "sourceSha256": "4CF361310B9769BA1893D01C0A61AE694BE422E35D48DA6A737A892DA5B5241C"
+        },
+        {
+          "ordinal": 23,
+          "id": "owned-closure-capture",
+          "sourceSha256": "A0F0938759BA676EE30AC9614EAE57A90462AC9987D5F29243D3E4BA7E9D6056"
+        },
+        {
+          "ordinal": 24,
+          "id": "normal-own-drop-body-and-field-failure-contract",
+          "sourceSha256": "E673C316AFD5336FCD0C9A5D721A16F21CB85609F755DC915D86FEF0C0D40E66"
+        },
+        {
+          "ordinal": 25,
+          "id": "unwind-own-drop-body-failure",
+          "sourceSha256": "52AB01715A75699F15068189BEFDA73E615ADBD0259BEBD632A35E9C3D0B13A7"
+        },
+        {
+          "ordinal": 26,
+          "id": "enum-mutable-call-replacement",
+          "sourceSha256": "2B6DDEFFF804E0D63E89BCCBFDEE653CFE69CDAC7CB3AD9B26EE9BC9DAE30560"
+        },
+        {
+          "ordinal": 27,
+          "id": "enum-mutable-call-replacement-unwind",
+          "sourceSha256": "DE7075900C7319624CF9BE7797B4F426AB30F90C1C61FB339DCFB1DFBE39E0A0"
+        }
+      ],
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\originals\\p1-drop-bytes-windows-x64-38515250985-1\\native-aot-v1.json",
+      "orderedInventorySha256": "5FAA8F8772F250C28EF9A71E29D29266DC4D539E6E517969D7FE2ED3997184A1"
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "focusedCandidateCases": 8,
+  "cases": [
+    {
+      "id": "array-order",
+      "originalSourceSha256": "9A65DC1C32999F90B54B1501F837375335486FDBF4A925C7537E53AA476D8AEE",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "body\n1\n2\n3\n"
+    },
+    {
+      "id": "aggregate-order",
+      "originalSourceSha256": "FD3B259FF36FBADD7064FFC6A46D4B4DE8E7B02EFF6AACA8ED41BB4E7EA23C10",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "body\n1\n2\n3\n"
+    },
+    {
+      "id": "enum-active",
+      "originalSourceSha256": "E11FCF837FBE9557FDE97DE93DA9E7118A8F7ACC1F0E5C58EA131E3805512AD8",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "body\n2\n1\n"
+    },
+    {
+      "id": "partial-move",
+      "originalSourceSha256": "BDC7E65FF722D899B16F41CB5FFE6953AC0373D0D22B15365BBBA17B10B12718",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "body\n1\n2\n"
+    },
+    {
+      "id": "aggregate-replacement",
+      "originalSourceSha256": "39DB2F301972C64C37154BE6F2E289291D55B9F39E87FE05C1128BB8EDAB1D38",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\n2\nbody\n3\n4\n"
+    },
+    {
+      "id": "field-replacement",
+      "originalSourceSha256": "5FC005E2A2989B3343AF0D1D238613D4133DA0EA2277C04666F01F680B12FDD3",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\nbody\n3\n2\n"
+    },
+    {
+      "id": "replacement-rhs-panic",
+      "originalSourceSha256": "4C7FDC8C5CD762E4A247B5822E155D33A1FEFD6308D4ADBAAB28D16D24281845",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "1\n"
+    },
+    {
+      "id": "statement-temporary",
+      "originalSourceSha256": "E6C734E04C67AC7ECADDC503074DF9E9812AEB3EB0DE9B89235829404783BD4F",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\nafter\n"
+    },
+    {
+      "id": "wildcard-temporary",
+      "originalSourceSha256": "BFFBE2D94E2C8E17D2E2E33B2F8A46B68E05E33197A9D6CEA525B90375E2AE17",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\nafter\n"
+    },
+    {
+      "id": "extended-temporary-borrow",
+      "originalSourceSha256": "E5630448F41AB04102A91FC627BBCAA8921FBB0EFD7C6DCF8DE4997623B73F46",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\nbody\n1\n"
+    },
+    {
+      "id": "partial-construction-panic",
+      "originalSourceSha256": "2E0FBE7CC77C5028247FA424F61B019E838F55849344C0D3C6E9170326AE0A5E",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "1\n"
+    },
+    {
+      "id": "body-unwind",
+      "originalSourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "body\n1\n"
+    },
+    {
+      "id": "normal-single-drop-panic",
+      "originalSourceSha256": "B847C1579F489FB81661E2236FAD6DB12D47CEEF023E31CD14E2DBFF621BC38E",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "body\nbad\n1\n"
+    },
+    {
+      "id": "body-double-panic",
+      "originalSourceSha256": "A18B0CC513767D26514C0EBFBDC9A1C377D73DBA5106504E20C3A7C69E24AE58",
+      "strictExpectedOutcome": "double-panic-abort",
+      "strictExpectedStdout": "body\nbad\n"
+    },
+    {
+      "id": "explicit-abort",
+      "originalSourceSha256": "2B0249FC2B82D8D396FDA08F2E2B97F71F0CD49D1661F5E6BBEE26F7B168A4D8",
+      "strictExpectedOutcome": "panic-abort",
+      "strictExpectedStdout": "body\n"
+    },
+    {
+      "id": "normal-multiple-drop-panic-contract",
+      "originalSourceSha256": "85FF70C38591D883748C7872B7F21E2F69DB7A8DF0CF400561B9971DC135165D",
+      "strictExpectedOutcome": "double-panic-abort",
+      "strictExpectedStdout": "body\nsecond\nfirst\n"
+    },
+    {
+      "id": "owned-return",
+      "originalSourceSha256": "7ED088596152F1F26B10DFBD5079CAF3D7E323ECEC73E16C4CD9A8AD75DE620B",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\n3\nbody\n4\n2\n"
+    },
+    {
+      "id": "loop-continue",
+      "originalSourceSha256": "24DFEEC5DB342771EB06834740116E7D43CE6E733C39870C6FA3AA3E52EE08A5",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "iteration\n1\niteration\n1\nafter\n"
+    },
+    {
+      "id": "labelled-break",
+      "originalSourceSha256": "606D2A64E00BBD775B7B2DED8CEEA71FFD5CC0322AF89384C266C39F39CE13B8",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "body\n3\n2\nafter\n1\n"
+    },
+    {
+      "id": "moved-unwind",
+      "originalSourceSha256": "D944AF4D85274E59D4A5C4DEA050F3886B8573FCD7CAE7A92D69EA95C8DFA0C9",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "callee\n2\n1\n"
+    },
+    {
+      "id": "active-enum-unwind",
+      "originalSourceSha256": "E351CD7B742A4D062D4E642EF6B84583144838202DA9278A6D996A2182602E3D",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "body\n2\n1\n"
+    },
+    {
+      "id": "expired-array-unwind",
+      "originalSourceSha256": "F9E8F61DC52270EBDA301135C69BB4D2FF95687118086AA310E2C25E6D17F1F3",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "scope\n1\n2\nafter\n"
+    },
+    {
+      "id": "zero-sized-construction-panic",
+      "originalSourceSha256": "4CF361310B9769BA1893D01C0A61AE694BE422E35D48DA6A737A892DA5B5241C",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "first\n"
+    },
+    {
+      "id": "owned-closure-capture",
+      "originalSourceSha256": "A0F0938759BA676EE30AC9614EAE57A90462AC9987D5F29243D3E4BA7E9D6056",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\nafter\n1\n"
+    },
+    {
+      "id": "normal-own-drop-body-and-field-failure-contract",
+      "originalSourceSha256": "E673C316AFD5336FCD0C9A5D721A16F21CB85609F755DC915D86FEF0C0D40E66",
+      "strictExpectedOutcome": "double-panic-abort",
+      "strictExpectedStdout": "body\nowner\nbad\n"
+    },
+    {
+      "id": "unwind-own-drop-body-failure",
+      "originalSourceSha256": "52AB01715A75699F15068189BEFDA73E615ADBD0259BEBD632A35E9C3D0B13A7",
+      "strictExpectedOutcome": "double-panic-abort",
+      "strictExpectedStdout": "body\nowner\nbad\n"
+    },
+    {
+      "id": "enum-mutable-call-replacement",
+      "originalSourceSha256": "2B6DDEFFF804E0D63E89BCCBFDEE653CFE69CDAC7CB3AD9B26EE9BC9DAE30560",
+      "strictExpectedOutcome": "success",
+      "strictExpectedStdout": "1\nbody\n2\n3\n9\n"
+    },
+    {
+      "id": "enum-mutable-call-replacement-unwind",
+      "originalSourceSha256": "DE7075900C7319624CF9BE7797B4F426AB30F90C1C61FB339DCFB1DFBE39E0A0",
+      "strictExpectedOutcome": "unwind",
+      "strictExpectedStdout": "body\n1\ncallee\n2\n3\n9\n"
+    }
+  ],
+  "callableCasesPerHost": 7,
+  "differentialCells": 168,
+  "oldProfilesPreserved": true,
+  "status": "PROPOSAL_NOT_APPROVED",
+  "fullP1Closure": false,
+  "bounds": {
+    "maximumOutputBytesPerStream": 1048576,
+    "maximumReportBytes": 4194304,
+    "publishSeconds": 600,
+    "suiteSeconds": 1200,
+    "maximumSourceBytes": 16777216,
+    "maximumProcessesPerCase": 32,
+    "maximumCancellationCleanupSeconds": 20,
+    "ilverifySeconds": 180,
+    "caseSeconds": 30
+  },
+  "productionImplemented": false,
+  "callableArtifactsPerHost": 2,
+  "oldEntrypoints": [
+    "LegacyV1",
+    "NativeV2",
+    "v1",
+    "v4",
+    "v5"
+  ],
+  "focusedRole": "Supplementary strict semantic controls only; never replaces28or callable7/2",
+  "schemaVersion": 1,
+  "runtimeCells": [
+    "rustc",
+    "CoreCLR",
+    "NativeAOT"
+  ],
+  "targetCases": [
+    "normal-multiple-drop-panic-contract",
+    "normal-own-drop-body-and-field-failure-contract"
+  ],
+  "nativeRids": [
+    "linux-x64",
+    "win-x64"
+  ],
+  "approvalGranted": false,
+  "contractId": "strict-normal-cleanup-v1-proposal",
+  "fixtureDenominator": 28,
+  "ilverifyOriginalPeCells": 56,
+  "focusedControls": [
+    {
+      "expected": "first panic propagates after remaining successful cleanup",
+      "id": "single-normal-failure"
+    },
+    {
+      "expected": "second destructor failure aborts;tracebody/second/first",
+      "id": "two-locals-double-panic"
+    },
+    {
+      "expected": "abort afterbody/owner/bad;good must not run",
+      "id": "owner-body-and-bad-field"
+    },
+    {
+      "expected": "one failure does not become multiple;remaining nonpanicking obligations complete",
+      "id": "first-failure-remaining-good"
+    },
+    {
+      "expected": "existing active unwinding plus destructor failure aborts",
+      "id": "unwind-plus-drop-body-panic"
+    },
+    {
+      "expected": "nested abort preserved at caller;no continuation past abort",
+      "id": "nested-owner-failure"
+    },
+    {
+      "expected": "actual strict nativeabort not a catchableaggregate return",
+      "id": "callable-double-panic-boundary"
+    },
+    {
+      "expected": "exact reverse cleanup order unchanged",
+      "id": "nonpanicking-reverse-cleanup"
+    }
+  ]
+}
