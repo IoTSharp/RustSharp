@@ -6,12 +6,26 @@ param(
     [Parameter()] [string] $WorkingDirectory = (Get-Location).Path,
     [Parameter()] [string] $CapturePrefix,
     [Parameter()] [ValidateRange(1024, 67108864)] [long] $MaximumOutputBytes = 16777216,
-    [Parameter()] [System.Threading.CancellationToken] $CancellationToken = [System.Threading.CancellationToken]::None
+    [Parameter()] [System.Threading.CancellationToken] $CancellationToken = [System.Threading.CancellationToken]::None,
+    [switch] $RequireFullContainment,
+    [string] $ContainmentAssemblyPath,
+    [string] $ContainmentAssemblySha256,
+    [string] $CallerLeaseRoot,
+    [string] $CallerLease,
+    [ValidateRange(1,20)] [int] $MaximumActiveProcesses = 3,
+    [ValidateRange(1,1024)] [int] $MaximumTotalProcesses = 3,
+    [ValidateRange(1,1000)] [int] $ContainmentPollingMilliseconds = 10
 )
 
 Set-StrictMode -Version 3.0
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
+if ($RequireFullContainment) {
+    $CancellationToken.ThrowIfCancellationRequested()
+    if ($CapturePrefix) { throw 'Full containment requires explicit caller-lease raw output paths; CapturePrefix compatibility is not implemented.' }
+    & (Join-Path $PSScriptRoot 'WindowsProcessContainment.ps1') -FilePath $FilePath -ArgumentList $ArgumentList -WorkingDirectory $WorkingDirectory -TimeoutSeconds $TimeoutSeconds -MaximumOutputBytes $MaximumOutputBytes -CancellationToken $CancellationToken -ContainmentAssemblyPath $ContainmentAssemblyPath -ContainmentAssemblySha256 $ContainmentAssemblySha256 -CallerLeaseRoot $CallerLeaseRoot -CallerLease $CallerLease -MaximumActiveProcesses $MaximumActiveProcesses -MaximumTotalProcesses $MaximumTotalProcesses -ContainmentPollingMilliseconds $ContainmentPollingMilliseconds
+    return
+}
 $terminationWaitMilliseconds = 5000
 $pollMilliseconds = 200
 $maximumWaitChecks = [int][Math]::Ceiling(($TimeoutSeconds * 1000.0) / $pollMilliseconds) + 1

@@ -1,0 +1,111 @@
+{
+  "actual": {
+    "denominator": 6,
+    "runtimeDenominator": 5,
+    "structuralDenominator": 1,
+    "passed": 6,
+    "cases": [
+      {
+        "case": "inventory-mutation",
+        "passed": true,
+        "scope": "STRUCTURAL_NEGATIVE_ONLY",
+        "nativeTargets": 0,
+        "wrapperInvoked": false
+      },
+      {
+        "case": "held-three-natural",
+        "passed": true,
+        "scope": "PRODUCTION_WRAPPER_OPT_IN",
+        "wrapperInvoked": true,
+        "primaryOutcome": "success",
+        "actualRootExit": 0,
+        "fullContainment": true,
+        "naturalExecution": true,
+        "wrapperFailure": null,
+        "actualReportSha256": "9E19456D0D7442A4629BB218BEC9A0DDE014E8845EF7B96AC7B5BF3A2482BCE5",
+        "metadataSha256": "56CDDBCC41720E9D787620CCCCBF1AA77C8B17CBCBA4116351CDF0178AACCBB9"
+      },
+      {
+        "case": "root-first-exit",
+        "passed": true,
+        "scope": "PRODUCTION_WRAPPER_OPT_IN",
+        "wrapperInvoked": true,
+        "primaryOutcome": "forced-descendant-reap",
+        "actualRootExit": 0,
+        "fullContainment": true,
+        "naturalExecution": false,
+        "wrapperFailure": "System.Management.Automation.RuntimeException: Contained invocation did not complete naturally: forced-descendant-reap. Actual report: D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v46\\production-controls\\root-first-exit\\actualreport.json",
+        "actualReportSha256": "AEFC511CD2EA636610C88C169512831896FCAF1A865CA926840D6CA19F1EA0CD",
+        "metadataSha256": "8ACD6A8E16A8055463DC6983AD1F8E14751F8EF3CE33C9C93498CB7A7564F65F"
+      },
+      {
+        "case": "timeout-three",
+        "passed": true,
+        "scope": "PRODUCTION_WRAPPER_OPT_IN",
+        "wrapperInvoked": true,
+        "primaryOutcome": "timeout",
+        "actualRootExit": 137,
+        "fullContainment": true,
+        "naturalExecution": false,
+        "wrapperFailure": "System.Management.Automation.RuntimeException: Contained invocation did not complete naturally: timeout. Actual report: D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v46\\production-controls\\timeout-three\\actualreport.json",
+        "actualReportSha256": "E8F42F1F7E6D6B782E8060470255271700D28F582A7C6CF26111D69DF3261291",
+        "metadataSha256": "E71DF0DFA360CF928AF75B2B47460974F24B0D1BBF140119C195D2EB930C5B54"
+      },
+      {
+        "case": "cancel-three",
+        "passed": true,
+        "scope": "PRODUCTION_WRAPPER_OPT_IN",
+        "wrapperInvoked": true,
+        "primaryOutcome": "cancelled",
+        "actualRootExit": 137,
+        "fullContainment": true,
+        "naturalExecution": false,
+        "wrapperFailure": "System.Management.Automation.RuntimeException: Contained invocation did not complete naturally: cancelled. Actual report: D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v46\\production-controls\\cancel-three\\actualreport.json",
+        "actualReportSha256": "2A766C6F449CC2A5597A48CFABBBEE98E6D19B5FCD2605F5F37D850296E3BA79",
+        "metadataSha256": "B281D68D1EF99F0FE3EF3E62B492CF486112EE84E9E103A1B8C612C2DBA45756"
+      },
+      {
+        "case": "transient-member",
+        "passed": true,
+        "scope": "PRODUCTION_WRAPPER_OPT_IN",
+        "wrapperInvoked": true,
+        "primaryOutcome": "runner-failure",
+        "actualRootExit": 0,
+        "fullContainment": false,
+        "naturalExecution": false,
+        "wrapperFailure": "System.Management.Automation.RuntimeException: Contained invocation did not complete naturally: runner-failure. Actual report: D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v46\\production-controls\\transient-member\\actualreport.json",
+        "actualReportSha256": "06446D660B9285228D955646B5A6E3B3F77AFA48E32DF8D859D4C9AD7188A955",
+        "metadataSha256": "C69ACF2438F9F25EB1DA00A18096A78896607FCB894589A771EA1D1F02F0EA70"
+      }
+    ],
+    "assemblySha256": "F4A52FBD5C82F6E9AA8E6EA1CB1CFE5B4CED8AF4AA5904DAE7A61FADE508616F",
+    "activeCap": 3,
+    "cumulativeCap": 3,
+    "linux": "UNKNOWN",
+    "fullP1Closure": false
+  },
+  "bindings": [
+    {
+      "sha256": "1BE9FFC7035A9C34DBEEE8EC6CDD02857A06B448FB3C055997BB3929CF05B147",
+      "path": "eng/Invoke-BoundedProcess.ps1"
+    },
+    {
+      "sha256": "3911E3B68E94AE877619BB944A5FAA9155AE1029F6F067DD9AE260E0462A43A2",
+      "path": "eng/WindowsProcessContainment.ps1"
+    },
+    {
+      "sha256": "121F5782EB0723E15FBA6D8D14232D3CA4BC10DB1C843DFE1107B3C6C9ECEFA0",
+      "path": "artifacts/p1-supervision/resume-root-v46/production-controls/controls.json"
+    }
+  ],
+  "limitations": [
+    "CapturePrefix rejected in explicit mode",
+    "Aggregate output cap has final check only",
+    "Linux containment UNKNOWN",
+    "Existing CI callers not migrated"
+  ],
+  "taskId": "P1-GATE.04.production-opt-in",
+  "fullP1Closure": false,
+  "scope": "WINDOWS_EXPLICIT_OPT_IN",
+  "legacyDefault": "parent-exit-only"
+}
