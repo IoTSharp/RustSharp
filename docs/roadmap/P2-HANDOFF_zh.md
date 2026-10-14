@@ -1113,3 +1113,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 Round56 P1-GATE.02库存组件 ✅ 已完成：本地严格构建及11项固定检查通过（四份原报告／112条有序ID与源码哈希、28项提案及六项新变异）。历史基线／八项变异保留且未重跑。[精确库存证据](../evidence/p1/strict-cleanup-inventory-v1.json)保留未批准提案及原28／168／56／callable7+2分母。这仅验证库存；生成清理语义与P1六门禁仍开放。
 
 Round56原句柄lease组件 ✅ 已完成：严格构建及真实Windows A1／A2／A3通过，包含强制异常与取消回收两个子项。[原生所有权证据](../evidence/p1/original-handle-lease-v1.json)绑定同一观察进程原句柄转移、接收方关闭、借用句柄存活及重复转移拒绝；历史分析器与路径前置条件失败保留。生产acquisition、生命周期祖先链、增长协调器及legacy8／dual3验收仍开放；active20／cumulative1024不变。
+
+Round56 P3-02.01协议候选组件 ✅ 已完成：启用trim／AOT分析的本地严格构建及24/24契约检查通过（八种消息、15项拒绝及调用方取消）。[候选证据](../evidence/p3/proc-wire-candidate-v1.json)仅覆盖精确版本、方向／类型、能力、字段及span；无transport／host／macro运行或全部预算边界证明。P3-01依赖未通过；P3正式叶子0/38、门禁0/4不变。

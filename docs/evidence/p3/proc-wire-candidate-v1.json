@@ -1,0 +1,40 @@
+{
+  "formalAcceptedGates": 0,
+  "formalAcceptedLeaves": 0,
+  "fullP3Closure": false,
+  "macroExecutions": 0,
+  "bindings": [
+    {
+      "path": "eng/prototypes/ProcWireCandidateV1/ProcWireCandidate.csproj",
+      "sha256": "9B2F33EF32B4941158D98C8F042DEAFE32E823F3F5A2F46AD0A5DBD26431D28A"
+    },
+    {
+      "path": "eng/prototypes/ProcWireCandidateV1/Contract.cs",
+      "sha256": "5C39B13AA67A325B0E6FA4749F967E3709C8914108C3295524958DF069C56FB4"
+    },
+    {
+      "path": "eng/prototypes/ProcWireCandidateV1/Program.cs",
+      "sha256": "5E1B9F820A123634FB072D5A85D8DD950F72E73C00C6F7374245040B28FB4708"
+    },
+    {
+      "path": "eng/prototypes/ProcWireCandidateV1/proc-wire.candidate.json",
+      "sha256": "9A2AB5F9EC3BD8CA1152E10F541A14F77C4D90BD253B8A3EC37DA886859299CC"
+    }
+  ],
+  "passed": 24,
+  "taskId": "P3-02.01.protocol-candidate",
+  "scope": "ISOLATED_JSON_CONTRACT_VALIDATOR_ONLY",
+  "tests": "artifacts/p1-supervision/resume-root-v56/calls/protocol-tests-3a2eec6ab79247dc803e9346ddc467fa/stdout.bin",
+  "positiveEnvelopeKinds": 8,
+  "hostExecutions": 0,
+  "testSha256": "D857C6609A82E5C9FA3D39F0C256A2EC90D4CC2D3EAC96085FD59E2DD1FB7EB5",
+  "denominator": 24,
+  "formalAcceptanceAllowed": false,
+  "negativeCases": 15,
+  "localSdk": "10.0.402",
+  "transportExecutions": 0,
+  "unmetDependency": "P3-01",
+  "callerCancellation": 1,
+  "integration": "Byte-identical isolated source snapshot; final-SHA CI pending",
+  "allResourceBoundariesProven": false
+}

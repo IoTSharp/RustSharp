@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "profile": "proc-wire-v1.candidate",
+  "candidateVersion": 1,
+  "protocolVersion": "rustsharp.proc-wire.candidate.v1",
+  "state": "candidate-design-only-prerequisite-unmet",
+  "leaf": "P3-02.01",
+  "hardDependencies": [
+    "P3-01",
+    "P0-04"
+  ],
+  "phasePredecessor": "P2-GATE",
+  "formalAcceptanceAllowed": false,
+  "acceptedP3Leaves": 0,
+  "P3LeafDenominator": 38,
+  "acceptedP3Gates": 0,
+  "P3GateDenominator": 4,
+  "macroCodeExecutions": 0,
+  "wireUnit": "One externally bounded UTF8 JSON object; no stream transport/framing implementation is claimed.",
+  "requiredEnvelopeFields": [
+    "protocolVersion",
+    "requestId",
+    "direction",
+    "kind",
+    "capabilities",
+    "documents",
+    "spans",
+    "tokens",
+    "diagnostics"
+  ],
+  "messageKinds": [
+    {
+      "kind": "hello",
+      "direction": "compiler-to-host",
+      "payload": "exact four candidate capabilities; all source/token/diagnostic arrays empty"
+    },
+    {
+      "kind": "ready",
+      "direction": "host-to-compiler",
+      "payload": "exact four candidate capabilities; all source/token/diagnostic arrays empty"
+    },
+    {
+      "kind": "expand",
+      "direction": "compiler-to-host",
+      "payload": "nonempty tokens/documents/spans; capabilities/diagnostics empty"
+    },
+    {
+      "kind": "expanded",
+      "direction": "host-to-compiler",
+      "payload": "nonempty tokens/documents/spans; capabilities/diagnostics empty"
+    },
+    {
+      "kind": "diagnostic",
+      "direction": "host-to-compiler",
+      "payload": "nonempty diagnostics; tokens/capabilities empty; optional bounded source spans"
+    },
+    {
+      "kind": "error",
+      "direction": "host-to-compiler",
+      "payload": "nonempty error-only diagnostics; tokens/capabilities empty; optional bounded source spans"
+    },
+    {
+      "kind": "cancel",
+      "direction": "compiler-to-host",
+      "payload": "all payload arrays empty"
+    },
+    {
+      "kind": "cancelled",
+      "direction": "host-to-compiler",
+      "payload": "all payload arrays empty"
+    }
+  ],
+  "capabilities": [
+    "token-tree-v1",
+    "span-v1",
+    "diagnostics-v1",
+    "cancellation-v1"
+  ],
+  "unsupportedCapabilities": [
+    "filesystem-read",
+    "filesystem-write",
+    "environment-read",
+    "network",
+    "process-spawn",
+    "dynamic-code",
+    "arbitrary-assembly-load"
+  ],
+  "capabilityPolicy": "Only the four explicit values; exactly all four at hello/ready, none in later messages; unknown and duplicate values reject. No capability grants a trusted runtime.",
+  "documents": {
+    "required": [
+      "id",
+      "utf16Length"
+    ],
+    "id": "nonempty opaque UTF8 text <=64bytes",
+    "utf16Length": "integer 0..65536",
+    "duplicateId": "reject"
+  },
+  "spans": {
+    "required": [
+      "documentId",
+      "start",
+      "length"
+    ],
+    "unit": "UTF16 offsets in declared document, not filesystem lookup",
+    "bounds": "document exists; start>=0; length>=0; start<=documentLength-length; no arithmetic overflow"
+  },
+  "tokens": {
+    "required": [
+      "kind",
+      "text",
+      "spanIndex"
+    ],
+    "kinds": [
+      "identifier",
+      "literal",
+      "punctuation",
+      "open",
+      "close"
+    ],
+    "text": "nonempty nonwhitespace <=256 UTF8bytes; spelling is opaque at this JSON boundary, not a Rust grammar acceptance claim",
+    "spanIndex": "0<=index<spans.count",
+    "delimiters": "open/close have one matching (),[],{} character and balanced depth<=16"
+  },
+  "diagnostics": {
+    "required": [
+      "severity",
+      "code",
+      "message",
+      "spanIndex"
+    ],
+    "severity": [
+      "error",
+      "warning",
+      "note"
+    ],
+    "code": "nonempty <=64 UTF8bytes",
+    "message": "nonempty <=2048 UTF8bytes",
+    "spanIndex": "-1 for no span, otherwise valid spans index"
+  },
+  "budgets": {
+    "maximumFrameBytes": 65536,
+    "maximumTokens": 256,
+    "maximumSpans": 256,
+    "maximumDocuments": 8,
+    "maximumDiagnostics": 16,
+    "maximumTokenBytes": 256,
+    "maximumDiagnosticBytes": 2048,
+    "maximumJsonDepth": 12,
+    "maximumDelimiterDepth": 16,
+    "maximumOperations": 8192,
+    "validationTimeoutMilliseconds": 1000,
+    "harnessMaximumCases": 24,
+    "harnessDeadlineMilliseconds": 10000
+  },
+  "proposedHostBudgetsNotImplemented": {
+    "maximumActiveRequests": 1,
+    "maximumHostProcesses": 1,
+    "maximumChildren": 0,
+    "maximumTemporaryBytes": 1048576,
+    "requestTimeoutMilliseconds": 2000,
+    "maximumResidentBytes": 134217728,
+    "filesystemAllowlist": [],
+    "environmentAllowlist": [],
+    "networkAllowed": false,
+    "enforcement": "NOT_IMPLEMENTED_NOT_RUN"
+  },
+  "diagnosticCodes": {
+    "RSPROC1001": "Unsupported capability",
+    "RSPROC1002": "Unsupported exact protocol version",
+    "RSPROC1090": "Malformed, bounded-out or incompatible wire object"
+  },
+  "caseDenominator": 24,
+  "positiveCases": 8,
+  "negativeMutationCases": 15,
+  "cancellationCases": 1,
+  "cases": [
+    {
+      "id": "hello-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "ready-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "expand-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "expanded-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "diagnostic-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "error-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "cancel-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "cancelled-positive",
+      "kind": "positive",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "empty-request-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "version-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "direction-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "kind-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "unknown-capability-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "duplicate-capability-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "unknown-field-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "duplicate-json-field-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "span-overflow-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "negative-span-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "missing-document-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "frame-byte-limit-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "token-byte-limit-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "null-diagnostic-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "caller-cancellation-propagates",
+      "kind": "cancellation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    },
+    {
+      "id": "unknown-token-field-reject",
+      "kind": "negative-mutation",
+      "execution": "NOT_RUN_ROOT_OWNED"
+    }
+  ],
+  "providerVersion": "NOT_SELECTED",
+  "crateVersions": [],
+  "gaps": [
+    "P3-01 formal dependency unmet",
+    "P2-GATE remains open",
+    "Binary stream framing/transport not selected or implemented",
+    "No SDK/provider/crate/runtime version selected",
+    "Stateless object checks do not correlate request lifetimes or attest host identity",
+    "Host trust boundary, resource enforcement and cleanup NOT_RUN",
+    "No native host process or macro code execution",
+    "No formal P3-02.01 acceptance"
+  ]
+}
