@@ -1,0 +1,13 @@
+{
+  "tests": "artifacts/p1-supervision/resume-root-v47/calls/p3-location-tests-614f666641f749a89ea17e3e49276a8e/capture-receipt.json",
+  "passed": 29,
+  "fullP3Closure": false,
+  "executed": 29,
+  "productionExpansions": 0,
+  "sourceSha256": "B48254F7F474315ECA4D0B90926FE181F65EC3D14B3EAE70D68B81A83E137E62",
+  "formalAcceptedLeaves": 0,
+  "fullCandidateDenominator": 82,
+  "taskId": "P3-01.location-prototype",
+  "testSourceSha256": "397D4B485C4C4280DEE4948A4009F1140CAA931F970FF9E7E26111984EE0EAF4",
+  "fullCandidateCasesExecuted": 0
+}
