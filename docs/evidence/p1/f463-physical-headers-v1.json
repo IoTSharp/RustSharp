@@ -1,0 +1,51 @@
+{
+  "sourceReportSha256": "7D74ED70251B60C049EEAD55F6F00301B78646A5807746876D0827E2193F413F",
+  "denominator": 236,
+  "schemaVersion": 1,
+  "sourceReport": "artifacts/p1-supervision/resume-root-v44/header-review.json",
+  "script": "artifacts/p1-supervision/resume-root-v44/Inspect-FrozenHeaders.ps1",
+  "failed": 0,
+  "scope": "STATIC_PE_ELF_HEADERS_ONLY",
+  "taskId": "P1-GATE.03.frozen-header-review",
+  "scriptSha256": "CC3207EF1287D9D2F2D6F3356F7D2B7A0FEEEE347CEEDC76ADE9E04BFB6E3B0B",
+  "rules": [
+    "Managed PE machine0x14c/PE32, CLI>=72bytes, ILONLY true/32BITREQUIRED false",
+    "Windows native PE machine0x8664/PE32+, CLI directory absent",
+    "Linux native ELF64/little endian/machine62"
+  ],
+  "byKind": [
+    {
+      "kind": "callable-native",
+      "count": 4
+    },
+    {
+      "kind": "native-aot",
+      "count": 56
+    },
+    {
+      "kind": "oracle",
+      "count": 56
+    },
+    {
+      "kind": "original-pe",
+      "count": 60
+    },
+    {
+      "kind": "runtime",
+      "count": 60
+    }
+  ],
+  "containmentSixControls": {
+    "accepted": false,
+    "root": "artifacts/p1-supervision/resume-root-v44",
+    "failed": 3,
+    "passed": 3
+  },
+  "fullP1Closure": false,
+  "runtimeExecuted": 0,
+  "candidateSha": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "checked": 236,
+  "run": "38515250985",
+  "historicalFailuresRetained": true,
+  "witnessMetadataDeepReview": "NOT_RUN"
+}
