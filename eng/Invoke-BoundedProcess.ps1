@@ -22,9 +22,11 @@ $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 or newer is required.' }
 if ($RequireFullContainment) {
     $CancellationToken.ThrowIfCancellationRequested()
-    if ($CapturePrefix) { throw 'Full containment requires explicit caller-lease raw output paths; CapturePrefix compatibility is not implemented.' }
-    & (Join-Path $PSScriptRoot 'WindowsProcessContainment.ps1') -FilePath $FilePath -ArgumentList $ArgumentList -WorkingDirectory $WorkingDirectory -TimeoutSeconds $TimeoutSeconds -MaximumOutputBytes $MaximumOutputBytes -CancellationToken $CancellationToken -ContainmentAssemblyPath $ContainmentAssemblyPath -ContainmentAssemblySha256 $ContainmentAssemblySha256 -CallerLeaseRoot $CallerLeaseRoot -CallerLease $CallerLease -MaximumActiveProcesses $MaximumActiveProcesses -MaximumTotalProcesses $MaximumTotalProcesses -ContainmentPollingMilliseconds $ContainmentPollingMilliseconds
+    & (Join-Path $PSScriptRoot 'WindowsProcessContainment.ps1') -FilePath $FilePath -ArgumentList $ArgumentList -WorkingDirectory $WorkingDirectory -TimeoutSeconds $TimeoutSeconds -MaximumOutputBytes $MaximumOutputBytes -CancellationToken $CancellationToken -CapturePrefix $CapturePrefix -ContainmentAssemblyPath $ContainmentAssemblyPath -ContainmentAssemblySha256 $ContainmentAssemblySha256 -CallerLeaseRoot $CallerLeaseRoot -CallerLease $CallerLease -MaximumActiveProcesses $MaximumActiveProcesses -MaximumTotalProcesses $MaximumTotalProcesses -ContainmentPollingMilliseconds $ContainmentPollingMilliseconds
     return
+}
+if ($PSBoundParameters.ContainsKey('ContainmentAssemblyPath') -or $PSBoundParameters.ContainsKey('ContainmentAssemblySha256') -or $PSBoundParameters.ContainsKey('CallerLeaseRoot') -or $PSBoundParameters.ContainsKey('CallerLease')) {
+    throw 'Containment parameters require explicit RequireFullContainment; fallback was not authorized.'
 }
 $terminationWaitMilliseconds = 5000
 $pollMilliseconds = 200

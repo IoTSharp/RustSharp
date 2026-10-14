@@ -1,0 +1,148 @@
+{
+  "taskId": "P1-GATE.04.windows-production-module",
+  "scope": "Explicit opt-in Windows x64 bounded component only; no phase closure",
+  "controls": "artifacts/p1-supervision/resume-root-v50/production-controls/controls.json",
+  "controlsSha256": "32A408B94D7EF0E9FF614CAE0D5D7883AC2C02D0D3C72BE9929A4E1F4F30CB59",
+  "denominator": 8,
+  "runtimeControls": 7,
+  "structuralControls": 1,
+  "passed": 8,
+  "activeCap": 3,
+  "cumulativeCap": 3,
+  "independentActualReports": [
+    {
+      "fullContainment": true,
+      "rootExit": 0,
+      "natural": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v50\\production-controls\\held-three-natural\\actualreport.json",
+      "sha256": "E2F87A2EF6A29793999D2ABDF197BED3C17B01D224DCB748CBB03F30C7AF314F",
+      "executionSucceeded": true,
+      "members": 3,
+      "total": 3,
+      "case": "held-three-natural",
+      "forced": false,
+      "wholeJobZero": true
+    },
+    {
+      "fullContainment": true,
+      "rootExit": 0,
+      "natural": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v50\\production-controls\\root-first-exit\\actualreport.json",
+      "sha256": "0A0D0B18A59582EAF5213F445333351588A413F1F8D0754E2594011F4A45709F",
+      "executionSucceeded": false,
+      "members": 3,
+      "total": 3,
+      "case": "root-first-exit",
+      "forced": true,
+      "wholeJobZero": true
+    },
+    {
+      "fullContainment": true,
+      "rootExit": 137,
+      "natural": false,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v50\\production-controls\\timeout-three\\actualreport.json",
+      "sha256": "9606930E8CA6D0157B0C3A3A3E8CB6719CFBC759628E27D5AA896FA1962414C8",
+      "executionSucceeded": false,
+      "members": 3,
+      "total": 3,
+      "case": "timeout-three",
+      "forced": true,
+      "wholeJobZero": true
+    },
+    {
+      "fullContainment": true,
+      "rootExit": 137,
+      "natural": false,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v50\\production-controls\\cancel-three\\actualreport.json",
+      "sha256": "DE49B7074AB1493DCE03F87638D6961A7F4AEBAF95796291E426FEC7F6EAA456",
+      "executionSucceeded": false,
+      "members": 3,
+      "total": 3,
+      "case": "cancel-three",
+      "forced": true,
+      "wholeJobZero": true
+    },
+    {
+      "fullContainment": false,
+      "rootExit": 0,
+      "natural": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v50\\production-controls\\transient-member\\actualreport.json",
+      "sha256": "07AEE0383F82D2F5D43959034CCE59005D110191F368D007A1CA0481787D1938",
+      "executionSucceeded": false,
+      "members": 1,
+      "total": 2,
+      "case": "transient-member",
+      "forced": false,
+      "wholeJobZero": true
+    },
+    {
+      "fullContainment": true,
+      "rootExit": 137,
+      "natural": false,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v50\\production-controls\\paired-stream-budget\\actualreport.json",
+      "sha256": "7ECCED47457018A922B19C51F25AF0C3FB108722808A4E634B7F4115C3664462",
+      "executionSucceeded": false,
+      "members": 3,
+      "total": 3,
+      "case": "paired-stream-budget",
+      "forced": true,
+      "wholeJobZero": true
+    },
+    {
+      "fullContainment": true,
+      "rootExit": 0,
+      "natural": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v50\\production-controls\\captureprefix-binary\\actualreport.json",
+      "sha256": "3DA46A418311B764352CABD49DAFAD25B147942EEAA6280B667F7B593EF5698D",
+      "executionSucceeded": true,
+      "members": 3,
+      "total": 3,
+      "case": "captureprefix-binary",
+      "forced": false,
+      "wholeJobZero": true
+    }
+  ],
+  "independentExactIdentitiesAbsent": 20,
+  "unknownNegativeExtraChecks": "native cmd exit0; fixture root exit0/natural; no forced reap; consecutive sequence2to3; native birth/terminal strictly between observations;Total2 retained1/fullfalse",
+  "argvComparison": "artifacts/p1-supervision/resume-root-v50/argv-real/comparison.json",
+  "argvStandardOldCandidateExit": [
+    0,
+    1,
+    0
+  ],
+  "argvRoundtrips": 8,
+  "librarySha256": "F3CE9940E5C52A1439E7CA1804C846932FADAB24596F42366884D74059AFD9B3",
+  "sourceFiles": [
+    {
+      "sha256": "2462ED61B33624A8ED6D5F7A56FD831A758C5D5A4CB7B18A652A57037AF7BD02",
+      "path": "D:\\GitHub\\RustSharp\\eng\\RustSharp.ProcessContainment\\Capture.cs"
+    },
+    {
+      "sha256": "D877B0277CC72D2081DEDDB35452FCA9EFB1FF6120BD80122F65CEFE2AD46AF9",
+      "path": "D:\\GitHub\\RustSharp\\eng\\RustSharp.ProcessContainment\\FullTreeRunner.cs"
+    },
+    {
+      "sha256": "40E0FF72E68869ECEE41BDB94B617DC5F9675CA23125E1DCC5F3D1D15F20B1D7",
+      "path": "D:\\GitHub\\RustSharp\\eng\\RustSharp.ProcessContainment\\Launcher.cs"
+    },
+    {
+      "sha256": "39D060E154E4F005EB0183419A4EC72F628318116C31EDA5346FDCF2A48CE9E5",
+      "path": "D:\\GitHub\\RustSharp\\eng\\RustSharp.ProcessContainment\\Native.cs"
+    },
+    {
+      "sha256": "3780A3D34B7AE16BEFDCE18DCD937D3EBC158FC26A364F65C6FA93FADD51A054",
+      "path": "D:\\GitHub\\RustSharp\\eng\\RustSharp.ProcessContainment\\RustSharp.ProcessContainment.csproj"
+    }
+  ],
+  "wrapperSha256": "90C62A53F39CE745189207E0B980917015C818A2AE7222B4A2335179E9649322",
+  "helperSha256": "7CB84DFD46DE8F4FD930D8B613783662ECEF021EDA3BB5CFC8FDCA2E61D6176A",
+  "buildSdk": "10.0.402",
+  "linux": "UNKNOWN",
+  "historicalP1Containment": "parent-exit-only",
+  "oldFailuresPreserved": [
+    "resume-root-v47",
+    "resume-root-v48"
+  ],
+  "fullP1Closure": false,
+  "formalP1GateAccepted": false
+}

@@ -7,10 +7,10 @@
 ## 当前监督入口 — 2026-10-14
 
 🚧 进行中：唯一新监督者为会话
-`01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
+`01a13917-a6b4-78e0-bd31-44600dd87b79`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v42/resumption.json`。
+`artifacts/p1-supervision/resume-root-v50/resumption.json`。
 
 第38轮新鲜Windows formatter集成在限定组件范围内为 ✅ 已完成：严格solution/driver构建零警告/零错误，完整formatter59/59、契约18/18、真实Windows CLI8/8及原生信号1/1通过。[新鲜集成证据](../evidence/p2/formatter-fresh-native-integration-v1.json)绑定精确工作树源码/DLL/PDB/driver哈希、实际pending995、自然130、原生Join/close及outer3→0；三个精确进程身份已独立确认不存在。旧outer骨架proof字段仍为false，不用它们替代已核哈希child证据。此前provenance拒绝仍未定位，尽管实际编译GitAsync返回997项且匹配原始raw哈希；未提高cap。新clean-SHA CI/Linux、完整取消/containment及完整59/91叶项合同仍开放，P2保持8/101。
 
@@ -1079,3 +1079,7 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 限定审查组件 ✅ 已完成：f463ac8/run38515250985/attempt1 的全部14组保留 native-host 源码/项目及14份 runtimeconfig，770/770字段匹配。Root 独立检查每份真实 runtimeconfig、精确 host 文本及项目结构、报告绑定和冻结源码合同。[审查证明](../evidence/p1/f463-host-runtimeconfig-review-v1.json)保留首次失败审计，并明确保留30项真实未知 PE/PDB/手工 MIR 结构组件。没有执行或重编译原始二进制。P1仍 🚧 进行中，六门禁开放；P2保持8/101，P3正式验收保持0/38及0/4门禁。全部阶段闭环标志仍为false。唯一监督会话为 `01a13917-a6b4-78e0-bd31-44600dd87b79`，检查点为 `artifacts/p1-supervision/resume-root-v49/resumption.json`；旧监督会话停止派工。
 
 第49轮 P3-01 规则解析原型组件 ✅ 已完成：保留 CA1859 失败后，本地 SDK10.0.402 严格 Release 构建及固定24/24测试通过。真实 lexer/token tree 产出源码范围、规则臂、ident/literal/tt捕获及嵌套/分隔重复结构，拒绝和取消均有界。[原型证明](../evidence/p3/macros-rule-parser-prototype-v1.json)不声称调用匹配、替换、展开、卫生性、歧义/基数语义、固定SDK CI或82项完整编译器用例。P3仍 🚧 进行中；正式叶子0/38、门禁0/4及前置依赖不变。P1 argv候选与真实三方probe仍NOT_RUN；生产containment模块未提交且未验收。
+
+## 第50轮：Windows 生产 containment 模块
+
+显式 Windows opt-in 组件 ✅ 已完成：新鲜严格库/夹具构建与全部8项控制通过（7项真实运行、1项结构变异）。真实cmd三方对照的标准/旧/候选序列化退出码为0/1/0，8种特殊参数往返精确匹配。[独立root证明](../evidence/p1/windows-production-containment-v2.json)检查全部7份实际报告及20个精确身份均不存在。瞬时子进程和夹具自然退出0；birth/terminal严格位于连续观测2→3之间，Total2/保留1仍按失败关闭/fullfalse处理。stdout+stderr合计实时预算及二进制CapturePrefix兼容通过，进程上限未改；保留第47/48轮失败。库项目为 `eng/RustSharp.ProcessContainment/RustSharp.ProcessContainment.csproj`；调用者须构建并绑定精确DLL哈希及显式lease/caps。Linux containment仍UNKNOWN，历史CI仍parent-exit-only，此组件不关闭任何P1门禁。P1仍 🚧 进行中、六门禁开放；P2保持8/101；P3正式叶子0/38、门禁0/4；全部阶段闭环标志仍false。
