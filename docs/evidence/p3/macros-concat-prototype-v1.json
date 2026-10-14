@@ -1,0 +1,22 @@
+{
+  "formalAcceptedLeaves": 0,
+  "tests": "artifacts/p1-supervision/resume-root-v46/calls/p3-concat-tests-6ba0821361ac4398a9715075b86c45c6/capture-receipt.json",
+  "fullCandidateCasesExecuted": 0,
+  "bindings": [
+    {
+      "sha256": "00CEF2C77AA7408B9D3BDE831E93E52080B0E4CCF81A40271DBED02621764EDD",
+      "path": "tools/RustSharp.Conformance/P3MacroConcatPrototype.cs"
+    },
+    {
+      "sha256": "389852D4AF85ACA84389EFF5A1DF4F2C3CC5CED48C42BCCF15497E0098C95A1A",
+      "path": "tests/RustSharp.Tests/P3MacroConcatPrototypeTests.cs"
+    }
+  ],
+  "fullP3Closure": false,
+  "taskId": "P3-01.concat-prototype",
+  "productionExpansions": 0,
+  "executed": 33,
+  "fullCandidateDenominator": 82,
+  "fixedTests": 33,
+  "passed": 33
+}
