@@ -1,0 +1,346 @@
+{
+  "sameJobBinding": "ReferenceEquals original JobLease token, not raw handle value",
+  "integration": "Byte-identical tested snapshot; final-SHA CI pending",
+  "growthReconciliationAccepted": false,
+  "fullP1Closure": false,
+  "nativePassed": 2,
+  "bindings": [
+    {
+      "sha256": "6FBF03490A7DC0B859CB9D6713807AD30E18EDD7C0E0D0FB91E78C52D6648533",
+      "path": "eng/prototypes/ParentLifetimeV1/ParentFixture.csproj"
+    },
+    {
+      "sha256": "77DEEDD2CC19D8727CDD7E99FE0AC1E29402962D158D815C78F07B39DBD4FEDB",
+      "path": "eng/prototypes/ParentLifetimeV1/ParentLifetime.cs"
+    },
+    {
+      "sha256": "1AAEAB29A8EF113556827E55EE4065CEA7A7011359142610ECEB857DEF327989",
+      "path": "eng/prototypes/ParentLifetimeV1/Program.cs"
+    },
+    {
+      "sha256": "39D060E154E4F005EB0183419A4EC72F628318116C31EDA5346FDCF2A48CE9E5",
+      "path": "eng/prototypes/ParentLifetimeV1/Core/Native.cs"
+    },
+    {
+      "sha256": "ACC2F90DFBE6988B35667C9B86739F9C8827AD65BAC2372F0A24AF9C2FEEBEAA",
+      "path": "eng/prototypes/ParentLifetimeV1/Core/Launcher.cs"
+    }
+  ],
+  "syntheticUniqueDenominator": 8,
+  "dualBudgetAccepted": false,
+  "legacyEightRerun": false,
+  "localSdk": "10.0.402",
+  "scope": "NATIVE_FIXTURE_RETAINED_HANDLE_CHAIN_ONLY",
+  "originalFailurePreserved": "Round57 pre-token build; no final token runtime existed before Round58",
+  "reports": [
+    {
+      "case": "held",
+      "proof": {
+        "Accepted": true,
+        "Reason": "complete-original-root-lifetime-chain",
+        "ChildToRoot": [
+          {
+            "Pid": 88532,
+            "CreationFileTime": 134364617764647796,
+            "ParentPid": 14264,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target child held D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-held Local\\RustSharp.Parent.e808e1325a0f4ff9b71018e32d6d83b6 e808e1325a0f4ff9b71018e32d6d83b6"
+          },
+          {
+            "Pid": 14264,
+            "CreationFileTime": 134364617761692088,
+            "ParentPid": 26216,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target parent held D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-held Local\\RustSharp.Parent.e808e1325a0f4ff9b71018e32d6d83b6 e808e1325a0f4ff9b71018e32d6d83b6"
+          },
+          {
+            "Pid": 26216,
+            "CreationFileTime": 134364617758576694,
+            "ParentPid": 74520,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target root held D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-held Local\\RustSharp.Parent.e808e1325a0f4ff9b71018e32d6d83b6 e808e1325a0f4ff9b71018e32d6d83b6"
+          }
+        ]
+      },
+      "path": "artifacts/p1-supervision/resume-root-v58/parent-held/report.json",
+      "syntheticNegatives": [
+        {
+          "Name": "missing-parent",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "missing-retained-parent"
+        },
+        {
+          "Name": "child-before-parent-birth",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "child-before-parent-birth"
+        },
+        {
+          "Name": "child-after-parent-exit",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "child-after-parent-lifetime"
+        },
+        {
+          "Name": "equal-parent-child-birth",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "equal-birth-ambiguity"
+        },
+        {
+          "Name": "equal-child-birth-parent-exit",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "equal-upper-ambiguity"
+        },
+        {
+          "Name": "duplicate-pid-lifetimes",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "duplicate-pid-lifetimes"
+        },
+        {
+          "Name": "cycle",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "parent-cycle"
+        },
+        {
+          "Name": "cross-job-token",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "cross-job-token"
+        }
+      ],
+      "nativeRows": [
+        {
+          "Identity": {
+            "Pid": 26216,
+            "CreationFileTime": 134364617758576694,
+            "ParentPid": 74520,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target root held D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-held Local\\RustSharp.Parent.e808e1325a0f4ff9b71018e32d6d83b6 e808e1325a0f4ff9b71018e32d6d83b6"
+          },
+          "Birth": 134364617758576694,
+          "Exit": 0,
+          "ObservedStarted": 134364617768054347,
+          "ObservedFinished": 134364617768054490,
+          "Terminal": false,
+          "OriginalIdentityAndJobVerified": true,
+          "EvidenceKind": "native-retained-original",
+          "OriginalHandle": 756
+        },
+        {
+          "Identity": {
+            "Pid": 14264,
+            "CreationFileTime": 134364617761692088,
+            "ParentPid": 26216,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target parent held D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-held Local\\RustSharp.Parent.e808e1325a0f4ff9b71018e32d6d83b6 e808e1325a0f4ff9b71018e32d6d83b6"
+          },
+          "Birth": 134364617761692088,
+          "Exit": 0,
+          "ObservedStarted": 134364617768054505,
+          "ObservedFinished": 134364617768054652,
+          "Terminal": false,
+          "OriginalIdentityAndJobVerified": true,
+          "EvidenceKind": "native-retained-original",
+          "OriginalHandle": 824
+        },
+        {
+          "Identity": {
+            "Pid": 88532,
+            "CreationFileTime": 134364617764647796,
+            "ParentPid": 14264,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target child held D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-held Local\\RustSharp.Parent.e808e1325a0f4ff9b71018e32d6d83b6 e808e1325a0f4ff9b71018e32d6d83b6"
+          },
+          "Birth": 134364617764647796,
+          "Exit": 0,
+          "ObservedStarted": 134364617768054667,
+          "ObservedFinished": 134364617768054833,
+          "Terminal": false,
+          "OriginalIdentityAndJobVerified": true,
+          "EvidenceKind": "native-retained-original",
+          "OriginalHandle": 828
+        }
+      ],
+      "terminal": [
+        {
+          "Terminal": true,
+          "BirthVerified": true,
+          "ExitCode": 0,
+          "Checks": 1,
+          "ElapsedMilliseconds": 26
+        },
+        {
+          "Terminal": true,
+          "BirthVerified": true,
+          "ExitCode": 0,
+          "Checks": 1,
+          "ElapsedMilliseconds": 0
+        },
+        {
+          "Terminal": true,
+          "BirthVerified": true,
+          "ExitCode": 0,
+          "Checks": 1,
+          "ElapsedMilliseconds": 0
+        }
+      ],
+      "sha256": "4DD2F4A1579A2A609C383A1EBA9A518D1935CDDCF1E798A54C1FE96A88E4CDD1"
+    },
+    {
+      "case": "exited",
+      "proof": {
+        "Accepted": true,
+        "Reason": "complete-original-root-lifetime-chain",
+        "ChildToRoot": [
+          {
+            "Pid": 80256,
+            "CreationFileTime": 134364617781144982,
+            "ParentPid": 77904,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target child exited D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-exited Local\\RustSharp.Parent.7e038a0f128749e6a9d605797b802f94 7e038a0f128749e6a9d605797b802f94"
+          },
+          {
+            "Pid": 77904,
+            "CreationFileTime": 134364617778368648,
+            "ParentPid": 41368,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target parent exited D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-exited Local\\RustSharp.Parent.7e038a0f128749e6a9d605797b802f94 7e038a0f128749e6a9d605797b802f94"
+          },
+          {
+            "Pid": 41368,
+            "CreationFileTime": 134364617775564065,
+            "ParentPid": 79272,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target root exited D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-exited Local\\RustSharp.Parent.7e038a0f128749e6a9d605797b802f94 7e038a0f128749e6a9d605797b802f94"
+          }
+        ]
+      },
+      "path": "artifacts/p1-supervision/resume-root-v58/parent-exited/report.json",
+      "syntheticNegatives": [
+        {
+          "Name": "missing-parent",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "missing-retained-parent"
+        },
+        {
+          "Name": "child-before-parent-birth",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "child-before-parent-birth"
+        },
+        {
+          "Name": "child-after-parent-exit",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "child-after-parent-lifetime"
+        },
+        {
+          "Name": "equal-parent-child-birth",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "equal-birth-ambiguity"
+        },
+        {
+          "Name": "equal-child-birth-parent-exit",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "equal-upper-ambiguity"
+        },
+        {
+          "Name": "duplicate-pid-lifetimes",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "duplicate-pid-lifetimes"
+        },
+        {
+          "Name": "cycle",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "parent-cycle"
+        },
+        {
+          "Name": "cross-job-token",
+          "EvidenceKind": "synthetic-structural-only",
+          "Rejected": true,
+          "Reason": "cross-job-token"
+        }
+      ],
+      "nativeRows": [
+        {
+          "Identity": {
+            "Pid": 41368,
+            "CreationFileTime": 134364617775564065,
+            "ParentPid": 79272,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target root exited D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-exited Local\\RustSharp.Parent.7e038a0f128749e6a9d605797b802f94 7e038a0f128749e6a9d605797b802f94"
+          },
+          "Birth": 134364617775564065,
+          "Exit": 0,
+          "ObservedStarted": 134364617785324893,
+          "ObservedFinished": 134364617785325799,
+          "Terminal": false,
+          "OriginalIdentityAndJobVerified": true,
+          "EvidenceKind": "native-retained-original",
+          "OriginalHandle": 744
+        },
+        {
+          "Identity": {
+            "Pid": 77904,
+            "CreationFileTime": 134364617778368648,
+            "ParentPid": 41368,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target parent exited D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-exited Local\\RustSharp.Parent.7e038a0f128749e6a9d605797b802f94 7e038a0f128749e6a9d605797b802f94"
+          },
+          "Birth": 134364617778368648,
+          "Exit": 134364617785186667,
+          "ObservedStarted": 134364617785325916,
+          "ObservedFinished": 134364617785325972,
+          "Terminal": true,
+          "OriginalIdentityAndJobVerified": true,
+          "EvidenceKind": "native-retained-original",
+          "OriginalHandle": 812
+        },
+        {
+          "Identity": {
+            "Pid": 80256,
+            "CreationFileTime": 134364617781144982,
+            "ParentPid": 77904,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-lifetime-build\\bin\\ParentFixture.dll target child exited D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v58\\parent-exited Local\\RustSharp.Parent.7e038a0f128749e6a9d605797b802f94 7e038a0f128749e6a9d605797b802f94"
+          },
+          "Birth": 134364617781144982,
+          "Exit": 0,
+          "ObservedStarted": 134364617785325979,
+          "ObservedFinished": 134364617785327188,
+          "Terminal": false,
+          "OriginalIdentityAndJobVerified": true,
+          "EvidenceKind": "native-retained-original",
+          "OriginalHandle": 816
+        }
+      ],
+      "terminal": [
+        {
+          "Terminal": true,
+          "BirthVerified": true,
+          "ExitCode": 0,
+          "Checks": 1,
+          "ElapsedMilliseconds": 22
+        },
+        {
+          "Terminal": true,
+          "BirthVerified": true,
+          "ExitCode": 0,
+          "Checks": 1,
+          "ElapsedMilliseconds": 0
+        },
+        {
+          "Terminal": true,
+          "BirthVerified": true,
+          "ExitCode": 0,
+          "Checks": 1,
+          "ElapsedMilliseconds": 0
+        }
+      ],
+      "sha256": "A71567B6A2F185CA9760BAB9F70C5724EECC3EAE6AB236AE52C2D26B5D052583"
+    }
+  ],
+  "nativeDenominator": 2,
+  "rustsharpGeneratedPrograms": 0,
+  "syntheticExecutions": 16,
+  "productionIntegrated": false,
+  "taskId": "P1-GATE.04.parent-lifetime-B"
+}
