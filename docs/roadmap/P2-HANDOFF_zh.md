@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v38/resumption.json`。
+`artifacts/p1-supervision/resume-root-v39/resumption.json`。
+
+第35轮稳定发布身份限定组件为 ✅ 已完成：本机SDK10.0.402严格全构建零警告/零错误，原生Windows与Ubuntu各通过publication21/21、命令API20/20、真实workspace子进程8/8；98/98已执行，失败/跳过/未运行均为0。[精确组件证据](../evidence/p2/documentation-stableidentity-v1.json)绑定10项源码、6份DLL/PDB、全部有序报告和16个子进程身份，并保留此前Linux20/21失败。Linux采用持续持有O_PATH描述符与原生稳定身份；替换oracle通过真实搬移原件和新建空目录证明替换，不操作时间戳。完整叶子、同进程运行FD泄漏证明、固定SDK400的新精确SHA CI及原始containment仍分列。Formatter v7源码补齐PID身份交接缺口，待监督者严格构建/原生验收。P1目标Drop案例不在d2源码/后端矩阵中；NativeV2实现已存在，须先对账历史v5原始证据再决定新执行。检查点v39；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
 第34轮仍为 🚧 进行中。精确PID63500资源查询组件为 ✅ 已完成：12:02:22独立原生OpenProcess返回87，与单PID查询不存在一致；历史UNKNOWN与Job5→0分别保留，不编造退出时间/退出码，不执行kill。[限定范围的监督复核](../evidence/p1/conhost63500-root-review-v1.json)保留两份原始收据。生产稳定身份源码已集成但未提交：本机新观察到SDK10.0.402，严格全构建零警告/零错误，Windows publication21/API20/workspace8全部通过。真实Linux publication已执行全部21项，20通过/1失败：旧替换目录测试前置条件比较.NET创建时间，在产品负向断言前失败。Linux API20/workspace8为NOT_RUN；不验收、不提交生产源码。头文件首次超时/自动变量错误及无效patch均保留。Formatter v5证明HWND归driver，而其自有job有独立conhost；v6改从真实job核身份仍仅源码。P1 NativeV2已有Linux析构清理分支，精确profile/案例执行仍未核。检查点v38；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 

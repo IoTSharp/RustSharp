@@ -2,6 +2,7 @@
   <PropertyGroup>
     <Description>RustSharp compiler pipeline.</Description>
     <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../RustSharp.Syntax/RustSharp.Syntax.csproj" />

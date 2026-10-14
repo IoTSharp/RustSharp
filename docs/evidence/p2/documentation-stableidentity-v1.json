@@ -1,0 +1,514 @@
+{
+  "failed": 0,
+  "archive": "documentation-stableidentity-v1.zip",
+  "windowsOwnedJobFinalZero": true,
+  "at": "2026-10-14T12:41:02.5875390+08:00",
+  "binaryHashes": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\stable-doc-bin\\RustSharp.Tests.dll",
+      "sha256": "2CCAAC9084796823FE1E3BA5361176A347CDD0B55EEA914C14903BF403316342"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\stable-doc-bin\\RustSharp.Tests.pdb",
+      "sha256": "CBCC6145A784A81A535AF9D796CD99C7D6CFD532F95A168615F14EA9E9266E5F"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\stable-doc-bin\\rsc.dll",
+      "sha256": "25137DE99FA86177DD715EF35C8CA8BDC9DA242E56523926837EA247F8807BFB"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\stable-doc-bin\\rsc.pdb",
+      "sha256": "870F670A08E10FA49AFF8C0CCDCA4B0794BDCC2B98A17CDD0923C588E0D280AC"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\stable-doc-bin\\RustSharp.Compiler.dll",
+      "sha256": "4EB9757A4C5FDF3C33EFD918DB3182C3F3B64B9157FC0C3F77C58D96667BB406"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\stable-doc-bin\\RustSharp.Compiler.pdb",
+      "sha256": "8A0ABA3D4B26D50A974240602B33BA0C44377B3847663962DBE8F74E5BD506C0"
+    }
+  ],
+  "localSdk": "10.0.402",
+  "linuxGuestNoObservedSurvivors": true,
+  "fullP2Closure": false,
+  "ciPinnedSdk": "10.0.400; newSHA native CI pending",
+  "taskId": "P2-08.03.STABLE-PUBLICATION-IDENTITY-V1",
+  "staticFdOwnershipReview": "Methodscope pins andfinally disposes allLinuxidentity descriptors; no runtime sameprocess FD baseline/after proof claimed",
+  "wholeLeafAccepted": false,
+  "executed": 98,
+  "actualChildIdentityChecks": 16,
+  "strictBuildWarnings": 0,
+  "scope": "StableLinux publicationidentity andrealreplacement test oracle only",
+  "perRid": {
+    "commandApi": 20,
+    "publication": 21,
+    "actualWorkspaceChildren": 8
+  },
+  "uncommittedFormatterProbeSourcePresentInLocalCliBuild": true,
+  "archiveSha256": "A55885A74FA038988CCA39410B13514F89AFA27FE0694858CE8674085A43079F",
+  "sourceHashes": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\src\\RustSharp.Compiler\\Documentation\\DocumentationFileIdentity.cs",
+      "sha256": "D5B475121442F6A656DC20D9CE835B7053F96A1A0AAA3056AE9651C95A58B234",
+      "bytes": 5739
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\src\\RustSharp.Compiler\\Documentation\\DocumentationPublisher.cs",
+      "sha256": "CC9F522BFB2A150A1FCE543C997D086844B2EC7F5C5C4712F6AC68982C64443F",
+      "bytes": 14646
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\src\\RustSharp.Compiler\\RustSharp.Compiler.csproj",
+      "sha256": "340DF61FCFE01C528FD5E41CC5B03900D971697C776E698B1B2753490FF5F40D",
+      "bytes": 505
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationPublicationTests.cs",
+      "sha256": "FE4C8C56DE4B39B488967DA4776FFB03CF6DAFF605B274754DD3D30DA5FC9EFC",
+      "bytes": 9637
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationCliTests.cs",
+      "sha256": "E1FDF9AD0CDDC2BF620CC8168A3616412ED37BA195F9940B6EB1DC005ECD4A7B",
+      "bytes": 6384
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationWorkspaceCliTests.cs",
+      "sha256": "4C020176548C52A1BBE4BF318778BE7D7E54BF63A038D8C19D7DB3416B08B05B",
+      "bytes": 4566
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationPublicationRunner.cs",
+      "sha256": "659E2AD1E09842D57D658FF8C99C0356353F937079BEA9A7A50EF189D0762D03",
+      "bytes": 4337
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationCliRunner.cs",
+      "sha256": "9970FB350AFD3AC63DEB6B6AD6196DCAF538B3DBE7524881AD000D35243863C8",
+      "bytes": 4312
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\P2DocumentationWorkspaceCliRunner.cs",
+      "sha256": "03DE506A82E48A49F7B57EDD312B4345B48F9EC89B547E8D52EF62B2A2DFD1D1",
+      "bytes": 5657
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\tests\\RustSharp.Tests\\Program.cs",
+      "sha256": "DBCA3DE94C0C50EE1F7FBDE12138EDEAC9A5F512C9B9C5E178129BAD74B30B70",
+      "bytes": 6873
+    }
+  ],
+  "fullP1Closure": false,
+  "validatedWorkingTreeBaseSha": "d66ddc02e8f5232719ac0b4842a2c499886ec96d",
+  "skipped": 0,
+  "runtimeFdLeakProof": false,
+  "notRun": 0,
+  "reports": [
+    {
+      "rid": "win-x64",
+      "component": "publication21",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\doc-win-publication21.json",
+      "sha256": "C50CEE69BA8C321DF20EAF899551E23F6AB0C08B8B5CD16B70C7F798E631454B",
+      "denominator": 21,
+      "executed": 21,
+      "passed": 21,
+      "failed": 0,
+      "notRun": 0,
+      "problems": [],
+      "processChecks": []
+    },
+    {
+      "rid": "win-x64",
+      "component": "command20",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\doc-win-api20.json",
+      "sha256": "D5C81FADB726671C7B783D8A2FA320BCC83F1CE33DEDA289F31949ACC499EF12",
+      "denominator": 20,
+      "executed": 20,
+      "passed": 20,
+      "failed": 0,
+      "notRun": 0,
+      "problems": [],
+      "processChecks": []
+    },
+    {
+      "rid": "win-x64",
+      "component": "workspace8",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v39\\doc-win-workspace8.json",
+      "sha256": "72F8F8EED7900D589385DC5E853B02F217C16FA1A953DB8889199D179C3F27E7",
+      "denominator": 8,
+      "executed": 8,
+      "passed": 8,
+      "failed": 0,
+      "notRun": 0,
+      "problems": [],
+      "processChecks": [
+        {
+          "index": 0,
+          "pid": 26096,
+          "startedAt": "2026-10-14T04:35:07.1740695+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 1,
+          "pid": 75304,
+          "startedAt": "2026-10-14T04:35:07.366499+00:00",
+          "valid": true,
+          "exitCode": 0
+        },
+        {
+          "index": 2,
+          "pid": 48076,
+          "startedAt": "2026-10-14T04:35:07.8795254+00:00",
+          "valid": true,
+          "exitCode": 0
+        },
+        {
+          "index": 3,
+          "pid": 47636,
+          "startedAt": "2026-10-14T04:35:08.3217405+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 4,
+          "pid": 26740,
+          "startedAt": "2026-10-14T04:35:08.6228939+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 5,
+          "pid": 78784,
+          "startedAt": "2026-10-14T04:35:08.8961942+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 6,
+          "pid": 77144,
+          "startedAt": "2026-10-14T04:35:09.0652842+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 7,
+          "pid": 74676,
+          "startedAt": "2026-10-14T04:35:09.3048563+00:00",
+          "valid": true,
+          "exitCode": 130
+        }
+      ]
+    },
+    {
+      "rid": "linux-x64",
+      "component": "publication21",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\documentation-stableidentity-native-v1\\runtime-originals\\documentation-native-a8834fd6e2624cfeb2150d3cd571c95d\\report.json",
+      "sha256": "ABBBD6097760CC9342016EB28BEB894FC1E8655715D922337DAADC7E15066450",
+      "denominator": 21,
+      "executed": 21,
+      "passed": 21,
+      "failed": 0,
+      "notRun": 0,
+      "problems": [],
+      "processChecks": []
+    },
+    {
+      "rid": "linux-x64",
+      "component": "command20",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\documentation-stableidentity-native-v1\\runtime-originals\\documentation-native-dbdfc9a750ee4366a92a3674cd575e0a\\report.json",
+      "sha256": "4C31780D060A58CF503A8A8D7A398E59F515E643AEF778E134D5CE8968D67DF5",
+      "denominator": 20,
+      "executed": 20,
+      "passed": 20,
+      "failed": 0,
+      "notRun": 0,
+      "problems": [],
+      "processChecks": []
+    },
+    {
+      "rid": "linux-x64",
+      "component": "workspace8",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\documentation-stableidentity-native-v1\\runtime-originals\\documentation-native-165e5f2aee1746c89640cff50bc80859\\report.json",
+      "sha256": "E1C0808FEEB4547C739CE7607321A4EC6FD16504BD939729FF53F17A6904AF80",
+      "denominator": 8,
+      "executed": 8,
+      "passed": 8,
+      "failed": 0,
+      "notRun": 0,
+      "problems": [],
+      "processChecks": [
+        {
+          "index": 0,
+          "pid": 148597,
+          "startedAt": "2026-10-14T04:35:20.7574497+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 1,
+          "pid": 148615,
+          "startedAt": "2026-10-14T04:35:20.9170273+00:00",
+          "valid": true,
+          "exitCode": 0
+        },
+        {
+          "index": 2,
+          "pid": 148629,
+          "startedAt": "2026-10-14T04:35:21.3009895+00:00",
+          "valid": true,
+          "exitCode": 0
+        },
+        {
+          "index": 3,
+          "pid": 148643,
+          "startedAt": "2026-10-14T04:35:21.549033+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 4,
+          "pid": 148657,
+          "startedAt": "2026-10-14T04:35:21.7121149+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 5,
+          "pid": 148671,
+          "startedAt": "2026-10-14T04:35:21.8707833+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 6,
+          "pid": 148682,
+          "startedAt": "2026-10-14T04:35:21.9608293+00:00",
+          "valid": true,
+          "exitCode": 1
+        },
+        {
+          "index": 7,
+          "pid": 148696,
+          "startedAt": "2026-10-14T04:35:22.1089663+00:00",
+          "valid": true,
+          "exitCode": 130
+        }
+      ]
+    }
+  ],
+  "oldFailureRetained": true,
+  "requiredCases": 98,
+  "originalContainmentPhaseAccepted": false,
+  "strictBuildErrors": 0,
+  "result": "COMPONENT_ACCEPTED",
+  "archiveFiles": [
+    {
+      "sha256": "C50CEE69BA8C321DF20EAF899551E23F6AB0C08B8B5CD16B70C7F798E631454B",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-win-publication21.json"
+    },
+    {
+      "sha256": "D5C81FADB726671C7B783D8A2FA320BCC83F1CE33DEDA289F31949ACC499EF12",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-win-api20.json"
+    },
+    {
+      "sha256": "72F8F8EED7900D589385DC5E853B02F217C16FA1A953DB8889199D179C3F27E7",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-win-workspace8.json"
+    },
+    {
+      "sha256": "ABBBD6097760CC9342016EB28BEB894FC1E8655715D922337DAADC7E15066450",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-a8834fd6e2624cfeb2150d3cd571c95d/report.json"
+    },
+    {
+      "sha256": "379011588ED969D97364435C598F772E0B5A7CD8CFA01C744BE0D70793817856",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-a8834fd6e2624cfeb2150d3cd571c95d/guest-receipt.json"
+    },
+    {
+      "sha256": "200A6A1AB085A8DDFA7DF95CBDE0A75182A62965AACB84BFFCEF97FC3C11D3D6",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-a8834fd6e2624cfeb2150d3cd571c95d/invocation.json"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-a8834fd6e2624cfeb2150d3cd571c95d/stdout.log"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-a8834fd6e2624cfeb2150d3cd571c95d/stderr.log"
+    },
+    {
+      "sha256": "39DCCDAD866B6707A7DE1CAE1A6EB83A9FBF159C47D52131EA78D09452F68E0A",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-a8834fd6e2624cfeb2150d3cd571c95d/owner.lease"
+    },
+    {
+      "sha256": "4C31780D060A58CF503A8A8D7A398E59F515E643AEF778E134D5CE8968D67DF5",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-dbdfc9a750ee4366a92a3674cd575e0a/report.json"
+    },
+    {
+      "sha256": "9FF240797E4F56AE6919B455CF9B93C7B037CD96EB0FAE0419E1267B7217B91D",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-dbdfc9a750ee4366a92a3674cd575e0a/guest-receipt.json"
+    },
+    {
+      "sha256": "74E8A303CC364F93000407ECF1FF993E098A910AEFFE9E235813F34D544905E3",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-dbdfc9a750ee4366a92a3674cd575e0a/invocation.json"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-dbdfc9a750ee4366a92a3674cd575e0a/stdout.log"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-dbdfc9a750ee4366a92a3674cd575e0a/stderr.log"
+    },
+    {
+      "sha256": "B7DDBCAD1B0E9438B55C95411D05042149B0E99EF770B0F93727B833D3FB7164",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-dbdfc9a750ee4366a92a3674cd575e0a/owner.lease"
+    },
+    {
+      "sha256": "E1C0808FEEB4547C739CE7607321A4EC6FD16504BD939729FF53F17A6904AF80",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-165e5f2aee1746c89640cff50bc80859/report.json"
+    },
+    {
+      "sha256": "738A1B555B5BC86A7AE00980CFE4D8A3AFB9A44DF4C1E7575495D806DCE5E2BA",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-165e5f2aee1746c89640cff50bc80859/guest-receipt.json"
+    },
+    {
+      "sha256": "3992E364D0C1F8A87FE6E4D4CD73A5BAABEFFCD7904360925CCFBED9B603A023",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-165e5f2aee1746c89640cff50bc80859/invocation.json"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-165e5f2aee1746c89640cff50bc80859/stdout.log"
+    },
+    {
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-165e5f2aee1746c89640cff50bc80859/stderr.log"
+    },
+    {
+      "sha256": "8455FBB74F5E41566169061AD7EF7930B6E10062B38AA1D21E60650185EC5C52",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-165e5f2aee1746c89640cff50bc80859/owner.lease"
+    },
+    {
+      "sha256": "4B70CE9A0CE15A68C7D3781AEF1D5612DFC07F19E1D15CE7A3225EE0A7658382",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-build.log"
+    },
+    {
+      "sha256": "FC2318946471C79199B5F9A3A7A2C9B28278D2BDD81BCD9682E8855F6288BD8E",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-build-owned.json"
+    },
+    {
+      "sha256": "B1F7EE7BE8242308B26D7FD4C6D32B0DEAF90B57013702F05A4917AA2A92A7BD",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-build.rsp"
+    },
+    {
+      "sha256": "2ACDC49BEADAD7DE7D6F3E0995D07290BD5EA9A8BF819E65E65275945A8BD9CA",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-binaries.json"
+    },
+    {
+      "sha256": "358345FA4159A311D019DF9C9DC7391180AE7DA0127678A0DEFDCB21C68E1C68",
+      "path": "artifacts/p1-supervision/resume-root-v39/oracle-integration.json"
+    },
+    {
+      "sha256": "6404B6A8DDD2AB1219026831EE947E4ED23502C3BCCA938720B9FF22A992C0DD",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-six-reports.json"
+    },
+    {
+      "sha256": "3C751F73F13C90EE120AC44A9F4CADA8CB374ACE0795B3A7572F19CE4CF404B1",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-six-root-review.json"
+    },
+    {
+      "sha256": "6334EDFFE1A1F3B2757AF65F8DE0864E213D71A5D66223475B6206C35867CCA0",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-win-publication21-owned.json"
+    },
+    {
+      "sha256": "4B1E60BEF6A76848AD2A46A5B48DE3E4081347011202525D39D08156BFCF0468",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-win-api20-owned.json"
+    },
+    {
+      "sha256": "1FAE6BBE8394BB9A11762AF98DEC1A45630F5B5D7638248649D2D0D8AD9255BB",
+      "path": "artifacts/p1-supervision/resume-root-v39/doc-win-workspace8-owned.json"
+    },
+    {
+      "sha256": "D5B475121442F6A656DC20D9CE835B7053F96A1A0AAA3056AE9651C95A58B234",
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationFileIdentity.cs"
+    },
+    {
+      "sha256": "CC9F522BFB2A150A1FCE543C997D086844B2EC7F5C5C4712F6AC68982C64443F",
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationPublisher.cs"
+    },
+    {
+      "sha256": "340DF61FCFE01C528FD5E41CC5B03900D971697C776E698B1B2753490FF5F40D",
+      "path": "src/RustSharp.Compiler/RustSharp.Compiler.csproj"
+    },
+    {
+      "sha256": "FE4C8C56DE4B39B488967DA4776FFB03CF6DAFF605B274754DD3D30DA5FC9EFC",
+      "path": "tests/RustSharp.Tests/P2DocumentationPublicationTests.cs"
+    },
+    {
+      "sha256": "E1FDF9AD0CDDC2BF620CC8168A3616412ED37BA195F9940B6EB1DC005ECD4A7B",
+      "path": "tests/RustSharp.Tests/P2DocumentationCliTests.cs"
+    },
+    {
+      "sha256": "4C020176548C52A1BBE4BF318778BE7D7E54BF63A038D8C19D7DB3416B08B05B",
+      "path": "tests/RustSharp.Tests/P2DocumentationWorkspaceCliTests.cs"
+    },
+    {
+      "sha256": "659E2AD1E09842D57D658FF8C99C0356353F937079BEA9A7A50EF189D0762D03",
+      "path": "tests/RustSharp.Tests/P2DocumentationPublicationRunner.cs"
+    },
+    {
+      "sha256": "9970FB350AFD3AC63DEB6B6AD6196DCAF538B3DBE7524881AD000D35243863C8",
+      "path": "tests/RustSharp.Tests/P2DocumentationCliRunner.cs"
+    },
+    {
+      "sha256": "03DE506A82E48A49F7B57EDD312B4345B48F9EC89B547E8D52EF62B2A2DFD1D1",
+      "path": "tests/RustSharp.Tests/P2DocumentationWorkspaceCliRunner.cs"
+    },
+    {
+      "sha256": "DBCA3DE94C0C50EE1F7FBDE12138EDEAC9A5F512C9B9C5E178129BAD74B30B70",
+      "path": "tests/RustSharp.Tests/Program.cs"
+    },
+    {
+      "sha256": "2CCAAC9084796823FE1E3BA5361176A347CDD0B55EEA914C14903BF403316342",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-bin/RustSharp.Tests.dll"
+    },
+    {
+      "sha256": "CBCC6145A784A81A535AF9D796CD99C7D6CFD532F95A168615F14EA9E9266E5F",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-bin/RustSharp.Tests.pdb"
+    },
+    {
+      "sha256": "25137DE99FA86177DD715EF35C8CA8BDC9DA242E56523926837EA247F8807BFB",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-bin/rsc.dll"
+    },
+    {
+      "sha256": "870F670A08E10FA49AFF8C0CCDCA4B0794BDCC2B98A17CDD0923C588E0D280AC",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-bin/rsc.pdb"
+    },
+    {
+      "sha256": "4EB9757A4C5FDF3C33EFD918DB3182C3F3B64B9157FC0C3F77C58D96667BB406",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-bin/RustSharp.Compiler.dll"
+    },
+    {
+      "sha256": "8A0ABA3D4B26D50A974240602B33BA0C44377B3847663962DBE8F74E5BD506C0",
+      "path": "artifacts/p1-supervision/resume-root-v39/stable-doc-bin/RustSharp.Compiler.pdb"
+    },
+    {
+      "sha256": "6C436968E62D437EEAFA1FA65449E10AE74DF630F3E82037EE237857891454F0",
+      "path": "artifacts/p2-supervision/documentation-acceptance-round35/ORACLE-FD-REVIEW.md"
+    },
+    {
+      "sha256": "7E23C83D240AA2FB9B0892ECD0CB57ABC9217435DA07FDED86C9AC737AC24C2B",
+      "path": "artifacts/p2-supervision/documentation-acceptance-round35/FIXED-CASE-EXPECTATIONS.json"
+    },
+    {
+      "sha256": "BA32A9316430D550E59712719BA1575F56860DE8B83BBE0A1D87F6CB38D2A55E",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-87f0c1b9453a4ea487e4f8872608d8d0/report.json"
+    },
+    {
+      "sha256": "BD442E43CB8CDAF15ACC41A9DFCAB38EE6899D481ADA518B86A23CACE13122C5",
+      "path": "artifacts/p2-supervision/documentation-stableidentity-native-v1/runtime-originals/documentation-native-87f0c1b9453a4ea487e4f8872608d8d0/guest-receipt.json"
+    }
+  ],
+  "formatterChangesIncludedInThisTaskCommit": false,
+  "passed": 98
+}
