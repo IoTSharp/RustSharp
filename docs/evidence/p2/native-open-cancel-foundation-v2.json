@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.02.open-cancel-v2",
+  "componentAccepted": true,
+  "caseDenominator": 1,
+  "executed": 1,
+  "passed": 1,
+  "failed": 0,
+  "notRun": 0,
+  "cliNativePendingProven": false,
+  "cliNativeCancellationProven": false,
+  "wholeLeafAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "One owned ordinary-file synchronous CreateFile open foundation with compatible readonly BATCH hold, real threadpending995/nativeExit/Join/resourceclosure; no production CLI/CTRL signal proof",
+  "build": "Actual strict Release zero warnings/errors",
+  "actual": {
+    "taskId": "P2-08.02.CTRL-v2",
+    "version": 2,
+    "state": "OPEN_FOUNDATION_PASS_PENDING_ROOT_REVIEW",
+    "nonce": "32bf8427480a49a2b84842e7821c9ec9",
+    "nativeCaseDenominator": 1,
+    "driverSha256": "0913A8D54211C8D6CC50AC9E610E1B6CEE538F409ED8DAE92254BFD1454BF01F",
+    "pdbSha256": "C0313181DAFF4FE950BCEFE2C3D1099FF726472A532B607688CBC12C7C68C158",
+    "driverMvid": "c5a1f393-16a7-4103-98d9-c439907ee340",
+    "exactAbsoluteDriver": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll",
+    "exactAbsolutePdb": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.pdb",
+    "borrowedSha256": "509EE571F815F6E0428E61CCEB6C21B5F3642537DFB3F11FCA97A063AFE0DAE9",
+    "cliLaunched": false,
+    "cliNativePendingProven": false,
+    "cliNativeCancellationProven": false,
+    "errors": [],
+    "cleanupErrors": [],
+    "host": {
+      "pid": 37304,
+      "nativeBirthFileTime": "134364119802748759",
+      "parentPid": 13884,
+      "fullCommand": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\nif($PSVersionTable.PSVersion.Major -lt 7){throw 'PowerShell7 required'}\nGet-Content -LiteralPath docs\\evidence\\p1\\powershell-body-source-mechanism-v1.json -TotalCount 65\nGet-Content -LiteralPath artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\msbuild.log -Tail 10\n$driver='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll';$hash=(Get-FileHash -LiteralPath $driver).Hash;$nonce=[Guid]::NewGuid().ToString('N');$runPath='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\'+$nonce\n@{nonce=$nonce;driver=$driver;sha256=$hash;runPath=$runPath;attempt=1;maximumAttempts=1;caseDenominator=1}|ConvertTo-Json|Set-Content -LiteralPath artifacts\\p1-supervision\\resume-root-v31\\open2-run-binding.json -Encoding utf8\ntry{& .\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\Run-Foundation.ps1 -Nonce $nonce -DriverDll $driver -ExpectedDriverSha256 $hash|Out-Null; 'open2 invocation finished'}catch{@{failed=$true;error=$_.ToString();nonce=$nonce}|ConvertTo-Json -Compress}\n[DateTimeOffset]::Now.ToString('o')\""
+    },
+    "hostParentChain": {
+      "Nodes": [
+        {
+          "Pid": 37304,
+          "CreationFileTime": 134364119802748759,
+          "ParentPid": 13884,
+          "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\nif($PSVersionTable.PSVersion.Major -lt 7){throw 'PowerShell7 required'}\nGet-Content -LiteralPath docs\\evidence\\p1\\powershell-body-source-mechanism-v1.json -TotalCount 65\nGet-Content -LiteralPath artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\msbuild.log -Tail 10\n$driver='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll';$hash=(Get-FileHash -LiteralPath $driver).Hash;$nonce=[Guid]::NewGuid().ToString('N');$runPath='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\'+$nonce\n@{nonce=$nonce;driver=$driver;sha256=$hash;runPath=$runPath;attempt=1;maximumAttempts=1;caseDenominator=1}|ConvertTo-Json|Set-Content -LiteralPath artifacts\\p1-supervision\\resume-root-v31\\open2-run-binding.json -Encoding utf8\ntry{& .\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\Run-Foundation.ps1 -Nonce $nonce -DriverDll $driver -ExpectedDriverSha256 $hash|Out-Null; 'open2 invocation finished'}catch{@{failed=$true;error=$_.ToString();nonce=$nonce}|ConvertTo-Json -Compress}\n[DateTimeOffset]::Now.ToString('o')\""
+        },
+        {
+          "Pid": 13884,
+          "CreationFileTime": 134363303724309614,
+          "ParentPid": 39640,
+          "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+        },
+        {
+          "Pid": 39640,
+          "CreationFileTime": 134363303677828900,
+          "ParentPid": 12544,
+          "CommandLine": "\"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\" "
+        },
+        {
+          "Pid": 12544,
+          "CreationFileTime": 134363301892520825,
+          "ParentPid": 3816,
+          "CommandLine": "sihost.exe"
+        }
+      ],
+      "Complete": false,
+      "StopReason": "Win32Exception: OpenProcess query-only ancestor"
+    },
+    "child": {
+      "pid": 27308,
+      "nativeBirthFileTime": "134364119808140340",
+      "parentPid": 37304,
+      "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll\" \"--child\" \"32bf8427480a49a2b84842e7821c9ec9\" \"FD3FC1022DB5B997781223CB08A91003356A4D8291514A404FA3C417514AD841\""
+    },
+    "launchSha256": "80D4558939C81226F4F6452246AB775EA23C2DE86F28918ED6DD15C092AEE7DA",
+    "actualChildExitCode": 0,
+    "childReportSha256": "DC8DF82FC38D046CBFA995218B9660EB7AA36AEE9AD1FA30FB98F56E323FC78A",
+    "childReport": {
+      "taskId": "P2-08.02.CTRL-v2",
+      "version": 2,
+      "caseDenominator": 1,
+      "cliNativePendingProven": false,
+      "cliNativeCancellationProven": false,
+      "cliLaunched": false,
+      "state": "OPEN_FOUNDATION_PASS",
+      "errors": [],
+      "cleanupErrors": [],
+      "actualDriver": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll",
+      "actualPdb": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.pdb",
+      "actualDriverSha256": "0913A8D54211C8D6CC50AC9E610E1B6CEE538F409ED8DAE92254BFD1454BF01F",
+      "actualPdbSha256": "C0313181DAFF4FE950BCEFE2C3D1099FF726472A532B607688CBC12C7C68C158",
+      "actualDriverMvid": "c5a1f393-16a7-4103-98d9-c439907ee340",
+      "owner": {
+        "pid": 27308,
+        "nativeBirthFileTime": "134364119808140340",
+        "parentPid": 37304,
+        "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll\" \"--child\" \"32bf8427480a49a2b84842e7821c9ec9\" \"FD3FC1022DB5B997781223CB08A91003356A4D8291514A404FA3C417514AD841\""
+      },
+      "host": {
+        "pid": 37304,
+        "nativeBirthFileTime": "134364119802748759",
+        "parentPid": 13884,
+        "fullCommand": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\nif($PSVersionTable.PSVersion.Major -lt 7){throw 'PowerShell7 required'}\nGet-Content -LiteralPath docs\\evidence\\p1\\powershell-body-source-mechanism-v1.json -TotalCount 65\nGet-Content -LiteralPath artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\msbuild.log -Tail 10\n$driver='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll';$hash=(Get-FileHash -LiteralPath $driver).Hash;$nonce=[Guid]::NewGuid().ToString('N');$runPath='D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\'+$nonce\n@{nonce=$nonce;driver=$driver;sha256=$hash;runPath=$runPath;attempt=1;maximumAttempts=1;caseDenominator=1}|ConvertTo-Json|Set-Content -LiteralPath artifacts\\p1-supervision\\resume-root-v31\\open2-run-binding.json -Encoding utf8\ntry{& .\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\Run-Foundation.ps1 -Nonce $nonce -DriverDll $driver -ExpectedDriverSha256 $hash|Out-Null; 'open2 invocation finished'}catch{@{failed=$true;error=$_.ToString();nonce=$nonce}|ConvertTo-Json -Compress}\n[DateTimeOffset]::Now.ToString('o')\""
+      },
+      "launchSha256": "80D4558939C81226F4F6452246AB775EA23C2DE86F28918ED6DD15C092AEE7DA",
+      "parentBoundaryVerified": true,
+      "systemAncestorsComplete": false,
+      "source": {
+        "volume": "12462597171130787332",
+        "fileIdLow": "4",
+        "fileIdHigh": "1871321",
+        "nativeBirth": "134364119809330027",
+        "attributes": 32,
+        "absoluteFinalPath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\32bf8427480a49a2b84842e7821c9ec9\\source.rs"
+      },
+      "sourceSha256": "536E506BB90914C243A12B397B9A998F85AE2CBD9BA02DFD03A9E155CA5CA0F4",
+      "sourceLeaseSha256": "C6CFAD3F8C837A2677A879CAA7875D375C935EFF55E0E4FB7EE72AFD6407837F",
+      "nativeRequestStatus": 259,
+      "helperOplockPending": true,
+      "holderAccess": "Read",
+      "holderShare": "ReadWriteDelete",
+      "holdKind": "BATCH",
+      "actualThreadPendingCreate": true,
+      "helperBreakSignaledBeforeCancellation": true,
+      "helperBreakNativeStatus": 0,
+      "actualTokenCancellationRequested": true,
+      "nativeOpenCancellationProven": true,
+      "casePassedBeforeCleanup": true,
+      "nativeThreadId": 25040,
+      "nativeThreadBirth": "134364119809415604",
+      "nativeCreateError": 995,
+      "nativeCreateAborted": true,
+      "nativeThreadExitedAndJoined": true,
+      "nativeThreadCloseSucceeded": true,
+      "openOwnerRetained": false,
+      "openEvents": [
+        "CancelSynchronousIo return=1 lastError=0"
+      ],
+      "openErrors": [],
+      "holdReleaseAfterFailedCase": false,
+      "nativeCompletedBeforeFree": true,
+      "fileHandleClosed": true,
+      "eventHandleClosed": true,
+      "nativeStorageFreed": true,
+      "ownedSourceRetainedAsArtifact": true,
+      "ownedSourceIdentityVerified": true,
+      "ownedSourceDeletionAttempted": false,
+      "elapsedMilliseconds": 36,
+      "exitCode": 0
+    },
+    "launchReceipt": {
+      "Pid": 27308,
+      "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll\" \"--child\" \"32bf8427480a49a2b84842e7821c9ec9\" \"FD3FC1022DB5B997781223CB08A91003356A4D8291514A404FA3C417514AD841\"",
+      "Identity": {
+        "Pid": 27308,
+        "CreationFileTime": 134364119808140340,
+        "ParentPid": 37304,
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\root-build\\bin\\OpenCancelConcept.dll\" \"--child\" \"32bf8427480a49a2b84842e7821c9ec9\" \"FD3FC1022DB5B997781223CB08A91003356A4D8291514A404FA3C417514AD841\""
+      },
+      "IdentityVerified": true,
+      "Assigned": true,
+      "Resumed": true,
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "WaitReturn": 0,
+      "ProcessHandleClosed": true,
+      "ThreadHandleClosed": true,
+      "OwnProcessReclaimed": true,
+      "Error": null,
+      "AssignReturn": 1,
+      "AssignLastError": 0,
+      "MembershipReturn": 1,
+      "MembershipLastError": 0,
+      "MembershipVerified": true,
+      "ProcessCloseLastError": 0,
+      "ThreadCloseLastError": 0,
+      "CleanupErrors": [],
+      "PublicationErrors": [],
+      "ActualExitCode": 0,
+      "ExitCodeReadReturn": 1,
+      "ExitCodeReadLastError": 0
+    },
+    "privateJobCleanup": {
+      "TerminationReturn": null,
+      "TerminationLastError": null,
+      "Before": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "Final": {
+        "Active": 0,
+        "Total": 1,
+        "Assigned": 0,
+        "Listed": 0,
+        "ReturnedBytes": 8,
+        "Members": [],
+        "Failures": [],
+        "Overflow": false,
+        "Coherent": true
+      },
+      "AccountingZero": true,
+      "HandleClosed": true,
+      "HandleCloseLastError": 0,
+      "Errors": [],
+      "Error": null
+    },
+    "resourceClosure": true,
+    "cliProof": "NO_NATIVE_CLI_PROOF"
+  },
+  "resourceReview": "artifacts/p1-supervision/resume-root-v31/native-task-resource-review.json",
+  "scopeFreezeSha256": "66B83862235B1477CE382DC937C196722E862CB4DE28BE2C69526B29E503A3BA",
+  "originals": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\32bf8427480a49a2b84842e7821c9ec9\\supervisor-report.json",
+      "sha256": "BE5FF505614227A76C6AE40C35BAEC44B3797D6891096BA7D2319E3138C18F17"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\32bf8427480a49a2b84842e7821c9ec9\\child-report.json",
+      "sha256": "DC8DF82FC38D046CBFA995218B9660EB7AA36AEE9AD1FA30FB98F56E323FC78A"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\32bf8427480a49a2b84842e7821c9ec9\\host-lease.json",
+      "sha256": "FD3FC1022DB5B997781223CB08A91003356A4D8291514A404FA3C417514AD841"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\32bf8427480a49a2b84842e7821c9ec9\\launch.json",
+      "sha256": "80D4558939C81226F4F6452246AB775EA23C2DE86F28918ED6DD15C092AEE7DA"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\32bf8427480a49a2b84842e7821c9ec9\\source-lease.json",
+      "sha256": "C6CFAD3F8C837A2677A879CAA7875D375C935EFF55E0E4FB7EE72AFD6407837F"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-open-cancel-v2\\runtime\\32bf8427480a49a2b84842e7821c9ec9\\source.rs",
+      "sha256": "536E506BB90914C243A12B397B9A998F85AE2CBD9BA02DFD03A9E155CA5CA0F4"
+    }
+  ],
+  "historicalE07d099Rerun": false,
+  "remaining": [
+    "Actual production CLI integration and registered cancellation handler",
+    "Actual Windows directedCTRL+C rather than cooperative token",
+    "UnsupportedFS and cancellation timing matrices",
+    "Whole fixed59/91 cases and phase gates"
+  ]
+}
