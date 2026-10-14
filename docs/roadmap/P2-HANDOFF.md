@@ -10,7 +10,7 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13917-a6b4-78e0-bd31-44600dd87b79`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v51/resumption.json`.
+`artifacts/p1-supervision/resume-root-v52/resumption.json`.
 
 Round38 fresh Windows formatter integration is ✅ Complete as a bounded component: strict solution/driver builds0 warnings/errors, full formatter59/59 and contract18/18, actual Windows CLI8/8 and real native signal1/1 pass. [Fresh integration proof](../evidence/p2/formatter-fresh-native-integration-v1.json) binds exact working-source/DLL/PDB/driver hashes, actual pending995, natural130, native Join/close and outer3→0; three exact process identities are independently absent. Legacy outer skeleton proof flags remain false and are not substituted for the hashed child proof. The earlier provenance rejection remains unresolved despite actual compiled GitAsync returning997 entries with the original raw hash; no cap increased. New clean-SHA CI/Linux/full cancellation/containment and complete59/91 leaf contracts remain open; P2 stays8/101.
 
