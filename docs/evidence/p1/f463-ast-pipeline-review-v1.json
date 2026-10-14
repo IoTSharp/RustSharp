@@ -1,0 +1,48 @@
+{
+  "taskId": "P1-GATE.03.exact-ast-span",
+  "formalGateAccepted": false,
+  "remaining": [
+    "2 synthetic hand AST provenance slots remain unknown, not counted as Rust AST",
+    "2 hand-MIR instruction-equivalence checks remain unknown"
+  ],
+  "report": "artifacts/p1-supervision/resume-root-v52/ast-full14.json",
+  "fullP1Closure": false,
+  "rustPointsMatched": 16,
+  "candidate": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "sourceSha256": "115029B43EE0D43914A751834D84CAB9437D4E1C766B5E5B93F498257A71A76E",
+  "pointMutationRejections": 48,
+  "handSyntheticCasesUnknown": 2,
+  "scope": "Actual compiler analysis pipeline mapped to frozen original PDB points; original generated code not loaded/executed",
+  "implementationModules": [
+    {
+      "candidateCopiedFilePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v52\\ast-build\\bin\\RustSharp.Syntax.dll",
+      "actualLoadedModuleMvid": "c442fa7b-1247-4cde-8b5c-272b32f67ec5",
+      "copiedFileMvid": "c442fa7b-1247-4cde-8b5c-272b32f67ec5",
+      "copiedFileSha256": "30C0F63159FF27E69F7A0B8B688AC3F80CF3CD24536D4307267F7F8EC03CF885",
+      "loadedLocationClaimed": false
+    },
+    {
+      "candidateCopiedFilePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v52\\ast-build\\bin\\RustSharp.Semantics.dll",
+      "actualLoadedModuleMvid": "2da84b80-93cd-4c33-9d92-4db80ec5eb44",
+      "copiedFileMvid": "2da84b80-93cd-4c33-9d92-4db80ec5eb44",
+      "copiedFileSha256": "4F87AC9CDA68EF568DF94600FDF1C964D5A14F9D94BA5B69A7878B1499884581",
+      "loadedLocationClaimed": false
+    },
+    {
+      "candidateCopiedFilePath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v52\\ast-build\\bin\\RustSharp.CodeGen.IL.dll",
+      "actualLoadedModuleMvid": "c2f17f59-c77b-41a2-b83a-afaf28d99b06",
+      "copiedFileMvid": "c2f17f59-c77b-41a2-b83a-afaf28d99b06",
+      "copiedFileSha256": "364AF1F8FD65A1839EF0B2B20BA41F55B796988AAC6BB735ED4C62C1928AC508",
+      "loadedLocationClaimed": false
+    }
+  ],
+  "firstIl3000BuildRetained": "calls/build-ast-reviewer-7e63179d7dd9454a9ee8187683571cf1",
+  "manifestSha256": "06A1397D3E6A03E2442E209A91A430058677D95419D95E784C26AABB80CB856C",
+  "rustSourceCases": 12,
+  "remainingHandComponents": 4,
+  "constSelectionRejections": 18,
+  "caseDenominator": 14,
+  "rootReview": "Actual public Parse/HIR/types/MIR/LIR identities and exact spans; source and copied implementation hashes bound; full14 unfiltered, hand2 separate",
+  "mutationClasses": 4,
+  "reportSha256": "31D2DF8893C1150656FFA033016DBE97DD58E8988205847D0B7E4363B6334142"
+}

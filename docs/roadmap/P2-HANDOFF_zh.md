@@ -1095,3 +1095,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第51轮 P3-01 模板替换原型组件 ✅ 已完成：本地严格Release及固定16/16测试通过。真实选中规则的捕获重新词法分析后替换模板词元/引用/普通分组，保留输入/模板/输出范围。[原型证明](../evidence/p3/macros-template-prototype-v1.json)绑定输出UTF8字节/词元/深度、合计步数/输入及真实取消边界测试。ASCII空格输出属于原型渲染；卫生性、递归展开、不支持的重复及生产/编译器集成不在已验收范围。全部82项完整编译器场景仍NOT_RUN；P3正式叶子0/38、门禁0/4及前置依赖未变。
 
 第51轮 Linux 文件提供者能力预检在只读WSL组件范围内 ✅ 已完成：20/20项有界探测自然结束；/dev/fuse可访问，FUSE运行库3.14.0-5build1及fusermount3存在，pkg-config fuse3不可用。[真实预检证明](../evidence/p2/formatter-linux-capability-v1.json)记录零安装、挂载、信号或formatter I/O用例。可控普通文件提供者及真实pending/cancel/release证据仍UNKNOWN/NOT_RUN；这不代表原生Linux CI或完整containment。formatter59/父91未变，P2-08.02仍 🚧 进行中；P2保持8/101。
+
+第52轮源码范围组件 ✅ 已完成：实际Parse/HIR/types/MIR/LIR身份匹配全部12个Rust源码案例/16个原始点，48项点变异及显式const选择负例被拒绝。完整14清单保留2个手工案例UNKNOWN；四项手工来源/结构组件仍开放。[真实pipeline证明](../evidence/p1/f463-ast-pipeline-review-v1.json)保留IL3000失败。没有加载/执行原始生成程序；P1门禁仍开放。
