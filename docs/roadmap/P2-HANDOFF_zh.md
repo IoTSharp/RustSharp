@@ -1077,3 +1077,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 ## 第49轮：原始 host/runtimeconfig 审查
 
 限定审查组件 ✅ 已完成：f463ac8/run38515250985/attempt1 的全部14组保留 native-host 源码/项目及14份 runtimeconfig，770/770字段匹配。Root 独立检查每份真实 runtimeconfig、精确 host 文本及项目结构、报告绑定和冻结源码合同。[审查证明](../evidence/p1/f463-host-runtimeconfig-review-v1.json)保留首次失败审计，并明确保留30项真实未知 PE/PDB/手工 MIR 结构组件。没有执行或重编译原始二进制。P1仍 🚧 进行中，六门禁开放；P2保持8/101，P3正式验收保持0/38及0/4门禁。全部阶段闭环标志仍为false。唯一监督会话为 `01a13917-a6b4-78e0-bd31-44600dd87b79`，检查点为 `artifacts/p1-supervision/resume-root-v49/resumption.json`；旧监督会话停止派工。
+
+第49轮 P3-01 规则解析原型组件 ✅ 已完成：保留 CA1859 失败后，本地 SDK10.0.402 严格 Release 构建及固定24/24测试通过。真实 lexer/token tree 产出源码范围、规则臂、ident/literal/tt捕获及嵌套/分隔重复结构，拒绝和取消均有界。[原型证明](../evidence/p3/macros-rule-parser-prototype-v1.json)不声称调用匹配、替换、展开、卫生性、歧义/基数语义、固定SDK CI或82项完整编译器用例。P3仍 🚧 进行中；正式叶子0/38、门禁0/4及前置依赖不变。P1 argv候选与真实三方probe仍NOT_RUN；生产containment模块未提交且未验收。
