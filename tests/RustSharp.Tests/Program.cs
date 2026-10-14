@@ -4,6 +4,8 @@ internal static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--p2-doc-workspace-cli-component")
+            return await P2DocumentationWorkspaceCliRunner.RunAsync(args[1]).ConfigureAwait(false);
         if (args.Length == 2 && args[0] == "--p2-doc-workspace-component")
             return await P2DocumentationWorkspaceRunner.RunAsync(args[1]).ConfigureAwait(false);
         if (args.Length == 2 && args[0] == "--p2-doc-depth-component")

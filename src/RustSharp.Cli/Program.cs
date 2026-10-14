@@ -255,6 +255,8 @@ internal static class Program
               rsc run <source.rs|Cargo.toml> [--output <program.dll>] [--timeout <seconds>]
               rsc publish <source.rs|Cargo.toml> [--runtime <rid>] [--output <directory>] [--timeout <seconds>]
               rsc fmt [--check] <source.rs|directory>
+              rsc doc <Cargo.toml> [--output <new-directory>]
+              rsc doc <Cargo.toml> --workspace [--output <new-directory>] [--timeout-ms <1..10000>] [--max-output-bytes <1..16777216>]
               rsc --version
 
             Profiles (Rust 1.98 / Edition 2024):

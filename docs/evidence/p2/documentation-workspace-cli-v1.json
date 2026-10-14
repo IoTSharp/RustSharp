@@ -1,0 +1,562 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.03.workspace-cli-v1",
+  "componentAccepted": true,
+  "wholeLeafAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "Explicit --workspace opt-in; actual8child cases, all20 command API and fixed17 legacy subprocess cases with unchanged golden5 page hashes; default virtual/dependency/feature rejection retained",
+  "actual8": {
+    "taskId": "P2-08.03.workspace-cli-v1",
+    "evidenceKind": "actual-workspace-documentation-eight-child-process-component",
+    "denominator": 8,
+    "executed": 8,
+    "passed": 8,
+    "failed": 0,
+    "notRun": 0,
+    "fullLeafAccepted": false,
+    "fullP2Closure": false,
+    "elapsedMilliseconds": 1550.2827,
+    "cases": [
+      {
+        "name": "P2-08.03 workspace CLI process default-virtual-rejected",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace CLI process optin-virtual-two-members",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace CLI process optin-root-plus-members",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace CLI process existing-target-unchanged",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace CLI process dependency-family-rejected",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace CLI process feature-family-rejected",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace CLI process output-byte-budget",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace CLI process real-child-deadline",
+        "status": "passed"
+      }
+    ],
+    "receiptRoots": [
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-84a612a353bf48a09ea0249e66e23a4d",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-48d601f24e864e6f8f154e52801f8067",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-a1e364d57bc743c39ceb5c3e093c61dd",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-82daffb872f0462b95975807972aabc3",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-9ee8991395e64e288d380e3937929774",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0e1c6191aa4141b493e5ac8397237151",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-15f8f8a89cd446e1bdd4f9ecbfee089c",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0ae73929811d494b84627eb0939d8e73"
+    ],
+    "processes": [
+      {
+        "pid": 19280,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:36.3539681+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-84a612a353bf48a09ea0249e66e23a4d\\Cargo.toml --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-84a612a353bf48a09ea0249e66e23a4d\\published",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-84a612a353bf48a09ea0249e66e23a4d",
+        "exitCode": 1,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "",
+        "stderr": "rsc: RSTDCLI1001: initial documentation requires one root-package target without dependencies or feature activation; workspace selection remains unsupported.\r\n"
+      },
+      {
+        "pid": 25040,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:36.4735222+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-48d601f24e864e6f8f154e52801f8067\\Cargo.toml --workspace --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-48d601f24e864e6f8f154e52801f8067\\published",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-48d601f24e864e6f8f154e52801f8067",
+        "exitCode": 0,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "Documented workspace C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-48d601f24e864e6f8f154e52801f8067\\published\r\n",
+        "stderr": ""
+      },
+      {
+        "pid": 42964,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:36.8424527+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-a1e364d57bc743c39ceb5c3e093c61dd\\Cargo.toml --workspace --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-a1e364d57bc743c39ceb5c3e093c61dd\\published",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-a1e364d57bc743c39ceb5c3e093c61dd",
+        "exitCode": 0,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "Documented workspace C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-a1e364d57bc743c39ceb5c3e093c61dd\\published\r\n",
+        "stderr": ""
+      },
+      {
+        "pid": 43872,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:37.1438032+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-82daffb872f0462b95975807972aabc3\\Cargo.toml --workspace --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-82daffb872f0462b95975807972aabc3\\published",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-82daffb872f0462b95975807972aabc3",
+        "exitCode": 1,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "",
+        "stderr": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-82daffb872f0462b95975807972aabc3\\published: RSTD2001: Existing ordinary parent and absent destination required.\r\n"
+      },
+      {
+        "pid": 59020,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:37.331774+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-9ee8991395e64e288d380e3937929774\\Cargo.toml --workspace --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-9ee8991395e64e288d380e3937929774\\published",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-9ee8991395e64e288d380e3937929774",
+        "exitCode": 1,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "",
+        "stderr": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-9ee8991395e64e288d380e3937929774\\b\\Cargo.toml: RSTD3001: Dependencies, feature activation or multiple targets require explicit documentation selection; no family was omitted.\r\n"
+      },
+      {
+        "pid": 57768,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:37.5087497+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0e1c6191aa4141b493e5ac8397237151\\Cargo.toml --workspace --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0e1c6191aa4141b493e5ac8397237151\\published",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0e1c6191aa4141b493e5ac8397237151",
+        "exitCode": 1,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "",
+        "stderr": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0e1c6191aa4141b493e5ac8397237151\\a\\Cargo.toml: RSTD3001: Dependencies, feature activation or multiple targets require explicit documentation selection; no family was omitted.\r\n"
+      },
+      {
+        "pid": 56884,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:37.6279604+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-15f8f8a89cd446e1bdd4f9ecbfee089c\\Cargo.toml --workspace --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-15f8f8a89cd446e1bdd4f9ecbfee089c\\published --max-output-bytes 1",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-15f8f8a89cd446e1bdd4f9ecbfee089c",
+        "exitCode": 1,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "",
+        "stderr": ": RSTD0001: Documentation budget exceeded.\r\n"
+      },
+      {
+        "pid": 55292,
+        "parentPid": 38260,
+        "startedAt": "2026-10-14T01:02:37.7999894+00:00",
+        "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll doc C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0ae73929811d494b84627eb0939d8e73\\Cargo.toml --workspace --output C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0ae73929811d494b84627eb0939d8e73\\published --timeout-ms 1",
+        "workingDirectory": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-0ae73929811d494b84627eb0939d8e73",
+        "exitCode": 130,
+        "termination": "Exited",
+        "cleanupAttempted": false,
+        "cleanupIncomplete": false,
+        "stdout": "",
+        "stderr": "rsc: workspace documentation cancelled or timed out.\r\n"
+      }
+    ]
+  },
+  "actual20": {
+    "taskId": "P2-08.03.cli-v1",
+    "evidenceKind": "actual-command-function-cargo-workspace-documentation-component",
+    "denominator": 20,
+    "executed": 20,
+    "passed": 20,
+    "failed": 0,
+    "notRun": 0,
+    "fullLeafAccepted": false,
+    "fullP2Closure": false,
+    "elapsedMilliseconds": 795.4964,
+    "cases": [
+      {
+        "name": "P2-08.03 CLI initial-success-hashes",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI nested-modules-source-hashes",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI existing-target-unchanged",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI missing-manifest",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI virtual-workspace-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI dependency-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI feature-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI multiple-targets-unsupported",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI invalid-arguments",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI invalid-option",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI noncargo-input",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI unsafe-module-path",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI missing-module",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI malformed-source",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI pre-cancel",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI mid-workspace-cancel",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI deadline-after-workspace",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI unsafe-output-parent",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI unsafe-documentation-scheme",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 CLI missing-documentation-symbol",
+        "status": "passed"
+      }
+    ],
+    "receiptRoots": [
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-625f2bc0cd3f4ae88a74a5380000ed16",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-445260f61dc44de18684dba29b0b409f",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-93224cfa1f0d46e2a0b80dfaf0cffb4e",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-9ea101057d5345b198ecaa17bca70c55",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-355b5093f6e04bb0bf997bd28b8ed6cb",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-0049181914d24d598103c3652ca01f70",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-721fd9ddc6344b8dac610dc0291c3b98",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-61644de024a549ddaa23b013112a839e",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-c8ee33d906f347f1acd4328157555884",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-5c99e312915f4b7880018382a29c5fe2",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-aa92c0e78bf8430284a3043119766712",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-7cee898568474ac8aeae2d591ff11b9b",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-ffb0b3d3d9ea425eafdd5502c524fd2d",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-cf295bd6a1a848a8b88dd454d458d6b6",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-94a4fee46d3c47eb954e31ffd6eeaef0",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-e9a72a23aa8e4f308e80bf6897c60efd",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-2873ffccf9b44c498351eef3567d76ae",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-0418f001bcb54fd9828b4039c463f2c3",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-23276f63f5e3456782c33a61ae02cff5",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-79b9a9efa51545bab266c692732c3518"
+    ]
+  },
+  "actual17": {
+    "executed": 17,
+    "notRun": 0,
+    "cases": [
+      {
+        "outputs": [
+          {
+            "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-78907e56893b4b9bac4427e59ae49ff4\\shell-round25-shell-round28-b31a87a0209c4461bf157a1063b2e656\\index.html",
+            "sha256": "2871319588A393115AD3D4C10E0A652FCA0D29B755B59E687B007D2D8EE672BF",
+            "expectedSha256": "2871319588A393115AD3D4C10E0A652FCA0D29B755B59E687B007D2D8EE672BF"
+          },
+          {
+            "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-78907e56893b4b9bac4427e59ae49ff4\\shell-round25-shell-round28-b31a87a0209c4461bf157a1063b2e656\\source\\src\\lib.rs.html",
+            "sha256": "079C9D4CB35E077B52C5DCD5D06092C308F5F5E41A76567B11B86B1AA49D9030",
+            "expectedSha256": "079C9D4CB35E077B52C5DCD5D06092C308F5F5E41A76567B11B86B1AA49D9030"
+          }
+        ],
+        "actual": 0,
+        "name": "P2-08.03 CLI initial-success-hashes",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-0-owned.json",
+        "passed": true,
+        "caseId": 0,
+        "expected": 0,
+        "receiptSha256": "FE3A795BD7C8BF0BF2A2654495DFA401C6AD7ECFCE3203197A7B0D42EE1EB1C3"
+      },
+      {
+        "outputs": [
+          {
+            "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-77f7c305fcc6422296818f10940f30dd\\shell-round25-shell-round28-b31a87a0209c4461bf157a1063b2e656\\index.html",
+            "sha256": "E7ADAD9F8CF9054EF6669A6BC8F17166AB72FCA3F7AC3A8B89B0EB3C43ACA33F",
+            "expectedSha256": "E7ADAD9F8CF9054EF6669A6BC8F17166AB72FCA3F7AC3A8B89B0EB3C43ACA33F"
+          },
+          {
+            "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-77f7c305fcc6422296818f10940f30dd\\shell-round25-shell-round28-b31a87a0209c4461bf157a1063b2e656\\source\\src\\lib.rs.html",
+            "sha256": "8CB22158E754B8FA10961633BF564EF856F8F632286E93B94BDBA4FF26F7D7A8",
+            "expectedSha256": "8CB22158E754B8FA10961633BF564EF856F8F632286E93B94BDBA4FF26F7D7A8"
+          },
+          {
+            "path": "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-77f7c305fcc6422296818f10940f30dd\\shell-round25-shell-round28-b31a87a0209c4461bf157a1063b2e656\\source\\src\\child.rs.html",
+            "sha256": "5E17F6FB55FAE428E80E48503C7C9612BDC799DF99DBDD3FA8B8AB42430A3DBC",
+            "expectedSha256": "5E17F6FB55FAE428E80E48503C7C9612BDC799DF99DBDD3FA8B8AB42430A3DBC"
+          }
+        ],
+        "actual": 0,
+        "name": "P2-08.03 CLI nested-modules-source-hashes",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-1-owned.json",
+        "passed": true,
+        "caseId": 1,
+        "expected": 0,
+        "receiptSha256": "F2CB3FA0543C34045BE846C0C572E37FF238389CFB0D8366E2277A96C07AD121"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI existing-target-unchanged",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-2-owned.json",
+        "passed": true,
+        "caseId": 2,
+        "expected": 1,
+        "receiptSha256": "9D4A1B31192B3A802A7306BF789F36D6D7A348358995923DAE114CE4FDC4CC5F"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI missing-manifest",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-3-owned.json",
+        "passed": true,
+        "caseId": 3,
+        "expected": 1,
+        "receiptSha256": "B0F43C6189F2BF9212765C51A247BF1B6BF284E3293D5D6EED9142CB003B21B3"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI virtual-workspace-unsupported",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-4-owned.json",
+        "passed": true,
+        "caseId": 4,
+        "expected": 1,
+        "receiptSha256": "6F572D9B82A12BAA8135E19EE3D2525C5D726C9B15099AD2E1A59ACE84EE6129"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI dependency-unsupported",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-5-owned.json",
+        "passed": true,
+        "caseId": 5,
+        "expected": 1,
+        "receiptSha256": "0611870C68379AC2C15DA36D4418980244FB0AB3F1257F9F973EB6DD40932684"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI feature-unsupported",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-6-owned.json",
+        "passed": true,
+        "caseId": 6,
+        "expected": 1,
+        "receiptSha256": "7DE812C6539522AF419DB7FFEB59CA7F84385C17E45025C35233D149FED0C5E7"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI multiple-targets-unsupported",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-7-owned.json",
+        "passed": true,
+        "caseId": 7,
+        "expected": 1,
+        "receiptSha256": "EE1433A8A8E6E2732F55E81CC7FCCF3A44BCB9FB02E1C24EC110061ED92097C5"
+      },
+      {
+        "outputs": [],
+        "actual": 2,
+        "name": "P2-08.03 CLI invalid-arguments",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-8-owned.json",
+        "passed": true,
+        "caseId": 8,
+        "expected": 2,
+        "receiptSha256": "157C40828D2D8A945B1C85F04EC1ABDC5C989E4B48F49C46BD91D25AA6FEF8FF"
+      },
+      {
+        "outputs": [],
+        "actual": 2,
+        "name": "P2-08.03 CLI invalid-option",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-9-owned.json",
+        "passed": true,
+        "caseId": 9,
+        "expected": 2,
+        "receiptSha256": "82753C3CA29BE280B237E2E4AAFEF10CDD91814AB5B1A3487B16898844529289"
+      },
+      {
+        "outputs": [],
+        "actual": 2,
+        "name": "P2-08.03 CLI noncargo-input",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-10-owned.json",
+        "passed": true,
+        "caseId": 10,
+        "expected": 2,
+        "receiptSha256": "984CB9434770A4727FA02B1AE87B2CCFB62DC5FD0CC07F197F1F31222C1F9CE0"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI unsafe-module-path",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-11-owned.json",
+        "passed": true,
+        "caseId": 11,
+        "expected": 1,
+        "receiptSha256": "4AA1DAA9EDF4E1889B9D75A61889FC0DF0695DBC9D47F873FB598B079A95B00E"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI missing-module",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-12-owned.json",
+        "passed": true,
+        "caseId": 12,
+        "expected": 1,
+        "receiptSha256": "BF951CC2B06F885F45A2E3659AF6D0FA80B9380A1BD5BF6778DFF3A8EDDB30CE"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI malformed-source",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-13-owned.json",
+        "passed": true,
+        "caseId": 13,
+        "expected": 1,
+        "receiptSha256": "D2ACDC77909AED65BAE9135152C60E744F240187A4B6F1B5B6FFE18555346BF2"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI unsafe-output-parent",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-17-owned.json",
+        "passed": true,
+        "caseId": 17,
+        "expected": 1,
+        "receiptSha256": "80379C17D68235A3E2148ED4C96660C35434B6633690C94DD158A8F3CF2B0EAC"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI unsafe-documentation-scheme",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-18-owned.json",
+        "passed": true,
+        "caseId": 18,
+        "expected": 1,
+        "receiptSha256": "8FCF5084C2ED0EBD4341101D3B8F455F177B0BFEDDE092707BDF657EB17FA708"
+      },
+      {
+        "outputs": [],
+        "actual": 1,
+        "name": "P2-08.03 CLI missing-documentation-symbol",
+        "receiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-19-owned.json",
+        "passed": true,
+        "caseId": 19,
+        "expected": 1,
+        "receiptSha256": "078B59EFAE88D4E2960DD7FEADD12B44A6403FF6F61505D05F4FF664934F0747"
+      }
+    ],
+    "actualCliSha256": "A5F6C568604EE4C4396EDD9D42C6325FDA5E97FF57BFF50D59D6D6E82BEF9F3F",
+    "maximumCases": 17,
+    "actualCli": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v31\\workspace-cli-bin\\rsc.dll",
+    "failed": 0,
+    "timeoutSeconds": 55,
+    "fullP1Closure": false,
+    "passed": 17,
+    "taskId": "P2-08.03.workspace-cli-v1.legacy17",
+    "elapsedSeconds": 5.3161782,
+    "fullP2Closure": false,
+    "denominator": 17
+  },
+  "sourceByteFreeze": [
+    {
+      "path": "src/RustSharp.Cli/DocumentationCommand.cs",
+      "sha256": "6920D8FBC5AF6AEF1357909BB35B867828ED225393D8A36B76B015D9B1E129E9"
+    },
+    {
+      "path": "src/RustSharp.Cli/Program.cs",
+      "sha256": "F19ACE88A0834B309E9E7F34D31F2A71B46E575162CEC5AFB8A3855A901BCE29"
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "DBCA3DE94C0C50EE1F7FBDE12138EDEAC9A5F512C9B9C5E178129BAD74B30B70"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationWorkspaceCliTests.cs",
+      "sha256": "4C020176548C52A1BBE4BF318778BE7D7E54BF63A038D8C19D7DB3416B08B05B"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P2DocumentationWorkspaceCliRunner.cs",
+      "sha256": "03DE506A82E48A49F7B57EDD312B4345B48F9EC89B547E8D52EF62B2A2DFD1D1"
+    }
+  ],
+  "candidateBuildBaseSha": "4e17072f9b72f93576d75d0938c388080aab6533",
+  "candidateSourceUncommittedDuringBuild": true,
+  "buildReceipt": "artifacts/p1-supervision/resume-root-v31/workspace-cli-build-repair-owned.json",
+  "actualCliSha256": "A5F6C568604EE4C4396EDD9D42C6325FDA5E97FF57BFF50D59D6D6E82BEF9F3F",
+  "actualTestsSha256": "A4F0C329E01A3D062843FDABEDB370D12C7318118905FA5F5C217B78FCDC6FFD",
+  "firstBoundFailureRetained": "artifacts/p1-supervision/resume-root-v32/workspace-cli-eight-owned.json",
+  "rootInfrastructureFinalTotal": 17,
+  "originalFixtureCapsUnchanged": true,
+  "remaining": [
+    "Native Linux actualCLI scope and exactremoteSHA CI originals",
+    "Full documentation12scenarios/91records, multi-target/dependency/feature and cross-package symbol closure",
+    "Windows CTRLsignal and original containment phase gates"
+  ],
+  "originals": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\workspace-cli-eight-tree17-owned.json",
+      "sha256": "1DA2221435A6FDCEF9C73CD31635A4CD0149C0EB4F71D6743D1A7230D0ADE109"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\workspace-cli-eight-tree17.json",
+      "sha256": "B4857F5D05B5722048627AFD7024590502CA1118E7F0378067B29C7EFF3D921A"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\workspace-cli-default20-owned.json",
+      "sha256": "73F775EA372839CB0F16033DE60D763F0F8BBD77B9371291836158EECD875B3F"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\workspace-cli-default20.json",
+      "sha256": "B354BE84FA70A186F26971484789C43FC3B5C74BE93617C46811A44E4D445DCF"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\legacy-cli17-result.json",
+      "sha256": "5336390B0F7CD5202AAEFB498864D2870D21E6813EB1BD0440F0D29F7FDBA307"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v32\\workspace-cli-current-freeze.json",
+      "sha256": "6CB0E4A0E74DD54537881147F73C0B9C1D99AAFDEE4D20922DE23A931A5C8C41"
+    }
+  ]
+}
