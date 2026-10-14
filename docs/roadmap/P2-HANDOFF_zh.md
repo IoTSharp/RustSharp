@@ -8,7 +8,15 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v30/resumption.json`。
+`artifacts/p1-supervision/resume-root-v31/resumption.json`。
+
+第27轮真实FirstChance诊断在 `e064897` 的限定范围内 ✅ 已完成：Hook／controller严格构建及单次精确instrumented target取得4条body执行前的HostException／原生错误6栈。PID／native birth／原始全串命令／Hook SHA／MVID一致；安装产品078a的精确ManagedEntrance catch路径返回初始0。DETACHED到buffer的OS边仍为推断；原tiny／body／identity／cancel6／retention2／Linux12验收 ⛔ 已阻塞。[真实异常栈](../evidence/p1/firstchance-v5-actual-hostexception.json)保留body失败、flags524300／helper0／caps，以及held2→Job0／环境5项恢复。
+
+普通文件同步open基础组件在 `4e17072` 的限定范围内 ✅ 已完成：真实兼容readonly BATCH hold、thread I/O pending、break signal、CancelSynchronousIo、原生995、native thread exit／Join及source／file／event／storage／thread／privateJob1→0回收全部1/1通过。[真实open证明](../evidence/p2/native-open-cancel-foundation-v2.json)不证明生产CLI／CTRL+C或完整59/91；未重复已验收e07d099。
+
+Workspace CLI仍 🚧 进行中：显式 `rsc doc <Cargo.toml> --workspace` 保留默认virtual-workspace拒绝。新8个child案例及当前受影响20／17回归均NOT_RUN：修复CA2016／IL3000后，新完整solution构建0警告／错误，但08:48:10完成时已过新运行截止。候选源码／共享注册／help保留未提交。下一轮先核v31的精确3源码hash，再执行完整8／20／17分母后验收。root基础设施cap3构建拒绝已回收；修复solution使用有界32个累计进程，实际21→0，原fixture caps不变。第一次构建失败的原始logger文件被第二次构建覆盖；其owned回执／tool输出仍保留，已记录归档缺口。其他原件及analyzer失败日志均保留。
+
+推送后已读回远端 `c4bc58a55e45bd3ba41bf29be51a1866b84a479c`。Roadmap run38490831640通过；08:33检查时platform38490831728、Windows38490831707及Linux AOT38490831681仍进行中。新e064897／4e17072仅在本地，不声称新HEAD的CI闭环。P1六门禁仍开放，P2保持8/101，fullP1Closure／fullP2Closure仍false，唯一heartbeat保持ACTIVE。
 
 第26轮workspace documentation API组件在 `5b8d699` 的限定范围内 ✅ 已完成：
 新构建0警告／错误，全部7个真实Cargo／member／source／atomic文件系统案例及

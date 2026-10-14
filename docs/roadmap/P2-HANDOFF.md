@@ -8,7 +8,15 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v30/resumption.json`.
+`artifacts/p1-supervision/resume-root-v31/resumption.json`.
+
+Round27 actual FirstChance diagnosis is ✅ Complete at `e064897`: strict Hook/controller builds and one exact instrumented target produced four HostException/native-error6 stacks before body execution. PID/native birth/full raw command/Hook SHA/MVID match; the exact installed078a ManagedEntrance catch path returns initial0. The DETACHED-to-buffer OS edge remains an inference; original tiny/body/identity/cancel6/retention2/Linux12 acceptance is ⛔ Blocked. [Actual stacks](../evidence/p1/firstchance-v5-actual-hostexception.json) retain failed body, flags524300/helper0/caps and held2→Job0/environment5 restoration.
+
+The ordinary-file synchronous-open foundation is ✅ Complete at `4e17072`: actual compatible readonly BATCH hold, thread I/O pending, break signal, CancelSynchronousIo, native995, native thread exit/Join and source/file/event/storage/thread/privateJob1→0 closure all pass1/1. [Actual open proof](../evidence/p2/native-open-cancel-foundation-v2.json) does not prove production CLI/CTRL+C or full59/91; accepted e07d099 was not repeated.
+
+Workspace CLI remains 🚧 In progress: explicit `rsc doc <Cargo.toml> --workspace` keeps the default virtual-workspace rejection. New8 child cases and current20/17 affected regressions are NOT_RUN: after CA2016/IL3000 repair, the fresh full solution builds0 warnings/errors but finishes at08:48:10 after the new-operation cutoff. Candidate sources/shared registration/help remain uncommitted. Next round verifies exact3 source hashes in v31, then executes complete8/20/17 denominators before acceptance. Root infrastructure cap3 build rejection was reaped; repaired solution uses bounded32 cumulative processes, with21→0. Original fixture caps are unchanged. The first failed build raw logger file was overwritten by the second build; its owned receipt/tool output remain, and the archive gap is recorded. All other original evidence and failed analyzer logs are retained.
+
+Remote `c4bc58a55e45bd3ba41bf29be51a1866b84a479c` was read back after push. Roadmap run38490831640 passes; platform38490831728, Windows38490831707 and Linux AOT38490831681 remain in progress at the08:33 check. New e064897/4e17072 are local only; no new-head CI closure is claimed. P1 six gates remain open, P2 stays8/101, fullP1Closure/fullP2Closure remain false and the unique heartbeat stays ACTIVE.
 
 Round26 workspace documentation API component is ✅ Complete at `5b8d699`:
 fresh build0 warnings/errors, all7 real Cargo/member/source/atomic filesystem cases
