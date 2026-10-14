@@ -1097,3 +1097,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第51轮 Linux 文件提供者能力预检在只读WSL组件范围内 ✅ 已完成：20/20项有界探测自然结束；/dev/fuse可访问，FUSE运行库3.14.0-5build1及fusermount3存在，pkg-config fuse3不可用。[真实预检证明](../evidence/p2/formatter-linux-capability-v1.json)记录零安装、挂载、信号或formatter I/O用例。可控普通文件提供者及真实pending/cancel/release证据仍UNKNOWN/NOT_RUN；这不代表原生Linux CI或完整containment。formatter59/父91未变，P2-08.02仍 🚧 进行中；P2保持8/101。
 
 第52轮源码范围组件 ✅ 已完成：实际Parse/HIR/types/MIR/LIR身份匹配全部12个Rust源码案例/16个原始点，48项点变异及显式const选择负例被拒绝。完整14清单保留2个手工案例UNKNOWN；四项手工来源/结构组件仍开放。[真实pipeline证明](../evidence/p1/f463-ast-pipeline-review-v1.json)保留IL3000失败。没有加载/执行原始生成程序；P1门禁仍开放。
+
+第52轮P3重复原型在限定子集内 ✅ 已完成：严格Release及16/16测试通过，支持单规则整个matcher为单层ident的star/plus/optional和逗号分隔。[原型证明](../evidence/p3/macros-repetition-prototype-v1.json)保留不支持形式显式拒绝及精确资源测试范围。不验收模板求值/卫生性/编译器；82完整场景NOT_RUN，正式叶子0/38、门禁0/4。
