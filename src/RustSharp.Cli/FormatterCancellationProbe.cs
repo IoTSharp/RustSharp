@@ -16,6 +16,13 @@ internal static partial class FormatterCancellationProbe
     internal static int Run(string[] args)
     {
         string? configuration = Environment.GetEnvironmentVariable(ConfigurationVariable);
+        if (FormatterNativeOpenProbe.Enabled)
+        {
+            if (!string.IsNullOrEmpty(configuration))
+                throw new InvalidDataException("Mutually exclusive private cancellation probes.");
+            return FormatterCommand.RunWithCancellationHandlerReady(args,
+                _ => FormatterNativeOpenProbe.HandlerReady(args));
+        }
         return string.IsNullOrEmpty(configuration)
             ? FormatterCommand.Run(args)
             : FormatterCommand.RunWithCancellationHandlerReady(args,

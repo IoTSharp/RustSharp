@@ -56,8 +56,10 @@ internal static class FormatterCommand
             if (maximumBytes is < 0 or > MaximumFileBytes)
                 throw new InvalidDataException("fmt read byte bound is invalid.");
             RejectLink(path);
-            using var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-                ReadChunkBytes, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            using var input = OperatingSystem.IsWindows()
+                ? WindowsCancellableSourceOpen.OpenRead(path, ReadChunkBytes, ioCancellation.Token)
+                : new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
+                    ReadChunkBytes, FileOptions.Asynchronous | FileOptions.SequentialScan);
             RejectLink(path); // Recheck the actual path and ancestors after opening.
             using var output = new MemoryStream();
             var buffer = new byte[ReadChunkBytes];

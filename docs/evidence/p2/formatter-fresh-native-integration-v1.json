@@ -1,0 +1,218 @@
+{
+  "leafClosed": false,
+  "sourceKind": "Explicit hash-bound working tree; no clean candidate-SHA report",
+  "windowsCli": {
+    "executed": 8,
+    "passed": 8,
+    "originalCleanup": "parent-exit-only",
+    "ids": [
+      "check-drift",
+      "invalid-utf8",
+      "malformed",
+      "unsupported",
+      "directory-prepublication-reject",
+      "readonly-write-failure",
+      "bom-format",
+      "canonical-check"
+    ]
+  },
+  "acceptedAt": "2026-10-14T14:20:28.2681256+08:00",
+  "retainedFailures": [
+    "Previous candidate provenance inventory rejection is unresolved; same actual compiled GitAsync now yields997 entries matching raw SHA. No cap increased.",
+    "Initial fresh driver build NETSDK1004 preserved; restored strict build0 warnings/errors and SARIF0 pass.",
+    "Initial wrapper proof assertion counted a null array pipeline value; actual SARIF results[] was independently inspected empty."
+  ],
+  "P2CompleteLeaves": 8,
+  "fullP1Closure": false,
+  "taskId": "P2-08.02.windows-native-open-integration",
+  "fullP2Closure": false,
+  "harness": {
+    "formatterPassed": 59,
+    "registered": 1215,
+    "failed": 0,
+    "formatter": 59,
+    "contractPassed": 18,
+    "contract": 18,
+    "notExecuted": 0
+  },
+  "P2LeafDenominator": 101,
+  "nativeCase": {
+    "independentProcessReadback": [
+      {
+        "noKillPerformed": true,
+        "sameIdentityPresent": false,
+        "identity": {
+          "pid": 45728,
+          "nativeBirthFileTime": "134364320665627862",
+          "parentPid": 64800,
+          "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\root-build-restored\\bin\\CliOpenDriver.dll\" \"--child\" \"b3bf0c7e01dd449486aae332dd5f2f57\" \"03B9C3C7FF9C96B30EEBBF9B47E13EA1FC7F7797E4CE1854C13DFF65322DADBE\""
+        },
+        "pidPresent": false
+      },
+      {
+        "noKillPerformed": true,
+        "sameIdentityPresent": false,
+        "identity": {
+          "pid": 38372,
+          "nativeBirthFileTime": "134364320671713055",
+          "parentPid": 45728,
+          "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\cli-bin\\rsc.dll\" \"fmt\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\runtime\\b3bf0c7e01dd449486aae332dd5f2f57\\source.rs\""
+        },
+        "pidPresent": false
+      },
+      {
+        "noKillPerformed": true,
+        "sameIdentityPresent": false,
+        "identity": {
+          "pid": 29592,
+          "nativeBirthFileTime": "134364320667038877",
+          "parentPid": 45728,
+          "fullCommand": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "pidPresent": false
+      }
+    ],
+    "pending": true,
+    "GenerateConsoleCtrlEvent": 1,
+    "nativeFileEventStorageClosed": true,
+    "actualCreateError": 995,
+    "sourceUnchanged": true,
+    "nativeThreadJoinAndClose": true,
+    "denominator": 1,
+    "outerCumulativeTotal": 3,
+    "naturalCliExit": 130,
+    "outerJobFinal": 0
+  },
+  "originalOuterSkeletonFields": {
+    "cliNativeCancellationProven": false,
+    "meaning": "Legacy outer skeleton fields remain false/NO_NATIVE_CLI_PROOF; accepted proof is the exact hashed child report and raw open-finished record independently reviewed above.",
+    "cliLaunched": false,
+    "cliProof": "NO_NATIVE_CLI_PROOF",
+    "cliNativePendingProven": false
+  },
+  "bindings": [
+    {
+      "sha256": "FD46F6B06913B3096A875C4D54689D1E2A3DD47491650C8430678E36B5498666",
+      "path": "D:/GitHub/RustSharp/src/RustSharp.Cli/FormatterCommand.cs",
+      "bytes": 16025
+    },
+    {
+      "sha256": "76113CA5892C1FE9F3CD55D1D4C6D24878CE17EC034AC8182EC1846CE29445BC",
+      "path": "D:/GitHub/RustSharp/src/RustSharp.Cli/FormatterCancellationProbe.cs",
+      "bytes": 9286
+    },
+    {
+      "sha256": "CD43C00B1FCD0E1EF352B75BB6B275D08D6EF0913569F897E94CB10AD24F8035",
+      "path": "D:/GitHub/RustSharp/src/RustSharp.Cli/WindowsCancellableSourceOpen.cs",
+      "bytes": 19473
+    },
+    {
+      "sha256": "0648C7F2F7A9B7DAEE5AA4C416F6E53FD141C263A202EFADF2F68A294D165632",
+      "path": "D:/GitHub/RustSharp/src/RustSharp.Cli/FormatterNativeOpenProbe.cs",
+      "bytes": 7306
+    },
+    {
+      "sha256": "159457EE9256019A644E0BA19EAE0717C40BBB424EB249C886F523C8B8388CF3",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v42\\formatter59-raw-885901891e12424e930138b6e49106eb\\stdout.bin",
+      "bytes": 2613
+    },
+    {
+      "sha256": "BE9085607E3D312EBA861EDC819062D661B41DEB8ED5C5F297FC032E2404B4C5",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v42\\formatter59-raw-885901891e12424e930138b6e49106eb\\capture-receipt.json",
+      "bytes": 5187
+    },
+    {
+      "sha256": "A5BB5133844EA210BB3085A12C125C3F97C9E793B099EB29DF605C2225688371",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v42\\formatter18-raw-5a793f20d97840888ace0aee71bfd353\\stdout.bin",
+      "bytes": 1268
+    },
+    {
+      "sha256": "FE0D0016EAE1E3675108D00F2FC71B324FAAF7A53EE366B1CC30333AA2E4173B",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v42\\formatter18-raw-5a793f20d97840888ace0aee71bfd353\\capture-receipt.json",
+      "bytes": 5102
+    },
+    {
+      "sha256": "C694D3601F387947D9B6BD2DD05B56FD975ADECD88524121DE211A8D7B8AE494",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v42\\formatter-windows-cli8\\formatter-cli-controls-3a2bdcc345444811a22b34ab2b4cbc2e.json",
+      "bytes": 20538
+    },
+    {
+      "sha256": "34507B9A40ED521182BD68584166B5562D7AA8C9B8D3D33F00A198D2BB3E4AF1",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\root-build-restored\\bin\\CliOpenDriver.dll",
+      "bytes": 52736
+    },
+    {
+      "sha256": "CA60DA1A5F4E3290310F7C45D8F29594C5DA31C936D08113730A30CD9A381C8C",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\root-build-restored\\bin\\CliOpenDriver.pdb",
+      "bytes": 33708
+    },
+    {
+      "sha256": "6F49E6D173527A7BDED4B5F5971DC66E0B0CC33BDF1C96F60EB626B762FFEA80",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\cli-bin\\rsc.dll",
+      "bytes": 91136
+    },
+    {
+      "sha256": "33119A2803D3B472137509B18EB054FE837351C10B65706CB5626A62E02E7BAD",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\cli-bin\\rsc.pdb",
+      "bytes": 33032
+    },
+    {
+      "sha256": "E954DCCF5B2C26812375C498657247A6E67F5DE3B0E6E2D45893D09217E7AECF",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\cli-bin\\net10.0\\RustSharp.Tests.dll",
+      "bytes": 2126848
+    },
+    {
+      "sha256": "E31C07F9BF718D81952E9D1D714B369EE953BBD555D92EA23EADEE0848C4D083",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\runtime\\b3bf0c7e01dd449486aae332dd5f2f57\\supervisor-report.json",
+      "bytes": 17873
+    },
+    {
+      "sha256": "FCCBE46F466BF091C036772C6A137CB8B8CBB6FC56A49CBD71E73223B37C5812",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\runtime\\b3bf0c7e01dd449486aae332dd5f2f57\\child-report.json",
+      "bytes": 5497
+    },
+    {
+      "sha256": "3A00F62AC88B5EC7E3E93821944BC33AD6D22F3755158DB7686D61952EF6AFBC",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\runtime\\b3bf0c7e01dd449486aae332dd5f2f57\\open-ready.json",
+      "bytes": 403
+    },
+    {
+      "sha256": "9CC11C9C0BF9FE2ED3DE282DB266B33B14F5BD41677E85A7DD18732307F69A32",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\runtime\\b3bf0c7e01dd449486aae332dd5f2f57\\open-finished.json",
+      "bytes": 400
+    },
+    {
+      "sha256": "536E506BB90914C243A12B397B9A998F85AE2CBD9BA02DFD03A9E155CA5CA0F4",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\runtime\\b3bf0c7e01dd449486aae332dd5f2f57\\source.rs",
+      "bytes": 13
+    },
+    {
+      "sha256": "2140B9148E0FE1892864036F6FBAF97F0997223E0F1A7F96DEC14FC4367579BC",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\Driver.cs",
+      "bytes": 39103
+    },
+    {
+      "sha256": "BDCDE438AF20326CB0BD36309C40351E2F8DE0F7261E41DDDB6B9B13ED232291",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\Run-Cli.ps1",
+      "bytes": 21966
+    },
+    {
+      "sha256": "0648C7F2F7A9B7DAEE5AA4C416F6E53FD141C263A202EFADF2F68A294D165632",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\Probe.cs",
+      "bytes": 7306
+    },
+    {
+      "sha256": "CEC28CE19EE54ED80B9BC6C688562B2D325483086327001B5BF2C882F16E4367",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-fresh-round37\\SOURCE-FROZEN.json",
+      "bytes": 2207
+    }
+  ],
+  "limitations": [
+    "Native control is one real Windows case, not full cancellation matrix or Linux current-source acceptance.",
+    "Parent91 includes separate documentation12 and unimplemented incremental20. Contract18 does not replace these.",
+    "Exact new-commit CI on pinned SDK10.0.400 and full containment remain open.",
+    "The native source/lease is intentionally retained as original evidence."
+  ],
+  "status": "COMPONENT_ACCEPTED",
+  "baseSourceHead": "e7816ee7b7eac3f7069ab50adbdfb4ca57477a90"
+}
