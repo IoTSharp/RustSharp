@@ -1,0 +1,77 @@
+{
+  "taskId": "P1-GATE.03.RETAINED-D2-ROUND32",
+  "status": "COMPONENT_RECONCILED",
+  "candidateSha": "d2ee24f44e850bab14a02670b6da7e07a8fd67c1",
+  "candidateTreeSha": "e8cf414bb9b8842baf96924b4fc544d177d50bfc",
+  "run": "38494398708",
+  "attempt": 1,
+  "groups": [
+    {
+      "rootMatched": 785,
+      "group": "source/windows-x64",
+      "reportSha256": "E18381A65CA18B9F8B314F81ACD73CC6C0AE003C7E38D447AE40966D7FCC21E3",
+      "manifestRows": 785
+    },
+    {
+      "rootMatched": 103,
+      "group": "backend/windows-x64",
+      "reportSha256": "F0B73354298BC15CA3894EB0137E41F84807B24A4D1DD974C4C46080B05BCCC9",
+      "manifestRows": 103
+    },
+    {
+      "rootMatched": 785,
+      "group": "source/linux-x64",
+      "reportSha256": "EA08D077335A258FACCF7F0FA611279F0180106485AB0EC426BE762B632EF5A0",
+      "manifestRows": 785
+    },
+    {
+      "rootMatched": 103,
+      "group": "backend/linux-x64",
+      "reportSha256": "6994EDF1B4373459FF1D03AFE4964AE2742D393AF568176F14224A1574533365",
+      "manifestRows": 103
+    }
+  ],
+  "uniqueRetainedFiles": 1776,
+  "previousPhysicalRetainedProof": 92,
+  "newPhysicalHashes": 1684,
+  "workerAllRetainedMatched": true,
+  "rootReview": "All1776 manifest rows independently joined to prior/current physical receipts; four original report hashes and two wrapper PE bytes independently rehashed. Historical accepted physical checks not repeated.",
+  "rootWrapperPhysicalChecks": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-windows-x64-38494398708-1\\evidence-4935711f78ff4de9b84681f02479ff7a\\three-package-tuple-array-unit-owner\\SourceWrapper.dll",
+      "sha256": "2EFED4B627634896C4A95A360CCCBD5CBE2F540F1E00F6A5409F99928E3F85B8",
+      "wrapperIlVerifyStatus": "passed",
+      "platform": "windows-x64"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-linux-x64-38494398708-1\\evidence-4fcd926e577f4f7e9f136c88cb761699\\three-package-tuple-array-unit-owner\\SourceWrapper.dll",
+      "sha256": "58083C57B028CA4D429E6A6DB888FA2920B2AE223455F4BCBB47899797DAA082",
+      "wrapperIlVerifyStatus": "passed",
+      "platform": "linux-x64"
+    }
+  ],
+  "missing": 0,
+  "mismatched": 0,
+  "unchecked": 0,
+  "workerReportSha256": "AEAEF92C812CCAD089D74CF156827BB5CED8130295076A1DC93871E45E0E5904",
+  "prior95ReceiptSha256": "8B52E2AB2768CC0B2FF029055206E911EC54FFBD3416799658AAC92F0B6F451D",
+  "extraReceiptSha256": "F4F301ECCBF5C6374BA65C67846EE30221C9DF15143F47D1A800990A86C6A022",
+  "sourcePerRid": 19,
+  "sourceOriginalPePerRid": 39,
+  "backendNativeCells": 24,
+  "backendPerHostPassed": 12,
+  "backendPerHostForeignBlocked": 12,
+  "manualMirSourceBoundaryPreserved": true,
+  "linuxThirdDropDifferenceApproved": false,
+  "currentHeadAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "resources": {
+    "originalsChanged": false,
+    "rootLongProcesses": 0,
+    "deletedObjects": 0
+  },
+  "at": "2026-10-14T11:16:11.7667551+08:00",
+  "elapsedSeconds": 1.9767722,
+  "deliveryEncoding": "UTF8 LF derived receipts; retained artifact originals and their recorded SHA256 bytes are unchanged."
+}

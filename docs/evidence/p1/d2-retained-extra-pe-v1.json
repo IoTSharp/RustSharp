@@ -1,0 +1,45 @@
+{
+  "previous95NotRehashed": true,
+  "candidateSha": "d2ee24f44e850bab14a02670b6da7e07a8fd67c1",
+  "runId": "38494398708",
+  "fullP1Closure": false,
+  "twoPreviouslyUncheckedOriginalPe": [
+    {
+      "sourceOriginalPeDenominator": 39,
+      "role": "originalWrapper",
+      "expectedSha256": "2EFED4B627634896C4A95A360CCCBD5CBE2F540F1E00F6A5409F99928E3F85B8",
+      "actualSha256": "2EFED4B627634896C4A95A360CCCBD5CBE2F540F1E00F6A5409F99928E3F85B8",
+      "platform": "windows-x64",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-windows-x64-38494398708-1\\evidence-4935711f78ff4de9b84681f02479ff7a\\three-package-tuple-array-unit-owner\\SourceWrapper.dll",
+      "reportSha256": "E18381A65CA18B9F8B314F81ACD73CC6C0AE003C7E38D447AE40966D7FCC21E3",
+      "caseId": "three-package-tuple-array-unit-owner",
+      "reportPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-windows-x64-38494398708-1\\source-package-v2.json",
+      "wrapperIlVerifyOriginalSha256": "2EFED4B627634896C4A95A360CCCBD5CBE2F540F1E00F6A5409F99928E3F85B8",
+      "wrapperIlVerifyStatus": "passed",
+      "bytes": 18944
+    },
+    {
+      "sourceOriginalPeDenominator": 39,
+      "role": "originalWrapper",
+      "expectedSha256": "58083C57B028CA4D429E6A6DB888FA2920B2AE223455F4BCBB47899797DAA082",
+      "actualSha256": "58083C57B028CA4D429E6A6DB888FA2920B2AE223455F4BCBB47899797DAA082",
+      "platform": "linux-x64",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-linux-x64-38494398708-1\\evidence-4fcd926e577f4f7e9f136c88cb761699\\three-package-tuple-array-unit-owner\\SourceWrapper.dll",
+      "reportSha256": "EA08D077335A258FACCF7F0FA611279F0180106485AB0EC426BE762B632EF5A0",
+      "caseId": "three-package-tuple-array-unit-owner",
+      "reportPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v35\\native-ci-originals\\p1-production-source-linux-x64-38494398708-1\\source-package-v2.json",
+      "wrapperIlVerifyOriginalSha256": "58083C57B028CA4D429E6A6DB888FA2920B2AE223455F4BCBB47899797DAA082",
+      "wrapperIlVerifyStatus": "passed",
+      "bytes": 18432
+    }
+  ],
+  "workerGit": 0,
+  "linuxThirdDropDifferenceApproved": false,
+  "currentHeadAcceptance": false,
+  "treeSha": "e8cf414bb9b8842baf96924b4fc544d177d50bfc",
+  "attempt": 1,
+  "workerBuild": 0,
+  "at": "2026-10-14T03:02:22.7834677+00:00",
+  "task": "P1-GATE.03.RETAINED-D2-ROUND32",
+  "workerNative": 0
+}

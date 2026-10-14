@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v35/resumption.json`。
+`artifacts/p1-supervision/resume-root-v36/resumption.json`。
+
+第32轮仍为 🚧 进行中。精确 d2ee24f/run38494398708/attempt1 的留存文件组件为 ✅ 已完成：1776个唯一留存清单文件（每个RID源码785、后端103）全部与物理哈希记录对齐，缺失/不一致/未核均为0。监督者独立关联完整分母，重核四份原始报告与此前未核的两个第39个wrapper PE。[限定范围的监督复核](../evidence/p1/d2-retained-manifest-root-review-v1.json)保留手工MIR/源码区别、外平台后端单元格和未获批准的Linux第三项Drop差异；不证明后续HEAD或关闭P1。171b1be/efc2dce/8e5383e已推送。Linux身份最小程序在保留IL2026/IL3050和CA1852失败后，通过零警告/零错误构建；两次WSL启动失败已保留，真实Linux执行仍为NOT_RUN。始终加引号并非已证实的WSL原因。稳定Linux身份补丁仍未应用，等待实际statx头和复现。Formatter driver的进程/源码/线程出生字段检查已冻结，但生产原子probe/构建/原生信号验收仍为NOT_RUN。检查点v36；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
 第31轮仍 🚧 进行中。新capture严格构建及已知NUL／非UTF8二进制微测通过，原生Job2→0；首轮quota1失败及全部旧analyzer失败均保留。提交171b1be保存精确源码字节并对账7个原始ZIP digest。真实d2ee24f／run38494398708／attempt1现联合24个唯一native backend格，各host12 passed／12 foreign-blocked保留；两RID source各19/19，95项独立物理hash（5ZIP+14backendPE+76sourcePE）全部一致。每RID第39个source PE仅有原生CI验证记录，本批未独立重hash；source／manual-MIR类型及未批准Linux第三Drop差异保留，不证明后续HEAD／完整P1。真实45f9 docs run38498734029失败：Windows8+20通过，Linux workspace6/8，两项RSTD2001 staging-ancestor失败，API20为NOT_RUN。两RID各977源码记录前后一致、6份DLL／PDB hash吻合。CreationTimeUtc身份假说待真实Linux复现，未削弱任何身份guard。Probe原子发布补丁已保存但未应用／运行。检查点v35；P1六门禁开放、P2保持8/101、两项full-closure仍false。
 
