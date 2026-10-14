@@ -1,0 +1,16 @@
+{
+  "assemblySha256": "0CAD4848315061ABC93758F46678D6DE1D476095C8E04FD8471F26B1F2FCB391",
+  "fullCandidateExecuted": 0,
+  "tests": "artifacts/p1-supervision/resume-root-v53/calls/p3-repeated-template-tests-3cb634aeb4d246508b3033468c6074e9/capture-receipt.json",
+  "taskId": "P3-01.repeated-template-prototype",
+  "fullCandidateDenominator": 82,
+  "fullP3Closure": false,
+  "productionExpansions": 0,
+  "scope": "Same-operator whole-template single reference over actual ident repetition items; ASCII-space rendering",
+  "passed": 16,
+  "sourceSha256": "E1408F62B103494DD35CE80103222BBBB46EC7F0A061BF2F4BA58409BC6F048E",
+  "executed": 16,
+  "formalAcceptedLeaves": 0,
+  "fixedTests": 16,
+  "testSourceSha256": "92F1150D33A91CB177A228F16D4E3B2C4C02B74302AE0591F6C91AE858C23E57"
+}

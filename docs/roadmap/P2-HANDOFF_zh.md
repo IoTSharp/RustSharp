@@ -10,7 +10,7 @@
 `01a13917-a6b4-78e0-bd31-44600dd87b79`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v52/resumption.json`。
+`artifacts/p1-supervision/resume-root-v54/resumption.json`。
 
 第38轮新鲜Windows formatter集成在限定组件范围内为 ✅ 已完成：严格solution/driver构建零警告/零错误，完整formatter59/59、契约18/18、真实Windows CLI8/8及原生信号1/1通过。[新鲜集成证据](../evidence/p2/formatter-fresh-native-integration-v1.json)绑定精确工作树源码/DLL/PDB/driver哈希、实际pending995、自然130、原生Join/close及outer3→0；三个精确进程身份已独立确认不存在。旧outer骨架proof字段仍为false，不用它们替代已核哈希child证据。此前provenance拒绝仍未定位，尽管实际编译GitAsync返回997项且匹配原始raw哈希；未提高cap。新clean-SHA CI/Linux、完整取消/containment及完整59/91叶项合同仍开放，P2保持8/101。
 
@@ -1103,3 +1103,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第52轮双输出预算候选验收 ❌ 失败：新增真实预算控制3/3通过，但受影响旧控制7/8。timeout-three在超时前因不完整原生成员快照按失败关闭；之后Job0仅证明回收。[保留失败](../evidence/p1/dual-output-limits-round52-failure.json)对应候选源码未提交，没有重跑至绿、改时序/上限或借cleanup回填证明。P1-GATE.04仍 🚧 进行中。
 
 第52轮固定FUSE头文件查询在只读WSL证据范围内 ✅ 已完成：4组查询显示libfuse3-dev未登记、两个指定FUSE3头文件不存在；现有kernel头文件声明协议7.39，运行库3.14.0路径已绑定。[真实查询](../evidence/p2/formatter-fuse-headers-v1.json)不证明provider、安装、挂载或取消案例；P2保持8/101，完整闭环false。
+
+第53轮重复模板原型在限定子集内 ✅ 已完成：严格Release及16/16通过。[证明](../evidence/p3/macros-repeated-template-prototype-v1.json)。P3正式叶子0/38、门禁0/4，82完整用例NOT_RUN。第54轮集成前独立复核冻结源码/DLL精确哈希及原始16项输出，没有重跑已验收测试。
