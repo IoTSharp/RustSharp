@@ -1,0 +1,128 @@
+{
+  "priorThreeFailuresRetained": "artifacts/p1-supervision/full-containment-candidate-v5/DIAGNOSIS.json",
+  "taskId": "P1-GATE.04.windows-fixture",
+  "scope": "BOUNDED_WINDOWS_FIXTURE_COMPONENT",
+  "maximumProcesses": 3,
+  "passed": 6,
+  "failed": 0,
+  "productionIntegrated": false,
+  "build": "artifacts/p1-supervision/resume-root-v45/calls/fixture-build-dda9fedb11b845cd99d15e132b8b0cda/capture-receipt.json",
+  "dllSha256": "F4A52FBD5C82F6E9AA8E6EA1CB1CFE5B4CED8AF4AA5904DAE7A61FADE508616F",
+  "denominator": 6,
+  "schemaVersion": 1,
+  "linuxContainment": "UNKNOWN",
+  "cases": [
+    {
+      "controlSha256": "FE299B9B241B5657C3AC1D4AF2049485528E4BE0063241253D0887FFE7FFCDDA",
+      "control": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-inventory-mutation\\control.json",
+      "name": "inventory-mutation",
+      "kind": "structural-negative",
+      "passed": true
+    },
+    {
+      "executionSucceeded": true,
+      "jobTotal": 3,
+      "controlSha256": "EF20B35470593B2AD964692A3EF0D51B1D05962332BCB105E2F0DBFCADF509A8",
+      "fullContainmentVerified": true,
+      "memberCount": 3,
+      "reportSha256": "3D8014E61DD4F18C3304B0FBE6F2739AA0DD51A301F8954B4E081C8918743CDB",
+      "passed": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-held-three-natural\\report.json",
+      "kind": "native-runtime",
+      "wholeJobZero": true,
+      "control": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-held-three-natural\\control.json",
+      "name": "held-three-natural"
+    },
+    {
+      "executionSucceeded": false,
+      "jobTotal": 3,
+      "controlSha256": "85E487836DD007FF2F5DD9DE0CBDBCE45BB3232B6394B34979FE6456FBD8322A",
+      "fullContainmentVerified": true,
+      "memberCount": 3,
+      "reportSha256": "744A134AFF610C7F67C5383CE6A5BF7192CE08B7B37F28FB6305B99EF76F9F37",
+      "passed": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-root-first-exit\\report.json",
+      "kind": "native-runtime",
+      "wholeJobZero": true,
+      "control": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-root-first-exit\\control.json",
+      "name": "root-first-exit"
+    },
+    {
+      "executionSucceeded": false,
+      "jobTotal": 3,
+      "controlSha256": "10AB9101809CA6D0B91D6BE3EA6ACC18CF7DBEDF7CA69DD3C99F163400130242",
+      "fullContainmentVerified": true,
+      "memberCount": 3,
+      "reportSha256": "B0BCEAC65888B4348D0C44DDA7A3AB966B413F48B6FC4C198BF72B4DC1E0841D",
+      "passed": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-timeout-three\\report.json",
+      "kind": "native-runtime",
+      "wholeJobZero": true,
+      "control": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-timeout-three\\control.json",
+      "name": "timeout-three"
+    },
+    {
+      "executionSucceeded": false,
+      "jobTotal": 3,
+      "controlSha256": "66D6138CB6CEE78AF0AE032F974CE8EA808A5ED56EF5C614A20B2D7A2E426859",
+      "fullContainmentVerified": true,
+      "memberCount": 3,
+      "reportSha256": "46535F434623A3AA56344366B9D1A41C2BDB73EAEEA7C6957A5F102BCAF4A56E",
+      "passed": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-cancel-three\\report.json",
+      "kind": "native-runtime",
+      "wholeJobZero": true,
+      "control": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-cancel-three\\control.json",
+      "name": "cancel-three"
+    },
+    {
+      "executionSucceeded": false,
+      "jobTotal": 2,
+      "controlSha256": "416661F7F2267F98E11D28C125AE75C7D1959289FE8F0CA1B609A1CAE6D7B622",
+      "fullContainmentVerified": false,
+      "memberCount": 1,
+      "reportSha256": "38FA604D767590D7899A646C46BC5996158B97C2A2E8383D70FF7312E0958919",
+      "passed": true,
+      "report": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-transient-member\\report.json",
+      "kind": "native-runtime",
+      "wholeJobZero": true,
+      "control": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v45\\fixture-transient-member\\control.json",
+      "name": "transient-member"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "tests/fixtures/processes/FullContainmentV5/Native.cs",
+      "sha256": "759E145D2DE2C79F64149FFB7B2E07D7BC56A6726D6A1249349CE437755A6E9A"
+    },
+    {
+      "path": "tests/fixtures/processes/FullContainmentV5/Launcher.cs",
+      "sha256": "8B7CF1B47D039676CC43338247182AC0FCD4F6FDF25CDCA0FE49A85656C5E067"
+    },
+    {
+      "path": "tests/fixtures/processes/FullContainmentV5/Capture.cs",
+      "sha256": "F26FCB49E629D959B0EF63FF95470C57C32CA25FDBCE623E0FC0B47A7EEE5433"
+    },
+    {
+      "path": "tests/fixtures/processes/FullContainmentV5/FullTreeRunner.cs",
+      "sha256": "15731FD6D344FD3460CDB037C586D67D5ED78437D43F5C1A869515DB14A3F8D7"
+    },
+    {
+      "path": "tests/fixtures/processes/FullContainmentV5/Program.cs",
+      "sha256": "1F08AF4EE11F295E2DA6A8B32E4F5C79F6503387C5F503734877F005310E683C"
+    },
+    {
+      "path": "tests/fixtures/processes/FullContainmentV5/FullContainmentV5.csproj",
+      "sha256": "3DDBC53330F6E07E139EC8A25E9D3F87581681B3F0EEF53B9A2CD56C3C735A9C"
+    },
+    {
+      "path": "tests/fixtures/processes/FullContainmentV5/CONTROLS.json",
+      "sha256": "FDA4663B28AA53584D4FAEB6B6DF9856A96C82E6A2C9A59C3E057FA61B09A2D0"
+    }
+  ],
+  "originalP1ScopePassed": false,
+  "nativeRuntimeControls": 5,
+  "structuralNegativeControls": 1,
+  "pdbSha256": "615969B545D346F7C52500B86836F1EDFEA68CD44FEE450B7E83145CCFA09EEC",
+  "fullP1Closure": false
+}

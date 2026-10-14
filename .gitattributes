@@ -19,3 +19,9 @@ tools/RustSharp.Conformance/fixtures/syntax-expanded-qualified.rs -text whitespa
 # Preserve those bytes in native checkouts and Git archives on both platforms.
 tools/RustSharp.Conformance/fixtures/p1-v3-*.rs -text whitespace=cr-at-eol
 tools/RustSharp.Conformance/fixtures/p1-platform-v2-*.rs -text whitespace=cr-at-eol
+# Preserve the raw bytes referenced by the frozen containment fixture hashes.
+tests/fixtures/processes/FullContainmentV5/CONTROLS.json -text whitespace=cr-at-eol
+tests/fixtures/processes/FullContainmentV5/SOURCE-MANIFEST.json -text whitespace=cr-at-eol
+tests/fixtures/processes/FullContainmentV5/*.cs -text whitespace=cr-at-eol
+tests/fixtures/processes/FullContainmentV5/Native.cs -text whitespace=cr-at-eol,-blank-at-eof
+tests/fixtures/processes/FullContainmentV5/*.csproj -text

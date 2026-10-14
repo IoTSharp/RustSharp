@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "scope": "VERSIONED_WINDOWS_CANDIDATE_FIXTURE",
+  "sourceManifestPath": "artifacts/p1-supervision/full-containment-candidate-v5/SOURCE-MANIFEST.json",
+  "sourceManifestSha256": "365D8B03CDA99E881B58F17D3B77EA3C80A3AF2963007DF1870C1C4FC5D574F6",
+  "namespace": "RustSharp.FullContainmentV5",
+  "assembly": "FullContainmentV5",
+  "copiedFileCount": 7,
+  "sourceBehaviorChanged": false,
+  "fixturePathRevalidation": "NOT_RUN_BY_WORKER",
+  "productionIntegrated": false,
+  "linux": "UNKNOWN",
+  "fullP1Closure": false,
+  "files": [
+    {
+      "path": "Native.cs",
+      "length": 13207,
+      "sha256": "759E145D2DE2C79F64149FFB7B2E07D7BC56A6726D6A1249349CE437755A6E9A",
+      "originalPath": "artifacts/p1-supervision/full-containment-candidate-v5/Native.cs",
+      "originalSha256": "759E145D2DE2C79F64149FFB7B2E07D7BC56A6726D6A1249349CE437755A6E9A",
+      "byteIdentical": true
+    },
+    {
+      "path": "Launcher.cs",
+      "length": 14828,
+      "sha256": "8B7CF1B47D039676CC43338247182AC0FCD4F6FDF25CDCA0FE49A85656C5E067",
+      "originalPath": "artifacts/p1-supervision/full-containment-candidate-v5/Launcher.cs",
+      "originalSha256": "8B7CF1B47D039676CC43338247182AC0FCD4F6FDF25CDCA0FE49A85656C5E067",
+      "byteIdentical": true
+    },
+    {
+      "path": "Capture.cs",
+      "length": 6982,
+      "sha256": "F26FCB49E629D959B0EF63FF95470C57C32CA25FDBCE623E0FC0B47A7EEE5433",
+      "originalPath": "artifacts/p1-supervision/full-containment-candidate-v5/Capture.cs",
+      "originalSha256": "F26FCB49E629D959B0EF63FF95470C57C32CA25FDBCE623E0FC0B47A7EEE5433",
+      "byteIdentical": true
+    },
+    {
+      "path": "FullTreeRunner.cs",
+      "length": 16395,
+      "sha256": "15731FD6D344FD3460CDB037C586D67D5ED78437D43F5C1A869515DB14A3F8D7",
+      "originalPath": "artifacts/p1-supervision/full-containment-candidate-v5/FullTreeRunner.cs",
+      "originalSha256": "15731FD6D344FD3460CDB037C586D67D5ED78437D43F5C1A869515DB14A3F8D7",
+      "byteIdentical": true
+    },
+    {
+      "path": "Program.cs",
+      "length": 7172,
+      "sha256": "1F08AF4EE11F295E2DA6A8B32E4F5C79F6503387C5F503734877F005310E683C",
+      "originalPath": "artifacts/p1-supervision/full-containment-candidate-v5/Program.cs",
+      "originalSha256": "1F08AF4EE11F295E2DA6A8B32E4F5C79F6503387C5F503734877F005310E683C",
+      "byteIdentical": true
+    },
+    {
+      "path": "FullContainmentV5.csproj",
+      "length": 775,
+      "sha256": "3DDBC53330F6E07E139EC8A25E9D3F87581681B3F0EEF53B9A2CD56C3C735A9C",
+      "originalPath": "artifacts/p1-supervision/full-containment-candidate-v5/FullContainmentV5.csproj",
+      "originalSha256": "3DDBC53330F6E07E139EC8A25E9D3F87581681B3F0EEF53B9A2CD56C3C735A9C",
+      "byteIdentical": true
+    },
+    {
+      "path": "CONTROLS.json",
+      "length": 1923,
+      "sha256": "FDA4663B28AA53584D4FAEB6B6DF9856A96C82E6A2C9A59C3E057FA61B09A2D0",
+      "originalPath": "artifacts/p1-supervision/full-containment-candidate-v5/CONTROLS.json",
+      "originalSha256": "FDA4663B28AA53584D4FAEB6B6DF9856A96C82E6A2C9A59C3E057FA61B09A2D0",
+      "byteIdentical": true
+    }
+  ]
+}

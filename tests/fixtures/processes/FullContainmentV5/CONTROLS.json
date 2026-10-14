@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "task": "P1-GATE.04.FULL-CONTAINMENT-v5",
+  "status": "SOURCE_CANDIDATE",
+  "controlDenominator": 6,
+  "nativeControlDenominator": 5,
+  "structuralControlDenominator": 1,
+  "activeProcessCap": 3,
+  "cumulativeProcessCap": 3,
+  "outputBytesPerStream": 65536,
+  "maximumControlCases": 6,
+  "maximumControlBatchSeconds": 100,
+  "linux": "UNKNOWN",
+  "fullP1Closure": false,
+  "cases": [
+    {
+      "expectedContainment": true,
+      "expectedTotal": 3,
+      "expectedRetained": 3,
+      "id": "held-three-natural",
+      "expectedExecution": true,
+      "kind": "NATIVE"
+    },
+    {
+      "required": "Natural root exit and forced descendant Job reap",
+      "expectedContainment": true,
+      "expectedTotal": 3,
+      "expectedRetained": 3,
+      "id": "root-first-exit",
+      "expectedExecution": false,
+      "kind": "NATIVE"
+    },
+    {
+      "required": "TimeoutException and forced Job reap",
+      "expectedContainment": true,
+      "expectedTotal": 3,
+      "expectedRetained": 3,
+      "id": "timeout-three",
+      "expectedExecution": false,
+      "kind": "NATIVE"
+    },
+    {
+      "required": "OperationCanceledException and forced Job reap",
+      "expectedContainment": true,
+      "expectedTotal": 3,
+      "expectedRetained": 3,
+      "id": "cancel-three",
+      "expectedExecution": false,
+      "kind": "NATIVE"
+    },
+    {
+      "required": "Actual JobTotal2, JobZero and incomplete retained native identities",
+      "expectedContainment": false,
+      "expectedTotal": 2,
+      "expectedRetained": 1,
+      "id": "transient-member",
+      "expectedExecution": false,
+      "kind": "NATIVE_NEGATIVE"
+    },
+    {
+      "expectedNativeProcessCount": 0,
+      "kind": "STRUCTURAL_NEGATIVE_ONLY",
+      "required": "RequireExact rejects cumulative count mismatch",
+      "id": "inventory-mutation"
+    }
+  ]
+}
