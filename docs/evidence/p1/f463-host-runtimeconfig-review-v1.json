@@ -1,0 +1,97 @@
+{
+  "taskId": "P1-GATE.03.host-runtimeconfig-review",
+  "status": "component-reviewed",
+  "candidate": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "run": "38515250985",
+  "attempt": 1,
+  "review": "artifacts/p1-supervision/witness-review-round49/HOST-RUNTIMECONFIG-REVIEW-v2.json",
+  "reviewSha256": "EBFA2F166A8600FA031BF01F591B1BB4804A9B178F92BD4CA77F2B4143CAC504",
+  "witnesses": 14,
+  "fields": 770,
+  "matched": 770,
+  "mismatched": 0,
+  "rootActualTextChecks": [
+    {
+      "platform": "linux-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "repeated-array-once"
+    },
+    {
+      "platform": "linux-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "mutable-subslice-call-return"
+    },
+    {
+      "platform": "linux-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "mutable-closure-captures"
+    },
+    {
+      "platform": "linux-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "inline-const-loop"
+    },
+    {
+      "platform": "linux-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "signed-scalar-ops"
+    },
+    {
+      "platform": "linux-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "nested-place-owner:frozen-hand-mir"
+    },
+    {
+      "platform": "linux-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "nested-place-owner:rust-source"
+    },
+    {
+      "platform": "windows-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "repeated-array-once"
+    },
+    {
+      "platform": "windows-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "mutable-subslice-call-return"
+    },
+    {
+      "platform": "windows-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "mutable-closure-captures"
+    },
+    {
+      "platform": "windows-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "inline-const-loop"
+    },
+    {
+      "platform": "windows-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "signed-scalar-ops"
+    },
+    {
+      "platform": "windows-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "nested-place-owner:frozen-hand-mir"
+    },
+    {
+      "platform": "windows-x64",
+      "actualRuntimeconfigHostAndProject": true,
+      "id": "nested-place-owner:rust-source"
+    }
+  ],
+  "rootReviewedScriptSha256": "9EEE6AE6B68E61C1A84CD668E0D724F69FE27F1FFD410DBD74B6247F07D5A774",
+  "remainingRealUnknown": 30,
+  "remaining": [
+    "14 PE metadata/sourceSHA/entrypoint/Drop profile",
+    "14 PDB source/sequencepoints",
+    "2 frozen hand-MIR PE structural equivalence"
+  ],
+  "originalCodeExecuted": false,
+  "originalCompiled": false,
+  "bulk2076HashRepeated": false,
+  "fullP1Closure": false,
+  "priorFailedAuditRetained": "artifacts/p1-supervision/witness-review-round49/HOST-RUNTIMECONFIG-REVIEW.json"
+}

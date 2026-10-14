@@ -1073,3 +1073,7 @@ v5 报告验证器接受两种根路径分隔符形式，拒绝同名前缀兄�
 编译器／元数据 Drop 策略传播，`tooling_p2` 负责十九项源码包的来源绑定／严格验证器。
 root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状态、串行验证／提交。
 仅在新改动／失败影响已验收检查时重跑这些检查。
+
+## 第49轮：原始 host/runtimeconfig 审查
+
+限定审查组件 ✅ 已完成：f463ac8/run38515250985/attempt1 的全部14组保留 native-host 源码/项目及14份 runtimeconfig，770/770字段匹配。Root 独立检查每份真实 runtimeconfig、精确 host 文本及项目结构、报告绑定和冻结源码合同。[审查证明](../evidence/p1/f463-host-runtimeconfig-review-v1.json)保留首次失败审计，并明确保留30项真实未知 PE/PDB/手工 MIR 结构组件。没有执行或重编译原始二进制。P1仍 🚧 进行中，六门禁开放；P2保持8/101，P3正式验收保持0/38及0/4门禁。全部阶段闭环标志仍为false。唯一监督会话为 `01a13917-a6b4-78e0-bd31-44600dd87b79`，检查点为 `artifacts/p1-supervision/resume-root-v49/resumption.json`；旧监督会话停止派工。

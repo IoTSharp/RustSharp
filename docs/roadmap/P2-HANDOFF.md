@@ -1303,3 +1303,7 @@ NativeV2 implementation). Next ownership is `cargo_p2` for P2-04.02 manifests,
 owns shared registration capacity, caller integration, CI/gate aggregation,
 bilingual status and serial verification/commits. Do not rerun already accepted
 checks unless a new edit/failure affects them.
+
+## Round49: original host/runtimeconfig review
+
+✅ Complete as a bounded review component: all 14 retained native-host source/project groups and 14 runtimeconfigs match 770/770 fields at f463ac8/run38515250985/attempt1. Root independently checked every actual runtimeconfig, exact host text and project shape, report bindings and frozen source contracts. [Review proof](../evidence/p1/f463-host-runtimeconfig-review-v1.json) preserves the first failed audit and explicitly retains 30 real unknown PE/PDB/hand-MIR structural components. No original binary was executed or rebuilt. P1 remains 🚧 In progress with six open gates; P2 remains 8/101 and P3 formal acceptance remains 0/38 and 0/4 gates. All phase closure flags remain false. The sole supervisor is chat `01a13917-a6b4-78e0-bd31-44600dd87b79`, checkpoint `artifacts/p1-supervision/resume-root-v49/resumption.json`; the old supervisor does not dispatch.
