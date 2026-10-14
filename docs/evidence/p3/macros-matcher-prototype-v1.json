@@ -1,0 +1,54 @@
+{
+  "acceptedP3Leaves": 0,
+  "fullP3Closure": false,
+  "formalAcceptanceAllowed": false,
+  "acceptedP3Gates": 0,
+  "bindings": [
+    {
+      "path": "tools/RustSharp.Conformance/P3MacroMatcherPrototype.cs",
+      "sha256": "8F11A0D5B9C8B3A2BE4988895633684B65BE462E393CFB85C4873F153B417180"
+    },
+    {
+      "path": "tests/RustSharp.Tests/P3MacroMatcherPrototypeTests.cs",
+      "sha256": "D4F6FC440D5651CDFAD3124711B356D72224476DEB9E44E16308D5F42590DB8B"
+    },
+    {
+      "path": "tests/RustSharp.Tests/Program.cs",
+      "sha256": "D75829F007A61CA881E49D0E92ED6404A9FD2B5C970F85BF122EAA9EE600AD54"
+    },
+    {
+      "path": "artifacts/p3-supervision/macros-round44/CANDIDATE-MAPPING.json",
+      "sha256": "E750C32DD17467F301769229C38C5B2BF1863C572E22644B6E44E4069F4EA342"
+    }
+  ],
+  "scope": "ISOLATED_INVOCATION_BODY_MATCHER",
+  "baseHead": "08d522f69f93649aa551651ff51f3644ef9d3305",
+  "executed": 26,
+  "build": "artifacts/p1-supervision/resume-root-v44/calls/solution-build-final-f35c003f01ad4c36a3d72105d9e6d2d2/capture-receipt.json",
+  "fixedPrototypeTests": 26,
+  "notRun": [
+    "macro_rules declaration parsing",
+    "transcription",
+    "hygiene",
+    "full candidate scenarios",
+    "rustc comparison",
+    "production compiler integration"
+  ],
+  "passed": 26,
+  "test": "artifacts/p1-supervision/resume-root-v44/calls/p3-matcher-tests-b34328b86bdf4085ab71f84009ac93fb/capture-receipt.json",
+  "failed": 0,
+  "fullCandidateCasesExecuted": 0,
+  "schemaVersion": 1,
+  "actualLexer": "RustLexer / RustTokenTree",
+  "taskId": "P3-01.02.prototype",
+  "mapping": "artifacts/p3-supervision/macros-round44/CANDIDATE-MAPPING.json",
+  "macroExpansionsExecuted": 0,
+  "fullCandidateCaseDenominator": 82,
+  "patterns": [
+    "Identifier",
+    "TokenTree",
+    "CommaStarIdentifiers",
+    "CommaPlusIdentifiers",
+    "OptionalIdentifier"
+  ]
+}
