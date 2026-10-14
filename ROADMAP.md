@@ -625,9 +625,11 @@ still limits every claim to its named API, feature, profile, and RID.
 
 ## P3: Add macros, async, and bounded unsafe/FFI
 
+Candidate preparation started on 2026-10-14: macros-v1.candidate defines 82 contract records and passes 10 validator tests with 29 rejected mutations. Macro executions: 0; accepted P3 leaves: 0/38, gates: 0/4. P2-GATE and the individual P2 dependencies remain required. See [candidate evidence](docs/evidence/p3/macros-candidate-v1.json).
+
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
-| P3-01 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-01). Implement built-in macros and `macro_rules!` token-tree matching, hygiene, expansion limits, and diagnostics. | P1-01, P2 gate | `rsc test tests/macros/macro-rules/Cargo.toml` | Declared expansion/hygiene cases pass; recursion/token limits terminate with source-aware diagnostics. |
+| P3-01 | 🚧 In progress | [Leaf breakdown](docs/roadmap/P3.md#p3-01). Implement built-in macros and `macro_rules!` token-tree matching, hygiene, expansion limits, and diagnostics. | P1-01, P2 gate | `rsc test tests/macros/macro-rules/Cargo.toml` | Declared expansion/hygiene cases pass; recursion/token limits terminate with source-aware diagnostics. |
 | P3-02 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-02). Define and implement an out-of-process procedural-macro protocol and SDK. | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | Derive/attribute/function-like samples work; crash, timeout, excessive output, and cancellation are contained and cleaned up. |
 | P3-03 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-03). Lower `async`/`.await` to explicit state machines and bridge `Future`, `Waker`, cancellation, and .NET `Task` without runtime code generation. | P1-06, P2-02 | `rsc test tests/async/core/Cargo.toml` | Completion, suspension, cancellation, error, Drop, and concurrency cases match the async profile on CoreCLR/AOT. |
 | P3-04 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-04). Implement the exact-version `tokio` compatibility profile required by application libraries. | P3-03, P2-03 | `rsc test compat/tokio/Cargo.toml --features declared-profile` | Runtime, task, timer, sync, IO, and network members listed in the profile manifest pass; omitted features are reported. |

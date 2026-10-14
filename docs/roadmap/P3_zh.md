@@ -2,7 +2,9 @@
 
 [English](P3.md) | 简体中文 | [主路线图](../../ROADMAP_zh.md)
 
-所有行均为 ⏳ 计划中。本文分解现有六项 P3 承诺，不声称计划中的 API、命令、语料或报告已经存在。现有实现根目录为 `src/RustSharp.Syntax/`、`src/RustSharp.Semantics/`、`src/RustSharp.CodeGen.IL/`、`src/RustSharp.Compiler/`、`src/RustSharp.Runtime/` 和 `tools/RustSharp.Conformance/`。下列新子目录、配置档清单、SDK/宿主项目与测试工作区均为拟建交付物。列出的 `rsc test` 命令仅在 CLI 与夹具前置条件具备后可执行。
+P3-01.01 的候选准备为 🚧 进行中；其余行仍为 ⏳ 计划中。本文分解现有六项 P3 承诺，不声称计划中的 API、命令、语料或报告已经存在。现有实现根目录为 `src/RustSharp.Syntax/`、`src/RustSharp.Semantics/`、`src/RustSharp.CodeGen.IL/`、`src/RustSharp.Compiler/`、`src/RustSharp.Runtime/` 和 `tools/RustSharp.Conformance/`。下列新子目录、配置档清单、SDK/宿主项目与测试工作区均为拟建交付物。列出的 `rsc test` 命令仅在 CLI 与夹具前置条件具备后可执行。
+
+2026-10-14 并行启动已产出 [macros-v1.candidate](../profiles/macros-v1.candidate.json)、schema 和有界验证器：82条具名合同记录、10项验证器测试通过、29项变异被拒绝。这些结果属于合同检查，宏执行数为0。P2-GATE 仍是未满足的正式前置；已验收实现叶子保持0/38，已验收门禁保持0/4。参见[候选证据](../evidence/p3/macros-candidate-v1.json)。
 
 合同冻结叶子必须先产出非空版本化清单，明确精确 API/feature/协议、用例 ID、预期结果、数值资源预算、分母与哈希，随后实现叶子方可关闭。上游 crate 版本与 TLS/ABI 细节在该叶子确定，本文不猜测。扩大范围必须新增清单版本；不得为通过而删除或放宽既有用例。
 
@@ -16,7 +18,7 @@
 
 | ID | 状态 | 交付物 / 所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| P3-01.01 | ⏳ 计划中 | `docs/profiles/macros-v1.json` — 冻结内置宏清单、片段语法、重复/卫生性规则与有限预算。 | P1-01, P2-GATE | 每种纳入形式均有具名正例、拒绝与限制用例；不支持片段有明确诊断；计数与哈希冻结。 | 清单模式与篡改测试；宏清单。 |
+| P3-01.01 | 🚧 进行中 | `docs/profiles/macros-v1.json` — 冻结内置宏清单、片段语法、重复/卫生性规则与有限预算。 | P1-01, P2-GATE | 每种纳入形式均有具名正例、拒绝与限制用例；不支持片段有明确诊断；计数与哈希冻结。 | 清单模式与篡改测试；宏清单。 |
 | P3-01.02 | ⏳ 计划中 | `src/RustSharp.Syntax/Macros/` — 实现词元树片段匹配与重复。 | P3-01.01 | 嵌套、分隔与零/一/多次重复匹配冻结语法；歧义或损坏捕获以有限匹配工作量拒绝。 | 匹配器黄金用例与工作量超限失败。 |
 | P3-01.03 | ⏳ 计划中 | `src/RustSharp.Syntax/Macros/` — 实现作用域定义、卫生性与捕获替换。 | P3-01.02 | 定义/使用点名称、嵌套作用域与遮蔽按契约解析；意外捕获与重复绑定失败；展开确定。 | 卫生性语料与 rustc 1.98 结果对比。 |
 | P3-01.04 | ⏳ 计划中 | `src/RustSharp.Compiler/`, `src/RustSharp.Semantics/` — 将内置宏与展开语法接入 HIR 和类型化 MIR。 | P3-01.03 | 每个冻结内置宏与展开结果使用正常编译链；不支持结果在发射前拒绝；无其他执行路径回退。 | 编译/运行语料与 HIR/MIR 快照。 |

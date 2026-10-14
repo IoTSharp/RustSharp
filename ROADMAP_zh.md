@@ -521,9 +521,11 @@ NuGet 依赖项、使用共享 LSP 和 Visual Studio 集成、进行调试，并
 
 ## P3：添加宏、异步和有界 unsafe/FFI
 
+候选准备已于2026-10-14启动：macros-v1.candidate 定义82条合同记录，10项验证器测试通过，29项变异被拒绝。宏执行数为0；P3已验收叶子0/38、门禁0/4。P2-GATE及各项P2依赖继续作为必需前置。参见[候选证据](docs/evidence/p3/macros-candidate-v1.json)。
+
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P3-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-01). 实现内置宏以及 `macro_rules!` 词元树匹配、卫生性、展开限制和诊断。 | P1-01, P2 门槛 | `rsc test tests/macros/macro-rules/Cargo.toml` | 已声明的展开/卫生性用例通过；递归/词元限制会终止并给出带源码信息的诊断。 |
+| P3-01 | 🚧 进行中 | [叶子详情](docs/roadmap/P3_zh.md#p3-01). 实现内置宏以及 `macro_rules!` 词元树匹配、卫生性、展开限制和诊断。 | P1-01, P2 门槛 | `rsc test tests/macros/macro-rules/Cargo.toml` | 已声明的展开/卫生性用例通过；递归/词元限制会终止并给出带源码信息的诊断。 |
 | P3-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-02). 定义并实现进程外过程宏协议和 SDK。 | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | 派生/属性/函数式示例正常工作；崩溃、超时、过量输出和取消均得到隔离与清理。 |
 | P3-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-03). 将 `async`/`.await` 降低为显式状态机，并在不生成运行时代码的情况下桥接 `Future`、`Waker`、取消和 .NET `Task`。 | P1-06, P2-02 | `rsc test tests/async/core/Cargo.toml` | 完成、挂起、取消、错误、Drop 和并发用例在 CoreCLR/AOT 上与异步配置档匹配。 |
 | P3-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-04). 实现应用程序库所需的精确版本 `tokio` 兼容性配置档。 | P3-03, P2-03 | `rsc test compat/tokio/Cargo.toml --features declared-profile` | 配置档清单中列出的运行时、任务、计时器、同步、IO 和网络成员通过；报告省略的 feature。 |

@@ -1,0 +1,61 @@
+{
+  "scope": "CONTRACT_VALIDATOR_ONLY",
+  "tests": "artifacts/p1-supervision/resume-root-v43/calls/p3-contract-tests-7a4bf56fc36e41cdbf2a69b8a8cbfc2f/capture-receipt.json",
+  "acceptedP3Leaves": 0,
+  "frozenContentSha256": "029BC741A5573580826EE4734CDEBCE54F1FEB9132F4460B530EC1676752F0CF",
+  "contractRecords": 82,
+  "resourceBoundaryRecords": 14,
+  "fullP3Closure": false,
+  "gateDenominator": 4,
+  "strictBuild": "artifacts/p1-supervision/resume-root-v43/calls/solution-build2-737516013ebe402a80c4556ef001dba6/capture-receipt.json",
+  "schemaVersion": 1,
+  "executedValidatorTests": 10,
+  "taskId": "P3-01.01.candidate",
+  "baseHead": "d038ebad7eeead491b61bb4755f77d503f6d5c5e",
+  "profile": "macros-v1.candidate",
+  "registeredValidatorTests": 10,
+  "acceptedP3Gates": 0,
+  "cancellationRecords": 2,
+  "bindings": [
+    {
+      "sha256": "95066A2901E94D2506090E1DF0A282F32FEF45473394764FFFEB7C76B81C61F0",
+      "path": "docs/profiles/macros-v1.candidate.json"
+    },
+    {
+      "sha256": "4356B6BE9F8AA7E33EA11C4E54B1427BCFA724FFC6EDE08E94D3D34368102DFA",
+      "path": "docs/profiles/macros-v1.candidate.schema.json"
+    },
+    {
+      "sha256": "A820EAE77E5AF917BA1890B3F96262C8438F570A74E305D76F82750D9946B779",
+      "path": "tools/RustSharp.Conformance/P3MacroContract.cs"
+    },
+    {
+      "sha256": "D4526DCED0282F7B9D03C082EE30221D6A0DB1F853CD6060DF0B52A12809B72D",
+      "path": "tests/RustSharp.Tests/P3MacroContractTests.cs"
+    },
+    {
+      "sha256": "950EEBBB267BEE7C6AF25502C0E28D609EE007F69AE076E0F5ECA53F84921142",
+      "path": "tests/RustSharp.Tests/Program.cs"
+    },
+    {
+      "sha256": "BD8AAA97B68341194C55E8681F87E49B362F7E19603564340D6933F3422499E5",
+      "path": "artifacts/p1-supervision/resume-root-v43/validation/bin/RustSharp.Tests.dll"
+    },
+    {
+      "sha256": "634A33BA486D325B9F7511A1F3A25736A4F1E1C5F02FE8E9EA7EDD6B05F975A1",
+      "path": "artifacts/p1-supervision/resume-root-v43/validation/bin/RustSharp.Conformance.dll"
+    }
+  ],
+  "formalAcceptanceAllowed": false,
+  "featurePassRejectLimitRecords": 54,
+  "unmetDependencies": [
+    "P2-GATE",
+    "P2-02",
+    "P2-06"
+  ],
+  "passedValidatorTests": 10,
+  "macroExecutions": 0,
+  "negativeMutations": 29,
+  "unsupportedFragmentRecords": 12,
+  "implementationLeafDenominator": 38
+}

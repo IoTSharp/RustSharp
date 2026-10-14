@@ -1,0 +1,1089 @@
+{
+  "schemaVersion": 1,
+  "profile": "macros-v1.candidate",
+  "contractVersion": 1,
+  "leafId": "P3-01.01",
+  "state": "candidate-predependency",
+  "inventoryKind": "contract-cases-not-macro-execution",
+  "formalAcceptanceAllowed": false,
+  "runtimeCasesExecuted": 0,
+  "hardDependencies": [
+    "P1-01",
+    "P2-GATE"
+  ],
+  "targetPlatforms": [
+    "win-x64",
+    "linux-x64"
+  ],
+  "edition": "2024",
+  "comparisonOracle": "rustc 1.98; comparison NOT_RUN",
+  "limits": {
+    "recursionDepth": 32,
+    "expandedTokens": 16384,
+    "matcherSteps": 100000,
+    "inputTokens": 4096,
+    "inputBytes": 65536,
+    "wallTimeMilliseconds": 2000,
+    "cancellationCheckSteps": 128
+  },
+  "features": [
+    {
+      "id": "builtin-stringify",
+      "family": "builtin",
+      "rule": "stringify!(balanced token trees) preserves token spelling separated by one ASCII space; no expansion of input macros."
+    },
+    {
+      "id": "builtin-concat",
+      "family": "builtin",
+      "rule": "concat!(zero or more comma-separated unsuffixed string literals; optional trailing comma) concatenates decoded strings. Other literal classes excluded."
+    },
+    {
+      "id": "builtin-line",
+      "family": "builtin",
+      "rule": "line!() returns the one-based original call-site line as u32; arguments forbidden."
+    },
+    {
+      "id": "builtin-column",
+      "family": "builtin",
+      "rule": "column!() returns one-based original call-site Unicode scalar column as u32; arguments forbidden."
+    },
+    {
+      "id": "builtin-file",
+      "family": "builtin",
+      "rule": "file!() returns the supplied workspace-relative slash-normalized source-map path; no host absolute paths or filesystem access."
+    },
+    {
+      "id": "fragment-ident",
+      "family": "fragment",
+      "rule": "ident matches one non-keyword ASCII identifier [A-Za-z_][A-Za-z0-9_]* except lone underscore; raw identifiers and special keywords excluded."
+    },
+    {
+      "id": "fragment-literal",
+      "family": "fragment",
+      "rule": "literal matches one unsuffixed nonnegative decimal integer token or one cooked UTF-8 string literal; signs, chars, bytes, raw strings and suffixes excluded."
+    },
+    {
+      "id": "fragment-tt",
+      "family": "fragment",
+      "rule": "tt matches one non-delimiter token or one recursively balanced (), [] or {} group; unmatched delimiters reject before matching."
+    },
+    {
+      "id": "repeat-star",
+      "family": "repetition",
+      "rule": "$( $x:ident )* matches zero, one or many adjacent identifiers; transcriber repeats at identical capture depth."
+    },
+    {
+      "id": "repeat-plus",
+      "family": "repetition",
+      "rule": "$( $x:ident )+ requires one or many adjacent identifiers; an empty invocation rejects."
+    },
+    {
+      "id": "repeat-optional",
+      "family": "repetition",
+      "rule": "$( $x:ident )? matches zero or one identifier; separator on optional and multiple captures reject."
+    },
+    {
+      "id": "repeat-comma-star",
+      "family": "repetition",
+      "rule": "$( $x:ident ),* matches comma-separated zero, one or many identifiers; trailing comma is excluded unless a separate optional comma is declared."
+    },
+    {
+      "id": "repeat-comma-plus",
+      "family": "repetition",
+      "rule": "$( $x:ident ),+ matches comma-separated one or many identifiers; empty and trailing comma reject."
+    },
+    {
+      "id": "repeat-nested",
+      "family": "repetition",
+      "rule": "$( [ $( $x:ident ),* ] );* matches zero or more bracketed comma lists separated by semicolon; substitutions preserve both nesting depths and lengths."
+    },
+    {
+      "id": "hygiene-local",
+      "family": "hygiene",
+      "rule": "Local variables and loop labels introduced by a declarative definition resolve at definition site; captured identifiers retain caller context; expansions receive distinct syntax contexts."
+    },
+    {
+      "id": "hygiene-path",
+      "family": "hygiene",
+      "rule": "Nonlocal item paths in expansion resolve at invocation site; unresolved invocation-site paths reject without fallback to definition-site items."
+    },
+    {
+      "id": "hygiene-crate",
+      "family": "hygiene",
+      "rule": "Dollar-crate resolves to the defining crate identity and does not bypass visibility; identifier matching cannot capture dollar-crate."
+    },
+    {
+      "id": "hygiene-shadow",
+      "family": "hygiene",
+      "rule": "Unqualified macro names use textual scope: definition must precede invocation; nested definitions shadow until the enclosing scope exits; duplicate metavariable bindings reject."
+    }
+  ],
+  "unsupportedFragments": [
+    "block",
+    "expr",
+    "expr_2021",
+    "item",
+    "lifetime",
+    "meta",
+    "pat",
+    "pat_param",
+    "path",
+    "stmt",
+    "ty",
+    "vis"
+  ],
+  "excludedBuiltins": [
+    "include!",
+    "include_str!",
+    "include_bytes!",
+    "env!",
+    "option_env!",
+    "format!",
+    "print!",
+    "println!",
+    "assert!",
+    "panic!"
+  ],
+  "excludedBuiltinDiagnostic": "RSMAC1001",
+  "diagnostics": {
+    "RSMAC1001": "Unsupported macro or fragment",
+    "RSMAC1002": "Malformed or unbalanced token tree",
+    "RSMAC1003": "Fragment or builtin argument mismatch",
+    "RSMAC1004": "Invalid repetition, ambiguity or capture-depth mismatch",
+    "RSMAC1005": "Resource budget exceeded",
+    "RSMAC1006": "Hygiene, visibility or duplicate-binding violation",
+    "RSMAC1007": "Expansion canceled",
+    "RSMAC1090": "Candidate contract malformed or changed"
+  },
+  "denominator": 82,
+  "cases": [
+    {
+      "id": "builtin-stringify-pass",
+      "feature": "builtin-stringify",
+      "kind": "pass",
+      "source": "stringify!(a + 1)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "a + 1",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-stringify-reject",
+      "feature": "builtin-stringify",
+      "kind": "reject",
+      "source": "stringify!([)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1002",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-stringify-limit",
+      "feature": "builtin-stringify",
+      "kind": "limit",
+      "source": "stringify!(a + 1)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "builtin-concat-pass",
+      "feature": "builtin-concat",
+      "kind": "pass",
+      "source": "concat!(\"a\", \"b\",)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "ab",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-concat-reject",
+      "feature": "builtin-concat",
+      "kind": "reject",
+      "source": "concat!(1)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1003",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-concat-limit",
+      "feature": "builtin-concat",
+      "kind": "limit",
+      "source": "concat!(\"a\", \"b\",)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "builtin-line-pass",
+      "feature": "builtin-line",
+      "kind": "pass",
+      "source": "line!()",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "7u32 at source line 7",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-line-reject",
+      "feature": "builtin-line",
+      "kind": "reject",
+      "source": "line!(1)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1003",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-line-limit",
+      "feature": "builtin-line",
+      "kind": "limit",
+      "source": "line!()",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "builtin-column-pass",
+      "feature": "builtin-column",
+      "kind": "pass",
+      "source": "column!()",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "3u32 at scalar column 3",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-column-reject",
+      "feature": "builtin-column",
+      "kind": "reject",
+      "source": "column!(x)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1003",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-column-limit",
+      "feature": "builtin-column",
+      "kind": "limit",
+      "source": "column!()",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "builtin-file-pass",
+      "feature": "builtin-file",
+      "kind": "pass",
+      "source": "file!()",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "src/main.rs for fixture source map",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-file-reject",
+      "feature": "builtin-file",
+      "kind": "reject",
+      "source": "file!(x)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1003",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "builtin-file-limit",
+      "feature": "builtin-file",
+      "kind": "limit",
+      "source": "file!()",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "fragment-ident-pass",
+      "feature": "fragment-ident",
+      "kind": "pass",
+      "source": "macro_rules! m { ($i:ident) => { $i }; } m!(name)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "capture name",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "fragment-ident-reject",
+      "feature": "fragment-ident",
+      "kind": "reject",
+      "source": "macro_rules! m { ($i:ident) => { $i }; } m!(42)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1003",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "fragment-ident-limit",
+      "feature": "fragment-ident",
+      "kind": "limit",
+      "source": "macro_rules! m { ($i:ident) => { $i }; } m!(name)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "fragment-literal-pass",
+      "feature": "fragment-literal",
+      "kind": "pass",
+      "source": "macro_rules! m { ($x:literal) => { $x }; } m!(42)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "capture 42",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "fragment-literal-reject",
+      "feature": "fragment-literal",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:literal) => { $x }; } m!(-1)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1003",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "fragment-literal-limit",
+      "feature": "fragment-literal",
+      "kind": "limit",
+      "source": "macro_rules! m { ($x:literal) => { $x }; } m!(42)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "fragment-tt-pass",
+      "feature": "fragment-tt",
+      "kind": "pass",
+      "source": "macro_rules! m { ($x:tt) => { $x }; } m!([a (b)])",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "capture [a (b)]",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "fragment-tt-reject",
+      "feature": "fragment-tt",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:tt) => { $x }; } m!([a))",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1002",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "fragment-tt-limit",
+      "feature": "fragment-tt",
+      "kind": "limit",
+      "source": "macro_rules! m { ($x:tt) => { $x }; } m!([a (b)])",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "repeat-star-pass",
+      "feature": "repeat-star",
+      "kind": "pass",
+      "source": "macro_rules! m { ($($x:ident)*) => { $($x)* }; } m!(a b)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "a b; additional named cardinalities: empty => empty, a => a",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-star-reject",
+      "feature": "repeat-star",
+      "kind": "reject",
+      "source": "macro_rules! m { ($($x:ident)*) => { $x }; } m!(a)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1004",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-star-limit",
+      "feature": "repeat-star",
+      "kind": "limit",
+      "source": "macro_rules! m { ($($x:ident)*) => { $($x)* }; } m!(a b)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "repeat-plus-pass",
+      "feature": "repeat-plus",
+      "kind": "pass",
+      "source": "macro_rules! m { ($($x:ident)+) => { $($x)+ }; } m!(a b)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "a b; single a => a",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-plus-reject",
+      "feature": "repeat-plus",
+      "kind": "reject",
+      "source": "macro_rules! m { ($($x:ident)+) => { $($x)+ }; } m!()",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1004",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-plus-limit",
+      "feature": "repeat-plus",
+      "kind": "limit",
+      "source": "macro_rules! m { ($($x:ident)+) => { $($x)+ }; } m!(a b)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "repeat-optional-pass",
+      "feature": "repeat-optional",
+      "kind": "pass",
+      "source": "macro_rules! m { ($($x:ident)?) => { $($x)? }; } m!(a)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "a; empty => empty",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-optional-reject",
+      "feature": "repeat-optional",
+      "kind": "reject",
+      "source": "macro_rules! m { ($($x:ident)?) => { $($x)? }; } m!(a b)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1004",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-optional-limit",
+      "feature": "repeat-optional",
+      "kind": "limit",
+      "source": "macro_rules! m { ($($x:ident)?) => { $($x)? }; } m!(a)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "repeat-comma-star-pass",
+      "feature": "repeat-comma-star",
+      "kind": "pass",
+      "source": "macro_rules! m { ($($x:ident),*) => { $($x),* }; } m!(a,b)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "a,b; empty => empty; a => a",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-comma-star-reject",
+      "feature": "repeat-comma-star",
+      "kind": "reject",
+      "source": "macro_rules! m { ($($x:ident),*) => { $($x),* }; } m!(a,)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1004",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-comma-star-limit",
+      "feature": "repeat-comma-star",
+      "kind": "limit",
+      "source": "macro_rules! m { ($($x:ident),*) => { $($x),* }; } m!(a,b)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "repeat-comma-plus-pass",
+      "feature": "repeat-comma-plus",
+      "kind": "pass",
+      "source": "macro_rules! m { ($($x:ident),+) => { $($x),+ }; } m!(a,b)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "a,b; a => a",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-comma-plus-reject",
+      "feature": "repeat-comma-plus",
+      "kind": "reject",
+      "source": "macro_rules! m { ($($x:ident),+) => { $($x),+ }; } m!()",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1004",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-comma-plus-limit",
+      "feature": "repeat-comma-plus",
+      "kind": "limit",
+      "source": "macro_rules! m { ($($x:ident),+) => { $($x),+ }; } m!(a,b)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "repeat-nested-pass",
+      "feature": "repeat-nested",
+      "kind": "pass",
+      "source": "macro_rules! m { ($([$($x:ident),*]);*) => { $([$($x),*]);* }; } m!([a,b];[];[c])",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "[a,b];[];[c]",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-nested-reject",
+      "feature": "repeat-nested",
+      "kind": "reject",
+      "source": "macro_rules! m { ($([$($x:ident),*]);*) => { $($x)* }; } m!([a])",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1004",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "repeat-nested-limit",
+      "feature": "repeat-nested",
+      "kind": "limit",
+      "source": "macro_rules! m { ($([$($x:ident),*]);*) => { $([$($x),*]);* }; } m!([a,b];[];[c])",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "hygiene-local-pass",
+      "feature": "hygiene-local",
+      "kind": "pass",
+      "source": "macro_rules! m { ($x:ident) => {{ let temp = $x; temp }}; } m!(caller)",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "introduced temp cannot capture caller temp",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-local-reject",
+      "feature": "hygiene-local",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:ident $x:ident) => { $x }; } m!(a b)",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1006",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-local-limit",
+      "feature": "hygiene-local",
+      "kind": "limit",
+      "source": "macro_rules! m { ($x:ident) => {{ let temp = $x; temp }}; } m!(caller)",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "hygiene-path-pass",
+      "feature": "hygiene-path",
+      "kind": "pass",
+      "source": "macro_rules! m { () => { helper() }; } m!()",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "invoke caller-visible helper",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-path-reject",
+      "feature": "hygiene-path",
+      "kind": "reject",
+      "source": "macro_rules! m { () => { missing() }; } m!()",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1006",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-path-limit",
+      "feature": "hygiene-path",
+      "kind": "limit",
+      "source": "macro_rules! m { () => { helper() }; } m!()",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "hygiene-crate-pass",
+      "feature": "hygiene-crate",
+      "kind": "pass",
+      "source": "macro_rules! m { () => { $crate::public_item() }; } m!()",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "defining crate public_item",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-crate-reject",
+      "feature": "hygiene-crate",
+      "kind": "reject",
+      "source": "macro_rules! m { () => { $crate::private_item() }; } m!()",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1006",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-crate-limit",
+      "feature": "hygiene-crate",
+      "kind": "limit",
+      "source": "macro_rules! m { () => { $crate::public_item() }; } m!()",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "hygiene-shadow-pass",
+      "feature": "hygiene-shadow",
+      "kind": "pass",
+      "source": "macro_rules! m { () => { 1 }; } { macro_rules! m { () => { 2 }; } m!(); } m!();",
+      "setup": "Frozen source-map fixture; all counters zero; no cancellation.",
+      "expected": "inner 2 then outer 1",
+      "diagnostic": "",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-shadow-reject",
+      "feature": "hygiene-shadow",
+      "kind": "reject",
+      "source": "before!(); macro_rules! before { () => { 1 }; }",
+      "setup": "All counters zero; no cancellation.",
+      "expected": "Reject before IL emission; no partial expansion usable.",
+      "diagnostic": "RSMAC1006",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "hygiene-shadow-limit",
+      "feature": "hygiene-shadow",
+      "kind": "limit",
+      "source": "macro_rules! m { () => { 1 }; } { macro_rules! m { () => { 2 }; } m!(); } m!();",
+      "setup": "Inject matcherSteps counter immediately before expansion at declared value.",
+      "expected": "Reject before matching more input; no partial expansion usable.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "unsupported-fragment-block",
+      "feature": "unsupported-fragment-block",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:block) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment block is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-expr",
+      "feature": "unsupported-fragment-expr",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:expr) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment expr is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-expr_2021",
+      "feature": "unsupported-fragment-expr_2021",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:expr_2021) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment expr_2021 is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-item",
+      "feature": "unsupported-fragment-item",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:item) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment item is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-lifetime",
+      "feature": "unsupported-fragment-lifetime",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:lifetime) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment lifetime is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-meta",
+      "feature": "unsupported-fragment-meta",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:meta) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment meta is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-pat",
+      "feature": "unsupported-fragment-pat",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:pat) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment pat is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-pat_param",
+      "feature": "unsupported-fragment-pat_param",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:pat_param) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment pat_param is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-path",
+      "feature": "unsupported-fragment-path",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:path) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment path is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-stmt",
+      "feature": "unsupported-fragment-stmt",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:stmt) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment stmt is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-ty",
+      "feature": "unsupported-fragment-ty",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:ty) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment ty is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "unsupported-fragment-vis",
+      "feature": "unsupported-fragment-vis",
+      "kind": "reject",
+      "source": "macro_rules! m { ($x:vis) => { $x }; }",
+      "setup": "Reject at definition parsing even without invocation.",
+      "expected": "Fragment vis is outside this candidate subset.",
+      "diagnostic": "RSMAC1001",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "budget-recursionDepth-at",
+      "feature": "budget-recursionDepth",
+      "kind": "boundary",
+      "source": "stringify!(x)",
+      "setup": "Inject the named counter/elapsed/check interval at value; every other budget remains below cap.",
+      "expected": "No budget rejection at exact inclusive cap; next operation must check cancellation.",
+      "diagnostic": "",
+      "budget": "recursionDepth",
+      "budgetValue": 32
+    },
+    {
+      "id": "budget-recursionDepth-over",
+      "feature": "budget-recursionDepth",
+      "kind": "limit",
+      "source": "stringify!(x)",
+      "setup": "Inject named counter/elapsed/check interval before next operation.",
+      "expected": "Reject and discard output at first observed value above cap.",
+      "diagnostic": "RSMAC1005",
+      "budget": "recursionDepth",
+      "budgetValue": 33
+    },
+    {
+      "id": "budget-expandedTokens-at",
+      "feature": "budget-expandedTokens",
+      "kind": "boundary",
+      "source": "stringify!(x)",
+      "setup": "Inject the named counter/elapsed/check interval at value; every other budget remains below cap.",
+      "expected": "No budget rejection at exact inclusive cap; next operation must check cancellation.",
+      "diagnostic": "",
+      "budget": "expandedTokens",
+      "budgetValue": 16384
+    },
+    {
+      "id": "budget-expandedTokens-over",
+      "feature": "budget-expandedTokens",
+      "kind": "limit",
+      "source": "stringify!(x)",
+      "setup": "Inject named counter/elapsed/check interval before next operation.",
+      "expected": "Reject and discard output at first observed value above cap.",
+      "diagnostic": "RSMAC1005",
+      "budget": "expandedTokens",
+      "budgetValue": 16385
+    },
+    {
+      "id": "budget-matcherSteps-at",
+      "feature": "budget-matcherSteps",
+      "kind": "boundary",
+      "source": "stringify!(x)",
+      "setup": "Inject the named counter/elapsed/check interval at value; every other budget remains below cap.",
+      "expected": "No budget rejection at exact inclusive cap; next operation must check cancellation.",
+      "diagnostic": "",
+      "budget": "matcherSteps",
+      "budgetValue": 100000
+    },
+    {
+      "id": "budget-matcherSteps-over",
+      "feature": "budget-matcherSteps",
+      "kind": "limit",
+      "source": "stringify!(x)",
+      "setup": "Inject named counter/elapsed/check interval before next operation.",
+      "expected": "Reject and discard output at first observed value above cap.",
+      "diagnostic": "RSMAC1005",
+      "budget": "matcherSteps",
+      "budgetValue": 100001
+    },
+    {
+      "id": "budget-inputTokens-at",
+      "feature": "budget-inputTokens",
+      "kind": "boundary",
+      "source": "stringify!(x)",
+      "setup": "Inject the named counter/elapsed/check interval at value; every other budget remains below cap.",
+      "expected": "No budget rejection at exact inclusive cap; next operation must check cancellation.",
+      "diagnostic": "",
+      "budget": "inputTokens",
+      "budgetValue": 4096
+    },
+    {
+      "id": "budget-inputTokens-over",
+      "feature": "budget-inputTokens",
+      "kind": "limit",
+      "source": "stringify!(x)",
+      "setup": "Inject named counter/elapsed/check interval before next operation.",
+      "expected": "Reject and discard output at first observed value above cap.",
+      "diagnostic": "RSMAC1005",
+      "budget": "inputTokens",
+      "budgetValue": 4097
+    },
+    {
+      "id": "budget-inputBytes-at",
+      "feature": "budget-inputBytes",
+      "kind": "boundary",
+      "source": "stringify!(x)",
+      "setup": "Inject the named counter/elapsed/check interval at value; every other budget remains below cap.",
+      "expected": "No budget rejection at exact inclusive cap; next operation must check cancellation.",
+      "diagnostic": "",
+      "budget": "inputBytes",
+      "budgetValue": 65536
+    },
+    {
+      "id": "budget-inputBytes-over",
+      "feature": "budget-inputBytes",
+      "kind": "limit",
+      "source": "stringify!(x)",
+      "setup": "Inject named counter/elapsed/check interval before next operation.",
+      "expected": "Reject and discard output at first observed value above cap.",
+      "diagnostic": "RSMAC1005",
+      "budget": "inputBytes",
+      "budgetValue": 65537
+    },
+    {
+      "id": "budget-wallTimeMilliseconds-at",
+      "feature": "budget-wallTimeMilliseconds",
+      "kind": "boundary",
+      "source": "stringify!(x)",
+      "setup": "Inject the named counter/elapsed/check interval at value; every other budget remains below cap.",
+      "expected": "No budget rejection at exact inclusive cap; next operation must check cancellation.",
+      "diagnostic": "",
+      "budget": "wallTimeMilliseconds",
+      "budgetValue": 2000
+    },
+    {
+      "id": "budget-wallTimeMilliseconds-over",
+      "feature": "budget-wallTimeMilliseconds",
+      "kind": "limit",
+      "source": "stringify!(x)",
+      "setup": "Inject named counter/elapsed/check interval before next operation.",
+      "expected": "Reject and discard output at first observed value above cap.",
+      "diagnostic": "RSMAC1005",
+      "budget": "wallTimeMilliseconds",
+      "budgetValue": 2001
+    },
+    {
+      "id": "budget-cancellationCheckSteps-at",
+      "feature": "budget-cancellationCheckSteps",
+      "kind": "boundary",
+      "source": "stringify!(x)",
+      "setup": "Inject the named counter/elapsed/check interval at value; every other budget remains below cap.",
+      "expected": "No budget rejection at exact inclusive cap; next operation must check cancellation.",
+      "diagnostic": "",
+      "budget": "cancellationCheckSteps",
+      "budgetValue": 128
+    },
+    {
+      "id": "budget-cancellationCheckSteps-over",
+      "feature": "budget-cancellationCheckSteps",
+      "kind": "limit",
+      "source": "stringify!(x)",
+      "setup": "Inject named counter/elapsed/check interval before next operation.",
+      "expected": "Reject and discard output at first observed value above cap.",
+      "diagnostic": "RSMAC1005",
+      "budget": "cancellationCheckSteps",
+      "budgetValue": 129
+    },
+    {
+      "id": "cancellation-pre-entry",
+      "feature": "cancellation",
+      "kind": "reject",
+      "source": "stringify!(x)",
+      "setup": "Caller token canceled before entry.",
+      "expected": "Cancellation propagated; output discarded.",
+      "diagnostic": "RSMAC1007",
+      "budget": "",
+      "budgetValue": 0
+    },
+    {
+      "id": "cancellation-mid-match",
+      "feature": "cancellation",
+      "kind": "reject",
+      "source": "macro_rules! m { ($($x:tt)*) => { $($x)* }; }",
+      "setup": "Cancel after first matcher step; check no later than 128 steps and before output publication.",
+      "expected": "Cancellation propagated; no publish or partial assembly.",
+      "diagnostic": "RSMAC1007",
+      "budget": "cancellationCheckSteps",
+      "budgetValue": 128
+    }
+  ],
+  "evidenceRequiredFields": [
+    "sourceSha",
+    "manifestRawSha256",
+    "manifestContentSha256",
+    "contractVersion",
+    "caseIds",
+    "expectedCount",
+    "actualCount",
+    "runtimeCasesExecuted",
+    "toolVersions",
+    "platformRid",
+    "command",
+    "timeoutMilliseconds",
+    "maximumItems",
+    "pid",
+    "startedAt",
+    "parentPid",
+    "exitCode",
+    "failureReason",
+    "cleanup"
+  ],
+  "formalBlockers": [
+    "P2-GATE has not passed",
+    "P1-GATE containment and semantic approval evidence remains open",
+    "No macro matcher, compiler lowering, execution, source maps or rustc comparison accepted"
+  ]
+}
