@@ -1,0 +1,124 @@
+{
+  "outerJobZero": true,
+  "wholeLeafAccepted": false,
+  "fullP2Closure": false,
+  "currentHeadAccepted": false,
+  "archive": "formatter-native-cli-signal-v1.zip",
+  "driverSha256": "E229D0AC899E6FFA0DC2C5745751EA99683EFEEC59F2F4686132E00A15B1D096",
+  "caseDenominator": 1,
+  "archiveSha256": "B06037AB6B2ACA70394EB7430799F01E371CE5EA772BB39BEF0096D83C91BD0B",
+  "at": "2026-10-14T13:20:23.8582662+08:00",
+  "fullP1Closure": false,
+  "outerJobClosed": true,
+  "realCtrlEvent": true,
+  "realPendingThreadAndBatchBreak": true,
+  "actualCreateError": 995,
+  "archiveFiles": [
+    {
+      "sha256": "F9A2C9E7EA5135AEB6BB75D9458356199A23EC440A0A629C2A6F86D715698571",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/child-report.json"
+    },
+    {
+      "sha256": "C38EE669D447833BBBE2B6FCCD18F0496BB89FA17EB6E45CDDA286C47FEFFE62",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/cli-probe-lease.json"
+    },
+    {
+      "sha256": "9633FD5A68DA2739BD25E6AA07BD76F2E4DF61FA433FE21B1368683D38EEE031",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/console-before-guard.json"
+    },
+    {
+      "sha256": "5D46472F02941D39C7C726285CFD1CD4A17DCDDB1D64C71184CD5D0008A38CA9",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/host-lease.json"
+    },
+    {
+      "sha256": "359EB3CCB1D2B7EEA6909D477AAF02F5EA69FEEF440E500E297957F86541C689",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/launch.json"
+    },
+    {
+      "sha256": "56EBA790267A4DCB38E28C7AA8CEC648E885845621B66896709544FA290DCD62",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/open-finished.json"
+    },
+    {
+      "sha256": "8D9F573EB3689E47C48024D7B4C60C4C90F32A890984506E1C212C37421FEBDB",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/open-ready.json"
+    },
+    {
+      "sha256": "55D1861F1B0591D081F3AEA2FB99DB17886D643F94B8EEAB257C655319E86871",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/outer-observed-final.json"
+    },
+    {
+      "sha256": "5661C987FD86AAE4F5891A27EFC61E5CD1F30F1B92AFA5BF45865975B857B032",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/source-lease.json"
+    },
+    {
+      "sha256": "536E506BB90914C243A12B397B9A998F85AE2CBD9BA02DFD03A9E155CA5CA0F4",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/source.rs"
+    },
+    {
+      "sha256": "373EEE606324C58D142DAF830A4E72109459E61DA2AF095A12F0311FD08002A5",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v1/runtime/b168a8f859274bef8b3563483b0723a6/supervisor-report.json"
+    },
+    {
+      "sha256": "F580FBEF15A3800691F8EF2EF0F14A50476879D26F6A2CB94757703461BD5A4C",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v11/Driver.cs"
+    },
+    {
+      "sha256": "CFB5BECCC7C5D72369DDBA2489EC88AF6532FE099484D9BFC716F05A5CA72118",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v11/CliOpenDriver.csproj"
+    },
+    {
+      "sha256": "1EEA93AE5AD6677B81398986B23AA15960501CF724947EC26E130EA500E564A6",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v11/Run-Cli.ps1"
+    },
+    {
+      "sha256": "B0CE2BB2F3B9091B32C7F923869B1310BC1EC111377116D1E28A3CAD07D00AB2",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v11/driver-build.rsp"
+    },
+    {
+      "sha256": "BC71417AE9CD0144BD593CAE5FEAA1B1A5E7E8E8E7E73CB7EB18E53BF82C407B",
+      "path": "artifacts/p2-supervision/formatter-cli-driver-v11/SOURCE-FROZEN.json"
+    },
+    {
+      "sha256": "5C24A7A6958D7149E718A38E9F024DC3D08063CA66CD1BFB27657EFCEB3D579D",
+      "path": "artifacts/p1-supervision/resume-root-v40/formatter-v11-native-binding.json"
+    },
+    {
+      "sha256": "C018A18CFE850BD260E45D831F0AAF1F95A98B4B88369A3E83B332ECFF37EE3C",
+      "path": "artifacts/p1-supervision/resume-root-v40/driver-v11-build-owned.json"
+    }
+  ],
+  "nativeExitJoinAndThreadClose": true,
+  "outerExactIdentities": [
+    {
+      "pid": 82068,
+      "nativeBirthFileTime": "134364287348297399",
+      "parentPid": 49748,
+      "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-cli-driver-v11\\root-build\\bin\\CliOpenDriver.dll\" \"--child\" \"b168a8f859274bef8b3563483b0723a6\" \"5D46472F02941D39C7C726285CFD1CD4A17DCDDB1D64C71184CD5D0008A38CA9\""
+    },
+    {
+      "pid": 84700,
+      "nativeBirthFileTime": "134364287350014587",
+      "parentPid": 82068,
+      "fullCommand": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    },
+    {
+      "pid": 77108,
+      "nativeBirthFileTime": "134364287350690992",
+      "parentPid": 82068,
+      "fullCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-cli-driver-v1\\cli-bin\\rsc.dll\" \"fmt\" \"D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-cli-driver-v1\\runtime\\b168a8f859274bef8b3563483b0723a6\\source.rs\""
+    }
+  ],
+  "cliSha256": "D539B24FAD9E24F0CB09355CEBC9204EBD511BBF687B9587DD339089EFD54814",
+  "result": "EXACT_PINNED_FORMATTER_NATIVE_CASE_ACCEPTED",
+  "naturalCliExit": 130,
+  "allFormerFailedCasesRetained": true,
+  "scope": "Exactunchanged formatter sources and pinnedprior CLI build only; not currentHEAD or completeleaf",
+  "taskId": "P2-08.02.PINNED-SOURCE-OPEN-SIGNAL-V1",
+  "full59or91Accepted": false,
+  "passed": 1,
+  "failed": 0,
+  "childOwnerClosure": true,
+  "cliPriorSourceHashesUnchanged": true,
+  "rareExitRaceBranchExercised": false,
+  "outerCumulative": 3
+}
