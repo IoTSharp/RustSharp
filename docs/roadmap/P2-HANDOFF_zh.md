@@ -1085,3 +1085,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 显式 Windows opt-in 组件 ✅ 已完成：新鲜严格库/夹具构建与全部8项控制通过（7项真实运行、1项结构变异）。真实cmd三方对照的标准/旧/候选序列化退出码为0/1/0，8种特殊参数往返精确匹配。[独立root证明](../evidence/p1/windows-production-containment-v2.json)检查全部7份实际报告及20个精确身份均不存在。瞬时子进程和夹具自然退出0；birth/terminal严格位于连续观测2→3之间，Total2/保留1仍按失败关闭/fullfalse处理。stdout+stderr合计实时预算及二进制CapturePrefix兼容通过，进程上限未改；保留第47/48轮失败。库项目为 `eng/RustSharp.ProcessContainment/RustSharp.ProcessContainment.csproj`；调用者须构建并绑定精确DLL哈希及显式lease/caps。Linux containment仍UNKNOWN，历史CI仍parent-exit-only，此组件不关闭任何P1门禁。P1仍 🚧 进行中、六门禁开放；P2保持8/101；P3正式叶子0/38、门禁0/4；全部阶段闭环标志仍false。
 
 第50轮 P3-01 平坦规则匹配原型组件 ✅ 已完成：本地严格Release及固定16/16测试通过。真实定义解析、调用词元树及既有ident/tt匹配保留按顺序选臂、完整消费和源码范围；literal限定为cooked字符串及无后缀十进制整数。[有界原型证明](../evidence/p3/macros-rule-match-prototype-v1.json)记录全部matcher重复/group节点显式拒绝、字节上限及真实取消。替换、展开、卫生性、歧义/基数语义及82项完整编译器用例仍NOT_RUN；正式叶子/门禁保持0/38和0/4，依赖未变。
+
+第50轮 PE/PDB 静态审查对完整14分母为 ❌ 失败：8项匹配，6项Windows源码文档路径与清单期望不同。[真实诊断](../evidence/p1/f463-static-metadata-review-v1.json)保留编译/分析器失败及初次审计列号假设失败；按实际零基格式修正审查器未掩盖Windows路径差异。原始程序集仅解码，没有加载或执行。精确AST范围映射及两项手工MIR结构检查仍UNKNOWN；未声称30项语义审查组件闭环。P1-GATE.03仍 🚧 进行中。下一次审查须绑定原始Windows输入路径字面值及实际PDB文档编码，再决定比较方式。

@@ -1,0 +1,126 @@
+{
+  "handMirStructuralEquivalence": "UNKNOWN",
+  "scope": "Original PE/PDB read-only diagnostic; full review failed, no formal acceptance",
+  "report": "artifacts/p1-supervision/resume-root-v50/metadata-full14.json",
+  "fullP1Closure": false,
+  "auditColumnAssumptionRepaired": "Official format permits zero column; root observed startColumn0. Corrected audit only, no producer changes; also enforce strict IL offsets",
+  "denominator": 14,
+  "fullReviewAccepted": false,
+  "bulk2076Rehashed": false,
+  "remainingSemanticUnknown": 30,
+  "taskId": "P1-GATE.03.static-pe-pdb-review",
+  "failed": 6,
+  "targetAssemblyLoaded": false,
+  "manifestSha256": "2CE31CE624DD72911EEAB99A75D6CDFD8446295FB2CAC6E672CB73E6A2352A67",
+  "attempt": 1,
+  "formatSource": "https://github.com/dotnet/runtime/blob/main/docs/design/specs/PortablePdb-Metadata.md",
+  "tinyBeforeFixed": "artifacts/p1-supervision/resume-root-v50/metadata-tiny-diagnostic.json",
+  "reportSha256": "CD9096775FA53E13BF49F90BEB5BA5C25A71F025D96FC6F3A1F2D90DD252BEBC",
+  "targetCodeExecuted": false,
+  "candidate": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "exactAstMapping": "UNKNOWN",
+  "staticMatches": 8,
+  "cases": [
+    {
+      "id": "repeated-array-once",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "linux-x64",
+      "sequencePoints": 2
+    },
+    {
+      "id": "mutable-subslice-call-return",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "linux-x64",
+      "sequencePoints": 2
+    },
+    {
+      "id": "mutable-closure-captures",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "linux-x64",
+      "sequencePoints": 1
+    },
+    {
+      "id": "inline-const-loop",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "linux-x64",
+      "sequencePoints": 1
+    },
+    {
+      "id": "signed-scalar-ops",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "linux-x64",
+      "sequencePoints": 1
+    },
+    {
+      "id": "nested-place-owner:frozen-hand-mir",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "linux-x64",
+      "sequencePoints": 1
+    },
+    {
+      "id": "nested-place-owner:rust-source",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "linux-x64",
+      "sequencePoints": 1
+    },
+    {
+      "id": "repeated-array-once",
+      "state": "FAIL",
+      "error": "System.IO.InvalidDataException: Metadata field mismatch: path\r",
+      "platform": "windows-x64",
+      "sequencePoints": null
+    },
+    {
+      "id": "mutable-subslice-call-return",
+      "state": "FAIL",
+      "error": "System.IO.InvalidDataException: Metadata field mismatch: path\r",
+      "platform": "windows-x64",
+      "sequencePoints": null
+    },
+    {
+      "id": "mutable-closure-captures",
+      "state": "FAIL",
+      "error": "System.IO.InvalidDataException: Metadata field mismatch: path\r",
+      "platform": "windows-x64",
+      "sequencePoints": null
+    },
+    {
+      "id": "inline-const-loop",
+      "state": "FAIL",
+      "error": "System.IO.InvalidDataException: Metadata field mismatch: path\r",
+      "platform": "windows-x64",
+      "sequencePoints": null
+    },
+    {
+      "id": "signed-scalar-ops",
+      "state": "FAIL",
+      "error": "System.IO.InvalidDataException: Metadata field mismatch: path\r",
+      "platform": "windows-x64",
+      "sequencePoints": null
+    },
+    {
+      "id": "nested-place-owner:frozen-hand-mir",
+      "state": "STATIC_COMPONENT_MATCH",
+      "error": null,
+      "platform": "windows-x64",
+      "sequencePoints": 1
+    },
+    {
+      "id": "nested-place-owner:rust-source",
+      "state": "FAIL",
+      "error": "System.IO.InvalidDataException: Metadata field mismatch: path\r",
+      "platform": "windows-x64",
+      "sequencePoints": null
+    }
+  ],
+  "run": "38515250985",
+  "sourceSha256": "60D1A49789FB2AFB5C1CDC326ABF05A31A99FBFAA336CC15D07D29374989D0AA",
+  "failure": "All6 Windows source PDB document names differ from manifest expected paths; do not normalize blindly"
+}
