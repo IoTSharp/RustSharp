@@ -1,0 +1,39 @@
+{
+  "launchSha256": "14675970ED883155C270BAC1A5B4B0DF0496DA650B9C1C77F1AA267B0473049D",
+  "pkgConfigFuse3": "not found",
+  "remaining": "Need an actual controlled ordinary-file provider and exact kernel pending/cancel/release evidence; existing FUSE runtime availability is insufficient",
+  "mountPerformed": false,
+  "rawSha256": "78665287867FFBBE27610E07B42CEA2228C4A6BC5740B193922EC4CE944BA5A1",
+  "signalSent": false,
+  "fuseRuntime": "3.14.0-5build1 installed",
+  "devFuse": {
+    "writable": true,
+    "exists": true,
+    "readable": true
+  },
+  "launch": "artifacts/p1-supervision/resume-root-v51/ubuntu-capability/launch.json",
+  "scope": "One read-only Ubuntu WSL environment preflight; no formatter or native-CI acceptance",
+  "developmentHeaders": "NOT_CHECKED_FIXED_PATH",
+  "parentDenominator": 91,
+  "controlledOrdinaryFileProvider": "UNKNOWN_NOT_RUN",
+  "rootReview": "Reviewed finite9 command-v+bounded proc reads and4 exact package queries; operation28s, outer30s, no target/provider mutation",
+  "installPerformed": false,
+  "fullP2Closure": false,
+  "formatter59Repeated": false,
+  "newFormatterIoCases": 0,
+  "actualRunExit": 0,
+  "raw": "artifacts/p1-supervision/resume-root-v51/ubuntu-capability/stdout.bin",
+  "knownLinuxTools": {
+    "fusermount": "/usr/bin/fusermount",
+    "dotnet": "/usr/bin/dotnet",
+    "clang": "/usr/bin/clang",
+    "gcc": "/usr/bin/gcc",
+    "timeout": "/usr/bin/timeout",
+    "fusermount3": "/usr/bin/fusermount3"
+  },
+  "fullLinuxContainment": "UNKNOWN",
+  "taskId": "P2-08.02.linux-file-provider-capability",
+  "preflightOnlyTrialPassed": true,
+  "actualProbeItems": 20,
+  "nativeCiAccepted": false
+}

@@ -1093,3 +1093,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 限定静态范围内 ✅ 已完成：期望路径直接绑定原始source.path字面值后，严格审查器构建、Windows极小1项及完整14/14通过。Root独立核对28份实际PE/PDB哈希、176项精确元数据/文档比较、18个序列点及5份与f463相同的源码合同。[限定审查证明](../evidence/p1/f463-static-metadata-review-v2.json)保留此前8/14失败和全部审计/构建诊断；没有加载/执行目标程序集，也未重跑2076文件审计。PE身份/入口/source metadata/Drop声明以及PDB文档/checksum/GUID/入口/ILoffset/范围检查已绑定；14项精确AST到序列点范围选择及2项手工MIR结构等价仍UNKNOWN（16项语义组件）。P1-GATE.03及六门禁仍开放；P2保持8/101，P3正式叶子/门禁保持0/38及0/4，全部阶段闭环仍false。
 
 第51轮 P3-01 模板替换原型组件 ✅ 已完成：本地严格Release及固定16/16测试通过。真实选中规则的捕获重新词法分析后替换模板词元/引用/普通分组，保留输入/模板/输出范围。[原型证明](../evidence/p3/macros-template-prototype-v1.json)绑定输出UTF8字节/词元/深度、合计步数/输入及真实取消边界测试。ASCII空格输出属于原型渲染；卫生性、递归展开、不支持的重复及生产/编译器集成不在已验收范围。全部82项完整编译器场景仍NOT_RUN；P3正式叶子0/38、门禁0/4及前置依赖未变。
+
+第51轮 Linux 文件提供者能力预检在只读WSL组件范围内 ✅ 已完成：20/20项有界探测自然结束；/dev/fuse可访问，FUSE运行库3.14.0-5build1及fusermount3存在，pkg-config fuse3不可用。[真实预检证明](../evidence/p2/formatter-linux-capability-v1.json)记录零安装、挂载、信号或formatter I/O用例。可控普通文件提供者及真实pending/cancel/release证据仍UNKNOWN/NOT_RUN；这不代表原生Linux CI或完整containment。formatter59/父91未变，P2-08.02仍 🚧 进行中；P2保持8/101。
