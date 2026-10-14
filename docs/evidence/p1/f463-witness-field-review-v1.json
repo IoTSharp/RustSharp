@@ -1,0 +1,18 @@
+{
+  "reviewSha256": "7E8D1EBB08EA87FC00EE6A6FE457ACE7EF8488134B4AE2C7D67A1AFC9837D71E",
+  "taskId": "P1-GATE.03.witness-fields",
+  "mismatched": 0,
+  "run": "38515250985",
+  "review": "artifacts/p1-supervision/witness-review-round48/WITNESS-FIELD-REVIEW-v2.json",
+  "attempt": 1,
+  "witnesses": 14,
+  "fields": 698,
+  "notApplicablePlaceholders": 12,
+  "unknownSemantic": 58,
+  "matched": 628,
+  "originalCodeExecuted": false,
+  "unknown": 70,
+  "metadataDecoded": false,
+  "fullP1Closure": false,
+  "candidate": "f463ac8fff710b11f851881437f9db864e4b42f6"
+}
