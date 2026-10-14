@@ -103,7 +103,7 @@ public static class DocumentationPublisher
   {
    budget.Step();if(++links>options.MaximumLinks)throw new DocumentationLimitException();string href=System.Net.WebUtility.HtmlDecode(match.Groups["double"].Success?match.Groups["double"].Value:match.Groups["single"].Value);
    if(Uri.TryCreate(href,UriKind.Absolute,out Uri? uri)){if(uri.Scheme!=Uri.UriSchemeHttps)throw new ArgumentException("Unsafe documentation link scheme.");continue;}
-   int at=href.IndexOf('#');string path=at<0?href:href[..at];string linked=path.Length==0?file.Key:Uri.UnescapeDataString(path);SafePath(linked,budget);if(!output.Files.TryGetValue(linked,out string? page))throw new ArgumentException("Local link must identify an emitted file.");if(at>=0&&!page.Contains("id=\""+System.Net.WebUtility.HtmlEncode(href[(at+1)..])+"\"",StringComparison.Ordinal))throw new ArgumentException("Local fragment must exist.");
+   int at=href.IndexOf('#');string path=at<0?href:href[..at];string decoded=Uri.UnescapeDataString(path);if(path.Length>0)SafePath(decoded,budget);string parent=Path.GetDirectoryName(file.Key)?.Replace('\\','/')??string.Empty;string linked=path.Length==0?file.Key:parent.Length==0?decoded:parent+"/"+decoded;SafePath(linked,budget);if(!output.Files.TryGetValue(linked,out string? page))throw new ArgumentException("Local link must identify an emitted file.");if(at>=0&&!page.Contains("id=\""+System.Net.WebUtility.HtmlEncode(href[(at+1)..])+"\"",StringComparison.Ordinal))throw new ArgumentException("Local fragment must exist.");
   }
  }
 }

@@ -1,0 +1,763 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-08.03.workspace-v1",
+  "componentAccepted": true,
+  "wholeLeafAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "Actual root/member workspace model/render/aggregatebudget/atomicfirstpublish API7; no CLIworkspace/dependencies/features/multitarget/crosspackage-symbol closure",
+  "actualCases": {
+    "taskId": "P2-08.03.workspace-v1",
+    "evidenceKind": "actual-workspace-documentation-seven-component",
+    "denominator": 7,
+    "executed": 7,
+    "passed": 7,
+    "failed": 0,
+    "notRun": 0,
+    "fullLeafAccepted": false,
+    "fullP2Closure": false,
+    "elapsedMilliseconds": 310.9821,
+    "cases": [
+      {
+        "name": "P2-08.03 workspace virtual-two-members",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace root-plus-member",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace dependency-family-diagnosed",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace feature-family-diagnosed",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace cancel-between-members",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace aggregate-file-budget",
+        "status": "passed"
+      },
+      {
+        "name": "P2-08.03 workspace existing-target-preserved",
+        "status": "passed"
+      }
+    ],
+    "receiptRoots": [
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspace-6ca16aca4b5f4f6da2b44999107999c8",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspace-2fe6fbb2f5da4542847b5888b9e6c24e",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspace-001a9d66d03f46b5aa50cbb58dab3a07",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspace-9dcc3041c4824dca838daa037035461e",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspace-66282d1000c7486eb721c7384866f4f8",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspace-705c0716b1024b83993f3504ed7d5fef",
+      "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocWorkspace-13aaa975f5244308aa5c2ab2dd1c6ea5"
+    ]
+  },
+  "affectedRegressions": [
+    {
+      "name": "workspace-pub-regression",
+      "actualReport": {
+        "taskId": "P2-08.03.atomic-output-v1",
+        "evidenceKind": "actual-new-directory-publication-component",
+        "denominator": 21,
+        "executed": 21,
+        "passed": 21,
+        "failed": 0,
+        "notRun": 0,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 298.1624,
+        "cases": [
+          {
+            "name": "P2-08.03 publication success-files-hashes",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication success-unicode-crlf",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication escape-path",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication absolute-file-path",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication unsafe-scheme",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication missing-file",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication missing-fragment",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication reparse-parent",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication case-path-conflict",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication existing-target-unchanged",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication pre-cancel",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication mid-failure-cleanup",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication mid-cancel-cleanup",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication aggregate-budget",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication operation-budget",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication cleanup-identity",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication foreign-lease-object",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication target-race-unchanged",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication unknown-no-throw",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication empty-folder-replacement-identity",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 publication mid-stage-reparse-no-external-write",
+            "status": "passed"
+          }
+        ],
+        "receiptRoots": [
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-d576b1ebe54e43a29534a484db528a86",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-9d3d2c0d9919406b80aad11d16d6f147",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-52b8bb9df19c418fabb6ae7324e8fea2",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-ef2e1597760d4f9e919be617feee729e",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-61ee0ac001324f679c2cbb1464b06655",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-c5d9649955bf4073a282321008aa6ab8",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-4abf6b78e70b4a9299b5834f3894b39b",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-8c61d8b0c6cf4473a834229c413e5973",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-d905e43047d14ca39f2bb7032d926103",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-5596fa1167884d47836bf99a5f9cad63",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-dec69bebdb6c4a85af82d41bfca80b93",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-7888c9bd1a6e459fa50518691f2c4e89",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-045ee07e1b8b416f8f2618e35dc2a44a",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-9fcb8f31a78841bb86f9663a9686b8e2",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-84123ee6d0034a9ab81ae1ceaa5ecdc3",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-a5b1f89791bd44799612870f4c9311e8",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-89e4b6e16c734a80b3e402c1388d5582",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-f781b0bcfddc42f19c7969a92f387fcd",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-6b2a8cbf34f349658cfe17b1be950e83",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-e5c8eada5bba4e61a20d462fba296dfc",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocPublication-ac487f7c8af44a9fab7007007ecb6460"
+        ]
+      }
+    },
+    {
+      "name": "workspace-cli-regression",
+      "actualReport": {
+        "taskId": "P2-08.03.cli-v1",
+        "evidenceKind": "actual-command-function-cargo-workspace-documentation-component",
+        "denominator": 20,
+        "executed": 20,
+        "passed": 20,
+        "failed": 0,
+        "notRun": 0,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 795.3013,
+        "cases": [
+          {
+            "name": "P2-08.03 CLI initial-success-hashes",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI nested-modules-source-hashes",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI existing-target-unchanged",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI missing-manifest",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI virtual-workspace-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI dependency-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI feature-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI multiple-targets-unsupported",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI invalid-arguments",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI invalid-option",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI noncargo-input",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI unsafe-module-path",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI missing-module",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI malformed-source",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI pre-cancel",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI mid-workspace-cancel",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI deadline-after-workspace",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI unsafe-output-parent",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI unsafe-documentation-scheme",
+            "status": "passed"
+          },
+          {
+            "name": "P2-08.03 CLI missing-documentation-symbol",
+            "status": "passed"
+          }
+        ],
+        "receiptRoots": [
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-3a3b060325364d59bef6e33c99377401",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-49def5dc9461470db974d1e9d379e707",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-c58a07379c5340d8af5fb88cd8649736",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-d2699fb789b143c7a4505df4c5c6b4fc",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-1d9860e0a0f44fcdbcfc3a50d0d7ee47",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-04f576015520465f912a404ebf900d0c",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-3a3c3b1c9f124c829ab21f68d7fd78ec",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-3d2715060b3f41e6964bd0bdfab7d228",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-30e0961e70554a8f94b78dd83d969aa7",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-51510094d89a4dce81f485dced4691db",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-ae08ac586e1b412e961f5351f55004dd",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-6236332907a04539bf7de090dc4ffcf9",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-b5ef4b4e3e254697ae82930084c748d6",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-bf95e662197244f6a03460f56cfde81a",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-bacdbcb8678e4c348b899dd8681e8a24",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-6d21b32f083244fab79727494272c324",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-2fdb81b87f824c52941d677d499ab102",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-a750a6e099034442aa89ca51f48c5036",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-ce208b4e5a3044ffa31c99d9527f6100",
+          "C:\\Users\\mysti\\AppData\\Local\\Temp\\RustSharpDocCli-25fb13844c9e44408e6d0aee98854460"
+        ]
+      }
+    },
+    {
+      "name": "workspace-depth-regression",
+      "actualReport": {
+        "schemaVersion": 1,
+        "taskId": "P2-08.03",
+        "evidenceKind": "actual-documentation-seven-depth-component",
+        "denominator": 7,
+        "toolingDenominator": 91,
+        "executed": 7,
+        "passed": 7,
+        "failed": 0,
+        "notRun": 0,
+        "componentPassed": true,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 79.6745,
+        "cases": [
+          {
+            "name": "P2-08.03 depth public-field-visibility",
+            "status": "passed",
+            "elapsedMilliseconds": 58.57,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth enum-variants-fields",
+            "status": "passed",
+            "elapsedMilliseconds": 1.5296,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth trait-associated-items",
+            "status": "passed",
+            "elapsedMilliseconds": 2.6651,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth glob-reexport-distinct-links",
+            "status": "passed",
+            "elapsedMilliseconds": 8.4599,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth labelled-local-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.1319,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth labelled-https-title",
+            "status": "passed",
+            "elapsedMilliseconds": 2.858,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 depth labelled-unsafe-scheme",
+            "status": "passed",
+            "elapsedMilliseconds": 1.1126,
+            "exception": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "workspace-source-regression",
+      "actualReport": {
+        "schemaVersion": 1,
+        "taskId": "P2-08.03",
+        "evidenceKind": "actual-documentation-twelve-seed-component",
+        "denominator": 12,
+        "toolingDenominator": 91,
+        "executed": 12,
+        "passed": 12,
+        "failed": 0,
+        "notRun": 0,
+        "componentPassed": true,
+        "fullLeafAccepted": false,
+        "fullP2Closure": false,
+        "elapsedMilliseconds": 93.8326,
+        "cases": [
+          {
+            "name": "P2-08.03 doc-public-items",
+            "status": "passed",
+            "elapsedMilliseconds": 66.6829,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-private-items",
+            "status": "passed",
+            "elapsedMilliseconds": 0.5746,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-generics-signatures",
+            "status": "passed",
+            "elapsedMilliseconds": 4.9967,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-source-links",
+            "status": "passed",
+            "elapsedMilliseconds": 3.0303,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-local-links",
+            "status": "passed",
+            "elapsedMilliseconds": 1.289,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-cross-module-links",
+            "status": "passed",
+            "elapsedMilliseconds": 7.7404,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-missing-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.3808,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-ambiguous-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.1798,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-malformed-comment",
+            "status": "passed",
+            "elapsedMilliseconds": 0.2235,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-escape-markup",
+            "status": "passed",
+            "elapsedMilliseconds": 0.0928,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-unsafe-link",
+            "status": "passed",
+            "elapsedMilliseconds": 0.6952,
+            "exception": null
+          },
+          {
+            "name": "P2-08.03 doc-budget",
+            "status": "passed",
+            "elapsedMilliseconds": 3.8943,
+            "exception": null
+          }
+        ]
+      }
+    }
+  ],
+  "sourceFiles": [
+    {
+      "sha256": "FBCF1C1B9165603FE1544F96C97626BB38AF51B464A992C7526DDA988179C25B",
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationWorkspace.cs"
+    },
+    {
+      "sha256": "06D240AE510E8074A82696BA54DD4A371CDB2C35D011597704E06664B65C05F5",
+      "path": "src/RustSharp.Compiler/Documentation/DocumentationPublisher.cs"
+    },
+    {
+      "sha256": "FF1135D8F7C69F1CC7CFA08405667B507FF4C055C05515EF46850261F708F1C3",
+      "path": "tests/RustSharp.Tests/P2DocumentationWorkspaceTests.cs"
+    },
+    {
+      "sha256": "407103FC0771C9449F5C3E0F9719E9F9909FBF07D6A2FC840303890E6BFD5342",
+      "path": "tests/RustSharp.Tests/P2DocumentationWorkspaceRunner.cs"
+    },
+    {
+      "sha256": "9D7DE36F4D27D677BBB8B3136E7B1A92904B8721F4733EF473549924781453D9",
+      "path": "tests/RustSharp.Tests/Program.cs"
+    }
+  ],
+  "build": {
+    "logPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-build.log",
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-build-owned.json",
+    "logSha256": "6D36CA8DF8B266D493A8FDE42012D08C50A71E3E9C464E00E6932AF3D670E0D7",
+    "sha256": "6CFBF4D55279658AF3EEBBECEAAC494EBF6F980A6CC6E37E378B934410F428DB",
+    "summary": [
+      "    0 个警告",
+      "    0 个错误"
+    ]
+  },
+  "runtime": {
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-tests-owned.json",
+    "sha256": "FB0E8E0094630E7A1BB0B0B4CC96205BF27273027FA4EAA04A081A098C70D35B"
+  },
+  "sourceByteBinding": "LF beforeactualfreshBuild; frozen source hash unchanged, no currentremoteSHA phasegate",
+  "at": "2026-10-14T08:17:18.5234919+08:00",
+  "independentResources": {
+    "identityCount": 26,
+    "liveOwned": 0,
+    "rows": [
+      {
+        "identity": {
+          "Pid": 16096,
+          "CreationFileTime": 134364099326633123,
+          "ParentPid": 9828,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"C:/Program Files/dotnet/sdk/10.0.401/MSBuild.dll\" \"@D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-build.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 62112,
+          "CreationFileTime": 134364099343097284,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmpe3a4dbf6639b4ada8b09e6137f1523c9.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 5352,
+          "CreationFileTime": 134364099343154791,
+          "ParentPid": 62112,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 58492,
+          "CreationFileTime": 134364099384258683,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmpfcf66e5958c449aeb2c712c26ed541bf.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 48660,
+          "CreationFileTime": 134364099384305508,
+          "ParentPid": 58492,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 4684,
+          "CreationFileTime": 134364099480867207,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmpa2b5e2aee4174cd6ac8a3485aee280ba.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 25464,
+          "CreationFileTime": 134364099480924014,
+          "ParentPid": 4684,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 45404,
+          "CreationFileTime": 134364099499639362,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmp0c175552284d4824a2827ac67b71963c.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 47784,
+          "CreationFileTime": 134364099499691051,
+          "ParentPid": 45404,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 15092,
+          "CreationFileTime": 134364099547128032,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmp0b8ccff4b91d4651a6c674b1bbd8f465.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 8840,
+          "CreationFileTime": 134364099547205403,
+          "ParentPid": 15092,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 27500,
+          "CreationFileTime": 134364099599383999,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmp187a10bede7145d1b19a32aaf27414c6.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 18888,
+          "CreationFileTime": 134364099599439657,
+          "ParentPid": 27500,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 8264,
+          "CreationFileTime": 134364099628349023,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmpa6d1f856c287427c97f1da3d39c1e421.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 69876,
+          "CreationFileTime": 134364099628399435,
+          "ParentPid": 8264,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 30828,
+          "CreationFileTime": 134364099644683041,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmp8b118481e21e457fb8cfb2d3e1750a33.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 49372,
+          "CreationFileTime": 134364099644737691,
+          "ParentPid": 30828,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 34568,
+          "CreationFileTime": 134364099683786896,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmpb6e1ac3404384a4781de1599ca107d94.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 67796,
+          "CreationFileTime": 134364099683838964,
+          "ParentPid": 34568,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 49820,
+          "CreationFileTime": 134364099773527036,
+          "ParentPid": 16096,
+          "CommandLine": "\"C:\\Program Files\\dotnet\\sdk\\10.0.401\\Roslyn\\bincore\\csc.exe\"  /noconfig @\"C:\\Users\\mysti\\AppData\\Local\\Temp\\MSBuildTempgitinm0h.oqv\\tmpa9f70e5944de45afb5d6b887deedfdca.rsp\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 51204,
+          "CreationFileTime": 134364099773580659,
+          "ParentPid": 49820,
+          "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 72164,
+          "CreationFileTime": 134364101195601347,
+          "ParentPid": 31964,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-bin\\RustSharp.Tests.dll\" \"--p2-doc-workspace-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-case-result.json\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 18428,
+          "CreationFileTime": 134364104181150961,
+          "ParentPid": 59344,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-bin\\RustSharp.Tests.dll\" \"--p2-doc-publication-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-pub-regression.json\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 6284,
+          "CreationFileTime": 134364104187534646,
+          "ParentPid": 59344,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-bin\\RustSharp.Tests.dll\" \"--p2-doc-cli-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-cli-regression.json\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 51604,
+          "CreationFileTime": 134364104198018801,
+          "ParentPid": 59344,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-bin\\RustSharp.Tests.dll\" \"--p2-doc-depth-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-depth-regression.json\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      },
+      {
+        "identity": {
+          "Pid": 49660,
+          "CreationFileTime": 134364104200757686,
+          "ParentPid": 59344,
+          "CommandLine": "\"C:/Program Files/dotnet/dotnet.exe\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-bin\\RustSharp.Tests.dll\" \"--p2-documentation-component\" \"D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\workspace-source-regression.json\""
+        },
+        "liveOwned": false,
+        "foreignReusePreserved": false
+      }
+    ]
+  }
+}
