@@ -1,0 +1,71 @@
+{
+  "fixtureSourceSha256": "3818D6252BF78EBB360EA93EC6704AE37C038BC7E5A03CFEA788F70B39C56A82",
+  "scope": "Independent actual kernel event/accounting input foundation only",
+  "root": "artifacts/p1-supervision/resume-root-v54",
+  "cases": [
+    {
+      "productionAccepted": false,
+      "creatorSha256": "7EB84FD839D3FC073B7A18371E7F5A198FF6AC855B029634F5462F90432CD6ED",
+      "scenario": "held",
+      "listed": 2,
+      "jobZero": true,
+      "before": {
+        "Started": 134364530431855658,
+        "Finished": 134364530431855853,
+        "NativeReturn": 1,
+        "Error": 0,
+        "Bytes": 48,
+        "Total": 1,
+        "Active": 1
+      },
+      "after": {
+        "Started": 134364530434547743,
+        "Finished": 134364530434547962,
+        "NativeReturn": 1,
+        "Error": 0,
+        "Bytes": 48,
+        "Total": 2,
+        "Active": 2
+      },
+      "reportSha256": "8C6BCB54517F12070B48CDA29AB1DF6D7B40E90424EA6F52C1B836560C6F0197",
+      "observed": 2
+    },
+    {
+      "productionAccepted": false,
+      "creatorSha256": "9322C5C221284C0DCDFD506147068D53481EA2E46F82156DC6B2E82F302F4F05",
+      "scenario": "transient",
+      "listed": 1,
+      "jobZero": true,
+      "before": {
+        "Started": 134364530439478091,
+        "Finished": 134364530439478301,
+        "NativeReturn": 1,
+        "Error": 0,
+        "Bytes": 48,
+        "Total": 1,
+        "Active": 1
+      },
+      "after": {
+        "Started": 134364530442358707,
+        "Finished": 134364530442358842,
+        "NativeReturn": 1,
+        "Error": 0,
+        "Bytes": 48,
+        "Total": 2,
+        "Active": 1
+      },
+      "reportSha256": "AA115D1810FF9A9AE622EE968B2816D3392A136A6F1A05A6FC8908AF6DE7A95A",
+      "observed": 1
+    }
+  ],
+  "legacyEightRerun": false,
+  "fullP1Closure": false,
+  "separateProductionInspection": "Not the cross-birth raw tuple",
+  "dualBudgetAccepted": false,
+  "oldHeldMissingCreatorReceipt": "resume-root-v53/growth-held retained and not accepted",
+  "denominator": 2,
+  "passed": 2,
+  "coreSourceCommitted": false,
+  "taskId": "P1-GATE.04.controlled-growth-input",
+  "productionGrowthReconciliationAccepted": false
+}

@@ -1107,3 +1107,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第53轮重复模板原型在限定子集内 ✅ 已完成：严格Release及16/16通过。[证明](../evidence/p3/macros-repeated-template-prototype-v1.json)。P3正式叶子0/38、门禁0/4，82完整用例NOT_RUN。第54轮集成前独立复核冻结源码/DLL精确哈希及原始16项输出，没有重跑已验收测试。
 
 第54轮手工MIR结构组件 ✅ 已完成：tiny1/full2匹配每host的230条canonical记录；8个真实MIR变体经Emit/Decode后被拒绝。[证明](../evidence/p1/f463-hand-mir-structure-v1.json)绑定原PE哈希与冻结factory源码。没有加载/执行原始代码。synthetic Source(0,1),x属于手工MIR来源，不声称Rust AST；阶段/运行时验收保持独立。
+
+第54轮独立原生growth输入组件 ✅ 已完成：held/transient2/2通过，具备真实creator回执与明确event done屏障，已审查native birth/full-command/parent/Job及自有句柄。[输入证明](../evidence/p1/controlled-growth-input-v1.json)保留旧缺回执试验。跨birth原始计数与另一次稳定production Inspect不同。生产reconciliation和双预算验收仍开放；没有重试旧8或提交core。P1六门禁、P2 8/101、P3 0/38+0/4均不变。
