@@ -1,0 +1,182 @@
+{
+  "taskId": "P1-GATE.current-native-original-component",
+  "status": "COMPONENT_ACCEPTED",
+  "acceptedAt": "2026-10-14T14:17:31.2880271+08:00",
+  "candidateSha": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "candidateTreeSha": "233c6505dde7dafd548ef1d20e7b521d52036d1f",
+  "runId": "38515250985",
+  "attempt": 1,
+  "originalArchives": [
+    {
+      "bytes": 2439990,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871506982-13d346b674864c6ab0cf057a1105936e\\stdout.bin",
+      "sha256": "0FCB73ABFEE6B4D00BF71C49CEC45A03942B454B3B6C1F438FC6DD5EDF15C2D9",
+      "id": 11871506982,
+      "name": "p1-drop-receipt-windows-x64-38515250985-1"
+    },
+    {
+      "bytes": 20428368,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871621588-3d9e92d3002d44738e58baa335ecdf51\\stdout.bin",
+      "sha256": "00D8F8AB18B0D0991FFB1B8FB872AEB037C49B718151DA34B9C2246122A0FE99",
+      "id": 11871621588,
+      "name": "p1-production-source-linux-x64-38515250985-1"
+    },
+    {
+      "bytes": 95717360,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871666905-edf75df0dafa44d08a020f56449682f5\\stdout.bin",
+      "sha256": "E86D0223F6B3CCCB9E8BF3A23709969A490D6634356F506653EDC76ABA54BF00",
+      "id": 11871666905,
+      "name": "p1-drop-bytes-windows-x64-38515250985-1"
+    },
+    {
+      "bytes": 2774001,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871681916-1f004fe146ee4acbae5f1a794179ef11\\stdout.bin",
+      "sha256": "856F61E146545D8CFDC823A03B030AE05F3E6DB1D90E1CC6F6662E91B4BD0406",
+      "id": 11871681916,
+      "name": "p1-production-receipt-windows-x64-38515250985-1"
+    },
+    {
+      "bytes": 2780588,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871714632-86b330a8dbf4499486deb9aeb9b72c98\\stdout.bin",
+      "sha256": "25E7500B78733EF40AA3FA784E2263CCF0590928320825675EB5F8165791029D",
+      "id": 11871714632,
+      "name": "p1-expanded-windows-x64-38515250985-1"
+    },
+    {
+      "bytes": 18341275,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871841884-ce79abaa11ae48bab9bf4488df9439a1\\stdout.bin",
+      "sha256": "ED9CC368C65223BF8BB764A0384754BA7E7BB388A83909230BBA42FDEE473E0F",
+      "id": 11871841884,
+      "name": "p1-production-source-windows-x64-38515250985-1"
+    },
+    {
+      "bytes": 2749768,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871862331-f63e0bf81df84dac89ec40a5dfad424c\\stdout.bin",
+      "sha256": "85400191767222FC53713D7BEE0D4999309DEFFC50FE85F36EB46953A44D51F3",
+      "id": 11871862331,
+      "name": "p1-production-receipt-linux-x64-38515250985-1"
+    },
+    {
+      "bytes": 24240968,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11871896300-d22c70a28df64b5e917bbe6be2cd4090\\stdout.bin",
+      "sha256": "48F6679C1C3CB9D21A513994F019CFDBAE845E70041403C10616B3A0D2349E0D",
+      "id": 11871896300,
+      "name": "p1-production-backend-linux-x64-38515250985-1"
+    },
+    {
+      "bytes": 2436703,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11872022016-23f610a27f4a4ff8a362a351427bff3c\\stdout.bin",
+      "sha256": "6220F65ED2265EFE2408731C688007FC1C3FED107EE91CD5195DBBEABFA81303",
+      "id": 11872022016,
+      "name": "p1-drop-receipt-linux-x64-38515250985-1"
+    },
+    {
+      "bytes": 120921755,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11872196812-d34c5b549cb34ae29565c941b08e4d31\\stdout.bin",
+      "sha256": "FBBC0FB39C56318C625714817C02B54822D4CD184A1CFA25139E76DBE01FF05E",
+      "id": 11872196812,
+      "name": "p1-drop-bytes-linux-x64-38515250985-1"
+    },
+    {
+      "bytes": 23603069,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11872315896-b9705ac9898441be8f69a3f43b5e4665\\stdout.bin",
+      "sha256": "B2763E52E2D90F587066F700254DE02FFEC61275171AF7796371105E38C6EBF7",
+      "id": 11872315896,
+      "name": "p1-production-backend-windows-x64-38515250985-1"
+    },
+    {
+      "bytes": 2713122,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11872365645-7c5a763c4c4b4b80b4eebe9e4718c30a\\stdout.bin",
+      "sha256": "E11E7935409DE3922787814DE504FFCD78DE821439936B44BEA73EFE82553989",
+      "id": 11872365645,
+      "name": "p1-expanded-linux-x64-38515250985-1"
+    },
+    {
+      "bytes": 10742,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v41\\archive-11872465918-a72b3c58cf2e4721b4e3fb080ba28f85\\stdout.bin",
+      "sha256": "EF0493D014BD992880046FD45B090673DA2476C172D592E6E3C8E888B28420AE",
+      "id": 11872465918,
+      "name": "p1-suite-gate-38515250985-1"
+    },
+    {
+      "bytes": 2145265,
+      "rawPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v42\\p1-gate-original-9635d893f76a4651af2d3163be58a8ca\\stdout.bin",
+      "sha256": "D5ECA0943D62394FAA8E22B3742E62C6247A426FF60453E8740A3B5FE886725B",
+      "id": 11871618366,
+      "name": "p1-production-gate-38515250985-1"
+    }
+  ],
+  "rootRehashedRetainedFiles": 2076,
+  "retainedBytes": 360738584,
+  "missing": 0,
+  "mismatched": 0,
+  "unchecked": 0,
+  "reviewBindings": [
+    {
+      "path": "artifacts/p1-supervision/current-drop-run38515250985/CURRENT-ACTUAL-REPORTS.json",
+      "sha256": "9F881BF109BC6E73626E6356A524A7D738A32567D3B11C5639809B65F651C6D8"
+    },
+    {
+      "path": "artifacts/p1-supervision/current-drop-run38515250985/CURRENT-PHYSICAL-300.json",
+      "sha256": "DA0E36AED0EE26BDC52FB60C0880609AF24F98A66BE641797467783D6EA8B896"
+    },
+    {
+      "path": "artifacts/p1-supervision/current-expanded-run38515250985/ACTUAL-EXPANDED-ROW-REVIEW.json",
+      "sha256": "8A7DE4D425737582239893374A7E13A370800585C0AB04E4973E2A1B76C520FE"
+    },
+    {
+      "path": "artifacts/p1-supervision/current-expanded-run38515250985/ACTUAL-PRODUCTION-RECEIPT-PHYSICAL.json",
+      "sha256": "B1B5CADB166960B84EA7BDA53FB5E1A1F099F1C666CD4F4340718FA7A815DBBC"
+    },
+    {
+      "path": "artifacts/p1-supervision/current-expanded-run38515250985/ACTUAL-PRODUCTION-RETAINED-BYTES.json",
+      "sha256": "908815D950B0E3DE23A75DE7184E717C78ABC540B80D1AF26659CE262DA71E62"
+    },
+    {
+      "path": "artifacts/p1-supervision/root-acceptance-round38/ACTUAL-FINAL-GATE-COMPARISON.json",
+      "sha256": "D40FCC0DF5357272DFF44178C79181B4AB263C2DCE411818C7F33C0FD7203528"
+    },
+    {
+      "path": "artifacts/p1-supervision/root-acceptance-round38/GATE-GAP-MATRIX.json",
+      "sha256": "98A76F77BFFE1516032615C262B5D668FDB788A7594FAAE3F6293FB05B6597D8"
+    }
+  ],
+  "finalJobs": {
+    "success": 8,
+    "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v42\\p1-final-status-9f0979cff6e74357b61ca40eb27016a7\\stdout.bin",
+    "sha256": "68A3C0154DABF7DABB281BE3CCF38BB0EFF5F76D9E85BCC7A8636EDA955AF0DC"
+  },
+  "gateReport": {
+    "path": "artifacts/p1-supervision/resume-root-v42/production-gate-original/production-ci-gate.json",
+    "sha256": "A7FB2E0581B76D8292322CAE3155DB77306A3D8C45FF16C1222387B84DDE0FF9"
+  },
+  "perNativeHost": {
+    "callable": 7,
+    "harness": 1215,
+    "dropRustcMatches": 26,
+    "sourceOriginalPe": 39,
+    "platform": 24,
+    "differential": 32,
+    "sourcePackages": 19,
+    "baseline": 60,
+    "dropGenerated": 28,
+    "dropAot": 28,
+    "dropContractDifferences": 2
+  },
+  "backendUniqueNativeCells": 24,
+  "legacySuiteChecks": 15,
+  "targetCurrentLinux": "rustc/CoreCLR/AOT: body/owner/bad, double-panic-abort",
+  "targetCurrentWindows": "rustc/CoreCLR/AOT: body/owner, double-panic-abort",
+  "limitations": [
+    "Original cleanup verification remains parent-exit-only; descendantContainmentVerified=false.",
+    "The two frozen Drop contract differences have no new language-gate approval.",
+    "PE/ELF headers and every field of seven semantic witnesses have not received an additional independent deep review.",
+    "Production SDK10.0.401 and expanded SDK10.0.400 are separate original builds.",
+    "This verifies exact f463 artifacts, not later HEAD or phase closure."
+  ],
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "P2CompleteLeaves": 8,
+  "P2LeafDenominator": 101,
+  "elapsedSeconds": 3.2630339
+}

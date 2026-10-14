@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v40/resumption.json`。
+`artifacts/p1-supervision/resume-root-v42/resumption.json`。
+
+第38轮精确f463ac8/run38515250985/attempt1原件证据组件为 ✅ 已完成：8个job全部成功；14份原始ZIP的digest/字节数全部匹配GitHub，监督者独立重核2076/2076份留存文件（Drop300、source/backend1776）。两原生host各执行1215/1215个harness案例、32差异、24平台和60基线案例；source19/39PE、backend24个唯一原生格、Drop28=26个rustc匹配+2项固定差异、AOT28和callable7分别保留范围。[当前原件证据](../evidence/p1/ci-f463-current-native-v1.json)确认目标double-panic abort在当前Linux为body/owner/bad，Windows为body/owner。原件parent-exit-only containment、未批准语言差异及metadata/witness深核仍开放。P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
 第36轮精确f463ac8/run38512774036/attempt1文档CI原件对账为 ✅ 已完成：两份原始ZIP digest与大小均匹配GitHub；各原生宿主991条源码前后一致、6份DLL/PDB实物哈希一致、8个真实workspace子进程及20项API全通过，共56/56。[CI原件证据](../evidence/p2/doc-ci-f463-originals-v1.json)将真实job/OS/attempt API溯源与原binding字段分开保留；CI未运行publication21，未上传临时fixture/页面原件，parent-only/完整containment/运行FD缺口仍保留。历史afb0988的Linux NativeV5原件现确认28=26+2，目标rustc/CoreCLR/AOT均实际body/owner/bad并abort；不提升为当前SHA验收，也不批准legacy-v4差异。当前f463完整P1手动CI已派发run38515250985，仍在运行。Formatter v10已出现真实CTRL、pending995、原生Join/close和自然130且子进程案例通过，但外层读取正在退出的已知driver时仍失败，不验收完整案例/叶子。检查点v40；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
