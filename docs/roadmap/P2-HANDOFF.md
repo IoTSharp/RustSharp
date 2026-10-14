@@ -1,5 +1,7 @@
 # P2 supervisor checkpoint
 
+Round 43 is 🚧 In progress. The provenance cwd repair component is ✅ Complete: the same old DLL returns 997 candidate entries from the repository root and zero from a capture subdirectory; ls-files is also cwd-relative, so changing only ls-tree is insufficient. Verification now resolves the Git top-level directory before all commands and path resolution, preserving the 4096 file cap and tracked/untracked input checks. The old four-control regression executes 4/4 with 1 pass and 3 failures; the fresh strict Release build passes all 4/4, including changed tracked and untracked compiler inputs outside the caller directory. [Repair evidence](../evidence/p2/provenance-cwd-repair-v1.json) preserves both originals. The real repository remains dirty and is not accepted as a clean candidate. P1 retains six open gates, P2 remains 8/101, and all phase closure flags remain false.
+
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
 ## Current supervision entry — 2026-10-14

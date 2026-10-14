@@ -25,13 +25,16 @@ internal static class CandidateSourceProvenance
         try
         {
             if (!RegressionHarness.IsCommitSha(sha)) throw new ArgumentException("Candidate SHA must be a full commit identity.", nameof(sha));
+            repositoryRoot = Path.GetFullPath((await GitAsync(["rev-parse", "--show-toplevel"], null,
+                repositoryRoot, processes, token).ConfigureAwait(false)).Trim());
             string commit = (await GitAsync(["rev-parse", sha + "^{commit}"], null, repositoryRoot, processes, token).ConfigureAwait(false)).Trim();
             if (!string.Equals(commit, sha, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Candidate identity must refer to a commit.");
             tree = (await GitAsync(["rev-parse", sha + "^{tree}"], null, repositoryRoot, processes, token).ConfigureAwait(false)).Trim();
             if (!RegressionHarness.IsCommitSha(tree)) throw new InvalidOperationException("Candidate tree is unavailable.");
             string inventory = await GitAsync(["ls-tree", "-rz", sha], null, repositoryRoot, processes, token).ConfigureAwait(false);
             string[] entries = inventory.Split('\0', StringSplitOptions.RemoveEmptyEntries);
-            if (entries.Length is 0 or > MaximumFiles) throw new InvalidOperationException("Candidate inventory exceeds its fixed file bound.");
+            if (entries.Length == 0) throw new InvalidOperationException("Candidate inventory is empty.");
+            if (entries.Length > MaximumFiles) throw new InvalidOperationException("Candidate inventory exceeds its fixed file bound.");
             var expected = new List<string>(entries.Length);
             var candidatePaths = new HashSet<string>(StringComparer.Ordinal);
             var paths = new StringBuilder();

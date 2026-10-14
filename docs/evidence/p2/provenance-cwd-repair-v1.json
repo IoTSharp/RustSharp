@@ -1,0 +1,509 @@
+{
+  "cause": "Git inventory commands inherit caller subdirectory filtering; normalize --show-toplevel before all inventory and source-path resolution.",
+  "fullP2Closure": false,
+  "oldDllFixedCases": {
+    "failed": 3,
+    "executed": 4,
+    "binding": "artifacts/p2-supervision/formatter-round43/old-negative-v2-binding.json",
+    "passed": 1
+  },
+  "newDllFixedCases": {
+    "taskId": "P2-08.02.provenance-cwd-regression",
+    "state": "PASS",
+    "denominator": 4,
+    "executed": 4,
+    "passed": 4,
+    "assemblyPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v43\\validation\\bin\\RustSharp.Tests.dll",
+    "assemblySha256": "BD8AAA97B68341194C55E8681F87E49B362F7E19603564340D6933F3422499E5",
+    "fixture": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-round43\\new-dll-positive-root43\\fixture-repo",
+    "fixtureRetainedAsEvidence": true,
+    "cases": [
+      {
+        "id": "clean-root",
+        "expectedMatch": true,
+        "passed": true,
+        "actual": {
+          "CandidateSha": "6c04156bce311b2da7f80ae3bae1984f162965fd",
+          "CandidateTreeSha": "12439ccbeb4443bafefd457297f5f50bab661b21",
+          "CandidateMatchesWorkingTree": true,
+          "CheckedFileCount": 3,
+          "Errors": [],
+          "Processes": [
+            {
+              "ProcessId": 27336,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.4742401+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "--show-toplevel"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"--show-toplevel\""
+            },
+            {
+              "ProcessId": 71908,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.5366238+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}\""
+            },
+            {
+              "ProcessId": 18140,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.6030045+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}\""
+            },
+            {
+              "ProcessId": 76284,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.6686301+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-tree",
+                "-rz",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-tree\" \"-rz\" \"6c04156bce311b2da7f80ae3bae1984f162965fd\""
+            },
+            {
+              "ProcessId": 75588,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.7299632+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+            },
+            {
+              "ProcessId": 79628,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.7959465+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "hash-object",
+                "--stdin-paths"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"hash-object\" \"--stdin-paths\""
+            }
+          ]
+        }
+      },
+      {
+        "id": "clean-nested",
+        "expectedMatch": true,
+        "expectedError": "",
+        "passed": true,
+        "actual": {
+          "CandidateSha": "6c04156bce311b2da7f80ae3bae1984f162965fd",
+          "CandidateTreeSha": "12439ccbeb4443bafefd457297f5f50bab661b21",
+          "CandidateMatchesWorkingTree": true,
+          "CheckedFileCount": 3,
+          "Errors": [],
+          "Processes": [
+            {
+              "ProcessId": 78328,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.8918412+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "--show-toplevel"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"--show-toplevel\""
+            },
+            {
+              "ProcessId": 56368,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:00.9563035+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}\""
+            },
+            {
+              "ProcessId": 10380,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.0215793+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}\""
+            },
+            {
+              "ProcessId": 13928,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.0891397+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-tree",
+                "-rz",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-tree\" \"-rz\" \"6c04156bce311b2da7f80ae3bae1984f162965fd\""
+            },
+            {
+              "ProcessId": 27752,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.1572537+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+            },
+            {
+              "ProcessId": 37496,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.218159+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "hash-object",
+                "--stdin-paths"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"hash-object\" \"--stdin-paths\""
+            }
+          ]
+        }
+      },
+      {
+        "id": "dirty-tracked-outside-cwd",
+        "expectedMatch": false,
+        "expectedError": "Working source differs from candidate: src/main.rs",
+        "passed": true,
+        "actual": {
+          "CandidateSha": "6c04156bce311b2da7f80ae3bae1984f162965fd",
+          "CandidateTreeSha": "12439ccbeb4443bafefd457297f5f50bab661b21",
+          "CandidateMatchesWorkingTree": false,
+          "CheckedFileCount": 3,
+          "Errors": [
+            "Working source differs from candidate: src/main.rs"
+          ],
+          "Processes": [
+            {
+              "ProcessId": 61368,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.2957701+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "--show-toplevel"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"--show-toplevel\""
+            },
+            {
+              "ProcessId": 80284,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.3626693+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}\""
+            },
+            {
+              "ProcessId": 57956,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.4266067+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}\""
+            },
+            {
+              "ProcessId": 29300,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.5030465+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-tree",
+                "-rz",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-tree\" \"-rz\" \"6c04156bce311b2da7f80ae3bae1984f162965fd\""
+            },
+            {
+              "ProcessId": 67012,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.5965058+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+            },
+            {
+              "ProcessId": 75036,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.7002642+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "hash-object",
+                "--stdin-paths"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"hash-object\" \"--stdin-paths\""
+            }
+          ]
+        }
+      },
+      {
+        "id": "untracked-compiler-outside-cwd",
+        "expectedMatch": false,
+        "expectedError": "Working compiler input is absent from candidate: tests/untracked.cs",
+        "passed": true,
+        "actual": {
+          "CandidateSha": "6c04156bce311b2da7f80ae3bae1984f162965fd",
+          "CandidateTreeSha": "12439ccbeb4443bafefd457297f5f50bab661b21",
+          "CandidateMatchesWorkingTree": false,
+          "CheckedFileCount": 3,
+          "Errors": [
+            "Working compiler input is absent from candidate: tests/untracked.cs"
+          ],
+          "Processes": [
+            {
+              "ProcessId": 72812,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.8049736+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "--show-toplevel"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"--show-toplevel\""
+            },
+            {
+              "ProcessId": 54040,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.8974061+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{commit}\""
+            },
+            {
+              "ProcessId": 76820,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:01.9842673+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "rev-parse",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"rev-parse\" \"6c04156bce311b2da7f80ae3bae1984f162965fd^{tree}\""
+            },
+            {
+              "ProcessId": 45292,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:02.0786023+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-tree",
+                "-rz",
+                "6c04156bce311b2da7f80ae3bae1984f162965fd"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-tree\" \"-rz\" \"6c04156bce311b2da7f80ae3bae1984f162965fd\""
+            },
+            {
+              "ProcessId": 79680,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:02.1905785+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"ls-files\" \"--cached\" \"--others\" \"--exclude-standard\" \"-z\""
+            },
+            {
+              "ProcessId": 75868,
+              "ParentProcessId": 77884,
+              "StartedAtUtc": "2026-10-14T06:43:02.2977201+00:00",
+              "FileName": "git",
+              "Arguments": [
+                "hash-object",
+                "--stdin-paths"
+              ],
+              "ExitCode": 0,
+              "CleanupComplete": true,
+              "CommandLine": "git \"hash-object\" \"--stdin-paths\""
+            }
+          ]
+        }
+      }
+    ],
+    "setupProcessEvidence": [
+      {
+        "ProcessId": 12196,
+        "ParentProcessId": 77884,
+        "StartedAtUtc": "2026-10-14T06:43:00.14048+00:00",
+        "FileName": "git",
+        "Arguments": [
+          "init",
+          "--quiet"
+        ],
+        "ExitCode": 0,
+        "CleanupComplete": true,
+        "CommandLine": "git \"init\" \"--quiet\""
+      },
+      {
+        "ProcessId": 70436,
+        "ParentProcessId": 77884,
+        "StartedAtUtc": "2026-10-14T06:43:00.2202639+00:00",
+        "FileName": "git",
+        "Arguments": [
+          "add",
+          "--",
+          ".gitignore",
+          "src/main.rs",
+          "tests/nested/placeholder.txt"
+        ],
+        "ExitCode": 0,
+        "CleanupComplete": true,
+        "CommandLine": "git \"add\" \"--\" \".gitignore\" \"src/main.rs\" \"tests/nested/placeholder.txt\""
+      },
+      {
+        "ProcessId": 64756,
+        "ParentProcessId": 77884,
+        "StartedAtUtc": "2026-10-14T06:43:00.299403+00:00",
+        "FileName": "git",
+        "Arguments": [
+          "-c",
+          "user.name=RustSharp fixture",
+          "-c",
+          "user.email=fixture@invalid",
+          "commit",
+          "--quiet",
+          "-m",
+          "bounded provenance fixture"
+        ],
+        "ExitCode": 0,
+        "CleanupComplete": true,
+        "CommandLine": "git \"-c\" \"user.name=RustSharp fixture\" \"-c\" \"user.email=fixture@invalid\" \"commit\" \"--quiet\" \"-m\" \"bounded provenance fixture\""
+      },
+      {
+        "ProcessId": 66596,
+        "ParentProcessId": 77884,
+        "StartedAtUtc": "2026-10-14T06:43:00.4078925+00:00",
+        "FileName": "git",
+        "Arguments": [
+          "rev-parse",
+          "HEAD"
+        ],
+        "ExitCode": 0,
+        "CleanupComplete": true,
+        "CommandLine": "git \"rev-parse\" \"HEAD\""
+      }
+    ],
+    "elapsedMilliseconds": 2281,
+    "failure": null,
+    "fullP2Closure": false
+  },
+  "taskId": "P2-08.02.provenance",
+  "schemaVersion": 1,
+  "strictBuild": "artifacts/p1-supervision/resume-root-v43/calls/solution-build2-737516013ebe402a80c4556ef001dba6/capture-receipt.json",
+  "fullP1Closure": false,
+  "baseHead": "d038ebad7eeead491b61bb4755f77d503f6d5c5e",
+  "rawRegression": "artifacts/p1-supervision/resume-root-v43/calls/provenance-regression-1c013389f1b84d2a8262e4e2ea4e69d2/capture-receipt.json",
+  "failuresRetained": true,
+  "bindings": [
+    {
+      "sha256": "5BCFAC65E5671E05D9F08CC2F2C085E31730EB6CA4895F58B0CDB69577C1E3C4",
+      "path": "tests/RustSharp.Tests/CandidateSourceProvenance.cs"
+    },
+    {
+      "sha256": "E65C61564E6218065FC268C8B642FA90DB9C5E54DB53F6F08A8A6DDF65B5F1DC",
+      "path": "eng/Test-CandidateSourceProvenance.ps1"
+    },
+    {
+      "sha256": "BD8AAA97B68341194C55E8681F87E49B362F7E19603564340D6933F3422499E5",
+      "path": "artifacts/p1-supervision/resume-root-v43/validation/bin/RustSharp.Tests.dll"
+    },
+    {
+      "sha256": "58EC88491757F57ED555FCFCD3E4FD2A8AAA8B50BE634935DC31C58497C84548",
+      "path": "artifacts/p1-supervision/resume-root-v43/validation/bin/RustSharp.Tests.pdb"
+    }
+  ],
+  "unchangedDirtyChecks": true,
+  "scope": "WORKING_TREE_REPAIR_COMPONENT",
+  "fileCap": 4096,
+  "fullLeafAccepted": false
+}
