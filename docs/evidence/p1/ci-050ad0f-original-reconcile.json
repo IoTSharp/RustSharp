@@ -1,0 +1,344 @@
+{
+  "candidateSha": "050ad0fbfad7c666c658fb8ad4415aa231e3c845",
+  "archiveReceipts": [
+    {
+      "attempt": 0,
+      "error": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "id": 11860022722,
+      "proxy": false
+    },
+    {
+      "id": 11860022722,
+      "githubDigest": "sha256:fc4a05bed65d50a3c3a1f308d47765104b60857026b2ee5a1985e775f80dc0d5",
+      "archive": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-linux-x64-safe-core-regression-v3.zip",
+      "sha256": "FC4A05BED65D50A3C3A1F308D47765104B60857026B2EE5A1985E775F80DC0D5",
+      "name": "p1-platform-linux-x64-safe-core-regression-v3",
+      "digestMatched": true,
+      "files": [
+        {
+          "bytes": 137511,
+          "sha256": "744CC23D04224D8D696888F8AC48EF71D9937939E7F619AE715FD93ADAAD9A45",
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-linux-x64-safe-core-regression-v3\\linux-x64-safe-core-regression-v3.json"
+        }
+      ]
+    },
+    {
+      "attempt": 0,
+      "error": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "id": 11859997994,
+      "proxy": false
+    },
+    {
+      "id": 11859997994,
+      "githubDigest": "sha256:6f9a6bf6147e74f56350621f09d6499c7ac777b0b514f555b0e42fe2fabab209",
+      "archive": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-exit-gate.zip",
+      "sha256": "6F9A6BF6147E74F56350621F09D6499C7AC777B0B514F555B0E42FE2FABAB209",
+      "name": "p1-exit-gate",
+      "digestMatched": true,
+      "files": [
+        {
+          "bytes": 3181,
+          "sha256": "EB8CB65DB98346F45B04191A83609C52689954DB2856227651CD43DD571D00DA",
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-exit-gate\\p1-exit-gate.json"
+        }
+      ]
+    },
+    {
+      "attempt": 0,
+      "error": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "id": 11859997624,
+      "proxy": false
+    },
+    {
+      "id": 11859997624,
+      "githubDigest": "sha256:bd61a80e9628ba930eef7e7e01cd84177e16fb1eaf0c44327988636712e003a8",
+      "archive": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-linux-x64.zip",
+      "sha256": "BD61A80E9628BA930EEF7E7E01CD84177E16FB1EAF0C44327988636712E003A8",
+      "name": "p1-platform-linux-x64",
+      "digestMatched": true,
+      "files": [
+        {
+          "bytes": 339330,
+          "sha256": "5BBF6E0AD406B7E9D9E57B00BD00295E3BCB109252A3A6FF073855E548F13EB3",
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-linux-x64\\linux-x64.json"
+        }
+      ]
+    },
+    {
+      "attempt": 0,
+      "error": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "id": 11859782760,
+      "proxy": false
+    },
+    {
+      "id": 11859782760,
+      "githubDigest": "sha256:8d86262786143f00d613971525675f9b328b13153fc0e548e32e8a694bf93c76",
+      "archive": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-linux-x64-differential-v2.zip",
+      "sha256": "8D86262786143F00D613971525675F9B328B13153FC0E548E32E8A694BF93C76",
+      "name": "p1-platform-linux-x64-differential-v2",
+      "digestMatched": true,
+      "files": [
+        {
+          "bytes": 85059,
+          "sha256": "538066025E0520879D548568D5D743C35E06766807A93E8DCB808124052A0AB5",
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-linux-x64-differential-v2\\linux-x64-differential-v2.json"
+        }
+      ]
+    },
+    {
+      "attempt": 0,
+      "error": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "id": 11859667904,
+      "proxy": false
+    },
+    {
+      "id": 11859667904,
+      "githubDigest": "sha256:dbbd4e4dff72610210126b375f52f5f718843b611be07207cf01a95e2fb50935",
+      "archive": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-windows-x64-differential-v2.zip",
+      "sha256": "DBBD4E4DFF72610210126B375F52F5F718843B611BE07207CF01A95E2FB50935",
+      "name": "p1-platform-windows-x64-differential-v2",
+      "digestMatched": true,
+      "files": [
+        {
+          "bytes": 85855,
+          "sha256": "522718C028F7E609E9F9FB7A9CA9E9B351211CE960E8C103D3B388AAB14A3DBF",
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-windows-x64-differential-v2\\windows-x64-differential-v2.json"
+        }
+      ]
+    },
+    {
+      "attempt": 0,
+      "error": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "id": 11859633095,
+      "proxy": false
+    },
+    {
+      "id": 11859633095,
+      "githubDigest": "sha256:c53d251896996b7fa48109051f332c1b122bcdad1fb478bbc90e3b6864ac1ae4",
+      "archive": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-windows-x64-safe-core-regression-v3.zip",
+      "sha256": "C53D251896996B7FA48109051F332C1B122BCDAD1FB478BBC90E3B6864AC1AE4",
+      "name": "p1-platform-windows-x64-safe-core-regression-v3",
+      "digestMatched": true,
+      "files": [
+        {
+          "bytes": 138799,
+          "sha256": "24B0D64626FA8248DAB810E2E3FDCC1B24F0F57FFBB1EDECB994C181180AA5F7",
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-windows-x64-safe-core-regression-v3\\windows-x64-safe-core-regression-v3.json"
+        }
+      ]
+    },
+    {
+      "attempt": 0,
+      "error": "The request was canceled due to the configured HttpClient.Timeout of 4 seconds elapsing.",
+      "id": 11859588002,
+      "proxy": false
+    },
+    {
+      "id": 11859588002,
+      "githubDigest": "sha256:c844e9e3ce69df24421fa737656ff55ccba15dc7dd1b2873513dc00adad640d5",
+      "archive": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-windows-x64.zip",
+      "sha256": "C844E9E3CE69DF24421FA737656FF55CCBA15DC7DD1B2873513DC00ADAD640D5",
+      "name": "p1-platform-windows-x64",
+      "digestMatched": true,
+      "files": [
+        {
+          "bytes": 402467,
+          "sha256": "F61716D94407CF42584B4D7274A2D61804AA5969EE5C20873125C221BB94CF35",
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v30\\ci050-originals\\p1-platform-windows-x64\\windows-x64.json"
+        }
+      ]
+    }
+  ],
+  "taskId": "P1-GATE.05",
+  "aggregateSummary": {
+    "Status": "passed",
+    "ExitCode": 0,
+    "Denominator": 6,
+    "Executed": 6,
+    "Passed": 6,
+    "Failed": 0,
+    "Blocked": 0,
+    "Skipped": 0
+  },
+  "wholeGateAccepted": false,
+  "scope": "Exact frozen CI profile only: eachhost12platform+16differential+26regression; doesnot replaceoriginalexpanded/fullphase/control contracts",
+  "at": "2026-10-14T08:14:40.9292100+08:00",
+  "schemaVersion": 1,
+  "inputs": [
+    {
+      "cleanup": {
+        "Completed": true,
+        "Diagnostic": null
+      },
+      "candidateSha": "050ad0fbfad7c666c658fb8ad4415aa231e3c845",
+      "sha256": "F61716D94407CF42584B4D7274A2D61804AA5969EE5C20873125C221BB94CF35",
+      "name": "windows-platform",
+      "path": "artifacts/p1-supervision/resume-root-v30/ci050-originals/p1-platform-windows-x64/windows-x64.json",
+      "platform": {
+        "Name": "windows-x64",
+        "RuntimeIdentifier": "win-x64",
+        "OperatingSystem": "Microsoft Windows 10.0.26100",
+        "Architecture": "X64",
+        "ProcessArchitecture": "X64",
+        "RuntimeIdentifierObserved": "win-x64"
+      },
+      "summary": {
+        "Status": "passed",
+        "ExitCode": 0,
+        "Denominator": 12,
+        "Executed": 12,
+        "Passed": 12,
+        "Failed": 0,
+        "Blocked": 0,
+        "Skipped": 0
+      },
+      "caseCount": 12
+    },
+    {
+      "cleanup": {
+        "Completed": true,
+        "Diagnostic": null
+      },
+      "candidateSha": "050ad0fbfad7c666c658fb8ad4415aa231e3c845",
+      "sha256": "5BBF6E0AD406B7E9D9E57B00BD00295E3BCB109252A3A6FF073855E548F13EB3",
+      "name": "linux-platform",
+      "path": "artifacts/p1-supervision/resume-root-v30/ci050-originals/p1-platform-linux-x64/linux-x64.json",
+      "platform": {
+        "Name": "linux-x64",
+        "RuntimeIdentifier": "linux-x64",
+        "OperatingSystem": "Ubuntu 24.04.5 LTS",
+        "Architecture": "X64",
+        "ProcessArchitecture": "X64",
+        "RuntimeIdentifierObserved": "linux-x64"
+      },
+      "summary": {
+        "Status": "passed",
+        "ExitCode": 0,
+        "Denominator": 12,
+        "Executed": 12,
+        "Passed": 12,
+        "Failed": 0,
+        "Blocked": 0,
+        "Skipped": 0
+      },
+      "caseCount": 12
+    },
+    {
+      "cleanup": {
+        "completed": true,
+        "diagnostic": null
+      },
+      "candidateSha": "050ad0fbfad7c666c658fb8ad4415aa231e3c845",
+      "sha256": "522718C028F7E609E9F9FB7A9CA9E9B351211CE960E8C103D3B388AAB14A3DBF",
+      "name": "windows-differential-v2",
+      "path": "artifacts/p1-supervision/resume-root-v30/ci050-originals/p1-platform-windows-x64-differential-v2/windows-x64-differential-v2.json",
+      "platform": {
+        "name": "win-x64",
+        "runtimeIdentifier": "win-x64"
+      },
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 16,
+        "executed": 16,
+        "passed": 16,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "borrowDenominator": 10,
+        "dropDenominator": 6
+      },
+      "caseCount": 16
+    },
+    {
+      "cleanup": {
+        "completed": true,
+        "diagnostic": null
+      },
+      "candidateSha": "050ad0fbfad7c666c658fb8ad4415aa231e3c845",
+      "sha256": "538066025E0520879D548568D5D743C35E06766807A93E8DCB808124052A0AB5",
+      "name": "linux-differential-v2",
+      "path": "artifacts/p1-supervision/resume-root-v30/ci050-originals/p1-platform-linux-x64-differential-v2/linux-x64-differential-v2.json",
+      "platform": {
+        "name": "linux-x64",
+        "runtimeIdentifier": "linux-x64"
+      },
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 16,
+        "executed": 16,
+        "passed": 16,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "borrowDenominator": 10,
+        "dropDenominator": 6
+      },
+      "caseCount": 16
+    },
+    {
+      "cleanup": null,
+      "candidateSha": "050ad0fbfad7c666c658fb8ad4415aa231e3c845",
+      "sha256": "24B0D64626FA8248DAB810E2E3FDCC1B24F0F57FFBB1EDECB994C181180AA5F7",
+      "name": "windows-safe-core-regression-v3",
+      "path": "artifacts/p1-supervision/resume-root-v30/ci050-originals/p1-platform-windows-x64-safe-core-regression-v3/windows-x64-safe-core-regression-v3.json",
+      "platform": null,
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 26,
+        "executed": 26,
+        "passed": 26,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "coverage": {
+          "compile-pass": 1,
+          "compile-fail": 4,
+          "run-pass": 17,
+          "differential": 4,
+          "legacy": 8,
+          "typed-mir": 14,
+          "borrow": 2,
+          "drop": 2
+        }
+      },
+      "caseCount": 26
+    },
+    {
+      "cleanup": null,
+      "candidateSha": "050ad0fbfad7c666c658fb8ad4415aa231e3c845",
+      "sha256": "744CC23D04224D8D696888F8AC48EF71D9937939E7F619AE715FD93ADAAD9A45",
+      "name": "linux-safe-core-regression-v3",
+      "path": "artifacts/p1-supervision/resume-root-v30/ci050-originals/p1-platform-linux-x64-safe-core-regression-v3/linux-x64-safe-core-regression-v3.json",
+      "platform": null,
+      "summary": {
+        "status": "passed",
+        "exitCode": 0,
+        "denominator": 26,
+        "executed": 26,
+        "passed": 26,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "coverage": {
+          "compile-pass": 1,
+          "compile-fail": 4,
+          "run-pass": 17,
+          "differential": 4,
+          "legacy": 8,
+          "typed-mir": 14,
+          "borrow": 2,
+          "drop": 2
+        }
+      },
+      "caseCount": 26
+    }
+  ],
+  "fullP2Closure": false,
+  "fullP1Closure": false,
+  "originalInputHashesMatched": 6,
+  "aggregateValidationRecords": 0,
+  "originalArchiveDigestsMatched": 7
+}
