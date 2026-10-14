@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using RustSharp.Compiler.Documentation;
 
@@ -13,6 +14,17 @@ internal static class P2DocumentationResourceRunner
     private sealed record Snapshot(string Name, Fd[] Entries);
     private sealed record Row(string Id, bool Warmup, int Repetition, string Outcome, string? Error,
         Snapshot Before, Snapshot After, Snapshot Settled, Fd[] PersistentNew);
+    private sealed class Budget(int maximum, CancellationToken token, int milliseconds = 2000)
+    {
+        private readonly Stopwatch clock = Stopwatch.StartNew();
+        private int count;
+        internal void Step()
+        {
+            token.ThrowIfCancellationRequested();
+            if (++count > maximum || clock.ElapsedMilliseconds >= milliseconds) throw new TimeoutException("Independent count/time budget exceeded.");
+            if (count % 1024 == 0) { Console.Error.WriteLine("documentation FD bounded work " + count.ToString(CultureInfo.InvariantCulture)); Thread.Yield(); }
+        }
+    }
 
     internal static async Task<int> RunAsync(string outputPath)
     {
@@ -20,14 +32,18 @@ internal static class P2DocumentationResourceRunner
         if (File.Exists(output)) throw new IOException("Fresh resource report required.");
         string reportDirectory = Path.GetDirectoryName(output) ?? throw new InvalidDataException("Report directory absent.");
         Directory.CreateDirectory(reportDirectory);
-        string root = Path.Combine(reportDirectory, "fd-fixture-" + Guid.NewGuid().ToString("N"));
+        string nonce = Guid.NewGuid().ToString("N");
+        string root = Path.Combine(reportDirectory, "fd-fixture-" + nonce);
         Directory.CreateDirectory(root);
-        File.WriteAllText(Path.Combine(root, "OWNER.json"), "{\"owner\":\"P2DocumentationResourceRunner\",\"retained\":true}");
+        using var ownershipCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        string ownership = CaptureOwnership(nonce, root, output, ownershipCancellation.Token);
+        File.WriteAllText(Path.Combine(root, "OWNER.json"), ownership);
         var rows = new List<Row>(18);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         var wall = Stopwatch.StartNew();
         string state = OperatingSystem.IsLinux() ? "FAIL" : "NOT_APPLICABLE";
         string? failure = null;
+        Exception? reportFailure = null;
         Snapshot? baseline = null, final = null;
         try
         {
@@ -55,15 +71,33 @@ internal static class P2DocumentationResourceRunner
                 }
                 final = Capture("measured-final", root, cancellation.Token);
                 if (rows.Count != 18) throw new TimeoutException("Fixed twelve measured cases incomplete.");
-                Row[] measured = rows.Where(static item => !item.Warmup).ToArray();
-                Fd[] overall = NewPersistent(baseline, final, final);
-                bool fixtureLeak = measured.Any(static row => row.PersistentNew.Any(static fd => fd.Kind.StartsWith("fixture-", StringComparison.Ordinal))) || overall.Any(static fd => fd.Kind.StartsWith("fixture-", StringComparison.Ordinal));
-                bool unknown = measured.Any(static row => row.PersistentNew.Length != 0 || HasUnknown(row.Before) || HasUnknown(row.After) || HasUnknown(row.Settled)) || overall.Length != 0 || HasUnknown(baseline) || HasUnknown(final);
-                state = measured.Any(static row => row.Error is not null) || fixtureLeak ? "FAIL" : unknown ? "UNKNOWN" : "PASS_PENDING_ROOT_REVIEW";
+                Fd[] overall = NewPersistent(baseline, final, final, cancellation.Token);
+                bool fixtureLeak = HasFixture(overall, cancellation.Token), operationFailed = false;
+                bool unknown = overall.Length != 0 || HasUnknown(baseline, cancellation.Token) || HasUnknown(final, cancellation.Token);
+                var analysis = new Budget(18, cancellation.Token);
+                for (int index = 0; index < rows.Count && index < 18; index++)
+                {
+                    analysis.Step(); Row row = rows[index]; if (row.Warmup) continue;
+                    operationFailed |= row.Error is not null;
+                    fixtureLeak |= HasFixture(row.PersistentNew, cancellation.Token);
+                    unknown |= row.PersistentNew.Length != 0 || HasUnknown(row.Before, cancellation.Token) || HasUnknown(row.After, cancellation.Token) || HasUnknown(row.Settled, cancellation.Token);
+                }
+                state = operationFailed || fixtureLeak ? "FAIL" : unknown ? "UNKNOWN" : "PASS_PENDING_ROOT_REVIEW";
             }
         }
         catch (Exception error) { failure = error.ToString(); state = "FAIL"; }
-        finally { WriteReport(output, root, state, failure, rows, baseline, final, wall.ElapsedMilliseconds); }
+        finally
+        {
+            try { WriteReport(output, root, state, failure, rows, baseline, final, wall.ElapsedMilliseconds, ownership); }
+            catch (Exception reportError)
+            {
+                // Preserve any partial original; never replace it with a successful report.
+                reportFailure = reportError;
+                try { File.WriteAllText(output + ".FAIL.txt", "FAIL: report incomplete\n" + reportError + "\npriorFailure=" + failure + "\nnonce=" + nonce + "\nfixture=" + root); }
+                catch (Exception sidecarError) { reportFailure = new AggregateException("Report and failure sidecar both failed.", reportError, sidecarError); }
+            }
+        }
+        if (reportFailure is not null) throw new IOException("Resource report failed; prior task failure: " + failure, reportFailure);
         return state == "PASS_PENDING_ROOT_REVIEW" ? 0 : state == "NOT_APPLICABLE" ? 2 : 1;
     }
 
@@ -78,7 +112,8 @@ internal static class P2DocumentationResourceRunner
         if (mode == 2) File.AppendAllText(Path.Combine(fixture, "b", "Cargo.toml"), "[dependencies]\nalpha={path=\"../a\"}\n");
         if (mode == 1) { Directory.CreateDirectory(target); File.WriteAllText(Path.Combine(target, "user.txt"), "original"); }
         string[] originals = [manifest, Path.Combine(fixture, "a", "Cargo.toml"), Path.Combine(fixture, "a", "src", "lib.rs"), Path.Combine(fixture, "b", "Cargo.toml"), Path.Combine(fixture, "b", "src", "lib.rs")];
-        string[] hashes = originals.Select(Hash).ToArray();
+        string[] hashes = new string[5]; var hashing = new Budget(5, token);
+        for (int index = 0; index < 5; index++) { hashing.Step(); hashes[index] = Hash(originals[index]); }
         Snapshot before = Capture("before", root, token);
         string outcome = "FAIL"; string? failure = null;
         try
@@ -97,7 +132,7 @@ internal static class P2DocumentationResourceRunner
                 var model = DocumentationWorkspace.Create(manifest, cancellationToken: operation.Token);
                 if (mode == 2)
                 {
-                    Require(!model.IsSuccessful && model.Output is null && model.Diagnostics.Any(static item => item.Code == "RSTD3001"), "Actual unsupported dependency must reject.");
+                    Require(!model.IsSuccessful && model.Output is null && HasDiagnostic(model.Diagnostics, "RSTD3001", token), "Actual unsupported dependency must reject.");
                     outcome = "EXPECTED_REJECTION";
                 }
                 else
@@ -108,7 +143,7 @@ internal static class P2DocumentationResourceRunner
                         : mode == 5 ? state => { if (state.FilesStaged == 1) operation.Cancel(); } : null;
                     var result = await DocumentationPublisher.PublishNewAsync(model.Output!, target, new(), progress, operation.Token).ConfigureAwait(false);
                     if (mode == 0) Require(result.Published && result.Diagnostics.Count == 0, "Actual success must publish.");
-                    else Require(!result.Published && result.RetainedLeasePath is null && result.Diagnostics.Any(static item => item.Code == "RSTD2001"), "Failure/cancel must reclaim its owned publication lease.");
+                    else Require(!result.Published && result.RetainedLeasePath is null && HasDiagnostic(result.Diagnostics, "RSTD2001", token), "Failure/cancel must reclaim its owned publication lease.");
                     if (mode == 1) Require(File.ReadAllText(Path.Combine(target, "user.txt")) == "original", "Existing target changed.");
                     if (mode is 4 or 5) Require(!Directory.Exists(target), "Failed/cancelled publication leaked partial target.");
                     outcome = mode == 0 ? "PUBLISHED" : mode == 5 ? "EXPECTED_CANCEL" : "EXPECTED_REJECTION";
@@ -125,7 +160,7 @@ internal static class P2DocumentationResourceRunner
         Snapshot after = Capture("after", root, token);
         await Task.Delay(50, token).ConfigureAwait(false);
         Snapshot settled = Capture("settled", root, token);
-        return new(Names[mode], warmup, repetition, outcome, failure, before, after, settled, NewPersistent(before, after, settled));
+        return new(Names[mode], warmup, repetition, outcome, failure, before, after, settled, NewPersistent(before, after, settled, token));
     }
 
     private static Snapshot Capture(string name, string fixtureRoot, CancellationToken token)
@@ -153,13 +188,47 @@ internal static class P2DocumentationResourceRunner
             catch (IOException error) { rows.Add(new(number, null, "unknown-readlink-race", error.Message)); }
         }
         if (!complete) throw new TimeoutException("FD snapshot4096 entries/2seconds incomplete.");
-        return new(name, rows.OrderBy(static row => row.Number).ToArray());
+        return new(name, rows.ToArray());
     }
 
-    private static Fd[] NewPersistent(Snapshot before, Snapshot after, Snapshot settled) => settled.Entries
-        .Where(fd => fd.Kind != "snapshot-observer" && after.Entries.Any(item => item.Number == fd.Number && item.Target == fd.Target)
-            && !before.Entries.Any(item => item.Number == fd.Number && item.Target == fd.Target)).ToArray();
-    private static bool HasUnknown(Snapshot snapshot) => snapshot.Entries.Any(static fd => fd.Error is not null);
+    private static Dictionary<int, string?> Index(Snapshot snapshot, CancellationToken token)
+    {
+        Require(snapshot.Entries.Length <= 4096, "FD inventory bound.");
+        var result = new Dictionary<int, string?>(snapshot.Entries.Length); var work = new Budget(4096, token);
+        for (int index = 0; index < snapshot.Entries.Length && index < 4096; index++)
+        { work.Step(); Fd fd = snapshot.Entries[index]; Require(result.TryAdd(fd.Number, fd.Target), "Duplicate raw FD number."); }
+        return result;
+    }
+    private static Fd[] NewPersistent(Snapshot before, Snapshot after, Snapshot settled, CancellationToken token)
+    {
+        var previous = Index(before, token); var observed = Index(after, token);
+        Require(settled.Entries.Length <= 4096, "Settled FD inventory bound.");
+        var result = new List<Fd>(); var work = new Budget(4096, token);
+        for (int index = 0; index < settled.Entries.Length && index < 4096; index++)
+        {
+            work.Step(); Fd fd = settled.Entries[index];
+            if (fd.Kind != "snapshot-observer" && observed.TryGetValue(fd.Number, out string? seen) && seen == fd.Target && (!previous.TryGetValue(fd.Number, out string? old) || old != fd.Target)) result.Add(fd);
+        }
+        return result.ToArray();
+    }
+    private static bool HasFixture(Fd[] entries, CancellationToken token)
+    {
+        Require(entries.Length <= 4096, "FD classification bound."); var work = new Budget(4096, token);
+        for (int index = 0; index < entries.Length && index < 4096; index++) { work.Step(); if (entries[index].Kind.StartsWith("fixture-", StringComparison.Ordinal)) return true; }
+        return false;
+    }
+    private static bool HasUnknown(Snapshot snapshot, CancellationToken token)
+    {
+        Require(snapshot.Entries.Length <= 4096, "FD unknown inventory bound."); var work = new Budget(4096, token);
+        for (int index = 0; index < snapshot.Entries.Length && index < 4096; index++) { work.Step(); if (snapshot.Entries[index].Error is not null) return true; }
+        return false;
+    }
+    private static bool HasDiagnostic(IReadOnlyList<RustSharp.Syntax.Diagnostic> diagnostics, string code, CancellationToken token)
+    {
+        Require(diagnostics.Count <= 4096, "Diagnostic inventory bound."); var work = new Budget(4096, token);
+        for (int index = 0; index < diagnostics.Count && index < 4096; index++) { work.Step(); if (diagnostics[index].Code == code) return true; }
+        return false;
+    }
     private static string Hash(string path) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
     private static void Require(bool value, string message) { if (!value) throw new InvalidOperationException(message); }
     private static void WritePackage(string path, string name)
@@ -169,42 +238,95 @@ internal static class P2DocumentationResourceRunner
         File.WriteAllText(Path.Combine(path, "src", "lib.rs"), "pub fn f() {}\n");
     }
 
-    private static void WriteReport(string output, string root, string state, string? failure, List<Row> rows, Snapshot? baseline, Snapshot? final, long elapsed)
+    private static string ReadProc(string path, CancellationToken token)
     {
+        using var stream = File.OpenRead(path); using var output = new MemoryStream(); var buffer = new byte[4096]; var work = new Budget(17, token);
+        for (int chunk = 0; chunk < 17; chunk++)
+        {
+            work.Step(); int count = stream.Read(buffer, 0, buffer.Length);
+            if (count == 0) return Encoding.UTF8.GetString(output.ToArray());
+            Require(output.Length + count <= 65536, "Native proc identity64KiB bound."); output.Write(buffer, 0, count);
+        }
+        throw new TimeoutException("Native proc identity chunk bound.");
+    }
+    private static string CaptureOwnership(string nonce, string root, string output, CancellationToken token)
+    {
+        using var self = Process.GetCurrentProcess(); using var bytes = new MemoryStream(); using var json = new Utf8JsonWriter(bytes);
+        json.WriteStartObject(); json.WriteString("owner", nameof(P2DocumentationResourceRunner)); json.WriteString("nonce", nonce);
+        json.WriteNumber("pid", Environment.ProcessId); json.WriteString("processStartUtc", self.StartTime.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture));
+        json.WriteString("managedCommandLine", Environment.CommandLine); json.WriteString("fixtureRoot", root); json.WriteString("reportPath", output); json.WriteBoolean("retained", true);
+        json.WriteStartArray("nativeParentChain"); int pid = Environment.ProcessId; bool complete = false; string? error = null;
+        var work = new Budget(8, token, 5000);
+        if (OperatingSystem.IsLinux())
+        {
+            for (int depth = 0; depth < 8 && pid > 0; depth++)
+            {
+                work.Step();
+                try
+                {
+                    string prefix = "/proc/" + pid.ToString(CultureInfo.InvariantCulture);
+                    string stat = ReadProc(prefix + "/stat", token), command = ReadProc(prefix + "/cmdline", token);
+                    int boundary = stat.LastIndexOf(") ", StringComparison.Ordinal); Require(boundary > 0, "Native stat command delimiter absent.");
+                    string[] fields = stat[(boundary + 2)..].Split(' ', 128, StringSplitOptions.RemoveEmptyEntries);
+                    Require(fields.Length >= 20, "Native stat fields incomplete.");
+                    int parent = int.Parse(fields[1], CultureInfo.InvariantCulture);
+                    json.WriteStartObject(); json.WriteNumber("pid", pid); json.WriteNumber("parentPid", parent); json.WriteString("nativeStartTicks", fields[19]);
+                    json.WriteString("rawStat", stat); json.WriteString("rawCommandLineNulSeparated", command); json.WriteEndObject();
+                    if (parent == 0) { complete = true; break; } Require(parent != pid, "Native ancestry cycle."); pid = parent;
+                }
+                catch (Exception ancestorError) { error = ancestorError.ToString(); break; }
+            }
+        }
+        else error = "NOT_APPLICABLE: Linux native /proc identity only.";
+        json.WriteEndArray(); json.WriteBoolean("nativeParentChainComplete", complete); json.WriteString("nativeParentChainError", error); json.WriteEndObject(); json.Flush();
+        return Encoding.UTF8.GetString(bytes.ToArray());
+    }
+    private static void WriteReport(string output, string root, string state, string? failure, List<Row> rows, Snapshot? baseline, Snapshot? final, long elapsed, string ownership)
+    {
+        using var reportCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        CancellationToken token = reportCancellation.Token; var work = new Budget(18, token, 10000);
+        Require(rows.Count <= 18, "Report row bound."); int warmups = 0, measured = 0;
+        for (int index = 0; index < rows.Count && index < 18; index++) { work.Step(); if (rows[index].Warmup) warmups++; else measured++; }
+        work = new Budget(18, token, 10000);
         using var process = Process.GetCurrentProcess();
         using var stream = new FileStream(output, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
         using var json = new Utf8JsonWriter(stream, new() { Indented = true });
         json.WriteStartObject(); json.WriteString("taskId", "P2-08.03.same-process-linux-fd"); json.WriteString("state", state);
         json.WriteBoolean("nativeLinux", OperatingSystem.IsLinux()); json.WriteNumber("pid", Environment.ProcessId);
         json.WriteString("processStartUtc", process.StartTime.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture));
+        using var owner = JsonDocument.Parse(ownership); json.WritePropertyName("ownership"); owner.RootElement.WriteTo(json);
         json.WriteString("fixtureRoot", root); json.WriteBoolean("fixturesRetained", true); json.WriteNumber("warmupDenominator", 6);
         json.WriteNumber("measuredCaseDenominator", 6); json.WriteNumber("repetitions", 2); json.WriteNumber("measuredExecutionDenominator", 12);
-        json.WriteNumber("warmupExecuted", rows.Count(static row => row.Warmup)); json.WriteNumber("measuredExecuted", rows.Count(static row => !row.Warmup));
+        json.WriteNumber("warmupExecuted", warmups); json.WriteNumber("measuredExecuted", measured);
         json.WriteNumber("elapsedMilliseconds", elapsed); json.WriteString("failure", failure); json.WriteBoolean("forcedGc", false);
         json.WriteString("runtimeFdPolicy", "Warmup deltas exposed; every persistent measured new runtime/unknown FD is UNKNOWN, never silently excluded.");
-        json.WritePropertyName("baseline"); WriteSnapshot(json, baseline); json.WritePropertyName("final"); WriteSnapshot(json, final);
+        json.WritePropertyName("baseline"); WriteSnapshot(json, baseline, token); json.WritePropertyName("final"); WriteSnapshot(json, final, token);
         json.WriteStartArray("cases");
-        foreach (Row row in rows)
+        for (int index = 0; index < rows.Count && index < 18; index++)
         {
+            work.Step(); Row row = rows[index];
             json.WriteStartObject(); json.WriteString("id", row.Id); json.WriteBoolean("warmup", row.Warmup); json.WriteNumber("repetition", row.Repetition);
             json.WriteString("outcome", row.Outcome); json.WriteString("error", row.Error);
-            json.WritePropertyName("before"); WriteSnapshot(json, row.Before); json.WritePropertyName("after"); WriteSnapshot(json, row.After);
-            json.WritePropertyName("settled"); WriteSnapshot(json, row.Settled); json.WritePropertyName("persistentNew"); WriteFds(json, row.PersistentNew); json.WriteEndObject();
+            json.WritePropertyName("before"); WriteSnapshot(json, row.Before, token); json.WritePropertyName("after"); WriteSnapshot(json, row.After, token);
+            json.WritePropertyName("settled"); WriteSnapshot(json, row.Settled, token); json.WritePropertyName("persistentNew"); WriteFds(json, row.PersistentNew, token); json.WriteEndObject();
         }
         json.WriteEndArray(); json.WriteBoolean("leafClosed", false); json.WriteBoolean("fullP2Closure", false); json.WriteEndObject(); json.Flush(); stream.Flush(true);
     }
-    private static void WriteSnapshot(Utf8JsonWriter json, Snapshot? snapshot)
+    private static void WriteSnapshot(Utf8JsonWriter json, Snapshot? snapshot, CancellationToken token)
     {
         if (snapshot is null) { json.WriteNullValue(); return; }
         json.WriteStartObject(); json.WriteString("name", snapshot.Name); json.WriteNumber("rawCount", snapshot.Entries.Length);
-        json.WriteNumber("observerCount", snapshot.Entries.Count(static fd => fd.Kind == "snapshot-observer"));
-        json.WritePropertyName("entries"); WriteFds(json, snapshot.Entries); json.WriteEndObject();
+        Require(snapshot.Entries.Length <= 4096, "Snapshot report bound."); int observers = 0; var work = new Budget(4096, token);
+        for (int index = 0; index < snapshot.Entries.Length && index < 4096; index++) { work.Step(); if (snapshot.Entries[index].Kind == "snapshot-observer") observers++; }
+        json.WriteNumber("observerCount", observers);
+        json.WritePropertyName("entries"); WriteFds(json, snapshot.Entries, token); json.WriteEndObject();
     }
-    private static void WriteFds(Utf8JsonWriter json, Fd[] entries)
+    private static void WriteFds(Utf8JsonWriter json, Fd[] entries, CancellationToken token)
     {
+        Require(entries.Length <= 4096, "FD report bound."); var work = new Budget(4096, token);
         json.WriteStartArray();
-        foreach (Fd fd in entries)
-        { json.WriteStartObject(); json.WriteNumber("fd", fd.Number); json.WriteString("target", fd.Target); json.WriteString("kind", fd.Kind); json.WriteString("error", fd.Error); json.WriteEndObject(); }
+        for (int index = 0; index < entries.Length && index < 4096; index++)
+        { work.Step(); Fd fd = entries[index]; json.WriteStartObject(); json.WriteNumber("fd", fd.Number); json.WriteString("target", fd.Target); json.WriteString("kind", fd.Kind); json.WriteString("error", fd.Error); json.WriteEndObject(); }
         json.WriteEndArray();
     }
 }

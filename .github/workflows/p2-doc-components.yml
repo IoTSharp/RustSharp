@@ -32,6 +32,16 @@ jobs:
           CANDIDATE_SHA: ${{ github.sha }}
           TOOL_RID: ${{ matrix.rid }}
         run: ./artifacts/p2-supervision/documentation-native-ci-v1/Invoke-DocumentationNativeCi.ps1
+      - name: Native Linux same-process documentation resource evidence
+        if: matrix.rid == 'linux-x64'
+        shell: pwsh
+        timeout-minutes: 2
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $PWD 'artifacts/p2-doc-native/linux-x64'
+          $tests = Join-Path $root 'bin/RustSharp.Tests.dll'
+          $report = Join-Path $root 'resource-fd.json'
+          & ./eng/Invoke-BoundedProcess.ps1 -FilePath dotnet -ArgumentList @($tests, '--p2-doc-resource-component', $report) -TimeoutSeconds 90 -CapturePrefix (Join-Path $root 'resource-fd')
       - name: Upload complete component and failure evidence
         if: always()
         uses: actions/upload-artifact@v4
