@@ -1,0 +1,950 @@
+{
+  "ridReviews": [
+    {
+      "taskId": "P2-08.03.ci-f463-review-v1",
+      "status": "COMPONENTS_AND_LOCAL_BINDINGS_MATCH",
+      "rid": "linux-x64",
+      "candidateSha": "f463ac8fff710b11f851881437f9db864e4b42f6",
+      "runId": "38512774036",
+      "actualSdk": "10.0.400",
+      "actualPowerShell": "7.6.6",
+      "sourceBeforeCount": 991,
+      "sourceAfterCount": 991,
+      "sourceRecordsCompared": 991,
+      "binaryChecks": [
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Tests.dll",
+          "actual": "3E5C7E7140D1BF5B5982A243A2E7613B94802C9B7A760E8546E834F673C0BBE7",
+          "expected": "3E5C7E7140D1BF5B5982A243A2E7613B94802C9B7A760E8546E834F673C0BBE7",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Tests.pdb",
+          "actual": "DDF5CD71BD3FE42FC82FCC9323FBBBD2E39B27A988EA39AF349F334CFF9EAFDA",
+          "expected": "DDF5CD71BD3FE42FC82FCC9323FBBBD2E39B27A988EA39AF349F334CFF9EAFDA",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\rsc.dll",
+          "actual": "81D7C7C6E7C8A766F96C27C4864714C1CC7942109090499AAB4360784C450275",
+          "expected": "81D7C7C6E7C8A766F96C27C4864714C1CC7942109090499AAB4360784C450275",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\rsc.pdb",
+          "actual": "CCD49BC226B4508418CAB31F9E592EEEF3316676C5C6C7D2E8339D635AB64A8E",
+          "expected": "CCD49BC226B4508418CAB31F9E592EEEF3316676C5C6C7D2E8339D635AB64A8E",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Compiler.dll",
+          "actual": "80D05A9B35EA402C0BC6E4E272365705003179F5331A877A9BD6B5D4F6B36120",
+          "expected": "80D05A9B35EA402C0BC6E4E272365705003179F5331A877A9BD6B5D4F6B36120",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Compiler.pdb",
+          "actual": "3FD5822F8AEABA9B4DEFCFB5CE576F5D8488924CC3BB553EAAA2969DCA981DF4",
+          "expected": "3FD5822F8AEABA9B4DEFCFB5CE576F5D8488924CC3BB553EAAA2969DCA981DF4",
+          "matches": true
+        }
+      ],
+      "reports": [
+        {
+          "file": "workspace-cli-eight.json",
+          "denominator": 8,
+          "executed": 8,
+          "passed": 8,
+          "failed": 0,
+          "notRun": 0,
+          "receiptRoots": [
+            "/tmp/RustSharpDocWorkspaceCli-aadf3bb243ef45ceb2f87b6a9d64f937",
+            "/tmp/RustSharpDocWorkspaceCli-6fa0fe80b33c4ba19f0d71738529894e",
+            "/tmp/RustSharpDocWorkspaceCli-b1b4be8251ed4e9f9a3760965fe6c21a",
+            "/tmp/RustSharpDocWorkspaceCli-7e46477560e0470e91fd116975ad1e40",
+            "/tmp/RustSharpDocWorkspaceCli-13aa1df3c44c4901a52ce1686c20ec71",
+            "/tmp/RustSharpDocWorkspaceCli-ece9385d460c44899155c9a86b31e5a6",
+            "/tmp/RustSharpDocWorkspaceCli-0516d835538849b4ae914fa3dbf29bdd",
+            "/tmp/RustSharpDocWorkspaceCli-9dd56010fb324cf081091570df3b9da9"
+          ]
+        },
+        {
+          "file": "command-api-twenty.json",
+          "denominator": 20,
+          "executed": 20,
+          "passed": 20,
+          "failed": 0,
+          "notRun": 0,
+          "receiptRoots": [
+            "/tmp/RustSharpDocCli-a755cf763bd4411b84d34a591634449b",
+            "/tmp/RustSharpDocCli-4a9d1fb6b51e42adafbe762d07b15dde",
+            "/tmp/RustSharpDocCli-9b9fa2d88cdd437881acb54f35f4dc4a",
+            "/tmp/RustSharpDocCli-29e38c15dd2f4203aebc02d303ee4f7f",
+            "/tmp/RustSharpDocCli-8b644c638a6a4c91bfcf0d6a5eac8929",
+            "/tmp/RustSharpDocCli-61c706602cea4e9caa21194d3282d1cc",
+            "/tmp/RustSharpDocCli-3c84e9332c4a408fafb4d535a65efbff",
+            "/tmp/RustSharpDocCli-d78365b665794a9d9c787ec7d7aa74ea",
+            "/tmp/RustSharpDocCli-4a007493700145cfa4e03831e047f5a7",
+            "/tmp/RustSharpDocCli-caf70cff610c4587977c5f279799d350",
+            "/tmp/RustSharpDocCli-4fd6581fbb2a4cf49cd406c45ee7d92f",
+            "/tmp/RustSharpDocCli-6ed614efe0774787a429af5c632a5f60",
+            "/tmp/RustSharpDocCli-d0575842ce2341bcbeebdbf42d10bfca",
+            "/tmp/RustSharpDocCli-96f3de225b834ccc9cbfa65032fc9435",
+            "/tmp/RustSharpDocCli-c2691d4ed74d4fb2b65a5f3f4aefc7e3",
+            "/tmp/RustSharpDocCli-2c7b0f675bcf47578216f30ea84b6bc9",
+            "/tmp/RustSharpDocCli-634f7b4216a6448d97fdde6523b406ef",
+            "/tmp/RustSharpDocCli-3b6a9e3cb22d43fe9756a318f4a70610",
+            "/tmp/RustSharpDocCli-a8d5eaea424e4470b50d29966c240bfb",
+            "/tmp/RustSharpDocCli-956ce5cac4e7479ab51146e196bbb7f7"
+          ]
+        }
+      ],
+      "childChecks": [
+        {
+          "index": 0,
+          "valid": true,
+          "original": {
+            "pid": 3033,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:09.952603+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-aadf3bb243ef45ceb2f87b6a9d64f937/Cargo.toml --output /tmp/RustSharpDocWorkspaceCli-aadf3bb243ef45ceb2f87b6a9d64f937/published",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-aadf3bb243ef45ceb2f87b6a9d64f937",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "rsc: RSTDCLI1001: initial documentation requires one root-package target without dependencies or feature activation; workspace selection remains unsupported.\n"
+          }
+        },
+        {
+          "index": 1,
+          "valid": true,
+          "original": {
+            "pid": 3048,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:10.0616992+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-6fa0fe80b33c4ba19f0d71738529894e/Cargo.toml --workspace --output /tmp/RustSharpDocWorkspaceCli-6fa0fe80b33c4ba19f0d71738529894e/published",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-6fa0fe80b33c4ba19f0d71738529894e",
+            "exitCode": 0,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "Documented workspace /tmp/RustSharpDocWorkspaceCli-6fa0fe80b33c4ba19f0d71738529894e/published\n",
+            "stderr": ""
+          }
+        },
+        {
+          "index": 2,
+          "valid": true,
+          "original": {
+            "pid": 3061,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:10.522754+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-b1b4be8251ed4e9f9a3760965fe6c21a/Cargo.toml --workspace --output /tmp/RustSharpDocWorkspaceCli-b1b4be8251ed4e9f9a3760965fe6c21a/published",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-b1b4be8251ed4e9f9a3760965fe6c21a",
+            "exitCode": 0,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "Documented workspace /tmp/RustSharpDocWorkspaceCli-b1b4be8251ed4e9f9a3760965fe6c21a/published\n",
+            "stderr": ""
+          }
+        },
+        {
+          "index": 3,
+          "valid": true,
+          "original": {
+            "pid": 3075,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:10.7841612+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-7e46477560e0470e91fd116975ad1e40/Cargo.toml --workspace --output /tmp/RustSharpDocWorkspaceCli-7e46477560e0470e91fd116975ad1e40/published",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-7e46477560e0470e91fd116975ad1e40",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "/tmp/RustSharpDocWorkspaceCli-7e46477560e0470e91fd116975ad1e40/published: RSTD2001: Existing ordinary parent and absent destination required.\n"
+          }
+        },
+        {
+          "index": 4,
+          "valid": true,
+          "original": {
+            "pid": 3087,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:10.9595017+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-13aa1df3c44c4901a52ce1686c20ec71/Cargo.toml --workspace --output /tmp/RustSharpDocWorkspaceCli-13aa1df3c44c4901a52ce1686c20ec71/published",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-13aa1df3c44c4901a52ce1686c20ec71",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "/tmp/RustSharpDocWorkspaceCli-13aa1df3c44c4901a52ce1686c20ec71/b/Cargo.toml: RSTD3001: Dependencies, feature activation or multiple targets require explicit documentation selection; no family was omitted.\n"
+          }
+        },
+        {
+          "index": 5,
+          "valid": true,
+          "original": {
+            "pid": 3099,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:11.1310944+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-ece9385d460c44899155c9a86b31e5a6/Cargo.toml --workspace --output /tmp/RustSharpDocWorkspaceCli-ece9385d460c44899155c9a86b31e5a6/published",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-ece9385d460c44899155c9a86b31e5a6",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "/tmp/RustSharpDocWorkspaceCli-ece9385d460c44899155c9a86b31e5a6/a/Cargo.toml: RSTD3001: Dependencies, feature activation or multiple targets require explicit documentation selection; no family was omitted.\n"
+          }
+        },
+        {
+          "index": 6,
+          "valid": true,
+          "original": {
+            "pid": 3108,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:11.2302458+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-0516d835538849b4ae914fa3dbf29bdd/Cargo.toml --workspace --output /tmp/RustSharpDocWorkspaceCli-0516d835538849b4ae914fa3dbf29bdd/published --max-output-bytes 1",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-0516d835538849b4ae914fa3dbf29bdd",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": ": RSTD0001: Documentation budget exceeded.\n"
+          }
+        },
+        {
+          "index": 7,
+          "valid": true,
+          "original": {
+            "pid": 3120,
+            "parentPid": 3024,
+            "startedAt": "2026-10-14T04:44:11.3851555+00:00",
+            "commandLine": "/usr/share/dotnet/dotnet /home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/rsc.dll doc /tmp/RustSharpDocWorkspaceCli-9dd56010fb324cf081091570df3b9da9/Cargo.toml --workspace --output /tmp/RustSharpDocWorkspaceCli-9dd56010fb324cf081091570df3b9da9/published --timeout-ms 1",
+            "workingDirectory": "/tmp/RustSharpDocWorkspaceCli-9dd56010fb324cf081091570df3b9da9",
+            "exitCode": 130,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "rsc: workspace documentation cancelled or timed out.\n"
+          }
+        }
+      ],
+      "freshBuildProcess": {
+        "Pid": 2896,
+        "ParentPid": 2763,
+        "StartedAt": "2026-10-14T04:42:53.7832682+00:00",
+        "OSCreationTime": "2026-10-14T04:42:53.7832682+00:00",
+        "IdentityVerification": "os-creation-time",
+        "IdentityFailure": null,
+        "LaunchRequestedAt": "2026-10-14T04:42:53.7935023+00:00",
+        "FilePath": "/usr/share/dotnet/dotnet",
+        "Arguments": [
+          "build",
+          "RustSharp.slnx",
+          "-c",
+          "Release",
+          "--no-restore",
+          "--no-incremental",
+          "-m:1",
+          "-p:OutDir=/home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/bin/"
+        ],
+        "ParentStartedAt": "2026-10-14T04:42:46.9732682+00:00",
+        "ParentCommandLine": "/opt/microsoft/powershell/7/pwsh.dll -command \". '/home/runner/work/_temp/b03946bb-3d23-4cf8-8853-e84b6b464f40.ps1'\"",
+        "WorkingDirectory": "/home/runner/work/RustSharp/RustSharp",
+        "TimeoutSeconds": 600,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 33554432,
+        "CapturePrefix": "/home/runner/work/RustSharp/RustSharp/artifacts/p2-doc-native/linux-x64/fresh-build",
+        "PollMilliseconds": 200,
+        "MaximumWaitChecks": 3001,
+        "CleanupVerification": "parent-exit-only",
+        "FinishedAt": "2026-10-14T04:44:09.8497072+00:00",
+        "ExitCode": 0,
+        "RootProcessExited": true,
+        "CleanupComplete": true,
+        "Failure": null,
+        "CleanupFailures": []
+      },
+      "bindingProvenanceFields": [
+        "runId"
+      ],
+      "auxiliaryRunAttempt": 1,
+      "auxiliaryJob": {
+        "id": 115684807319,
+        "run_id": 38512774036,
+        "workflow_name": "P2 documentation native components",
+        "head_branch": "master",
+        "run_url": "https://api.github.com/repos/IoTSharp/RustSharp/actions/runs/38512774036",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOUKxMm88AAAAa71oSlw",
+        "head_sha": "f463ac8fff710b11f851881437f9db864e4b42f6",
+        "url": "https://api.github.com/repos/IoTSharp/RustSharp/actions/jobs/115684807319",
+        "html_url": "https://github.com/IoTSharp/RustSharp/actions/runs/38512774036/job/115684807319",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-14T04:42:26Z",
+        "started_at": "2026-10-14T04:42:30Z",
+        "completed_at": "2026-10-14T04:44:19Z",
+        "name": "documentation (ubuntu-24.04, linux-x64)",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-10-14T04:42:31Z",
+            "completed_at": "2026-10-14T04:42:33Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-10-14T04:42:33Z",
+            "completed_at": "2026-10-14T04:42:35Z"
+          },
+          {
+            "name": "Run actions/setup-dotnet@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-10-14T04:42:35Z",
+            "completed_at": "2026-10-14T04:42:46Z"
+          },
+          {
+            "name": "Native documentation components and exact candidate evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-10-14T04:42:46Z",
+            "completed_at": "2026-10-14T04:44:12Z"
+          },
+          {
+            "name": "Upload complete component and failure evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-10-14T04:44:12Z",
+            "completed_at": "2026-10-14T04:44:15Z"
+          },
+          {
+            "name": "Post Run actions/setup-dotnet@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-10-14T04:44:15Z",
+            "completed_at": "2026-10-14T04:44:15Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-10-14T04:44:15Z",
+            "completed_at": "2026-10-14T04:44:15Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-10-14T04:44:15Z",
+            "completed_at": "2026-10-14T04:44:15Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/IoTSharp/RustSharp/check-runs/115684807319",
+        "labels": [
+          "ubuntu-24.04"
+        ],
+        "runner_id": 1000014442,
+        "runner_name": "GitHub Actions 1000014442",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      "nativeOsEvidence": {
+        "actualJobLabels": [
+          "ubuntu-24.04"
+        ],
+        "jobMatrixLabel": "ubuntu-24.04",
+        "bindingRid": "linux-x64",
+        "note": "No absent runnerOS field is fabricated; labels and native RID are the OS binding evidence"
+      },
+      "originalFiles": [
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\candidate-binding.json",
+          "sha256": "C1A48C5A984990E955A802C789E321513A316CD1267BF2BC48BC23A382FE7962"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\workspace-cli-eight.json",
+          "sha256": "EE697B97463EF838EF28EAB3F9D78BD90707E63674FACE86718E92B1753B6E1C"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\command-api-twenty.json",
+          "sha256": "B47AAF93052775ECEB64C22A3F99A8308D86F9E7F26B04F7634738318D18AEF3"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\fresh-build.process.json",
+          "sha256": "D4E02AA3AC076DBB4023D28424EB3411D5388ECD3AE693EF85BB25750C15F31C"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-linux-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\sdk-version.stdout.log",
+          "sha256": "D0C8E5A09A2E5655CFFDCA9E350ECBBA59A860154F5ADADB92398B844F705ED0"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\docs-ci-run-a1945a848eb943229015c98a11bc0f69\\stdout.bin",
+          "sha256": "3B159E4A0F227A3208A89D0B2DC2D78C5B02C732AF4572805C326B0FF06DA2A7"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\docs-ci-jobs-e28f0187f8ae4328925f3bf5a4d4b247\\stdout.bin",
+          "sha256": "9E6CAAE0C1F371326CD8A69A0F6519BBF8FA83819DF4A649BE4F4A7B42233069"
+        }
+      ],
+      "problems": [],
+      "knownGaps": [
+        "CI binding lacks attempt/job/runnerOS; original run/jobs API provides auxiliary provenance",
+        "Temporary fixture/page bytes not uploaded remain unavailable",
+        "Parent-exit-only build/helper cleanup is not full descendant containment",
+        "Runtime FD baseline/after not measured by these components"
+      ],
+      "fullLeafAccepted": false,
+      "fullP2Closure": false,
+      "fullContainmentPhaseAccepted": false
+    },
+    {
+      "taskId": "P2-08.03.ci-f463-review-v1",
+      "status": "COMPONENTS_AND_LOCAL_BINDINGS_MATCH",
+      "rid": "win-x64",
+      "candidateSha": "f463ac8fff710b11f851881437f9db864e4b42f6",
+      "runId": "38512774036",
+      "actualSdk": "10.0.400",
+      "actualPowerShell": "7.6.6",
+      "sourceBeforeCount": 991,
+      "sourceAfterCount": 991,
+      "sourceRecordsCompared": 991,
+      "binaryChecks": [
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Tests.dll",
+          "actual": "C22ECC36169A185A1C54E73A65EC33F682FA4CA0E9AE8F2F9805F03BBEA8B830",
+          "expected": "C22ECC36169A185A1C54E73A65EC33F682FA4CA0E9AE8F2F9805F03BBEA8B830",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Tests.pdb",
+          "actual": "F67BD549D5CE4884AF26CD3C2C0FFC7354FF6067C36577C2CD1CBD210624A4E8",
+          "expected": "F67BD549D5CE4884AF26CD3C2C0FFC7354FF6067C36577C2CD1CBD210624A4E8",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\rsc.dll",
+          "actual": "0A3000A308D9761A60CA869EC0F65FB5C938B6CC328BE544AFE23743E54D8273",
+          "expected": "0A3000A308D9761A60CA869EC0F65FB5C938B6CC328BE544AFE23743E54D8273",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\rsc.pdb",
+          "actual": "FEB27042E7399D944291E35A1C6E3DB88523C345F80515D059D94DB1106A49A0",
+          "expected": "FEB27042E7399D944291E35A1C6E3DB88523C345F80515D059D94DB1106A49A0",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Compiler.dll",
+          "actual": "1CEE531CA1EFCD933781771C5EA5756A6D2C872FA325BA3ABCE0F351D7031334",
+          "expected": "1CEE531CA1EFCD933781771C5EA5756A6D2C872FA325BA3ABCE0F351D7031334",
+          "matches": true
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\bin\\RustSharp.Compiler.pdb",
+          "actual": "3F8944AAE151F9B050A97AE211FC4822B3B7F65E5FF7664BE0D4889156A03C20",
+          "expected": "3F8944AAE151F9B050A97AE211FC4822B3B7F65E5FF7664BE0D4889156A03C20",
+          "matches": true
+        }
+      ],
+      "reports": [
+        {
+          "file": "workspace-cli-eight.json",
+          "denominator": 8,
+          "executed": 8,
+          "passed": 8,
+          "failed": 0,
+          "notRun": 0,
+          "receiptRoots": [
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-c5f791c3d6eb43ccba91f3258c0af68c",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-973a972f88304b579a22772db2e9524b",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-e766f19a364c419b9a7c89d21e0071ec",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-7f50693790484d3384210815fb2f725a",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-d26758aa507f4f1bbe54a0825650274f",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-58802f1f781947cc8537811e3728d115",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-cbd876d12adc41cca4b2840a4b01eca2",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-3385fd8dc768469f98a9cf6a48c1083e"
+          ]
+        },
+        {
+          "file": "command-api-twenty.json",
+          "denominator": 20,
+          "executed": 20,
+          "passed": 20,
+          "failed": 0,
+          "notRun": 0,
+          "receiptRoots": [
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-4246435a6938498a8c3678a779515ef0",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-a9e3f84b489d4c91bbdd01b39db6bda9",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-94e14d3d520b46a79f2ef8285c1b7d62",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-659563eddf9642f6884c8a4125c565aa",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-77e9cb333e214a6c961d8590e6de3f9e",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-24aa252102c44723ba03f84ddde79e33",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-7122df2c6c7c44d6a3d641d0cff3db78",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-5c5416a39ef64aea83504fda52d14a7d",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-d35aceffe0364f798a7017e3724852ce",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-27e0fdb129eb40378b6741f9836124bb",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-451ede86d0504ae680175432534931e7",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-e86ca229baca4362a9e5a94407c8c75c",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-f4609d3e7b914e08bf24aad6cada4a05",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-32c2b3fdd92540988d64bdd8dc97d74a",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-84f2d966d0c84bf9aeb1cdccf460e68e",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-4fc03a4049584f79b5aa196dad97d1c1",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-2961420c512e402aae583062ffb7cbf4",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-23817f4db8cc4ad589120c3f0b52b6d5",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-7d9c814a183a494d94e77b6caf370945",
+            "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocCli-358924a23be641bc9c0367eb4d54304d"
+          ]
+        }
+      ],
+      "childChecks": [
+        {
+          "index": 0,
+          "valid": true,
+          "original": {
+            "pid": 684,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:28.1808535+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-c5f791c3d6eb43ccba91f3258c0af68c\\Cargo.toml --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-c5f791c3d6eb43ccba91f3258c0af68c\\published",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-c5f791c3d6eb43ccba91f3258c0af68c",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "rsc: RSTDCLI1001: initial documentation requires one root-package target without dependencies or feature activation; workspace selection remains unsupported.\r\n"
+          }
+        },
+        {
+          "index": 1,
+          "valid": true,
+          "original": {
+            "pid": 576,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:28.3099079+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-973a972f88304b579a22772db2e9524b\\Cargo.toml --workspace --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-973a972f88304b579a22772db2e9524b\\published",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-973a972f88304b579a22772db2e9524b",
+            "exitCode": 0,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "Documented workspace C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-973a972f88304b579a22772db2e9524b\\published\r\n",
+            "stderr": ""
+          }
+        },
+        {
+          "index": 2,
+          "valid": true,
+          "original": {
+            "pid": 10124,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:28.7736719+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-e766f19a364c419b9a7c89d21e0071ec\\Cargo.toml --workspace --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-e766f19a364c419b9a7c89d21e0071ec\\published",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-e766f19a364c419b9a7c89d21e0071ec",
+            "exitCode": 0,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "Documented workspace C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-e766f19a364c419b9a7c89d21e0071ec\\published\r\n",
+            "stderr": ""
+          }
+        },
+        {
+          "index": 3,
+          "valid": true,
+          "original": {
+            "pid": 9728,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:29.0704046+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-7f50693790484d3384210815fb2f725a\\Cargo.toml --workspace --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-7f50693790484d3384210815fb2f725a\\published",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-7f50693790484d3384210815fb2f725a",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-7f50693790484d3384210815fb2f725a\\published: RSTD2001: Existing ordinary parent and absent destination required.\r\n"
+          }
+        },
+        {
+          "index": 4,
+          "valid": true,
+          "original": {
+            "pid": 4176,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:29.3017727+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-d26758aa507f4f1bbe54a0825650274f\\Cargo.toml --workspace --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-d26758aa507f4f1bbe54a0825650274f\\published",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-d26758aa507f4f1bbe54a0825650274f",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-d26758aa507f4f1bbe54a0825650274f\\b\\Cargo.toml: RSTD3001: Dependencies, feature activation or multiple targets require explicit documentation selection; no family was omitted.\r\n"
+          }
+        },
+        {
+          "index": 5,
+          "valid": true,
+          "original": {
+            "pid": 6032,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:29.4739111+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-58802f1f781947cc8537811e3728d115\\Cargo.toml --workspace --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-58802f1f781947cc8537811e3728d115\\published",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-58802f1f781947cc8537811e3728d115",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-58802f1f781947cc8537811e3728d115\\a\\Cargo.toml: RSTD3001: Dependencies, feature activation or multiple targets require explicit documentation selection; no family was omitted.\r\n"
+          }
+        },
+        {
+          "index": 6,
+          "valid": true,
+          "original": {
+            "pid": 1800,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:29.5916919+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-cbd876d12adc41cca4b2840a4b01eca2\\Cargo.toml --workspace --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-cbd876d12adc41cca4b2840a4b01eca2\\published --max-output-bytes 1",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-cbd876d12adc41cca4b2840a4b01eca2",
+            "exitCode": 1,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": ": RSTD0001: Documentation budget exceeded.\r\n"
+          }
+        },
+        {
+          "index": 7,
+          "valid": true,
+          "original": {
+            "pid": 4252,
+            "parentPid": 7928,
+            "startedAt": "2026-10-14T04:44:29.8000275+00:00",
+            "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\rsc.dll doc C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-3385fd8dc768469f98a9cf6a48c1083e\\Cargo.toml --workspace --output C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-3385fd8dc768469f98a9cf6a48c1083e\\published --timeout-ms 1",
+            "workingDirectory": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\RustSharpDocWorkspaceCli-3385fd8dc768469f98a9cf6a48c1083e",
+            "exitCode": 130,
+            "termination": "Exited",
+            "cleanupAttempted": false,
+            "cleanupIncomplete": false,
+            "stdout": "",
+            "stderr": "rsc: workspace documentation cancelled or timed out.\r\n"
+          }
+        }
+      ],
+      "freshBuildProcess": {
+        "Pid": 7356,
+        "ParentPid": 5952,
+        "StartedAt": "2026-10-14T04:43:22.1141387+00:00",
+        "OSCreationTime": "2026-10-14T04:43:22.1141387+00:00",
+        "IdentityVerification": "os-creation-time",
+        "IdentityFailure": null,
+        "LaunchRequestedAt": "2026-10-14T04:43:22.1136728+00:00",
+        "FilePath": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "Arguments": [
+          "build",
+          "RustSharp.slnx",
+          "-c",
+          "Release",
+          "--no-restore",
+          "--no-incremental",
+          "-m:1",
+          "-p:OutDir=D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\bin\\"
+        ],
+        "ParentStartedAt": "2026-10-14T04:43:18.1709493+00:00",
+        "ParentCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -command \". 'D:\\a\\_temp\\e1ce1da9-6f56-4457-bb0f-3e9be6b7a1dc.ps1'\"",
+        "WorkingDirectory": "D:\\a\\RustSharp\\RustSharp",
+        "TimeoutSeconds": 600,
+        "MaximumAttempts": 1,
+        "MaximumOutputBytes": 33554432,
+        "CapturePrefix": "D:\\a\\RustSharp\\RustSharp\\artifacts\\p2-doc-native\\win-x64\\fresh-build",
+        "PollMilliseconds": 200,
+        "MaximumWaitChecks": 3001,
+        "CleanupVerification": "parent-exit-only",
+        "FinishedAt": "2026-10-14T04:44:28.0427202+00:00",
+        "ExitCode": 0,
+        "RootProcessExited": true,
+        "CleanupComplete": true,
+        "Failure": null,
+        "CleanupFailures": []
+      },
+      "bindingProvenanceFields": [
+        "runId"
+      ],
+      "auxiliaryRunAttempt": 1,
+      "auxiliaryJob": {
+        "id": 115684807497,
+        "run_id": 38512774036,
+        "workflow_name": "P2 documentation native components",
+        "head_branch": "master",
+        "run_url": "https://api.github.com/repos/IoTSharp/RustSharp/actions/runs/38512774036",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOUKxMm88AAAAa71oTSQ",
+        "head_sha": "f463ac8fff710b11f851881437f9db864e4b42f6",
+        "url": "https://api.github.com/repos/IoTSharp/RustSharp/actions/jobs/115684807497",
+        "html_url": "https://github.com/IoTSharp/RustSharp/actions/runs/38512774036/job/115684807497",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-14T04:42:26Z",
+        "started_at": "2026-10-14T04:42:38Z",
+        "completed_at": "2026-10-14T04:44:35Z",
+        "name": "documentation (windows-2025, win-x64)",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-10-14T04:42:39Z",
+            "completed_at": "2026-10-14T04:42:40Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-10-14T04:42:40Z",
+            "completed_at": "2026-10-14T04:42:45Z"
+          },
+          {
+            "name": "Run actions/setup-dotnet@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-10-14T04:42:45Z",
+            "completed_at": "2026-10-14T04:43:17Z"
+          },
+          {
+            "name": "Native documentation components and exact candidate evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-10-14T04:43:17Z",
+            "completed_at": "2026-10-14T04:44:31Z"
+          },
+          {
+            "name": "Upload complete component and failure evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-10-14T04:44:31Z",
+            "completed_at": "2026-10-14T04:44:32Z"
+          },
+          {
+            "name": "Post Run actions/setup-dotnet@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-10-14T04:44:32Z",
+            "completed_at": "2026-10-14T04:44:32Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-10-14T04:44:32Z",
+            "completed_at": "2026-10-14T04:44:34Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-10-14T04:44:34Z",
+            "completed_at": "2026-10-14T04:44:34Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/IoTSharp/RustSharp/check-runs/115684807497",
+        "labels": [
+          "windows-2025"
+        ],
+        "runner_id": 1000014445,
+        "runner_name": "GitHub Actions 1000014445",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      "nativeOsEvidence": {
+        "actualJobLabels": [
+          "windows-2025"
+        ],
+        "jobMatrixLabel": "windows-2025",
+        "bindingRid": "win-x64",
+        "note": "No absent runnerOS field is fabricated; labels and native RID are the OS binding evidence"
+      },
+      "originalFiles": [
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\candidate-binding.json",
+          "sha256": "B83564DFD2A36842DB2098A1E85EB60F9B5FCB1836735DE969C82509A7793588"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\workspace-cli-eight.json",
+          "sha256": "3A4D0C9CE9C84B1A720F6F9D33DE4005FE3385676558767C842F7070D054F126"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\command-api-twenty.json",
+          "sha256": "C8DF4634BDB5405E825553C40DCE45BBBF74A04B2A070F8A38294424C340FB2F"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\fresh-build.process.json",
+          "sha256": "2D3F3CBF8C5676F02F08A4518A19BA6B0ED2B6DD7C703ADAC1F26CF55D211231"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\native-ci-originals\\p2-doc-native-win-x64-f463ac8fff710b11f851881437f9db864e4b42f6\\sdk-version.stdout.log",
+          "sha256": "4B509237900912AC8385460ADA8A1332F7CFCCA46D8728BF019800DE733C535F"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\docs-ci-run-a1945a848eb943229015c98a11bc0f69\\stdout.bin",
+          "sha256": "3B159E4A0F227A3208A89D0B2DC2D78C5B02C732AF4572805C326B0FF06DA2A7"
+        },
+        {
+          "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v40\\docs-ci-jobs-e28f0187f8ae4328925f3bf5a4d4b247\\stdout.bin",
+          "sha256": "9E6CAAE0C1F371326CD8A69A0F6519BBF8FA83819DF4A649BE4F4A7B42233069"
+        }
+      ],
+      "problems": [],
+      "knownGaps": [
+        "CI binding lacks attempt/job/runnerOS; original run/jobs API provides auxiliary provenance",
+        "Temporary fixture/page bytes not uploaded remain unavailable",
+        "Parent-exit-only build/helper cleanup is not full descendant containment",
+        "Runtime FD baseline/after not measured by these components"
+      ],
+      "fullLeafAccepted": false,
+      "fullP2Closure": false,
+      "fullContainmentPhaseAccepted": false
+    }
+  ],
+  "passed": 56,
+  "provenanceFiles": [
+    {
+      "sha256": "FA7F255EA32C03832684CAEF03090EF8F24BED2E31F4B6BA414054F389AE67AB",
+      "path": "artifacts/p1-supervision/resume-root-v40/docs-original-archives.json"
+    },
+    {
+      "sha256": "E7392AF63C8A0A733F791534E5B3801A91C3CD92DCBF7293D5E925C0A2ECF9CD",
+      "path": "artifacts/p2-supervision/documentation-ci-f463-review-v1/FINAL-FREEZE.json"
+    },
+    {
+      "sha256": "0EF846F5621A60B3E859F642880EE773F771ABABAEBB4A0604AC06F3DBA41401",
+      "path": "artifacts/p2-supervision/documentation-ci-f463-review-v1/Review-DocumentationCiOriginal.ps1"
+    },
+    {
+      "sha256": "B52B4D3F4267C164BFCB463E5F9889DAE5658609892E520E1AD0717A896101FA",
+      "path": "artifacts/p2-supervision/documentation-ci-f463-review-v1/ACTUAL-linux-x64-REVIEW.json"
+    },
+    {
+      "sha256": "CC49530C953A2CE36D31684022D0025AE65635A54A5E0F6DD8B14E51FC34456A",
+      "path": "artifacts/p2-supervision/documentation-ci-f463-review-v1/ACTUAL-win-x64-REVIEW.json"
+    },
+    {
+      "sha256": "105ABB55317EA86F2AC3A204584BE29C1EFCB31C1FE88454D6836454741A8790",
+      "path": "artifacts/p2-supervision/documentation-ci-f463-review-v1/ACTUAL-PROCESS-ARCHIVE-LINKS.json"
+    },
+    {
+      "sha256": "7439624B14CA17022C090CFF4B9C6397CFBE49361A61B492D074697D6DF46653",
+      "path": "artifacts/p2-supervision/documentation-ci-f463-review-v1/ACTUAL-REVIEW.md"
+    },
+    {
+      "sha256": "168775C83894343A64AEA325CD3C1000F31BD178EB212FC8A332C8675E1B067E",
+      "path": "artifacts/p1-supervision/resume-root-v40/docs-ci-artifacts-cecee5bdecc146bcaba760226d0c6cf8/stdout.bin"
+    },
+    {
+      "sha256": "9ACEC452FDB26A5416D2662941979CB0172923F5DE0D02BE06E74CF2AC0EC8B7",
+      "path": "artifacts/p1-supervision/resume-root-v40/docs-ci-artifacts-cecee5bdecc146bcaba760226d0c6cf8/capture-receipt.json"
+    },
+    {
+      "sha256": "3B159E4A0F227A3208A89D0B2DC2D78C5B02C732AF4572805C326B0FF06DA2A7",
+      "path": "artifacts/p1-supervision/resume-root-v40/docs-ci-run-a1945a848eb943229015c98a11bc0f69/stdout.bin"
+    },
+    {
+      "sha256": "B33A4752DB23B0A95377CAFC63824AE88145D5B92BEF250260B5D9184F6F6225",
+      "path": "artifacts/p1-supervision/resume-root-v40/docs-ci-run-a1945a848eb943229015c98a11bc0f69/capture-receipt.json"
+    },
+    {
+      "sha256": "9E6CAAE0C1F371326CD8A69A0F6519BBF8FA83819DF4A649BE4F4A7B42233069",
+      "path": "artifacts/p1-supervision/resume-root-v40/docs-ci-jobs-e28f0187f8ae4328925f3bf5a4d4b247/stdout.bin"
+    },
+    {
+      "sha256": "B536B9DF7B672EF67B7C18B4559EDDBA05FADAD7F524AC80E91035908452B502",
+      "path": "artifacts/p1-supervision/resume-root-v40/docs-ci-jobs-e28f0187f8ae4328925f3bf5a4d4b247/capture-receipt.json"
+    }
+  ],
+  "candidateSha": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "publication21ExecutedInThisCi": false,
+  "result": "EXACT_NATIVE_CI_ORIGINALS_RECONCILED",
+  "originalContainmentPhaseAccepted": false,
+  "notRun": 0,
+  "perRidSourceRecords": 991,
+  "temporaryFixturePageOriginalsUploaded": false,
+  "fullP1Closure": false,
+  "attemptAndOsProvenance": "OriginalCIbinding lacksfields; auxiliary actualrun/jobsAPI supply them withoutmutatingoriginals",
+  "perRidPhysicalDllPdb": 6,
+  "runAttempt": 1,
+  "failed": 0,
+  "provenanceSha256": "B703D344EEADD0F42F6DC9A715BAE11EBEC63482E8523BD732BF1243D524C7CB",
+  "provenanceArchive": "doc-ci-f463-provenance-v1.zip",
+  "perRidActualWorkspaceChildren": 8,
+  "jobs": [
+    {
+      "jobId": 115684807319,
+      "conclusion": "success",
+      "rid": "linux-x64",
+      "label": "ubuntu-24.04"
+    },
+    {
+      "jobId": 115684807497,
+      "conclusion": "success",
+      "rid": "win-x64",
+      "label": "windows-2025"
+    }
+  ],
+  "wholeLeafAccepted": false,
+  "perRidApiCases": 20,
+  "runtimeFdLeakProof": false,
+  "executed": 56,
+  "at": "2026-10-14T13:16:23.3013187+08:00",
+  "fullP2Closure": false,
+  "runId": 38512774036,
+  "archives": [
+    {
+      "artifactId": 11870946716,
+      "remoteDigest": "sha256:1a5ec24a7e4776c65c1f7ac78df939d173411a4f577267b1281ff0ef6140c757",
+      "rid": "linux-x64",
+      "sha256": "1A5EC24A7E4776C65C1F7AC78DF939D173411A4F577267B1281FF0EF6140C757",
+      "delivery": "doc-ci-f463-linux-x64.zip",
+      "bytes": 2912994
+    },
+    {
+      "artifactId": 11870358778,
+      "remoteDigest": "sha256:52259a3273f4583a30fbe8883538dc8962f16505a88ba1c3d8ee199908fd5847",
+      "rid": "win-x64",
+      "sha256": "52259A3273F4583A30FBE8883538DC8962F16505A88BA1C3D8EE199908FD5847",
+      "delivery": "doc-ci-f463-win-x64.zip",
+      "bytes": 3071433
+    }
+  ],
+  "taskId": "P2-08.03.CI-F463-ORIGINALS-V1"
+}

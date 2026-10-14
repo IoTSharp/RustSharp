@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v39/resumption.json`。
+`artifacts/p1-supervision/resume-root-v40/resumption.json`。
+
+第36轮精确f463ac8/run38512774036/attempt1文档CI原件对账为 ✅ 已完成：两份原始ZIP digest与大小均匹配GitHub；各原生宿主991条源码前后一致、6份DLL/PDB实物哈希一致、8个真实workspace子进程及20项API全通过，共56/56。[CI原件证据](../evidence/p2/doc-ci-f463-originals-v1.json)将真实job/OS/attempt API溯源与原binding字段分开保留；CI未运行publication21，未上传临时fixture/页面原件，parent-only/完整containment/运行FD缺口仍保留。历史afb0988的Linux NativeV5原件现确认28=26+2，目标rustc/CoreCLR/AOT均实际body/owner/bad并abort；不提升为当前SHA验收，也不批准legacy-v4差异。当前f463完整P1手动CI已派发run38515250985，仍在运行。Formatter v10已出现真实CTRL、pending995、原生Join/close和自然130且子进程案例通过，但外层读取正在退出的已知driver时仍失败，不验收完整案例/叶子。检查点v40；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
 第35轮稳定发布身份限定组件为 ✅ 已完成：本机SDK10.0.402严格全构建零警告/零错误，原生Windows与Ubuntu各通过publication21/21、命令API20/20、真实workspace子进程8/8；98/98已执行，失败/跳过/未运行均为0。[精确组件证据](../evidence/p2/documentation-stableidentity-v1.json)绑定10项源码、6份DLL/PDB、全部有序报告和16个子进程身份，并保留此前Linux20/21失败。Linux采用持续持有O_PATH描述符与原生稳定身份；替换oracle通过真实搬移原件和新建空目录证明替换，不操作时间戳。完整叶子、同进程运行FD泄漏证明、固定SDK400的新精确SHA CI及原始containment仍分列。Formatter v7源码补齐PID身份交接缺口，待监督者严格构建/原生验收。P1目标Drop案例不在d2源码/后端矩阵中；NativeV2实现已存在，须先对账历史v5原始证据再决定新执行。检查点v39；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
