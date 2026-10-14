@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v34/resumption.json`。
+`artifacts/p1-supervision/resume-root-v35/resumption.json`。
+
+第31轮仍 🚧 进行中。新capture严格构建及已知NUL／非UTF8二进制微测通过，原生Job2→0；首轮quota1失败及全部旧analyzer失败均保留。提交171b1be保存精确源码字节并对账7个原始ZIP digest。真实d2ee24f／run38494398708／attempt1现联合24个唯一native backend格，各host12 passed／12 foreign-blocked保留；两RID source各19/19，95项独立物理hash（5ZIP+14backendPE+76sourcePE）全部一致。每RID第39个source PE仅有原生CI验证记录，本批未独立重hash；source／manual-MIR类型及未批准Linux第三Drop差异保留，不证明后续HEAD／完整P1。真实45f9 docs run38498734029失败：Windows8+20通过，Linux workspace6/8，两项RSTD2001 staging-ancestor失败，API20为NOT_RUN。两RID各977源码记录前后一致、6份DLL／PDB hash吻合。CreationTimeUtc身份假说待真实Linux复现，未削弱任何身份guard。Probe原子发布补丁已保存但未应用／运行。检查点v35；P1六门禁开放、P2保持8/101、两项full-closure仍false。
 
 第30轮仍 🚧 进行中。待推送983b765／45f9e22已于10:00推送并触发documentation native CI，当前run／结果尚未读回。Windows native-open候选以已有BasicAsync黄金字面量通过2/2实际基础CLI检查；此前空函数预期是监督者oracle错误，其1/2失败已保留，不能据此验收取消／CTRL／完整59／91。实际CLI driver、probe源码及精确patch已保存，生产尚未应用，ready原子发布／conhost／嵌套Job及完整native单例仍需复核。新原始字节capture helper已有实物，但首次严格构建失败10个analyzer；未关闭任何analyzer，原始archive仍0、native24格仍未对账。当前v34检查点保留全部失败及资源缺口。P1门禁仍开放，P2保持8/101，fullP1Closure／fullP2Closure仍false，唯一heartbeat保持ACTIVE。
 
