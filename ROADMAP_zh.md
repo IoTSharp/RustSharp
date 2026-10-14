@@ -24,7 +24,7 @@
 | P0 | ✅ 已完成 | 17 | 34 | 3 | [纵向架构](docs/roadmap/P0_zh.md) |
 | P1 | 🚧 进行中 | 10 | 85 | 6 | [安全核心实现与闭环](docs/roadmap/P1_zh.md) |
 | P2 | 🚧 进行中 | 15 | 94 | 7 | [库、包与工具链](docs/roadmap/P2_zh.md) |
-| P3 | ⏳ 计划中 | 6 | 38 | 4 | [宏、async、unsafe/FFI 与 TLS](docs/roadmap/P3_zh.md) |
+| P3 | 🚧 进行中 | 6 | 38 | 4 | [宏、async、unsafe/FFI 与 TLS](docs/roadmap/P3_zh.md) |
 | P4 | ⏳ 计划中 | 5 | 29 | 4 | [HTTP 与 WebSocket](docs/roadmap/P4_zh.md) |
 | P5 | ⏳ 计划中 | 7 | 39 | 4 | [数据库与 ORM](docs/roadmap/P5_zh.md) |
 | P6 | ⏳ 计划中 | 8 | 46 | 4 | [平台与发布](docs/roadmap/P6_zh.md) |
@@ -526,7 +526,7 @@ NuGet 依赖项、使用共享 LSP 和 Visual Studio 集成、进行调试，并
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
 | P3-01 | 🚧 进行中 | [叶子详情](docs/roadmap/P3_zh.md#p3-01). 实现内置宏以及 `macro_rules!` 词元树匹配、卫生性、展开限制和诊断。 | P1-01, P2 门槛 | `rsc test tests/macros/macro-rules/Cargo.toml` | 已声明的展开/卫生性用例通过；递归/词元限制会终止并给出带源码信息的诊断。 |
-| P3-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-02). 定义并实现进程外过程宏协议和 SDK。 | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | 派生/属性/函数式示例正常工作；崩溃、超时、过量输出和取消均得到隔离与清理。 |
+| P3-02 | 🚧 进行中 | [叶子详情](docs/roadmap/P3_zh.md#p3-02). 定义并实现进程外过程宏协议和 SDK。 | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | 派生/属性/函数式示例正常工作；崩溃、超时、过量输出和取消均得到隔离与清理。 |
 | P3-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-03). 将 `async`/`.await` 降低为显式状态机，并在不生成运行时代码的情况下桥接 `Future`、`Waker`、取消和 .NET `Task`。 | P1-06, P2-02 | `rsc test tests/async/core/Cargo.toml` | 完成、挂起、取消、错误、Drop 和并发用例在 CoreCLR/AOT 上与异步配置档匹配。 |
 | P3-04 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-04). 实现应用程序库所需的精确版本 `tokio` 兼容性配置档。 | P3-03, P2-03 | `rsc test compat/tokio/Cargo.toml --features declared-profile` | 配置档清单中列出的运行时、任务、计时器、同步、IO 和网络成员通过；报告省略的 feature。 |
 | P3-05 | ⏳ 计划中 | [叶子详情](docs/roadmap/P3_zh.md#p3-05). 实现有界的 `unsafe`、布局、裸指针、联合体、固定和 C FFI 配置档。 | P1-08, P2-06 | `rsc test tests/unsafe-ffi/Cargo.toml` | 受支持的 `repr(C)` 布局和 C 调用与原生测试夹具匹配；明确拒绝被排除的内部函数/汇编/Rust ABI。 |

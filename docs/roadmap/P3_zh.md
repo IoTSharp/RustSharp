@@ -2,7 +2,7 @@
 
 [English](P3.md) | 简体中文 | [主路线图](../../ROADMAP_zh.md)
 
-P3-01.01 的候选准备和 P3-01.02 的隔离原型为 🚧 进行中；其余行仍为 ⏳ 计划中。本文分解现有六项 P3 承诺，不声称计划中的 API、命令、语料或报告已经存在。现有实现根目录为 `src/RustSharp.Syntax/`、`src/RustSharp.Semantics/`、`src/RustSharp.CodeGen.IL/`、`src/RustSharp.Compiler/`、`src/RustSharp.Runtime/` 和 `tools/RustSharp.Conformance/`。下列新子目录、配置档清单、SDK/宿主项目与测试工作区均为拟建交付物。列出的 `rsc test` 命令仅在 CLI 与夹具前置条件具备后可执行。
+P3-01.01 的候选准备和 P3-01.02 的隔离原型为 🚧 进行中；P3-02.01 的协议候选准备为 🚧 进行中；其余行仍为 ⏳ 计划中。本文分解现有六项 P3 承诺，不声称计划中的 API、命令、语料或报告已经存在。现有实现根目录为 `src/RustSharp.Syntax/`、`src/RustSharp.Semantics/`、`src/RustSharp.CodeGen.IL/`、`src/RustSharp.Compiler/`、`src/RustSharp.Runtime/` 和 `tools/RustSharp.Conformance/`。下列新子目录、配置档清单、SDK/宿主项目与测试工作区均为拟建交付物。列出的 `rsc test` 命令仅在 CLI 与夹具前置条件具备后可执行。
 
 2026-10-14 并行启动已产出 [macros-v1.candidate](../profiles/macros-v1.candidate.json)、schema 和有界验证器：82条具名合同记录、10项验证器测试通过、29项变异被拒绝。这些结果属于合同检查，宏执行数为0。P2-GATE 仍是未满足的正式前置；已验收实现叶子保持0/38，已验收门禁保持0/4。参见[候选证据](../evidence/p3/macros-candidate-v1.json)。
 
@@ -35,7 +35,7 @@ P3-01.01 的候选准备和 P3-01.02 的隔离原型为 🚧 进行中；其余�
 
 | ID | 状态 | 交付物 / 所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| P3-02.01 | ⏳ 计划中 | `docs/profiles/proc-macros-v1.json` — 冻结协议、SDK、信任边界与宿主资源契约。 | P3-01, P0-04 | 枚举版本化词元/范围/诊断消息、能力、环境输入及大小/时间上限；不兼容或损坏消息拒绝。 | 协议模式、兼容性与超大消息夹具。 |
+| P3-02.01 | 🚧 进行中 | `docs/profiles/proc-macros-v1.json` — 冻结协议、SDK、信任边界与宿主资源契约。 | P3-01, P0-04 | 枚举版本化词元/范围/诊断消息、能力、环境输入及大小/时间上限；不兼容或损坏消息拒绝。 | 协议模式、兼容性与超大消息夹具。 |
 | P3-02.02 | ⏳ 计划中 | `tools/RustSharp.MacroHost/` — 实现有界宿主握手、传输与生命周期。 | P3-02.01 | 每个请求有自有进程记录与确定结果；截断帧、协议不匹配、崩溃和超时不能挂起或破坏编译。 | 含 PID 与清理的宿主故障注入报告。 |
 | P3-02.03 | ⏳ 计划中 | `src/RustSharp.MacroSdk/`, `tests/macros/proc/` — 提供派生、属性与函数式 SDK 入口。 | P3-02.02 | 每个冻结入口展开一个有效示例；无效注册、不支持能力和无效词元输出在宿主边界失败。 | 三类宏及 SDK 负向夹具。 |
 | P3-02.04 | ⏳ 计划中 | `src/RustSharp.Compiler/`, `src/RustSharp.Syntax/Macros/` — 集成展开映射、诊断与确定性缓存键。 | P3-02.03 | 宿主输出重新进入 HIR/MIR；源码映射穿过嵌套调用；声明输入变化使缓存失效；损坏/过期缓存拒绝。 | 冷/热输出对比与源码映射篡改测试。 |
@@ -106,3 +106,5 @@ P3-01.01 的候选准备和 P3-01.02 的隔离原型为 🚧 进行中；其余�
 | P3-GATE.02 | ⏳ 计划中 | `.github/workflows/`, `eng/` — 在原生 Windows x64 运行完整 P3 门禁。 | P3-GATE.01 | Release 零警告/错误；固定 CoreCLR 与 Native AOT 分母零失败/跳过；可验证 IL 通过 ILVerify；unsafe IL 排除遵守冻结策略且不静默消失。 | Windows CI SHA/链接、原生运行日志与 IL 策略报告。 |
 | P3-GATE.03 | ⏳ 计划中 | `.github/workflows/`, `eng/` — 在原生 Linux x64 运行完整 P3 门禁。 | P3-GATE.01 | 相同固定清单通过 CoreCLR/Native AOT 与 IL 验证策略，零失败/跳过且无 AOT/裁剪抑制；原生 ABI/TLS 夹具在本地运行。 | Linux CI SHA/链接、原生运行日志与 IL 策略报告。 |
 | P3-GATE.04 | ⏳ 计划中 | `docs/roadmap/P3.md`, `docs/roadmap/P3_zh.md`, `ROADMAP.md`, `ROADMAP_zh.md` — 关闭 P3 前对账最终 SHA、兼容性声明与清理。 | P3-GATE.02, P3-GATE.03 | 同提交证据覆盖每个必需格、确定性输出与有界清理；双语 API/排除声明一致；报告篡改拒绝过期/缺失数据；此后才关闭 P3-GATE。 | 包含工具、清单、RID、命令、PID、超时与清理的最终证据索引。 |
+
+过程宏候选新增19/19边界检查通过，仍未满足P3-01前置依赖，正式叶子0/38、门禁0/4。[边界证据](../evidence/p3/proc-wire-boundaries-v1.json)不证明宿主运行、8192操作或1秒截止边界。

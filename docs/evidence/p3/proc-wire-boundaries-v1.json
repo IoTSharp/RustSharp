@@ -1,0 +1,34 @@
+{
+  "denominator": 19,
+  "reportSha256": "9A49A7B27100421FE335B180435F2CBBCCEEB18E7977AC123B0342534F2DF70A",
+  "formalAcceptanceAllowed": false,
+  "hostExecutions": 0,
+  "taskId": "P3-02.01.protocol-boundaries",
+  "dimensions": 9,
+  "integration": "Byte-identical validated source snapshot; final-SHA CI pending",
+  "passed": 19,
+  "localSdk": "10.0.402",
+  "historical24Rerun": 0,
+  "deadline1000ms": "NOT_PROVEN",
+  "scope": "ISOLATED_CANDIDATE_BOUNDARY_CHECKS_ONLY",
+  "fullP3Closure": false,
+  "midValidationCancel": "NOT_PROVEN",
+  "macroExecutions": 0,
+  "formalAcceptedLeaves": 0,
+  "bindings": [
+    {
+      "path": "eng/prototypes/ProcWireBoundariesV1/Program.cs",
+      "sha256": "1B74A95FE182618690F36518BD257576BF526945E17A9DA2B4BA46ED84A8E2D0"
+    },
+    {
+      "path": "eng/prototypes/ProcWireBoundariesV1/ProcWireBoundaries.csproj",
+      "sha256": "8D8C2A3877C1B9684B7D31457950403C8AF56563457C84F37824681CE37FD7B8"
+    }
+  ],
+  "operations8192": "NOT_PROVEN",
+  "legalJsonDepth12": "NOT_PROVEN_UNREACHABLE_VALID_SCHEMA",
+  "rawJsonDepth13Reject": 1,
+  "priorBuildFailure": "IL2026/IL3050 JsonArray.Add<T>, retained without suppression",
+  "report": "artifacts/p1-supervision/resume-root-v57/calls/protocol-boundaries-tests-8b5d4260e73d418392c96dd0acfb8321/stdout.bin",
+  "formalAcceptedGates": 0
+}

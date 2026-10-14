@@ -10,7 +10,7 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13917-a6b4-78e0-bd31-44600dd87b79`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v56/resumption.json`.
+`artifacts/p1-supervision/resume-root-v57/resumption.json`.
 
 Round38 fresh Windows formatter integration is ✅ Complete as a bounded component: strict solution/driver builds0 warnings/errors, full formatter59/59 and contract18/18, actual Windows CLI8/8 and real native signal1/1 pass. [Fresh integration proof](../evidence/p2/formatter-fresh-native-integration-v1.json) binds exact working-source/DLL/PDB/driver hashes, actual pending995, natural130, native Join/close and outer3→0; three exact process identities are independently absent. Legacy outer skeleton proof flags remain false and are not substituted for the hashed child proof. The earlier provenance rejection remains unresolved despite actual compiled GitAsync returning997 entries with the original raw hash; no cap increased. New clean-SHA CI/Linux/full cancellation/containment and complete59/91 leaf contracts remain open; P2 stays8/101.
 
@@ -1345,3 +1345,5 @@ Round56 P1-GATE.02 inventory component is ✅ Complete: strict local build and11
 Round56 original-handle lease component is ✅ Complete: strict build and real Windows A1/A2/A3 pass, including both forced-exception and cancellation cleanup. [Native ownership proof](../evidence/p1/original-handle-lease-v1.json) binds same observer handle transfer, receiver close, borrowed-handle survival and duplicate-transfer rejection; prior analyzer and path-precondition failures remain. Production acquisition, lifetime ancestry, growth reconciliation and legacy8/dual3 acceptance remain open; active20/cumulative1024 are unchanged.
 
 Round56 P3-02.01 protocol candidate component is ✅ Complete: strict trim/AOT-analyzed local build and24/24 contract checks pass (eight envelope kinds,15 rejects and caller cancellation). [Candidate proof](../evidence/p3/proc-wire-candidate-v1.json) covers exact version, direction/kind, capabilities, fields and spans only; no transport/host/macro runs or complete budget-boundary proof follows. P3-01 dependency is unpassed; P3 formal leaves0/38 and gates0/4 remain unchanged.
+
+Round57 P3 protocol boundary component is ✅ Complete: strict build and19/19 new tests pass; old24 are not rerun. [Boundary proof](../evidence/p3/proc-wire-boundaries-v1.json) covers nine independent at/over dimensions and one actual JSON parser-depth rejection. Legal depth12/operations/deadline/mid-validation cancel remain NOT_PROVEN. P1 final same-Job parent candidate remains NOT_RUN after repair; P2 extraction fails closed before headers on child identity, with original failures retained. P1 six gates, P2 8/101 and P3 formal0/38+0/4 remain open.

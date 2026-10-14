@@ -28,7 +28,7 @@ scope and date, rather than defining new work for each later commit.
 | P0 | ✅ Complete | 17 | 34 | 3 | [Vertical architecture](docs/roadmap/P0.md) |
 | P1 | 🚧 In progress | 10 | 85 | 6 | [Safe-core implementation and closure](docs/roadmap/P1.md) |
 | P2 | 🚧 In progress | 15 | 94 | 7 | [Libraries, packages and toolchain](docs/roadmap/P2.md) |
-| P3 | ⏳ Planned | 6 | 38 | 4 | [Macros, async, unsafe/FFI and TLS](docs/roadmap/P3.md) |
+| P3 | 🚧 In progress | 6 | 38 | 4 | [Macros, async, unsafe/FFI and TLS](docs/roadmap/P3.md) |
 | P4 | ⏳ Planned | 5 | 29 | 4 | [HTTP and WebSocket](docs/roadmap/P4.md) |
 | P5 | ⏳ Planned | 7 | 39 | 4 | [Databases and ORM](docs/roadmap/P5.md) |
 | P6 | ⏳ Planned | 8 | 46 | 4 | [Platforms and release](docs/roadmap/P6.md) |
@@ -630,7 +630,7 @@ Candidate preparation started on 2026-10-14: macros-v1.candidate defines 82 cont
 | ID | Status | Work item | Hard dependency | Acceptance command | Observable result |
 | --- | --- | --- | --- | --- | --- |
 | P3-01 | 🚧 In progress | [Leaf breakdown](docs/roadmap/P3.md#p3-01). Implement built-in macros and `macro_rules!` token-tree matching, hygiene, expansion limits, and diagnostics. | P1-01, P2 gate | `rsc test tests/macros/macro-rules/Cargo.toml` | Declared expansion/hygiene cases pass; recursion/token limits terminate with source-aware diagnostics. |
-| P3-02 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-02). Define and implement an out-of-process procedural-macro protocol and SDK. | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | Derive/attribute/function-like samples work; crash, timeout, excessive output, and cancellation are contained and cleaned up. |
+| P3-02 | 🚧 In progress | [Leaf breakdown](docs/roadmap/P3.md#p3-02). Define and implement an out-of-process procedural-macro protocol and SDK. | P3-01, P0-04 | `rsc test tests/macros/proc/Cargo.toml` | Derive/attribute/function-like samples work; crash, timeout, excessive output, and cancellation are contained and cleaned up. |
 | P3-03 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-03). Lower `async`/`.await` to explicit state machines and bridge `Future`, `Waker`, cancellation, and .NET `Task` without runtime code generation. | P1-06, P2-02 | `rsc test tests/async/core/Cargo.toml` | Completion, suspension, cancellation, error, Drop, and concurrency cases match the async profile on CoreCLR/AOT. |
 | P3-04 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-04). Implement the exact-version `tokio` compatibility profile required by application libraries. | P3-03, P2-03 | `rsc test compat/tokio/Cargo.toml --features declared-profile` | Runtime, task, timer, sync, IO, and network members listed in the profile manifest pass; omitted features are reported. |
 | P3-05 | ⏳ Planned | [Leaf breakdown](docs/roadmap/P3.md#p3-05). Implement the bounded `unsafe`, layout, raw-pointer, union, pinning, and C FFI profile. | P1-08, P2-06 | `rsc test tests/unsafe-ffi/Cargo.toml` | Supported `repr(C)` layout and C calls match native fixtures; excluded intrinsics/assembly/Rust ABI fail explicitly. |

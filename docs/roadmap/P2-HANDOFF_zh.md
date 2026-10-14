@@ -10,7 +10,7 @@
 `01a13917-a6b4-78e0-bd31-44600dd87b79`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v56/resumption.json`。
+`artifacts/p1-supervision/resume-root-v57/resumption.json`。
 
 第38轮新鲜Windows formatter集成在限定组件范围内为 ✅ 已完成：严格solution/driver构建零警告/零错误，完整formatter59/59、契约18/18、真实Windows CLI8/8及原生信号1/1通过。[新鲜集成证据](../evidence/p2/formatter-fresh-native-integration-v1.json)绑定精确工作树源码/DLL/PDB/driver哈希、实际pending995、自然130、原生Join/close及outer3→0；三个精确进程身份已独立确认不存在。旧outer骨架proof字段仍为false，不用它们替代已核哈希child证据。此前provenance拒绝仍未定位，尽管实际编译GitAsync返回997项且匹配原始raw哈希；未提高cap。新clean-SHA CI/Linux、完整取消/containment及完整59/91叶项合同仍开放，P2保持8/101。
 
@@ -1115,3 +1115,5 @@ Round56 P1-GATE.02库存组件 ✅ 已完成：本地严格构建及11项固定�
 Round56原句柄lease组件 ✅ 已完成：严格构建及真实Windows A1／A2／A3通过，包含强制异常与取消回收两个子项。[原生所有权证据](../evidence/p1/original-handle-lease-v1.json)绑定同一观察进程原句柄转移、接收方关闭、借用句柄存活及重复转移拒绝；历史分析器与路径前置条件失败保留。生产acquisition、生命周期祖先链、增长协调器及legacy8／dual3验收仍开放；active20／cumulative1024不变。
 
 Round56 P3-02.01协议候选组件 ✅ 已完成：启用trim／AOT分析的本地严格构建及24/24契约检查通过（八种消息、15项拒绝及调用方取消）。[候选证据](../evidence/p3/proc-wire-candidate-v1.json)仅覆盖精确版本、方向／类型、能力、字段及span；无transport／host／macro运行或全部预算边界证明。P3-01依赖未通过；P3正式叶子0/38、门禁0/4不变。
+
+Round57 P3协议边界组件 ✅ 已完成：严格构建及新增19/19通过，未重跑旧24项。[边界证据](../evidence/p3/proc-wire-boundaries-v1.json)覆盖九个独立维度的上限／超限和一个真实JSON解析深度拒绝。合法depth12／操作数／截止／验证中取消仍NOT_PROVEN。P1同Job父链最终候选修复后仍NOT_RUN；P2提取因子进程身份失败而在头文件写入前拒绝，历史失败保留。P1六门禁、P2 8/101及P3正式0/38+0/4仍开放。

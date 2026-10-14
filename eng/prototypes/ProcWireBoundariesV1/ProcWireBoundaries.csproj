@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><IsTestProject>true</IsTestProject><IsPackable>false</IsPackable><IsAotCompatible>true</IsAotCompatible>
+    <AssemblyName>RustSharp.ProcWireBoundaries.Round57</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup><Compile Include="../../../eng/prototypes/ProcWireCandidateV1/Contract.cs" Link="AcceptedContract.cs" /></ItemGroup>
+</Project>
