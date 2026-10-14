@@ -8,7 +8,31 @@ English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 `01a13503-db0e-7be0-a50e-11ff85e5890c`, bound to the unique active 30-minute
 heartbeat `rustsharp-p1-p2-30`. The deleted old `rustsharp-p2` is not restored.
 The persistent dispatch and acceptance checkpoint is
-`artifacts/p1-supervision/resume-root-v29/resumption.json`.
+`artifacts/p1-supervision/resume-root-v30/resumption.json`.
+
+Round26 workspace documentation API component is ✅ Complete at `5b8d699`:
+fresh build0 warnings/errors, all7 real Cargo/member/source/atomic filesystem cases
+and affected21 publication,20 command-function,7 depth and12 source-page cases pass.
+Package-relative href validation is corrected without changing the old CLI's
+unsupported-workspace semantics. [Actual workspace proof](../evidence/p2/documentation-workspace-v1.json)
+leaves CLI workspace selection, dependencies/features/multi-target/cross-package
+symbols and full12/91 scope open. Exact050ad0f's four CI workflows succeed; original
+archive7 digests and aggregate input6 hashes/SHA are reconciled at `e2e74a1` in the
+[current frozen CI proof](../evidence/p1/ci-050ad0f-original-reconcile.json). This
+profile's108 cases cannot close all six P1 gates or prove the new unpushed source.
+
+FirstChance v3 strict controller build is ❌ Failed by a stale intermediate lease
+in10 of226 RSP tokens; actual bytes and failed cleanup proof are retained. v4's
+two strict builds pass/SARIF0 and the real target emits an initialization journal:
+managed CommandLine names pwsh.dll while the exact OS/request command names
+pwsh.exe, so the full-command guard rejects before observing exceptions. Environment
+restoration now passes; body/init/exception acceptance remains false. [Actual
+instrumentation and guard](../evidence/p1/firstchance-v4-command-guard.json) keep
+original flags/helpers/caps unchanged. v5 native-command-binding source exists,
+but a PowerShell alias collision and later deadline reject left no complete freeze;
+it is ⛔ Blocked and prohibited from running. The synchronous-open cancel concept
+also remains NOT_READY: attribute/rights/lease/driver/join gaps have no native proof.
+P1's six gates remain open, P2 stays8/101 and the sole heartbeat stays ACTIVE.
 
 Round25 actual ordinary-file kernel-IO foundation is ✅ Complete at `e07d099`:
 one helper's real oplock request returns STATUS_PENDING, cancellation completes

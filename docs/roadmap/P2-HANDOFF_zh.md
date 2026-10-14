@@ -8,7 +8,28 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v29/resumption.json`。
+`artifacts/p1-supervision/resume-root-v30/resumption.json`。
+
+第26轮workspace documentation API组件在 `5b8d699` 的限定范围内 ✅ 已完成：
+新构建0警告／错误，全部7个真实Cargo／member／source／atomic文件系统案例及
+受影响的21个publication、20个command函数、7个depth和12个source-page案例通过。
+已修package-relative href校验，旧CLI的unsupported-workspace语义不变。
+[真实workspace证明](../evidence/p2/documentation-workspace-v1.json)保留CLI workspace选择、
+dependencies／features／multi-target／cross-package symbols及完整12/91范围缺口。
+精确050ad0f的4条CI workflow成功，原archive7 digest及aggregate input6 hash／SHA
+在 `e2e74a1` 对账，见[当前冻结CI证明](../evidence/p1/ci-050ad0f-original-reconcile.json)。
+此profile的108案例不能关闭P1六门禁，也不能证明新未推送源码。
+
+FirstChance v3严格controller构建因226个RSP token中的10处陈旧intermediate lease
+❌ 失败，真实原件及失败cleanup证明均保留。v4两次严格构建／SARIF0通过，真实
+target输出了初始化journal：managed CommandLine指向pwsh.dll，而精确OS／request
+命令指向pwsh.exe，因此full-command guard在观察异常前拒绝。环境恢复现已通过，
+body／init／exception验收仍为false。
+[实际取证及guard](../evidence/p1/firstchance-v4-command-guard.json)保持原flags／helper／
+caps不变。v5原生命令绑定源码已保存，但PowerShell alias冲突及随后截止检查拒绝
+导致未完整冻结，状态 ⛔ 已阻塞，禁止运行。同步open cancel概念也仍NOT_READY，
+attribute／权限／lease／driver／join缺口尚无native证明。P1六门禁仍开放，P2保持
+8/101，唯一heartbeat保持ACTIVE。
 
 第25轮真实普通文件kernel-IO基础组件在 `e07d099` 的限定范围内 ✅ 已完成：
 单helper真实oplock请求返回STATUS_PENDING，取消后原生事件signaled且状态为
