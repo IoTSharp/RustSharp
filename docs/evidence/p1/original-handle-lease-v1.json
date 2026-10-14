@@ -1,0 +1,486 @@
+{
+  "denominator": 3,
+  "exceptionAndCancellationSubcases": 2,
+  "bindings": [
+    {
+      "path": "eng/prototypes/OriginalHandleLeaseV1/LeaseFixture.csproj",
+      "sha256": "40533396FA320822980ED66EAB27298347C764778F812B95D8DDECCCB2AFF95E"
+    },
+    {
+      "path": "eng/prototypes/OriginalHandleLeaseV1/Program.cs",
+      "sha256": "E935F2686547FFE7DF0CB94484B4E139C43D6BF1936DEF12747BAE7D7C1686A7"
+    },
+    {
+      "path": "eng/prototypes/OriginalHandleLeaseV1/OriginalHandleLease.cs",
+      "sha256": "FD9AC593E23B517088EB8232A05BD9571C653117ACEC3B3B1E7C31A8F10F8959"
+    },
+    {
+      "path": "eng/prototypes/OriginalHandleLeaseV1/Core/Native.cs",
+      "sha256": "39D060E154E4F005EB0183419A4EC72F628318116C31EDA5346FDCF2A48CE9E5"
+    },
+    {
+      "path": "eng/prototypes/OriginalHandleLeaseV1/Core/Launcher.cs",
+      "sha256": "ACC2F90DFBE6988B35667C9B86739F9C8827AD65BAC2372F0A24AF9C2FEEBEAA"
+    }
+  ],
+  "localSdk": "10.0.402",
+  "cumulativeCap": 1024,
+  "retainedFailures": [
+    "build-lease IL2026/IL3050/IL3000",
+    "A1 slash-root precondition rejected before native work"
+  ],
+  "legacyEightRerun": false,
+  "growthReconciliation": "NOT_IMPLEMENTED",
+  "activeCap": 20,
+  "integration": "Byte-identical source snapshot; final-SHA CI pending",
+  "fullP1Closure": false,
+  "parentLifetimeProof": "NOT_IMPLEMENTED",
+  "dualBudgetAccepted": false,
+  "taskId": "P1-GATE.04.original-handle-lease-A",
+  "reports": [
+    {
+      "sha256": "DDAF1E4D460072568E0585E7D2DDAA26C4DA1F7E8436FED655BABD6FA2F2C5B0",
+      "targets": [
+        {
+          "Pid": 13792,
+          "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A1 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a1 0005eac741e841078fa5ef01d24fb5a2",
+          "Identity": {
+            "Pid": 13792,
+            "CreationFileTime": 134364587455312025,
+            "ParentPid": 53320,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A1 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a1 0005eac741e841078fa5ef01d24fb5a2"
+          },
+          "IdentityVerified": true,
+          "Assigned": true,
+          "Resumed": false,
+          "TerminationReturn": null,
+          "TerminationLastError": null,
+          "WaitReturn": 0,
+          "ProcessHandleClosed": true,
+          "ThreadHandleClosed": true,
+          "OwnProcessReclaimed": true,
+          "Error": null,
+          "AssignReturn": 1,
+          "AssignLastError": 0,
+          "MembershipReturn": 1,
+          "MembershipLastError": 0,
+          "MembershipVerified": true,
+          "ProcessCloseLastError": 0,
+          "ThreadCloseLastError": 0,
+          "CleanupErrors": [],
+          "PublicationErrors": [],
+          "ActualExitCode": 137,
+          "ExitCodeReadReturn": 1,
+          "ExitCodeReadLastError": 0,
+          "PostJobTerminalWait": true,
+          "PostJobWait": {
+            "Terminal": true,
+            "BirthVerified": true,
+            "ExitCode": 137,
+            "Checks": 1,
+            "ElapsedMilliseconds": 0
+          }
+        },
+        {
+          "Pid": 46840,
+          "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A1 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a1 0005eac741e841078fa5ef01d24fb5a2",
+          "Identity": {
+            "Pid": 46840,
+            "CreationFileTime": 134364587455382166,
+            "ParentPid": 53320,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A1 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a1 0005eac741e841078fa5ef01d24fb5a2"
+          },
+          "IdentityVerified": true,
+          "Assigned": true,
+          "Resumed": false,
+          "TerminationReturn": null,
+          "TerminationLastError": null,
+          "WaitReturn": 0,
+          "ProcessHandleClosed": true,
+          "ThreadHandleClosed": true,
+          "OwnProcessReclaimed": true,
+          "Error": null,
+          "AssignReturn": 1,
+          "AssignLastError": 0,
+          "MembershipReturn": 1,
+          "MembershipLastError": 0,
+          "MembershipVerified": true,
+          "ProcessCloseLastError": 0,
+          "ThreadCloseLastError": 0,
+          "CleanupErrors": [],
+          "PublicationErrors": [],
+          "ActualExitCode": 137,
+          "ExitCodeReadReturn": 1,
+          "ExitCodeReadLastError": 0,
+          "PostJobTerminalWait": false,
+          "PostJobWait": null
+        }
+      ],
+      "handles": [
+        {
+          "Identity": {
+            "Pid": 13792,
+            "CreationFileTime": 134364587455312025,
+            "ParentPid": 53320,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A1 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a1 0005eac741e841078fa5ef01d24fb5a2"
+          },
+          "Borrowed": true,
+          "OriginalHandle": 732,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": true,
+          "CloseSucceeded": null,
+          "CloseError": null,
+          "ClosedProbeReturn": null,
+          "ClosedProbeError": null
+        },
+        {
+          "Identity": {
+            "Pid": 46840,
+            "CreationFileTime": 134364587455382166,
+            "ParentPid": 53320,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A1 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a1 0005eac741e841078fa5ef01d24fb5a2"
+          },
+          "Borrowed": false,
+          "OriginalHandle": 784,
+          "ReceiverHandle": 784,
+          "SameManagedObject": true,
+          "NativeUsableAfterLeaseDispose": true,
+          "CloseSucceeded": true,
+          "CloseError": 0,
+          "ClosedProbeReturn": 0,
+          "ClosedProbeError": 6
+        }
+      ],
+      "scenario": "A1",
+      "path": "artifacts/p1-supervision/resume-root-v56/lease-a1/report.json"
+    },
+    {
+      "sha256": "89F66C87A7945CA31E9E137CE233AC0253834EAEA9103167473EFE1AB5870EE5",
+      "targets": [
+        {
+          "Pid": 23192,
+          "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083",
+          "Identity": {
+            "Pid": 23192,
+            "CreationFileTime": 134364587457837901,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "IdentityVerified": true,
+          "Assigned": true,
+          "Resumed": false,
+          "TerminationReturn": null,
+          "TerminationLastError": null,
+          "WaitReturn": 0,
+          "ProcessHandleClosed": true,
+          "ThreadHandleClosed": true,
+          "OwnProcessReclaimed": true,
+          "Error": null,
+          "AssignReturn": 1,
+          "AssignLastError": 0,
+          "MembershipReturn": 1,
+          "MembershipLastError": 0,
+          "MembershipVerified": true,
+          "ProcessCloseLastError": 0,
+          "ThreadCloseLastError": 0,
+          "CleanupErrors": [],
+          "PublicationErrors": [],
+          "ActualExitCode": 137,
+          "ExitCodeReadReturn": 1,
+          "ExitCodeReadLastError": 0,
+          "PostJobTerminalWait": false,
+          "PostJobWait": null
+        },
+        {
+          "Pid": 23924,
+          "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083",
+          "Identity": {
+            "Pid": 23924,
+            "CreationFileTime": 134364587457908472,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "IdentityVerified": true,
+          "Assigned": true,
+          "Resumed": false,
+          "TerminationReturn": null,
+          "TerminationLastError": null,
+          "WaitReturn": 0,
+          "ProcessHandleClosed": true,
+          "ThreadHandleClosed": true,
+          "OwnProcessReclaimed": true,
+          "Error": null,
+          "AssignReturn": 1,
+          "AssignLastError": 0,
+          "MembershipReturn": 1,
+          "MembershipLastError": 0,
+          "MembershipVerified": true,
+          "ProcessCloseLastError": 0,
+          "ThreadCloseLastError": 0,
+          "CleanupErrors": [],
+          "PublicationErrors": [],
+          "ActualExitCode": 137,
+          "ExitCodeReadReturn": 1,
+          "ExitCodeReadLastError": 0,
+          "PostJobTerminalWait": false,
+          "PostJobWait": null
+        },
+        {
+          "Pid": 88752,
+          "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083",
+          "Identity": {
+            "Pid": 88752,
+            "CreationFileTime": 134364587457931590,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "IdentityVerified": true,
+          "Assigned": true,
+          "Resumed": false,
+          "TerminationReturn": null,
+          "TerminationLastError": null,
+          "WaitReturn": 0,
+          "ProcessHandleClosed": true,
+          "ThreadHandleClosed": true,
+          "OwnProcessReclaimed": true,
+          "Error": null,
+          "AssignReturn": 1,
+          "AssignLastError": 0,
+          "MembershipReturn": 1,
+          "MembershipLastError": 0,
+          "MembershipVerified": true,
+          "ProcessCloseLastError": 0,
+          "ThreadCloseLastError": 0,
+          "CleanupErrors": [],
+          "PublicationErrors": [],
+          "ActualExitCode": 137,
+          "ExitCodeReadReturn": 1,
+          "ExitCodeReadLastError": 0,
+          "PostJobTerminalWait": false,
+          "PostJobWait": null
+        }
+      ],
+      "handles": [
+        {
+          "Identity": {
+            "Pid": 23192,
+            "CreationFileTime": 134364587457837901,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "Borrowed": true,
+          "OriginalHandle": 756,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": true,
+          "CloseSucceeded": null,
+          "CloseError": null,
+          "ClosedProbeReturn": null,
+          "ClosedProbeError": null
+        },
+        {
+          "Identity": {
+            "Pid": 23924,
+            "CreationFileTime": 134364587457908472,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "Borrowed": false,
+          "OriginalHandle": 788,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": false,
+          "CloseSucceeded": true,
+          "CloseError": 0,
+          "ClosedProbeReturn": 0,
+          "ClosedProbeError": 6
+        },
+        {
+          "Identity": {
+            "Pid": 88752,
+            "CreationFileTime": 134364587457931590,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "Borrowed": false,
+          "OriginalHandle": 792,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": false,
+          "CloseSucceeded": true,
+          "CloseError": 0,
+          "ClosedProbeReturn": 0,
+          "ClosedProbeError": 6
+        },
+        {
+          "Identity": {
+            "Pid": 23192,
+            "CreationFileTime": 134364587457837901,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "Borrowed": true,
+          "OriginalHandle": 756,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": true,
+          "CloseSucceeded": null,
+          "CloseError": null,
+          "ClosedProbeReturn": null,
+          "ClosedProbeError": null
+        },
+        {
+          "Identity": {
+            "Pid": 23924,
+            "CreationFileTime": 134364587457908472,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "Borrowed": false,
+          "OriginalHandle": 792,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": false,
+          "CloseSucceeded": true,
+          "CloseError": 0,
+          "ClosedProbeReturn": 0,
+          "ClosedProbeError": 6
+        },
+        {
+          "Identity": {
+            "Pid": 88752,
+            "CreationFileTime": 134364587457931590,
+            "ParentPid": 7236,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A2 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a2 ee2709e5bae14ff488a5447d0d106083"
+          },
+          "Borrowed": false,
+          "OriginalHandle": 788,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": false,
+          "CloseSucceeded": true,
+          "CloseError": 0,
+          "ClosedProbeReturn": 0,
+          "ClosedProbeError": 6
+        }
+      ],
+      "scenario": "A2",
+      "path": "artifacts/p1-supervision/resume-root-v56/lease-a2/report.json"
+    },
+    {
+      "sha256": "08183DD48DB9C058149ADFE6AB242DE859E24734289B1804A30A5D4801E12933",
+      "targets": [
+        {
+          "Pid": 82564,
+          "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A3 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a3 15abd798f2434f2c976d44c7c65e5fc0",
+          "Identity": {
+            "Pid": 82564,
+            "CreationFileTime": 134364587460484527,
+            "ParentPid": 74036,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A3 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a3 15abd798f2434f2c976d44c7c65e5fc0"
+          },
+          "IdentityVerified": true,
+          "Assigned": true,
+          "Resumed": false,
+          "TerminationReturn": null,
+          "TerminationLastError": null,
+          "WaitReturn": 0,
+          "ProcessHandleClosed": true,
+          "ThreadHandleClosed": true,
+          "OwnProcessReclaimed": true,
+          "Error": null,
+          "AssignReturn": 1,
+          "AssignLastError": 0,
+          "MembershipReturn": 1,
+          "MembershipLastError": 0,
+          "MembershipVerified": true,
+          "ProcessCloseLastError": 0,
+          "ThreadCloseLastError": 0,
+          "CleanupErrors": [],
+          "PublicationErrors": [],
+          "ActualExitCode": 137,
+          "ExitCodeReadReturn": 1,
+          "ExitCodeReadLastError": 0,
+          "PostJobTerminalWait": false,
+          "PostJobWait": null
+        },
+        {
+          "Pid": 78436,
+          "IntendedCommand": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A3 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a3 15abd798f2434f2c976d44c7c65e5fc0",
+          "Identity": {
+            "Pid": 78436,
+            "CreationFileTime": 134364587460561761,
+            "ParentPid": 74036,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A3 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a3 15abd798f2434f2c976d44c7c65e5fc0"
+          },
+          "IdentityVerified": true,
+          "Assigned": true,
+          "Resumed": false,
+          "TerminationReturn": null,
+          "TerminationLastError": null,
+          "WaitReturn": 0,
+          "ProcessHandleClosed": true,
+          "ThreadHandleClosed": true,
+          "OwnProcessReclaimed": true,
+          "Error": null,
+          "AssignReturn": 1,
+          "AssignLastError": 0,
+          "MembershipReturn": 1,
+          "MembershipLastError": 0,
+          "MembershipVerified": true,
+          "ProcessCloseLastError": 0,
+          "ThreadCloseLastError": 0,
+          "CleanupErrors": [],
+          "PublicationErrors": [],
+          "ActualExitCode": 137,
+          "ExitCodeReadReturn": 1,
+          "ExitCodeReadLastError": 0,
+          "PostJobTerminalWait": false,
+          "PostJobWait": null
+        }
+      ],
+      "handles": [
+        {
+          "Identity": {
+            "Pid": 82564,
+            "CreationFileTime": 134364587460484527,
+            "ParentPid": 74036,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A3 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a3 15abd798f2434f2c976d44c7c65e5fc0"
+          },
+          "Borrowed": true,
+          "OriginalHandle": 756,
+          "ReceiverHandle": null,
+          "SameManagedObject": false,
+          "NativeUsableAfterLeaseDispose": true,
+          "CloseSucceeded": null,
+          "CloseError": null,
+          "ClosedProbeReturn": null,
+          "ClosedProbeError": null
+        },
+        {
+          "Identity": {
+            "Pid": 78436,
+            "CreationFileTime": 134364587460561761,
+            "ParentPid": 74036,
+            "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-fixed-build\\bin\\LeaseFixture.dll target A3 D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v56\\lease-a3 15abd798f2434f2c976d44c7c65e5fc0"
+          },
+          "Borrowed": false,
+          "OriginalHandle": 788,
+          "ReceiverHandle": 788,
+          "SameManagedObject": true,
+          "NativeUsableAfterLeaseDispose": true,
+          "CloseSucceeded": true,
+          "CloseError": 0,
+          "ClosedProbeReturn": 0,
+          "ClosedProbeError": 6
+        }
+      ],
+      "scenario": "A3",
+      "path": "artifacts/p1-supervision/resume-root-v56/lease-a3/report.json"
+    }
+  ],
+  "passed": 3,
+  "productionIntegrated": false,
+  "scope": "ISOLATED_NATIVE_OWNERSHIP_COMPONENT"
+}

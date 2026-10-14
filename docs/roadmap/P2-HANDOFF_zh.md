@@ -1111,3 +1111,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第54轮独立原生growth输入组件 ✅ 已完成：held/transient2/2通过，具备真实creator回执与明确event done屏障，已审查native birth/full-command/parent/Job及自有句柄。[输入证明](../evidence/p1/controlled-growth-input-v1.json)保留旧缺回执试验。跨birth原始计数与另一次稳定production Inspect不同。生产reconciliation和双预算验收仍开放；没有重试旧8或提交core。P1六门禁、P2 8/101、P3 0/38+0/4均不变。
 
 Round56 P1-GATE.02库存组件 ✅ 已完成：本地严格构建及11项固定检查通过（四份原报告／112条有序ID与源码哈希、28项提案及六项新变异）。历史基线／八项变异保留且未重跑。[精确库存证据](../evidence/p1/strict-cleanup-inventory-v1.json)保留未批准提案及原28／168／56／callable7+2分母。这仅验证库存；生成清理语义与P1六门禁仍开放。
+
+Round56原句柄lease组件 ✅ 已完成：严格构建及真实Windows A1／A2／A3通过，包含强制异常与取消回收两个子项。[原生所有权证据](../evidence/p1/original-handle-lease-v1.json)绑定同一观察进程原句柄转移、接收方关闭、借用句柄存活及重复转移拒绝；历史分析器与路径前置条件失败保留。生产acquisition、生命周期祖先链、增长协调器及legacy8／dual3验收仍开放；active20／cumulative1024不变。
