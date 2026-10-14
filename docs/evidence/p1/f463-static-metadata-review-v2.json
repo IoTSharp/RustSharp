@@ -1,0 +1,173 @@
+{
+  "denominator": 14,
+  "bulk2076HashRepeated": false,
+  "run": "38515250985",
+  "report": "artifacts/p1-supervision/resume-root-v51/metadata-full14.json",
+  "fullP1Closure": false,
+  "rootExactFieldComparisons": 176,
+  "attempt": 1,
+  "reviewerSha256": "1D5C5AFA754D008CABF5D6FAC5D8EF23E08B9616BC65AEF7C1C812C1F7D579EC",
+  "candidate": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "sequencePoints": 18,
+  "physicalBindings": 28,
+  "remainingSemanticComponents": 16,
+  "manifestSha256": "63418EBEEDF1C990597706D0948F44B0A31B83C183B46BEF28D120F35A045CFB",
+  "remaining": [
+    "14 exact AST to sequencepoint span selections",
+    "2 frozen hand-MIR instruction structure equivalence"
+  ],
+  "repair": "Expected source paths copied literally from original report; actual PDB and Equal compare not normalized; six Windows expected values changed, eight others unchanged",
+  "targetAssemblyLoaded": false,
+  "matched": 14,
+  "sourcePe": 12,
+  "taskId": "P1-GATE.03.static-pe-pdb-review",
+  "targetCodeExecuted": false,
+  "priorFailuresPreserved": "resume-root-v50 metadata full14=8MATCH+6FAIL and all tiny/build/diagnostic logs",
+  "formalGateAccepted": false,
+  "failed": 0,
+  "handMirPe": 2,
+  "scope": "Frozen original14 PE identity/entrypoint/schema/sourceSHA/Drop metadata plus PortablePDB document/checksum/GUID/entrypoint/IL-offset/range component",
+  "reportSha256": "7DB9A3A2FECBAD9EF7D8D3727DDC8EEBBE9651B4A82E851547F95CE9C4ABF40E",
+  "bindings": [
+    {
+      "pdbSha256": "8379360E7A8076C02889826FDB1E1C134783DF9727D31890C2D9982191E56B8B",
+      "sequencePoints": 2,
+      "literalSourcePath": "/home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-8022-40f196bb640d4a71ae5fcde297951dd8/repeated-array-once/program.rs",
+      "id": "repeated-array-once",
+      "platform": "linux-x64",
+      "peSha256": "520C6D53F768D322FAE38CC85EE13BD325A670C9E69D83B5A0EC5BA662F3726F"
+    },
+    {
+      "pdbSha256": "402D9C0FC9AE27F0488988EED475CA5F3715BE784EE794966BBA5394277F1C26",
+      "sequencePoints": 2,
+      "literalSourcePath": "/home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-8022-40f196bb640d4a71ae5fcde297951dd8/mutable-subslice-call-return/program.rs",
+      "id": "mutable-subslice-call-return",
+      "platform": "linux-x64",
+      "peSha256": "79D3DCF3B72C4D871A4995D97462A2327F0DA69E24D636376CFB1478C16863C2"
+    },
+    {
+      "pdbSha256": "50DFED59802075CE26350264C0E9296E68D27889A091A83357B31BF637577063",
+      "sequencePoints": 1,
+      "literalSourcePath": "/home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-8022-40f196bb640d4a71ae5fcde297951dd8/mutable-closure-captures/program.rs",
+      "id": "mutable-closure-captures",
+      "platform": "linux-x64",
+      "peSha256": "9A73DE8D118CF678D205FA10AF346C292B8D4E74C38C6344DA7801EE7C22BED5"
+    },
+    {
+      "pdbSha256": "01A32C13710A20D0183B2D65CACBBA38D6A7B7E9082B1DABDB3D1CDAE6DB3FAE",
+      "sequencePoints": 1,
+      "literalSourcePath": "/home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-8022-40f196bb640d4a71ae5fcde297951dd8/inline-const-loop/program.rs",
+      "id": "inline-const-loop",
+      "platform": "linux-x64",
+      "peSha256": "0F8D8B3C3E2196F202A4527CA1CDB946C31F7B93E6CFE1E6203F0429CD9E9EDD"
+    },
+    {
+      "pdbSha256": "1294D5AFB397355CA6A7CFD04790A256F0CE7F785589C05B073D997C8DC1558A",
+      "sequencePoints": 1,
+      "literalSourcePath": "/home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-8022-40f196bb640d4a71ae5fcde297951dd8/signed-scalar-ops/program.rs",
+      "id": "signed-scalar-ops",
+      "platform": "linux-x64",
+      "peSha256": "D73C7A299AB7F4EF83DA4F562E664EE43579F415A782AB89F7AD5179C120F2C4"
+    },
+    {
+      "pdbSha256": "F63EA31A51BB758BE54A993005682EEA9C80721DD249FDFA2E2E6C358D801EC7",
+      "sequencePoints": 1,
+      "literalSourcePath": "projection-backend.rs",
+      "id": "nested-place-owner:frozen-hand-mir",
+      "platform": "linux-x64",
+      "peSha256": "9C6CF40B73F69AB91EC23872DEFF0CC3605F12DF1699ECB4E595264E81AB8E8E"
+    },
+    {
+      "pdbSha256": "5631E4DBF1C1937F9C57A6E23F01813FD84C13E2FF582224E9D1809628BFD18E",
+      "sequencePoints": 1,
+      "literalSourcePath": "/home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-8022-40f196bb640d4a71ae5fcde297951dd8/nested-place-owner-rust-source/program.rs",
+      "id": "nested-place-owner:rust-source",
+      "platform": "linux-x64",
+      "peSha256": "30DC505874B0B8B25CC660619CCCFE00328FBF5C812201A7AD21168CBDFBFDF4"
+    },
+    {
+      "pdbSha256": "23BC217478B39A354712C101F3A9B60D007A6513008B6B2A22CA8D62BB0C6A4F",
+      "sequencePoints": 2,
+      "literalSourcePath": "D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-6776-9c7a5010ab064b74945dce3f483595c8\\repeated-array-once\\program.rs",
+      "id": "repeated-array-once",
+      "platform": "windows-x64",
+      "peSha256": "0B3E7E2E16E8691483DD6AAADE2315EC7354F2B92723EBBFA51EE5781BD4570E"
+    },
+    {
+      "pdbSha256": "5F4080308CF20B28518F09DB4E050AC3393B01C5014C4993C053C96E438384EA",
+      "sequencePoints": 2,
+      "literalSourcePath": "D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-6776-9c7a5010ab064b74945dce3f483595c8\\mutable-subslice-call-return\\program.rs",
+      "id": "mutable-subslice-call-return",
+      "platform": "windows-x64",
+      "peSha256": "EB3A446280BCC2000A7E94692D60E62FEB527C861FFA498CA9B8901147229F14"
+    },
+    {
+      "pdbSha256": "7F9755232C9BADE16A53C35644EF095F3A8582BE36BFAAAC96C402D65A47083A",
+      "sequencePoints": 1,
+      "literalSourcePath": "D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-6776-9c7a5010ab064b74945dce3f483595c8\\mutable-closure-captures\\program.rs",
+      "id": "mutable-closure-captures",
+      "platform": "windows-x64",
+      "peSha256": "2F5E8B11DF6CB0A95F86C58E57EC6BB9873FC3C723EF5F2973878A119CB75134"
+    },
+    {
+      "pdbSha256": "78B526DD90CC96D29185DF3698AC0BEE974036C04693A9F4E4F464D5A327CF0B",
+      "sequencePoints": 1,
+      "literalSourcePath": "D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-6776-9c7a5010ab064b74945dce3f483595c8\\inline-const-loop\\program.rs",
+      "id": "inline-const-loop",
+      "platform": "windows-x64",
+      "peSha256": "59B594BC3C27F820D07F6E3F74820E90B46A33DDD02702F39A4FE3F571EE6837"
+    },
+    {
+      "pdbSha256": "0CEE4425F6AB8F6225274D281C1349C43A781A65E21D879DED232027C94B6EF8",
+      "sequencePoints": 1,
+      "literalSourcePath": "D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-6776-9c7a5010ab064b74945dce3f483595c8\\signed-scalar-ops\\program.rs",
+      "id": "signed-scalar-ops",
+      "platform": "windows-x64",
+      "peSha256": "00FF7AA27A7C79B26898B8A35D2E3798686880DE058AC4AA5C070CC329CCB6D4"
+    },
+    {
+      "pdbSha256": "F63EA31A51BB758BE54A993005682EEA9C80721DD249FDFA2E2E6C358D801EC7",
+      "sequencePoints": 1,
+      "literalSourcePath": "projection-backend.rs",
+      "id": "nested-place-owner:frozen-hand-mir",
+      "platform": "windows-x64",
+      "peSha256": "9C6CF40B73F69AB91EC23872DEFF0CC3605F12DF1699ECB4E595264E81AB8E8E"
+    },
+    {
+      "pdbSha256": "A61DF6414502AEF7547D655E2E28F096417AD0DB09123E08F6FD4F6BA8BCA082",
+      "sequencePoints": 1,
+      "literalSourcePath": "D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-6776-9c7a5010ab064b74945dce3f483595c8\\nested-place-owner-rust-source\\program.rs",
+      "id": "nested-place-owner:rust-source",
+      "platform": "windows-x64",
+      "peSha256": "30DB2BAC77AC7ABDDD46C66F43898D57956F1BDAF525E7EBC5CACAF3C6E479A6"
+    }
+  ],
+  "pathContract": "artifacts/p1-supervision/witness-review-round51/PATH-PROPAGATION-CONTRACT.json",
+  "rootSourceContractBindings": [
+    {
+      "matchesFrozenSnapshot": true,
+      "path": "tools/RustSharp.Conformance/P1BackendCoverageRunner.cs",
+      "sha256": "D68C4D75A444B813B83BB2296BCA3B98C1CDC00F3FCC8B97FE891FACFB916B0A"
+    },
+    {
+      "matchesFrozenSnapshot": true,
+      "path": "tools/RustSharp.Conformance/P1BackendCoverageEvidence.cs",
+      "sha256": "610273C5C2025A27C034F0F0A3D30AD2E9EC0F3089BF50F2F0D14ECCCE2F7F63"
+    },
+    {
+      "matchesFrozenSnapshot": true,
+      "path": "src/RustSharp.Compiler/CompilerDriver.cs",
+      "sha256": "0F5D01B9AB924A080C6A9299F7E48121BC9FD7DFE4CA990616BCEAF50FE03F0B"
+    },
+    {
+      "matchesFrozenSnapshot": true,
+      "path": "src/RustSharp.CodeGen.IL/ClrLirAssemblyEmitter.cs",
+      "sha256": "96F64FA0B7D29631975C194AFF55DCFFC38F202C224E31C717C29449D120585D"
+    },
+    {
+      "matchesFrozenSnapshot": true,
+      "path": "src/RustSharp.CodeGen.IL/IlAssemblyEmitter.cs",
+      "sha256": "8C56957C0B1D5CFC0C337DCD0EFF30CE2EC577B763DAA9EB90EE6223CACE1D15"
+    }
+  ]
+}

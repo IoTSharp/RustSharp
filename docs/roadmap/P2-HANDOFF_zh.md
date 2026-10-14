@@ -10,7 +10,7 @@
 `01a13917-a6b4-78e0-bd31-44600dd87b79`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v50/resumption.json`。
+`artifacts/p1-supervision/resume-root-v51/resumption.json`。
 
 第38轮新鲜Windows formatter集成在限定组件范围内为 ✅ 已完成：严格solution/driver构建零警告/零错误，完整formatter59/59、契约18/18、真实Windows CLI8/8及原生信号1/1通过。[新鲜集成证据](../evidence/p2/formatter-fresh-native-integration-v1.json)绑定精确工作树源码/DLL/PDB/driver哈希、实际pending995、自然130、原生Join/close及outer3→0；三个精确进程身份已独立确认不存在。旧outer骨架proof字段仍为false，不用它们替代已核哈希child证据。此前provenance拒绝仍未定位，尽管实际编译GitAsync返回997项且匹配原始raw哈希；未提高cap。新clean-SHA CI/Linux、完整取消/containment及完整59/91叶项合同仍开放，P2保持8/101。
 
@@ -1087,3 +1087,7 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第50轮 P3-01 平坦规则匹配原型组件 ✅ 已完成：本地严格Release及固定16/16测试通过。真实定义解析、调用词元树及既有ident/tt匹配保留按顺序选臂、完整消费和源码范围；literal限定为cooked字符串及无后缀十进制整数。[有界原型证明](../evidence/p3/macros-rule-match-prototype-v1.json)记录全部matcher重复/group节点显式拒绝、字节上限及真实取消。替换、展开、卫生性、歧义/基数语义及82项完整编译器用例仍NOT_RUN；正式叶子/门禁保持0/38和0/4，依赖未变。
 
 第50轮 PE/PDB 静态审查对完整14分母为 ❌ 失败：8项匹配，6项Windows源码文档路径与清单期望不同。[真实诊断](../evidence/p1/f463-static-metadata-review-v1.json)保留编译/分析器失败及初次审计列号假设失败；按实际零基格式修正审查器未掩盖Windows路径差异。原始程序集仅解码，没有加载或执行。精确AST范围映射及两项手工MIR结构检查仍UNKNOWN；未声称30项语义审查组件闭环。P1-GATE.03仍 🚧 进行中。下一次审查须绑定原始Windows输入路径字面值及实际PDB文档编码，再决定比较方式。
+
+## 第51轮：原始 PE/PDB 绑定组件
+
+限定静态范围内 ✅ 已完成：期望路径直接绑定原始source.path字面值后，严格审查器构建、Windows极小1项及完整14/14通过。Root独立核对28份实际PE/PDB哈希、176项精确元数据/文档比较、18个序列点及5份与f463相同的源码合同。[限定审查证明](../evidence/p1/f463-static-metadata-review-v2.json)保留此前8/14失败和全部审计/构建诊断；没有加载/执行目标程序集，也未重跑2076文件审计。PE身份/入口/source metadata/Drop声明以及PDB文档/checksum/GUID/入口/ILoffset/范围检查已绑定；14项精确AST到序列点范围选择及2项手工MIR结构等价仍UNKNOWN（16项语义组件）。P1-GATE.03及六门禁仍开放；P2保持8/101，P3正式叶子/门禁保持0/38及0/4，全部阶段闭环仍false。
