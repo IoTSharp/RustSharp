@@ -1105,3 +1105,5 @@ root 负责共享注册容量、调用方集成、CI／门禁聚合、双语状�
 第52轮固定FUSE头文件查询在只读WSL证据范围内 ✅ 已完成：4组查询显示libfuse3-dev未登记、两个指定FUSE3头文件不存在；现有kernel头文件声明协议7.39，运行库3.14.0路径已绑定。[真实查询](../evidence/p2/formatter-fuse-headers-v1.json)不证明provider、安装、挂载或取消案例；P2保持8/101，完整闭环false。
 
 第53轮重复模板原型在限定子集内 ✅ 已完成：严格Release及16/16通过。[证明](../evidence/p3/macros-repeated-template-prototype-v1.json)。P3正式叶子0/38、门禁0/4，82完整用例NOT_RUN。第54轮集成前独立复核冻结源码/DLL精确哈希及原始16项输出，没有重跑已验收测试。
+
+第54轮手工MIR结构组件 ✅ 已完成：tiny1/full2匹配每host的230条canonical记录；8个真实MIR变体经Emit/Decode后被拒绝。[证明](../evidence/p1/f463-hand-mir-structure-v1.json)绑定原PE哈希与冻结factory源码。没有加载/执行原始代码。synthetic Source(0,1),x属于手工MIR来源，不声称Rust AST；阶段/运行时验收保持独立。

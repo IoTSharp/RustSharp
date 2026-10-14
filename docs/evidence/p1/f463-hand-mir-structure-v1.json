@@ -1,0 +1,24 @@
+{
+  "fullP1Closure": false,
+  "decoderSha256": "F6644D801301D86AD0C265BC9E89819734954A76D9DDFC5DCC8DAE9A1315AEC7",
+  "report": "artifacts/p1-supervision/resume-root-v54/hand-full2.json",
+  "factorySha256": "BF43F116E0F33C66DEC647782343B1F8D7999F54AE297D70FCD1A33FB23DFFBB",
+  "taskId": "P1-GATE.03.hand-mir-canonical-structure",
+  "syntheticSource": "Typed hand MIR Source(0,1),x; not a Rust AST case",
+  "originalPeLoadedOrExecuted": false,
+  "reportSha256": "6718699D1B515012FCB627CCFBD90CC0DC330E9816F3E8249256C0B293810A72",
+  "canonicalRowsPerHost": 230,
+  "realMirMutations": 8,
+  "matched": 2,
+  "candidate": "f463ac8fff710b11f851881437f9db864e4b42f6",
+  "scope": "Metadata-only fixed original structure comparison plus actual MIR -> emitted PE -> canonical decode mutants, not new runtime/phase acceptance",
+  "mutationClasses": [
+    "constant41to42",
+    "tupleBoolToI32WithTypedValue",
+    "dynamicProjectionToStaticIndex0",
+    "newBasicBlockGotoReturn"
+  ],
+  "denominator": 2,
+  "sourceSha256": "1CF152D5569621F80FC4D9761DCAA404A004ECB397DC99DB58F8F3854729A397",
+  "runId": "38515250985"
+}
