@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.02.firstchance-v5",
+  "diagnosticComponentAccepted": true,
+  "actualInstrumentedCauseObserved": true,
+  "originalScopePassed": false,
+  "wholeGateAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "scope": "One exact instrumented pwsh target; initialization and four HostException native6 stack observations; original script body/tiny/identity/cancel6/retention2/Linux12 remain open",
+  "events": [
+    {
+      "sha256": "A5BEBE22D5D2FD6CB528BF020B24B8DA0A69870301493D434149204A33CDBB25",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-event-c0db872f9f8040a5a0529be4fdcbd2a5-1.json",
+      "actual": {
+        "Instrumented": true,
+        "OriginalScopePassed": false,
+        "Nonce": "c0db872f9f8040a5a0529be4fdcbd2a5",
+        "Lease": "7e317dd1995a4fa48f1fd336ac85c093",
+        "Pid": 57988,
+        "Birth": 134364117453135948,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "ManagedCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -NoLogo -NoProfile -NonInteractive -Command \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "RequestCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "Executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "WorkingDirectory": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5",
+        "HookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "HookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "KnownInitStep": "ObserverSubscribed",
+        "InitError": "",
+        "EnvironmentHookPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-runtime\\StartupHook.dll",
+        "ExpectedHookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "ExpectedHookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "WorkingDirectoryMatched": true,
+        "RequestFullCommandMatched": true,
+        "HookHashMatched": true,
+        "HookMvidMatched": true,
+        "Index": 1,
+        "ElapsedMilliseconds": 102,
+        "ExceptionType": "System.Management.Automation.Host.HostException",
+        "Message": "检索活动控制台输出缓冲区的句柄时发生 Win32 内部错误 \"句柄无效。\" 0x6。请与 Microsoft 客户支持服务部门联系。",
+        "NativeErrorCode": 6,
+        "ExceptionStack": "   at Microsoft.PowerShell.ConsoleControl.<>c.<.cctor>b__95_1()",
+        "FirstChanceStack": "   at System.Environment.get_StackTrace()\r\n   at StartupHook.Save(String name, Exception exception, Nullable`1 code, Int32 index) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 90\r\n   at StartupHook.Observe(Object sender, FirstChanceExceptionEventArgs args) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 72\r\n   at Microsoft.PowerShell.ConsoleControl.<>c.<.cctor>b__95_1()\r\n   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)\r\n   at System.Lazy`1.ExecutionAndPublication(LazyHelper executionAndPublication, Boolean useDefaultConstructor)\r\n   at System.Lazy`1.CreateValue()\r\n   at Microsoft.PowerShell.ConsoleHost..ctor()\r\n   at Microsoft.PowerShell.ConsoleHost.Start(String bannerText, String helpText, Boolean issProvidedExternally)\r\n   at Microsoft.PowerShell.UnmanagedPSEntry.Start(String[] args, Int32 argc)\r\n   at Microsoft.PowerShell.ManagedPSEntry.Main(String[] args)"
+      }
+    },
+    {
+      "sha256": "DDD388B4A4575B654B1CCC6FECA680E928CDEDDD032A53F3ADA39D305B5C244C",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-event-c0db872f9f8040a5a0529be4fdcbd2a5-2.json",
+      "actual": {
+        "Instrumented": true,
+        "OriginalScopePassed": false,
+        "Nonce": "c0db872f9f8040a5a0529be4fdcbd2a5",
+        "Lease": "7e317dd1995a4fa48f1fd336ac85c093",
+        "Pid": 57988,
+        "Birth": 134364117453135948,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "ManagedCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -NoLogo -NoProfile -NonInteractive -Command \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "RequestCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "Executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "WorkingDirectory": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5",
+        "HookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "HookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "KnownInitStep": "ObserverSubscribed",
+        "InitError": "",
+        "EnvironmentHookPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-runtime\\StartupHook.dll",
+        "ExpectedHookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "ExpectedHookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "WorkingDirectoryMatched": true,
+        "RequestFullCommandMatched": true,
+        "HookHashMatched": true,
+        "HookMvidMatched": true,
+        "Index": 2,
+        "ElapsedMilliseconds": 114,
+        "ExceptionType": "System.Management.Automation.Host.HostException",
+        "Message": "检索活动控制台输出缓冲区的句柄时发生 Win32 内部错误 \"句柄无效。\" 0x6。请与 Microsoft 客户支持服务部门联系。",
+        "NativeErrorCode": 6,
+        "ExceptionStack": "   at Microsoft.PowerShell.ConsoleControl.<>c.<.cctor>b__95_1()\r\n   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)",
+        "FirstChanceStack": "   at System.Environment.get_StackTrace()\r\n   at StartupHook.Save(String name, Exception exception, Nullable`1 code, Int32 index) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 90\r\n   at StartupHook.Observe(Object sender, FirstChanceExceptionEventArgs args) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 72\r\n   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)\r\n   at System.Lazy`1.ExecutionAndPublication(LazyHelper executionAndPublication, Boolean useDefaultConstructor)\r\n   at System.Lazy`1.CreateValue()\r\n   at Microsoft.PowerShell.ConsoleHost..ctor()\r\n   at Microsoft.PowerShell.ConsoleHost.Start(String bannerText, String helpText, Boolean issProvidedExternally)\r\n   at Microsoft.PowerShell.UnmanagedPSEntry.Start(String[] args, Int32 argc)\r\n   at Microsoft.PowerShell.ManagedPSEntry.Main(String[] args)"
+      }
+    },
+    {
+      "sha256": "5946FCCD4CF6237127E5F9FB5790DAB10B56123D42144F304626D4DA7B1D0F76",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-event-c0db872f9f8040a5a0529be4fdcbd2a5-3.json",
+      "actual": {
+        "Instrumented": true,
+        "OriginalScopePassed": false,
+        "Nonce": "c0db872f9f8040a5a0529be4fdcbd2a5",
+        "Lease": "7e317dd1995a4fa48f1fd336ac85c093",
+        "Pid": 57988,
+        "Birth": 134364117453135948,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "ManagedCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -NoLogo -NoProfile -NonInteractive -Command \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "RequestCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "Executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "WorkingDirectory": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5",
+        "HookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "HookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "KnownInitStep": "ObserverSubscribed",
+        "InitError": "",
+        "EnvironmentHookPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-runtime\\StartupHook.dll",
+        "ExpectedHookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "ExpectedHookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "WorkingDirectoryMatched": true,
+        "RequestFullCommandMatched": true,
+        "HookHashMatched": true,
+        "HookMvidMatched": true,
+        "Index": 3,
+        "ElapsedMilliseconds": 116,
+        "ExceptionType": "System.Management.Automation.Host.HostException",
+        "Message": "检索活动控制台输出缓冲区的句柄时发生 Win32 内部错误 \"句柄无效。\" 0x6。请与 Microsoft 客户支持服务部门联系。",
+        "NativeErrorCode": 6,
+        "ExceptionStack": "   at Microsoft.PowerShell.ConsoleControl.<>c.<.cctor>b__95_1()\r\n   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)\r\n--- End of stack trace from previous location ---\r\n   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()",
+        "FirstChanceStack": "   at System.Environment.get_StackTrace()\r\n   at StartupHook.Save(String name, Exception exception, Nullable`1 code, Int32 index) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 90\r\n   at StartupHook.Observe(Object sender, FirstChanceExceptionEventArgs args) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 72\r\n   at System.Lazy`1.CreateValue()\r\n   at Microsoft.PowerShell.ConsoleHostRawUserInterface..ctor(ConsoleHostUserInterface mshConsole)\r\n   at Microsoft.PowerShell.ConsoleHostUserInterface..ctor(ConsoleHost parent)\r\n   at Microsoft.PowerShell.ConsoleHost..ctor()\r\n   at Microsoft.PowerShell.ConsoleHost.Start(String bannerText, String helpText, Boolean issProvidedExternally)\r\n   at Microsoft.PowerShell.UnmanagedPSEntry.Start(String[] args, Int32 argc)\r\n   at Microsoft.PowerShell.ManagedPSEntry.Main(String[] args)"
+      }
+    },
+    {
+      "sha256": "04792F7393BEBBE3C0C70357402789D41828FA901E73F1D8F515DFC13C742740",
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-event-c0db872f9f8040a5a0529be4fdcbd2a5-4.json",
+      "actual": {
+        "Instrumented": true,
+        "OriginalScopePassed": false,
+        "Nonce": "c0db872f9f8040a5a0529be4fdcbd2a5",
+        "Lease": "7e317dd1995a4fa48f1fd336ac85c093",
+        "Pid": 57988,
+        "Birth": 134364117453135948,
+        "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "ManagedCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.dll\" -NoLogo -NoProfile -NonInteractive -Command \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "RequestCommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" \"-NoLogo\" \"-NoProfile\" \"-NonInteractive\" \"-Command\" \"$self=[Diagnostics.Process]::GetCurrentProcess();try{$r=[ordered]@{Nonce='b066a056578c404ab407e9de8ecd0fdc';Pid=$PID;Birth=$self.StartTime.ToFileTimeUtc();CommandLine=[Environment]::CommandLine;WorkingDirectory=[Environment]::CurrentDirectory};[IO.File]::WriteAllText('D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-body.json',($r|ConvertTo-Json -Compress));[Console]::Out.WriteLine('HOST_BODY_OUT:b066a056578c404ab407e9de8ecd0fdc');[Console]::Error.WriteLine('HOST_BODY_ERR:b066a056578c404ab407e9de8ecd0fdc')}finally{$self.Dispose()}\"",
+        "Executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "WorkingDirectory": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5",
+        "HookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "HookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "KnownInitStep": "ObserverSubscribed",
+        "InitError": "",
+        "EnvironmentHookPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-runtime\\StartupHook.dll",
+        "ExpectedHookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+        "ExpectedHookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+        "WorkingDirectoryMatched": true,
+        "RequestFullCommandMatched": true,
+        "HookHashMatched": true,
+        "HookMvidMatched": true,
+        "Index": 4,
+        "ElapsedMilliseconds": 119,
+        "ExceptionType": "System.Management.Automation.Host.HostException",
+        "Message": "检索活动控制台输出缓冲区的句柄时发生 Win32 内部错误 \"句柄无效。\" 0x6。请与 Microsoft 客户支持服务部门联系。",
+        "NativeErrorCode": 6,
+        "ExceptionStack": "   at Microsoft.PowerShell.ConsoleHost.Start(String bannerText, String helpText, Boolean issProvidedExternally)",
+        "FirstChanceStack": "   at System.Environment.get_StackTrace()\r\n   at StartupHook.Save(String name, Exception exception, Nullable`1 code, Int32 index) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 90\r\n   at StartupHook.Observe(Object sender, FirstChanceExceptionEventArgs args) in D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\hook-source\\StartupHook.cs:line 72\r\n   at Microsoft.PowerShell.ConsoleHost.Start(String bannerText, String helpText, Boolean issProvidedExternally)\r\n   at Microsoft.PowerShell.UnmanagedPSEntry.Start(String[] args, Int32 argc)\r\n   at Microsoft.PowerShell.ManagedPSEntry.Main(String[] args)"
+      }
+    }
+  ],
+  "environment": {
+    "EnvironmentErrors": [],
+    "EnvironmentAfter": {
+      "RUSTSHARP_FIRSTCHANCE_LEASE": {
+        "Value": null,
+        "Present": false
+      },
+      "DOTNET_STARTUP_HOOKS": {
+        "Value": null,
+        "Present": false
+      },
+      "RUSTSHARP_FIRSTCHANCE_SHA": {
+        "Value": null,
+        "Present": false
+      },
+      "RUSTSHARP_FIRSTCHANCE_NONCE": {
+        "Value": null,
+        "Present": false
+      },
+      "RUSTSHARP_FIRSTCHANCE_MVID": {
+        "Value": null,
+        "Present": false
+      }
+    },
+    "EnvironmentBefore": {
+      "RUSTSHARP_FIRSTCHANCE_LEASE": {
+        "Value": null,
+        "Present": false
+      },
+      "DOTNET_STARTUP_HOOKS": {
+        "Value": null,
+        "Present": false
+      },
+      "RUSTSHARP_FIRSTCHANCE_SHA": {
+        "Value": null,
+        "Present": false
+      },
+      "RUSTSHARP_FIRSTCHANCE_NONCE": {
+        "Value": null,
+        "Present": false
+      },
+      "RUSTSHARP_FIRSTCHANCE_MVID": {
+        "Value": null,
+        "Present": false
+      }
+    },
+    "RootReadHookMvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+    "EnvironmentRestored": true,
+    "ActualHookSha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+    "PrimaryRuntimeError": "Held-job phase rejected; no automatic retry",
+    "HookBound": "Target actualtypeof assemblyMVID + uniquepath/fileSHA; strictactualpwsh/requestfullcmd/nativebirth",
+    "OriginalScopePassed": false,
+    "Lease": "7e317dd1995a4fa48f1fd336ac85c093",
+    "Instrumented": true,
+    "Nonce": "c0db872f9f8040a5a0529be4fdcbd2a5"
+  },
+  "actualTargetExitCode": 0,
+  "actualBodyMatched": false,
+  "actualBodyPresent": false,
+  "failure": "Actual phase exit nonzero; original report retained",
+  "outerAccountingFinal": {
+    "Active": 0,
+    "Total": 2,
+    "Assigned": 0,
+    "Listed": 0,
+    "ReturnedBytes": 8,
+    "Members": [],
+    "Failures": [],
+    "Overflow": false,
+    "Coherent": true
+  },
+  "allObservedMemberIdentitiesComplete": true,
+  "resourceReview": "artifacts/p1-supervision/resume-root-v31/native-task-resource-review.json",
+  "sourceMechanismSha256": "B57FE9EADDEDFF9130013EE8DDAA18651AB7122C564732472CCF9A4BBE8D8E2E",
+  "sourceMechanism": "Exact078a ManagedEntrance initializes0; catches innerWin32_6/1236 before body and returns0",
+  "remainingInference": "DETACHED_PROCESS to unavailable active buffer OS edge not independently proved; no evidence that conhost was killed",
+  "noFlagHelperCapChange": true,
+  "hookBinding": {
+    "mvid": "89026d69-8dde-45d2-b00f-bbf92f9a6e20",
+    "sha256": "3BC726D5F6598005A5A1781D40A82D5E93A50E96C6484C278A3DC94E95F3F6C3",
+    "hookSourceSha256": "F1FD562772491DABEE9324EEDC174FA3D1757AC23B164A2C3933258E3C61C0B7",
+    "topFreezeSha256": "34614F43DC04A6DE2048C9420D283E036E6EEDC7AA60BB5D7AC89E9722E35B99"
+  },
+  "originals": [
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\MANIFEST.json",
+      "sha256": "34614F43DC04A6DE2048C9420D283E036E6EEDC7AA60BB5D7AC89E9722E35B99"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\SOURCE-FROZEN.json",
+      "sha256": "7BE8659FE380AC767E392C005367DEAC601D869A3EF069847D06F188454D546D"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\HOOK-SOURCE-FROZEN.json",
+      "sha256": "36DF5FBF58891F5E7206FC854D336F2C3486FA82DF18C1B51FF8D433CA1E5CB2"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\root-build-outer.json",
+      "sha256": "801E3476C326A389144B051C56D3092E0B0F910949C9F0280A8AB30FC4CE6C2E"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\root-build.sarif",
+      "sha256": "BA409C351A3D37BF6725E66791A53010B5AC26E65F553E7864DA7F23B1F85D0B"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\root-nativetiny-outer.json",
+      "sha256": "F9C6C8B7998F09F2B37C6428093FD86717CD50AFA16619472D6766DA451100FE"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\tiny-root-result.json",
+      "sha256": "F75B1AB591C34FA3B064F13EE84E996964ECBCA5317AFDE0DA252A7FCF413E9F"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\SCOPE-RUN-FROZEN.json",
+      "sha256": "56E287DDD1D56AB7E3972CA2F5A841F4188668CF742C501C1B6479A5B356A1C8"
+    },
+    {
+      "path": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\powershell-firstchance-v5\\command-launch-request.json",
+      "sha256": "9C21CE587A5AB3E102A3B67A334CD08A6DA802E38883EDF6D76D3A1A1ABEEF2C"
+    }
+  ]
+}
