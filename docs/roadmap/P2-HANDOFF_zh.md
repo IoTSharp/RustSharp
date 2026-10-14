@@ -8,7 +8,9 @@
 `01a13503-db0e-7be0-a50e-11ff85e5890c`，绑定唯一 ACTIVE 的每30分钟
 heartbeat `rustsharp-p1-p2-30`。已删除的旧 `rustsharp-p2` 不恢复。
 持久派单与验收检查点为
-`artifacts/p1-supervision/resume-root-v37/resumption.json`。
+`artifacts/p1-supervision/resume-root-v38/resumption.json`。
+
+第34轮仍为 🚧 进行中。精确PID63500资源查询组件为 ✅ 已完成：12:02:22独立原生OpenProcess返回87，与单PID查询不存在一致；历史UNKNOWN与Job5→0分别保留，不编造退出时间/退出码，不执行kill。[限定范围的监督复核](../evidence/p1/conhost63500-root-review-v1.json)保留两份原始收据。生产稳定身份源码已集成但未提交：本机新观察到SDK10.0.402，严格全构建零警告/零错误，Windows publication21/API20/workspace8全部通过。真实Linux publication已执行全部21项，20通过/1失败：旧替换目录测试前置条件比较.NET创建时间，在产品负向断言前失败。Linux API20/workspace8为NOT_RUN；不验收、不提交生产源码。头文件首次超时/自动变量错误及无效patch均保留。Formatter v5证明HWND归driver，而其自有job有独立conhost；v6改从真实job核身份仍仅源码。P1 NativeV2已有Linux析构清理分支，精确profile/案例执行仍未核。检查点v38；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 
 第33轮仍为 🚧 进行中。Linux目录身份诊断组件为 ✅ 已完成：直接statx最小程序通过严格零警告/零错误构建，真实Ubuntu /tmp三次采样3/3；设备号/inode/类型/原生出生时间保持固定，创建子目录后.NET CreationTimeUtc随ctime变化。[原生机制证据](../evidence/p2/linux-directory-identity-native-v1.json)保留精确源码/二进制/头文件/原件传输哈希及短stat竞态失败。这支持RSTD2001假说，但生产稳定身份修复与精确CI8+20回归仍为NOT_RUN。新WSL capture通过严格构建及精确21字节printf，仅属于监督设施。真实CLI和driver严格构建在保留超时/还原/AOT失败后通过，但实际formatter案例因无法确立独立私有conhost PID，在CLI启动前失败；CTRL/pending995/自然130/完整59/91仍未证明。检查点v37；P1六门禁仍开放，P2保持8/101，两个完整闭环标志仍为false。
 

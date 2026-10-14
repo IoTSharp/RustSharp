@@ -1,0 +1,79 @@
+{
+  "taskId": "P1-INFRA.resource63500-v1",
+  "requestedHistoricalIdentity": {
+    "Pid": 63500,
+    "CreationFileTime": 134364226682750937,
+    "ParentPid": 76744,
+    "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+  },
+  "historicalOriginalUnknown": {
+    "error": "调用“Read”并传入“1”个参数时发生异常：“OpenProcess exact query/synchronize target”",
+    "identity": {
+      "Pid": 63500,
+      "CreationFileTime": 134364226682750937,
+      "ParentPid": 76744,
+      "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    }
+  },
+  "historicalParentChainToCaller": [
+    {
+      "Pid": 63500,
+      "CreationFileTime": 134364226682750937,
+      "ParentPid": 76744,
+      "CommandLine": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4"
+    },
+    {
+      "Pid": 76744,
+      "CreationFileTime": 134364226682500241,
+      "ParentPid": 61076,
+      "CommandLine": " --distro-id {af6f1535-673c-4bc0-994d-3c9957261d33} --vm-id {edce88c6-dcc5-400d-b957-79608bb6d7d5} --handle 776 --event 796 --parent 800"
+    },
+    {
+      "Pid": 61076,
+      "CreationFileTime": 134364226682105140,
+      "ParentPid": 76716,
+      "CommandLine": "C:\\Windows\\System32\\wsl.exe --distribution Ubuntu --exec /usr/bin/printf %s RUSTSHARP_WSL_ARGV_V2"
+    },
+    {
+      "Pid": 76716,
+      "CreationFileTime": 134364226681395614,
+      "ParentPid": 14408,
+      "CommandLine": "C:\\Windows\\System32\\wsl.exe --distribution Ubuntu --exec /usr/bin/printf %s RUSTSHARP_WSL_ARGV_V2"
+    },
+    {
+      "Pid": 14408,
+      "CreationFileTime": 134364226675396520,
+      "ParentPid": 13884,
+      "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$ErrorActionPreference='Stop'\n$base='D:/GitHub/RustSharp/artifacts/p1-supervision/resume-root-v37'\n$lease=[Guid]::NewGuid().ToString('N');$caller=[IO.Path]::GetFullPath((Join-Path $base ('wsl-tiny-'+$lease)));[IO.Directory]::CreateDirectory($caller)|Out-Null\n[IO.File]::WriteAllText((Join-Path $caller 'OWNER.json'),(@{lease=$lease;task='Round33 WSL argv literal tiny';at=[DateTimeOffset]::Now.ToString('o')}|ConvertTo-Json),[Text.UTF8Encoding]::new($false))\n$assembly='D:/GitHub/RustSharp/artifacts/p1-supervision/wsl-capture-v2/runtime/WslCaptureLauncherV2.dll';$hash=(Get-FileHash -LiteralPath $assembly).Hash\n$binding=@{caller=$caller;lease=$lease;assemblySha256=$hash;sourceFreezeSha256='5DBE475E5EE20A17F42AC69C40087E309F6E0F6DBAD2E064FD2E6A1ADC4CEA17';wsl=(Get-FileHash -LiteralPath C:/Windows/System32/wsl.exe).Hash;nativeEvidenceScope='Rawargv experiment only; no P1 or Linux containment acceptance'}\n[IO.File]::WriteAllText((Join-Path $base 'wsl-tiny-binding.json'),($binding|ConvertTo-Json),[Text.UTF8Encoding]::new($false))\n& ./artifacts/p1-supervision/wsl-capture-v2/Run-Capture.ps1 -Exe 'C:\\Windows\\System32\\wsl.exe' -ArgumentsFile 'D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\wsl-capture-v2\\tiny-argv.json' -CallerLeaseRoot $caller -Lease $lease -ReviewedAssemblySha256 $hash -ReviewedSourceFreezeSha256 '5DBE475E5EE20A17F42AC69C40087E309F6E0F6DBAD2E064FD2E6A1ADC4CEA17' -ReviewedCandidateLease 'c3629672559542cf901a993aae9af314' -MaximumProcesses 16 -MaximumBytes 1048576 -RootApproved\n$receipt=Get-Content -LiteralPath (Join-Path $caller 'capture-receipt.json') -Raw|ConvertFrom-Json -DateKind String\n$actual=(Get-FileHash -LiteralPath (Join-Path $caller 'stdout.bin')).Hash\nif($actual -cne '41E28AFDFAC2A7A3097E135CB153CF3516E301703DFF06AD37009E48A94A98D1' -or (Get-Item -LiteralPath (Join-Path $caller 'stderr.bin')).Length -ne 0 -or $receipt.actualExit -ne 0 -or -not $receipt.cleanup.AccountingZero -or -not $receipt.cleanup.HandleClosed){throw 'ActualWSLtiny mismatch'}\n$receipt|Select-Object actualExit,@{n='stdoutSha256';e={$actual}},@{n='rawCommand';e={$_.launch.IntendedCommand}},@{n='jobZero';e={$_.cleanup.AccountingZero}}|ConvertTo-Json\nGet-Date -Format o\""
+    }
+  ],
+  "historicalCallerBoundaryVerified": true,
+  "historicalSystemAncestorsClaimed": false,
+  "historicalAllJobMembers": 5,
+  "historicalJobTotal": 5,
+  "historicalSpecificJobZeroVerified": true,
+  "historicalCaptureLease": "8f8bec4ef86a405f821ec41ffd5c4ec5",
+  "bindingPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v37\\wsl-tiny-binding.json",
+  "bindingSha256": "B715A0B7108C2F22D21989F776C3013754DB59E153BD6F587F541F772AA6AD80",
+  "captureReceiptPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v37\\wsl-tiny-8f8bec4ef86a405f821ec41ffd5c4ec5\\capture-receipt.json",
+  "captureReceiptSha256": "BA9983D08068C70776867F1082170EE42E8B461AAC72D653790F1DD17244839D",
+  "originalResourceCloseoutPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\resume-root-v37\\RESOURCE-CLOSEOUT.json",
+  "originalResourceCloseoutSha256": "31DE7B129F402B5CB54B7F8BAFE6C6C478A1B9D883F52B909F763CADE7B4F58E",
+  "freshNativeResultSha256": "E62895637069E2C8C75DA29E1719F5FFCAE25BDA1969E50388580B6D4A6BD1C8",
+  "freshNativeStatus": "NO_PROCESS_AT_NATIVE_OPEN_TIME",
+  "freshWin32Error": 87,
+  "interpretation": "Single Get-Process found no PID; accepted native OpenProcess returned ERROR_INVALID_PARAMETER87, not AccessDenied5. No process existed at the native open observation. Specific exit time/code/cause cannot be reconstructed without a retained live process handle; historical UNKNOWN is preserved.",
+  "protectedProcessProven": false,
+  "currentPidReuseObserved": false,
+  "currentExactLiveIdentityProven": false,
+  "killOrReclaimRecommended": false,
+  "reclaimDecision": "No current target/handle, so no kill. A future same numeric PID requires a fresh birth/full-command/parent check and scope review; never act on PID alone.",
+  "jobZeroIsIndependentIdentityProof": false,
+  "workerNativeReadTransactions": 1,
+  "workerBuild": 0,
+  "workerGit": 0,
+  "workerTargetProcessesStarted": 0,
+  "deletedObjects": 0,
+  "originalsModified": false,
+  "at": "2026-10-14T04:04:05.7849908+00:00"
+}

@@ -1,0 +1,32 @@
+{
+  "deliveryEncoding": "LF UTF8 derivatives; immutable originals retained",
+  "fullP1Closure": false,
+  "killAttempted": false,
+  "at": "2026-10-14T12:19:57.0242148+08:00",
+  "componentResult": "NO_TARGET_AT_NATIVE_QUERY_TIME",
+  "fullP2Closure": false,
+  "rootReview": "ExactPID/birth/parent/command linked to actualreadonly native query87 and two preserved original receipts; no currenttarget atquerytime",
+  "accessDeniedObserved": false,
+  "historicalBirth": "134364226682750937",
+  "pid": 63500,
+  "nativeQueryAt": "2026-10-14T04:02:22.2145863+00:00",
+  "nativeWin32Error": 87,
+  "originals": [
+    {
+      "delivery": "conhost63500-native-query-v1.json",
+      "original": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\conhost63500-audit-v1\\NATIVE-READ-RESULT.json",
+      "originalSha256": "E62895637069E2C8C75DA29E1719F5FFCAE25BDA1969E50388580B6D4A6BD1C8",
+      "deliverySha256": "295B499277F578440E6011B47E03704BB68152B6EFF1D31A028612A9961B4059"
+    },
+    {
+      "delivery": "conhost63500-historical-job-v1.json",
+      "original": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\conhost63500-audit-v1\\HISTORICAL-JOB-BINDING.json",
+      "originalSha256": "170A2BAB8B46CEE8FDC0D1313CEBC88BF90F2DCFF3F4AB837152AB7B07A15D7D",
+      "deliverySha256": "DC6F24226E10890397351A6D8DE875804D33AAEB16AE84644F7107945C66BD66"
+    }
+  ],
+  "exactExitTimeAndCode": "UNKNOWN; no retainedhandle",
+  "taskId": "P1-INFRA.resource63500-v1",
+  "historicalParentChainAndJob5To0Independent": true,
+  "historicalUnknownPreserved": true
+}

@@ -1,0 +1,35 @@
+{
+  "taskId": "P1-INFRA.resource63500-v1",
+  "pid": 63500,
+  "expectedBirth": "134364226682750937",
+  "expectedParentPid": 76744,
+  "expectedCommand": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+  "singleGetProcessAt": "2026-10-14T04:00:04Z",
+  "singleGetProcessFound": false,
+  "nativeStatus": "NO_PROCESS_AT_NATIVE_OPEN_TIME",
+  "nativeIdentity": null,
+  "nativeWin32Error": 87,
+  "nativeError": "调用“Invoke”并传入“2”个参数时发生异常：“OpenProcess exact query/synchronize target”",
+  "exceptionChain": [
+    {
+      "message": "调用“Invoke”并传入“2”个参数时发生异常：“OpenProcess exact query/synchronize target”",
+      "type": "System.Management.Automation.MethodInvocationException"
+    },
+    {
+      "message": "OpenProcess exact query/synchronize target",
+      "type": "System.ComponentModel.Win32Exception"
+    }
+  ],
+  "acceptedBridgePath": "D:\\GitHub\\RustSharp\\artifacts\\p2-supervision\\formatter-windows-cancel-v6\\Launcher.dll",
+  "acceptedBridgeSha256": "214B705AAC5DBDE7ACB0FAEF73ECCFC2B02C3956ED3EFB14188B87F74DC0F1E6",
+  "nativeCallsToRead": 1,
+  "nativeQueryElapsedSeconds": 0.2149973,
+  "priorResourceUnknownPreserved": true,
+  "jobZeroDoesNotProveIndependentIdentity": true,
+  "exitCode": "NOT_AVAILABLE_NO_RETAINED_HANDLE",
+  "killAttempted": false,
+  "workerBuild": 0,
+  "workerGit": 0,
+  "childProcessesStarted": 0,
+  "at": "2026-10-14T04:02:22.2145863+00:00"
+}
