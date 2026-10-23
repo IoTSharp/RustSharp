@@ -1,0 +1,419 @@
+{
+  "schemaVersion": 1,
+  "profile": "core-v1",
+  "leafId": "P2-01.01",
+  "hardDependencies": [
+    "P1-GATE"
+  ],
+  "platforms": [
+    "win-x64",
+    "linux-x64"
+  ],
+  "denominator": 42,
+  "inventoryKind": "frozen-core-contract-inventory",
+  "families": [
+    "primitives",
+    "option",
+    "result",
+    "formatting",
+    "comparison",
+    "hashing",
+    "iterators"
+  ],
+  "members": [
+    "core::bool",
+    "core::i32",
+    "core::u32",
+    "core::usize",
+    "core::option::Option",
+    "core::option::Option::none",
+    "core::option::Option::some",
+    "core::option::Option::is_some",
+    "core::result::Result",
+    "core::result::Result::ok",
+    "core::result::Result::err",
+    "core::result::Result::is_ok",
+    "core::fmt::Display",
+    "core::fmt::Debug",
+    "core::fmt::write",
+    "core::fmt::format",
+    "core::cmp::PartialEq",
+    "core::cmp::Eq",
+    "core::cmp::Ord",
+    "core::cmp::Ordering",
+    "core::hash::Hash",
+    "core::hash::Hasher",
+    "core::hash::DefaultHasher",
+    "core::iter::Iterator",
+    "core::iter::IntoIterator",
+    "core::iter::empty",
+    "core::iter::once",
+    "core::iter::map"
+  ],
+  "diagnostics": {
+    "invalidInput": "RSCORE1001",
+    "overflow": "RSCORE1002",
+    "missingImplementation": "RSCORE1003",
+    "invalidSpecifier": "RSCORE1004",
+    "incompatibleTypes": "RSCORE1005",
+    "budgetExceeded": "RSCORE0001"
+  },
+  "limits": {
+    "maximumMembers": 128,
+    "maximumCases": 42,
+    "maximumOutputBytes": 16777216,
+    "maximumOperations": 1000000,
+    "timeoutMilliseconds": 10000
+  },
+  "testTargets": [
+    {
+      "leafId": "P2-01.01",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-01.01 --timeout 30 --deadline 120",
+      "denominator": 42,
+      "registration": "P2CoreContractTests.All"
+    },
+    {
+      "leafId": "P2-01.02",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-01.02 --timeout 30 --deadline 120",
+      "denominator": 12,
+      "registration": "P2CoreValueTests.All"
+    },
+    {
+      "leafId": "P2-01.03",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-01.03 --timeout 30 --deadline 120",
+      "denominator": 6,
+      "registration": "P2CoreFormattingTests.All"
+    },
+    {
+      "leafId": "P2-01.04",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-01.04 --timeout 30 --deadline 120",
+      "denominator": 6,
+      "registration": "P2CoreComparisonHashTests.All"
+    },
+    {
+      "leafId": "P2-01.05",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-01.05 --timeout 30 --deadline 120",
+      "denominator": 6,
+      "registration": "P2CoreIteratorTests.All"
+    },
+    {
+      "leafId": "P2-01.06",
+      "command": "dotnet run --project tests/RustSharp.Tests -c Release --no-build --no-restore -- --filter P2-01.06 --timeout 30 --deadline 120",
+      "denominator": 2,
+      "registration": "P2CoreConsumerTests.All"
+    }
+  ],
+  "cases": [
+    {
+      "id": "primitive-bool",
+      "family": "primitives",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded primitives contract case 'primitive-bool' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "primitive-i32",
+      "family": "primitives",
+      "kind": "error",
+      "expected": "reject",
+      "scenario": "Bounded primitives contract case 'primitive-i32' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "primitive-u32",
+      "family": "primitives",
+      "kind": "boundary",
+      "expected": "pass",
+      "scenario": "Bounded primitives contract case 'primitive-u32' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "primitive-usize",
+      "family": "primitives",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded primitives contract case 'primitive-usize' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "primitive-overflow",
+      "family": "primitives",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded primitives contract case 'primitive-overflow' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "primitive-invalid-cast",
+      "family": "primitives",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded primitives contract case 'primitive-invalid-cast' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "option-none",
+      "family": "option",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded option contract case 'option-none' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "option-some",
+      "family": "option",
+      "kind": "error",
+      "expected": "reject",
+      "scenario": "Bounded option contract case 'option-some' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "option-match",
+      "family": "option",
+      "kind": "boundary",
+      "expected": "pass",
+      "scenario": "Bounded option contract case 'option-match' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "option-map",
+      "family": "option",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded option contract case 'option-map' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "option-boundary",
+      "family": "option",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded option contract case 'option-boundary' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "option-invalid-use",
+      "family": "option",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded option contract case 'option-invalid-use' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "result-ok",
+      "family": "result",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded result contract case 'result-ok' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "result-err",
+      "family": "result",
+      "kind": "error",
+      "expected": "reject",
+      "scenario": "Bounded result contract case 'result-err' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "result-match",
+      "family": "result",
+      "kind": "boundary",
+      "expected": "pass",
+      "scenario": "Bounded result contract case 'result-match' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "result-map",
+      "family": "result",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded result contract case 'result-map' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "result-boundary",
+      "family": "result",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded result contract case 'result-boundary' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "result-invalid-use",
+      "family": "result",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded result contract case 'result-invalid-use' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "format-display",
+      "family": "formatting",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded formatting contract case 'format-display' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "format-debug",
+      "family": "formatting",
+      "kind": "error",
+      "expected": "reject",
+      "scenario": "Bounded formatting contract case 'format-debug' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "format-golden-utf8",
+      "family": "formatting",
+      "kind": "boundary",
+      "expected": "pass",
+      "scenario": "Bounded formatting contract case 'format-golden-utf8' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "format-invalid-specifier",
+      "family": "formatting",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded formatting contract case 'format-invalid-specifier' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "format-missing-impl",
+      "family": "formatting",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded formatting contract case 'format-missing-impl' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "format-output-budget",
+      "family": "formatting",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded formatting contract case 'format-output-budget' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "comparison-equality",
+      "family": "comparison",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded comparison contract case 'comparison-equality' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "comparison-order",
+      "family": "comparison",
+      "kind": "error",
+      "expected": "reject",
+      "scenario": "Bounded comparison contract case 'comparison-order' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "comparison-float",
+      "family": "comparison",
+      "kind": "boundary",
+      "expected": "pass",
+      "scenario": "Bounded comparison contract case 'comparison-float' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "comparison-incompatible",
+      "family": "comparison",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded comparison contract case 'comparison-incompatible' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "comparison-boundary",
+      "family": "comparison",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded comparison contract case 'comparison-boundary' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "comparison-invalid-impl",
+      "family": "comparison",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded comparison contract case 'comparison-invalid-impl' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "hash-stable",
+      "family": "hashing",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded hashing contract case 'hash-stable' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "hash-collision",
+      "family": "hashing",
+      "kind": "error",
+      "expected": "reject",
+      "scenario": "Bounded hashing contract case 'hash-collision' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "hash-empty",
+      "family": "hashing",
+      "kind": "boundary",
+      "expected": "pass",
+      "scenario": "Bounded hashing contract case 'hash-empty' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "hash-incompatible",
+      "family": "hashing",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded hashing contract case 'hash-incompatible' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "hash-boundary",
+      "family": "hashing",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded hashing contract case 'hash-boundary' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "hash-invalid-impl",
+      "family": "hashing",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded hashing contract case 'hash-invalid-impl' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "iterator-empty",
+      "family": "iterators",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded iterators contract case 'iterator-empty' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "iterator-single",
+      "family": "iterators",
+      "kind": "error",
+      "expected": "reject",
+      "scenario": "Bounded iterators contract case 'iterator-single' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "iterator-many",
+      "family": "iterators",
+      "kind": "boundary",
+      "expected": "pass",
+      "scenario": "Bounded iterators contract case 'iterator-many' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "iterator-map",
+      "family": "iterators",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded iterators contract case 'iterator-map' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "iterator-order",
+      "family": "iterators",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded iterators contract case 'iterator-order' with fixed input, output or diagnostic and no skipped execution."
+    },
+    {
+      "id": "iterator-invalid-item",
+      "family": "iterators",
+      "kind": "positive",
+      "expected": "pass",
+      "scenario": "Bounded iterators contract case 'iterator-invalid-item' with fixed input, output or diagnostic and no skipped execution."
+    }
+  ],
+  "evidenceRequiredFields": [
+    "leafId",
+    "manifestSha256",
+    "candidateSha",
+    "tools",
+    "runtimeIdentifier",
+    "command",
+    "denominator",
+    "passed",
+    "failed",
+    "skipped",
+    "timeResourceLimits",
+    "cleanup",
+    "failureReasons",
+    "provenance"
+  ],
+  "runtimeEvidence": false
+}

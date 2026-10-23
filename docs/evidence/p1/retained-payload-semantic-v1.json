@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P1-GATE.03.CISEM-v1",
+  "status": "🚧 In progress",
+  "evidenceKind": "retained-ci-original-byte-component-audit",
+  "candidateSha": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "treeSha": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "runId": "37710305713",
+  "attempt": 1,
+  "source": {
+    "taskId": "P1-GATE.03.CISEM-v1",
+    "at": "2026-10-13T19:44:04.8599948+08:00",
+    "sourcePath": "D:\\GitHub\\RustSharp\\eng\\Audit-P1RetainedPayload.ps1",
+    "sourceSha256": "448AB33B4E7E047E84E3CCA66A817E103E54CF56B1E18D119030A0FF04C378B5",
+    "sourceBytes": 22220,
+    "sourceFrozen": true,
+    "finalTrial": "artifacts/p1-supervision/ci-followup-v27/tiny3.json",
+    "finalAudit": "artifacts/p1-supervision/ci-followup-v27/semantic-attempt3.json",
+    "auditSha256": "77DBDB4C14F39C893A81A494F8E2EF3EAAF2C841B28BB30EBEBB44E0C563FB65",
+    "status": "passed",
+    "checks": 7912,
+    "issues": 0,
+    "files": 1806,
+    "headers": 144,
+    "cases": 52,
+    "pending": 8,
+    "completeSemanticsAccepted": false,
+    "fullP1Closure": false,
+    "fullP2Closure": false
+  },
+  "actualAuditResult": "passed",
+  "counts": {
+    "checks": 7912,
+    "issues": 0,
+    "sourceFiles": 1572,
+    "backendFiles": 234,
+    "filesHashed": 1806,
+    "headers": 144,
+    "caseRecords": 52,
+    "sourcePackagesEach": 19,
+    "sourcePeEach": 39,
+    "sourceAotEach": 19,
+    "sourceRetainedEach": 785,
+    "backendCells": 24,
+    "backendRetainedEach": 103
+  },
+  "components": [
+    {
+      "group": "source",
+      "rid": "win-x64",
+      "packages": 19,
+      "originalPE": 39,
+      "originalAOT": 19,
+      "retained": 785,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    },
+    {
+      "group": "source",
+      "rid": "linux-x64",
+      "packages": 19,
+      "originalPE": 39,
+      "originalAOT": 19,
+      "retained": 785,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    },
+    {
+      "group": "backend",
+      "rid": "win-x64",
+      "matrixDenominator": 24,
+      "localCells": 12,
+      "blockedForeignCells": 12,
+      "witnesses": 7,
+      "retained": 103,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    },
+    {
+      "group": "backend",
+      "rid": "linux-x64",
+      "matrixDenominator": 24,
+      "localCells": 12,
+      "blockedForeignCells": 12,
+      "witnesses": 7,
+      "retained": 103,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    }
+  ],
+  "issues": [],
+  "pending": [
+    {
+      "id": "source/win-x64/imported-unwind-cleans-caller",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    },
+    {
+      "id": "source/win-x64/imported-abort-skips-caller-drop",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    },
+    {
+      "id": "source/win-x64/imported-unwind-caller-double-panic",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    },
+    {
+      "id": "source/win-x64/owned-tuple-partial-move-unwind",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    },
+    {
+      "id": "source/linux-x64/imported-unwind-cleans-caller",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    },
+    {
+      "id": "source/linux-x64/imported-abort-skips-caller-drop",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    },
+    {
+      "id": "source/linux-x64/imported-unwind-caller-double-panic",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    },
+    {
+      "id": "source/linux-x64/owned-tuple-partial-move-unwind",
+      "gap": "Nonzero exit and expected stdout verified; independent unwound/aborted/double-panic stderr classifier and language approval still required."
+    }
+  ],
+  "additionalGaps": [
+    "Generated metadata/PDB/member signature decoding",
+    "Full independent candidate Git blob mapping",
+    "Complete descendant containment",
+    "Expanded original native binaries",
+    "Formal joint and phase gates"
+  ],
+  "expandedSdk": "10.0.400",
+  "productionSdk": "10.0.401",
+  "immutableFailure": "artifacts/p1-supervision/ci-followup-v27/semantic-attempt1.json",
+  "failureReason": "Audit synthetic PSCustomObject Length=1; fixed explicit length property lookup; original bytes preserved",
+  "completeSemanticsAccepted": false,
+  "formalJointAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "externalChildrenLaunched": 0,
+  "objectsDeleted": 0,
+  "networkRequests": 0,
+  "downloadedProgramsExecuted": 0,
+  "hostIdentity": {
+    "ProcessId": 51196,
+    "ParentProcessId": 13884,
+    "CreationDate": "2026-10-13T19:42:42.312319+08:00",
+    "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n& ./eng/Audit-P1RetainedPayload.ps1 -Trial -TimeoutSeconds 15 -OutputPath artifacts/p1-supervision/ci-followup-v27/tiny3.json; & ./eng/Audit-P1RetainedPayload.ps1 -TimeoutSeconds 90 -TrialReportPath artifacts/p1-supervision/ci-followup-v27/tiny3.json -OutputPath artifacts/p1-supervision/ci-followup-v27/semantic-attempt3.json\""
+  },
+  "parentChainComplete": false,
+  "elapsedMilliseconds": 10108
+}

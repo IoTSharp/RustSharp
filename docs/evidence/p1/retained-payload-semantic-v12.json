@@ -1,0 +1,53 @@
+{
+  "taskId": "P1-GATE.03.CISEM-v1",
+  "version": 12,
+  "status": "❌ Failed",
+  "sourceReady": true,
+  "sourceSha256": "FB2327B5F33706B89C23F24EDA4931FAD80E4EBF9090984107D82A162DD2FC65",
+  "sourceFrozenAt": "2026-10-14T00:07:33.7282537+08:00",
+  "candidateSha": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "treeSha": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "runId": "37710305713",
+  "attempt": 1,
+  "sourcePeDenominator": 78,
+  "valueTypeDenominator": 88,
+  "fieldDenominator": 76,
+  "nonzeroDenominator": 56,
+  "zeroDenominator": 22,
+  "backendPeDenominator": 14,
+  "backendMatrixDenominator": 24,
+  "caseDenominator": 52,
+  "workerActualPeRun": "NOT_RUN",
+  "tiny": "failed",
+  "full": "NOT_RUN",
+  "rootAcceptance": "NOT_ACCEPTED",
+  "byteNegativeControls": "NOT_RUN",
+  "fullAbiSemanticsAccepted": false,
+  "completeSemanticsAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "expandedSdk": "10.0.400",
+  "productionSdk": "10.0.401",
+  "rootCommands": [
+    "& 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -NoProfile -File 'eng/Audit-P1RetainedPayloadV12.ps1' -Trial -OutputPath 'artifacts/p1-supervision/ci-followup-v38/root-tiny1.json' -TimeoutSeconds 20",
+    "& 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -NoProfile -File 'eng/Audit-P1RetainedPayloadV12.ps1' -TrialReportPath 'artifacts/p1-supervision/ci-followup-v38/root-tiny1.json' -OutputPath 'artifacts/p1-supervision/ci-followup-v38/root-semantic1.json' -TimeoutSeconds 60"
+  ],
+  "pending": [
+    "NOT_ACCEPTED: full recursive external field assembly scopes",
+    "NOT_ACCEPTED: generic scoped substitution and complete ABI/panic semantics",
+    "NOT_ACCEPTED: backend14/24cells/52cases/formalJoint and all6 gates"
+  ],
+  "rootTinyReportPath": "artifacts/p1-supervision/ci-followup-v38/root-tiny1.json",
+  "rootTinyReportSha256": "E2CA869E63ED8D83BE0771D05B2B510828418E4A4EE05843C0EA84B16FEEA667",
+  "rootTinyFailure": "Independent prerequisite mismatch",
+  "rootTinyIssues": [
+    {
+      "id": "V10 immutable root source contract",
+      "expected": "BE9388B3D46255FCFA1C5E2369A77CBE4BD56BF7703352DA49A588EDF772317C",
+      "actual": "52107D57245719E366336A99758D8BE5A1A46BA8CC526FB481F4FD879C6B99FA",
+      "passed": false
+    }
+  ],
+  "actualPeCompared": 0,
+  "actualByteControls": 0
+}

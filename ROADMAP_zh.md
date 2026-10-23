@@ -498,7 +498,7 @@ API/feature/RID 配置档报告；Visual Studio 工作只在共享 LSP 和 SDK �
 
 | ID | 状态 | 工作项 | 硬依赖 | 验收命令 | 可观察结果 |
 | --- | --- | --- | --- | --- | --- |
-| P2-01 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-01). 实现以 Rust 命名的 `core` 原语、`Option`、`Result`、格式化、比较、哈希和迭代器基础。 | P1 门槛 | `rsc test library/core/Cargo.toml` | 配置档清单中的公共名称/签名存在，且行为测试在 CoreCLR/AOT 上通过。 |
+| P2-01 | 🚧 进行中 | [叶子详情](docs/roadmap/P2_zh.md#p2-01). 实现以 Rust 命名的 `core` 原语、`Option`、`Result`、格式化、比较、哈希和迭代器基础。 | P1 门槛 | `rsc test library/core/Cargo.toml` | `P2-01.01` 已 ✅ 已完成；托管混合运行时表面及 CoreCLR/Windows/Linux x64 Native AOT 冒烟消费者已实现，Rust# 泛型枚举/前端、语言级 trait 降低和生成消费者门禁仍开放。 |
 | P2-02 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-02). 使用托管混合模型为 `Box`、`Vec`、`String`、`Rc`、`Arc` 和集合实现 `alloc` 配置档。 | P2-01 | `rsc test library/alloc/Cargo.toml` | 所有权、容量、索引、迭代、Drop、线程安全和分配限制测试通过。 |
 | P2-03 | ⏳ 计划中 | [叶子详情](docs/roadmap/P2_zh.md#p2-03). 实现 `std::io`、`std::fs`、`std::path`、环境、时间、进程、线程、同步和 `std::net` 配置档。 | P2-02 | `rsc test library/std/Cargo.toml` | 文件/目录操作、流、路径、进程取消、同步、TCP/UDP 和 DNS 示例在受支持的 x64 平台上通过。 |
 | P2-04 | 🚧 进行中 | [叶子详情](docs/roadmap/P2_zh.md#p2-04). 解析兼容 Cargo 的包/工作区清单、feature、目标 `cfg`、锁定数据和依赖图。 | P1-03 | `rsc check tests/workspaces/basic/Cargo.toml --locked` | 解析具有确定性；feature 合并和受支持的 `cfg` 用例与已记录的 Cargo 子集匹配；对不支持的键给出清晰诊断。 |

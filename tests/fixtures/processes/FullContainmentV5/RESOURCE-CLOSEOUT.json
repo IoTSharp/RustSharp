@@ -1,0 +1,23 @@
+{
+  "owner": "/root/containment_round43",
+  "scope": "FullContainmentV5 fixture byte preservation and bilingual documentation",
+  "at": "2026-10-14T15:39:16.2428468+08:00",
+  "copiedFilesByteIdentical": 7,
+  "behaviorChanges": 0,
+  "buildProcesses": 0,
+  "nativeProcesses": 0,
+  "longChildren": [],
+  "backgroundJobs": [],
+  "temporaryFiles": [],
+  "temporaryDirectories": [],
+  "downloads": [],
+  "deletions": [],
+  "allToolShellCommandsReturnedNormally": true,
+  "sourceOriginalsModified": false,
+  "foreignFormatterModified": false,
+  "bilingualHeadingHierarchyMatched": true,
+  "bilingualCommandBlocksMatched": 2,
+  "bilingualStatusMarkersMatched": true,
+  "workingRelativeLanguageLinks": true,
+  "allDeliverablesRetained": true
+}

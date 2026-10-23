@@ -1,0 +1,22 @@
+{
+  "taskId": "P2-08.02.CTRL-v2",
+  "version": 10,
+  "status": "🚧 In progress",
+  "evidenceKind": "source-review-only",
+  "review": "artifacts/p2-supervision/formatter-control-v10/REVIEW.md",
+  "nextScope": "artifacts/p2-supervision/formatter-control-v10/NEXT-SCOPE.json",
+  "functionalSourceChanged": false,
+  "workerBuild": "NOT_RUN",
+  "workerRuntime": "NOT_RUN",
+  "rootNativeRuntimeOwner": true,
+  "originalHelpersAllowed": 0,
+  "formatterCases": 59,
+  "toolingCases": 91,
+  "actualCtrlCExecuted": 0,
+  "fixtureNoSignalExecuted": 0,
+  "kernelIoExecuted": 0,
+  "systemAncestorsComplete": false,
+  "originalPermissionPassed": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}

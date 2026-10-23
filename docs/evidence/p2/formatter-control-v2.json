@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "at": "2026-10-13T19:43:09.0073925+08:00",
+  "taskId": "P2-08.02.CTRL-v2",
+  "componentStatus": "🚧 Source frozen; supervisor acceptance pending / 🚧 源码已冻结；监督者验收待完成",
+  "sourceManifest": "artifacts/p2-supervision/formatter-control-v2/SOURCE-FROZEN/source-manifest.json",
+  "sourceManifestSha256": "86D33121AC1584248359AA8CA433B7EB8B14FB8E3117AFFB4E31C340798DD089",
+  "compiled": false,
+  "runtimeCount": 0,
+  "workerSignals": 0,
+  "ctrlCProbePassed": false,
+  "actualCtrlCProven": false,
+  "cancelPassed": false,
+  "formatterPendingKernelIOProven": false,
+  "stdioCompletenessProven": false,
+  "systemAncestorsComplete": false,
+  "leafClosed": false,
+  "fixedLeafDenominator": 59,
+  "fixedParentDenominator": 91,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "productionBinding": "Supervisor must retain actual candidate/tree/CLI/build/source hashes; the v1 candidate is historical and not current-phase acceptance",
+  "pending": [
+    "fresh supervisor compilation with zero diagnostics",
+    "new same-assembly no-signal tiny1 actual run",
+    "actual owned-console CTRL+C probe1 with natural production exit130",
+    "independent handler readiness; no timing assumption",
+    "actual pending regular-file kernel IO",
+    "complete stdio",
+    "upstream system ancestors",
+    "59/91 formatter and tooling acceptance"
+  ]
+}

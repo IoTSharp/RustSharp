@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-01.01",
+  "profile": "core-v1",
+  "leafClosed": true,
+  "runtimeEvidence": false,
+  "implementationState": "contract-accepted",
+  "candidateSha": "2b4822138da8f02ab9a76f2a8deb2725ada38b0f",
+  "workingTreeDirty": true,
+  "manifestPath": "tools/RustSharp.Conformance/fixtures/p2-core-v1-manifest.json",
+  "manifestSha256": "4BF87D8C81A75DA4C43A7E5CCFF581F83F2C7E710467FAFE9574CF0AF5522355",
+  "canonicalContractSha256": "18C6D1B60FDEA05883FBD893DB06961EF9780C69365EE35AEFABDE1C963237A2",
+  "caseDenominator": 42,
+  "verifiedCases": 42,
+  "families": [
+    "primitives",
+    "option",
+    "result",
+    "formatting",
+    "comparison",
+    "hashing",
+    "iterators"
+  ],
+  "members": 28,
+  "testTargets": 6,
+  "validation": {
+    "sdk": "10.0.402",
+    "warnings": 0,
+    "cleanup": "passed",
+    "runtimeIdentifier": "win-x64",
+    "command": "standalone CoreContract validation",
+    "errors": 0,
+    "result": "valid=True; cases=42; issues=0"
+  },
+  "fullP2Closure": false,
+  "remainingLeaves": [
+    "P2-01.02",
+    "P2-01.03",
+    "P2-01.04",
+    "P2-01.05",
+    "P2-01.06"
+  ]
+}

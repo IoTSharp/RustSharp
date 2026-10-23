@@ -1,0 +1,21 @@
+{
+  "formatterCases": 59,
+  "buildIdentityComplete": false,
+  "actualCtrlCCasesExecuted": 0,
+  "fullP2Closure": false,
+  "PSAstErrors": 0,
+  "version": 13,
+  "build": "NOT_RUN",
+  "rootPendingReview": true,
+  "fullP1Closure": false,
+  "workerNativeProcesses": 0,
+  "sourceFrozen": true,
+  "sourceFiles": 11,
+  "noSignalCasesExecuted": 0,
+  "runtime": "NOT_RUN",
+  "toolingCases": 91,
+  "status": "🚧 In progress / 🚧 进行中",
+  "taskId": "P2-08.02.CTRL-v2",
+  "PSAstFiles": 5,
+  "manifestSha256": "3F33393A07ADF805F1BB5C8F603659EAF45DB72C15C31E36B992DBF04E823F33"
+}

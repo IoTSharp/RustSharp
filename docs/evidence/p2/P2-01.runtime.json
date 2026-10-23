@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "taskId": "P2-01",
+  "profile": "core-v1",
+  "candidateSha": "2b4822138da8f02ab9a76f2a8deb2725ada38b0f",
+  "scope": "managed-hybrid runtime core surface",
+  "runtimeEvidence": true,
+  "rustSharpGenericFrontEnd": false,
+  "leaves": {
+    "P2-01.02": {
+      "state": "🚧 In progress",
+      "tests": 12,
+      "passed": 12,
+      "coreClr": "passed",
+      "aot": {
+        "linux_x64": "passed",
+        "win_x64": "passed"
+      },
+      "remaining": "Rust# generic enum/Option/Result front-end integration"
+    },
+    "P2-01.03": {
+      "state": "🚧 In progress",
+      "tests": 6,
+      "passed": 6,
+      "coreClr": "passed",
+      "aot": {
+        "linux_x64": "passed",
+        "win_x64": "passed"
+      },
+      "remaining": "Rust# source formatting trait integration"
+    },
+    "P2-01.04": {
+      "state": "🚧 In progress",
+      "tests": 6,
+      "passed": 6,
+      "coreClr": "passed",
+      "aot": {
+        "linux_x64": "passed",
+        "win_x64": "passed"
+      },
+      "remaining": "Rust# trait lowering and language-level hash/comparison integration"
+    },
+    "P2-01.05": {
+      "state": "🚧 In progress",
+      "tests": 6,
+      "passed": 6,
+      "coreClr": "passed",
+      "aot": {
+        "linux_x64": "passed",
+        "win_x64": "passed"
+      },
+      "remaining": "Rust# iterator trait lowering and ownership integration"
+    },
+    "P2-01.06": {
+      "state": "🚧 In progress",
+      "tests": 2,
+      "passed": 2,
+      "consumerCoreClr": "passed",
+      "consumerAot": {
+        "linux_x64": "passed",
+        "win_x64": "passed"
+      },
+      "remaining": "Generated Rust# consumer and manifest export inventory"
+    }
+  },
+  "sourceFiles": [
+    {
+      "path": "src/RustSharp.Runtime/CoreComparison.cs",
+      "sha256": "B36BE74C9F52FAD31DED107DCE028D79746B8C8131B0580B5DC7F310FC780EE8"
+    },
+    {
+      "path": "src/RustSharp.Runtime/CoreFormatting.cs",
+      "sha256": "35A95DED423991068FB2F42D37177161011469E5029FFECD01F533B16AE74E48"
+    },
+    {
+      "path": "src/RustSharp.Runtime/CoreHashing.cs",
+      "sha256": "84CC48AA230C3F81121D140F2EED7DEDC9A31B59C21A6F0E649EE966C7DC4F7D"
+    },
+    {
+      "path": "src/RustSharp.Runtime/CoreIterator.cs",
+      "sha256": "B4ABE4CB10FDB5543FA0DFE684FA0FA5529FFB358543AED00D1DE1B6D9600920"
+    },
+    {
+      "path": "src/RustSharp.Runtime/CoreOption.cs",
+      "sha256": "D008779D3DDF9B2DAE6C7389671624D9EE1A88E65E83CF6609E3A62C66FFF502"
+    },
+    {
+      "path": "src/RustSharp.Runtime/CoreResult.cs",
+      "sha256": "7F9B90F056B99B95DC93EB43ADEEF6E4CA0042621FE412A2E4106628B5632F96"
+    }
+  ],
+  "validation": {
+    "errors": 0,
+    "cleanup": "passed",
+    "windowsOutput": "43|bad!|2,4,6",
+    "warnings": 0,
+    "runtimeTests": "32/32 passed",
+    "linuxOutput": "43|bad!|2,4,6",
+    "linuxCommand": "Ubuntu dotnet publish -r linux-x64 -p:PublishAot=true",
+    "windowsCommand": "dotnet build RuntimeCheck.csproj -c Release; dotnet publish -r win-x64 -p:PublishAot=true"
+  },
+  "fullP2Closure": false
+}

@@ -33,12 +33,12 @@ VS Code、CLI 和应用平台门槛覆盖 Windows 与 Linux x64。
 
 | ID | 状态 | 交付物 / 所有权 | 依赖 | 完成条件 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| P2-01.01 | ⏳ 计划中 | 冻结 `core-v1` API/签名、trait 与用例清单；`library/core/`、一致性清单。 | P1-GATE | 父任务全部七个功能族都有具名成员、正向/错误/边界用例及固定分母；未知成员已分类。 | `test:core-manifest`；清单验证报告。 |
-| P2-01.02 | ⏳ 计划中 | 原语操作及 `Option`/`Result`；`library/core/`。 | P2-01.01 | 声明的构造、匹配、组合器与错误传播可执行；溢出、缺失值和错误泛型约束符合配置档。 | `test:core-values`；生成程序与诊断报告。 |
-| P2-01.03 | ⏳ 计划中 | 格式化及 display/debug 适配器；`library/core/fmt/`。 | P2-01.01 | 具名格式化成员产生黄金 UTF-8 输出；无效说明符、缺失实现和输出预算产生诊断。 | `test:core-format`；格式化/输出限制报告。 |
-| P2-01.04 | ⏳ 计划中 | 比较与哈希契约；`library/core/cmp/`、`library/core/hash/`。 | P2-01.02 | 相等/排序/哈希符合声明契约，包括浮点数和碰撞；无效 trait 实现失败。 | `test:core-comparison-hash`；契约报告。 |
-| P2-01.05 | ⏳ 计划中 | 迭代器基础和适配器；`library/core/iter/`。 | P2-01.02 | 空/单/多元素遍历及声明的适配器保留顺序和所有权；移动后使用及不兼容元素类型失败。 | `test:core-iterators`；所有权与迭代报告。 |
-| P2-01.06 | ⏳ 计划中 | 导出清单及编译库消费者；`tests/library/core/`、一致性运行器。 | P2-01.03, P2-01.04, P2-01.05 | 清单签名与发出的导出一致；消费者在两个 x64 RID 上通过 CoreCLR/ILVerify/AOT，并验证无效消费者诊断。 | `test:core-consumers`；API 清单与双 RID 报告。 |
+| P2-01.01 | ✅ 已完成 | 冻结 `core-v1` API/签名、trait 与用例清单；`library/core/`、一致性清单。 | P1-GATE | 父任务全部七个功能族都有具名成员、正向/错误/边界用例及固定分母；未知成员已分类。 | `test:core-manifest`；[契约证据](../evidence/p2/P2-01.01.json)。42 个固定用例、28 个成员、七个家族、六个有界目标及明确的 `runtimeEvidence=false` 声明均已验证；运行时实现仍属于 P2-01.02–.06。 |
+| P2-01.02 | 🚧 进行中 | 原语操作及托管混合 `Option`/`Result`；`RustSharp.Runtime.Core`。 | P2-01.01 | 运行时构造、匹配、组合器和错误传播通过 CoreCLR 12/12 及 Windows/Linux x64 Native AOT 冒烟消费者；Rust# 泛型枚举/前端集成仍开放。 | [运行时证据](../evidence/p2/P2-01.runtime.json)；生成 Rust# 消费者与诊断矩阵仍开放。 |
+| P2-01.03 | 🚧 进行中 | 格式化及 display/debug 适配器；`RustSharp.Runtime.Core`。 | P2-01.01 | 运行时 display/debug、UTF-8 和预算用例在 CoreCLR 及 Windows/Linux x64 Native AOT 通过 6/6；Rust# 格式化 trait 集成仍开放。 | [运行时证据](../evidence/p2/P2-01.runtime.json)；语言级格式化消费者仍开放。 |
+| P2-01.04 | 🚧 进行中 | 比较与哈希契约；`RustSharp.Runtime.Core`。 | P2-01.02 | 运行时相等/排序/浮点部分比较和稳定哈希在 CoreCLR 及 Windows/Linux x64 Native AOT 通过 6/6；Rust# trait 降低仍开放。 | [运行时证据](../evidence/p2/P2-01.runtime.json)；语言级比较/哈希消费者仍开放。 |
+| P2-01.05 | 🚧 进行中 | 迭代器基础和适配器；`RustSharp.Runtime.Core`。 | P2-01.02 | 运行时空/once/map/顺序/惰性用例在 CoreCLR 及 Windows/Linux x64 Native AOT 通过 6/6；Rust# 迭代器所有权降低仍开放。 | [运行时证据](../evidence/p2/P2-01.runtime.json)；语言级迭代器消费者仍开放。 |
+| P2-01.06 | 🚧 进行中 | 导出清单及编译库消费者；运行时消费者夹具。 | P2-01.03, P2-01.04, P2-01.05 | 两个组合运行时消费者通过 CoreCLR 及 Windows/Linux x64 Native AOT 冒烟运行；生成 Rust# 导出清单、ILVerify 绑定和无效消费者诊断仍开放。 | [运行时证据](../evidence/p2/P2-01.runtime.json)。 |
 
 <a id="p2-02"></a>
 ## P2-02 — 托管混合 alloc 库

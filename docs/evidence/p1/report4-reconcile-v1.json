@@ -1,0 +1,15 @@
+{
+  "taskId": "P1-GATE.03.REPORT4-v1",
+  "version": 1,
+  "status": "failed",
+  "failureKind": "invalidSchemaAssumption",
+  "sourceSha256": "6F2E6CD4CEE8C39957CEB76AADF8C6B01D5D43D81CCE289676274A098160D880",
+  "wrongAssumption": "nativeExecution=true mandatory for source schema2",
+  "actualSourceField": "UNKNOWN_NOT_IN_SOURCE_SCHEMA",
+  "rootActualRun": "NOT_RUN",
+  "candidateProgramsExecuted": 0,
+  "sourceRetained": true,
+  "supersedingImmutableVersion": 2,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}

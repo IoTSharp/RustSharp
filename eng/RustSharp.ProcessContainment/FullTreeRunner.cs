@@ -27,15 +27,21 @@ public sealed class FullTreeReport {
  public RetainedJobObservation? LastRetainedObservation {get;set;}
  public int RetainedObservationCount {get;set;}
  public long MaximumOutputBytes {get;set;}public long AggregateOutputBytes {get;set;}public bool AggregateOutputBudgetExceeded {get;set;}public bool AggregateOutputBudgetObservedWhileRunning {get;set;}
+ public long MaximumOutputBytesPerStream {get;set;}public long MaximumTotalOutputBytes {get;set;}public long StandardOutputBytes {get;set;}public long StandardErrorBytes {get;set;}
+ public bool StandardOutputBudgetExceeded {get;set;}public bool StandardErrorBudgetExceeded {get;set;}public bool PerStreamOutputBudgetExceeded {get;set;}public bool PerStreamOutputBudgetObservedWhileRunning {get;set;}
  public long ObservationCount {get;set;}public List<ProcessObservation> Observations {get;}=new();
+ public JobSnapshotAudit? LastNativeSnapshot {get;set;}public JobSnapshotAudit? FailedNativeSnapshot {get;set;}
 }
 public static class FullTreeRunner {
  public static FullTreeReport Run(string executable,IReadOnlyList<string> arguments,string workingDirectory,string callerLeaseRoot,string callerLease,
   int maximumActiveProcesses,int maximumTotalProcesses,int timeoutSeconds,long maximumOutputBytes,CancellationToken cancellationToken,int pollingMilliseconds=10)
+  =>Run(executable,arguments,workingDirectory,callerLeaseRoot,callerLease,maximumActiveProcesses,maximumTotalProcesses,timeoutSeconds,maximumOutputBytes,maximumOutputBytes,cancellationToken,pollingMilliseconds);
+ public static FullTreeReport Run(string executable,IReadOnlyList<string> arguments,string workingDirectory,string callerLeaseRoot,string callerLease,
+  int maximumActiveProcesses,int maximumTotalProcesses,int timeoutSeconds,long maximumOutputBytesPerStream,long maximumTotalOutputBytes,CancellationToken cancellationToken,int pollingMilliseconds=10)
  {
   if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("FAIL_CLOSED: an owned escape-resistant cgroup/manager boundary has not been implemented. A process group is insufficient.");
   ArgumentNullException.ThrowIfNull(arguments);cancellationToken.ThrowIfCancellationRequested();
-  if(maximumActiveProcesses is <1 or >20||maximumTotalProcesses<maximumActiveProcesses||maximumTotalProcesses>1024||timeoutSeconds is <1 or >3600||maximumOutputBytes is <1 or >1073741824||pollingMilliseconds is <1 or >1000)
+  if(maximumActiveProcesses is <1 or >20||maximumTotalProcesses<maximumActiveProcesses||maximumTotalProcesses>1024||timeoutSeconds is <1 or >3600||maximumOutputBytesPerStream is <1 or >1073741824||maximumTotalOutputBytes is <1 or >1073741824||pollingMilliseconds is <1 or >1000)
    throw new ArgumentOutOfRangeException(nameof(maximumActiveProcesses),"Explicit unchanged caller caps and finite timeout/bytes required.");
   if(Path.GetFullPath(workingDirectory)!=workingDirectory||!Directory.Exists(workingDirectory))throw new ArgumentException("Exact existing working directory required.",nameof(workingDirectory));
   string root=ProcessAudit.VerifyRoot(callerLeaseRoot,cancellationToken),stdout=Path.Combine(root,"stdout.bin"),stderr=Path.Combine(root,"stderr.bin");
@@ -56,14 +62,17 @@ public static class FullTreeRunner {
    if(ownerJson.RootElement.GetProperty("lease").GetString()!=callerLease||!string.Equals(ownerJson.RootElement.GetProperty("root").GetString(),root,StringComparison.OrdinalIgnoreCase))
     throw new InvalidDataException("Caller OWNER lease/root mismatch; no target launched.");
   }
-  var report=new FullTreeReport{CallerLease=callerLease,MaximumOutputBytes=maximumOutputBytes,OwnerSha256=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(ownerBytes))};var retained=new Dictionary<ProcessIdentity,KernelHandle>();JobLease? job=null;OwnedSuspendedProcess? process=null;
+  var report=new FullTreeReport{CallerLease=callerLease,MaximumOutputBytes=maximumOutputBytesPerStream,MaximumOutputBytesPerStream=maximumOutputBytesPerStream,MaximumTotalOutputBytes=maximumTotalOutputBytes,OwnerSha256=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(ownerBytes))};var retained=new Dictionary<ProcessIdentity,KernelHandle>();JobLease? job=null;OwnedSuspendedProcess? process=null;
   var clock=Stopwatch.StartNew();bool coherent=true;int maximumPolls=checked(timeoutSeconds*1000/pollingMilliseconds+1);
   void ObserveOutput()
   {
    bool running=process!=null&&process.Receipt.Resumed&&!process.HasExited();long a=new FileInfo(stdout).Length,b=new FileInfo(stderr).Length;
-   report.AggregateOutputBytes=checked(a+b);
-   if(report.AggregateOutputBytes>maximumOutputBytes){report.AggregateOutputBudgetExceeded=true;report.AggregateOutputBudgetObservedWhileRunning|=running;throw new IOException("Aggregate raw output byte quota exceeded whileRunning="+running);}
-   if(a>maximumOutputBytes||b>maximumOutputBytes)throw new IOException("Per-stream raw output byte quota.");
+   report.StandardOutputBytes=a;report.StandardErrorBytes=b;report.AggregateOutputBytes=checked(a+b);
+   report.StandardOutputBudgetExceeded|=a>maximumOutputBytesPerStream;report.StandardErrorBudgetExceeded|=b>maximumOutputBytesPerStream;
+   report.PerStreamOutputBudgetExceeded|=a>maximumOutputBytesPerStream||b>maximumOutputBytesPerStream;
+   report.PerStreamOutputBudgetObservedWhileRunning|=running&&(a>maximumOutputBytesPerStream||b>maximumOutputBytesPerStream);
+   if(report.AggregateOutputBytes>maximumTotalOutputBytes){report.AggregateOutputBudgetExceeded=true;report.AggregateOutputBudgetObservedWhileRunning|=running;throw new IOException("Aggregate raw output byte quota exceeded whileRunning="+running);}
+   if(a>maximumOutputBytesPerStream||b>maximumOutputBytesPerStream)throw new IOException("Per-stream raw output byte quota exceeded whileRunning="+running);
   }
   void Observe()
   {
@@ -72,7 +81,7 @@ public static class FullTreeRunner {
    // Once every permitted cumulative member has an owned handle, no new identity may
    // be admitted. Observe exits through those same handles, never by reopening a PID.
    if(retained.Count==maximumTotalProcesses){try{report.LastRetainedObservation=ObserveRetained(job!,retained,cancellationToken);report.RetainedObservationCount++;RecordObservation(report.LastRetainedObservation.Total,report.LastRetainedObservation.AfterActive);}catch(OperationCanceledException){throw;}catch(Exception){coherent=false;throw;}ObserveOutput();return;}
-   JobSnapshot snapshot=job!.Inspect(cancellationToken);if(snapshot.Overflow||!snapshot.Coherent||snapshot.Failures.Count!=0){coherent=false;throw new InvalidDataException("Incomplete native member snapshot; fail closed.");}
+   JobSnapshot snapshot;try{snapshot=job!.Inspect(cancellationToken);report.LastNativeSnapshot=snapshot.Acquisition;}catch(Exception){report.FailedNativeSnapshot=job!.LastAcquisition;throw;}if(snapshot.Overflow||!snapshot.Coherent||snapshot.Failures.Count!=0){report.FailedNativeSnapshot=snapshot.Acquisition;coherent=false;throw new InvalidDataException("Incomplete native member snapshot; fail closed.");}
    if(snapshot.Total>maximumTotalProcesses||snapshot.Active>maximumActiveProcesses)throw new InvalidDataException("Original caller process cap exceeded.");
    var captureClock=Stopwatch.StartNew();int index=0;
    foreach(ProcessIdentity identity in snapshot.Members){if(index++>=20||captureClock.Elapsed.TotalSeconds>=5)throw new TimeoutException("Member20/5seconds bound.");cancellationToken.ThrowIfCancellationRequested();if(retained.ContainsKey(identity))continue;
@@ -111,8 +120,8 @@ public static class FullTreeRunner {
     finally{try{pair.Value.Dispose();proof.HandleClosed=pair.Value.CloseSucceeded;if(proof.HandleClosed is not true)terminal=false;}catch(Exception error){proof.Error=error.ToString();terminal=false;}}
    }
    if(job!=null){try{job.Dispose();}catch(Exception error){report.Errors.Add("job-close: "+error);}}
-   foreach(string path in new[]{stdout,stderr}){try{if(File.Exists(path)&&new FileInfo(path).Length>maximumOutputBytes)report.Errors.Add("Final raw byte quota: "+path);}catch(Exception error){report.Errors.Add("output-final: "+error);}}
-   try{if(File.Exists(stdout)&&File.Exists(stderr)){report.AggregateOutputBytes=checked(new FileInfo(stdout).Length+new FileInfo(stderr).Length);if(report.AggregateOutputBytes>maximumOutputBytes){report.AggregateOutputBudgetExceeded=true;report.Errors.Add("Final aggregate raw output byte quota exceeded");}}}catch(Exception error){report.Errors.Add("aggregate-output-final: "+error);}
+   foreach(string path in new[]{stdout,stderr}){try{if(File.Exists(path)&&new FileInfo(path).Length>maximumOutputBytesPerStream)report.Errors.Add("Final raw byte quota: "+path);}catch(Exception error){report.Errors.Add("output-final: "+error);}}
+   try{if(File.Exists(stdout)&&File.Exists(stderr)){report.StandardOutputBytes=new FileInfo(stdout).Length;report.StandardErrorBytes=new FileInfo(stderr).Length;report.AggregateOutputBytes=checked(report.StandardOutputBytes+report.StandardErrorBytes);report.StandardOutputBudgetExceeded|=report.StandardOutputBytes>maximumOutputBytesPerStream;report.StandardErrorBudgetExceeded|=report.StandardErrorBytes>maximumOutputBytesPerStream;report.PerStreamOutputBudgetExceeded|=report.StandardOutputBudgetExceeded||report.StandardErrorBudgetExceeded;if(report.AggregateOutputBytes>maximumTotalOutputBytes){report.AggregateOutputBudgetExceeded=true;report.Errors.Add("Final aggregate raw output byte quota exceeded");}}}catch(Exception error){report.Errors.Add("aggregate-output-final: "+error);}
    report.IdentityInventoryComplete=coherent&&report.JobTotal.HasValue&&report.JobTotal.Value==retained.Count;
    report.AllRetainedHandlesTerminalAndClosed=terminal&&report.IdentityInventoryComplete;
    report.FullContainmentVerified=report.WholeJobZero&&report.JobCleanup?.HandleClosed is true&&report.JobCleanup.Errors.Count==0&&report.AllRetainedHandlesTerminalAndClosed&&report.Root?.OwnProcessReclaimed is true&&report.Root.CleanupErrors.Count==0&&report.Root.PublicationErrors.Count==0;

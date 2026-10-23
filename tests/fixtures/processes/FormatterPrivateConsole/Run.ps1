@@ -4,7 +4,7 @@ param(
  [Parameter(Mandatory)][ValidatePattern('^[A-Fa-f0-9]{64}$')][string]$ReviewedManifestSha256,
  [Parameter(Mandatory)][string]$ReviewedLiveHostIdentityPath,
  [Parameter(Mandatory)][ValidatePattern('^[A-Fa-f0-9]{64}$')][string]$ReviewedLiveHostIdentitySha256,
- [ValidateSet('resume-no-signal')][string]$Mode='resume-no-signal'
+ [ValidateSet('resume-no-signal','resume-ctrl-c-probe')][string]$Mode='resume-no-signal'
 )
 Set-StrictMode -Version 3.0
 $ErrorActionPreference='Stop'
@@ -21,8 +21,11 @@ if(Test-Path -LiteralPath $taskResult){throw 'One retained root runtime attempt 
 $taskManifest=Join-Path $taskRoot 'manifest.json'
 $taskDeadline=[DateTime]::UtcNow.AddSeconds(120)
 $taskCancellation=[Threading.CancellationTokenSource]::new([TimeSpan]::FromSeconds(120))
-$taskReport=[ordered]@{status='🚧 In progress / 🚧 进行中';mode=$Mode;controllerProcessesCreated=0;helperProcessesCreated=0;cliProcessesCreated=0;signalSent=$false;cancelPassed=$false;noSignalPassed=$false;leafClosed=$false;systemAncestorsComplete=$false;fixedLeafDenominator=59;fixedParentDenominator=91;cleanupFailures=@();publicationFailures=@();maximumRuntimeChecks=20;maximumSeconds=120}
+$taskReport=[ordered]@{status='🚧 In progress / 🚧 进行中';mode=$Mode;controllerProcessesCreated=0;helperProcessesCreated=0;cliProcessesCreated=0;signalSent=$false;cancelPassed=$false;noSignalPassed=$false;ctrlCProbePassed=$false;stdioCompletenessProven=$false;formatterPendingKernelIOProven=$false;leafClosed=$false;systemAncestorsComplete=$false;fixedLeafDenominator=59;fixedParentDenominator=91;cleanupFailures=@();publicationFailures=@();maximumRuntimeChecks=20;maximumSeconds=120}
 $taskController=$null;$taskOuter=$null;$taskIoFiles=0;$taskIoBytes=0L;$taskIoChunks=0;$taskCleanupPublication=$false
+function Test-TaskComponentPassed {if($Mode -eq 'resume-ctrl-c-probe'){return $taskReport.ctrlCProbePassed};return $taskReport.noSignalPassed}
+function Clear-TaskComponentPass {$taskReport.noSignalPassed=$false;$taskReport.ctrlCProbePassed=$false}
+function Get-TaskComponentStatus {if(Test-TaskComponentPassed){if($Mode -eq 'resume-ctrl-c-probe'){return '✅ CTRL+C component probe verified; leaf open / ✅ CTRL+C 组件探针已验证；叶项未闭环'};return '✅ No-signal path verified; cancellation open / ✅ 无信号路径已验证；取消未闭环'};return '⛔ Blocked / ⛔ 已阻塞'}
 function Read-TaskBytes([string]$Path){
  $taskReadClock=[Diagnostics.Stopwatch]::StartNew();$taskCancellation.Token.ThrowIfCancellationRequested();Test-TaskRequirement ([IO.Path]::IsPathFullyQualified($Path)) 'Absolute I/O path';$taskReadPath=[IO.Path]::GetFullPath($Path)
  Test-TaskRequirement ((([IO.File]::GetAttributes($taskReadPath)) -band ([IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint)) -eq 0) 'Ordinary I/O file only';$script:taskIoFiles++;Test-TaskRequirement ($script:taskIoFiles -le 100) 'Shared100 file bound'
@@ -143,18 +146,22 @@ try{
  Test-TaskRequirement ($taskControllerDone -and $taskController.ExitCode -eq 0 -and $taskHelperGate -and $taskConsoleGate -and $taskCliGate) 'Natural controller exit zero with both reviewed gates required'
  $taskControllerResult=Read-TaskText (Join-Path $taskRoot 'controller-result.json')|ConvertFrom-Json -Depth 24
  $taskHelperResult=Read-TaskText (Join-Path $taskRoot 'helper-result.json')|ConvertFrom-Json -Depth 24
- Test-TaskRequirement ($taskControllerResult.noSignalPassed -and $taskHelperResult.noSignalPassed -and -not $taskControllerResult.signalSent -and -not $taskHelperResult.signalSent -and $taskHelperResult.cliExitCode -eq 0 -and $taskHelperResult.fixtureRemoved) 'Exact independent no-signal worker and owned cleanup evidence required'
- $taskReport.controllerExitCode=$taskController.ExitCode;$taskReport.workerResultHashes=@{controller=Get-TaskHash (Join-Path $taskRoot 'controller-result.json');helper=Get-TaskHash (Join-Path $taskRoot 'helper-result.json')};$taskReport.noSignalPassed=$true
- $taskReport.status='✅ No-signal path verified; cancellation open / ✅ 无信号路径已验证；取消未闭环'
+  Test-TaskRequirement ($taskHelperResult.liveConsoleQuery.RawCount -eq 2 -and $taskHelperResult.liveConsoleQuery.Members.Count -eq 2 -and (@($taskHelperResult.liveConsoleQuery.Members | Sort-Object) -join ',') -eq (@($taskHelper.Pid,$taskCli.Pid | Sort-Object) -join ',')) 'Independent live raw count/LastError/full member array required'
+  if($Mode -eq 'resume-ctrl-c-probe'){
+   Test-TaskRequirement ($taskControllerResult.ctrlCProbePassed -and $taskHelperResult.ctrlCProbePassed -and $taskControllerResult.signalSent -and $taskHelperResult.signalSent -and $taskHelperResult.cliExitCode -eq 130 -and $taskHelperResult.fixtureRemoved -and $taskHelperResult.ctrlCEventReceipt.EventKind -eq 0 -and $taskHelperResult.ctrlCEventReceipt.ProcessGroup -eq 0 -and $taskHelperResult.ctrlCEventReceipt.RawReturn -ne 0 -and $taskHelperResult.beforeCtrlCConsoleQuery.RawCount -eq 2 -and $taskHelperResult.beforeCtrlCConsoleQuery.Members.Count -eq 2 -and -not $taskHelperResult.cancelPassed -and -not $taskHelperResult.formatterPendingKernelIOProven -and -not $taskHelperResult.stdioCompletenessProven) 'Actual private CTRL+C and natural production exit130 component only; pending IO/stdio/leaf remain open'
+   $taskReport.signalSent=$true;$taskReport.ctrlCProbePassed=$true;$taskReport.ctrlCEventReceipt=$taskHelperResult.ctrlCEventReceipt
+  }else{Test-TaskRequirement ($taskControllerResult.noSignalPassed -and $taskHelperResult.noSignalPassed -and -not $taskControllerResult.signalSent -and -not $taskHelperResult.signalSent -and $taskHelperResult.cliExitCode -eq 0 -and $taskHelperResult.fixtureRemoved) 'Exact independent no-signal worker and owned cleanup evidence required';$taskReport.noSignalPassed=$true}
+  $taskReport.controllerExitCode=$taskController.ExitCode;$taskReport.workerResultHashes=@{controller=Get-TaskHash (Join-Path $taskRoot 'controller-result.json');helper=Get-TaskHash (Join-Path $taskRoot 'helper-result.json')}
+  $taskReport.status=Get-TaskComponentStatus
 }catch{
- $taskReport.status='⛔ Blocked / ⛔ 已阻塞';$taskReport.failure=$_.ToString()
+ Clear-TaskComponentPass;$taskReport.status='⛔ Blocked / ⛔ 已阻塞';$taskReport.failure=$_.ToString()
  if($_.Exception.GetType().FullName -eq 'FormatterPrivateConsoleFixture.LaunchFailure'){$taskReport.structuredLaunchFailure=$_.Exception.Receipt}
 }finally{
  $taskCleanupPublication=$true
- if($taskOuter){try{$taskReport.outerJobCleanup=$taskOuter.Reap([Threading.CancellationToken]::None)}catch{$taskReport.cleanupFailures+=($_.ToString());$taskReport.noSignalPassed=$false}}
- if($taskController){try{$taskController.Dispose();$taskReport.controllerCleanup=$taskController.Receipt;$taskReport.controllerExitCode=$taskController.Receipt.ActualExitCode;if(-not $taskController.Receipt.OwnProcessReclaimed -or $taskController.Receipt.CleanupErrors.Count -ne 0 -or $taskController.Receipt.PublicationErrors.Count -ne 0 -or $taskController.Receipt.ActualExitCode -ne 0){$taskReport.noSignalPassed=$false}}catch{$taskReport.cleanupFailures+=($_.ToString());$taskReport.noSignalPassed=$false}}
- if($taskOuter){try{$taskOuter.Dispose();$taskReport.outerJobHandleClosed=$taskOuter.Cleanup.HandleClosed;if(-not $taskOuter.Cleanup.AccountingZero -or $taskOuter.Cleanup.HandleClosed -ne $true -or $taskOuter.Cleanup.Final.Total -ne 4 -or $taskOuter.Cleanup.Errors.Count -ne 0){$taskReport.noSignalPassed=$false}}catch{$taskReport.cleanupFailures+=($_.ToString());$taskReport.noSignalPassed=$false}}
- $taskReport.status=if($taskReport.noSignalPassed){'✅ No-signal path verified; cancellation open / ✅ 无信号路径已验证；取消未闭环'}else{'⛔ Blocked / ⛔ 已阻塞'};$taskReport.ioBudget=@{files=$script:taskIoFiles;bytes=$script:taskIoBytes;chunks=$script:taskIoChunks};$taskCancellation.Dispose();$taskReport.finishedAt=Get-Date -Format o;try{Save-TaskResult}catch{$taskReport.noSignalPassed=$false;$taskReport.status='⛔ Final publication failed / ⛔ 最终落盘失败';$taskReport.finalPublicationFailure=$_.ToString();$taskReport|ConvertTo-Json -Depth 24|Write-Output;throw}
+ if($taskOuter){try{$taskReport.outerJobCleanup=$taskOuter.Reap([Threading.CancellationToken]::None)}catch{$taskReport.cleanupFailures+=($_.ToString());Clear-TaskComponentPass}}
+ if($taskController){try{$taskController.Dispose();$taskReport.controllerCleanup=$taskController.Receipt;$taskReport.controllerExitCode=$taskController.Receipt.ActualExitCode;if(-not $taskController.Receipt.OwnProcessReclaimed -or $taskController.Receipt.CleanupErrors.Count -ne 0 -or $taskController.Receipt.PublicationErrors.Count -ne 0 -or $taskController.Receipt.ActualExitCode -ne 0){Clear-TaskComponentPass}}catch{$taskReport.cleanupFailures+=($_.ToString());Clear-TaskComponentPass}}
+ if($taskOuter){try{$taskOuter.Dispose();$taskReport.outerJobHandleClosed=$taskOuter.Cleanup.HandleClosed;if(-not $taskOuter.Cleanup.AccountingZero -or $taskOuter.Cleanup.HandleClosed -ne $true -or $taskOuter.Cleanup.Final.Total -ne 4 -or $taskOuter.Cleanup.Errors.Count -ne 0){Clear-TaskComponentPass}}catch{$taskReport.cleanupFailures+=($_.ToString());Clear-TaskComponentPass}}
+ $taskReport.status=Get-TaskComponentStatus;$taskReport.ioBudget=@{files=$script:taskIoFiles;bytes=$script:taskIoBytes;chunks=$script:taskIoChunks};$taskCancellation.Dispose();$taskReport.finishedAt=Get-Date -Format o;try{Save-TaskResult}catch{Clear-TaskComponentPass;$taskReport.status='⛔ Final publication failed / ⛔ 最终落盘失败';$taskReport.finalPublicationFailure=$_.ToString();$taskReport|ConvertTo-Json -Depth 24|Write-Output;throw}
 }
-if(-not $taskReport.noSignalPassed){throw 'Reusable fixture no-signal proof did not pass; original evidence retained; no automatic runtime retry'}
+if(-not (Test-TaskComponentPassed)){throw 'Reusable fixture component did not pass; original evidence retained; no automatic runtime retry'}
 $taskReport|ConvertTo-Json -Depth 24

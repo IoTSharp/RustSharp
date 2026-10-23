@@ -4,6 +4,10 @@ Round 43 is 🚧 In progress. The provenance cwd repair component is ✅ Complet
 
 English | [简体中文](P2-HANDOFF_zh.md) | [P2 contract](P2.md)
 
+## Current P2-01 runtime checkpoint — 2026-10-23
+
+🚧 P2-01.01 is ✅ Complete with the frozen `core-v1` contract: 42 cases, 28 members, seven families, six bounded targets, and exact canonical hash validation. The managed-hybrid `RustSharp.Runtime.Core` implementation now passes 32/32 CoreCLR runtime cases plus Windows x64 and Ubuntu Linux x64 Native AOT smoke consumers for `Option`, `Result`, formatting, comparison, hashing, and iterators. P2-01.02–.06 remain 🚧 In progress because the Rust# generic enum front-end, language-level trait lowering, generated export inventory, ILVerify binding, and invalid generated-consumer diagnostics are still open. The P2 parent and phase remain open.
+
 ## Current supervision entry — 2026-10-14
 
 🚧 In progress: the sole new supervisor is chat

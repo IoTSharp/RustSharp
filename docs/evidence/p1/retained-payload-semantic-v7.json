@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 7,
+  "taskId": "P1-GATE.03.CISEM-v1",
+  "status": "🚧 In progress",
+  "sourcePath": "eng/Audit-P1RetainedPayloadV7.ps1",
+  "sourceSha256": "CB7E3437B7AB88045B9CB3EC64327B7EDE9A95AC2DDE6D16C313A3E2A5593541",
+  "trialPath": "artifacts/p1-supervision/ci-followup-v33/tiny1.json",
+  "trialStatus": "passed",
+  "trialPe": 1,
+  "trialChecks": 23,
+  "trialIssues": 0,
+  "negativeControls": [
+    {
+      "mutation": "actualILTokenBytes",
+      "offset": 5,
+      "rejected": true,
+      "originalsModified": false
+    },
+    {
+      "mutation": "decodedActualAssemblyReferenceVersion",
+      "original": "System.Runtime|10.0.0.0||B03F5F7F11D50A3A",
+      "mutated": "System.Runtime|11.0.0.0||B03F5F7F11D50A3A",
+      "rejected": true,
+      "originalsModified": false
+    }
+  ],
+  "fullRun": "NOT_RUN",
+  "rootIndependentAcceptance": "NOT_RUN",
+  "completeSemanticsAccepted": false,
+  "formalJointAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "caseDenominator": 52,
+  "backendMatrixDenominator": 24,
+  "backendPeDenominator": 14,
+  "sourcePackagesEach": 19,
+  "sourcePeEach": 39,
+  "sourceFileDenominator": 1572,
+  "backendFileDenominator": 234,
+  "physicalFileDenominator": 1806,
+  "reusedV4Checks": 1012,
+  "reusedV4ReportSha256": "926CE02EDF486B6B15504372FB57B979A7832B5B4B31B5891420E6B8D5050E72",
+  "expandedSdk": "10.0.400",
+  "productionSdk": "10.0.401",
+  "externalChildrenLaunched": 0,
+  "networkRequests": 0,
+  "objectsDeleted": 0,
+  "pending": [
+    "NOT_ACCEPTED: full source-MIR expected call/ABI/generic/layout semantics",
+    "NOT_ACCEPTED: backend14/24cell/cases52 semantic expectations",
+    "NOT_ACCEPTED: generic substitution and field/layout equivalence",
+    "NOT_ACCEPTED: real PE AssemblyRef byte mutation negative",
+    "NOT_ACCEPTED: independent root acceptance and full containment"
+  ]
+}

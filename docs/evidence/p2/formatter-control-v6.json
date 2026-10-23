@@ -1,0 +1,30 @@
+{
+  "taskId": "P2-08.02.CTRL-v2",
+  "version": 6,
+  "status": "🚧 In progress",
+  "scope": {
+    "toolingCases": 91,
+    "stdioTiny": 1,
+    "formatterCases": 59,
+    "productionCandidate": "aee97ccdc2509fb64693631979fa4e93c3a31578",
+    "stdioSource": 6
+  },
+  "namespace": "FormatterPrivateStdioV6",
+  "sourceManifestSha256": "C6D18775EAD744E6A588A4D44C111B6121D17227F816DC820217D7490D79E658",
+  "buildSha256": "C64B071882B921431F412E7BFE87637BAAD34AE432861A2D064B9DB5CEC2D1E8",
+  "tinySha256": "707B846EDD1677B09A88190C079862E4C579C0139112108E4C6FE98C565032BE",
+  "staticParserErrors": 0,
+  "compiled": false,
+  "runtimeCount": 0,
+  "fixtureNoSignalExecuted": 0,
+  "actualCtrlCExecuted": 0,
+  "pendingKernelFileIoProved": false,
+  "stdioCancellationProved": false,
+  "systemAncestorsComplete": false,
+  "leafClosed": false,
+  "workerProcessesCreated": 0,
+  "cleanupObjectsRemoved": 0,
+  "priorFailuresRetained": true,
+  "next": "Root review/actual compile0 diagnostics + all compiler-root closes; then one body/argv/stdio tiny. NoSignal/CTRL+C require separate fresh approved same-assembly prerequisite. No historic runtime acceptance inherited.",
+  "at": "2026-10-13T21:08:54.2580422+08:00"
+}

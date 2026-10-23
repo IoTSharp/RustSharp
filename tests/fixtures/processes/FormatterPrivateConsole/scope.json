@@ -1,30 +1,46 @@
 {
-  "schemaVersion": 1,
-  "owner": "/root/windows_cancel_review",
-  "lease": "tracked-port-v10-01b3baf1ef4f4b78a4fc4dbf2abb6769",
-  "trackedRoot": "D:\\GitHub\\RustSharp\\tests\\fixtures\\processes\\FormatterPrivateConsole",
+  "schemaVersion": 2,
+  "taskId": "P2-08.02.CTRL-v2",
+  "owner": "/root/formatter_control_v2",
+  "supervisor": "/root",
+  "status": "🚧 In progress / 🚧 进行中",
   "scope": [
-    "Complete Native/Launcher/Helper/Run tracked reusable fixture",
-    "Parameter TaskRoot and reviewed candidate manifest",
-    "Exact root/nonce/native-owner lease and reparse ancestry",
-    "Actual raw console-query receipts",
-    "Every cleanup/publication error in passed predicates"
+    "Private console source contract",
+    "Independent live/before/after raw console receipts",
+    "Actual GenerateConsoleCtrlEvent(0,0) component probe",
+    "Actual natural production CLI exit130 required",
+    "Native owner/CLI/console membership and hashes",
+    "Unchanged sources and zero staging/complete cleanup"
   ],
-  "excluded": [
-    "shared harness/roadmaps/git/stage/commit",
-    "worker compiler/runtime/signal",
-    "CTRL+C and formatter pending regular-file I/O closure"
+  "modes": [
+    "resume-no-signal",
+    "resume-ctrl-c-probe"
   ],
+  "supplementaryNoSignalCases": 1,
+  "supplementaryControlCases": 1,
   "fixedLeafDenominator": 59,
   "fixedParentDenominator": 91,
-  "supplementaryTiny": 1,
-  "supplementaryActualCancel": 1,
-  "historicalV9IsNotPortRuntimeEvidence": true,
+  "ordinarySourceFiles": 2,
+  "commentBytesEach": 32768,
+  "signalsPerProbe": 1,
+  "signalEventKind": 0,
+  "signalProcessGroup": 0,
   "workerCompiler": 0,
   "workerRuntime": 0,
-  "signals": 0,
-  "sourceFreezeDeadline": "2026-10-08T12:10:00+08:00",
-  "finalDeadline": "2026-10-08T12:15:00+08:00",
+  "workerSignals": 0,
   "maximumFilesPerBatch": 40,
-  "secondsPerBatch": 30
+  "maximumRuntimeSeconds": 120,
+  "sourceFreezeDeadline": "2026-10-13T19:42:00+08:00",
+  "finalDeadline": "2026-10-13T19:44:00+08:00",
+  "excluded": [
+    "pending regular-file kernel IO closure",
+    "stdio completeness",
+    "upstream system ancestors",
+    "full59/91 leaf closure",
+    "shared harness/git/stage/commit/build/run"
+  ],
+  "handlerReadinessIndependentProof": false,
+  "ctrlCProbePassed": false,
+  "cancelPassed": false,
+  "leafClosed": false
 }

@@ -1,0 +1,191 @@
+{
+  "taskId": "P1-GATE.03.REPORT4-v1",
+  "version": 2,
+  "status": "failed",
+  "sourceSha256": "039F96C29F21EFA64648FD9EBB537826B7F1EA89E7FE453CFE0815D379F04E71",
+  "inputsSha256": "94254FBEE8096C634F73B04AB713F706B95A0F4A505752A6A92059F5435F2ACE",
+  "candidateSha": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "treeSha": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "runId": "37710305713",
+  "attempt": 1,
+  "reportDenominator": 4,
+  "scopedCaseDenominator": 52,
+  "sourceCasesPerRid": 19,
+  "sourcePePerRid": 39,
+  "backendWitnessPerRid": 7,
+  "backendCellsPerReport": 24,
+  "backendForeignBlockedPerReport": 12,
+  "sourceNativeExecutionFlag": "UNKNOWN_NOT_IN_SOURCE_SCHEMA",
+  "nativeReportRunAndAttempt": "UNKNOWN_NOT_PRESENT",
+  "receiptRunIdentityOrigin": "hashed production receipt ci.runId/ci.runAttempt;native report itself does not state these",
+  "v1SchemaMistakePreserved": true,
+  "rootTiny": "failed",
+  "rootFull": "NOT_RUN",
+  "rootAcceptance": "NOT_ACCEPTED",
+  "candidateProgramsExecuted": 0,
+  "newRuntimeOrPEHashSweep": false,
+  "reusePreviousAcceptedPayloadHashes": true,
+  "completeSemanticsAccepted": false,
+  "wholeDescendantContainmentAccepted": false,
+  "perCellWitnessAndUnionFullSemanticGateAccepted": false,
+  "currentShaAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "sourceFrozenAt": "2026-10-14T01:40:21.2799626+08:00",
+  "hardSourceCutoffMet": true,
+  "readyTargetLateSeconds": 51.2799626,
+  "at": "2026-10-14T01:43:19.3645762+08:00",
+  "actualIssues": [
+    {
+      "id": "manifest retained hash proof",
+      "expected": "3399F1F6A85DE4946C987788785BDB4ADBFD88548A5122CD27B13247E1DEAB40",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "snapshot retained hash proof",
+      "expected": "2ACB3E2C71967124AE5EE2AF871F5D0E5FC635B54ECE9F7C9A1CB5EBD4FAD90C",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "build retained hash proof",
+      "expected": "334BCB930FA6DF3CE313F25E4AA12BF7190BAA11E91E175F713117E1AD55305E",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend originalPE retained hash proof",
+      "expected": "DB946C3AE4350B06CBBCF637ECA1C2277CD458DC13C14B4509112E34F7C4DC51",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend AOT retained hash proof",
+      "expected": "3DF3E516CA154C27B56CCBB7164E3BF1B945937B1944C786419646B22B2A630C",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend registration retained hash proof",
+      "expected": "FFDE51BD1CAB1AFA60A3C71AFFE20DC3502B56F8654A836B1ED572E040C65BE5",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend originalPE retained hash proof",
+      "expected": "D3B9ACFC3DFBB261F4ECE2922448EC9118D9184F9CDE062AFA1D39F67CFEA295",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend AOT retained hash proof",
+      "expected": "20BAA5622270BDBE10D67E368ABD5926F692320D5B3C43C7617C940336394D14",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend registration retained hash proof",
+      "expected": "AC6F9CC2990466FCCC5BFDE7405BD75CC89E3AE276EC124166D04C36B80FA520",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend originalPE retained hash proof",
+      "expected": "D8BEFF62C40735E581C5E4470211AA37E65E97427D80D02316321A0AFE286010",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend AOT retained hash proof",
+      "expected": "B6C9B9FB52B257DEF57AA576D9C084A9B5208C18F01A02AEE9555D5F76548ED8",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend registration retained hash proof",
+      "expected": "39DE7DE8DB5E2923611AA8BD9C6492C37892D38BBFB4BD9C3B93A9751824B4B9",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend originalPE retained hash proof",
+      "expected": "F04D577B7FFB3DE87CADD30EAC517EC67D71229119302397885A40FD5414D862",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend AOT retained hash proof",
+      "expected": "F45FEE1D739B00BE6F47FD6B564C796C53E943663D368A598FEAAFC8DE3B76D7",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend registration retained hash proof",
+      "expected": "6E43177E33D18463A8355A49EDF9E977FCDB5B52D0D127042D08ABEBB1B3BB72",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend originalPE retained hash proof",
+      "expected": "F5847BE17E20DD3598EC2DE94A4B467C38546D7CD8F891E69223947A3EA22941",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend AOT retained hash proof",
+      "expected": "4F57086028DFEE56EE09268F804A0DCF0F9565C796AFCA81DA31F7DE0D2DF652",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend registration retained hash proof",
+      "expected": "09817C470BA8B1FC6AAD7548939B75143985A277B0F9F38FAE89D733B8A5B550",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend originalPE retained hash proof",
+      "expected": "9C6CF40B73F69AB91EC23872DEFF0CC3605F12DF1699ECB4E595264E81AB8E8E",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend AOT retained hash proof",
+      "expected": "9218C4EB96D045B0F375271517F959E8368A13085E8FA53B5DD33714C5A436A9",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend registration retained hash proof",
+      "expected": "19114FDBBD220326F9A32CD814B430117D3436FEC96BDA5D356BE6DB7F93DA90",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend originalPE retained hash proof",
+      "expected": "0C2F59B360A148DFD90E1C8795226E73F32C783D912B042A65B48491EF8B6DF0",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend AOT retained hash proof",
+      "expected": "D0EFAC3C22222659716490BE2C80FC8A37FD23A807E93829C56B3456E02217F9",
+      "actual": null,
+      "passed": false
+    },
+    {
+      "id": "backend registration retained hash proof",
+      "expected": "19114FDBBD220326F9A32CD814B430117D3436FEC96BDA5D356BE6DB7F93DA90",
+      "actual": null,
+      "passed": false
+    }
+  ],
+  "rootTinyReportSha256": "BD9AD8640CFC5289A789031F82442CFD038E967C0D4BA679B69C22C0AA75C845",
+  "rootExecutionReceiptSha256": "66326612D16500026280E23BA75940C2CC937CB165B6131CBE5BF265ED66E9D7",
+  "actualExecutionOwnerPid": 65104,
+  "actualExecutionOwnerCreation": "2026-10-14T02:01:29.3993180+08:00",
+  "actualExecutionParentPid": 13884,
+  "failureCause": "Static inventory contains sha256, not freshSha256; freshSha256 exists only in independently accepted prior physical proof",
+  "successorAcceptedComponent": "artifacts/p1-supervision/report4-reconcile-v3/ACCEPTED-COMPONENT.json"
+}

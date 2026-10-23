@@ -68,6 +68,9 @@ internal static class Program
             .. P1StructuralOwnerPackageTests.All];
         tests = [.. tests, .. P1HarnessEvidenceTests.All];
         tests = [.. tests, .. P2CargoContractTests.All];
+        tests = [.. tests, .. P2CoreContractTests.All];
+        tests = [.. tests, .. P2CoreValueTests.All, .. P2CoreFormattingTests.All,
+            .. P2CoreComparisonHashTests.All, .. P2CoreIteratorTests.All, .. P2CoreConsumerTests.All];
         tests = [.. tests, .. P2ToolingContractTests.All];
         tests = [.. tests, .. P2DocumentationTests.All];
         tests = [.. tests, .. P2FormatterTests.All];

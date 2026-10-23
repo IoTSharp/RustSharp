@@ -1,0 +1,24 @@
+{
+  "taskId": "P2-08.02.CTRL-v2",
+  "version": 8,
+  "manifestSha256": "1F7915A430AD0F322613894211140AC6782E223C4126EBAE9803E926FBA0BA60",
+  "build": "NOT_RUN",
+  "runtime": "NOT_RUN",
+  "parse": [
+    {
+      "path": "Build-ObserverV8.ps1",
+      "parseErrors": []
+    },
+    {
+      "path": "Verify-Freeze.ps1",
+      "parseErrors": []
+    },
+    {
+      "path": "Observe-HeldRoot.ps1",
+      "parseErrors": []
+    }
+  ],
+  "originalHelpersAllowed": 0,
+  "fullP1Closure": false,
+  "fullP2Closure": false
+}

@@ -1,0 +1,677 @@
+{
+  "schemaVersion": 2,
+  "taskId": "P1-GATE.03.CISEM-v1",
+  "status": "🚧 In progress",
+  "evidenceKind": "retained-ci-data-only-ecma335-pdb-semantic-classification",
+  "candidateSha": "afb0988bb74e698a685adde93bacdd2b82b8c932",
+  "treeSha": "387d2ae7af9bfbd1a963dff481de3968fb7c24ae",
+  "runId": "37710305713",
+  "attempt": 1,
+  "source": {
+    "taskId": "P1-GATE.03.CISEM-v1",
+    "version": 2,
+    "at": "2026-10-13T20:09:18.5508445+08:00",
+    "sourcePath": "D:/GitHub/RustSharp/eng/Audit-P1RetainedPayloadV2.ps1",
+    "sourceSha256": "7D67185E070DA66A02C1C315FECED689C09D8FF4BD86A6B27BAAEFB47D1A715D",
+    "sourceBytes": 33623,
+    "sourceFrozen": true,
+    "runner": "C:\\Program Files\\PowerShell\\7\\pwsh.exe -NoProfile -File eng/Audit-P1RetainedPayloadV2.ps1 -Trial -TimeoutSeconds 15 -OutputPath artifacts/p1-supervision/ci-followup-v28/root-tiny1.json THEN same -TimeoutSeconds 90 -TrialReportPath artifacts/p1-supervision/ci-followup-v28/root-tiny1.json -OutputPath artifacts/p1-supervision/ci-followup-v28/root-semantic1.json",
+    "finalTrial": "artifacts/p1-supervision/ci-followup-v28/tiny2.json",
+    "finalAudit": "artifacts/p1-supervision/ci-followup-v28/semantic-attempt2.json",
+    "auditSha256": "A033D1D906EEF366D6D38D2E852951F9861322F7DD2658F68D6F2F58B2D2FFEC",
+    "status": "passed",
+    "checks": 8598,
+    "issues": 0,
+    "files": 1806,
+    "headers": 144,
+    "cases": 52,
+    "metadata": 92,
+    "pdb": 92,
+    "nonSuccess": 8,
+    "pending": [
+      {
+        "id": "backend/win-x64/repeated-array-once original PE",
+        "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\repeated-array-once\\program.rs"
+      },
+      {
+        "id": "backend/win-x64/mutable-subslice-call-return original PE",
+        "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\mutable-subslice-call-return\\program.rs"
+      },
+      {
+        "id": "backend/win-x64/mutable-closure-captures original PE",
+        "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\mutable-closure-captures\\program.rs"
+      },
+      {
+        "id": "backend/win-x64/inline-const-loop original PE",
+        "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\inline-const-loop\\program.rs"
+      },
+      {
+        "id": "backend/win-x64/signed-scalar-ops original PE",
+        "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\signed-scalar-ops\\program.rs"
+      },
+      {
+        "id": "backend/win-x64/nested-place-owner:frozen-hand-mir original PE",
+        "gap": "PDB document retained source binding absent: projection-backend.rs"
+      },
+      {
+        "id": "backend/win-x64/nested-place-owner:rust-source original PE",
+        "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\nested-place-owner-rust-source\\program.rs"
+      },
+      {
+        "id": "backend/linux-x64/repeated-array-once original PE",
+        "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/repeated-array-once/program.rs"
+      },
+      {
+        "id": "backend/linux-x64/mutable-subslice-call-return original PE",
+        "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/mutable-subslice-call-return/program.rs"
+      },
+      {
+        "id": "backend/linux-x64/mutable-closure-captures original PE",
+        "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/mutable-closure-captures/program.rs"
+      },
+      {
+        "id": "backend/linux-x64/inline-const-loop original PE",
+        "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/inline-const-loop/program.rs"
+      },
+      {
+        "id": "backend/linux-x64/signed-scalar-ops original PE",
+        "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/signed-scalar-ops/program.rs"
+      },
+      {
+        "id": "backend/linux-x64/nested-place-owner:frozen-hand-mir original PE",
+        "gap": "PDB document retained source binding absent: projection-backend.rs"
+      },
+      {
+        "id": "backend/linux-x64/nested-place-owner:rust-source original PE",
+        "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/nested-place-owner-rust-source/program.rs"
+      }
+    ],
+    "completeSemanticsAccepted": false,
+    "gitBlobProvenanceAccepted": false,
+    "formalJointAccepted": false,
+    "fullP1Closure": false,
+    "fullP2Closure": false,
+    "externalChildrenLaunched": 0,
+    "objectsDeleted": 0
+  },
+  "actualAuditResult": "passed",
+  "counts": {
+    "checks": 8598,
+    "issues": 0,
+    "sourceFiles": 1572,
+    "backendFiles": 234,
+    "filesHashed": 1806,
+    "headers": 144,
+    "caseRecords": 52,
+    "sourcePackagesEach": 19,
+    "sourcePeEach": 39,
+    "sourceAotEach": 19,
+    "sourceRetainedEach": 785,
+    "backendCells": 24,
+    "backendRetainedEach": 103,
+    "decodedOriginalPe": 92,
+    "decodedOriginalPdb": 92,
+    "nonSuccessCases": 8,
+    "backendPdbUnbound": 14
+  },
+  "components": [
+    {
+      "group": "source",
+      "rid": "win-x64",
+      "packages": 19,
+      "originalPE": 39,
+      "originalAOT": 19,
+      "retained": 785,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    },
+    {
+      "group": "source",
+      "rid": "linux-x64",
+      "packages": 19,
+      "originalPE": 39,
+      "originalAOT": 19,
+      "retained": 785,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    },
+    {
+      "group": "backend",
+      "rid": "win-x64",
+      "matrixDenominator": 24,
+      "localCells": 12,
+      "blockedForeignCells": 12,
+      "witnesses": 7,
+      "retained": 103,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    },
+    {
+      "group": "backend",
+      "rid": "linux-x64",
+      "matrixDenominator": 24,
+      "localCells": 12,
+      "blockedForeignCells": 12,
+      "witnesses": 7,
+      "retained": 103,
+      "sdk": "10.0.401",
+      "completeSemanticsAccepted": false
+    }
+  ],
+  "issues": [],
+  "pending": [
+    {
+      "id": "backend/win-x64/repeated-array-once original PE",
+      "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\repeated-array-once\\program.rs"
+    },
+    {
+      "id": "backend/win-x64/mutable-subslice-call-return original PE",
+      "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\mutable-subslice-call-return\\program.rs"
+    },
+    {
+      "id": "backend/win-x64/mutable-closure-captures original PE",
+      "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\mutable-closure-captures\\program.rs"
+    },
+    {
+      "id": "backend/win-x64/inline-const-loop original PE",
+      "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\inline-const-loop\\program.rs"
+    },
+    {
+      "id": "backend/win-x64/signed-scalar-ops original PE",
+      "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\signed-scalar-ops\\program.rs"
+    },
+    {
+      "id": "backend/win-x64/nested-place-owner:frozen-hand-mir original PE",
+      "gap": "PDB document retained source binding absent: projection-backend.rs"
+    },
+    {
+      "id": "backend/win-x64/nested-place-owner:rust-source original PE",
+      "gap": "PDB document retained source binding absent: D:\\a\\RustSharp\\RustSharp\\artifacts\\p1-backend\\windows-x64\\backend-2044-a88a674e98464a0eadacd7719a9f3be9\\nested-place-owner-rust-source\\program.rs"
+    },
+    {
+      "id": "backend/linux-x64/repeated-array-once original PE",
+      "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/repeated-array-once/program.rs"
+    },
+    {
+      "id": "backend/linux-x64/mutable-subslice-call-return original PE",
+      "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/mutable-subslice-call-return/program.rs"
+    },
+    {
+      "id": "backend/linux-x64/mutable-closure-captures original PE",
+      "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/mutable-closure-captures/program.rs"
+    },
+    {
+      "id": "backend/linux-x64/inline-const-loop original PE",
+      "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/inline-const-loop/program.rs"
+    },
+    {
+      "id": "backend/linux-x64/signed-scalar-ops original PE",
+      "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/signed-scalar-ops/program.rs"
+    },
+    {
+      "id": "backend/linux-x64/nested-place-owner:frozen-hand-mir original PE",
+      "gap": "PDB document retained source binding absent: projection-backend.rs"
+    },
+    {
+      "id": "backend/linux-x64/nested-place-owner:rust-source original PE",
+      "gap": "PDB document retained source binding absent: /home/runner/work/RustSharp/RustSharp/artifacts/p1-backend/linux-x64/backend-7516-c38d988bd9e5421bad49e9c226c4955b/nested-place-owner-rust-source/program.rs"
+    }
+  ],
+  "nonSuccess": [
+    {
+      "id": "source/win-x64/imported-unwind-cleans-caller",
+      "expectedOutcome": "unwound",
+      "expectedOutput": "drop\n",
+      "producerPanicStrategy": "unwind",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\imported-unwind-cleans-caller\\build-0\\producer.rs",
+          "sha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+          "originalSource": "pub fn fail(input: i32) -> i32 {\n    input + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\imported-unwind-cleans-caller\\build-0\\consumer.rs",
+          "sha256": "0944D904EBA2286C88590619995C386B0664632F9B0F394CF81144C71DB39E40",
+          "originalSource": "use SourceProducer::fail;\n\nstruct Guard { value: i32 }\nimpl Drop for Guard {\n    fn drop(&mut self) { println!(\"drop\"); }\n}\n\nfn main() {\n    let guard = Guard { value: 1 };\n    println!(\"{}\", fail(2147483647));\n    println!(\"{}\", guard.value);\n}\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "unwound",
+          "exitCode": -532462766,
+          "stdout": "drop\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_0(Int32) in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-panic-producer.rs:line 1\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.fn_0(Int32) in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-panic-producer.rs:line 1\n   at RustSharp.Generated.Program.Main() in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-panic-consumer.rs:line 8\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.Main() in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-panic-consumer.rs:line 8\n",
+          "originalPid": 9784,
+          "originalStartedAtUtc": "2026-10-08T01:00:45.6750842+00:00",
+          "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\imported-unwind-cleans-caller\\build-0\\SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "unwound",
+          "exitCode": -1073740791,
+          "stdout": "drop\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_0(Int32) + 0x20d\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x41\n   at RustSharp.Generated.Program.fn_0(Int32) + 0x23d\n   at RustSharp.Generated.Program.Main() + 0x1e6\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x41\n   at RustSharp.Generated.Program.Main() + 0x8ad\n   at RustSharp.NativeAotHost.EntryPoint.Main() + 0x9\n",
+          "originalPid": 5272,
+          "originalStartedAtUtc": "2026-10-08T01:00:57.4563288+00:00",
+          "commandLine": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\imported-unwind-cleans-caller\\native\\SourceConsumer.NativeAotHost.exe"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    },
+    {
+      "id": "source/win-x64/imported-abort-skips-caller-drop",
+      "expectedOutcome": "aborted",
+      "expectedOutput": "",
+      "producerPanicStrategy": "abort",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\imported-abort-skips-caller-drop\\build-0\\producer.rs",
+          "sha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+          "originalSource": "pub fn fail(input: i32) -> i32 {\n    input + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\imported-abort-skips-caller-drop\\build-0\\consumer.rs",
+          "sha256": "0944D904EBA2286C88590619995C386B0664632F9B0F394CF81144C71DB39E40",
+          "originalSource": "use SourceProducer::fail;\n\nstruct Guard { value: i32 }\nimpl Drop for Guard {\n    fn drop(&mut self) { println!(\"drop\"); }\n}\n\nfn main() {\n    let guard = Guard { value: 1 };\n    println!(\"{}\", fail(2147483647));\n    println!(\"{}\", guard.value);\n}\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "aborted",
+          "exitCode": 134,
+          "stdout": "",
+          "stderr": "RustSharp panic abort: Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 6436,
+          "originalStartedAtUtc": "2026-10-08T01:00:57.939881+00:00",
+          "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\imported-abort-skips-caller-drop\\build-0\\SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "aborted",
+          "exitCode": 134,
+          "stdout": "",
+          "stderr": "RustSharp panic abort: Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 2832,
+          "originalStartedAtUtc": "2026-10-08T01:01:09.5345725+00:00",
+          "commandLine": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\imported-abort-skips-caller-drop\\native\\SourceConsumer.NativeAotHost.exe"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    },
+    {
+      "id": "source/win-x64/imported-unwind-caller-double-panic",
+      "expectedOutcome": "double-panic",
+      "expectedOutput": "start\n",
+      "producerPanicStrategy": "unwind",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\imported-unwind-caller-double-panic\\build-0\\producer.rs",
+          "sha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+          "originalSource": "pub fn fail(input: i32) -> i32 {\n    input + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-double-panic-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\imported-unwind-caller-double-panic\\build-0\\consumer.rs",
+          "sha256": "680134BDC8EF64E5B710DC8C892774F9C9A2E4BCEFB41E67F5D3F4C05EC2C029",
+          "originalSource": "use SourceProducer::fail;\n\nstruct Guard { value: i32 }\nimpl Drop for Guard {\n    fn drop(&mut self) {\n        let value = 2147483647;\n        println!(\"{}\", value + 1);\n    }\n}\n\nfn main() {\n    let guard = Guard { value: 1 };\n    println!(\"start\");\n    println!(\"{}\", fail(2147483647));\n    println!(\"{}\", guard.value);\n}\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "double-panic",
+          "exitCode": 134,
+          "stdout": "start\n",
+          "stderr": "RustSharp double panic abort: Arithmetic operation resulted in an overflow. | Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 3096,
+          "originalStartedAtUtc": "2026-10-08T01:02:51.6874613+00:00",
+          "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\imported-unwind-caller-double-panic\\build-0\\SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "double-panic",
+          "exitCode": 134,
+          "stdout": "start\n",
+          "stderr": "RustSharp double panic abort: Arithmetic operation resulted in an overflow. | Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 624,
+          "originalStartedAtUtc": "2026-10-08T01:03:03.4293004+00:00",
+          "commandLine": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\imported-unwind-caller-double-panic\\native\\SourceConsumer.NativeAotHost.exe"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    },
+    {
+      "id": "source/win-x64/owned-tuple-partial-move-unwind",
+      "expectedOutcome": "unwound",
+      "expectedOutput": "1\n2\n",
+      "producerPanicStrategy": null,
+      "requiredFunctions": [
+        "crate::make",
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\owned-tuple-partial-move-unwind\\build-0\\producer.rs",
+          "sha256": "C5C25C63432C718A3CC365497596338DDF09A555F2EA894B3DC1EB3FE6301DFA",
+          "originalSource": "pub struct Resource { pub value: i32 }\n\nimpl Drop for Resource {\n    fn drop(&mut self) { println!(\"{}\", self.value); }\n}\n\npub fn make() -> (Resource, Resource) {\n    (Resource { value: 1 }, Resource { value: 2 })\n}\n\npub fn fail(pair: (Resource, Resource)) -> i32 {\n    let first = pair.0;\n    let max = 2147483647;\n    max + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\windows-x64\\evidence-53cc3affcecd4e8fa3a19ac37d26936c\\owned-tuple-partial-move-unwind\\build-0\\consumer.rs",
+          "sha256": "7F3E872959CFC23695EEA91ABE36FA5A4998231D15911ACB3BE2C64D2D4AC114",
+          "originalSource": "use SourceProducer::{make, fail};\n\nfn main() { fail(make()); }\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "unwound",
+          "exitCode": -532462766,
+          "stdout": "1\n2\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-partial-move-unwind-producer.rs:line 11\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-partial-move-unwind-producer.rs:line 11\n   at RustSharp.Generated.Program.Main() in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-partial-move-unwind-consumer.rs:line 3\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.Main() in D:\\a\\RustSharp\\RustSharp\\tools\\RustSharp.Conformance\\fixtures\\p1-source-package-v1-partial-move-unwind-consumer.rs:line 3\n",
+          "originalPid": 7620,
+          "originalStartedAtUtc": "2026-10-08T01:03:35.0597172+00:00",
+          "commandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\" C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\owned-tuple-partial-move-unwind\\build-0\\SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "unwound",
+          "exitCode": -1073740791,
+          "stdout": "1\n2\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) + 0x8ad\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x41\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) + 0xc6c\n   at RustSharp.Generated.Program.Main() + 0x132\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x41\n   at RustSharp.Generated.Program.Main() + 0x43b\n   at RustSharp.NativeAotHost.EntryPoint.Main() + 0x9\n",
+          "originalPid": 8196,
+          "originalStartedAtUtc": "2026-10-08T01:03:46.6948841+00:00",
+          "commandLine": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\rsc-p1-source-package-8387fe91a74a4105be587c04d7fad36d\\owned-tuple-partial-move-unwind\\native\\SourceConsumer.NativeAotHost.exe"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    },
+    {
+      "id": "source/linux-x64/imported-unwind-cleans-caller",
+      "expectedOutcome": "unwound",
+      "expectedOutput": "drop\n",
+      "producerPanicStrategy": "unwind",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\imported-unwind-cleans-caller\\build-0\\producer.rs",
+          "sha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+          "originalSource": "pub fn fail(input: i32) -> i32 {\n    input + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\imported-unwind-cleans-caller\\build-0\\consumer.rs",
+          "sha256": "0944D904EBA2286C88590619995C386B0664632F9B0F394CF81144C71DB39E40",
+          "originalSource": "use SourceProducer::fail;\n\nstruct Guard { value: i32 }\nimpl Drop for Guard {\n    fn drop(&mut self) { println!(\"drop\"); }\n}\n\nfn main() {\n    let guard = Guard { value: 1 };\n    println!(\"{}\", fail(2147483647));\n    println!(\"{}\", guard.value);\n}\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "unwound",
+          "exitCode": 134,
+          "stdout": "drop\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_0(Int32) in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs:line 1\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.fn_0(Int32) in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs:line 1\n   at RustSharp.Generated.Program.Main() in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs:line 8\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.Main() in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs:line 8\n",
+          "originalPid": 4784,
+          "originalStartedAtUtc": "2026-10-08T00:58:48.2981533+00:00",
+          "commandLine": "/usr/share/dotnet/dotnet /tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/imported-unwind-cleans-caller/build-0/SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "unwound",
+          "exitCode": 134,
+          "stdout": "drop\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_0(Int32) + 0x1e8\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x3c\n   at RustSharp.Generated.Program.fn_0(Int32) + 0x217\n   at RustSharp.Generated.Program.Main() + 0x195\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x3c\n   at RustSharp.Generated.Program.Main() + 0x79a\n   at RustSharp.NativeAotHost.EntryPoint.Main() + 0x6\n",
+          "originalPid": 4975,
+          "originalStartedAtUtc": "2026-10-08T00:58:54.8850721+00:00",
+          "commandLine": "/tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/imported-unwind-cleans-caller/native/SourceConsumer.NativeAotHost"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    },
+    {
+      "id": "source/linux-x64/imported-abort-skips-caller-drop",
+      "expectedOutcome": "aborted",
+      "expectedOutput": "",
+      "producerPanicStrategy": "abort",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\imported-abort-skips-caller-drop\\build-0\\producer.rs",
+          "sha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+          "originalSource": "pub fn fail(input: i32) -> i32 {\n    input + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\imported-abort-skips-caller-drop\\build-0\\consumer.rs",
+          "sha256": "0944D904EBA2286C88590619995C386B0664632F9B0F394CF81144C71DB39E40",
+          "originalSource": "use SourceProducer::fail;\n\nstruct Guard { value: i32 }\nimpl Drop for Guard {\n    fn drop(&mut self) { println!(\"drop\"); }\n}\n\nfn main() {\n    let guard = Guard { value: 1 };\n    println!(\"{}\", fail(2147483647));\n    println!(\"{}\", guard.value);\n}\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "aborted",
+          "exitCode": 134,
+          "stdout": "",
+          "stderr": "RustSharp panic abort: Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 4989,
+          "originalStartedAtUtc": "2026-10-08T00:58:55.0296622+00:00",
+          "commandLine": "/usr/share/dotnet/dotnet /tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/imported-abort-skips-caller-drop/build-0/SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "aborted",
+          "exitCode": 134,
+          "stdout": "",
+          "stderr": "RustSharp panic abort: Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 5173,
+          "originalStartedAtUtc": "2026-10-08T00:59:01.5735237+00:00",
+          "commandLine": "/tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/imported-abort-skips-caller-drop/native/SourceConsumer.NativeAotHost"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    },
+    {
+      "id": "source/linux-x64/imported-unwind-caller-double-panic",
+      "expectedOutcome": "double-panic",
+      "expectedOutput": "start\n",
+      "producerPanicStrategy": "unwind",
+      "requiredFunctions": [
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-panic-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\imported-unwind-caller-double-panic\\build-0\\producer.rs",
+          "sha256": "E6AA88FF0FECF7064A08AC0513ACE5475D86F4F1603C549FC7FE91398EE15E0F",
+          "originalSource": "pub fn fail(input: i32) -> i32 {\n    input + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-double-panic-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\imported-unwind-caller-double-panic\\build-0\\consumer.rs",
+          "sha256": "680134BDC8EF64E5B710DC8C892774F9C9A2E4BCEFB41E67F5D3F4C05EC2C029",
+          "originalSource": "use SourceProducer::fail;\n\nstruct Guard { value: i32 }\nimpl Drop for Guard {\n    fn drop(&mut self) {\n        let value = 2147483647;\n        println!(\"{}\", value + 1);\n    }\n}\n\nfn main() {\n    let guard = Guard { value: 1 };\n    println!(\"start\");\n    println!(\"{}\", fail(2147483647));\n    println!(\"{}\", guard.value);\n}\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "double-panic",
+          "exitCode": 134,
+          "stdout": "start\n",
+          "stderr": "RustSharp double panic abort: Arithmetic operation resulted in an overflow. | Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 6603,
+          "originalStartedAtUtc": "2026-10-08T00:59:52.2045405+00:00",
+          "commandLine": "/usr/share/dotnet/dotnet /tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/imported-unwind-caller-double-panic/build-0/SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "double-panic",
+          "exitCode": 134,
+          "stdout": "start\n",
+          "stderr": "RustSharp double panic abort: Arithmetic operation resulted in an overflow. | Arithmetic operation resulted in an overflow.\n",
+          "originalPid": 6788,
+          "originalStartedAtUtc": "2026-10-08T00:59:58.4491493+00:00",
+          "commandLine": "/tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/imported-unwind-caller-double-panic/native/SourceConsumer.NativeAotHost"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    },
+    {
+      "id": "source/linux-x64/owned-tuple-partial-move-unwind",
+      "expectedOutcome": "unwound",
+      "expectedOutput": "1\n2\n",
+      "producerPanicStrategy": null,
+      "requiredFunctions": [
+        "crate::make",
+        "crate::fail"
+      ],
+      "source": [
+        {
+          "role": "producer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-producer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\owned-tuple-partial-move-unwind\\build-0\\producer.rs",
+          "sha256": "C5C25C63432C718A3CC365497596338DDF09A555F2EA894B3DC1EB3FE6301DFA",
+          "originalSource": "pub struct Resource { pub value: i32 }\n\nimpl Drop for Resource {\n    fn drop(&mut self) { println!(\"{}\", self.value); }\n}\n\npub fn make() -> (Resource, Resource) {\n    (Resource { value: 1 }, Resource { value: 2 })\n}\n\npub fn fail(pair: (Resource, Resource)) -> i32 {\n    let first = pair.0;\n    let max = 2147483647;\n    max + 1\n}\n\nfn main() {}\n"
+        },
+        {
+          "role": "consumer",
+          "candidatePath": "tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-consumer.rs",
+          "retainedPath": "D:\\GitHub\\RustSharp\\artifacts\\p1-supervision\\ci-followup-v25\\originals\\linux-x64\\evidence-c32f2936ce5e4f008ea2bfae894a8a7d\\owned-tuple-partial-move-unwind\\build-0\\consumer.rs",
+          "sha256": "7F3E872959CFC23695EEA91ABE36FA5A4998231D15911ACB3BE2C64D2D4AC114",
+          "originalSource": "use SourceProducer::{make, fail};\n\nfn main() { fail(make()); }\n"
+        }
+      ],
+      "runs": [
+        {
+          "backend": "coreClr",
+          "actualClassification": "unwound",
+          "exitCode": 134,
+          "stdout": "1\n2\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-producer.rs:line 11\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-producer.rs:line 11\n   at RustSharp.Generated.Program.Main() in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-consumer.rs:line 3\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object panic, Boolean entryBoundary)\n   at RustSharp.Generated.Program.Main() in /home/runner/work/RustSharp/RustSharp/tools/RustSharp.Conformance/fixtures/p1-source-package-v1-partial-move-unwind-consumer.rs:line 3\n",
+          "originalPid": 7153,
+          "originalStartedAtUtc": "2026-10-08T01:00:11.4618508+00:00",
+          "commandLine": "/usr/share/dotnet/dotnet /tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/owned-tuple-partial-move-unwind/build-0/SourceConsumer.dll"
+        },
+        {
+          "backend": "nativeRun",
+          "actualClassification": "unwound",
+          "exitCode": 134,
+          "stdout": "1\n2\n",
+          "stderr": "Unhandled exception. System.OverflowException: Arithmetic operation resulted in an overflow.\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) + 0x7a2\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x3c\n   at RustSharp.Generated.Program.fn_2(mir_value_da593488b414ace710d0b512) + 0xb2c\n   at RustSharp.Generated.Program.Main() + 0x116\n--- End of stack trace from previous location ---\n   at RustSharp.Runtime.RustGeneratedPanic.Propagate(Object, Boolean) + 0x3c\n   at RustSharp.Generated.Program.Main() + 0x3e0\n   at RustSharp.NativeAotHost.EntryPoint.Main() + 0x6\n",
+          "originalPid": 7330,
+          "originalStartedAtUtc": "2026-10-08T01:00:18.035554+00:00",
+          "commandLine": "/tmp/rsc-p1-source-package-b19b7943d8fe40a1bd9eadffa3446678/owned-tuple-partial-move-unwind/native/SourceConsumer.NativeAotHost"
+        }
+      ],
+      "frozenContractMatched": true,
+      "newLanguageDifferenceApproved": false,
+      "gateAccepted": false
+    }
+  ],
+  "additionalGaps": [
+    "Independent exact candidate Git blob mapping supplied by root remains awaiting integration",
+    "Member export/call signature semantic comparison beyond decoded data",
+    "Backend PDB retained-source mapping12 and frozen hand-MIR documents2",
+    "Complete descendant containment",
+    "Expanded original native binaries",
+    "Formal joint and phase gates"
+  ],
+  "completeSemanticsAccepted": false,
+  "gitBlobProvenanceAccepted": false,
+  "formalJointAccepted": false,
+  "fullP1Closure": false,
+  "fullP2Closure": false,
+  "expandedSdk": "10.0.400",
+  "productionSdk": "10.0.401",
+  "externalChildrenLaunched": 0,
+  "objectsDeleted": 0,
+  "networkRequests": 0,
+  "downloadedProgramsExecuted": 0,
+  "hostIdentity": {
+    "ProcessId": 34820,
+    "ParentProcessId": 13884,
+    "CreationDate": "2026-10-13T20:08:09.492171+08:00",
+    "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n$p='D:/GitHub/RustSharp/eng/Audit-P1RetainedPayloadV2.ps1';$b=[IO.File]::ReadAllText($p);$b=$b.Replace('$pm=$provider.GetMetadataReader();$docs=',@'\n$pm=$provider.GetMetadataReader();$id=[byte[]]@($pm.DebugMetadataHeader.Id);if($id.Length -ne 20){throw 'Portable PDB ID must20 bytes'};$pdbGuid=[Guid]::new([byte[]]$id[0..15]);$pdbStamp=[BitConverter]::ToUInt32($id,16);$debug=@($pe.ReadDebugDirectory());if($debug.Count -gt 64){throw 'PE debug directory cap'};$codeviews=0;foreach($dd in $debug){Bound;if([string]$dd.Type -eq 'CodeView'){$cv=$pe.ReadCodeViewDebugDirectoryData($dd);Check ($label+' PDB/PE CodeView GUID') $cv.Guid.ToString() $pdbGuid.ToString();Check ($label+' PDB/PE CodeView stamp') ([long]$dd.Stamp) ([long]$pdbStamp);$codeviews++}};Check ($label+' one original CodeView') 1 $codeviews;$docs=\n'@);[IO.File]::WriteAllText($p,$b,[Text.UTF8Encoding]::new($false)); & ./eng/Audit-P1RetainedPayloadV2.ps1 -Trial -TimeoutSeconds 15 -OutputPath artifacts/p1-supervision/ci-followup-v28/tiny2.json; & ./eng/Audit-P1RetainedPayloadV2.ps1 -TimeoutSeconds 90 -TrialReportPath artifacts/p1-supervision/ci-followup-v28/tiny2.json -OutputPath artifacts/p1-supervision/ci-followup-v28/semantic-attempt2.json\""
+  },
+  "parentChain": [
+    {
+      "ProcessId": 13884,
+      "ParentProcessId": 39640,
+      "CreationDate": "2026-10-13T09:59:32.430961+08:00",
+      "CommandLine": "C:\\Users\\mysti\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
+    },
+    {
+      "ProcessId": 39640,
+      "ParentProcessId": 12544,
+      "CreationDate": "2026-10-13T09:59:27.78289+08:00",
+      "CommandLine": "\"C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.1007.2314.0_x64__2p2nqsd0c76g0\\app\\ChatGPT.exe\" "
+    },
+    {
+      "ProcessId": 12544,
+      "ParentProcessId": 3816,
+      "CreationDate": "2026-10-13T09:56:29.252082+08:00",
+      "CommandLine": "sihost.exe"
+    },
+    {
+      "ProcessId": 3816,
+      "ParentProcessId": 1960,
+      "CreationDate": "2026-10-13T09:56:23.099628+08:00",
+      "CommandLine": null
+    }
+  ],
+  "parentChainComplete": false,
+  "elapsedMilliseconds": 9497
+}
