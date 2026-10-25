@@ -20,7 +20,7 @@ public static class SafeCoreGenericMetadata
         int work = 0;
         writer.WriteStartObject();
         writer.WriteNumber("schemaVersion", SchemaVersion);
-        writer.WriteString("profile", SafeCoreGenericAnalysis.Profile);
+        writer.WriteString("profile", program.Profile);
         writer.WriteString("traitProfile", "bounded-traits-v1");
         writer.WriteString("linkage", "source-linked-crates");
         writer.WriteStartArray("crates");

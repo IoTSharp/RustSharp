@@ -12,12 +12,27 @@ namespace RustSharp.Tests;
 internal static class P2FormatterTests
 {
     private const int MaximumComparisonItems = 1_000_000;
-    private static string Root => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
+    private static string Root => FindRepositoryRoot();
     private static readonly string[] FrozenScenarioIds =
     ["format-basic", "format-comments", "format-doc-comments", "format-nested-comments", "format-literals",
         "format-crlf", "format-bom-shebang", "format-check-drift", "format-idempotent", "format-budget"];
     private static readonly ToolingContractManifest Manifest = ReadManifest();
     public static IReadOnlyList<TestCase> All { get; } = CreateCases();
+
+    private static string FindRepositoryRoot()
+    {
+        foreach (string seed in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            DirectoryInfo? directory = new(Path.GetFullPath(seed));
+            for (int depth = 0; directory is not null && depth < 16; depth++, directory = directory.Parent)
+            {
+                string candidate = Path.Combine(directory.FullName, "tools", "RustSharp.Conformance", "fixtures", ToolingContract.ManifestFileName);
+                if (File.Exists(candidate)) return directory.FullName;
+            }
+        }
+
+        throw new DirectoryNotFoundException("The RustSharp repository root could not be located from the bounded test roots.");
+    }
 
     private static ToolingContractManifest ReadManifest()
     {

@@ -93,6 +93,11 @@ public static partial class SafeCoreGenericAnalysis
                         type = diverges.Contains(node.ChildIds[0]) ? Never : RustType.Unit;
                         break;
                     case N.NameExpression:
+                        if (node.ReferencedSymbol is not null && TryGetEnumVariant(node, out _, out _))
+                        {
+                            type = ConstructEnumVariant(node, node, [], expected, depth);
+                            break;
+                        }
                         if (node.ReferencedSymbol is not null && owner.definitions.TryGetValue(Key(node.ReferencedSymbol), out Declaration? nominal) &&
                             nominal.Node.Kind == N.Struct && nominal.Node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.UnitStruct))
                         {
@@ -150,6 +155,9 @@ public static partial class SafeCoreGenericAnalysis
                         type = Call(node, expected, depth);
                         if (node.ChildIds.Skip(1).Any(diverges.Contains)) type = Never;
                         break;
+                    case N.MatchExpression:
+                        type = Match(node, expected, depth);
+                        break;
                     case N.StructExpression:
                         if (node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.StructUpdate) || node.ReferencedSymbol is null ||
                             !owner.definitions.TryGetValue(Key(node.ReferencedSymbol), out Declaration? structure) || structure.Node.Kind != N.Struct ||
@@ -180,6 +188,9 @@ public static partial class SafeCoreGenericAnalysis
                 SafeCoreHirNode callee = owner.Child(node, 0);
                 owner.Step(callee, depth);
                 if (callee.Kind == N.NameExpression && callee.ReferencedSymbol is not null &&
+                    TryGetEnumVariant(callee, out _, out _))
+                    return ConstructEnumVariant(node, callee, [.. owner.Parts(node).Skip(1)], expected, depth);
+                if (callee.Kind == N.NameExpression && callee.ReferencedSymbol is not null &&
                     owner.definitions.TryGetValue(Key(callee.ReferencedSymbol), out Declaration? constructor) && constructor.Node.Kind == N.Struct &&
                     constructor.Node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.TupleStruct))
                     return Construct(node, constructor, [.. owner.Parts(node).Skip(1)], expected, depth);
@@ -208,8 +219,21 @@ public static partial class SafeCoreGenericAnalysis
                     RustType substituted = owner.Substitute(template, bindings);
                     bool resolved = !ContainsCalleeParameter(substituted, function.Parameters, 0);
                     SafeCoreHirNode argumentNode = owner.Child(node, index + 1);
-                    RustType actual = Expression(argumentNode,
-                        resolved && argumentNode.Kind == N.CallExpression ? substituted : null, depth + 1);
+                    RustType actual;
+                    try
+                    {
+                        actual = Expression(argumentNode, resolved ? substituted : null, depth + 1);
+                    }
+                    catch (SourceFailure failure) when (resolved &&
+                        failure.Diagnostic.Code == SafeCoreGenericDiagnosticCodes.BodyMismatch)
+                    {
+                        // An argument that fails against an already-bound
+                        // parameter is a call-site mismatch. Preserve the
+                        // generic profile's InvalidCall contract instead of
+                        // leaking the expression-level BodyMismatch code.
+                        Fail(argumentNode, SafeCoreGenericDiagnosticCodes.InvalidCall, failure.Diagnostic.Message);
+                        throw;
+                    }
                     if (!actual.Equals(Never)) Infer(template, actual, bindings, owner.Child(node, index + 1), 0);
                     if (resolved) Require(actual, substituted, owner.Child(node, index + 1));
                 }
@@ -226,6 +250,141 @@ public static partial class SafeCoreGenericAnalysis
                 owner.budget.Count(calls.Count + 1);
                 calls.Add(node.Id, instance);
                 return owner.Substitute(function.ReturnType, bindings);
+            }
+
+            private RustType ConstructEnumVariant(SafeCoreHirNode node, SafeCoreHirNode symbolNode,
+                IReadOnlyList<SafeCoreHirNode> values, RustType? expected, int depth)
+            {
+                owner.Step(node, depth);
+                Declaration? enumeration = null;
+                SafeCoreGenericEnumVariantDefinition? variant = null;
+                if (!TryGetEnumVariant(symbolNode, out enumeration, out variant) || enumeration is null || variant is null)
+                    Fail(symbolNode, SafeCoreGenericDiagnosticCodes.InvalidCall, "The enum variant is not declared in the generic profile.");
+                Declaration enumDefinition = enumeration;
+                SafeCoreGenericEnumVariantDefinition variantDefinition = variant;
+                if (values.Count != variantDefinition.Fields.Length)
+                    Fail(node, SafeCoreGenericDiagnosticCodes.InvalidCall, "The enum variant payload count does not match its declaration.");
+
+                var bindings = new Dictionary<string, RustType>(StringComparer.Ordinal);
+                RustType template = RustType.Named(Key(enumDefinition.Node.DeclaredSymbol!),
+                    [.. enumDefinition.Parameters.Select(RustType.Parameter)]);
+                if (expected is not null && !expected.Equals(Never)) Infer(template, expected, bindings, node, 0);
+                for (int index = 0; index < values.Count; index++)
+                {
+                    RustType fieldTemplate = owner.Substitute(variantDefinition.Fields[index].Type, bindings);
+                    bool resolved = !ContainsCalleeParameter(fieldTemplate, enumDefinition.Parameters, 0);
+                    RustType actual = Expression(values[index], resolved ? fieldTemplate : null, depth + 1);
+                    if (!actual.Equals(Never)) Infer(variantDefinition.Fields[index].Type, actual, bindings, values[index], 0);
+                    if (resolved) Require(actual, fieldTemplate, values[index]);
+                }
+                if (enumDefinition.Parameters.Any(parameter => !bindings.ContainsKey(parameter)))
+                    Fail(node, SafeCoreGenericDiagnosticCodes.InvalidCall,
+                        "Enum variant type arguments cannot be inferred; add an expected enum type.");
+                RustType result = owner.Substitute(template, bindings);
+                owner.WellFormed(result, enumDefinition.Bounds, 0);
+                return result;
+            }
+
+            private RustType Match(SafeCoreHirNode node, RustType? expected, int depth)
+            {
+                if (node.ChildIds.Count < 2) Unsupported(node);
+                RustType scrutinee = Expression(owner.Child(node, 0), null, depth + 1);
+                Declaration? enumeration = null;
+                if (scrutinee.Kind != RustTypeKind.Named ||
+                    !owner.definitions.TryGetValue(scrutinee.Name, out enumeration) ||
+                    enumeration is null || enumeration.Node.Kind != N.Enum)
+                    Fail(node, SafeCoreGenericDiagnosticCodes.BodyMismatch, "Only declared enum values may be matched in this profile.");
+                Declaration enumDefinition = enumeration!;
+
+                var covered = new HashSet<string>(StringComparer.Ordinal);
+                RustType? result = expected;
+                bool wildcard = false;
+                for (int index = 1; index < node.ChildIds.Count; index++)
+                {
+                    SafeCoreHirNode arm = owner.Child(node, index);
+                    if (arm.Kind != N.MatchArm || arm.ChildIds.Count < 2) Unsupported(arm);
+                    SafeCoreHirNode pattern = owner.Child(arm, 0);
+                    var saved = locals.ToArray();
+                    try
+                    {
+                        if (pattern.Kind == N.WildcardPattern)
+                        {
+                            wildcard = true;
+                        }
+                        else if (pattern.Kind == N.PathPattern)
+                        {
+                            string variantName = BindEnumPattern(pattern, scrutinee, depth + 1);
+                            covered.Add(variantName);
+                        }
+                        else Unsupported(pattern);
+
+                        int bodyIndex = 1;
+                        if (arm.ChildIds.Count == 3)
+                        {
+                            Require(Expression(owner.Child(arm, 1), RustType.Bool, depth + 1), RustType.Bool, owner.Child(arm, 1));
+                            bodyIndex = 2;
+                        }
+                        RustType armType = Expression(owner.Child(arm, bodyIndex), result, depth + 1);
+                        if (result is null) result = armType;
+                        else Require(armType, result, owner.Child(arm, bodyIndex));
+                    }
+                    finally
+                    {
+                        locals.Clear();
+                        foreach ((SafeCoreSymbol symbol, (RustType Type, bool Mutable) binding) in saved)
+                            locals.Add(symbol, binding);
+                    }
+                }
+
+                if (!wildcard && enumDefinition.VariantDefinitions.Any(variant => !covered.Contains(variant.Name)))
+                    Fail(node, SafeCoreGenericDiagnosticCodes.BodyMismatch, "Enum match must cover every declared variant or use a wildcard.");
+                return result ?? RustType.Unit;
+            }
+
+            private string BindEnumPattern(SafeCoreHirNode pattern, RustType scrutinee, int depth)
+            {
+                Declaration? enumeration = null;
+                SafeCoreGenericEnumVariantDefinition? variant = null;
+                if (pattern.ReferencedSymbol is null ||
+                    !TryGetEnumVariant(pattern, out enumeration, out variant) || enumeration is null || variant is null ||
+                    scrutinee.Name != Key(enumeration.Node.DeclaredSymbol!))
+                    Fail(pattern, SafeCoreGenericDiagnosticCodes.BodyMismatch, "The enum pattern does not match the scrutinee type.");
+                Declaration enumDefinition = enumeration;
+                SafeCoreGenericEnumVariantDefinition variantDefinition = variant;
+                if (pattern.ChildIds.Count != variantDefinition.Fields.Length)
+                    Fail(pattern, SafeCoreGenericDiagnosticCodes.BodyMismatch, "The enum pattern payload count does not match its variant.");
+                var bindings = owner.BindArguments(enumDefinition.Parameters, scrutinee.Arguments);
+                for (int index = 0; index < variantDefinition.Fields.Length; index++)
+                {
+                    RustType fieldType = owner.Substitute(variantDefinition.Fields[index].Type, bindings);
+                    SafeCoreHirNode child = owner.Child(pattern, index);
+                    if (child.Kind is not (N.IdentifierPattern or N.WildcardPattern)) Unsupported(child);
+                    Bind(child, fieldType);
+                }
+                return variantDefinition.Name;
+            }
+
+            private bool TryGetEnumVariant(SafeCoreHirNode node, out Declaration? enumeration,
+                out SafeCoreGenericEnumVariantDefinition? variant)
+            {
+                enumeration = null;
+                variant = null;
+                SafeCoreSymbol? symbol = node.ReferencedSymbol;
+                if (symbol is null || symbol.Kind != SafeCoreSymbolKind.EnumVariant) return false;
+                string ownerId = symbol.ScopePath;
+                if (!owner.definitions.TryGetValue(ownerId, out Declaration? candidate) || candidate.Node.Kind != N.Enum)
+                {
+                    string qualified = Key(symbol);
+                    int separator = qualified.LastIndexOf("::", StringComparison.Ordinal);
+                    if (separator <= 0 || !owner.definitions.TryGetValue(qualified[..separator], out candidate) || candidate.Node.Kind != N.Enum)
+                        return false;
+                }
+                string name = symbol.Name;
+                SafeCoreGenericEnumVariantDefinition? found = candidate.VariantDefinitions.FirstOrDefault(item => item.Name == name);
+                if (found is null) return false;
+                enumeration = candidate;
+                variant = found;
+                return true;
             }
 
             private void Infer(RustType template, RustType actual, Dictionary<string, RustType> bindings, SafeCoreHirNode node, int depth)
@@ -333,12 +492,42 @@ public static partial class SafeCoreGenericAnalysis
                 }
                 else
                 {
-                    if (text != "{}") Unsupported(format);
+                    string trait;
+                    if (text == "{}") trait = ResolveFormattingTrait("Display", format);
+                    else if (text == "{:?}") trait = ResolveFormattingTrait("Debug", format);
+                    else
+                    {
+                        Unsupported(format);
+                        return RustType.Unit;
+                    }
                     RustType value = Expression(owner.Child(node, 1), null, depth + 1);
-                    if (!Scalar(value)) Unsupported(owner.Child(node, 1));
+                    RequireFormattingTrait(value, trait);
                     if (diverges.Contains(node.ChildIds[1])) return Never;
                 }
                 return RustType.Unit;
+            }
+
+            private string ResolveFormattingTrait(string shortName, SafeCoreHirNode format)
+            {
+                owner.Step(format);
+                string suffix = "::" + shortName;
+                string? declared = owner.declarations.Keys
+                    .Where(key => string.Equals(key, shortName, StringComparison.Ordinal) || key.EndsWith(suffix, StringComparison.Ordinal))
+                    .OrderBy(key => key, StringComparer.Ordinal)
+                    .FirstOrDefault();
+                if (declared is not null) return declared;
+
+                // Keep the diagnostic deterministic when a caller uses the
+                // built-in spelling without declaring the corresponding trait.
+                // The subsequent proof reports the missing implementation while
+                // preserving the source-level formatting boundary.
+                return "core::fmt::" + shortName;
+            }
+
+            private void RequireFormattingTrait(RustType value, string trait)
+            {
+                if (value.Equals(Never) || Scalar(value)) return;
+                owner.traits.Prove(new GenericTraitObligation(trait, value), definition.Bounds);
             }
 
             private int Integer(SafeCoreHirNode node, bool negative)

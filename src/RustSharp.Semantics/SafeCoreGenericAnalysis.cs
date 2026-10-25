@@ -10,6 +10,8 @@ public sealed record SafeCoreGenericAnalysisOptions
 {
     public GenericAnalysisLimits Limits { get; init; } = new();
     public ImmutableArray<SafeCoreCrate> Crates { get; init; } = [];
+    /// <summary>Enables the separate experimental core enum/Option/Result profile.</summary>
+    public bool EnableCoreEnums { get; init; }
 }
 
 public static class SafeCoreGenericDiagnosticCodes
@@ -47,13 +49,31 @@ public sealed record SafeCoreGenericAnalysisProgram(
     GenericMonomorphizationResult Plan,
     ImmutableArray<SafeCoreGenericSpecialization> Specializations)
 {
+    public string Profile { get; init; } = SafeCoreGenericAnalysis.Profile;
     public ImmutableArray<SafeCoreGenericNominalDefinition> NominalTypes { get; init; } = [];
 }
 
 public sealed record SafeCoreGenericFieldDefinition(string Name, RustType Type, SafeCoreHirNode Declaration);
 
+/// <summary>
+/// A checked payload field belonging to one generic enum variant.  Variant
+/// payloads stay source linked until a later lowering pass decides how to
+/// represent the discriminant and closed layout.
+/// </summary>
+public sealed record SafeCoreGenericEnumVariantDefinition(
+    string Name,
+    SafeCoreEnumVariantKind Kind,
+    SafeCoreHirNode Declaration,
+    ImmutableArray<SafeCoreGenericFieldDefinition> Fields);
+
 public sealed record SafeCoreGenericNominalDefinition(string Id, SafeCoreHirNode Declaration,
-    ImmutableArray<string> Parameters, ImmutableArray<SafeCoreGenericFieldDefinition> Fields);
+    ImmutableArray<string> Parameters, ImmutableArray<SafeCoreGenericFieldDefinition> Fields)
+{
+    /// <summary>Source payload inventory for enum declarations; structs keep this empty.</summary>
+    public ImmutableArray<SafeCoreGenericEnumVariantDefinition> Variants { get; init; } = [];
+
+    public bool IsEnum => Declaration.Kind == SafeCoreHirNodeKind.Enum;
+}
 
 public sealed record SafeCoreGenericAnalysisResult(
     SafeCoreGenericAnalysisProgram? Program, IReadOnlyList<Diagnostic> Diagnostics)
@@ -65,6 +85,7 @@ public sealed record SafeCoreGenericAnalysisResult(
 public static partial class SafeCoreGenericAnalysis
 {
     public const string Profile = "safe-core-generics-v1";
+    public const string CoreProfile = "safe-core-generics-core-v1";
 
     public static SafeCoreGenericAnalysisResult Check(SafeCoreSyntaxResult syntax,
         SafeCoreGenericAnalysisOptions? options = null, CancellationToken cancellationToken = default)
@@ -73,6 +94,14 @@ public static partial class SafeCoreGenericAnalysis
         cancellationToken.ThrowIfCancellationRequested();
         var budget = CreateBudget(options, cancellationToken);
         if (!syntax.IsSuccessful) return new(null, syntax.Diagnostics);
+        SafeCoreEnumSyntax? firstEnum = FindFirstEnum(syntax.Root!);
+        bool enableCoreEnums = options?.EnableCoreEnums == true;
+        if (firstEnum is not null && !enableCoreEnums)
+        {
+            return new(null, [new Diagnostic(SafeCoreGenericDiagnosticCodes.Unsupported,
+                $"Enum declarations are outside {Profile}.", firstEnum.Span) { SourcePath = syntax.SourcePath }]);
+        }
+        bool containsEnum = firstEnum is not null;
         try
         {
             SafeCoreHirResult hir = SafeCoreHirLowering.Lower(syntax, new()
@@ -84,6 +113,10 @@ public static partial class SafeCoreGenericAnalysis
                 MaximumNestingDepth = budget.Limits.MaximumDepth,
                 NameResolution = new()
                 {
+                    // Variant payload fields need the type-system field scopes;
+                    // keep that extension disabled for ordinary generic
+                    // functions so their established diagnostics remain stable.
+                    EnableTypeSystemExtensions = containsEnum,
                     EnableGenericExtensions = true,
                     Crates = options?.Crates ?? [],
                     CancellationToken = cancellationToken,
@@ -94,7 +127,7 @@ public static partial class SafeCoreGenericAnalysis
                     MaximumNestingDepth = budget.Limits.MaximumDepth,
                 },
             });
-            return Analyze(hir, budget);
+            return Analyze(hir, budget, enableCoreEnums);
         }
         catch (GenericFailure failure)
         {
@@ -107,7 +140,7 @@ public static partial class SafeCoreGenericAnalysis
     {
         ArgumentNullException.ThrowIfNull(hir);
         cancellationToken.ThrowIfCancellationRequested();
-        return Analyze(hir, CreateBudget(options, cancellationToken));
+        return Analyze(hir, CreateBudget(options, cancellationToken), options?.EnableCoreEnums == true);
     }
 
     private static GenericBudget CreateBudget(SafeCoreGenericAnalysisOptions? options, CancellationToken cancellation)
@@ -117,7 +150,26 @@ public static partial class SafeCoreGenericAnalysis
         return new(options.Limits, cancellation);
     }
 
-    private static SafeCoreGenericAnalysisResult Analyze(SafeCoreHirResult hir, GenericBudget budget)
+    private static SafeCoreEnumSyntax? FindFirstEnum(SafeCoreCompilationUnitSyntax root)
+    {
+        var pending = new Stack<IReadOnlyList<SafeCoreItemSyntax>>();
+        pending.Push(root.Items);
+        for (int visited = 0; pending.Count != 0 && visited < 100_000; visited++)
+        {
+            foreach (SafeCoreItemSyntax item in pending.Pop())
+            {
+                if (item is SafeCoreEnumSyntax enumeration) return enumeration;
+                if (item is SafeCoreModuleSyntax module) pending.Push(module.Items);
+            }
+        }
+
+        // A bounded, unusually large tree is rejected by the parser before
+        // this point; retaining a null result keeps the legacy boundary exact.
+        return null;
+    }
+
+    private static SafeCoreGenericAnalysisResult Analyze(SafeCoreHirResult hir, GenericBudget budget,
+        bool enableCoreEnums = false)
     {
         if (!hir.IsSuccessful) return new(null, hir.Diagnostics.Select(diagnostic => diagnostic with
         {
@@ -125,7 +177,7 @@ public static partial class SafeCoreGenericAnalysis
             Code = diagnostic.Code is SafeCoreHirDiagnosticCodes.LimitReached or SafeCoreNameResolutionDiagnosticCodes.LimitReached
                 ? SafeCoreGenericDiagnosticCodes.LimitReached : diagnostic.Code,
         }).ToImmutableArray());
-        var checker = new Checker(hir, budget);
+        var checker = new Checker(hir, budget, enableCoreEnums);
         try { return new(checker.Run(), []); }
         catch (SourceFailure failure)
         {
@@ -152,10 +204,12 @@ public static partial class SafeCoreGenericAnalysis
     {
         private readonly SafeCoreHirResult hir;
         private readonly GenericBudget budget;
-        public Checker(SafeCoreHirResult hir, GenericBudget budget)
+        private readonly bool enableCoreEnums;
+        public Checker(SafeCoreHirResult hir, GenericBudget budget, bool enableCoreEnums)
         {
             this.hir = hir;
             this.budget = budget;
+            this.enableCoreEnums = enableCoreEnums;
             Current = hir.Root!;
         }
         private static readonly RustType Never = RustType.Named("$never");
@@ -179,6 +233,7 @@ public static partial class SafeCoreGenericAnalysis
             public SafeCoreHirNode Body { get; set; } = node;
             public List<RustType> Fields { get; } = [];
             public List<SafeCoreGenericFieldDefinition> FieldDefinitions { get; } = [];
+            public List<SafeCoreGenericEnumVariantDefinition> VariantDefinitions { get; } = [];
         }
 
         public SafeCoreGenericAnalysisProgram Run()
@@ -213,13 +268,15 @@ public static partial class SafeCoreGenericAnalysis
                 Step(site.Node);
                 WellFormed(site.Type, site.Owner.Bounds, 0);
             }
-            foreach (Declaration definition in definitions.Values.Where(static d => d.Node.Kind == N.Struct))
+            foreach (Declaration definition in definitions.Values.Where(static d => d.Node.Kind is N.Struct or N.Enum))
             {
                 CheckLayout(definition, new HashSet<string>(StringComparer.Ordinal), 0);
                 foreach (string parameter in definition.Parameters)
-                    if (!definition.Fields.Any(type => ContainsParameter(type, parameter, 0)))
+                    if (!definition.Fields.Any(type => ContainsParameter(type, parameter, 0)) &&
+                        !definition.VariantDefinitions.SelectMany(static variant => variant.Fields)
+                            .Any(field => ContainsParameter(field.Type, parameter, 0)))
                         Fail(definition.Node, SafeCoreGenericDiagnosticCodes.InvalidInput,
-                            "Each struct type parameter must occur in a field type.");
+                            "Each nominal type parameter must occur in a field or enum variant payload type.");
             }
             var functions = ImmutableArray.CreateBuilder<SafeCoreGenericFunctionDefinition>();
             foreach (var entry in definitions.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
@@ -278,10 +335,14 @@ public static partial class SafeCoreGenericAnalysis
             }
             return new(hir, functions.ToImmutable(), plan, specializations.ToImmutable())
             {
+                Profile = enableCoreEnums ? CoreProfile : Profile,
                 NominalTypes = [.. definitions.OrderBy(static entry => entry.Key, StringComparer.Ordinal)
-                    .Where(static entry => entry.Value.Node.Kind == N.Struct)
+                    .Where(static entry => entry.Value.Node.Kind is N.Struct or N.Enum)
                     .Select(static entry => new SafeCoreGenericNominalDefinition(entry.Key, entry.Value.Node,
-                        entry.Value.Parameters, [.. entry.Value.FieldDefinitions]))],
+                        entry.Value.Parameters, [.. entry.Value.FieldDefinitions])
+                    {
+                        Variants = [.. entry.Value.VariantDefinitions],
+                    })],
             };
         }
 
@@ -302,6 +363,7 @@ public static partial class SafeCoreGenericAnalysis
                     break;
                 case N.Function:
                 case N.Struct:
+                case N.Enum:
                 case N.Trait:
                     budget.Count(declarations.Count + 1);
                     if (!declarations.TryAdd(Key(node.DeclaredSymbol!), node))
@@ -333,6 +395,11 @@ public static partial class SafeCoreGenericAnalysis
         {
             Step(definition.Node);
             definition.Bounds = Bounds(definition.Node, definition);
+            if (definition.Node.Kind == N.Enum)
+            {
+                DefineEnum(definition);
+                return;
+            }
             var parameterTypes = ImmutableArray.CreateBuilder<RustType>();
             foreach (SafeCoreHirNode part in Parts(definition.Node))
             {
@@ -363,6 +430,48 @@ public static partial class SafeCoreGenericAnalysis
             }
             if (definition.Node.Modifiers.HasFlag(SafeCoreHirNodeModifiers.ConstFunction)) Unsupported(definition.Node);
             definition.ParameterTypes = parameterTypes.ToImmutable();
+        }
+
+        private void DefineEnum(Declaration definition)
+        {
+            foreach (SafeCoreHirNode variant in Parts(definition.Node).Where(static part => part.Kind == N.EnumVariant))
+            {
+                Step(variant);
+                var fields = ImmutableArray.CreateBuilder<SafeCoreGenericFieldDefinition>();
+                bool hasNamedField = false;
+                foreach (SafeCoreHirNode part in Parts(variant))
+                {
+                    Step(part);
+                    if (part.Kind == N.Attribute)
+                    {
+                        Documentation(part);
+                        continue;
+                    }
+
+                    if (part.Kind != N.Field)
+                    {
+                        // Explicit discriminants are intentionally left to the
+                        // typed-MIR enum profile; generic metadata must never
+                        // silently drop one.
+                        Unsupported(part);
+                    }
+
+                    SafeCoreHirNode typeNode = Parts(part).FirstOrDefault(IsType)
+                        ?? throw new SourceFailure(new(SafeCoreGenericDiagnosticCodes.Unsupported,
+                            "An enum variant field must have a type.", part.Span));
+                    RustType type = Type(typeNode, definition, 0);
+                    string name = part.Name ?? fields.Count.ToString(CultureInfo.InvariantCulture);
+                    hasNamedField |= part.Name is not null;
+                    fields.Add(new(name, type, part));
+                    budget.Count(fields.Count);
+                }
+
+                SafeCoreEnumVariantKind kind = fields.Count == 0
+                    ? SafeCoreEnumVariantKind.Unit
+                    : hasNamedField ? SafeCoreEnumVariantKind.Struct : SafeCoreEnumVariantKind.Tuple;
+                definition.VariantDefinitions.Add(new(variant.Name ?? string.Empty, kind, variant, fields.ToImmutable()));
+                budget.Count(definition.VariantDefinitions.Count);
+            }
         }
 
         private void DefineImplementation(SafeCoreHirNode node)
@@ -442,7 +551,8 @@ public static partial class SafeCoreGenericAnalysis
                                 Fail(node, SafeCoreGenericDiagnosticCodes.InvalidInput, "Invalid type parameter reference or arguments.");
                             type = RustType.Parameter(id);
                         }
-                        else if (definitions.TryGetValue(id, out Declaration? declaration) && declaration.Node.Kind == N.Struct)
+                        else if (definitions.TryGetValue(id, out Declaration? declaration) &&
+                            declaration.Node.Kind is N.Struct or N.Enum)
                         {
                             if (declaration.Parameters.Length != arguments.Count)
                                 Fail(node, SafeCoreGenericDiagnosticCodes.InvalidCall, "The nominal type has incorrect generic arity.");
@@ -473,7 +583,8 @@ public static partial class SafeCoreGenericAnalysis
         private void WellFormed(RustType type, ImmutableArray<GenericTraitObligation> assumptions, int depth)
         {
             budget.Step(depth);
-            if (definitions.TryGetValue(type.Name, out Declaration? definition) && definition.Node.Kind == N.Struct)
+            if (definitions.TryGetValue(type.Name, out Declaration? definition) &&
+                definition.Node.Kind is N.Struct or N.Enum)
             {
                 ImmutableDictionary<string, RustType> bindings = BindArguments(definition.Parameters, type.Arguments);
                 foreach (GenericTraitObligation bound in definition.Bounds)
@@ -488,12 +599,15 @@ public static partial class SafeCoreGenericAnalysis
             string id = Key(definition.Node.DeclaredSymbol!);
             if (!active.Add(id)) Fail(definition.Node, SafeCoreGenericDiagnosticCodes.InvalidInput, "A struct has infinite recursive layout.");
             foreach (RustType field in definition.Fields) Visit(field, depth + 1);
+            foreach (SafeCoreGenericEnumVariantDefinition variant in definition.VariantDefinitions)
+                foreach (SafeCoreGenericFieldDefinition field in variant.Fields) Visit(field.Type, depth + 1);
             active.Remove(id);
 
             void Visit(RustType type, int nesting)
             {
                 budget.Step(nesting);
-                if (definitions.TryGetValue(type.Name, out Declaration? target) && target.Node.Kind == N.Struct)
+                if (definitions.TryGetValue(type.Name, out Declaration? target) &&
+                    target.Node.Kind is N.Struct or N.Enum)
                     CheckLayout(target, active, nesting + 1);
                 foreach (RustType argument in type.Arguments) Visit(argument, nesting + 1);
             }

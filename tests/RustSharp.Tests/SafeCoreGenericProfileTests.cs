@@ -123,9 +123,14 @@ internal static class SafeCoreGenericProfileTests
 
     private static Task ChecksCliAsync() => WithWorkspace(async (directory, token) =>
     {
-        string repository = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        string repository = FindRepositoryRoot();
         string configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
-        string cli = Path.Combine(repository, "src", "RustSharp.Cli", "bin", configuration, "net10.0", "rsc.dll");
+        string[] cliCandidates =
+        [
+            Path.Combine(AppContext.BaseDirectory, "rsc.dll"),
+            Path.Combine(repository, "src", "RustSharp.Cli", "bin", configuration, "net10.0", "rsc.dll"),
+        ];
+        string cli = cliCandidates.FirstOrDefault(File.Exists) ?? cliCandidates[0];
         AssertEx.True(File.Exists(cli), $"Build the solution before running CLI tests: {cli}");
         string source = Path.Combine(directory, "generics.rs");
         File.WriteAllText(source, GenericSource);
@@ -170,6 +175,21 @@ internal static class SafeCoreGenericProfileTests
             AssertEx.False(result.ProcessTreeCleanupIncomplete, "Rejected CLI commands must reclaim their process trees.");
         }
     });
+
+    private static string FindRepositoryRoot()
+    {
+        foreach (string seed in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            DirectoryInfo? directory = new(Path.GetFullPath(seed));
+            for (int depth = 0; directory is not null && depth < 16; depth++, directory = directory.Parent)
+            {
+                string candidate = Path.Combine(directory.FullName, "tools", "RustSharp.Conformance", "manifests", "safe-core-generics-v1.json");
+                if (File.Exists(candidate)) return directory.FullName;
+            }
+        }
+
+        throw new DirectoryNotFoundException("The RustSharp repository root could not be located from the bounded test roots.");
+    }
 
     private static async Task AssertRunAsync(string assembly, string directory, CancellationToken token)
     {

@@ -28,6 +28,7 @@ RustSharp 使用 C# 和 .NET 10 实现，目标是一个刻意限定范围的 Ru
 | `safe-core-primitives-v1` | 可选配置档：有界文件模块和本地 `path` 包、非泛型函数、`i32` / `bool`、已初始化的可变局部变量、`if` / `else`、返回、受检查算术、比较、布尔运算符和 `println!`。 |
 | `safe-core-types-v1` | 可选的仅检查类型配置档：基础数值类型、元组、数组、切片、引用、函数指针、非泛型 ADT、别名、模式/match、闭包、有界 const 求值、推断和有方向的强制转换。不检查借用，也不生成可执行输出。 |
 | `safe-core-generics-v1` | 可选的可执行泛型配置档：刚性类型参数主体检查、显式/推断调用、标记 trait 约束和 impl 一致性、元组及泛型结构体，以及经 CLR LIR 输出 IL 和 Native AOT 的闭合主体特化。 |
+| `safe-core-generics-core-v1` | 实验性可选扩展：提供带源码链接的泛型枚举 payload，以及闭合 `Option<T>` / `Result<T,T>` 的构造和匹配；固定消费者已通过 CoreCLR 与 Windows/Linux x64 Native AOT，冻结的 `safe-core-generics-v1` 边界保持不变。 |
 | 输出 | 对已覆盖的配置档，直接生成 ECMA-335 和 Portable PDB，支持 CoreCLR 运行与 Native AOT 发布。 |
 
 RustSharp 不是 `rustc` 的直接替代品。完整 Rust 兼容性、标准库对等、通用 Cargo 注册表解析、宏展开、所有权与借用检查、Rust ABI 兼容性以及任意 `unsafe` 代码，当前都不是承诺范围。精确边界见[兼容性契约](docs/compatibility.md)。

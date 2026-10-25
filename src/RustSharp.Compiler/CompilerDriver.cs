@@ -46,7 +46,7 @@ public sealed class CompilerDriver
         if (selection is not null) return CompilationResult.Failed([selection]);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
-        if ((profile == CompilationProfile.SafeCoreGenerics || profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) && IsCargoManifest(fullSourcePath))
+        if (profile is (CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) && IsCargoManifest(fullSourcePath))
         {
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
@@ -58,7 +58,7 @@ public sealed class CompilerDriver
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
         if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreTypes or
-            CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
+            CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
             if (!workspace.IsSuccessful) return CompilationResult.Failed(workspace.Diagnostics);
@@ -121,8 +121,9 @@ public sealed class CompilerDriver
         cancellationToken.ThrowIfCancellationRequested();
         if (profile == CompilationProfile.SafeCoreTypes)
             return CheckSafeCoreTypes(source, sourcePath, cancellationToken);
-        if (profile == CompilationProfile.SafeCoreGenerics)
-            return CheckSafeCoreGenerics(source, sourcePath, cancellationToken, crates);
+        if (profile is CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore)
+            return CheckSafeCoreGenerics(source, sourcePath, cancellationToken, crates,
+                profile == CompilationProfile.SafeCoreGenericsCore);
         if (profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
             return CheckSafeCoreMir(source, sourcePath, cancellationToken, crates,
                 profile == CompilationProfile.SafeCoreMirV2, panicStrategy, dropCleanupProfile);
@@ -193,7 +194,7 @@ public sealed class CompilerDriver
             return RejectTypeProfileEmission(sourcePath);
 
         var fullSourcePath = Path.GetFullPath(sourcePath);
-        if ((profile == CompilationProfile.SafeCoreGenerics || profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) && IsCargoManifest(fullSourcePath))
+        if (profile is (CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) && IsCargoManifest(fullSourcePath))
         {
             GenericPackageWorkspaceResult packages = GenericPackageWorkspace.Load(fullSourcePath, cancellationToken);
             if (!packages.IsSuccessful) return CompilationResult.Failed(packages.Diagnostics);
@@ -204,7 +205,7 @@ public sealed class CompilerDriver
         var cargo = TryResolveCargo(fullSourcePath, cancellationToken, out var cargoDiagnostics);
         if (cargoDiagnostics is not null) return CompilationResult.Failed(cargoDiagnostics);
         fullSourcePath = cargo ?? fullSourcePath;
-        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or
+        if (profile is CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore or
             CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2)
         {
             SafeCoreWorkspaceResult workspace = SafeCoreWorkspace.Load(fullSourcePath, cancellationToken: cancellationToken);
@@ -456,6 +457,7 @@ public sealed class CompilerDriver
                     profile switch
                     {
                         CompilationProfile.SafeCoreGenerics => "safe-core-generics-v1",
+                        CompilationProfile.SafeCoreGenericsCore => "safe-core-generics-core-v1",
                         CompilationProfile.SafeCoreMir => SafeCoreMirPipeline.Profile,
                         CompilationProfile.SafeCoreMirV2 => SafeCoreMirPipeline.ProfileV2,
                         _ => "safe-core-primitives-v1",
@@ -485,7 +487,7 @@ public sealed class CompilerDriver
                     Path.GetFileName(pdbPath),
                     sourceBytes);
             }
-            catch (Exception exception) when ((profile == CompilationProfile.SafeCoreGenerics || profile is CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) &&
+            catch (Exception exception) when ((profile is CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2) &&
                 exception is ArgumentException or InvalidOperationException or TimeoutException)
             {
                 return CompilationResult.Failed([new Diagnostic(SafeCoreGenericDiagnosticCodes.LimitReached,
@@ -576,7 +578,8 @@ public sealed class CompilerDriver
     }
 
     private static CompilationResult CheckSafeCoreGenerics(string source, string sourcePath,
-        CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default)
+        CancellationToken cancellationToken, ImmutableArray<SafeCoreCrate> crates = default,
+        bool enableCoreEnums = false)
     {
         SafeCoreSyntaxResult syntax;
         try { syntax = SafeCoreSyntax.Parse(source, sourcePath, null, cancellationToken); }
@@ -586,7 +589,11 @@ public sealed class CompilerDriver
                 "Safe-core parsing exceeded its time budget.", new TextSpan(0, 0))]);
         }
         if (!syntax.IsSuccessful) return CompilationResult.Failed(syntax.Diagnostics);
-        var result = SafeCoreGenericAnalysis.Check(syntax, new() { Crates = crates.IsDefault ? [] : crates }, cancellationToken);
+        var result = SafeCoreGenericAnalysis.Check(syntax, new()
+        {
+            Crates = crates.IsDefault ? [] : crates,
+            EnableCoreEnums = enableCoreEnums,
+        }, cancellationToken);
         return result.IsSuccessful ? new(true, [], null) : CompilationResult.Failed(result.Diagnostics);
     }
 
@@ -632,7 +639,7 @@ public sealed class CompilerDriver
         SafeCorePanicStrategy panicStrategy = SafeCorePanicStrategy.Unwind,
         SafeCoreDropCleanupProfile dropCleanupProfile = SafeCoreDropCleanupProfile.LegacyV1)
     {
-        if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
+        if (profile is not (CompilationProfile.SafeCorePrimitives or CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore or CompilationProfile.SafeCoreMir or CompilationProfile.SafeCoreMirV2))
             return new([], [], [new("RSC0007", "Unknown compilation profile.", new TextSpan(0, 0))]);
         cancellationToken.ThrowIfCancellationRequested();
         SafeCoreSyntaxResult syntax;
@@ -644,10 +651,14 @@ public sealed class CompilerDriver
         }
         if (!syntax.IsSuccessful) return new([], [], syntax.Diagnostics);
         cancellationToken.ThrowIfCancellationRequested();
-        if (profile == CompilationProfile.SafeCoreGenerics)
+        if (profile is CompilationProfile.SafeCoreGenerics or CompilationProfile.SafeCoreGenericsCore)
         {
             SafeCoreGenericAnalysisResult generics = SafeCoreGenericAnalysis.Check(syntax,
-                new() { Crates = crates.IsDefault ? [] : crates }, cancellationToken);
+                new()
+                {
+                    Crates = crates.IsDefault ? [] : crates,
+                    EnableCoreEnums = profile == CompilationProfile.SafeCoreGenericsCore,
+                }, cancellationToken);
             return generics.IsSuccessful ? SafeCoreGenericClrLowering.Lower(generics.Program!, cancellationToken)
                 : new([], [], generics.Diagnostics);
         }
@@ -1616,6 +1627,7 @@ public sealed class CompilerDriver
         {
             CompilationProfile.SafeCorePrimitives => "safe-core-primitives-v1",
             CompilationProfile.SafeCoreGenerics => "safe-core-generics-v1",
+            CompilationProfile.SafeCoreGenericsCore => "safe-core-generics-core-v1",
             CompilationProfile.SafeCoreMir => SafeCoreMirPipeline.Profile,
             CompilationProfile.SafeCoreMirV2 => SafeCoreMirPipeline.ProfileV2,
             _ => null,

@@ -264,6 +264,7 @@ internal static class Program
               --profile safe-core-primitives-v1   (i32/bool functions, locals, branches)
               --profile safe-core-types-v1        (check only: aggregates, references, inference)
               --profile safe-core-generics-v1     (closed generic functions, value types and marker traits)
+              --profile safe-core-generics-core-v1 (experimental generic core enums/Option/Result)
               --profile safe-core-mir-p1-v1       (bounded typed MIR, source mapping and ownership evidence)
               --profile safe-core-mir-p1-v2       (typed MIR v2 with structural-Copy repeated arrays)
               --drop-cleanup-profile legacy-v1|native-v2 (default: legacy-v1; native-v2 requires typed MIR)

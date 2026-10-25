@@ -63,13 +63,14 @@ internal static class CommandLineParser
                     break;
                 case "--profile":
                     if (!TryTakeValue(arguments, ref index, out var profileName) ||
-                        profileName is not ("vertical-slice-v1" or "safe-core-primitives-v1" or "safe-core-types-v1" or "safe-core-generics-v1" or "safe-core-mir-p1-v1" or "safe-core-mir-p1-v2"))
-                        return Failure("Option '--profile' requires vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1, safe-core-generics-v1, safe-core-mir-p1-v1 or safe-core-mir-p1-v2.");
+                        profileName is not ("vertical-slice-v1" or "safe-core-primitives-v1" or "safe-core-types-v1" or "safe-core-generics-v1" or "safe-core-generics-core-v1" or "safe-core-mir-p1-v1" or "safe-core-mir-p1-v2"))
+                        return Failure("Option '--profile' requires vertical-slice-v1, safe-core-primitives-v1, safe-core-types-v1, safe-core-generics-v1, safe-core-generics-core-v1, safe-core-mir-p1-v1 or safe-core-mir-p1-v2.");
                     profile = profileName switch
                     {
                         "safe-core-primitives-v1" => RustSharp.Compiler.CompilationProfile.SafeCorePrimitives,
                         "safe-core-types-v1" => RustSharp.Compiler.CompilationProfile.SafeCoreTypes,
                         "safe-core-generics-v1" => RustSharp.Compiler.CompilationProfile.SafeCoreGenerics,
+                        "safe-core-generics-core-v1" => RustSharp.Compiler.CompilationProfile.SafeCoreGenericsCore,
                         "safe-core-mir-p1-v1" => RustSharp.Compiler.CompilationProfile.SafeCoreMir,
                         "safe-core-mir-p1-v2" => RustSharp.Compiler.CompilationProfile.SafeCoreMirV2,
                         _ => RustSharp.Compiler.CompilationProfile.VerticalSlice,

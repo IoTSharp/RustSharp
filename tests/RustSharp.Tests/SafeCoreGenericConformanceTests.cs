@@ -16,8 +16,23 @@ internal static class SafeCoreGenericConformanceTests
 
     private static SafeCoreGenericProfileRunner.CatalogData Load(CancellationToken token = default)
     {
-        string repository = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        string repository = FindRepositoryRoot();
         return SafeCoreGenericProfileRunner.LoadCatalog(repository, token);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        foreach (string seed in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            DirectoryInfo? directory = new(Path.GetFullPath(seed));
+            for (int depth = 0; directory is not null && depth < 16; depth++, directory = directory.Parent)
+            {
+                string candidate = Path.Combine(directory.FullName, "tools", "RustSharp.Conformance", "manifests", "safe-core-generics-v1.json");
+                if (File.Exists(candidate)) return directory.FullName;
+            }
+        }
+
+        throw new DirectoryNotFoundException("The RustSharp repository root could not be located from the bounded test roots.");
     }
 
     private static Task ChecksCatalogAsync()

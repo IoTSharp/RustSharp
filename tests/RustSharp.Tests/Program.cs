@@ -71,6 +71,8 @@ internal static class Program
         tests = [.. tests, .. P2CoreContractTests.All];
         tests = [.. tests, .. P2CoreValueTests.All, .. P2CoreFormattingTests.All,
             .. P2CoreComparisonHashTests.All, .. P2CoreIteratorTests.All, .. P2CoreConsumerTests.All];
+        tests = [.. tests, .. P2CoreFormattingIntegrationTests.All, .. P2CoreComparisonIteratorExtensionTests.All];
+        tests = [.. tests, .. P2CoreGenericEnumTests.All, .. P2CoreGenericOptionResultTests.All];
         tests = [.. tests, .. P2ToolingContractTests.All];
         tests = [.. tests, .. P2DocumentationTests.All];
         tests = [.. tests, .. P2FormatterTests.All];

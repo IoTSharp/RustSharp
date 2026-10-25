@@ -2,15 +2,15 @@ namespace RustSharp.Tests;
 
 internal static class AssertEx
 {
-    public static void True(bool condition, string message)
+    public static void True(bool condition, string? message = null)
     {
         if (!condition)
         {
-            throw new InvalidOperationException(message);
+            throw new InvalidOperationException(message ?? "The assertion was false.");
         }
     }
 
-    public static void False(bool condition, string message) => True(!condition, message);
+    public static void False(bool condition, string? message = null) => True(!condition, message);
 
     public static void Equal<T>(T expected, T actual, string? message = null)
         where T : notnull

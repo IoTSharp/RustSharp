@@ -163,12 +163,40 @@ public static class SafeCoreGenericClrLowering
             else if (nominalTypes.TryGetValue(type.Name, out SafeCoreGenericNominalDefinition? nominal))
             {
                 if (nominal.Parameters.Length != type.Arguments.Length) Fail(node, "A closed nominal type has invalid generic arity.");
-                if (nominal.Fields.Length > ClrLirLimits.MaximumFields)
+                int declaredFieldCount = nominal.IsEnum
+                    ? 1 + nominal.Variants.Select(static variant => variant.Fields.Length).DefaultIfEmpty(0).Max()
+                    : nominal.Fields.Length;
+                if (declaredFieldCount > ClrLirLimits.MaximumFields)
                     Limit(node, "A closed nominal type exceeds its field limit.");
                 var bindings = new Dictionary<string, RustType>(StringComparer.Ordinal);
                 for (int index = 0; index < nominal.Parameters.Length; index++) bindings.Add(nominal.Parameters[index], type.Arguments[index]);
-                foreach (SafeCoreGenericFieldDefinition field in nominal.Fields)
-                    fields.Add(new(field.Name, Map(Substitute(field.Type, bindings, field.Declaration, 0), field.Declaration, depth + 1)));
+                if (nominal.IsEnum)
+                {
+                    fields.Add(new("$tag", ClrLirType.I32));
+                    int payloadCount = nominal.Variants.Select(static variant => variant.Fields.Length).DefaultIfEmpty(0).Max();
+                    for (int fieldIndex = 0; fieldIndex < payloadCount; fieldIndex++)
+                    {
+                        SafeCoreGenericFieldDefinition? selected = nominal.Variants
+                            .Select(variant => variant.Fields.ElementAtOrDefault(fieldIndex))
+                            .FirstOrDefault(field => field is not null);
+                        if (selected is null) Fail(node, "An enum payload field is missing its checked source type.");
+                        RustType payloadType = Substitute(selected.Type, bindings, selected.Declaration, 0);
+                        ClrLirType mappedPayload = Map(payloadType, selected.Declaration, depth + 1);
+                        foreach (SafeCoreGenericEnumVariantDefinition variant in nominal.Variants)
+                        {
+                            if (fieldIndex >= variant.Fields.Length) continue;
+                            RustType candidate = Substitute(variant.Fields[fieldIndex].Type, bindings, variant.Fields[fieldIndex].Declaration, 0);
+                            if (Map(candidate, variant.Fields[fieldIndex].Declaration, depth + 1) != mappedPayload)
+                                Fail(node, "Enum variants at one payload position must share a closed CLR type.");
+                        }
+                        fields.Add(new("$v" + fieldIndex.ToString(CultureInfo.InvariantCulture), mappedPayload));
+                    }
+                }
+                else
+                {
+                    foreach (SafeCoreGenericFieldDefinition field in nominal.Fields)
+                        fields.Add(new(field.Name, Map(Substitute(field.Type, bindings, field.Declaration, 0), field.Declaration, depth + 1)));
+                }
             }
             else Fail(node, "A closed nominal type has no checked field definition.");
             string name = "value_" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key))).ToLowerInvariant();
@@ -197,6 +225,31 @@ public static class SafeCoreGenericClrLowering
             if (mapped.Kind != ClrLirTypeKind.Value || !layouts.TryGetValue(mapped.Name!, out ClrLirValueType? layout))
                 Fail(node, "A field operation requires a concrete value layout.");
             return layouts[mapped.Name!];
+        }
+
+        internal bool TryEnumVariant(SafeCoreSymbol symbol, out SafeCoreGenericNominalDefinition? nominal,
+            out SafeCoreGenericEnumVariantDefinition? variant, out int index)
+        {
+            nominal = null;
+            variant = null;
+            index = -1;
+            if (symbol.Kind != SafeCoreSymbolKind.EnumVariant) return false;
+            if (!nominalTypes.TryGetValue(symbol.ScopePath, out SafeCoreGenericNominalDefinition? candidate) || !candidate.IsEnum)
+            {
+                string qualified = symbol.ResolvedImportTargetQualifiedName ?? symbol.QualifiedName;
+                int separator = qualified.LastIndexOf("::", StringComparison.Ordinal);
+                if (separator <= 0 || !nominalTypes.TryGetValue(qualified[..separator], out candidate) || !candidate.IsEnum)
+                    return false;
+            }
+            for (int candidateIndex = 0; candidateIndex < candidate.Variants.Length; candidateIndex++)
+            {
+                if (!string.Equals(candidate.Variants[candidateIndex].Name, symbol.Name, StringComparison.Ordinal)) continue;
+                nominal = candidate;
+                variant = candidate.Variants[candidateIndex];
+                index = candidateIndex;
+                return true;
+            }
+            return false;
         }
 
         private void Step(SafeCoreHirNode node, int depth = 0)
@@ -288,7 +341,9 @@ public static class SafeCoreGenericClrLowering
                         if (current is not null) Return();
                         break;
                     case N.NameExpression:
-                        if (node.ReferencedSymbol is { } referenced && bindings.TryGetValue(referenced, out int bound))
+                        if (node.ReferencedSymbol is { } enumSymbol && owner.TryEnumVariant(enumSymbol, out _, out _, out _))
+                            EnumConstruct(node, node, [], depth);
+                        else if (node.ReferencedSymbol is { } referenced && bindings.TryGetValue(referenced, out int bound))
                             Emit(new ClrLirLoadLocal(bound));
                         else Emit(new ClrLirConstructValue(owner.Layout(ValueType(node), node)));
                         break;
@@ -313,6 +368,8 @@ public static class SafeCoreGenericClrLowering
                         Conditional(node, depth); break;
                     case N.CallExpression:
                         Call(node, depth); break;
+                    case N.MatchExpression:
+                        Match(node, depth); break;
                     case N.PrintExpression:
                         Print(node, depth); break;
                     default: Fail(node, "This checked HIR operation has no closed CLR lowering."); break;
@@ -350,6 +407,120 @@ public static class SafeCoreGenericClrLowering
                     Emit(new ClrLirLoadLocal(value));
                 }
                 Emit(new ClrLirConstructValue(layout));
+            }
+
+            private void EnumConstruct(SafeCoreHirNode node, SafeCoreHirNode symbolNode,
+                IReadOnlyList<SafeCoreHirNode> values, int depth)
+            {
+                SafeCoreGenericEnumVariantDefinition? variant = null;
+                int variantIndex = -1;
+                if (symbolNode.ReferencedSymbol is null ||
+                    !owner.TryEnumVariant(symbolNode.ReferencedSymbol, out _, out variant, out variantIndex) ||
+                    variant is null)
+                    Fail(symbolNode, "The enum variant has no closed generic layout.");
+                if (values.Count != variant.Fields.Length)
+                    Fail(node, "The enum variant payload count does not match its closed layout.");
+                var evaluated = new List<int>(values.Count);
+                foreach (SafeCoreHirNode value in values)
+                {
+                    evaluated.Add(Evaluate(value, depth + 1));
+                    if (current is null) return;
+                }
+                ClrLirValueType layout = owner.Layout(ValueType(node), node);
+                Emit(new ClrLirLoadInt32(variantIndex));
+                for (int index = 0; index < layout.Fields.Length - 1; index++)
+                {
+                    if (index < evaluated.Count)
+                    {
+                        Emit(new ClrLirLoadLocal(evaluated[index]));
+                    }
+                    else
+                    {
+                        EmitDefault(layout.Fields[index + 1].Type, node);
+                    }
+                }
+                Emit(new ClrLirConstructValue(layout));
+            }
+
+            private void EmitDefault(ClrLirType type, SafeCoreHirNode node)
+            {
+                if (type == ClrLirType.I32) Emit(new ClrLirLoadInt32(0));
+                else if (type == ClrLirType.Bool) Emit(new ClrLirLoadBoolean(false));
+                else Fail(node, "A generic enum payload without a value requires a scalar default in this profile.");
+            }
+
+            private void Match(SafeCoreHirNode node, int depth)
+            {
+                SafeCoreHirNode scrutinee = Child(node, 0);
+                int scrutineeLocal = Evaluate(scrutinee, depth + 1);
+                if (current is null) return;
+                ClrLirValueType layout = owner.Layout(ValueType(scrutinee), scrutinee);
+                if (layout.Fields.Length < 1 || layout.Fields[0].Type != ClrLirType.I32)
+                    Fail(node, "A generic enum match requires an i32 discriminant field.");
+                int resultLocal = Local(Type(node));
+                Block join = NewBlock();
+                for (int index = 1; index < node.ChildIds.Count; index++)
+                {
+                    SafeCoreHirNode arm = Child(node, index);
+                    SafeCoreHirNode pattern = Child(arm, 0);
+                    bool wildcard = pattern.Kind == N.WildcardPattern;
+                    int variantIndex = -1;
+                    SafeCoreGenericEnumVariantDefinition? variant = null;
+                    if (!wildcard)
+                    {
+                        if (pattern.Kind != N.PathPattern || pattern.ReferencedSymbol is null ||
+                            !owner.TryEnumVariant(pattern.ReferencedSymbol, out _, out variant, out variantIndex) || variant is null)
+                            Fail(pattern, "Only enum variant and wildcard patterns are supported by the generic CLR lowering.");
+                        if (pattern.ChildIds.Count != variant.Fields.Length)
+                            Fail(pattern, "The enum pattern payload count does not match its closed layout.");
+                    }
+                    bool last = index == node.ChildIds.Count - 1;
+                    Block armBlock = NewBlock();
+                    Block next = NewBlock();
+                    if (wildcard)
+                    {
+                        Terminate(new ClrLirBranch(armBlock.Label));
+                    }
+                    else
+                    {
+                        Emit(new ClrLirLoadLocal(scrutineeLocal));
+                        Emit(new ClrLirReadField(layout, 0));
+                        Emit(new ClrLirLoadInt32(variantIndex));
+                        Emit(new ClrLirBinary(ClrLirBinaryOperator.Equal, ClrLirType.I32));
+                        Emit(new ClrLirBranchTrue(armBlock.Label));
+                        Terminate(new ClrLirBranch(next.Label));
+                    }
+                    Start(armBlock);
+                    if (!wildcard && variant!.Fields.Length != 0)
+                    {
+                        for (int fieldIndex = 0; fieldIndex < variant.Fields.Length; fieldIndex++)
+                        {
+                            SafeCoreHirNode bindingPattern = Child(pattern, fieldIndex);
+                            if (bindingPattern.Kind == N.WildcardPattern) continue;
+                            int payload = Local(layout.Fields[fieldIndex + 1].Type);
+                            Emit(new ClrLirLoadLocal(scrutineeLocal));
+                            Emit(new ClrLirReadField(layout, fieldIndex + 1));
+                            Emit(new ClrLirStoreLocal(payload));
+                            if (bindingPattern.DeclaredSymbol is { } symbol) bindings[symbol] = payload;
+                        }
+                    }
+                    SafeCoreHirNode body = Child(arm, arm.ChildIds.Count == 3 ? 2 : 1);
+                    Expression(body, depth + 1);
+                    if (current is not null)
+                    {
+                        Emit(new ClrLirStoreLocal(resultLocal));
+                        Terminate(new ClrLirBranch(join.Label));
+                    }
+                    Start(next);
+                    if (last)
+                    {
+                        EmitDefault(Type(node), node);
+                        Emit(new ClrLirStoreLocal(resultLocal));
+                        Terminate(new ClrLirBranch(join.Label));
+                    }
+                }
+                Start(join);
+                Emit(new ClrLirLoadLocal(resultLocal));
             }
 
             private void Member(SafeCoreHirNode node, int depth)
@@ -440,6 +611,12 @@ public static class SafeCoreGenericClrLowering
 
             private void Call(SafeCoreHirNode node, int depth)
             {
+                SafeCoreHirNode callee = Child(node, 0);
+                if (callee.ReferencedSymbol is { } enumSymbol && owner.TryEnumVariant(enumSymbol, out _, out _, out _))
+                {
+                    EnumConstruct(node, callee, [.. Parts(node).Skip(1)], depth);
+                    return;
+                }
                 if (!method.Specialization.Calls.TryGetValue(node.Id, out GenericFunctionInstance? instance))
                 { Construct(node, Parts(node).Skip(1), depth); return; }
                 if (!owner.methods.TryGetValue(owner.InstanceKey(instance, node), out Method? target))
